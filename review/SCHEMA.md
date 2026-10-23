@@ -141,14 +141,21 @@ is not read. The check reads the file's text, not what Lean makes of it, and ref
 whole file, naming the line, for each of these forms: an import outside `Elements`; a
 `variable`, `include` or `export`, or a command that declares a token (`notation`,
 `infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`, `binder_predicate` or
-`declare_simp_like_tactic`), before the section's end; a namespace or a declaration (a
-constructor among them) whose name has a part `Elements`, or a part in «…» that holds a
-dot, which the check cannot tell from a longer name; or a theorem of the section whose
-name the file declares twice. `macro`, `elab` and their `_rules` are refused by the
+`declare_simp_like_tactic`), before the section's end; a namespace, or a declaration by
+`theorem`, `def` or another word the scan reads (a constructor among them), whose name,
+with only whitespace between it and that word, has a part `Elements`, or a part in «…»
+that holds a dot, which the check cannot tell from a longer name; or a theorem it reads
+whose name the file declares twice. `macro`, `elab` and their `_rules` are refused by the
 source scan, in `Audit/` and `Elements/` alike. The scan trusts the modules of
 `Elements` the file imports: a declaration there under `Audit.Elements`, or a notation
-there that reads `type_of% … :=` otherwise, would mislead it. The full cure, a
-follow-up, is for Lean itself to report each audit theorem's type and axioms.
+there that reads `type_of% … :=` otherwise, would mislead it. Nor does it read the name
+of a `where` or `let rec` auxiliary, or tell a syntax quotation's text from commands: an
+auxiliary named `Elements.BookIII.Prop5`, read inside a namespace named after its
+declaration, or a `theorem` or `namespace` inside `` `(command| …) ``, would mislead it
+too. Nor does it read the name in `theorem«Elements».BookIII.Prop5`, closed up to its
+word, or in `instance (priority := (10)) Elements.Inst`, after a priority that holds a
+bracket; Lean reads both. The full cure, a follow-up, is for Lean itself to report each
+audit theorem's type and axioms.
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its

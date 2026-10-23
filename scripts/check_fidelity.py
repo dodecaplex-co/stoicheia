@@ -112,12 +112,20 @@
      the file's text, not what Lean makes of it, and refuses the file whole for each of
      these forms, naming its line: an import outside `Elements`; a `variable`, `include`
      or `export`, or a command that declares a token (`notation`, `infix` and the rest of
-     HIDDEN), before the section's end; a namespace or declaration whose name has a part
-     `Elements`, or a part in «…» that holds a dot; or a theorem there whose name the
-     file declares twice (`declared_in`). The scan trusts the modules of `Elements` the
-     file imports: a declaration there under `Audit.Elements`, or a notation there that
-     reads `type_of% … :=` otherwise, would mislead it. The full cure, a follow-up, is
-     for Lean itself to report each audit theorem's type and axioms.
+     HIDDEN), before the section's end; a namespace, or a declaration by `theorem`, `def`
+     or another word the scan reads (a constructor among them), whose name, with only
+     whitespace between it and that word, has a part `Elements`, or a part in «…» that
+     holds a dot (`declared_in`); or a theorem it reads whose name the file declares
+     twice. The scan trusts the modules of `Elements` the file imports: a declaration
+     there under `Audit.Elements`, or a notation there that reads `type_of% … :=`
+     otherwise, would mislead it. Nor does it read the name of a `where` or `let rec`
+     auxiliary, or tell a syntax quotation's text from commands: an auxiliary named
+     `Elements.BookIII.Prop5`, read inside a namespace named after its declaration, or a
+     `theorem` or `namespace` inside "`(command| …)", would mislead it too. Nor does it
+     read the name in `theorem«Elements».BookIII.Prop5`, closed up to its word, or in
+     `instance (priority := (10)) Elements.Inst`, after a priority that holds a bracket;
+     Lean reads both. The full cure, a follow-up, is for Lean itself to report each audit
+     theorem's type and axioms.
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -1672,12 +1680,13 @@ def lean_words(*words: str) -> re.Pattern:
 
 
 # The scan reads a theorem's type in AUDIT_OVERLAPS as it is written, where Lean
-# elaborates it (#293): so it reads the full name of each declaration, in the namespaces
-# Lean puts it in, and refuses the file for each form `declared_in` lists that could make
-# a type mean another. DECLARES: the word of a command that opens or closes a scope,
-# wherever it stands, or declares a name. Lean opens a scope for each part of `namespace
-# A.B` or `section A.B`, and `end B` closes one; `noncomputable section` is a section, and
-# a `mutual` block ends with `end` too.
+# elaborates it (#293): so it follows the namespaces the file's commands open and close,
+# and refuses the file for each form `declared_in` lists that could make a type mean
+# another; `declared_in` says too what the scan does not read. DECLARES: the words of the
+# commands the scan follows, each of which opens or closes a scope or declares a name,
+# read wherever they stand, even in a syntax quotation's text. Lean opens a scope for each
+# part of `namespace A.B` or `section A.B`, and `end B` closes one; `noncomputable
+# section` is a section, and a `mutual` block ends with `end` too.
 DECLARES = lean_words("namespace", "section", "mutual", "end", "theorem", "lemma", "def",
                       "abbrev", "instance", "structure", "class", "inductive", "coinductive",
                       "opaque", "axiom")
@@ -1729,15 +1738,23 @@ def misleading_name(parts: list[str]) -> str:
 
 def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, str], str]:
     """Each declaration of `code`, the Lean that `read_lean` gives from the file `where`'s
-    text `src`, by the offset of its word, with its full name, in the namespaces Lean puts
-    it in (DECLARES). Or {} and the first of the forms it refuses, named by its line, each
-    of which could make a theorem's type mean other than its text reads: an import outside
-    `Elements`, whose names it does not read; a `variable`, `include` or `export`, or a
-    command that declares a token, before the offset `end` (HIDDEN); or a namespace or a
-    declaration, a constructor among them, whose name could mislead it
+    text `src`, by a word of DECLARES and with a name the scan reads, by the offset of its
+    word, with its full name, following the namespaces the file's commands open and close.
+    Or {} and the first of the forms it refuses, named by its line, each of which could
+    make a theorem's type mean other than its text reads: an import outside `Elements`,
+    whose names it does not read; a `variable`, `include` or `export`, or a command that
+    declares a token, before the offset `end` (HIDDEN); or a namespace, or a declaration
+    by `theorem`, `def` or another word the scan reads (a constructor among them), whose
+    name, with only whitespace between it and that word, could mislead it
     (`misleading_name`). It refuses only these: the scan trusts the modules of `Elements`
     the file imports, and a declaration there under `Audit.Elements`, or a notation there
-    that reads `type_of% … :=` otherwise, would mislead it."""
+    that reads `type_of% … :=` otherwise, would mislead it. Nor does it read the name of a
+    `where` or `let rec` auxiliary, or tell a syntax quotation's text from commands: an
+    auxiliary named `Elements.BookIII.Prop5`, read inside a namespace named after its
+    declaration, or a `theorem` or `namespace` inside "`(command| …)", would mislead it
+    too. Nor does it read the name in `theorem«Elements».BookIII.Prop5`, closed up to its
+    word, or in `instance (priority := (10)) Elements.Inst`, after a priority that holds a
+    bracket; Lean reads both."""
     def at(offset):
         return f"{where}:{line_of(src, offset)}"
     why = ("so a theorem's type could mean other than it reads, and the scan reads only "

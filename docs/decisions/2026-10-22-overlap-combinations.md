@@ -26,24 +26,32 @@
   combination, and the theorems the file proves the proposition by, with their rules.
 
   Lean elaborates a theorem's type where the check reads it as written, so the check
-  reads each theorem's full name in the namespaces Lean puts it in, wherever a command
-  stands and a dotted namespace a part at a time, and refuses the whole file, naming the
-  line, for each of these forms: an import outside `Elements`; a `variable`, `include` or
+  follows the namespaces the file's commands open and close, wherever a command stands
+  and a dotted namespace a part at a time, and refuses the whole file, naming the line,
+  for each of these forms: an import outside `Elements`; a `variable`, `include` or
   `export`, or a command that declares a token (`notation`, `infix`, `infixl`, `infixr`,
   `prefix`, `postfix`, `syntax`, `binder_predicate` or `declare_simp_like_tactic`),
-  before the section's end; a namespace or declaration, a constructor among them, whose
-  name has a part `Elements`, or a part in «…» that holds a dot, which the check cannot
-  tell from a longer name; or a theorem of the section whose name the file declares
-  twice. `macro`, `elab` and their `_rules` are refused by the source scan, in `Audit/`
-  and `Elements/` alike. Main's file has none of these. The scan trusts the modules of
-  `Elements` the file imports: a declaration there under `Audit.Elements`, or a notation
-  there that reads `type_of% … :=` otherwise, would mislead it. The full cure, a
-  follow-up, is for Lean itself to report each audit theorem's type and axioms.
+  before the section's end; a namespace, or a declaration by `theorem`, `def` or another
+  word the scan reads (a constructor among them), whose name, with only whitespace
+  between it and that word, has a part `Elements`, or a part in «…» that holds a dot,
+  which the check cannot tell from a longer name; or a theorem it reads whose name the
+  file declares twice. `macro`, `elab` and their `_rules` are refused by the source scan,
+  in `Audit/` and `Elements/` alike. Main's file has none of these. The scan trusts the
+  modules of `Elements` the file imports: a declaration there under `Audit.Elements`, or
+  a notation there that reads `type_of% … :=` otherwise, would mislead it. Nor does it
+  read the name of a `where` or `let rec` auxiliary, or tell a syntax quotation's text
+  from commands: an auxiliary named `Elements.BookIII.Prop5`, read inside a namespace
+  named after its declaration, or a `theorem` or `namespace` inside `` `(command| …) ``,
+  would mislead it too. Nor does it read the name in `theorem«Elements».BookIII.Prop5`,
+  closed up to its word, or in `instance (priority := (10)) Elements.Inst`, after a
+  priority that holds a bracket; Lean reads both. The full cure, a follow-up, is for Lean
+  itself to report each audit theorem's type and axioms.
 
-  The check holds soundness alone, that each combination a record names is proved there.
-  Completeness, that each combination the file proves is in its record, would refuse
-  main's III.5 today, and follows those records. On main, III.2 (two audit theorems with
-  one combination), III.5 and III.6 pass the new check unchanged.
+  The check holds soundness alone, that each combination a record names is proved there,
+  as the scan reads the file. Completeness, that each combination the file proves is in
+  its record, would refuse main's III.5 today, and follows those records. On main, III.2
+  (two audit theorems with one combination), III.5 and III.6 pass the new check
+  unchanged.
 
   Where a record has `ways`, the line under the enunciation says how many combinations
   contain the proposition and, in a few words, whether our proof rests on all, some or
@@ -69,9 +77,9 @@
   This entry approves the change to `scripts/check_fidelity.py`, whose review check holds
   each combination of a `states` or `gives` overlap to `Audit/Overlaps.lean`
   (`overlap_proofs`, `check_overlap_ways`), leaves out the theorems of
-  `AUDIT_NOT_OVERLAPS`, refuses the file for each form `declared_in` lists, and for a
-  symbolic link, and looks for each rule of `ways` among facts.json's axioms, as it
-  looked for those of `rule` and `also`.
+  `AUDIT_NOT_OVERLAPS`, refuses the file for each form `declared_in` lists, and when the
+  file is itself a symbolic link, and looks for each rule of `ways` among facts.json's
+  axioms, as it looked for those of `rule` and `also`.
 
   This entry approves the change to `scripts/render.py`, which counts the combinations of
   `ways` in the line under the enunciation, with a few words on what our proof rests on,
