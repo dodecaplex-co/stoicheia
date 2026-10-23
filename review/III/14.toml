@@ -87,7 +87,15 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "full"
-commit = "9eae4df1"
+commit = "3027a105"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:720ade15c16cf730"
+lean = "sha256:4e99fba888723a6e"
 run = "card #131, ship ER: re-read after III.1's call was dropped; lines 78 and 115 of Prop14.lean, of unknown family, read also by GPT-6 Astra (Codex); the calls of III.1 and centre_unique dropped (#131), written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
