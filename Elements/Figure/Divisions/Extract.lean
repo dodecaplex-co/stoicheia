@@ -572,7 +572,7 @@ theorem loop_crossings {loops : List (List Point)}
     (pairwise_same (elems_pairwise R)) (loops.flatMap sides)
     (fun s hs => elems_cover R (hflat s hs).1)
     (fun x e h => by simp only [crosses_of_same h])]
-  refine congrArg List.sum (List.map_congr_left fun e he => ?_)
+  refine congrArg List.sum (List.map_congr_left fun e _ => ?_)
   congr 1
   by_cases hb : Bdry R e.1 e.2
   · rw [ite_eq_left hb]
@@ -783,7 +783,7 @@ theorem apart_outline : ∃ F : Outline, ∀ X : Point, Covers R.pieces X ↔ F.
     rw [CoverFacts.depth_congr F hsame, hdepth]
     exact (parity_at R hsimple hside hl2 hl3
       (fun t' ht' s hs hs' => int_not_on_side R ht ht' hW hs hs')).mpr ⟨t, ht, Or.inl hW⟩
-  · rcases hX with ⟨L, hL, hXL⟩ | ⟨hb, hodd⟩
+  · rcases hX with ⟨L, hL, hXL⟩ | ⟨-, hodd⟩
     · exact covers_of_loop R (hside L hL) hXL
     · by_cases hsd : ∃ t ∈ R.pieces, ∃ s ∈ triSides t, OnSeg X s
       · obtain ⟨t, ht, s, hs, hXs⟩ := hsd
