@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.30 at a glance</title>
-  <desc>Join AB (yellow), halve it at C and draw CD at right angles (black). The straight lines DA, DB (blue) are equal, so they cut off equal circumferences AD, DB (red): D halves the circumference ADB.</desc>
+  <desc>Join AB (yellow), halve it at C and draw CD (black) at right angles. The straight lines DA, DB (blue) are equal, so they cut off equal circumferences AD, DB (red): D halves the circumference ADB.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polyline points="212.0,210.5 212.0,198.5 200.0,198.5" fill="none" stroke="#222222" stroke-width="1.6"/>
   <polyline points="188.0,210.5 188.0,198.5 200.0,198.5" fill="none" stroke="#222222" stroke-width="1.6"/>

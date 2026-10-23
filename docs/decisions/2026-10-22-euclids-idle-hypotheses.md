@@ -8,8 +8,9 @@
   [#347](https://github.com/jackChallis/stoicheia/issues/347).
 
   Why. Such a hypothesis is Euclid's, not a product of our representation, so the tag
-  would say something false of it. Taking it out would change the scope of a published
-  statement, which is the owner's decision, and is not asked for.
+  would say something false of it. Taking it out would widen a published statement beyond
+  what Euclid claims, a change of scope that is not asked for and that this ruling does not
+  make.
 
   The example is III.8, in `Elements/BookIII/Prop08.lean`. Its clause on the concave
   circumference, comparing DE with DF, supposes that F, the more remote, lies on that
