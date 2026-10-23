@@ -129,7 +129,7 @@ agreement with Heath's preferred local reading at the contact.
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
 | I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [14 proofs, each calling it itself](#i13s-rule-in-14-proofs), by the recount of 22 October 2026, after II.5 and II.14 came to prove their right angles in place. III.1, III.1 Por. and III.2 no longer reach it: III.1's helper takes the step by I.13 in its own Lean. |
-| III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. no longer calls it: since 19 October 2026 the porism takes the argument of Euclid's reductio from its given centre, reaches neither III.1 nor the theorem, and rests on 51 tacit rules to III.1's 56 ([facts.json](../../facts.json)). III.14 is the first proposition whose own Lean calls the theorem, and III.36 the only other; [five proofs](#iii1s-corollary) rest on it without passing through another entry. |
+| III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. no longer calls it: since 19 October 2026 the porism takes the argument of Euclid's reductio from its given centre, reaches neither III.1 nor the theorem, and rests on 38 tacit rules to III.1's 39 ([facts.json](../../facts.json)). III.14 is the first proposition whose own Lean calls the theorem, and III.36 the only other; [five proofs](#iii1s-corollary) rest on it without passing through another entry. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 | III.6's contact without and Generalities 3 (`centre_inside`) | A proof in `Elements/Figure/RuleBase.lean` (19 October 2026): a centre that were not inside its circle would have two unequal radii on one straight line. The radii are unequal because no radius is nothing (`RuleProofs.Circle.radius_ne_zero`, and `RuleProofs.Circle.length_pos` over it), and that proof uses Postulate 3 and Diagram-segment 2 (`circle_eq`): a point at no distance from the centre would be on the circle. Lean reports, for `centre_inside`, Definition I.15, Postulates 1 and 3 and 16 tacit rules, among them Circle 1, Diagram-segment 2, Intersections 4 and 5 and the rules of length and order. `Audit.III_6` now rests on that proof, and its pinned axioms are those of that proof with `exists_point`, which Generalities 4's proof adds, so contact without rests on Diagram-segment 2 as contact within does; for both, the remaining axiom overlap is the Diagram-segment 2 row above. |
 | III.5 and Diagram-segment 4 (`len_lt_of_inside`), with Definition I.15 and a magnitude law (`lt_irrefl`) | A proof in `Elements/Figure/Incidence.lean` (19 October 2026): the straight line from the centre through the point within, produced to the circumference, makes the point's distance a part of the radius. That proof rests on Diagram-segment 2 through the proved rules beneath it, so `Audit.III_5_crossing` now rests on Diagram-segment 2 too; the remaining axiom overlap is the Diagram-segment 2 row above. |
@@ -156,14 +156,18 @@ crossing proof.
 
 ### I.13's rule in 14 proofs
 
-Recounted on 22 October 2026, on the revision that holds all 137 certificate entries (99
-propositions, three porisms and 35 companions), after III.1 came to take its step by I.13
-in its own Lean ([issue #168](https://github.com/jackChallis/stoicheia/issues/168)) and II.5
-and II.14 came to prove their right angles in place: the theorem occurs in 14 proofs
-without passing through another certified entry, and all 14 call it in their own
-declarations or their proposition's helpers. III.1, its porism and III.19 have left the
-count since 21 October, and so have II.5, II.14 and II.14's companion
-`BookII.Prop14.rectangle`; no entry has joined it.
+Recounted on 22 October 2026, on that day's merged revision `7a55a929`, which held 137
+certificate entries (99 propositions, three porisms and 35 companions), after III.1 came to
+take its step by I.13 in its own Lean
+([issue #168](https://github.com/jackChallis/stoicheia/issues/168)) and II.5 and II.14 came
+to prove their right angles in place: the theorem occurs in 14 proofs without passing
+through another certified entry, and all 14 call it in their own declarations or their
+proposition's helpers. III.1, its porism and III.19 have left the count since 21 October,
+and so have II.5, II.14 and II.14's companion `BookII.Prop14.rectangle`; no entry has
+joined it. At `84a78856`, with 140 certificate entries (99 propositions, three porisms and
+38 companions), a search of the Lean sources still finds the theorem called in these 14
+proofs and no others, and the citation closure in `facts.json` still gives 33 entries,
+without a new walk of Lean's declarations.
 
 On 21 October, three counts, across 130 entries, 136 and 137, found 20 proofs, 19 of them
 calling the theorem themselves: these 14; II.5, II.14 and `BookII.Prop14.rectangle`; III.1
@@ -195,7 +199,7 @@ III.19, which use that helper, do not reach the rule through it; III.16, which u
 still calls the rule itself. II.5 no longer calls it either: it proves the right angle HDA
 by I.13 and Common Notion 3 in its own Lean. Nor do II.14 and its companion
 `BookII.Prop14.rectangle`, which prove the right angle HEG (it is the angle HEB) in the same
-way and cite II.5; so neither they nor II.14's other five companions rest on the rule at
+way and cite II.5; so neither they nor II.14's other seven companions rest on the rule at
 all. Nineteen more entries (nine propositions, III.16's porism and nine companions) rest on
 it through these 14. I.13 does not rest on it. The rule gives the right angles Euclid reads
 off his figure, as for the rectangles of II.1, where his text says nothing of them. These 14
@@ -699,8 +703,11 @@ the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`, `Arc.measure`,
 `InSegment`, `LocallyLess`, `LocallyWithin`, `MixedAngle.Exceeds`, `MixedAngle.FallsShort`,
 `MixedAngle.WellFormed`, `MixedAngle.casesOn`, `MixedAngle.region`, `MixedAngle.vertex`,
 `NearVertexOpen`, `OnArc`, `OnSideOrLine`, `Places`, `Surrounds` and `WithinAngle`), also in
-issue #160; until then the run on the restated readings, above, cannot be made. The screen
-now tries the <!-- count:axioms -->49<!-- /count --> axioms of the certificate, 11 of them
+issue #160; until then the run on the restated readings, above, cannot be made. The
+outline companions of I.45 and II.14 also reach definitions in none of the screen's lists,
+such as `Figures.Outline.area`, which their statements name; the screen stops on these too
+until they are listed. The screen now tries the <!-- count:axioms -->49<!-- /count -->
+axioms of the certificate, 11 of them
 about circles with `Tacit.exists_centre`, and unfolds, budgets and leaves out rules as the
 revised screen does. No run of it on the restated statements is recorded yet.
 
