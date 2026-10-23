@@ -8398,30 +8398,58 @@ class OwnGitUnderHook(Edge):
         self.assertEqual(sorted(set(env) & safe_push.REPOSITORY_VARIABLES),
                          ["GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS"])
 
-    def test_only_base_tree_keeps_a_repository_variable(self):
-        # `keep` lets a variable that ties git to one repository through: only base_tree
-        # may name one, its own temporary GIT_INDEX_FILE, and run() and
-        # without_replacements only pass `keep` along (#357, #392).
-        tree = ast.parse((SOURCE / "scripts" / "safe_push.py").read_text())
-        kept = []
+    def test_base_tree_uses_only_its_temporary_index(self):
+        path = "docs/reading.md"
+        sha = self.commit("A changed base-tree input", {
+            path: self.text(path) + "\nA line for the test.\n"})
+        expected = git(WORK, "rev-parse", f"{BASE}^{{tree}}").strip()
+        repository_index = WORK / ".git" / "index"
+        repository_before = repository_index.read_bytes()
 
-        def visit(node, where):
-            # Each call is counted once, under the innermost function that holds it.
-            for child in ast.iter_child_nodes(node):
-                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    visit(child, f"{where}.{child.name}" if where else child.name)
-                    continue
-                if (isinstance(child, ast.Call) and isinstance(child.func, ast.Name)
-                        and child.func.id in ("run", "own_env", "without_replacements")):
-                    values = [k.value for k in child.keywords if k.arg in ("keep", None)]
-                    if child.func.id != "run" and len(child.args) > 1:
-                        values.append(child.args[1])
-                    kept.extend((where, ast.unparse(value)) for value in values)
-                visit(child, where)
-        visit(tree, "")
-        self.assertEqual(sorted(kept), [("base_tree.index", "('GIT_INDEX_FILE',)"),
-                                        ("run", "keep"), ("run", "keep"),
-                                        ("without_replacements", "keep")])
+        with tempfile.TemporaryDirectory(prefix="caller-index-", dir=TMP) as tmp:
+            caller_index = Path(tmp) / "index"
+            plain = self.plain_env()
+            git(WORK, "read-tree", sha,
+                env=dict(plain, GIT_INDEX_FILE=str(caller_index)))
+            caller_before = caller_index.read_bytes()
+            planted = {name: "/planted" for name in safe_push.REPOSITORY_VARIABLES}
+            planted["GIT_INDEX_FILE"] = str(caller_index)
+            seen = []
+            real_run = subprocess.run
+
+            def record(cmd, **kwargs):
+                result = real_run(cmd, **kwargs)
+                env = kwargs["env"]
+                index = env.get("GIT_INDEX_FILE")
+                seen.append((cmd, env, index is not None and Path(index).is_file()))
+                return result
+
+            with mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push.subprocess, "run", record):
+                tree = safe_push.base_tree(WORK, BASE, sha, [("M", path)])
+
+            self.assertEqual(tree, expected)
+            self.assertEqual(caller_index.read_bytes(), caller_before)
+            self.assertEqual(repository_index.read_bytes(), repository_before)
+
+        temporary_indexes = []
+        for cmd, env, index_exists in seen:
+            operation = next(arg for arg in cmd if arg in
+                             {"read-tree", "ls-tree", "update-index", "write-tree"})
+            left = sorted(set(env) & (safe_push.REPOSITORY_VARIABLES
+                                      - {"GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS"}))
+            self.assertEqual(left, [], operation)
+            self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1", operation)
+            if operation == "ls-tree":
+                self.assertNotIn("GIT_INDEX_FILE", env)
+                continue
+            self.assertTrue(index_exists, operation)
+            temporary_indexes.append(env["GIT_INDEX_FILE"])
+        self.assertEqual(len(set(temporary_indexes)), 1)
+        temporary_index = Path(temporary_indexes[0])
+        self.assertNotEqual(temporary_index, caller_index)
+        self.assertNotEqual(temporary_index, repository_index)
+        self.assertFalse(temporary_index.exists())
 
     MUTATORS = frozenset({"update", "setdefault", "pop", "popitem", "clear", "__setitem__",
                           "__delitem__", "__ior__"})

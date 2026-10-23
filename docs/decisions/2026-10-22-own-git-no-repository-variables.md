@@ -34,8 +34,9 @@
   such variable the harness sets on purpose, the temporary `GIT_INDEX_FILE` in which
   `base_tree` builds the base tree for the main-checks cache
   ([#392](https://github.com/jackChallis/stoicheia/pull/392)), is named to `run()` in
-  `keep`, and its environment is otherwise built by `own_env()`; only `base_tree` names
-  it, as a test of the source holds.
+  `keep`, and its environment is otherwise built by `own_env()`. A behavioral test calls
+  `base_tree` under planted caller repository variables and observes that its index
+  commands use the harness's temporary index while its other git command gets no index.
 
   This entry approves the change to `scripts/safe_push.py`, whose `run()`,
   `without_replacements()`, `risk_class()` launch, CI watch and hand-over give no command
@@ -49,9 +50,10 @@
   against git's own list; checks with `test_run_gives_no_command_a_repository_variable`
   what `run()` gives a git command, another program and a check started with `tool_env()`,
   and that a variable named in `keep` passes while every other is dropped; checks, reading
-  the source, that only `base_tree` names one in `keep`, its temporary `GIT_INDEX_FILE`;
-  and checks, reading the source, that each place safe_push starts a process, `run()`'s
-  own among them, gives it an environment built by `own_env()` or
+  subprocess environments, that `base_tree` makes the expected tree through its temporary
+  index, leaves the caller's and repository's indexes unchanged and passes no unrelated
+  repository variable; and checks, reading the source, that each place safe_push starts a
+  process, `run()`'s own among them, gives it an environment built by `own_env()` or
   `without_replacements()`, directly or by a name every binding of which in its function
   is one of those calls and which nothing there changes afterwards (no item stored or
   deleted, no `update()` or the like), and that none uses a function that takes no
