@@ -582,7 +582,9 @@ every train and group as unreadable.
   focused test that shows the defect would now be caught (a negative test, an entry in
   `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
   of a figure, a case in `tests/test_check_style.py`). Tests that only repeat a trivial
-  prose change are not added.
+  prose change are not added. `CommentReaderTests` in `tests/test_negative_tests.py` holds
+  the cases for the Lean-comment reader shared by the fidelity check, the style check and
+  the Jev question generator; `negative_tests.py` runs that file before it plants faults.
 - **The certificate's coincidence cases need built foundations.**
   `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
   and through transformers, with negative controls for derivations that supply no step,
@@ -621,10 +623,9 @@ every train and group as unreadable.
   itself on review records varied in memory. The Jev question generator's tests,
   `python3 -I tests/test_jev_questions.py`, are not in the sequence, for one of them
   checks out a commit of 19 October, `39ae65c2`, which the `check` job's checkout, one
-  commit deep, does not hold. Two more of them now fail at any depth, on main too, with
-  "Elements.Superposition.Lit is not imported", since the superposition rule landed there
-  (#191); the generator's fix is in #185. The file can join a job with the whole history
-  once #185 lands.
+  commit deep, does not hold. Two more of them now fail at any depth, on main too, at the
+  I.40 mutation anchor; their repair is card #350. The file can join a job with the whole
+  history once those failures are repaired.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
@@ -715,9 +716,7 @@ looked into.
 6. **One voice** (section 7).
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
-   Books I and II have reached `full` in all their records; Book III's remain at
-   `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
-   into Elements in stages 3 and 4 (#25, #28; the records are #29).
+   Books I, II and III are at `full` in all their records (Book III's are #29).
 8. **The page read-through and the stale-content audit.** Before every release or
    consolidation, readers go through the rendered pages as visitors, as section 7 requires.
    Separately, before every release and at the end of each programme stage, the coordinator
