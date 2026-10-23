@@ -293,9 +293,11 @@ construction, its premises, and the diagram fact or lemma it needed.
   redundant (III.27 holds for any two circles as stated). Say so in the handback;
   the record tags it `redundant-hypothesis` where that is the truth. A hypothesis of
   Euclid's that goes unused in his own argument as well as ours stays as he states it,
-  with no tag, for the tag marks a redundancy our representation makes. In III.8, Euclid's
-  proof and ours compare E with F on the concave circumference without using that F, the
-  more remote, is on it, and K with L on the convex circumference without using that L is.
+  with no tag, for the tag marks a redundancy our representation makes
+  ([decisions, 22 October 2026](decisions/2026-10-22-euclids-idle-hypotheses.md)). In
+  III.8, Euclid's proof and ours compare E with F on the concave circumference without
+  using that F, the more remote, is on it, and K with L on the convex circumference
+  without using that L, the more remote, is on it.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
 - **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
