@@ -135,6 +135,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
 
+import check_fidelity
 import heath
 import render
 
@@ -920,31 +921,20 @@ def lean_notes(path: Path) -> str:
 
 
 def lean_note_spans(src: str, n: int | None = None) -> list[tuple[int, int]]:
-    """The source ranges of a Lean file's reader-visible block-comment interiors."""
+    """The source ranges of a Lean file's reader-visible block-comment interiors: of each
+    block its `-/` closes, from past its `/-`, `/--` or `/-!` to that `-/`, the comments
+    read as Lean reads them (`check_fidelity.lean_comments`)."""
     skip = None
     if n is not None:
         span = heath.theorem_span(src, n)
         if span is not None:
             skip = span.start
     spans = []   # (first, last) character of each note's text
-    i, depth, inner = 0, 0, 0
-    while i < len(src):
-        if src.startswith("/-", i):
-            if depth == 0:
-                opener = 3 if src.startswith(("/--", "/-!"), i) else 2
-                inner = i + opener if i != skip else -1
-            depth += 1
-            i += 2
-        elif depth and src.startswith("-/", i):
-            depth -= 1
-            if depth == 0 and inner >= 0:
-                spans.append((inner, i))
-            i += 2
-        elif depth == 0 and src.startswith("--", i):
-            j = src.find("\n", i)
-            i = len(src) if j < 0 else j
-        else:
-            i += 1
+    for i, _ in check_fidelity.lean_comments(src):
+        if (src.startswith("/-", i) and i != skip
+                and (end := check_fidelity.comment_end(src, i)) is not None):
+            opener = 3 if src.startswith(("/--", "/-!"), i) else 2
+            spans.append((i + opener, end - 2))
     return spans
 
 
