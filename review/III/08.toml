@@ -1,13 +1,13 @@
 # review/III/08.toml
 [statement]
 scope = "full"
-note = "Concave and convex orders stay separate. `Prop8.general` compares either side of DA; `Prop8` keeps one side. The last clause includes contact."
+note = "The two orders stay apart; `Prop8.general` takes both sides of DA; the last clause includes contact. F's and L's classes are Euclid's, idle in his argument too."
 companions = ["III.8 general"]
 fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24, which reaches every point of the circle. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`); the companion takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart."
+note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where neither the convex order nor the concave reaches: N and the point it is compared with on different circumferences, or one of them a point of contact. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`); the companion takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart."
 
 [[passage]]
 at = "Let ABC be a circle"
@@ -108,8 +108,14 @@ note = "Euclid uses the equality of MK and MB without giving a reason. The Lean 
 
 [[passage]]
 at = "that is, the nearer to the least DG equal to the more remote"
+kind = "helper"
+helper = "onRay_of_angle_eq"
+note = "Euclid takes for granted that DN, a straight line other than DB, makes a different angle with DA, so that one of the two is the nearer. Where both end on one circumference, the Lean compares the angles at D by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5): equal angles put N on the ray DB, or on DK when N is on K's side, by `onRay_of_angle_eq`, and `OnRay.eq_of_len_eq` makes N that point."
+
+[[passage]]
+at = "which was proved impossible"
 kind = "different"
-note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact; the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
+note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact; the Lean takes his step where N and the point it is compared with both end on the convex circumference, the concave order where both end on the concave, a case his figure leaves aside, and only where neither order reaches splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
 
 [figure]
 case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"
@@ -120,12 +126,4 @@ stage = "full"
 commit = "77b0a759"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:4f1dea9a8e1ffdea"
-run = "brief 0005 stage 5, ship R3 (#29)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
+run = "card #332, ship ER (#125, #347): re-read after Euclid's route moved into Elements/"
