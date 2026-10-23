@@ -1396,3 +1396,12 @@ items 1 to 6 are done, but for the reason given for III.2's expectation in
 stands and whose owner is asked to change it. The row for #131 in the opening table,
 "analysis only", and the last sentence of the section on III.8, that its proof takes the
 centre by III.1, are of this report's date.
+
+## Correction to the #131 addendum
+
+*23 October 2026.*
+
+The #131 addendum's phrase "Euclid's route" for III.8 is too broad. III.8 remains
+modified: it uses Euclid's orders where they apply and I.24 where neither order reaches,
+including points on different circumferences and points of contact. Its centre M now
+comes from `Tacit.exists_centre` under Heath's "[III. 1]".
