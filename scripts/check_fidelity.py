@@ -334,8 +334,8 @@ def theorem_block(src: str, n: int):
     span = heath.theorem_span(src, n)
     if span is None:
         return None, None
-    # Drop block comments (our remarks), keep full-line `--` comments (Euclid's words).
-    body = re.sub(r"/-.*?-/", "", src[span.body:span.end], flags=re.S)
+    # Blank block comments (our remarks), keep full-line `--` comments (Euclid's words).
+    body = _blank_remarks(src[span.body:span.end])
     words = [m.group(1) for m in re.finditer(r"^\s*--\s?(.*)$", body, re.M)]
     return span.doc, " ".join(words)
 
@@ -494,6 +494,8 @@ def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
     _read_code(src, 0, marks)
     out, unsure = list(src), []
     for kind, i, j in marks:
+        if kind == "comment":
+            continue
         if kind == "unsure":
             unsure.append(i)
             continue
@@ -515,6 +517,39 @@ def without_comments(src: str) -> str:
     `read_lean` reads it: what `scripts/render.py` searches for a declaration's uses, so a
     name in a comment, a docstring or a string is no use."""
     return read_lean(src)[0]
+
+
+def lean_comments(src: str) -> list[tuple[int, int]]:
+    """Each comment of the Lean `src`, in order, as `read_lean` reads them: its offset
+    and the offset where it ends (`comment_end`), the end of `src` for a block that no
+    `-/` closes. A comment in an interpolated string's hole is one; a `--` or `/-` within
+    a comment, a string or a character literal begins none."""
+    marks: list[tuple[str, int, int]] = []
+    _read_code(src, 0, marks)
+    return [(i, j) for kind, i, j in marks if kind == "comment"]
+
+
+def comment_end(src: str, i: int) -> int | None:
+    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
+    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
+    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
+    docstrings and nested blocks among them, just past the `-/` that closes it, or None
+    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
+    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
+    whole comment and the `-/` of `/--/` closes nothing. The scripts that read where a
+    Lean comment ends all call this (#206); it uses nothing else of this file, for
+    scripts/audit/jev_questions.py takes it alone."""
+    if src.startswith("--", i):
+        end = src.find("\n", i)
+        return len(src) if end < 0 else end
+    j, nested = i + 3, 1
+    while j < len(src):
+        pair = src[j:j + 2]
+        nested += (pair == "/-") - (pair == "-/")
+        j += 2 if pair in ("/-", "-/") else 1
+        if not nested:
+            return j
+    return None
 
 
 def _find(src: str, s: str, i: int) -> int:
@@ -540,28 +575,20 @@ def closed_up(src: str) -> bytes:
 
 def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
-    that offset. `marks` gains the text of each comment and literal ("text"), each «…»
-    name ("name"), each string, character literal or raw string the scan cannot read for
-    certain ("unsure"), and each string literal, from its opening quote past its closing
-    one ("string"), and raw string's text ("raw")."""
+    that offset. `marks` gains the text of each comment and literal ("text"), each
+    comment again ("comment", `comment_end`), each «…» name ("name"), each string,
+    character literal or raw string the scan cannot read for certain ("unsure"), and each
+    string literal, from its opening quote past its closing one ("string"), and raw
+    string's text ("raw")."""
     depth, previous, can_project, field_dot = 0, "", False, False
     closed = closed_up(src)
     while i < len(src):
         c, j = src[i], i + 1
-        if src.startswith("--", i):
-            j = _find(src, "\n", i)
+        if src.startswith(("--", "/-"), i):
+            end = comment_end(src, i)
+            j = len(src) if end is None else end
             marks.append(("text", i, j))
-            can_project, field_dot = False, False
-        elif src.startswith("/-", i):
-            # a comment's body begins at its fourth character, as Lean reads it: after
-            # `/--` or `/-!`, and past the third character of any other `/-`, which Lean
-            # passes over, so that `/-/- -/` is a whole comment
-            j, nested = min(i + 3, len(src)), 1
-            while j < len(src) and nested:
-                pair = src[j:j + 2]
-                nested += (pair == "/-") - (pair == "-/")
-                j += 2 if pair in ("/-", "-/") else 1
-            marks.append(("text", i, j))
+            marks.append(("comment", i, j))
             can_project, field_dot = False, False
         elif c == '"':
             j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
@@ -1308,26 +1335,13 @@ SENTENCE_BREAK = re.compile(r"[.;:?!\]]\s+(?=\S)")
 
 def _blank_remarks(text: str) -> str:
     """`text` with every `/- … -/` remark (nested ones too) made spaces, line breaks
-    kept, and `--` line comments left as they are."""
-    out, depth, i = [], 0, 0
-    while i < len(text):
-        if not depth and text.startswith("--", i):
-            j = text.find("\n", i)
-            j = len(text) if j < 0 else j
-            out.append(text[i:j])
-            i = j
-        elif text.startswith("/-", i):
-            depth, i = depth + 1, i + 2
-            out.append("  ")
-        elif depth and text.startswith("-/", i):
-            depth, i = depth - 1, i + 2
-            out.append("  ")
-        elif depth:
-            out.append("\n" if text[i] == "\n" else " ")
-            i += 1
-        else:
-            out.append(text[i])
-            i += 1
+    kept, and `--` line comments left as they are: the comments as `read_lean` reads
+    them (`lean_comments`), so that a `--` within a remark goes with it, and a `/-`
+    within a `--` comment or a string opens none."""
+    out = list(text)
+    for i, j in lean_comments(text):
+        if text.startswith("/-", i):
+            out[i:j] = ["\n" if ch == "\n" else " " for ch in text[i:j]]
     return "".join(out)
 
 

@@ -8,9 +8,11 @@ The negative suite runs these first. Temporary files stand in for Lake outputs;
 simulated builds delete, replace and create them before failing or being interrupted.
 A temporary repository stands in for the pre-flight's pass with origin/main's checks,
 whose work tree lacks the files a commit adds under the check inputs while Git's index
-still lists them.
+still lists them. The comment reader the scripts share is fed the texts on which a reader
+could read a Lean comment otherwise than Lean does, each with Lean's own reading.
 """
 
+import importlib.util
 import io
 import json
 import os
@@ -783,6 +785,127 @@ class BookZeroImportTests(unittest.TestCase):
         self.assertEqual(self.findings("import Elements.Figure.Lines\n"), [])
         self.assertEqual(self.findings("import Elements.BookI.Prop01\n",
                                        "Elements/BookI/Prop02.lean"), [])
+
+
+class CommentReaderTests(unittest.TestCase):
+    """The one reader of Lean comments that the scripts share, check_fidelity's
+    `comment_end`, read through `lean_comments` and `read_lean`, without Lean (#206): the
+    texts on which a reader that began a block's body at its third character, or read no
+    strings or character literals, could read otherwise than Lean 4.35. Each expected
+    reading is Lean's: each text was elaborated in Lean 4.35 as written, alone in a scratch
+    file outside the tree, where the names after its comments were defined, those within
+    them unknown, and each of UNCLOSED refused as an unterminated comment at its end. Then
+    the three readers that call it, check_fidelity's `_blank_remarks`, check_style's
+    `lean_note_spans` and the Jev generator's `comment_end`, each read them so too."""
+
+    # (a text, the comments Lean reads in it, in order, the names it defines and those it
+    # does not, which stand within a comment)
+    CASES = (
+        ("/-/- -/ def after_slash_dash : Nat := 1\n", ["/-/- -/"], ["after_slash_dash"], []),
+        ("/-/ x -/ def after_slash : Nat := 2\n", ["/-/ x -/"], ["after_slash"], []),
+        ("/-/-/ def after_slash_dash_slash : Nat := 3\n", ["/-/-/"],
+         ["after_slash_dash_slash"], []),
+        ("/--/ def hidden_in_doc : Nat := 0 -/ def after_doc_slash : Nat := 4\n",
+         ["/--/ def hidden_in_doc : Nat := 0 -/"], ["after_doc_slash"], ["hidden_in_doc"]),
+        ("/-!/ x -/ def after_module_doc_slash : Nat := 5\n", ["/-!/ x -/"],
+         ["after_module_doc_slash"], []),
+        ("/- /- -/ def hidden_in_nested : Nat := 0 -/ def after_nested : Nat := 6\n",
+         ["/- /- -/ def hidden_in_nested : Nat := 0 -/"], ["after_nested"],
+         ["hidden_in_nested"]),
+        ('def opener_in_string : String := "/-" def after_string : Nat := 7\n', [],
+         ["opener_in_string", "after_string"], []),
+        ('def closer_after_quote : Nat := 8 /- "-/ def after_quote : Nat := 9 -- "\n',
+         ['/- "-/', '-- "'], ["closer_after_quote", "after_quote"], []),
+        ("def dash_char : Char := '-'/- a remark -/ def after_dash_char : Nat := 10\n",
+         ["/- a remark -/"], ["dash_char", "after_dash_char"], []),
+        ("def slash_char : Char := '/'-- a remark\ndef after_slash_char : Nat := 11\n",
+         ["-- a remark"], ["slash_char", "after_slash_char"], []),
+        ("def quote_char : Char := '\"' /- \"-/ def after_quote_char : Nat := 12 -- \"\n",
+         ['/- "-/', '-- "'], ["quote_char", "after_quote_char"], []),
+        ("/- -- -/ def after_dashes_in_block : Nat := 13\n", ["/- -- -/"],
+         ["after_dashes_in_block"], []),
+        ("-- /-\ndef after_opener_in_line : Nat := 14\n", ["-- /-"],
+         ["after_opener_in_line"], []),
+        ('def in_hole : String := s!"{(1 : Nat) /- c -/}" def after_hole : Nat := 15\n',
+         ["/- c -/"], ["in_hole", "after_hole"], []),
+    )
+    # Likewise, each with its last comment not closed, which runs to the end.
+    UNCLOSED = (
+        ("def before_unclosed : Nat := 1\n/- unclosed /- -/\ndef hidden_unclosed : Nat := 0\n",
+         ["/- unclosed /- -/\ndef hidden_unclosed : Nat := 0\n"], ["before_unclosed"],
+         ["hidden_unclosed"]),
+        ("def before_bare : Nat := 1\n/-", ["/-"], ["before_bare"], []),
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        import check_style
+        cls.check_style = check_style
+        spec = importlib.util.spec_from_file_location(
+            "jev_questions_comment_reader", REPO / "scripts/audit/jev_questions.py")
+        cls.questions = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = cls.questions
+        cls.addClassCleanup(sys.modules.pop, spec.name, None)
+        spec.loader.exec_module(cls.questions)
+
+    def spans(self, text, comments):
+        """Each of `comments`, read from `text` in order, as its offsets in it."""
+        found, at = [], 0
+        for comment in comments:
+            at = text.index(comment, at)
+            found.append((at, at + len(comment)))
+            at += len(comment)
+        return found
+
+    def cases(self):
+        """Each case, with its comments' offsets and whether its last comment is closed."""
+        for (text, comments, defined, hidden), closed in (
+                [(case, True) for case in self.CASES]
+                + [(case, False) for case in self.UNCLOSED]):
+            yield text, self.spans(text, comments), defined, hidden, closed
+
+    def test_each_comment_ends_where_lean_ends_it(self):
+        for text, spans, _, _, closed in self.cases():
+            with self.subTest(text=text):
+                self.assertEqual(negative.check_fidelity.lean_comments(text), spans)
+                for start, end in spans[:None if closed else -1]:
+                    self.assertEqual(negative.check_fidelity.comment_end(text, start), end)
+                if not closed:
+                    self.assertEqual(spans[-1][1], len(text))
+                    self.assertIsNone(negative.check_fidelity.comment_end(text, spans[-1][0]))
+
+    def test_read_lean_shows_the_names_lean_defines_and_no_other(self):
+        for text, _, defined, hidden, _ in self.cases():
+            with self.subTest(text=text):
+                words = set(re.findall(r"\w+", negative.check_fidelity.read_lean(text)[0]))
+                self.assertLessEqual(set(defined), words)
+                self.assertFalse(set(hidden) & words)
+
+    def test_the_readers_that_call_it_read_each_case_so(self):
+        for text, spans, _, _, closed in self.cases():
+            blocks = [(i, j) for i, j in spans if text.startswith("/-", i)]
+            remarks = list(text)
+            for i, j in blocks:
+                remarks[i:j] = ["\n" if ch == "\n" else " " for ch in text[i:j]]
+            ended = spans if closed else spans[:-1]
+            notes = [(i + (3 if text.startswith(("/--", "/-!"), i) else 2), j - 2)
+                     for i, j in blocks if (i, j) in ended]
+            with self.subTest(text=text):
+                self.assertEqual(negative.check_fidelity._blank_remarks(text), "".join(remarks))
+                self.assertEqual(self.check_style.lean_note_spans(text), notes)
+                for i, j in ended:
+                    self.assertEqual(self.questions.comment_end(text, i), j)
+                if not closed:
+                    with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
+                        self.questions.comment_end(text, spans[-1][0])
+
+    def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
+        shared = self.questions.shared_comment_end.__code__
+        own = negative.check_fidelity.comment_end.__code__
+        self.assertEqual(Path(shared.co_filename),
+                         Path(negative.check_fidelity.__file__).resolve())
+        self.assertEqual((shared.co_code, shared.co_consts, shared.co_names),
+                         (own.co_code, own.co_consts, own.co_names))
 
 
 if __name__ == "__main__":
