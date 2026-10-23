@@ -660,7 +660,7 @@ def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
     holes: list[tuple[str, int, int]] = []
     end = _read_interpolated(src, i, holes)
     if end == plain or (interpolated and end is not None):
-        marks += holes
+        marks += holes if interpolated else [mark for mark in holes if mark[0] != "comment"]
         return end
     marks.append(("text", i + 1, plain))
     if "{" in src[i:plain]:

@@ -881,6 +881,17 @@ class CommentReaderTests(unittest.TestCase):
                 self.assertLessEqual(set(defined), words)
                 self.assertFalse(set(hidden) & words)
 
+    def test_plain_string_braces_create_no_speculative_comment(self):
+        comment = "/- not_a_comment -/"
+        text = f'def s : String := "{{ {comment} }}"\n'
+        expected = text.replace(comment, " " * len(comment))
+        strings = []
+        self.assertEqual(negative.check_fidelity.lean_comments(text), [])
+        self.assertEqual(negative.check_fidelity._blank_remarks(text), text)
+        self.assertEqual(self.check_style.lean_note_spans(text), [])
+        self.assertEqual(negative.check_fidelity.read_lean(text, strings), (expected, []))
+        self.assertEqual(strings, [(text.index('"'), f"{{ {comment} }}")])
+
     def test_the_readers_that_call_it_read_each_case_so(self):
         for text, spans, _, _, closed in self.cases():
             blocks = [(i, j) for i, j in spans if text.startswith("/-", i)]
@@ -911,6 +922,40 @@ def comment_end(src, i):
         read.assert_called_once_with(checked)
         self.assertEqual(reader("prefix /- comment -/ suffix", 7),
                          ("controlled reader", "prefix /- comment -/ suffix", 7))
+
+    def test_the_jev_generator_prepares_its_reader_before_running_helpers(self):
+        invalid = (
+            ("missing", None, r"check_fidelity\.py: helper module is missing"),
+            ("absent", b"def another_function():\n    pass\n",
+             r"defines no single function comment_end"),
+            ("duplicate", b"def comment_end(src, i):\n    pass\n\n"
+                          b"def comment_end(src, i):\n    pass\n",
+             r"defines no single function comment_end"),
+        )
+        helper_names = {name for name, _ in self.questions.HELPERS}
+        for label, reader, message in invalid:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                audit = root / "scripts/audit"
+                audit.mkdir(parents=True)
+                generator = audit / "jev_questions.py"
+                generator.write_bytes((REPO / "scripts/audit/jev_questions.py").read_bytes())
+                (root / "scripts/heath.py").write_text(
+                    'raise AssertionError("heath helper ran")\n', encoding="utf-8")
+                (audit / "jev.py").write_text(
+                    'raise AssertionError("Jev helper ran")\n', encoding="utf-8")
+                if reader is not None:
+                    (root / "scripts/check_fidelity.py").write_bytes(reader)
+                name = f"jev_questions_invalid_reader_{label}"
+                spec = importlib.util.spec_from_file_location(name, generator)
+                module = importlib.util.module_from_spec(spec)
+                with patch.dict(sys.modules) as modules:
+                    for dependency in helper_names:
+                        modules.pop(dependency, None)
+                    modules[name] = module
+                    with self.assertRaisesRegex(ValueError, message):
+                        spec.loader.exec_module(module)
+                    self.assertFalse(helper_names & modules.keys())
 
     def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
         source = "prefix /- comment -/ suffix"

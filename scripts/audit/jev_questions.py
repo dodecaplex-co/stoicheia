@@ -129,17 +129,18 @@ HELPERS = (('jev_questions_heath', 'scripts/heath.py'),
            ('jev_questions_client', 'scripts/audit/jev.py'))
 
 
-def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
-    """Check every helper's path, then read and compile each, before any helper runs."""
+def _prepare_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     checked = []
     for name, path in helpers:
         resolved = evidence_path(path)
         require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
         checked.append((name, path, resolved))
-    # Each helper runs from the bytes read here, never through a final symlink.
-    code = [(name, path, resolved, compile(read_no_follow(resolved), str(resolved), 'exec',
-                                           dont_inherit=True))
+    return [(name, path, resolved, compile(read_no_follow(resolved), str(resolved), 'exec',
+                                            dont_inherit=True))
             for name, path, resolved in checked]
+
+
+def _execute_modules(code: list) -> list:
     result = []
     for name, path, resolved, compiled in code:
         spec = importlib.util.spec_from_file_location(name, resolved)
@@ -151,30 +152,49 @@ def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     return result
 
 
+def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
+    """Check every helper's path, then read and compile each, before any helper runs."""
+    return _execute_modules(_prepare_modules(helpers))
+
+
 # check_fidelity's reader of where a Lean comment ends, shared with it (#206). The file
 # imports heath and generated_counts by name, which a generator run by path, as with
 # `python3 -I`, cannot import, so the function is taken alone and nothing else of it runs.
 READER = ('jev_questions_reader', 'scripts/check_fidelity.py', 'comment_end')
 
 
-def shared_function(name: str, path: str, function: str):
-    """Check a helper's path, then define its top-level `function` alone, from the bytes
-    read."""
+def _prepare_function(name: str, path: str, function: str) -> tuple[str, object]:
     resolved = evidence_path(path)
     require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
     tree = ast.parse(read_no_follow(resolved), str(resolved))
     found = [node for node in tree.body
              if isinstance(node, ast.FunctionDef) and node.name == function]
     require(len(found) == 1, f'{path}: defines no single function {function}')
+    compiled = compile(ast.Module(found, type_ignores=[]), str(resolved), 'exec',
+                       dont_inherit=True)
+    return name, compiled
+
+
+def _execute_function(prepared: tuple[str, object]):
+    name, compiled = prepared
     namespace = {'__name__': name}
-    exec(compile(ast.Module(found, type_ignores=[]), str(resolved), 'exec', dont_inherit=True),
-         namespace)
-    return namespace[function]
+    exec(compiled, namespace)
+    functions = [value for value in namespace.values() if callable(value)]
+    require(len(functions) == 1, f'{name}: prepared no single function')
+    return functions[0]
+
+
+def shared_function(name: str, path: str, function: str):
+    """Check a helper's path, then define its top-level `function` alone, from the bytes
+    read."""
+    return _execute_function(_prepare_function(name, path, function))
 
 
 try:
-    heath, jev = helper_modules(HELPERS)
-    shared_comment_end = shared_function(*READER)
+    prepared_helpers = _prepare_modules(HELPERS)
+    prepared_reader = _prepare_function(*READER)
+    heath, jev = _execute_modules(prepared_helpers)
+    shared_comment_end = _execute_function(prepared_reader)
 except (Refusal, OSError) as error:
     if __name__ != '__main__':
         raise
