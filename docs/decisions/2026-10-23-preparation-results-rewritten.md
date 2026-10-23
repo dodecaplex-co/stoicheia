@@ -11,9 +11,11 @@
   counterexample, the 15 mutations were all caught, and in the hyperbolic plane
   `Postulate5` alone failed, as it must. [MODEL.md](../../tests/model/MODEL.md) carries
   the counts as the run wrote them. The exhaustive and structured runs now count the 31
-  laws this preparation keeps as derived properties under their `derived.` names, and the
-  search and hyperbolic counts are as before. No check, law, test or expected value
-  changes.
+  laws this preparation keeps as derived properties under their `derived.` names, with the
+  runs it adds for some of them, so the plane's total falls from 6,650,199 to 4,747,443
+  and the derived properties' rises from 6,887,189 to 9,525,564; the search and hyperbolic
+  counts are as before. Writing the results again changes no check, law, test or expected
+  value.
 
   This entry approves each result file that run wrote again, one by one:
   - the angle check's output, `tests/model/results/angle_check.txt`;
