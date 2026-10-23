@@ -5917,6 +5917,8 @@ class HandOver(Edge):
                            capture_output=True, text=True)
         out = r.stdout + r.stderr
         self.assertFalse(marker.exists(), f"the launcher ran the foreign harness:\n{out}")
+        # And the clone's harness ran to the end: a dry run of the clone's HEAD.
+        self.assertEqual(r.returncode, 0, out)
         own = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py",
                   env=plain).strip()
         own_heath = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/heath.py",
@@ -5935,7 +5937,12 @@ class HandOver(Edge):
         names = set(match.group(1).replace("\\\n", " ").split())
         self.assertEqual(names, safe_push.REPOSITORY_VARIABLES
                          - {"GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE"})
-        first_git = re.search(r"(?m)^[a-z_]+=\$\(git |^git ", text).start()
+        # Before the git() wrapper and before every other mention of git outside a
+        # comment, whatever the line it stands on.
+        code = [(m.start(), line) for m in re.finditer(r"(?m)^.*$", text)
+                for line in [m.group(0)] if not line.lstrip().startswith("#")]
+        first_git = min(start for start, line in code if re.search(r"\bgit\b", line)
+                        and not line.startswith("unset "))
         self.assertLess(match.start(), first_git)
         self.assertIn("\nunset GIT_REPLACE_REF_BASE\n", text[:first_git])
 

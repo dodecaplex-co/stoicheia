@@ -33,8 +33,10 @@ unset GIT_REPLACE_REF_BASE
 # Nor any other variable that ties git to one repository, as `git rev-parse
 # --local-env-vars` lists them (safe_push.py's REPOSITORY_VARIABLES): a caller's GIT_DIR,
 # GIT_INDEX_FILE and the rest would send this launcher's git to that repository, to fetch
-# from it and copy out its origin/main harness. Each git here finds the repository by the
-# working directory instead, and so does the safe_push it runs (#359).
+# its origin into it and copy out its origin/main harness. Each git here finds the
+# repository by the working directory instead, and so does the safe_push it runs (#359).
+# A setting given as `git -c key=value safe-push` no longer reaches the fetch either: set
+# it in the repository's configuration.
 unset GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_CONFIG GIT_CONFIG_COUNT \
     GIT_CONFIG_PARAMETERS GIT_DIR GIT_GRAFT_FILE GIT_IMPLICIT_WORK_TREE GIT_INDEX_FILE \
     GIT_INTERNAL_SUPER_PREFIX GIT_OBJECT_DIRECTORY GIT_PREFIX GIT_SHALLOW_FILE \

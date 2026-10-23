@@ -1,10 +1,11 @@
 - **The launcher unsets git's repository variables before its first git command
   ([#359](https://github.com/jackChallis/stoicheia/issues/359)).**
-  `scripts/hooks/safe-push`, the launcher behind `git safe-push`, runs `git rev-parse --show-toplevel`, `git fetch`
-  and `git cat-file` before it runs origin/main's `safe_push.py`, and they took the
-  caller's environment. Under a `GIT_DIR` naming another repository it fetched from that
-  repository and copied out and ran its origin/main harness: a test that sets up such a
-  repository, with a harness of its own that only marks that it ran, saw the mark. The
+  `scripts/hooks/safe-push`, the launcher behind `git safe-push`, runs `git rev-parse`,
+  `git fetch` and `git cat-file` before it runs origin/main's `safe_push.py`, and they
+  took the caller's environment. Under a `GIT_DIR` naming another repository it fetched
+  that repository's origin into it and copied out and ran its origin/main harness: a test
+  that sets up such a repository, with a harness of its own that only marks that it ran,
+  saw the mark. The
   [entry for #357](2026-10-22-own-git-no-repository-variables.md) took these variables
   from every command `safe_push.py` runs itself, but the launcher runs before it, and
   `git safe-push` runs origin/main's harness, so that entry could reach launcher runs only
@@ -13,9 +14,15 @@
   `GIT_INTERNAL_SUPER_PREFIX`), but `GIT_NO_REPLACE_OBJECTS`, which it sets, and
   `GIT_REPLACE_REF_BASE`, which it already unset (#256), before its first git command.
   Its git and the harness it runs then find the repository by the working directory, as
-  `git safe-push` is run from inside it. The pre-push hook, `scripts/hooks/pre-push`, is
-  unchanged: it runs under `git push`, in the repository pushed from, and the scan it runs
-  is `safe_push.py`'s, which drops the variables itself since #357.
+  `git safe-push` is run from inside it. As for `safe_push.py` since #357, a setting given
+  as `git -c key=value safe-push` (a proxy for the fetch, say) no longer reaches the
+  launcher's git; one is set in the repository's configuration instead. The change governs
+  a launcher once it runs: which launcher `git safe-push` runs is still read from the
+  configuration the caller's git finds, and an installed launcher changes only when it is
+  installed again (`sh scripts/install_hooks.sh --force`), until when the pre-flight
+  notes that it differs from origin/main's. The pre-push hook, `scripts/hooks/pre-push`,
+  is unchanged: it runs under `git push`, in the repository pushed from, and the scan it
+  runs is `safe_push.py`'s, which drops the variables itself since #357.
 
   This entry approves the change to `scripts/hooks/safe-push`, which unsets those
   variables before its first git command.
