@@ -11,8 +11,7 @@ note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle
 
 [[passage]]
 at = "For let the centre E of the circle be taken"
-kind = "helper"
-helper = "Prop1.of_circle"
+kind = "carried"
 note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E."
 
 [[passage]]
