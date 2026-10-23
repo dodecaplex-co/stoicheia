@@ -502,8 +502,9 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   linter passes over any declaration with a `sorry` in it, even one that never runs, so a
   staged statement gives no hit until its proof arrives; outside Staging, a file with
   `sorry` or `admit` in its code is refused. Its `--self-test` plants each kind of hit,
-  and controls that must pass, in Lean outside the tree. CI's `negative` job runs both
-  after its build; the sweep there only lists, and the release gate (section 10, step
+  and controls that must pass, in Lean outside the tree. CI's `check` job runs both sweep
+  commands for every risk class, after `test_certificate.py` and before the whole-worktree
+  cleanliness check; the sweep there only lists, and the release gate (section 10, step
   10) runs it with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
