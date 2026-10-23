@@ -76,9 +76,7 @@ theorem I_7 : type_of% @Elements.BookI.Prop7 := by
 within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
 This is Astra's proof from the outside review, now using Circle 2 as a theorem of
 Circle 3. The overlap with Circle 3 remains. Our III.2 follows Euclid, by I.5, I.16
-and I.19, and rests on neither Circle 2 nor Circle 3: III.1, which finds its centre, puts
-the middle point of a straight line in the circle within it by III.2's own argument
-(`Prop1.within`). -/
+and I.19, takes its centre from the rule, and rests on neither Circle 2 nor Circle 3. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
