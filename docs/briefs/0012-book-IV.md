@@ -260,13 +260,13 @@ IV adopts the lesson as a rule for every problem:
    IV.11), a straight line to build on (IV.10). Such a choice is quantified over, so the
    problem as Euclid states it is recovered by choosing it; it is never a hypothesis that
    supplies what is unknown. A given circle is a
-   `Circle`, and its centre, when the construction needs one, is found as Euclid finds it
-   ("let the centre K of the circle ABC be taken [III. 1]"), by III.1, on brief 0008's
-   rule that a centre exists. A given straight line is its two ends, as in I.3 (`D₁ D₂`,
-   with `D₁ ≠ D₂`). A given triangle is its corners, with `Triangle`; a given square or
-   pentagon its corners, with `Polygon` and the properties the enunciation names. A
-   condition on the data is a hypothesis in Euclid's terms: IV.1's straight line "not
-   greater than the diameter" is not greater than any diameter.
+   `Circle`, and its centre, when the construction needs one, is taken from
+   `exists_centre`, by the corrected centre rule of [brief 0008](0008-centre.md); Heath's
+   "[III. 1]" stays as his reference. A given straight line is its two ends, as in I.3
+   (`D₁ D₂`, with `D₁ ≠ D₂`). A given triangle is its corners, with `Triangle`; a
+   given square or pentagon its corners, with `Polygon` and the properties the enunciation
+   names. A condition on the data is a hypothesis in Euclid's terms: IV.1's straight line
+   "not greater than the diameter" is not greater than any diameter.
 2. **The conclusion returns what the problem asks for, with the definitions that make it a
    solution, and the objects of the construction that later proofs cite.** IV.4 returns
    the circle with its centre and its points of contact; IV.5 the circle with its centre
@@ -283,7 +283,7 @@ For Book IV the check finds no problem that needs the third clause:
 
 | Proposition | Given | Read by the construction | Returns | Core kept apart? |
 |---|---|---|---|---|
-| IV.1 | a circle; a straight line, not greater than the diameter; and, for its users, the point of the circle to fit it from | the circle, the diameter from that point (its centre by III.1), the straight line's length | the other end of the fitted straight line | no: the answer is not among the data |
+| IV.1 | a circle; a straight line, not greater than the diameter; and, for its users, the point of the circle to fit it from | the circle, the diameter from that point (its centre from `exists_centre`), the straight line's length | the other end of the fitted straight line | no: the answer is not among the data |
 | IV.2, IV.3 | a circle; a triangle; and, for IV.2's users, the point of the circle for its first corner | the circle (its centre, in IV.3); the triangle's angles | the triangle, with its angles | no |
 | IV.4, IV.5, IV.8, IV.9 | a triangle, a square | its corners and sides | the circle, its centre, its contact points or where its centre falls | no: a figure's circle is not part of the figure |
 | IV.6, IV.7, IV.11, IV.12, IV.15, IV.16 | a circle | the circle, its centre and diameters | the figure | no |
