@@ -8,7 +8,7 @@ kind = "modified"
 note = "Euclid's reductio for the angles at the centres, and his halving by III.20 where the angles at the circumferences are acute; where they are right or obtuse, the Lean halves the measure of the circumference instead (`Circumference.standing`)."
 
 [representation]
-tags = ["angle-measure", "redundant-hypothesis", "centre-given"]
+tags = ["angle-measure", "redundant-hypothesis"]
 note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [[passage]]
@@ -22,6 +22,6 @@ note = "Euclid's figure draws the impossible supposition that BGC is greater tha
 
 [review]
 stage = "exceptions"
-commit = "7f4fba99"
+commit = "17987153"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:7be789b74d6d4d78"
+lean = "sha256:07efce28f8d637db"

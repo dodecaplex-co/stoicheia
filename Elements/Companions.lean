@@ -12,6 +12,7 @@ import Elements.BookIII.Prop17
 import Elements.BookIII.Prop23
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop25
+import Elements.BookIII.Prop30
 import Elements.BookIII.Prop31
 
 /-!
@@ -37,6 +38,7 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookI.Prop45.apart, "I.45 apart"),
   (``Elements.BookI.Prop45.figure, "I.45 figure"),
   (``Elements.BookI.Prop45.fan, "I.45 fan"),
+  (``Elements.BookI.Prop45.outline, "I.45 outline"),
   (``Elements.BookI.Prop47.general, "I.47 general"),
   (``Elements.BookII.Prop1.two, "II.1 two"),
   (``Elements.BookII.Prop1.general, "II.1 general"),
@@ -46,6 +48,8 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookII.Prop14.figure, "II.14 figure"),
   (``Elements.BookII.Prop14.square, "II.14 square"),
   (``Elements.BookII.Prop14.fan, "II.14 fan"),
+  (``Elements.BookII.Prop14.outline, "II.14 outline"),
+  (``Elements.BookII.Prop14.outline_side, "II.14 outline_side"),
   (``Elements.BookIII.Prop7.general, "III.7 general"),
   (``Elements.BookIII.Prop8.general, "III.8 general"),
   (``Elements.BookIII.Prop14.general, "III.14 general"),
@@ -61,5 +65,6 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookIII.Prop25.complete, "III.25 complete"),
   (``Elements.BookIII.Prop25.kind, "III.25 kind"),
   (``Elements.BookIII.Prop25.of_circle, "III.25 of_circle"),
+  (``Elements.BookIII.Prop30.halves, "III.30 halves"),
   (``Elements.BookIII.Prop31.greater, "III.31 greater"),
   (``Elements.BookIII.Prop31.less, "III.31 less")]
