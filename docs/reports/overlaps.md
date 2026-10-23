@@ -460,7 +460,7 @@ companion `Prop25.of_circle` uses it; III.25's construction is given the fact, a
 sees a circle. Book Zero
 keeps its own three, `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
 `exists_onCircle_sameSideOf`, stated for a circle with no centre given, and nothing uses
-them now ([below](#a-separate-piece-of-work)). `Staging/Routes/` contains seven Lean files;
+them now ([below](#a-separate-piece-of-work)). `Staging/Routes/` contains five Lean files;
 their theorems rest on neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
 those three Book Zero lemmas. The

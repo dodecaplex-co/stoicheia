@@ -175,7 +175,7 @@ What the proofs show:
 | ✅ | &emsp;[III.25 kind](book/III/25.md#kind) |  |  |  | I.5, I.32, III.2, III.20, III.21, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 | 0 | 32 |
 | ✅ | &emsp;[III.25 of_circle](book/III/25.md#of_circle) |  |  |  | III.2, III.25, III.25 complete | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 | 6 | 4 |
 | ✅ | [III.26](book/III/26.md) | whole† | Euclid's, one step changed | I.4, III.24 | I.4, I.5, I.32, III.2, III.20, III.21, III.22, III.24, III.24 equalMeasure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 | 6 | 30 |
-| ✅ | [III.27](book/III/27.md) | whole† | Euclid's, one step changed | I.23, III.20, III.26 | I.23, III.2, III.20, III.21, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 | 4 | 27 |
+| ✅ | [III.27](book/III/27.md) | whole† | Euclid's, one step changed | I.23, III.20, III.26 | I.5, I.23, I.32, III.2, III.20, III.21, III.22, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 | 6 | 33 |
 | ✅ | [III.28](book/III/28.md) | whole† | Euclid's, one step changed | I.8, III.26 | I.5, I.8, I.20, I.32, III.2, III.20, III.21, III.22, III.24, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 | 8 | 28 |
 | ✅ | [III.29](book/III/29.md) | whole† | Euclid's, one step changed | I.4, III.27 | I.4, I.5, I.32, III.2, III.20, III.21, III.22, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 | 7 | 29 |
 | ✅ | [III.30](book/III/30.md) | whole† | Euclid's | I.4, III.28 | I.4, I.10, I.11, I.17, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 | 16 | 15 |
