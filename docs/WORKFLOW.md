@@ -305,6 +305,8 @@ lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
 python3 -I tests/test_certificate.py
+python3 scripts/sweep_citations.py --self-test
+python3 scripts/sweep_citations.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -335,9 +337,6 @@ run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs ru
 which class", after the block:
 
 ```sh
-python3 scripts/sweep_citations.py --self-test   # the sweep's plants, and below, the sweep,
-python3 scripts/sweep_citations.py     # which only lists: CI's `negative` job runs the two
-                                       # after lake build and Facts.lean, before the next line
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
