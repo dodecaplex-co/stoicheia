@@ -6537,6 +6537,50 @@ class CadenceReport(unittest.TestCase):
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
 
+
+    def test_checks_never_inherit_a_hooks_git_variables(self):
+        # Under a hook, GIT_DIR and GIT_INDEX_FILE name the hook's repository. A check that
+        # builds a repository of its own must not act on that one (#355): run_step, which
+        # runs every check with tool_env(), is given such a hook's variables, and a check
+        # that runs git init, add and commit in a folder of its own must leave the
+        # enclosing repository's HEAD, index, config and files as they were.
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            outer, inner, logs = tmp / "outer", tmp / "inner", tmp / "logs"
+            for folder in (outer, inner, logs):
+                folder.mkdir()
+            ident = ["-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
+                     "-c", "commit.gpgsign=false"]
+            subprocess.run(["git", "init", "-q", str(outer)], check=True)
+            (outer / "a.txt").write_text("outer\n")
+            subprocess.run(["git", "-C", str(outer), "add", "a.txt"], check=True)
+            subprocess.run(["git", "-C", str(outer), *ident, "commit", "-q", "-m", "outer"],
+                           check=True)
+            git_dir = outer / ".git"
+            before = {name: (git_dir / name).read_bytes() for name in ("HEAD", "index", "config")}
+            head = subprocess.run(["git", "-C", str(outer), "rev-parse", "HEAD"],
+                                  capture_output=True, text=True, check=True).stdout
+            check = ("git init -q && echo inner > b.txt && git add b.txt && "
+                     f"git {' '.join(ident)} commit -q -m inner")
+            hook = {"GIT_DIR": str(git_dir), "GIT_INDEX_FILE": str(git_dir / "index"),
+                    "GIT_WORK_TREE": str(outer), "GIT_PREFIX": "",
+                    "GIT_NO_REPLACE_OBJECTS": "1"}
+            with mock.patch.dict(os.environ, hook):
+                self.assertEqual(safe_push.tool_env()["GIT_NO_REPLACE_OBJECTS"], "1")
+                self.assertFalse({"GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_PREFIX"}
+                                 & set(safe_push.tool_env()))
+                rep = safe_push.Report()
+                safe_push.run_step("4", "a check that builds a repository",
+                                   ["sh", "-c", check], inner, rep, logs, 1)
+            self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+            for name, data in before.items():
+                self.assertEqual((git_dir / name).read_bytes(), data, name)
+            self.assertEqual(subprocess.run(["git", "-C", str(outer), "rev-parse", "HEAD"],
+                                            capture_output=True, text=True).stdout, head)
+            self.assertEqual(sorted(p.name for p in outer.iterdir()), [".git", "a.txt"])
+            self.assertTrue((inner / ".git").is_dir())
+            self.assertEqual(subprocess.run(["git", "-C", str(inner), "log", "--format=%s"],
+                                            capture_output=True, text=True).stdout, "inner\n")
     def configured_check_commands(self):
         checks = []
         for name, command in safe_push.CHECKS:
