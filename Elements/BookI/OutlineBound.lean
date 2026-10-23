@@ -171,7 +171,6 @@ theorem cone_side {O B C B'' C'' : Point} (hOBC : Triangle O B C) (hB : Between 
   have hB''B : OnLine B'' LB := on_line_of_between hB hB_B hO_B
   have hC''C : OnLine C'' LC := on_line_of_between hC hC_C hO_C
   have hOB'' : O ≠ B'' := (ne_of_between (between_symm hB)).symm
-  have hOC'' : O ≠ C'' := (ne_of_between (between_symm hC)).symm
   have hB''C : ¬ OnLine B'' LC := fun h =>
     hBC (on_line_of_between (between_symm hB) h hO_C)
   have hC''B : ¬ OnLine C'' LB := fun h =>
