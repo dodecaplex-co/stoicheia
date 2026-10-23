@@ -6,13 +6,14 @@ companions = ["III.17 general"]
 fingerprint = "sha256:105a583195d3f19f"
 
 [route]
-kind = "euclid"
-note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
+kind = "modified"
+note = "Euclid's argument, but for the centre E: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, a rule we assume, for the proof needs the centre alone. Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
 
 [[passage]]
 at = "For let the centre E of the circle be taken"
-kind = "carried"
-note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E."
+kind = "different"
+helper = "Tacit.exists_centre"
+note = "Euclid takes the centre E by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes E from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E."
 
 [[passage]]
 at = "let AE be joined, and with centre E"
@@ -49,10 +50,10 @@ case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "d8011767"
+commit = "eed076538"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:8fc1257893f4e28c"
-run = "brief 0005 stage 5, ship R3 (#29); Prop1.of_circle, written by Claude, read also by GPT-6 Astra (Codex) (for III.1)"
+lean = "sha256:d3e631b8a21c8016"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"
 
 [review.items]
 statement = "pass"
