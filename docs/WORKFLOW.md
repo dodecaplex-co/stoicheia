@@ -430,8 +430,9 @@ October ([the decision](decisions/2026-10-22-checks-by-risk.md)):
 Main's run after each merge is R5, and runs `negative` and `formal-model` in full beside
 `check` and `model`; `acceptance` runs only on a pull request. The cadence, the
 `safe-push-tests` workflow, runs its three jobs on main every six hours, whatever landed:
-the safe_push tests (38 to 45 minutes), the negative tests in full, and the formal model's
-build and kernel re-check. A release runs three things at its own head: the full
+the safe_push tests (72 to 78 minutes, and 137 on the slow run cited below), the negative
+tests in full, and the formal model's build and kernel re-check. A release runs three
+things at its own head: the full
 pre-flight, since its label makes it R5; its pull request's CI, in full when its run
 starts with the label; and a run of the `safe-push-tests` workflow, whose three jobs must
 each pass ([section 10](#landing-work-pull-requests), step 4). So the negative tests check
