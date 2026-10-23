@@ -13,9 +13,45 @@ tags = ["hypothesis-dropped"]
 note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names."
 
 [[passage]]
+at = "For, if possible, let the circle ABC cut the circle DEF"
+kind = "helper"
+helper = "Prop2.triangle"
+note = "Euclid supposes more than two common points; the Lean assumes the circles differ and uses three of those points. `Prop2.triangle` (III.2, for which Heath prints no reference here) shows that B, H and G are not on one straight line, as the perpendicular constructions and their unique meeting require."
+
+[[passage]]
+at = "let BH, BG be joined and bisected at the points K, L"
+kind = "helper"
+helper = "BookI.Prop10"
+note = "Euclid bisects BH and BG without a reference from Heath here. The Lean joins them by Postulate 1 and constructs K and L by I.10 (`BookI.Prop10`)."
+
+[[passage]]
+at = "and from K, L let KC, LM be drawn at right angles"
+kind = "helper"
+helper = "BookI.Prop11"
+note = "Euclid draws the perpendiculars and carries them through the circle; the Lean uses I.11, puts K and L within ABC by III.2 and obtains A, C, N and O from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, with no reference from Heath for these constructions. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and M and E need no further construction."
+
+[[passage]]
+at = "Then, since in the circle ABC a straight line AC"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid places the centre on AC by the porism to III.1. The Lean first takes that centre, named P, from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, then applies `Prop1.porism`."
+
+[[passage]]
+at = "But it was also proved to be on AC"
+kind = "helper"
+helper = "Prop10.meet_once"
+note = "Euclid reads from the figure that AC and NO meet only at P. `Prop10.meet_once` proves this using I.13 through `Prop10.right_on_line` and I.17, for which Heath prints no reference here: if the perpendiculars were one straight line, the triangle BKL would have two right angles."
+
+[[passage]]
 at = "therefore the point P is the centre of the circle ABC"
 kind = "grouped"
 note = "The rule gives ABC its centre, which the Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
+
+[[passage]]
+at = "Similarly we can prove that P is also the centre of the circle DEF"
+kind = "grouped"
+helper = "Prop1.porism"
+note = "Euclid invokes the same argument for DEF without writing it out. The Lean takes its centre from the same assumed rule `Tacit.exists_centre`, applies `Prop1.porism` to BH and BG again, and uses the unique meeting just proved to identify that centre with P."
 
 [[passage]]
 at = "therefore the two circles ABC, DEF which cut one another"
@@ -26,7 +62,16 @@ note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre
 note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no second circle can."
 
 [review]
-stage = "exceptions"
-commit = "1c08feeb"
+stage = "full"
+commit = "5baf18d2"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1eecfe36ac5f86e8"
+run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
