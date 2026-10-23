@@ -53,8 +53,9 @@ order, and the first that fails stops it with a message saying why:
    finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
    does any command safe_push.py runs itself, git's or another's, get a variable that
    ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
-   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them): each
-   finds its repository by its working directory too, the hand-over's included (#357).
+   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them), but
+   GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its working directory
+   too, the hand-over's included (#357).
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -488,7 +489,9 @@ class NothingToPush(Exception):
 # repository it runs in; left set, they would send safe_push's own commands to that
 # repository and its index: `git worktree add` would check the commit out into a linked
 # worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
-# one, and git finds its repository by the working directory each command names.
+# one but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its repository by the
+# working directory each command names. The list is git 2.50's, with
+# GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
 REPOSITORY_VARIABLES = frozenset({
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
     "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
@@ -498,14 +501,16 @@ REPOSITORY_VARIABLES = frozenset({
 
 
 def own_env(env=None) -> dict:
-    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES (#357)."""
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but those
+    KEPT_GIT_VARIABLES names, so that a check started with tool_env() keeps
+    GIT_NO_REPLACE_OBJECTS (#355, #357)."""
     return {name: value for name, value in (os.environ if env is None else env).items()
-            if name not in REPOSITORY_VARIABLES}
+            if name not in REPOSITORY_VARIABLES or name in KEPT_GIT_VARIABLES}
 
 
 def without_replacements(env=None) -> dict:
     """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but
-    GIT_NO_REPLACE_OBJECTS=1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets
+    GIT_NO_REPLACE_OBJECTS, set to 1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets
     core.useReplaceRefs=true in config override it, which run() pins off
     (NO_REPLACE_REFS)."""
     env = own_env(env)
@@ -523,7 +528,7 @@ def run(cmd, cwd, *, env=None, input=None, binary=False) -> subprocess.Completed
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
     # a clean stand-in (#256). No command, git's or another's, gets a variable that ties
-    # git to one repository (#357).
+    # git to one repository, but GIT_NO_REPLACE_OBJECTS (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
         cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
         env = without_replacements(env)
@@ -3148,7 +3153,8 @@ def harness(repo, base: str, rep: Report) -> None:
           "origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath) / "safe_push.py"
     # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
-    # checks: so an older harness, whose run() sets neither, has them too (#256).
+    # checks: so an older harness, whose run() sets neither, has them too (#256). No other
+    # variable that ties git to one repository goes with them (#357).
     env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()

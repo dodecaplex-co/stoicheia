@@ -6540,9 +6540,13 @@ class OwnGitUnderHook(Edge):
     run leaves the train's HEAD, its index and the change staged in it as they were."""
 
     def plain_env(self) -> dict:
-        """clean_env() with no variable of git's, so the test's own git is not the hook's."""
-        return {name: value for name, value in clean_env().items()
-                if not name.startswith("GIT_")}
+        """clean_env() with no variable of git's, so the test's own git is not the hook's,
+        and no global or system configuration, so no hook or setting of the machine's runs
+        in it (a global core.hooksPath would run on `git worktree add`)."""
+        env = {name: value for name, value in clean_env().items()
+               if not name.startswith("GIT_")}
+        env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        return env
 
     def dry_run_under_hook(self, work_tree: bool) -> None:
         plain = self.plain_env()
@@ -6604,13 +6608,44 @@ class OwnGitUnderHook(Edge):
             safe_push.run(["git", "status"], WORK)
             safe_push.run(["gh", "pr", "view"], WORK)
             safe_push.run(["git", "status"], WORK, env=dict(os.environ))
-        self.assertEqual([name for name, _ in seen], ["git", "gh", "git"])
+            # A check, as run_step starts one: tool_env() keeps GIT_NO_REPLACE_OBJECTS
+            # (#355), and run() must not take it away.
+            safe_push.run(["sh", "-c", "true"], WORK, env=safe_push.tool_env())
+        self.assertEqual([name for name, _ in seen], ["git", "gh", "git", "sh"])
         for name, env in seen:
             left = sorted(set(env) & (safe_push.REPOSITORY_VARIABLES
                                       - {"GIT_NO_REPLACE_OBJECTS"}))
             self.assertEqual(left, [], name)
         self.assertEqual([env.get("GIT_NO_REPLACE_OBJECTS") for _, env in seen],
-                         ["1", None, "1"])
+                         ["1", "/planted", "1", "/planted"])
+
+    def test_every_launch_outside_run_is_given_its_environment(self):
+        # risk.py's launch, the CI watch and the hand-over start their processes without
+        # run(): each names an environment built by own_env() or without_replacements(),
+        # never the caller's as it is (#357).
+        tree = ast.parse((SOURCE / "scripts" / "safe_push.py").read_text())
+        launches = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+                continue
+            owner = node.func.value
+            name = f"{owner.id}.{node.func.attr}" if isinstance(owner, ast.Name) else ""
+            if name in ("subprocess.run", "subprocess.Popen", "subprocess.call",
+                        "subprocess.check_call", "subprocess.check_output", "os.execve",
+                        "os.execvpe", "os.spawnve", "os.system", "os.popen"):
+                launches.append((name, node))
+        self.assertEqual(len(launches), 4, [ast.unparse(n) for _, n in launches])
+        for name, node in launches:
+            with self.subTest(launch=ast.unparse(node)[:60]):
+                env = (node.args[2] if name == "os.execve" else
+                       next((k.value for k in node.keywords if k.arg == "env"), None))
+                self.assertIsNotNone(env)
+                if isinstance(env, ast.Name):
+                    # run()'s own, and the hand-over's: each assigned from one of the two.
+                    self.assertEqual(env.id, "env")
+                    continue
+                self.assertIsInstance(env, ast.Call)
+                self.assertIn(ast.unparse(env.func), ("own_env", "without_replacements"))
 
 
 class HookEnvironment(unittest.TestCase):
@@ -6665,7 +6700,11 @@ class HookEnvironment(unittest.TestCase):
             heads = (self.git("-C", str(main), "rev-parse", "HEAD"),
                      self.git("-C", str(linked), "rev-parse", "HEAD"))
             git = shlex.join(["git", *self.options])
-            check = (f"{git} init -q && echo inner > b.txt && {git} add b.txt && "
+            # The check writes down the git variables it was started with (#357: run() once
+            # took GIT_NO_REPLACE_OBJECTS from it while tool_env() kept it).
+            seen = tmp / "seen-variables"
+            check = (f"env | grep '^GIT_' | sort > {shlex.quote(str(seen))}; "
+                     f"{git} init -q && echo inner > b.txt && {git} add b.txt && "
                      f"{git} {' '.join(self.IDENT)} commit -q --no-verify -m inner")
             hook = {"GIT_DIR": str(git_dir), "GIT_INDEX_FILE": str(git_dir / "index"),
                     "GIT_NO_REPLACE_OBJECTS": "1",
@@ -6690,6 +6729,7 @@ class HookEnvironment(unittest.TestCase):
             kept = sorted(name for name in env if name.startswith("GIT_"))
             self.assertEqual(kept, ["GIT_NO_REPLACE_OBJECTS"])
             self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1")
+            self.assertEqual(seen.read_text(), "GIT_NO_REPLACE_OBJECTS=1\n")
 
     def test_a_hooks_git_dir_and_index_reach_no_check(self):
         # The incident's shape: GIT_DIR and GIT_INDEX_FILE alone, naming a linked worktree.
