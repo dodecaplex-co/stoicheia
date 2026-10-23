@@ -26,10 +26,10 @@ theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem 
    there, and citing a law puts symbols already there for its letters. Every derivation
    holds under every valuation of exactly those symbols that makes its context true, so no
    step needs a point or a straight line the symbols do not already stand for. Every law is
-   a universal statement, with nothing to construct. And every law I.4 cites is proved with
-   no rule that constructs (`Cited.holds_of_drawsNothing`, `Prop4.cites_drawNothing`); I.8
-   cites I.7, whose proof draws (brief 0009, question 4, approved as prototyped on
-   20 October 2026; its finishing is tracked in #150).
+   a universal statement, with nothing to construct. What a law's own proof draws, outside
+   the placement, is question 4 of brief 0009 (approved as prototyped on 20 October 2026;
+   its finishing is tracked in #150): the rule asks only that each cited law hold, and the
+   certificate records the construction rules beneath each law's proof (`cited_laws`).
 4. **No hypothesis of the rule speaks of the placement.** The rule's hypotheses are the cited
    laws (from a fixed list, each a universal statement over its letters), the given facts
    and the conclusion (data over the figure's numbered symbols: no point, no straight line,
