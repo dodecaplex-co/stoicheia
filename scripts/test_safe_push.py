@@ -177,6 +177,8 @@ one commit and runs safe_push.py against that origin:
   sandboxed child plants beside the harness; the same watch covers a flagged dry run and
   push of an R3 commit; and on macOS a command run there cannot write the cache, nor
   rename a directory above it, and a profile without the rules above the cache is caught;
+  and a flagged train/* branch, however written, gets no cache and no sandbox while its
+  train check still runs, and the train check refuses under a sandbox (#383);
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -3949,6 +3951,42 @@ class Trains(Edge):
         self.assertNotIn("4. The full local checks", out)
         self.assertIsNone(self.origin_branch("train/docs-1"))
         self.assertEqual(self.origin_main(), base)
+
+    def test_a_flagged_train_runs_uncached_and_still_checks_its_train(self):
+        # #224 after #383: with --main-checks-cache, a train/* branch, however written,
+        # gets no cache and no sandbox, since its train check loads main's check_train.py
+        # into the harness after the commit's code has run; the train check still runs,
+        # in a process with no sandbox and no cache.
+        marker = TMP / "flagged-train.txt"
+        checker = ("import sys\n"
+                   "def check_train(repo, base, sha, body):\n"
+                   "    m = sys.modules['__main__']\n"
+                   f"    open({str(marker)!r}, 'a').write(repr((m.SANDBOX, m.CACHE)) + '\\n')\n"
+                   "    return []\n")
+        for branch in ("train/tooling-1", "refs/heads/train/tooling-1"):
+            with self.subTest(branch=branch):
+                self.setUp()
+                marker.unlink(missing_ok=True)
+                self.new_base("Main's train checker", {"scripts/check_train.py": checker})
+                path = "scripts/check_links.py"
+                change = {path: self.text(path) + "\n# A comment for the test.\n"}
+                change.update(self.decision(f"A comment in `{path}`, for the test."))
+                self.commit("A comment in a check", change)
+                # The log's directory resolved: dir_problem refuses a symlink above it.
+                root = Path(os.path.realpath(tempfile.mkdtemp(prefix="flagged-train-",
+                                                              dir=TMP)))
+                env = clean_env()
+                env["STOICHEIA_PUSH_LOG"] = str(root / "pushes.log")
+                r = self.safe_push("--branch", branch, "--label", "tooling", "--body-file",
+                                   str(self.body_file()), "--dry-run", "--main-checks-cache",
+                                   env=env)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 0, out)
+                self.assertEqual(self.step(out, "main-checks cache"), "note", out)
+                self.assertIn("a train/* branch's train check", out)
+                self.assertEqual(self.guard(out, "train"), "ok", out)
+                self.assertEqual(marker.read_text(), "(None, None)\n", out)
+                self.assertFalse((root / "main-checks").exists(), out)
 
 
 def in_prose(text: str, change) -> str:

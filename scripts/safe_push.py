@@ -125,7 +125,9 @@ order, and the first that fails stops it with a message saying why:
    between its count markers changes), which move with the content they pin. A crash of
    origin/main's render.py, its check of docs/program.toml among them, is a verdict.
    Step 3's two checks run the same way. With --main-checks-cache, for R3 to R5 (the
-   classes that run this step in full), origin/main's pass here (both its loops) is
+   classes that run this step in full), but not on a train/* branch, whose train check
+   runs in this process after the commit's code (open_cache), origin/main's pass here
+   (both its loops) is
    reused from ~/.cache/stoicheia/main-checks/ when an earlier run checked the same trees
    with the same harness, toolchain and environment (main_checks_fields). After the
    class is read and origin/main's count-marker reader is loaded, every command the run
@@ -5863,7 +5865,8 @@ def main(argv=None) -> int:
                         help="everything but the push, the pull request and the merge")
     parser.add_argument("--main-checks-cache", action="store_true",
                         help="the pre-flight only, for a change of R3 to R5, whose step 4 "
-                        "runs in full: reuse origin/main's pass of the full "
+                        "runs in full, not on a train/* branch, whose train check runs in "
+                        "the harness's own process: reuse origin/main's pass of the full "
                         "checks from ~/.cache/stoicheia/main-checks/ when an earlier run "
                         "checked the same trees with the same harness, toolchain and "
                         "environment, every command the run starts then running under "

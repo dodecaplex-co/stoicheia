@@ -23,7 +23,8 @@
   own dry run does not. Without the flag nothing reads or writes the cache, and its
   directory is never made. Since the pre-flight was scaled to risk
   ([checks by risk](2026-10-22-checks-by-risk.md)), the cache serves only a train of R3
-  and above, whose pre-flight still runs step 4 in full: for R0 to R2, which leave step 4
+  and above landed from a branch not named `train/*` (since #383, below), whose
+  pre-flight still runs step 4 in full: for R0 to R2, which leave step 4
   to CI, the flag makes, reads and writes nothing and sets no sandbox, and the run says
   so (should the check inputs overrule a low class, origin/main's pass runs uncached).
   With it, for R3 to R5:
@@ -58,8 +59,10 @@
     loads origin/main's `check_train.py` into the harness's own process with
     `importlib`, after the guards have run the commit's code; so for a train the flag
     sets no cache and no sandbox, and the run goes on as without it, and the train check
-    refuses to run should a sandbox be set. `importlib` appears nowhere else in the
-    harness, and a test holds both. The `tomllib` import is unconditional at module load,
+    refuses to run should a sandbox be set. `importlib` is used nowhere else in the
+    harness, and two tests hold both (`test_every_import_is_at_the_top` and
+    `test_the_flag_for_a_train`), with a flagged dry run of a `train/*` branch end to
+    end. The `tomllib` import is unconditional at module load,
     so an unsupported interpreter can fail before the harness reaches its controlled
     version refusal. Tests check this as they run,
     by Python's own record of each process started and each module imported, any import
@@ -156,8 +159,8 @@
   What it does not do. The digest is no signature, and the sandbox stops only this: the
   commands a flagged run starts writing the cache directly. It does not stop a run
   without the flag, a ship's own dry run among them, which starts its commands with no
-  sandbox; nor anything code run as the same user does outside a flagged run; nor
-  anything a flagged run's code leaves for a later command to run before its sandbox
+  sandbox, nor a flagged run of a `train/*` branch, which sets none; nor anything code
+  run as the same user does outside a flagged run; nor anything a flagged run's code leaves for a later command to run before its sandbox
   starts: the launcher in `.git/stoicheia/`, `alias.safe-push` in `.git/config`, a
   program earlier on the `PATH`, the harness copy in `~/.cache/stoicheia/harness/`, a
   module in the harness's own directory, which Python searches first, or in Python's

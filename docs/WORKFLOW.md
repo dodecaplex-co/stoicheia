@@ -1386,7 +1386,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       they do when the coordinator's dry run of a train is followed by its push, at one
       head against one main. Only the runs that land a train pass the flag (the
       coordinator ruled): the coordinator's dry run of the train and its push. It serves
-      only a change of R3 to R5, whose step 4 runs in full: for R0 to R2, which leave step
+      only a change of R3 to R5, whose step 4 runs in full, landed from a branch not
+      named `train/*`, as a `batch/*` landing is (a `train/*` branch's train check runs
+      in the harness's own process, so it has no cache): for R0 to R2, which leave step
       4 to CI, the flag reads, writes and makes nothing, and sets no sandbox. Step 3's
       pass and the commit's own pass run every time; on a hit, the commit's own pass
       builds what the skipped pass would have built. An entry's name is the SHA-256 of its
@@ -1428,8 +1430,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       is otherwise unchanged.
       The digest is no signature, and the sandbox stops only this: the commands a
       flagged run starts writing the cache directly. It does not stop a run without the
-      flag, a ship's own dry run among them, which starts its commands with no sandbox;
-      nor anything code run as the same user does outside a flagged run; nor anything a
+      flag, a ship's own dry run among them, which starts its commands with no sandbox,
+      nor a flagged run of a `train/*` branch, which sets none; nor anything code run as
+      the same user does outside a flagged run; nor anything a
       flagged run's code leaves for a later command to run before its sandbox starts: the
       launcher in `.git/stoicheia/`, `alias.safe-push` in `.git/config`, a program
       earlier on the `PATH`, the harness copy in `~/.cache/stoicheia/harness/`, a module
