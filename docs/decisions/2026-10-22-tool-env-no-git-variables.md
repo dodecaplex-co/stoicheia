@@ -7,12 +7,11 @@
   itself. On 22 October a test on one train's branch did exactly that: its fixture
   committed into the train's branch, and its `git init`, with `GIT_DIR` naming a linked
   worktree's git directory, took the repository for a bare one and wrote
-  `core.bare = true` into the main clone's shared configuration. Every test on main that
-  builds a repository clears those variables itself, so main was safe, but the tool should
-  not depend on that. Now `tool_env()` keeps no variable of git's but
-  `GIT_NO_REPLACE_OBJECTS`, which safe_push sets on purpose, so each check finds its
-  repository by its working directory. The git commands safe_push runs itself are
-  unchanged.
+  `core.bare = true` into the main clone's shared configuration. The safety boundary now
+  sits at the pre-flight: `tool_env()` keeps no variable of git's but
+  `GIT_NO_REPLACE_OBJECTS`, which safe_push sets on purpose, so every program it launches
+  as a check finds its repository by its working directory. The git commands safe_push
+  runs itself are unchanged.
 
   This entry approves the change to `scripts/safe_push.py`, whose `tool_env()` drops every
   `GIT_*` variable but those `KEPT_GIT_VARIABLES` names.

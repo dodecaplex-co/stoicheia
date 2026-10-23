@@ -6547,40 +6547,53 @@ class Units(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             outer, inner, logs = tmp / "outer", tmp / "inner", tmp / "logs"
-            for folder in (outer, inner, logs):
+            home, xdg, hooks = tmp / "home", tmp / "xdg", tmp / "hooks"
+            for folder in (outer, inner, logs, home, xdg, hooks):
                 folder.mkdir()
+            fixture = {name: value for name, value in os.environ.items()
+                       if not name.startswith("GIT_")}
+            fixture.update(HOME=str(home), XDG_CONFIG_HOME=str(xdg),
+                           GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+            git_options = ["-c", f"core.hooksPath={hooks}",
+                           "-c", f"core.excludesFile={os.devnull}"]
+            git = ["git", *git_options]
             ident = ["-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
                      "-c", "commit.gpgsign=false"]
-            subprocess.run(["git", "init", "-q", str(outer)], check=True)
-            (outer / "a.txt").write_text("outer\n")
-            subprocess.run(["git", "-C", str(outer), "add", "a.txt"], check=True)
-            subprocess.run(["git", "-C", str(outer), *ident, "commit", "-q", "-m", "outer"],
-                           check=True)
-            git_dir = outer / ".git"
-            before = {name: (git_dir / name).read_bytes() for name in ("HEAD", "index", "config")}
-            head = subprocess.run(["git", "-C", str(outer), "rev-parse", "HEAD"],
-                                  capture_output=True, text=True, check=True).stdout
-            check = ("git init -q && echo inner > b.txt && git add b.txt && "
-                     f"git {' '.join(ident)} commit -q -m inner")
-            hook = {"GIT_DIR": str(git_dir), "GIT_INDEX_FILE": str(git_dir / "index"),
-                    "GIT_WORK_TREE": str(outer), "GIT_PREFIX": "",
-                    "GIT_NO_REPLACE_OBJECTS": "1"}
-            with mock.patch.dict(os.environ, hook):
-                self.assertEqual(safe_push.tool_env()["GIT_NO_REPLACE_OBJECTS"], "1")
-                self.assertFalse({"GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_PREFIX"}
-                                 & set(safe_push.tool_env()))
-                rep = safe_push.Report()
-                safe_push.run_step("4", "a check that builds a repository",
-                                   ["sh", "-c", check], inner, rep, logs, 1)
-            self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
-            for name, data in before.items():
-                self.assertEqual((git_dir / name).read_bytes(), data, name)
-            self.assertEqual(subprocess.run(["git", "-C", str(outer), "rev-parse", "HEAD"],
-                                            capture_output=True, text=True).stdout, head)
-            self.assertEqual(sorted(p.name for p in outer.iterdir()), [".git", "a.txt"])
-            self.assertTrue((inner / ".git").is_dir())
-            self.assertEqual(subprocess.run(["git", "-C", str(inner), "log", "--format=%s"],
-                                            capture_output=True, text=True).stdout, "inner\n")
+            with mock.patch.dict(os.environ, fixture, clear=True):
+                subprocess.run([*git, "init", "-q", str(outer)], check=True)
+                (outer / "a.txt").write_text("outer\n")
+                subprocess.run([*git, "-C", str(outer), "add", "a.txt"], check=True)
+                subprocess.run([*git, "-C", str(outer), *ident,
+                                "commit", "-q", "-m", "outer"], check=True)
+                git_dir = outer / ".git"
+                before = {name: (git_dir / name).read_bytes()
+                          for name in ("HEAD", "index", "config")}
+                head = subprocess.run([*git, "-C", str(outer), "rev-parse", "HEAD"],
+                                      capture_output=True, text=True, check=True).stdout
+                inner_git = shlex.join(git)
+                check = (f"{inner_git} init -q && echo inner > b.txt && "
+                         f"{inner_git} add b.txt && "
+                         f"{inner_git} {' '.join(ident)} commit -q -m inner")
+                hook = {"GIT_DIR": str(git_dir), "GIT_INDEX_FILE": str(git_dir / "index"),
+                        "GIT_WORK_TREE": str(outer), "GIT_PREFIX": "",
+                        "GIT_NO_REPLACE_OBJECTS": "1"}
+                with mock.patch.dict(os.environ, hook):
+                    self.assertEqual(safe_push.tool_env()["GIT_NO_REPLACE_OBJECTS"], "1")
+                    self.assertFalse({"GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_PREFIX"}
+                                     & set(safe_push.tool_env()))
+                    rep = safe_push.Report()
+                    safe_push.run_step("4", "a check that builds a repository",
+                                       ["sh", "-c", check], inner, rep, logs, 1)
+                self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+                for name, data in before.items():
+                    self.assertEqual((git_dir / name).read_bytes(), data, name)
+                self.assertEqual(subprocess.run([*git, "-C", str(outer),
+                                                 "rev-parse", "HEAD"], capture_output=True,
+                                                text=True).stdout, head)
+                self.assertEqual(sorted(p.name for p in outer.iterdir()), [".git", "a.txt"])
+                self.assertTrue((inner / ".git").is_dir())
+                self.assertEqual(subprocess.run([*git, "-C", str(inner), "log", "--format=%s"],
+                                                capture_output=True, text=True).stdout, "inner\n")
     def configured_check_commands(self):
         checks = []
         for name, command in safe_push.CHECKS:

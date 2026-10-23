@@ -894,8 +894,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       scan reads what the push sends: every git command `safe_push.py` runs itself, the
       scan's among them, reads with git's replacement objects off, whatever the caller's
       environment holds (#256), its `git status` check among them. The programs it runs
-      as checks keep the environment they are given, which holds `GIT_NO_REPLACE_OBJECTS`
-      under the launcher or after a hand-over, and otherwise only if the caller set it;
+      as checks discard every `GIT_*` variable except an existing
+      `GIT_NO_REPLACE_OBJECTS`. That variable is present under the launcher or after a
+      hand-over, and otherwise only if the caller set it; every other git variable is
+      discarded so that a check finds its repository by its working directory (#355).
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
