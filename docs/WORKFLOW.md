@@ -309,6 +309,8 @@ lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
 python3 -I tests/test_certificate.py
+python3 scripts/sweep_citations.py --self-test
+python3 scripts/sweep_citations.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -366,9 +368,6 @@ run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs ru
 which class", after the block:
 
 ```sh
-python3 scripts/sweep_citations.py --self-test   # the sweep's plants, and below, the sweep,
-python3 scripts/sweep_citations.py     # which only lists: CI's `negative` job runs the two
-                                       # after lake build and Facts.lean, before the next line
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
@@ -537,8 +536,9 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   linter passes over any declaration with a `sorry` in it, even one that never runs, so a
   staged statement gives no hit until its proof arrives; outside Staging, a file with
   `sorry` or `admit` in its code is refused. Its `--self-test` plants each kind of hit,
-  and controls that must pass, in Lean outside the tree. CI's `negative` job runs both
-  after its build; the sweep there only lists, and the release gate (section 10, step
+  and controls that must pass, in Lean outside the tree. CI's `check` job runs both sweep
+  commands for every risk class, after `test_certificate.py` and before the whole-worktree
+  cleanliness check; the sweep there only lists, and the release gate (section 10, step
   10) runs it with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
