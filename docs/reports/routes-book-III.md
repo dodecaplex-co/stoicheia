@@ -96,7 +96,7 @@ with its issue"), while an issue labelled `blocks-release` tracks their move int
 | #126 | [`Touching.lean`](../../Staging/Routes/Touching.lean) | Definition III.3 read at the point of contact, and its agreement with our reading of the whole circles | new, a draft |
 | #129 | [`Prop20.lean`](../../Staging/Routes/Prop20.lean), [`Prop21.lean`](../../Staging/Routes/Prop21.lean), [`Prop26.lean`](../../Staging/Routes/Prop26.lean) | the angle at the centre of any size; III.20 for it; III.21 and III.26 by Euclid's one argument | III.20 in general new, a draft; III.20's special case, III.21 and III.26 as in `Elements/` |
 | #130 | [`AngleOfContact.lean`](../../Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
-| #131 | none | which calls of III.1 do work | analysis only |
+| #131 | none: the five proofs in `Elements/` | which calls of III.1 do work; the five that do none dropped on 22 October 2026 | in `Elements/` |
 
 "As in `Elements/`" in the last column means that the staged theorem has exactly the type
 of the theorem in `Elements/`, which each file checks with Lean in its last declaration
@@ -230,8 +230,9 @@ proof replaced the proof in `Elements/BookIII/Prop08.lean`, and the mishnah's pa
 "which was proved impossible" now says what changed. The same change revises the gap catalogue's entry, and reads the
 record again, with its passage at "that is, the nearer to the least DG equal to the more
 remote" and its route note rewritten. The companions
-`Prop8.partner` and `Prop8.general` use the statement, which did not change. The proof
-still takes the centre by III.1 under Heath's "[III. 1]" (#131, below).
+`Prop8.partner` and `Prop8.general` use the statement, which did not change. Since 22
+October 2026 the proof takes the centre from the rule, no longer by III.1 under Heath's
+"[III. 1]" (#131, below).
 
 ## III.27: Euclid's reductio and halving, the obtuse case by the remainders (#127)
 
