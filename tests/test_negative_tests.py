@@ -809,18 +809,32 @@ class OverlapWayTests(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
         return negative.check_fidelity.overlap_proofs(path)
 
+    def audit(self, body, head="", pins=()):
+        """A file in the audit's shape: `head`, then `body` in the section, in the namespace
+        Audit, then each pin, as (name, axiom, …)."""
+        return (f"{head}namespace Audit\n\n{self.SECTION}\n\n{body}\n"
+                "/-! ## Hypotheses our measure leaves idle -/\n\nend Audit\n\n"
+                + "".join(self.pin(*p) for p in pins))
+
     def test_the_audit_file_proves_main_s_combinations(self):
+        """Main's file, in its own order (III.5 by crossing before radius, as III.5's note
+        has them), and nothing of `Audit.I_7`, which proves no overlap."""
         proofs, problem = negative.check_fidelity.overlap_proofs(
             negative.check_fidelity.AUDIT_OVERLAPS)
         self.assertEqual(problem, "")
-        found = {ref: sorted(sorted(axioms) for _, axioms in proofs.get(ref, []))
-                 for ref in ("III.2", "III.5", "III.6")}
+        found = {ref: [(name, sorted(axioms)) for name, axioms in found]
+                 for ref, found in proofs.items()}
         self.assertEqual(found, {
-            "III.2": [["Tacit.outside_of_between"], ["Tacit.outside_of_between"]],
-            "III.5": [["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
-                      ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"],
-                      ["Tacit.circle_eq", "Tacit.inside_not_on"]],
-            "III.6": [["Tacit.centre_inside", "Tacit.circle_eq", "Tacit.inside_not_on"]]})
+            "III.2": [("Audit.III_2", ["Tacit.outside_of_between"]),
+                      ("Audit.III_2_outside", ["Tacit.outside_of_between"])],
+            "III.5": [("Audit.III_5", ["Tacit.circle_eq", "Tacit.inside_not_on"]),
+                      ("Audit.III_5_crossing",
+                       ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"]),
+                      ("Audit.III_5_radius",
+                       ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"])],
+            "III.6": [("Audit.III_6",
+                       ["Tacit.centre_inside", "Tacit.circle_eq", "Tacit.inside_not_on"])]})
+        self.assertIn("Audit.I_7", negative.check_fidelity.AUDIT_NOT_OVERLAPS)
         for ref in ("III.2", "III.5", "III.6"):
             n = int(ref.split(".")[1])
             negative.check_fidelity.check_overlap_ways(ref, ref, negative.heath.load_review(
@@ -866,16 +880,127 @@ class OverlapWayTests(unittest.TestCase):
         proofs, problem = negative.check_fidelity.overlap_proofs(self.root / "Missing.lean")
         self.assertEqual((proofs, problem[-10:]), ({}, "is missing"))
 
+    def test_a_heading_in_a_string_is_no_heading(self):
+        """A string's text that reads as the section's heading, plain or raw, is no heading:
+        alone, the file has no such section; beside the heading, it is not a second."""
+        prop = "theorem X : type_of% @Elements.BookIII.Prop5 :=\n  x\n"
+        for literal in (f'"{self.SECTION}"', f'r#"{self.SECTION}"#'):
+            with self.subTest(literal=literal):
+                proofs, problem = self.proofs(f"namespace Audit\ndef s := {literal}\n{prop}"
+                                              "end Audit\n"
+                                              + self.pin("Audit.X", "Elements.Tacit.a"))
+                self.assertEqual(proofs, {})
+                self.assertIn("has no section headed", problem)
+                self.assertEqual(self.proofs(self.audit(f"def s := {literal}\n{prop}",
+                                                        pins=[("Audit.X", "Elements.Tacit.a")])),
+                                 ({"III.5": [("Audit.X", frozenset({"Tacit.a"}))]}, ""))
+
+    def test_what_could_make_a_type_mean_another_refuses_the_file(self):
+        """Files that Lean builds with their pins (the outside reviewer's probes: an
+        instance-implicit `variable`, an `include`, a theorem that shadows a proposition, a
+        namespace `Elements.BookIII` within Audit, an `export`; and a dotted constructor, a
+        structure's, an instance with a priority, a «…» name, a theorem in a syntax
+        quotation whose name another declaration has, and an import outside `Elements`):
+        each could make the scan take a theorem for a proof of a proposition it does not
+        prove, so each refuses the whole file, naming its line."""
+        uses = "  have := @Elements.Tacit.inside_not_on\n"
+        prop = "theorem T : type_of% @Elements.BookIII.Prop5 :=\n" + uses + "  x\n"
+        for head, body, at, said in [
+                ("", "class Bad : Prop where\n  bad : False\n\nvariable [Bad]\n\n"
+                     "theorem III_5_inst : type_of% @Elements.BookIII.Prop5 :=\n" + uses
+                     + "  (Bad.bad).elim\n", "variable [Bad]",
+                 "has `variable` before the section's end"),
+                ("", "include hX\n\ntheorem III_5_incl : type_of% @Elements.BookIII.Prop5 :=\n"
+                     + uses + "  hX\n", "include hX", "has `include` before the section's end"),
+                ("", "theorem Elements.BookIII.Prop6 : True := trivial\n\n"
+                     "theorem III_6_shadow : type_of% @Elements.BookIII.Prop6 :=\n" + uses
+                     + "  trivial\n", "theorem Elements",
+                 "declares `Elements.BookIII.Prop6`, a name with a part `Elements`"),
+                ("", "namespace Elements.BookIII\ntheorem Prop8 : True := trivial\n"
+                     "end Elements.BookIII\n\ntheorem III_8_nested : type_of% "
+                     "@Elements.BookIII.Prop8 :=\n" + uses + "  trivial\n",
+                 "namespace Elements",
+                 "opens the namespace `Elements.BookIII`, a name with a part `Elements`"),
+                ("namespace Fake\ntheorem Prop7 : True := trivial\nend Fake\n\n",
+                 "export Fake (Prop7)\n\ntheorem III_7_alias : type_of% "
+                 "@Elements.BookIII.Prop7 :=\n" + uses + "  trivial\n", "export Fake",
+                 "has `export` before the section's end"),
+                ("", "inductive T : Prop\n  | Elements.BookIII.Prop5 : T\n\nnamespace T\n"
+                     + prop + "end T\n", "| Elements",
+                 "declares the constructor `Elements.BookIII.Prop5`"),
+                ("", "structure S : Prop where\n  Elements.BookIII.Prop5 ::\n  x : True\n",
+                 "Elements.BookIII.Prop5 ::",
+                 "declares the constructor `Elements.BookIII.Prop5`"),
+                ("", "class C : Prop where\n  x : True\n\n"
+                     "instance (priority := 10) Elements.BookIII.Prop5 : C := ⟨trivial⟩\n\n"
+                     + prop, "instance (priority",
+                 "declares `Elements.BookIII.Prop5`, a name with a part `Elements`"),
+                ("", "theorem «Elements».BookIII.Prop6 : True := trivial\n",
+                 "theorem «Elements»", "declares `«Elements».BookIII.Prop6`"),
+                ("", "def q : Lean.MacroM Lean.Syntax :=\n  `(command| theorem Z : type_of% "
+                     "@Elements.BookIII.Prop5 := rfl)\n\ntheorem Z : True :=\n" + uses
+                     + "  trivial\n", "theorem Z : type_of%",
+                 "declares `Audit.Z`, and another declaration of the file has that name too"),
+                ("import Elements\nimport Audit.Shadow\n\n", prop, "import Audit.Shadow",
+                 "imports `Audit.Shadow`, outside `Elements`")]:
+            with self.subTest(said=said):
+                text = self.audit(body, head, [(name, "Elements.Tacit.inside_not_on") for name
+                                               in ("Audit.III_5_inst", "Audit.III_5_incl",
+                                                   "Audit.III_6_shadow", "Audit.III_8_nested",
+                                                   "Audit.III_7_alias", "Audit.T.T", "Audit.T",
+                                                   "Audit.Z")])
+                proofs, problem = self.proofs(text)
+                line = text[:text.index(at)].count("\n") + 1
+                self.assertEqual(proofs, {})
+                self.assertIn(f".lean:{line} {said}", problem)
+        # What follows the section cannot change what its theorems prove.
+        self.assertEqual(self.proofs(self.audit(prop, pins=[("Audit.T", "Elements.Tacit.a")])
+                                     + "variable (n : Nat)\nexport Fake (Prop7)\n"),
+                         ({"III.5": [("Audit.T", frozenset({"Tacit.a"}))]}, ""))
+
+    def test_the_namespaces_are_read_as_lean_reads_them(self):
+        """Each theorem by the full name Lean gives it, so that the pin read is its own:
+        with a dotted namespace that `end` closes a part at a time, a namespace opened in
+        the middle of a line, or named on the next line, a `noncomputable section`, a
+        `mutual` block and a dotted section, each closed by `end`, and `_root_`. In the first
+        two, a scan that missed the namespace would take another theorem's pin."""
+        prop = "theorem X : type_of% @Elements.BookIII.Prop5 :=\n  x\n"
+        a, b = "Elements.Tacit.a", "Elements.Tacit.b"
+        for head, body, pins, name in [
+                ("theorem X : True := trivial\n\n", "namespace A.B\nend B\nend A\n" + prop,
+                 [("X", b), ("Audit.X", a)], "Audit.X"),
+                ("", "theorem X : True := trivial\ntheorem W : True := trivial namespace Foo\n"
+                     + prop + "end Foo\n", [("Audit.X", b), ("Audit.Foo.X", a)], "Audit.Foo.X"),
+                ("", "namespace\n  Foo\n" + prop + "end\n  Foo\n", [("Audit.Foo.X", a)],
+                 "Audit.Foo.X"),
+                ("", "noncomputable section\ntheorem Y : True := trivial\nend\n\nmutual\n"
+                     "theorem Z : True := trivial\nend\n\nsection S.T\nend T\nend S\n" + prop,
+                 [("Audit.X", a)], "Audit.X"),
+                ("", prop.replace("theorem X", "theorem _root_.X"), [("X", a)], "X")]:
+            with self.subTest(body=body):
+                self.assertEqual(self.proofs(self.audit(body, head, pins)),
+                                 ({"III.5": [(name, frozenset({"Tacit.a"}))]}, ""))
+
+    def test_a_theorem_that_proves_no_overlap_is_left_out(self):
+        """`Audit.I_7`, a circular derivation through I.7's own corollary, is no overlap of
+        I.7, though its type is I.7's and its axioms are pinned."""
+        text = self.audit("theorem I_7 : type_of% @Elements.BookI.Prop7 :=\n  x\n\n"
+                          "theorem III_5 : type_of% @Elements.BookIII.Prop5 :=\n  x\n",
+                          pins=[("Audit.I_7", "Elements.Tacit.a"),
+                                ("Audit.III_5", "Elements.Tacit.a")])
+        self.assertEqual(self.proofs(text),
+                         ({"III.5": [("Audit.III_5", frozenset({"Tacit.a"}))]}, ""))
+
     def test_each_combination_must_be_proved_exactly(self):
         overlap = {"rule": "Tacit.circle_eq", "also": ["Tacit.inside_not_on"], "kind": "gives",
-                   "ways": [["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
-                            ["Definition15", "Tacit.len_lt_of_inside"],
+                   "ways": [["Definition15", "Tacit.len_lt_of_inside"],
                             ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl",
-                             "Tacit.circle_eq"]]}
+                             "Tacit.circle_eq"],
+                            ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"]]}
         negative.check_fidelity.check_overlap_ways("III.5", "review/III/05.toml", overlap)
         self.assertEqual([e.split(" names ")[0] for e in self.errors],
-                         ["review/III/05.toml: [overlap] `ways` 2",
-                          "review/III/05.toml: [overlap] `ways` 3"])
+                         ["review/III/05.toml: [overlap] `ways` 1",
+                          "review/III/05.toml: [overlap] `ways` 2"])
         self.assertIn("The file proves III.5 from [Tacit.circle_eq, Tacit.inside_not_on] "
                       "(`Audit.III_5`), from [Definition15, Tacit.len_lt_of_inside, "
                       "Tacit.lt_irrefl] (`Audit.III_5_crossing`) and from [Definition15, "

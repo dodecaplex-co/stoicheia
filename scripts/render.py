@@ -840,7 +840,10 @@ ORDINAL_WORDS = ["", "first", "second", "third", "fourth", "fifth", "sixth", "se
 
 
 def ordinal_word(k):
-    return ORDINAL_WORDS[k] if 0 < k < len(ORDINAL_WORDS) else f"{k}th"
+    if 0 < k < len(ORDINAL_WORDS):
+        return ORDINAL_WORDS[k]
+    suffix = "th" if k % 100 in (11, 12, 13) else {1: "st", 2: "nd", 3: "rd"}.get(k % 10, "th")
+    return f"{k}{suffix}"
 
 
 def and_list(items):
@@ -942,18 +945,40 @@ def way_use(p, rules):
     return f"{names} together, of which our proof {partial_use(used, unused)}"
 
 
+def overlap_ways_line(p, overlap):
+    """What the line under the enunciation says of an [overlap] with `ways`, in a few
+    words: how many combinations contain the proposition, and whether our proof rests on
+    all, some or none of the rules of each, "our axioms already contain it in three ways,
+    and our proof rests on some of the rules of each". Where that differs from one to
+    another, each is taken by its place: "… rests on all the rules of the first, some of
+    the rules of the second and none of the rules of the third". The Overlap row names
+    the rules."""
+    ways = overlap_ways(overlap)
+    family = overlap_family(ways)
+    count = number_word(len(ways))
+    uses = ["all" if way_rests(p, w) == w else "some of" if way_rests(p, w) else "none of"
+            for w in ways]
+    if set(uses) == {"none of"}:
+        return (f"our {family} contain it too, in {count} ways, though this proof uses none "
+                "of their rules")
+    if len(set(uses)) == 1:
+        return (f"our {family} already contain it in {count} ways, and our proof rests on "
+                f"{uses[0]} the rules of each")
+    return (f"our {family} already contain it in {count} ways, and our proof rests on "
+            + and_list(f"{u} the rules of the {ordinal_word(k)}" for k, u in enumerate(uses, 1)))
+
+
 def overlap_ways_clause(p, overlap):
     """The combinations of an [overlap] with `ways`, each with the rules our proof rests on
-    (`way_use`), for the line under the enunciation and the book's summary: "in three ways:
-    …; …; and …"."""
+    (`way_use`), for the book's summary: "in three ways: …; …; and …"."""
     ways = [way_use(p, w) for w in overlap_ways(overlap)]
     return f"in {number_word(len(ways))} ways: " + "; ".join(ways[:-1]) + "; and " + ways[-1]
 
 
 def overlap_contains_ways(p, overlap, what):
-    """What the line under the enunciation and the book's summary say of an [overlap] with
-    `ways`: our rules "already contain" `what` in each way, or, where the proof uses none
-    of the rules of any, "contain it too"."""
+    """What the book's summary says of an [overlap] with `ways`: our rules "already
+    contain" `what` in each way, or, where the proof uses none of the rules of any,
+    "contain it too"."""
     ways = overlap_ways(overlap)
     family = overlap_family(ways)
     if any(way_rests(p, w) for w in ways):
@@ -1021,7 +1046,7 @@ def in_lean_line(p, record, book, n):
         one = len(rules) == 1
         rule = "the rule" if one else "the rules"
         if len(overlap_ways(ov)) > 1:
-            parts.append(f"{overlap_contains_ways(p, ov, 'it')} (see Overlap)")
+            parts.append(f"{overlap_ways_line(p, ov)} (see Overlap)")
         elif used and used != rules:
             claim = ("supply a step of a proof of it" if overlap_steps(ov)
                      else "already contain it")

@@ -745,10 +745,10 @@ def _self_test() -> int:
     # `also` and from each other. Whether Audit/Overlaps.lean proves each is
     # check_fidelity's business.
     first = {"rule": "Tacit.circle_eq", "also": ["Tacit.inside_not_on"], "kind": "gives"}
-    radius = ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"]
     crossing = ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"]
+    radius = ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"]
     for ways, change, ok in [
-            ([radius, crossing], {}, True),
+            ([crossing, radius], {}, True),
             ([crossing], {"kind": "states"}, True),
             ([["Tacit.circle_eq"]], {"also": []}, False),
             ([radius], {"kind": "step", "note": "The rules supply a step of III.5's proof."},

@@ -108,7 +108,11 @@
      theorem of that file's section "Rules that state a proposition, give it at once, or
      supply its step" whose type is the proposition's own, as the theorem's `#guard_msgs`
      pin of `#print axioms` gives them (`overlap_proofs`, read from the file's text, whose
-     pins `lake build Audit` checks).
+     pins `lake build Audit` checks), and not one of AUDIT_NOT_OVERLAPS. The file is
+     refused whole where its text could make a theorem's type mean other than it reads:
+     an import outside `Elements`, a `variable`, `include` or `export` before the
+     section's end, a namespace or declaration whose name has a part `Elements`, or a
+     theorem there whose name the file declares twice (`declared_in`).
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -1644,11 +1648,46 @@ AUDIT_OVERLAPS = ROOT / "Audit" / "Overlaps.lean"
 # The section of AUDIT_OVERLAPS whose theorems prove propositions from the rules that
 # contain them, each under the proposition's own type.
 AUDIT_SECTION = "Rules that state a proposition, give it at once, or supply its step"
+# The theorems of that section that prove no overlap, each with its reason:
+# `overlap_proofs` leaves them out.
+AUDIT_NOT_OVERLAPS = {
+    "Audit.I_7": "a circular derivation through I.7's own corollary, Circle 4, which the "
+                 "file says \"establishes no independent overlap\"",
+}
 PROPOSITION_TYPE = re.compile(
     r"\btheorem\s+([^\s:({\[]+)\s*:\s*type_of%\s*@Elements\.Book([IVX]+)\.Prop(\d+)\s*:=")
 PRINT_AXIOMS = re.compile(r"#guard_msgs\s+in\s+#print\s+axioms\s+(\S+)")
 PINNED_AXIOMS = re.compile(r"/--\s*info: '([^'\s]+)' depends on axioms: \[([^\]]*)\]\s*-/")
-NAMESPACE = re.compile(r"^[ \t]*(namespace|section|end)\b[ \t]*(\S*)", re.M)
+
+
+def lean_words(*words: str) -> re.Pattern:
+    """Lean's `words`, each read whole, never as part of a name (as DECLARATION_END)."""
+    return re.compile(f"(?<![{ID_REST}.])(?:{'|'.join(words)})"
+                      f"(?![{ID_REST}])(?!\\.[{ID_FIRST}«])")
+
+
+# The scan reads a theorem's type in AUDIT_OVERLAPS as it is written, where Lean
+# elaborates it (#293): so it reads the full name of each declaration, in the namespaces
+# Lean puts it in, and refuses the file where its text could make a type mean another
+# (`declared_in`). DECLARES: the word of a command that opens or closes a scope, wherever
+# it stands, or declares a name. Lean opens a scope for each part of `namespace A.B` or
+# `section A.B`, and `end B` closes one; `noncomputable section` is a section, and a
+# `mutual` block ends with `end` too.
+DECLARES = lean_words("namespace", "section", "mutual", "end", "theorem", "lemma", "def",
+                      "abbrev", "instance", "structure", "class", "inductive", "coinductive",
+                      "opaque", "axiom")
+# The name Lean reads after such a word, on its line or a later one, but never a word
+# that begins a command; after `instance`, past its priority.
+DECLARED_NAME = re.compile(
+    rf"\s+(?!(?:{'|'.join(COMMAND_WORDS)})(?![{ID_REST}]))"
+    r"((?:«[^»]*»|[^\s:({\[«.]+)(?:\.(?:«[^»]*»|[^\s:({\[«.]+))*)")
+PRIORITY = re.compile(r"\s*\(\s*priority\s*:=[^)]*\)")
+# A constructor's name, after `|` or before a structure's `::`: Lean takes a dotted one, as
+# `| Elements.BookIII.Prop5 : T`.
+CONSTRUCTOR = re.compile(r"\|\s*([^\s:({\[|]+)|([^\s:({\[|]+)\s*::")
+# `variable`, with `include`, gives a theorem hypotheses its type does not show, and
+# `export` names a declaration under another name.
+HIDDEN = lean_words("variable", "include", "export")
 
 
 def overlap_ways(overlap) -> list[tuple[str, list[str]]]:
@@ -1658,6 +1697,61 @@ def overlap_ways(overlap) -> list[tuple[str, list[str]]]:
         (f"`ways` {i}", way) for i, way in enumerate(overlap.get("ways", []), 1)]
 
 
+def name_parts(name: str) -> list[str]:
+    """A Lean name's parts, each «…» one without its quotes: `A.«B.C»` has two."""
+    return [quoted or plain for quoted, plain in re.findall(r"«([^»]*)»|([^.«»]+)", name)]
+
+
+def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, str], str]:
+    """Each declaration of `code`, the Lean that `read_lean` gives from the file `where`'s
+    text `src`, by the offset of its word, with its full name, in the namespaces Lean puts
+    it in (DECLARES). Or {} and why the scan cannot read a theorem's type as Lean does: an
+    import outside `Elements`, whose names it does not read; a `variable`, `include` or
+    `export` before the offset `end` (HIDDEN); or a namespace or a declaration, a
+    constructor among them, whose name has a part `Elements`, which could stand for a
+    proposition's own name. Each is named by its line."""
+    def at(offset):
+        return f"{where}:{line_of(src, offset)}"
+    why = ("so a theorem's type could mean other than it reads, and the scan reads only "
+           "what is written")
+    for offset, module in imports(code):
+        if module is None or name_parts(module)[0] != "Elements":
+            return {}, (f"{at(offset)} imports "
+                        + (f"`{module}`" if module else "a module the scan cannot read")
+                        + f", outside `Elements`, {why}")
+    words = QUOTED_NAME.sub(lambda q: re.sub(r"[^\n]", " ", q[0]), code)
+    if m := HIDDEN.search(words, 0, end):
+        return {}, f"{at(m.start())} has `{m[0]}` before the section's end, {why}"
+    for m in CONSTRUCTOR.finditer(code):
+        if "Elements" in name_parts(m[1] or m[2]):
+            return {}, (f"{at(m.start())} declares the constructor `{m[1] or m[2]}`, a name "
+                        f"with a part `Elements`, {why}")
+    names: dict[int, str] = {}
+    stack: list[str] = []
+    for m in DECLARES.finditer(words):
+        after = m.end()
+        if m[0] == "instance" and (priority := PRIORITY.match(code, after)):
+            after = priority.end()
+        named = DECLARED_NAME.match(code, after)
+        parts = name_parts(named[1]) if named else []
+        if m[0] == "mutual":
+            stack.append("")
+        elif m[0] == "section":
+            stack += [""] * max(len(parts), 1)
+        elif m[0] == "end":
+            del stack[max(len(stack) - max(len(parts), 1), 0):]
+        elif "Elements" in parts:
+            return {}, (f"{at(m.start())} "
+                        + ("opens the namespace" if m[0] == "namespace" else "declares")
+                        + f" `{named[1]}`, a name with a part `Elements`, {why}")
+        elif m[0] == "namespace":
+            stack += parts
+        elif parts:
+            names[m.start()] = ".".join(parts[1:] if parts[0] == "_root_" else
+                                        [part for part in stack if part] + parts)
+    return names, ""
+
+
 @functools.lru_cache(maxsize=None)
 def overlap_proofs(path: Path) -> tuple[dict, str]:
     """What the section AUDIT_SECTION of Audit/Overlaps.lean proves: for each proposition,
@@ -1665,19 +1759,26 @@ def overlap_proofs(path: Path) -> tuple[dict, str]:
     @Elements.BookIII.Prop5`), by its full name, with the axioms that its `#guard_msgs` pin
     of `#print axioms` gives, named as facts.json names them, without `Elements.` (one
     outside `Elements` keeps its name after `_root_.`, so it matches none), and without
-    LEAN_FOUNDATIONS. A theorem with no such pin proves nothing here. The pins are read
-    from the file's text, as `read_lean` reads it; `lake build Audit` checks that Lean
-    reports what they say. Returns the map and "", or {} and why the file cannot be read."""
+    LEAN_FOUNDATIONS. A theorem with no such pin proves nothing here, nor does one of
+    AUDIT_NOT_OVERLAPS. The pins are read from the file's text, as `read_lean` reads it;
+    `lake build Audit` checks that Lean reports what they say. Returns the map and "", or
+    {} and why the file cannot be read: among the reasons, whatever `declared_in` finds
+    that could make a theorem's type mean other than it reads, and a theorem whose name
+    the file declares twice, since the scan could not tell which declaration its pin
+    reports."""
     if not path.exists():
         return {}, f"{rel(path)} is missing"
     src = lean_text(path)
     code = read_lean(src)[0]
     marks: list[tuple[str, int, int]] = []
     _read_code(src, 0, marks)
+    # A heading in a string's text is no heading.
+    literals = [(i, j) for kind, i, j in marks if kind in ("string", "raw")]
     headings = []
     for kind, i, j in marks:
         lines = src[i + 3:j - 2].strip().splitlines() if src.startswith("/-!", i) else []
-        if kind == "text" and lines and lines[0].startswith("## "):
+        if (kind == "text" and lines and lines[0].startswith("## ")
+                and not any(s <= i < e for s, e in literals)):
             headings.append((i, j, lines[0][3:].strip()))
     mine = [k for k, (_, _, title) in enumerate(headings) if title == AUDIT_SECTION]
     if len(mine) != 1:
@@ -1685,6 +1786,9 @@ def overlap_proofs(path: Path) -> tuple[dict, str]:
                     f"\"## {AUDIT_SECTION}\"")
     start = headings[mine[0]][1]
     end = headings[mine[0] + 1][0] if mine[0] + 1 < len(headings) else len(src)
+    declared, problem = declared_in(rel(path), src, code, end)
+    if problem:
+        return {}, problem
     pins = {}
     for m in GUARD_MSGS.finditer(code):
         printed = PRINT_AXIOMS.match(code, m.start())
@@ -1696,15 +1800,13 @@ def overlap_proofs(path: Path) -> tuple[dict, str]:
                 for a in names if a not in LEAN_FOUNDATIONS))
     proofs: dict[str, list[tuple[str, frozenset]]] = {}
     for m in PROPOSITION_TYPE.finditer(code, start, end):
-        stack = []
-        for word, name in NAMESPACE.findall(code, 0, m.start()):
-            if word == "namespace":
-                stack.append(name)
-            elif word == "section":
-                stack.append("")
-            elif stack:
-                stack.pop()
-        full = ".".join([part for part in stack if part] + [m[1]])
+        full = declared.get(m.start())
+        if full is None or full in AUDIT_NOT_OVERLAPS:
+            continue
+        if list(declared.values()).count(full) > 1:
+            return {}, (f"{rel(path)}:{line_of(src, m.start())} declares `{full}`, and another "
+                        "declaration of the file has that name too, so the scan cannot tell "
+                        "which one its pin reports")
         if full in pins:
             proofs.setdefault(f"{m[2]}.{int(m[3])}", []).append((full, pins[full]))
     return proofs, ""

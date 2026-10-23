@@ -118,12 +118,13 @@ kinds, and `kind` names the row's kind in the catalogue's words:
 More than one combination of rules may contain a proposition: `Audit/Overlaps.lean`
 proves III.5 from Diagram-segment 2 with Generalities 4, and twice more from Definition
 I.15 with two other rules. `rule` with `also` names the first combination, and `ways`
-names each further one, as a list of axioms named as facts.json names them:
+names each further one, as a list of axioms named as facts.json names them, in the order
+of the record's note:
 
 ```toml
 ways = [
-  ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
   ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"],
+  ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
 ]
 ```
 
@@ -135,6 +136,12 @@ the proposition, every combination, the first among them, is one that
 a proposition, give it at once, or supply its step" has the proposition's own type
 (`type_of% @Elements.BookIII.Prop5`), and the `#guard_msgs` pin of its `#print axioms`
 gives exactly those rules, less Lean's own `propext`, `Classical.choice` and `Quot.sound`.
+`Audit.I_7`, a circular derivation through I.7's own corollary, proves no overlap, and
+is not read. The check reads the file's text, not what Lean makes of it, so it refuses
+the whole file where the text could make a theorem's type mean other than it reads: an
+import outside `Elements`, a `variable`, `include` or `export` before the section's end,
+a namespace or a declaration (a constructor among them) whose name has a part
+`Elements`, or a theorem of the section whose name the file declares twice.
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
@@ -146,11 +153,16 @@ each unused is named. The table's Overlap row names the rules and gives the reco
 `note` word for word (with no note, it says by the kind that the rules contain the
 proposition, or supply a step of a proof of it); it adds the account of which rules our
 proof rests on only when the proof uses some but not all. Where an overlap has `ways`,
-each of these places names every combination, the first one first, and says of each,
-as of a single one, which of its rules our proof rests on: in the line and the summary,
-all, some or none; in the table, for each combination the proof uses only in part, each
-rule used and each unused. Every `[overlap]` names its kind, and one that does not is a
-fault, so no page words an overlap by a guess.
+the line under the enunciation says in a few words how many combinations contain the
+proposition, and whether our proof rests on all, some or none of the rules of each ("our
+axioms already contain it in three ways, and our proof rests on some of the rules of
+each"); where that differs from one to another, it takes each by its place. The summary
+and the table name every combination, the first one first, and say of each, as of a
+single one, which of its rules our proof rests on: in the summary, whether it rests on
+all of its rules, some (naming each rule used and each unused) or none; in the table,
+for each combination the proof uses only in part, each rule used and each unused. Every
+`[overlap]` names its kind, and one that does not is a fault, so no page words an
+overlap by a guess.
 
 ### `[coverage]`: the clause map
 
@@ -292,7 +304,8 @@ holds an `[overlap]` to them too: each rule it names, in `rule`, `also` or `ways
 axiom in facts.json, and, for the kinds `states` and `gives`, each combination is one
 that `Audit/Overlaps.lean` proves the proposition from, as `[overlap]` says above, read
 from the file's text, whose pins `lake build Audit` checks. A fault names the record,
-the combination and the rules that the file proves the proposition from.
+the combination and the rules that the file proves the proposition from, or the line of
+the file that the check refuses it for.
 `scripts/render.py` reads a carried passage's `helper` as the porism or a companion
 facts.json attaches to the proposition, and stops, naming the proposition and the helper,
 on any other.
