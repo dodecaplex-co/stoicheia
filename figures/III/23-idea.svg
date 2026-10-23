@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.23 at a glance</title>
-  <desc>Draw two different segments ACB, ADB on the same straight line AB (blue), on the same side: the angle ACB in the inner one (red) is always greater than ADB (yellow). So two segments there with equal angles coincide.</desc>
+  <desc>Draw two different segments ACB, ADB on the same straight line AB (blue), on the same side: the angle ACB (red) in the inner one is always greater than ADB (yellow). So two segments there with equal angles coincide.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M138.1,172.7 L163.2,179.4 A26,26 0 0,1 117.6,188.7 Z" fill="#d0312d"/>
   <path d="M258.7,78.5 L269.6,102.1 A26,26 0 0,1 238.2,94.5 Z" fill="#f2b705"/>
