@@ -137,11 +137,18 @@ a proposition, give it at once, or supply its step" has the proposition's own ty
 (`type_of% @Elements.BookIII.Prop5`), and the `#guard_msgs` pin of its `#print axioms`
 gives exactly those rules, less Lean's own `propext`, `Classical.choice` and `Quot.sound`.
 `Audit.I_7`, a circular derivation through I.7's own corollary, proves no overlap, and
-is not read. The check reads the file's text, not what Lean makes of it, so it refuses
-the whole file where the text could make a theorem's type mean other than it reads: an
-import outside `Elements`, a `variable`, `include` or `export` before the section's end,
-a namespace or a declaration (a constructor among them) whose name has a part
-`Elements`, or a theorem of the section whose name the file declares twice.
+is not read. The check reads the file's text, not what Lean makes of it, and refuses the
+whole file, naming the line, for each of these forms: an import outside `Elements`; a
+`variable`, `include` or `export`, or a command that declares a token (`notation`,
+`infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`, `binder_predicate` or
+`declare_simp_like_tactic`), before the section's end; a namespace or a declaration (a
+constructor among them) whose name has a part `Elements`, or a part in «…» that holds a
+dot, which the check cannot tell from a longer name; or a theorem of the section whose
+name the file declares twice. `macro`, `elab` and their `_rules` are refused by the
+source scan, in `Audit/` and `Elements/` alike. The scan trusts the modules of
+`Elements` the file imports: a declaration there under `Audit.Elements`, or a notation
+there that reads `type_of% … :=` otherwise, would mislead it. The full cure, a
+follow-up, is for Lean itself to report each audit theorem's type and axioms.
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its

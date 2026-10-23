@@ -879,6 +879,16 @@ class OverlapWayTests(unittest.TestCase):
                 self.assertIn(f"has {why} section headed \"## Rules that state", problem)
         proofs, problem = negative.check_fidelity.overlap_proofs(self.root / "Missing.lean")
         self.assertEqual((proofs, problem[-10:]), ({}, "is missing"))
+        # A link is not followed, though it points to a file the scan would accept, and is
+        # named as written.
+        target = self.root / "Target.lean"
+        target.write_text(self.audit("theorem X : type_of% @Elements.BookIII.Prop5 :=\n  x\n",
+                                     pins=[("Audit.X", "Elements.Tacit.a")]), encoding="utf-8")
+        (self.root / "Link.lean").symlink_to(target)
+        self.assertEqual(negative.check_fidelity.overlap_proofs(self.root / "Link.lean"),
+                         ({}, f"{self.root}/Link.lean is a symbolic link, which the scan does "
+                              "not follow"))
+        self.assertEqual(negative.check_fidelity.overlap_proofs(target)[1], "")
 
     def test_a_heading_in_a_string_is_no_heading(self):
         """A string's text that reads as the section's heading, plain or raw, is no heading:
@@ -900,9 +910,12 @@ class OverlapWayTests(unittest.TestCase):
         instance-implicit `variable`, an `include`, a theorem that shadows a proposition, a
         namespace `Elements.BookIII` within Audit, an `export`; and a dotted constructor, a
         structure's, an instance with a priority, a «…» name, a theorem in a syntax
-        quotation whose name another declaration has, and an import outside `Elements`):
-        each could make the scan take a theorem for a proof of a proposition it does not
-        prove, so each refuses the whole file, naming its line."""
+        quotation whose name another declaration has, and an import outside `Elements`;
+        the second outside review's: a «…» name under `_root_` holding dots, a «…» name
+        holding a dot beside a `where` auxiliary of that name, and a local notation that
+        reads `type_of% … :=` otherwise): each could make the scan take a theorem for a
+        proof of a proposition it does not prove, so each refuses the whole file, naming
+        its line."""
         uses = "  have := @Elements.Tacit.inside_not_on\n"
         prop = "theorem T : type_of% @Elements.BookIII.Prop5 :=\n" + uses + "  x\n"
         for head, body, at, said in [
@@ -942,13 +955,29 @@ class OverlapWayTests(unittest.TestCase):
                      + "  trivial\n", "theorem Z : type_of%",
                  "declares `Audit.Z`, and another declaration of the file has that name too"),
                 ("import Elements\nimport Audit.Shadow\n\n", prop, "import Audit.Shadow",
-                 "imports `Audit.Shadow`, outside `Elements`")]:
+                 "imports `Audit.Shadow`, outside `Elements`"),
+                ("", "theorem _root_.«Elements.Tacit.inside_of_between» : type_of% "
+                     "@Elements.BookIII.Prop6 :=\n  @Elements.BookIII.Prop6\n",
+                 "theorem _root_", "declares `_root_.«Elements.Tacit.inside_of_between»`, a "
+                 "name with a part in «…» that holds a dot"),
+                ("", "theorem «III_5_y.x» : type_of% @Elements.BookIII.Prop5 := "
+                     "@Elements.BookIII.Prop5\n\ndef III_5_y : Nat := 0\nwhere x : True :=\n"
+                     "  have := @Elements.Tacit.len_lt_of_inside\n"
+                     "  have := @Elements.Tacit.lt_irrefl\n  trivial\n",
+                 "theorem «III_5_y.x»", "declares `«III_5_y.x»`, a name with a part in «…» "
+                 "that holds a dot, which the scan cannot tell from a longer name"),
+                ("", "section\nlocal notation:max \"type_of%\" _a:max \" := \" b:max => b\n\n"
+                     "theorem III_5_n : type_of% @Elements.BookIII.Prop5 := True := by\n"
+                     "  have := @Elements.Tacit.len_lt_of_inside\n"
+                     "  have := @Elements.Tacit.lt_irrefl\n  trivial\nend\n",
+                 "local notation", "has `notation` before the section's end")]:
             with self.subTest(said=said):
                 text = self.audit(body, head, [(name, "Elements.Tacit.inside_not_on") for name
                                                in ("Audit.III_5_inst", "Audit.III_5_incl",
                                                    "Audit.III_6_shadow", "Audit.III_8_nested",
                                                    "Audit.III_7_alias", "Audit.T.T", "Audit.T",
-                                                   "Audit.Z")])
+                                                   "Audit.Z", "Elements.Tacit.inside_of_between",
+                                                   "Audit.III_5_y.x", "Audit.III_5_n")])
                 proofs, problem = self.proofs(text)
                 line = text[:text.index(at)].count("\n") + 1
                 self.assertEqual(proofs, {})
@@ -1024,16 +1053,17 @@ class OverlapWayTests(unittest.TestCase):
         before["overlap"].pop("ways", None)
         self.assertEqual(after, before)
         # A record that has `ways` already, written across lines, gains the plant's at the end.
-        twice, k = negative.with_way(planted, ["Tacit.circle_eq", "Tacit.centre_inside"])
-        self.assertEqual((k, tomllib.loads(twice)["overlap"]["ways"][-2:]),
-                         (2, [negative.UNPROVED_WAY, ["Tacit.circle_eq", "Tacit.centre_inside"]]))
+        twice, k2 = negative.with_way(planted, ["Tacit.circle_eq", "Tacit.centre_inside"])
+        self.assertEqual((k2, tomllib.loads(twice)["overlap"]["ways"][-2:]),
+                         (k + 1, [negative.UNPROVED_WAY,
+                                  ["Tacit.circle_eq", "Tacit.centre_inside"]]))
         record = negative.heath.validate_review(after | {"overlap": tomllib.loads(planted)[
             "overlap"]}, "III", 5, require_stamp=False, where="the planted record")
         negative.check_fidelity.check_overlap_ways("III.5", "the planted record",
                                                    record["overlap"])
         self.assertEqual(len(self.errors), 1, self.errors)
         self.assertTrue(self.errors[0].startswith(
-            f"the planted record: [overlap] `ways` {k - 1} names "
+            f"the planted record: [overlap] `ways` {k} names "
             "[Tacit.len_lt_of_inside, Tacit.lt_irrefl] as containing III.5"), self.errors[0])
 
 

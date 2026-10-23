@@ -108,11 +108,16 @@
      theorem of that file's section "Rules that state a proposition, give it at once, or
      supply its step" whose type is the proposition's own, as the theorem's `#guard_msgs`
      pin of `#print axioms` gives them (`overlap_proofs`, read from the file's text, whose
-     pins `lake build Audit` checks), and not one of AUDIT_NOT_OVERLAPS. The file is
-     refused whole where its text could make a theorem's type mean other than it reads:
-     an import outside `Elements`, a `variable`, `include` or `export` before the
-     section's end, a namespace or declaration whose name has a part `Elements`, or a
-     theorem there whose name the file declares twice (`declared_in`).
+     pins `lake build Audit` checks), and not one of AUDIT_NOT_OVERLAPS. The scan reads
+     the file's text, not what Lean makes of it, and refuses the file whole for each of
+     these forms, naming its line: an import outside `Elements`; a `variable`, `include`
+     or `export`, or a command that declares a token (`notation`, `infix` and the rest of
+     HIDDEN), before the section's end; a namespace or declaration whose name has a part
+     `Elements`, or a part in «…» that holds a dot; or a theorem there whose name the
+     file declares twice (`declared_in`). The scan trusts the modules of `Elements` the
+     file imports: a declaration there under `Audit.Elements`, or a notation there that
+     reads `type_of% … :=` otherwise, would mislead it. The full cure, a follow-up, is
+     for Lean itself to report each audit theorem's type and axioms.
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -1668,11 +1673,11 @@ def lean_words(*words: str) -> re.Pattern:
 
 # The scan reads a theorem's type in AUDIT_OVERLAPS as it is written, where Lean
 # elaborates it (#293): so it reads the full name of each declaration, in the namespaces
-# Lean puts it in, and refuses the file where its text could make a type mean another
-# (`declared_in`). DECLARES: the word of a command that opens or closes a scope, wherever
-# it stands, or declares a name. Lean opens a scope for each part of `namespace A.B` or
-# `section A.B`, and `end B` closes one; `noncomputable section` is a section, and a
-# `mutual` block ends with `end` too.
+# Lean puts it in, and refuses the file for each form `declared_in` lists that could make
+# a type mean another. DECLARES: the word of a command that opens or closes a scope,
+# wherever it stands, or declares a name. Lean opens a scope for each part of `namespace
+# A.B` or `section A.B`, and `end B` closes one; `noncomputable section` is a section, and
+# a `mutual` block ends with `end` too.
 DECLARES = lean_words("namespace", "section", "mutual", "end", "theorem", "lemma", "def",
                       "abbrev", "instance", "structure", "class", "inductive", "coinductive",
                       "opaque", "axiom")
@@ -1685,9 +1690,16 @@ PRIORITY = re.compile(r"\s*\(\s*priority\s*:=[^)]*\)")
 # A constructor's name, after `|` or before a structure's `::`: Lean takes a dotted one, as
 # `| Elements.BookIII.Prop5 : T`.
 CONSTRUCTOR = re.compile(r"\|\s*([^\s:({\[|]+)|([^\s:({\[|]+)\s*::")
-# `variable`, with `include`, gives a theorem hypotheses its type does not show, and
-# `export` names a declaration under another name.
-HIDDEN = lean_words("variable", "include", "export")
+# `variable`, with `include`, gives a theorem hypotheses its type does not show, `export`
+# names a declaration under another name, and a notation, or another command that
+# declares a token, can make a type's text read as another term: Lean takes the longest
+# match, so after `local notation:max "type_of%" _a:max " := " b:max => b`, the theorem
+# `theorem T : type_of% @Elements.BookIII.Prop5 := True := …` proves `True`. `macro` and
+# `elab`, which declare a token too, and `macro_rules` and `elab_rules`, which give syntax
+# a meaning, are FORBIDDEN in every file check_rules reads, this one among them.
+HIDDEN = lean_words("variable", "include", "export", "notation", "infix", "infixl", "infixr",
+                    "prefix", "postfix", "syntax", "binder_predicate",
+                    "declare_simp_like_tactic")
 
 
 def overlap_ways(overlap) -> list[tuple[str, list[str]]]:
@@ -1702,14 +1714,30 @@ def name_parts(name: str) -> list[str]:
     return [quoted or plain for quoted, plain in re.findall(r"«([^»]*)»|([^.«»]+)", name)]
 
 
+def misleading_name(parts: list[str]) -> str:
+    """Why a declared name of these parts (`name_parts`) could mislead the scan, or "": a
+    part `Elements` could stand for a proposition's own name, and a part in «…» that holds
+    a dot reads, once the parts are joined, as a longer name (`Audit.«III_5_y.x»` as
+    `Audit.III_5_y.x`, which a `where` auxiliary the scan never sees may be)."""
+    if "Elements" in parts:
+        return "a name with a part `Elements`"
+    if any("." in part for part in parts):
+        return ("a name with a part in «…» that holds a dot, which the scan cannot tell from "
+                "a longer name")
+    return ""
+
+
 def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, str], str]:
     """Each declaration of `code`, the Lean that `read_lean` gives from the file `where`'s
     text `src`, by the offset of its word, with its full name, in the namespaces Lean puts
-    it in (DECLARES). Or {} and why the scan cannot read a theorem's type as Lean does: an
-    import outside `Elements`, whose names it does not read; a `variable`, `include` or
-    `export` before the offset `end` (HIDDEN); or a namespace or a declaration, a
-    constructor among them, whose name has a part `Elements`, which could stand for a
-    proposition's own name. Each is named by its line."""
+    it in (DECLARES). Or {} and the first of the forms it refuses, named by its line, each
+    of which could make a theorem's type mean other than its text reads: an import outside
+    `Elements`, whose names it does not read; a `variable`, `include` or `export`, or a
+    command that declares a token, before the offset `end` (HIDDEN); or a namespace or a
+    declaration, a constructor among them, whose name could mislead it
+    (`misleading_name`). It refuses only these: the scan trusts the modules of `Elements`
+    the file imports, and a declaration there under `Audit.Elements`, or a notation there
+    that reads `type_of% … :=` otherwise, would mislead it."""
     def at(offset):
         return f"{where}:{line_of(src, offset)}"
     why = ("so a theorem's type could mean other than it reads, and the scan reads only "
@@ -1723,9 +1751,9 @@ def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, st
     if m := HIDDEN.search(words, 0, end):
         return {}, f"{at(m.start())} has `{m[0]}` before the section's end, {why}"
     for m in CONSTRUCTOR.finditer(code):
-        if "Elements" in name_parts(m[1] or m[2]):
-            return {}, (f"{at(m.start())} declares the constructor `{m[1] or m[2]}`, a name "
-                        f"with a part `Elements`, {why}")
+        if misleading := misleading_name(name_parts(m[1] or m[2])):
+            return {}, (f"{at(m.start())} declares the constructor `{m[1] or m[2]}`, "
+                        f"{misleading}, {why}")
     names: dict[int, str] = {}
     stack: list[str] = []
     for m in DECLARES.finditer(words):
@@ -1740,10 +1768,10 @@ def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, st
             stack += [""] * max(len(parts), 1)
         elif m[0] == "end":
             del stack[max(len(stack) - max(len(parts), 1), 0):]
-        elif "Elements" in parts:
+        elif misleading := misleading_name(parts):
             return {}, (f"{at(m.start())} "
                         + ("opens the namespace" if m[0] == "namespace" else "declares")
-                        + f" `{named[1]}`, a name with a part `Elements`, {why}")
+                        + f" `{named[1]}`, {misleading}, {why}")
         elif m[0] == "namespace":
             stack += parts
         elif parts:
@@ -1762,10 +1790,13 @@ def overlap_proofs(path: Path) -> tuple[dict, str]:
     LEAN_FOUNDATIONS. A theorem with no such pin proves nothing here, nor does one of
     AUDIT_NOT_OVERLAPS. The pins are read from the file's text, as `read_lean` reads it;
     `lake build Audit` checks that Lean reports what they say. Returns the map and "", or
-    {} and why the file cannot be read: among the reasons, whatever `declared_in` finds
-    that could make a theorem's type mean other than it reads, and a theorem whose name
-    the file declares twice, since the scan could not tell which declaration its pin
-    reports."""
+    {} and why the file cannot be read: among the reasons, a symbolic link, each form that
+    `declared_in` refuses, and a theorem whose name the file declares twice, since the
+    scan could not tell which declaration its pin reports."""
+    if path.is_symlink():
+        # Named as written: `rel` would name the file the link points to.
+        return {}, (f"{rel(path.parent)}/{path.name} is a symbolic link, which the scan "
+                    "does not follow")
     if not path.exists():
         return {}, f"{rel(path)} is missing"
     src = lean_text(path)
