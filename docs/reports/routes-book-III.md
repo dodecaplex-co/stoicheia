@@ -5,8 +5,14 @@
 This report answers issues #125, #126, #127, #129, #130 and #131. Five of them ask for
 Euclid's own argument where our proofs of Book III take another way, or for something his
 words say that our Lean does not yet say; the sixth asks which of our calls of III.1 do any
-work. The Lean is in seven files under `Staging/Routes/`, and none of it is in `Elements/`
-yet. Its declarations are in two namespaces:
+work. The Lean was written in seven files under `Staging/Routes/`, none of it in
+`Elements/`. *Note of 22 October 2026, card #332:* III.8 and III.27 have since moved into
+[Elements/BookIII/Prop08.lean](../../Elements/BookIII/Prop08.lean) and
+[Elements/BookIII/Prop27.lean](../../Elements/BookIII/Prop27.lean), unchanged but for the
+namespace and the removed checks of their types, for each proof now is the theorem in
+`Elements/`; their staged copies are gone, and the sections on #125 and #127 say what the
+move leaves to do. "This branch", in this report, is the routes train's, merged as #361.
+The declarations still staged, in five files, are in two namespaces:
 
 ```text
 Elements.BookIII.Staging   III.20 in general, with its helper, its special case and
@@ -85,8 +91,8 @@ with its issue"), while an issue labelled `blocks-release` tracks their move int
 
 | Issue | File | What it holds | Statement |
 |---|---|---|---|
-| #125 | [`Prop08.lean`](../../Staging/Routes/Prop08.lean) | III.8, with Euclid's last step | as in `Elements/` |
-| #127 | [`Prop27.lean`](../../Staging/Routes/Prop27.lean) | III.27 by Euclid's reductio and halving, the obtuse case by the remainders, the right read off the measure | as in `Elements/` |
+| #125 | [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean), moved there on 22 October 2026 (#332) | III.8, with Euclid's last step | the theorem in `Elements/` |
+| #127 | [`Elements/BookIII/Prop27.lean`](../../Elements/BookIII/Prop27.lean), moved there on 22 October 2026 (#332) | III.27 by Euclid's reductio and halving, the obtuse case by the remainders, the right read off the measure | the theorem in `Elements/` |
 | #126 | [`Touching.lean`](../../Staging/Routes/Touching.lean) | Definition III.3 read at the point of contact, and its agreement with our reading of the whole circles | new, a draft |
 | #129 | [`Prop20.lean`](../../Staging/Routes/Prop20.lean), [`Prop21.lean`](../../Staging/Routes/Prop21.lean), [`Prop26.lean`](../../Staging/Routes/Prop26.lean) | the angle at the centre of any size; III.20 for it; III.21 and III.26 by Euclid's one argument | III.20 in general new, a draft; III.20's special case, III.21 and III.26 as in `Elements/` |
 | #130 | [`AngleOfContact.lean`](../../Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
@@ -181,28 +187,34 @@ DA, equal to DK, by I.4 at the centre M, and supposes a third straight line DN e
 "that is, the nearer to the least DG equal to the more remote: which was proved
 impossible." The order on the convex circumference does the work.
 
-**What `Elements/` does.**
-[Elements/BookIII/Prop08.lean](../../Elements/BookIII/Prop08.lean) takes that last step by
+**What `Elements/` did before the move.**
+[Elements/BookIII/Prop08.lean](../../Elements/BookIII/Prop08.lean) took that last step by
 I.24 at the centre M, for every point of the circle: unequal angles at M give unequal
 straight lines from D. Its record, [review/III/08.toml](../../review/III/08.toml), gives the
 route as modified, and the [gap catalogue](gaps-book-III.md) says why under III.8: the
 convex order does not reach a DN ending on the concave circumference, or a DK that touches
 the circle.
 
-**What the staged file does.** It keeps the statement and the proof in `Elements/`, and
-changes only the last step. When N is off DA, it is compared with DB or DK, whichever lies
-on its side of DA. If both are on the convex circumference, the one making the less angle
+**What the staged file did, and `Elements/` now does.** It kept the statement and the proof
+then in `Elements/`, and changed only the last step. When N is off DA, it is compared with
+DB or DK, whichever lies on its side of DA. If both are on the convex circumference, the one making the less angle
 with DA is the nearer to the least DG, and so the less, by the convex order proved earlier
 in the same proof: that is Euclid's step. If the two angles are equal, N lies on the same
 ray from D and as far from D, and so is the same point. Two points of the concave
 circumference are compared by the concave order in the same way, a case Euclid's figure
 leaves aside. On DA itself, N is A or G, the greatest and the least. The helpers
 `Prop8.outside`, `Prop8.within` and `Prop8.on_diameter` are cited from III.8's file in
-`Elements/`. The file ends with its own check that the statement is the one in `Elements/`:
+`Elements/`. The staged file ended with its own check that the statement was the one in
+`Elements/`:
 
 ```lean
 example : type_of% @Elements.BookIII.Routes.Prop8 = type_of% @Elements.BookIII.Prop8 := rfl
 ```
+
+*Note of 22 October 2026, card #332:* the staged proof has moved into
+`Elements/BookIII/Prop08.lean`, unchanged but for its namespace and that check, which the
+move removed, for the proof now is the theorem in `Elements/`. It needed no helper of its
+own. The staged copy is gone.
 
 **What remains of the departure.** I.24 at M stays for the cases neither order reaches:
 the two points on different circumferences, or one of them a point where a straight line
@@ -213,13 +225,13 @@ where it stands. These cases lie within Euclid's statement, so under
 [review/SCHEMA.md](../../review/SCHEMA.md) the route stays modified, with a narrower note:
 the I.24 step now serves only where his order cannot.
 
-**What is left.** No approval is needed. At the move the staged proof replaces the proof
-in `Elements/BookIII/Prop08.lean`; the record is read again, with its passage at "that is,
-the nearer to the least DG equal to the more remote" and its route note rewritten; and the
-gap catalogue's entry and the mishnah's paragraph on "which was proved impossible" say what
-changed. The companions `Prop8.partner` and `Prop8.general` use the statement, which does
-not change. The staged proof still takes the centre by III.1 under Heath's "[III. 1]", as
-the proof in `Elements/` does (#131, below).
+**What is left.** No approval is needed. On 22 October 2026, under card #332, the staged
+proof replaced the proof in `Elements/BookIII/Prop08.lean`, and the mishnah's paragraph on
+"which was proved impossible" now says what changed. Still to come: the record, read again,
+with its passage at "that is, the nearer to the least DG equal to the more remote" and its
+route note rewritten; and the gap catalogue's entry, revised. The companions
+`Prop8.partner` and `Prop8.general` use the statement, which did not change. The proof
+still takes the centre by III.1 under Heath's "[III. 1]" (#131, below).
 
 ## III.27: Euclid's reductio and halving, the obtuse case by the remainders (#127)
 
@@ -232,19 +244,19 @@ angles at A and D are acute. Heath, having set out the cases under III.26, write
 III.27 that "the remarks about the method of treating the different cases apply here also"
 (vol. 2, p. 59).
 
-**What `Elements/` does.**
-[Elements/BookIII/Prop27.lean](../../Elements/BookIII/Prop27.lean) keeps Euclid's reductio
+**What `Elements/` did before the move.**
+[Elements/BookIII/Prop27.lean](../../Elements/BookIII/Prop27.lean) kept Euclid's reductio
 at the centres, and his halving where the centres lie on the sides of A and D. Elsewhere the
-angles at A and D are right or obtuse, and the proof in `Elements/` halves the measure of
+angles at A and D are right or obtuse, and the proof in `Elements/` halved the measure of
 the circumference instead (`Circumference.standing`: a circumference is twice the angle
 standing on it). That is the shortcut [FORMALIZATION](../FORMALIZATION.md), section 5, names
 for "III.27, III.30 and III.26's measures", "by the circumference measure alone", before it
 says "take his route, for his inferences are the proposition's content". The record,
 [review/III/27.toml](../../review/III/27.toml), gives the route as modified.
 
-**What the staged file does.** It writes Euclid's argument, his reductio and his halving
-together, once, for any points of the two circles on the centres' sides whose angles stand
-on equal circumferences, and uses it as the centres fall. A first step shows that equal
+**What the staged file did, and `Elements/` now does.** It writes Euclid's argument, his
+reductio and his halving together, once, for any points of the two circles on the centres'
+sides whose angles stand on equal circumferences, and uses it as the centres fall. A first step shows that equal
 circumferences put the centres alike: both on the sides of A and D, both on BC and EF, or
 both beyond them, since a circumference is less than a semicircle, a semicircle, or greater
 as its centre lies (`Circumference.lt_semicircle`, `Circumference.semicircle`,
@@ -275,27 +287,35 @@ theorem Prop27.sides {A B C D E F G H : Point} {ABC DEF : Circle} (hG : Centre G
 In the reductio, under "therefore the circumference BK is equal to the circumference EF"
 [III. 26], III.26 in `Elements/` gives BK and EF equal in measure and congruent. The
 comparison with BC that follows is by measure, so the Lean takes the measures, as III.27 in
-`Elements/` does; a remark in the staged file says why. The file does not call
-`Circumference.standing`. Its theorem for III.27 has the statement in `Elements/` exactly,
-and the file ends with Lean's check of that, as III.8's does (see "Checks").
+`Elements/` did before the move; a remark in the proof says why. The file does not call
+`Circumference.standing`. Its theorem for III.27 had the statement in `Elements/` exactly,
+and the staged file ended with Lean's check of that, as III.8's did (see "Checks").
+
+*Note of 22 October 2026, card #332:* the staged proof and its helper `Prop27.sides` have
+moved into `Elements/BookIII/Prop27.lean`, unchanged but for their namespace and that check,
+which the move removed, for the proof now is the theorem in `Elements/`. The file now
+imports III.22 and III.24, which the proof cites; nothing it imports imports it. The staged
+copy is gone.
 
 **What remains of the departure.** Euclid's halving covers acute angles alone, so the
 obtuse and right cases are argued another way, by III.22 and by the angle in a semicircle;
 each is labelled where it stands. As in `Elements/`, K is laid on the ray of I.23 at the
 distance GB, so that it is on the circle, and "the less to the greater" is read from the
 angles at G (`Circumference.centre`). The obtuse and right cases lie within Euclid's
-statement, so the route stays modified. Its note changes from the measure to III.22 for the
-obtuse case, and keeps the measure for the right case, which still rests on it through
-`Prop24.angle_type`. The measure still compares the circumferences in every case: the
-staged file's first theorem sorts the centres by it, calling `Prop24.angle_type` for where
+statement, so the route stays modified. Its note is to change from the measure to III.22
+for the obtuse case, and to keep the measure for the right case, which still rests on it
+through `Prop24.angle_type`. The measure still compares the circumferences in every case:
+the file's first theorem, `Prop27.sides`, sorts the centres by it, calling `Prop24.angle_type` for where
 they lie, and the reductio reads "the less to the greater" from it, so `Circumference.eq`
 [III. 21] lies beneath the acute and obtuse cases too. What the note records is where the
 angles at A and D are read off the measure: now the right case alone.
 
 **What is left.** No approval is needed: nothing new is stated or defined, and the step that
-puts the centres alike is a helper of III.27, before it in its file. At the move the staged
-proof replaces the proof in `Elements/`, the record is read again with its route note, and
-the gap catalogue's entry for III.27, which tells of `Circumference.standing`, is revised.
+puts the centres alike is a helper of III.27, before it in its file. On 22 October 2026,
+under card #332, the staged proof replaced the proof in `Elements/`, and the mishnah now
+tells the obtuse and right cases as the proof takes them. Still to come: the record, read
+again with its route note, and the gap catalogue's entry for III.27, which tells of
+`Circumference.standing`, revised.
 
 ## Definition III.3 read at the point of contact (#126)
 
@@ -764,6 +784,21 @@ not built from changed Lean. How far the audit pins shrink is inferred, for they
 
 ## Checks
 
+**On branch lean/promote-routes-332 at 10b9ccee with this train's edits** (22 October 2026,
+card #332, the move of III.8 and III.27 into `Elements/`). Before the staged copies were
+deleted, they were built against the moved files, and their two type equalities closed by
+`rfl` once more. Then `lake build Elements.BookIII.Prop08 Elements.BookIII.Prop27 Staging`
+completed (107 jobs), as did `lake build Elements` (185 jobs) and the three audit modules
+that import `Elements` (187 jobs, every pin holding). The moved files gave no warning, and
+no message at all elaborated alone, and hold no `sorry` and no command that FORMALIZATION,
+section 7, forbids; the only warnings were the four unused variables of
+`Elements/Figure/Circles.lean` and `Elements/BookIII/Prop31.lean`, which import neither.
+`python3 scripts/check_style.py` and `python3 scripts/check_links.py` passed (`✓ style: the
+hard rules hold (S1–S26)`; `✓ links: all 14247 relative links and anchors in 504 Markdown
+files resolve`), and `python3 scripts/check_fidelity.py` found two problems alone: the
+stamps of the records of III.8 and III.27, whose Lean has changed, are stale until those
+records are read again.
+
 Each check below names the revision it ran on. The staged Lean is the same from e786ffc3
 to e09f40f6: in that span no file of `Staging/`, `Certificate/` or the toolchain changes,
 nor `Staging.lean`, and `Elements/` changes only in the proof of III.1's step
@@ -799,6 +834,12 @@ done
 lake env lean RoutesCheck.lean
 lake env lean Cutoff.lean
 ```
+
+*Note of 22 October 2026, card #332:* these commands, the imports of RoutesCheck.lean below
+and its pairs for III.8 and III.27, and the runs below that name `Staging/Routes/Prop08.lean`
+or `Prop27.lean`, are those of the files as they stood at the revisions given. Both files
+have since moved into `Elements/BookIII/Prop08.lean` and `Prop27.lean`, and the staged
+copies are gone, so these commands reproduce at those revisions only.
 
 Every retained Lean validation command exited 0. Each of the seven files, elaborated alone,
 gave no message at all, so the five type equalities they end with hold. The build of the
