@@ -1,0 +1,8 @@
+# Check coincidence steps and module boundaries, rejecting reached Staging.Hidden and
+# Lean.Hidden helpers and allowing unused foreign imports. It needs the foundations built,
+# and runs immediately after Facts.lean (docs/WORKFLOW.md, section 8).
+order = 50
+name = "python3 -I tests/test_certificate.py"
+job = "check"
+command = ["python3", "-I", "tests/test_certificate.py"]
+section8 = "python3 -I tests/test_certificate.py"

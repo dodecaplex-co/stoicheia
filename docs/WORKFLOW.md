@@ -169,7 +169,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
   between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
   which `render.py` fills; the rest of README.md has an owner of its own, named in the
-  orders. The integrator also owns the companions list,
+  orders. Section 8's first command block, between the `<!-- checks -->` markers of this
+  page, is generated too, from the registry of checks in `checks/`, and travels with the
+  change to the registry that moves it. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
   companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp
@@ -313,8 +315,10 @@ Ships' captains enforcing a few pages each do not, between them, make one voice.
 
 This section is the one home of the commands; every other page links here and keeps only
 the subset its reader runs. The evidence belongs to the revision being delivered. On it,
-run exactly what CI's `check` job runs, in its order:
+run exactly what CI's `check` job runs, in its order (`python3 scripts/run_checks.py --job
+check` runs it so, as CI does):
 
+<!-- checks -->
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
 lake build
@@ -339,6 +343,33 @@ git status --porcelain                 # prints nothing
 python3 scripts/check_queue.py --tree .
 python3 scripts/check_links.py
 ```
+<!-- /checks -->
+
+**The registry of checks.** That block is generated: each of its commands is a file of
+its own in [`checks/`](../checks/README.md), and `render.py` writes the block from them,
+in the order of their `order` fields. The same files are CI's `check` job, which runs
+`python3 scripts/run_checks.py --job check` after its setup, each check a named group of
+its log, stopping at the first that fails; and they are the pre-flight's sequence
+(section 10, step 4), which reads origin/main's copy of them out of Git, never the copy of
+the commit it checks ([the decision](decisions/2026-10-22-check-registry.md)). So CI runs
+the pull request's registry, as it runs the pull request's own workflow, while the
+pre-flight runs main's. CI's `check` job is a required check of the pull request, so a
+train that changes the registry does change checks that judge it there; three things keep
+that safe. Every train that touches `checks/` is R3 or above, so its pre-flight runs
+main's whole registry on it, in both passes, whatever its CI runs. The change is
+protected: each registry file it adds, removes or changes is named in a decision entry,
+and the pull request carries `security-review`. And the change judges later trains only
+once it has merged. To add a check, add one file to `checks/`
+([its README](../checks/README.md) says what a file holds), run `render.py`, and commit
+the file with the regenerated block; to remove one, or change its command, job or order,
+change its file. `checks/` is a protected path and a check input (section 10), of class
+R3, and neither `scripts/safe_push.py` nor the CI workflow changes with it. The registry's
+reader, `scripts/registry.py`, and its runner, `scripts/run_checks.py`, are R5, with the
+landing tool and CI: main's reader decides the pre-flight's sequence, and the runner is
+CI's `check` job. The reader stays one self-contained file of the standard library, since
+the pre-flight runs it alone, out of Git; step 3 of the pre-flight runs the commit's own
+reader so, and refuses the commit when it cannot read the commit's registry, before a
+broken reader can merge.
 
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
@@ -473,7 +504,8 @@ in which all three jobs are green, and the release waits for that. The suite's t
 read the whole tree,
 content as well as code: the check
 inputs safe_push guards, the workflows, this page, whose first command block they compare
-with safe_push's `CHECKS` and the `check` job, and content such as `heath/I/01.md`, the
+with the registry's render, the registry itself, which they hold to safe_push's reading of
+it and the `check` job to its one step, and content such as `heath/I/01.md`, the
 decisions page, `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and
 `facts.json`, over which they run `check_fidelity.py` and `render.py`; so any change can
 break them, and the next run shows it. They need Git with the whole history and the pinned
@@ -484,10 +516,12 @@ the three jobs reads the repository with no other permission, and its checkout k
 token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
-head commit of every pull request of R3 to R5 (section 10), but one: it does not yet run
-`python3 -I tests/model/results_check.py`, which only CI's `model` job runs until the
-command joins safe_push's `CHECKS`. A change to the commands is made there too, and in the
-CI workflow; for R0 to R2 it leaves them to CI, which runs those of
+head commit of every pull request of R3 to R5 (section 10): those of `check` as
+origin/main's registry lists them, so a change to them is a change to `checks/` alone; those
+of `model` and `negative` from lists of its own, so a change to them is made there too, and
+in the CI workflow, but for `python3 -I tests/model/results_check.py`, which only CI's
+`model` job runs until the command joins safe_push's `MODEL_JOB`. For R0 to R2 it leaves
+them to CI, which runs those of
 `check` and `model` on the pull request before the merge. It leaves the `formal-model`
 job to CI on purpose, since it fetches
 Mathlib's prebuilt files ([model/README.md](../model/README.md#the-ci-job)), the
@@ -958,6 +992,20 @@ change already lands apart from the content it judges, the check first.
 `python3 scripts/risk.py --paths <file>...` gives a file's class before the work
 starts, and `python3 scripts/risk.py . origin/main` a branch's.
 
+**Adding a check.** A check of CI's `check` job is one file in `checks/` (section 8, "The
+registry of checks", and [the folder's README](../checks/README.md)). The train that adds
+one carries that file, section 8's command block as `render.py` regenerates it, and a
+decision entry naming the file in a sentence of its own; it is R3, and touches neither
+`scripts/safe_push.py` nor the CI workflow, so trains that each add a check no longer edit
+those two files, and a conflict in the block they both regenerate is settled by rendering
+it again. Removing a check, or changing its command, job or order, is a change to
+its one file, named the same way. The train's CI runs the train's own registry, the new
+check with it, while its pre-flight runs origin/main's whole registry, without it, in both
+passes: the check joins the pre-flight at its merge, and judges the trains after it
+there. A command of another
+job (`model`, `negative`, `formal-model`, `acceptance`) is still a step of the CI workflow
+and, where the pre-flight runs it, a line of `scripts/safe_push.py`.
+
 **The merge queue's judge.** The merge queue is not in use: the owner has not enabled
 it, and CI does not yet run on `merge_group`. Its judge, `scripts/check_queue.py`, is on
 main first, so that the change that brings the queue in is reviewed against it. The
@@ -1263,6 +1311,13 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       - no review record stale (`check_fidelity.py`, on the commit as committed);
       - the generated pages current (`render.py`, on the commit as committed, changes
         nothing, and refuses no decision entry);
+      - the commit's registry of checks readable as a later pre-flight will read it once
+        the commit is origin/main's: by the commit's own `scripts/registry.py`, taken out
+        of Git and run alone from a temporary directory, reading the commit's `checks/`
+        out of Git, its checks' names held as step 4 holds them (`render.py` and CI load
+        the reader from `scripts/` and read the worktree, so a reader that leans on a
+        module beside it would pass them both); skipped only while the commit holds
+        neither the registry nor its reader;
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
         deleted unless the decisions page or a dated entry gains a new line naming it, as
         a protected file is named (below), with a full stop after it only when its
@@ -1336,9 +1391,20 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       change can need keeping apart; should origin/main's classifier ever class one that
       does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
       checks of section 8 in that worktree, and `negative_tests.py` in a
-      second, each step timed. The check scripts and what they expect (`scripts/`,
-      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
-      the registry of checks that #229 brings) are origin/main's
+      second, each step timed. The `check` job's checks are those of origin/main's
+      registry, `checks/`, read out of Git by origin/main's `scripts/registry.py`, which
+      runs from a temporary directory: never the pull request's registry or reader, so a
+      train cannot add, drop or change a check its pre-flight runs. The pre-flight holds
+      the checks' names itself: only the check that `git status --porcelain` prints
+      nothing bears that name, and every other is named by its command's words, so that
+      no command bears a name whose failure is passed over as stale pages (below). A step
+      line says how many checks run and whose registry they come from. While origin/main
+      holds no registry (the train that brings it), the lists built into `safe_push.py`
+      stand in for it, until a follow-up card removes them; a registry at origin/main
+      that cannot be read, or whose reader fails or gives no check, refuses the
+      pre-flight. The check scripts and what they expect (`scripts/`,
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and the registry,
+      `checks/`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1561,7 +1627,6 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
-`checks/` (the registry of checks that #229 brings, one file per check),
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
 `git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
@@ -1573,7 +1638,10 @@ and the formal model's build files (`model/lakefile.toml`, `model/lakefile.lean`
 the lock the model was last checked against). Since 19 October, `model/Model/Audit.lean`
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
-build. A change to any of them needs a new line in the decisions page or a dated entry
+build. Since 22 October (#229), `checks/`, the registry of CI's `check` job, joins them,
+so that a check added or removed, or with its command, job or order changed, is named
+file by file; it is a check input too (step 4, above). A change to any of them needs a
+new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a
 relative link that resolves from the folder of the file that names it, `docs/briefs/`
 for the page and `docs/decisions/` for an entry, to exactly that path: for
