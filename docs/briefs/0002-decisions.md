@@ -5078,6 +5078,7 @@ findings:
   failed it, the `acceptance` job's ratchet could not catch a regression in those items
   as the branches above land.
   The branch carries the work of the lane of 18 October that first built it, with thanks.
+
 - **A figure that draws every case says so
   ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
   [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
