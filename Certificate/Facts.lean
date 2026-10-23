@@ -23,7 +23,10 @@ straight from Lean's own proof terms:
   entries it cites, with the calculus's `Coincidence.step` counted as Common Notion 4
   when named in a walked local declaration's value;
 * which shared steps it calls on (`Prop30.meet`, `Prop34.bisect`, `Rectangle.eq_rect`),
-  and the entries each one brings in.
+  and the entries each one brings in;
+* for I.4 and I.8, whose derivations cite laws inside a hypothetical placement, each law
+  their own Lean names, the theorems that prove it, and the construction rules beneath
+  those proofs (`cited_laws`).
 
 Every walk reads a declaration in the same way, through `mentions`: its type, its value
 and an inductive type's constructors, as `collectAxioms` reads them. The walks reject a
@@ -38,8 +41,10 @@ names, together with those it inherits. If they ever differ, the run fails.
 
 For the whole environment it also records the module that declares every axiom of
 this project, and of every axiom an entry rests on; the `opaque` words; the exact
-statement of every axiom; and the vocabulary that the axioms' statements and the
-entries' statements are written in. So `scripts/check_fidelity.py` can check from Lean
+statement of every axiom; the vocabulary that the axioms' statements and the
+entries' statements are written in; and which of the axioms are construction rules
+(docs/FORMALIZATION.md, section 9), read from their statements. So
+`scripts/check_fidelity.py` can check from Lean
 itself, not from the source text, that every axiom lives in `Elements/Foundations/`,
 that the primitive words stay opaque, that no axiom has changed what it says, and that
 no word a statement uses (`Touches`, `rect`, `Parallel`) has changed what it means.
@@ -243,6 +248,10 @@ structure Own where
   (`EqualCircles.radii`) or a shared step (`Prop5.base`, or `Prop1.perpendicular` for
   III.19). What a lemma brings in is counted by `directDeps` from it. -/
   lemmas : NameSet := {}
+  /-- Its own declarations themselves: the declaration, its helpers in `home` and Lean's
+  auxiliary declarations for them, as the walk visits them. `cited_laws` reads the laws
+  they name. -/
+  decls : NameSet := {}
 
 /-- Walk `root` as `directDeps` does, through `mentions`, and in the same steps, but pass
 only through its own declarations, as `sharedSteps` does: the helpers in `home` and Lean's
@@ -263,6 +272,7 @@ def ownDeps (env : Environment) (toolchain entries : NameSet) (root home : Name)
     seen := seen.insert c
     unless ← isLocal env toolchain c do continue
     let some ci := env.find? c | continue
+    unless ci.isAxiom do own := { own with decls := own.decls.insert c }
     for d in mentions ci do
       let isProject ← isLocal env toolchain d
       if d == ``sorryAx || d == root || entries.contains d || cns.contains d then continue
@@ -273,6 +283,175 @@ def ownDeps (env : Environment) (toolchain entries : NameSet) (root home : Name)
       else if home.isPrefixOf d || d.isInternal then todo := todo.push d
       else own := { own with lemmas := own.lemmas.insert d }
   return own
+
+/-! ## Construction rules, and the laws a derivation cites
+
+A construction rule is an axiom whose conclusion, once this project's definitions are
+unfolded, asserts `Exists` in positive position (docs/FORMALIZATION.md, "Construction
+rules"). The names below take a single backtick, as `coincidenceStep` does, so that the
+certificate also runs on a library without the restricted calculus. -/
+
+/-- The laws a restricted derivation may cite, as a type. -/
+def citedType : Name := `Elements.Superposition.Cited
+
+/-- What a cited law asserts in an interpretation: `Cited.Holds I c`. -/
+def citedHolds : Name := `Elements.Superposition.Cited.Holds
+
+/-- The interpretation in Euclid's own words, in which the restricted rule is assumed. -/
+def primitivesName : Name := `Elements.primitives
+
+/-- How deep a statement is read, an unfolded definition counting as a step down: far more
+than any statement here needs, so a definition that unfolds without end fails the run
+instead of being followed for ever. -/
+def readDepth : Nat := 1000
+
+/-- `e` with the definition at its head unfolded and applied to `e`'s arguments, when that
+head is a definition of this project; `none` for anything else (Lean's own definitions, an
+opaque word, an axiom, a theorem, a constructor or an inductive type). -/
+def unfoldHead? (env : Environment) (toolchain : NameSet) (e : Expr) : m (Option Expr) := do
+  let .const n us := e.getAppFn | return none
+  unless ← isLocal env toolchain n do return none
+  let some ci@(.defnInfo _) := env.find? n | return none
+  return some ((ci.instantiateValueLevelParams! us).beta e.getAppArgs)
+
+/-- Field `i` of the structure value `s`: `s`'s head unfolded while it is a definition of
+this project, and a `let` at its head substituted into its body, until it is a constructor
+applied to its arguments. A projection at its head, of a structure nested in another or of
+a field that is a function, is read the same way, and the field it names, applied to the
+projection's arguments, takes its place. `none` when there is never a constructor, as for
+a structure given by an opaque word or a variable. -/
+def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
+    m (Option Expr) := do
+  let mut s := s.consumeMData.headBeta
+  let mut pending : List (Nat × Array Expr) := [(i, #[])]
+  for _ in [0:readDepth] do
+    match s.getAppFn with
+    | .proj _ j t =>
+      pending := (j, s.getAppArgs) :: pending
+      s := t.consumeMData.headBeta
+    | .letE _ _ v b _ => s := (mkAppN (b.instantiate1 v) s.getAppArgs).consumeMData.headBeta
+    | .const n _ =>
+      if let some (.ctorInfo c) := env.find? n then
+        match pending with
+        | [] => return none
+        | (j, args) :: rest =>
+          let some f := s.getAppArgs[c.numParams + j]? | return none
+          let f := (f.beta args).consumeMData.headBeta
+          if rest.isEmpty then return some f
+          pending := rest
+          s := f
+      else match ← unfoldHead? env toolchain s with
+        | some s' => s := s'.consumeMData.headBeta
+        | none => return none
+    | _ => return none
+  throwError "certificate: a structure value is too deep to read for construction rules"
+
+/-- Does `e`, read at polarity `pos`, assert `Exists` in positive position? `And` and `Or`
+keep the polarity of their parts, `Not` and the left of an implication (a `∀` binder's type)
+flip it, and both sides of an `Iff` are read at both. A definition of this project is
+unfolded where it stands, a `let` is substituted into its body, a projection of a structure
+that a definition of this project gives (an instance's `≤`) is read through that
+definition, and anything else is a leaf that asserts no existence. -/
+def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : Bool)
+    (e : Expr) : m Bool := do
+  match fuel with
+  | 0 => throwError "certificate: a statement is too deep to read for construction rules"
+  | fuel + 1 =>
+    let go := assertsExists env toolchain fuel
+    match e.consumeMData with
+    | .forallE _ d b _ => return (← go (!pos) d) || (← go pos b)
+    | .lam _ _ b _ => go pos b
+    | .letE _ _ v b _ => go pos (b.instantiate1 v)
+    | .proj _ i s =>
+      match ← projField? env toolchain s i with
+      | some f => go pos f
+      | none => return false
+    | e =>
+      let args := e.getAppArgs
+      match e.getAppFn with
+      | .lam .. => go pos e.headBeta
+      | .letE _ _ v b _ => go pos (mkAppN (b.instantiate1 v) args)
+      | .const n _ =>
+        if n == ``Exists then
+          if pos then return true
+          match args.back? with
+          | some p => go pos p
+          | none => return false
+        else if (n == ``And || n == ``Or) && args.size == 2 then
+          return (← go pos args[0]!) || (← go pos args[1]!)
+        else if n == ``Not && args.size == 1 then go (!pos) args[0]!
+        else if n == ``Iff && args.size == 2 then
+          for a in args do
+            if (← go true a) || (← go false a) then return true
+          return false
+        else if let some p := env.getProjectionFnInfo? n then
+          match args[p.numParams]? with
+          | some s =>
+            match ← projField? env toolchain s p.i with
+            | some f => go pos (f.beta (args.extract (p.numParams + 1) args.size))
+            | none => return false
+          | none => return false
+        else match ← unfoldHead? env toolchain e with
+          | some e' => go pos e'
+          | none => return false
+      | _ => return false
+
+/-- What a statement concludes: its type with the leading `∀` binders and the hypotheses of
+its implications stripped off. -/
+def conclusion : Expr → Expr
+  | .forallE _ _ b _ => conclusion b
+  | .mdata _ e => conclusion e
+  | e => e
+
+/-- Is an axiom stated as `ty` a construction rule: does its conclusion assert `Exists` in
+positive position, once this project's definitions are unfolded? -/
+def constructs (env : Environment) (toolchain : NameSet) (ty : Expr) : m Bool :=
+  assertsExists env toolchain readDepth true (conclusion ty)
+
+/-- The constructor `c` of `Cited` that the statement `ty` says holds in Euclid's own
+words: `ty` is exactly `Cited.Holds primitives c`. -/
+def provesLaw? (ty : Expr) : Option Name :=
+  match ty.consumeMData.getAppFn, ty.consumeMData.getAppArgs with
+  | .const h _, #[.const i _, .const c _] =>
+    if h == citedHolds && i == primitivesName then some c else none
+  | _, _ => none
+
+/-- The theorems beneath `root` that prove a cited law, by its constructor among `laws`:
+each a theorem whose statement is exactly `Cited.Holds primitives c`. The walk reads every
+declaration through `mentions`, goes through every declaration of this project, and stops
+at the other entries: a law proved only inside a proposition that `root` cites is not
+found. -/
+def lawProofs (env : Environment) (toolchain entries : NameSet) (root : Name)
+    (laws : Array Name) : m (Std.HashMap Name (Array Name)) := do
+  let mut seen : NameSet := {}
+  let mut todo : Array Name := #[root]
+  let mut found : Std.HashMap Name (Array Name) := {}
+  while h : todo.size > 0 do
+    let c := todo.back
+    todo := todo.pop
+    if seen.contains c then continue
+    seen := seen.insert c
+    unless ← isLocal env toolchain c do continue
+    let some ci := env.find? c | continue
+    if let .thmInfo _ := ci then
+      if let some law := provesLaw? ci.type then
+        if laws.contains law then found := found.insert law ((found.getD law #[]).push c)
+    for d in mentions ci do
+      if d != root && entries.contains d then continue
+      unless seen.contains d do todo := todo.push d
+  return found
+
+/-- The theorems among `decls` that prove a cited law among `laws`, by its constructor, as
+`lawProofs` recognises them. Given an entry's own declarations and the lemmas they call on
+(`Own.decls` and `Own.lemmas`), these are the proofs its own Lean names directly. -/
+def namedProofs (env : Environment) (decls : NameSet) (laws : Array Name) :
+    Std.HashMap Name (Array Name) := Id.run do
+  let mut found : Std.HashMap Name (Array Name) := {}
+  for d in decls.toList do
+    if let some ci@(.thmInfo _) := env.find? d then
+      if let some law := provesLaw? ci.type then
+        if laws.contains law then found := found.insert law ((found.getD law #[]).push d)
+  return found
 
 /-- Where `n` is declared, as a path from the repository root and the line of its
 name: `("Elements/BookII/Rectangles.lean", 98)` for `Rectangle.eq_rect`. -/
@@ -466,6 +645,19 @@ run_cmd do
   for (n, m) in declared do
     modules := modules.insert (nameStr n) m
     axiomNames := axiomNames.insert (nameStr n) n
+  /- The construction rules: of the axioms `axiom_modules` lists, those this project
+     declares and those an entry rests on, the ones whose conclusion asserts existence. -/
+  let mut known : NameSet := NameSet.ofList (declared.map (·.1)).toList
+  for s in subjects do
+    for a in euclidOnly (axiomsOf.getD s.name #[]) do known := known.insert a
+  let mut construction : NameSet := {}
+  for a in known.toList do
+    let some ci := env.find? a | continue
+    if ← constructs env toolchain ci.type then construction := construction.insert a
+  /- The laws a derivation may cite, in the order of their type. -/
+  let laws : Array Name := match env.find? citedType with
+    | some (.inductInfo v) => v.ctors.toArray
+    | _ => #[]
   for s in subjects do
     let p := s.name
     let axs := axiomsOf.getD p #[]
@@ -540,6 +732,60 @@ run_cmd do
         ("brings_in", Json.arr ((ordered.filter (reached.contains ·.name)).map (Json.str ·.ref))),
         ("file", Json.str file),
         ("line", toJson line)]
+    /- The laws its own declarations name, each with the theorems that prove it and the
+       construction rules beneath those proofs. A law named with no proof found fails the
+       run: an empty list of rules would claim a law proved with none. -/
+    let mut citedJson : Array Json := #[]
+    let mut named : Array Name := #[]
+    for law in laws do
+      if own.decls.toList.any fun d => (env.find? d).any fun ci => (mentions ci).contains law then
+        named := named.push law
+    unless named.isEmpty do
+      let reached ← lawProofs env toolchain entrySet p named
+      let direct := namedProofs env (own.lemmas.toList.foldl (·.insert ·) own.decls) named
+      for law in named do
+        let all := reached.getD law #[]
+        if all.isEmpty then
+          logError m!"{s.ref}: its own Lean names the law {law}, but no theorem stating \
+            exactly `Cited.Holds primitives {law}` is reached from it without passing \
+            through another entry"
+        /- The proofs its own Lean names directly, when there are any and every proof
+           reached lies beneath one of them; otherwise every proof reached. -/
+        let mine := direct.getD law #[]
+        let mut beneath : NameSet := {}
+        for d in mine do
+          for x in (← lawProofs env toolchain entrySet d #[law]).getD law #[] do
+            beneath := beneath.insert x
+        let found := (if !mine.isEmpty && all.all beneath.contains then mine else all).qsort
+          (nameStr · < nameStr ·)
+        let rulesBeneath (proofs : Array Name) : Elab.Command.CommandElabM NameSet := do
+          let mut rules : NameSet := {}
+          for proof in proofs do
+            for a in ← collectAxioms proof do
+              if construction.contains a then rules := rules.insert a
+          return rules
+        let rules ← rulesBeneath found
+        /- The self-check: the proofs listed have beneath them every construction rule
+           beneath any proof reached. If they ever differ, the run fails. -/
+        let everyRule ← rulesBeneath all
+        unless rules.toList == everyRule.toList do
+          logError m!"{s.ref}: the proofs listed for the law {law} have the construction \
+            rules {rules.toList} beneath them, but the proofs reached have {everyRule.toList}"
+        let mut proofsJson : Array Json := #[]
+        for proof in found do
+          let (file, line) ← declaredAt proof
+          proofsJson := proofsJson.push <| Json.mkObj [
+            ("name", Json.str (nameStr proof)), ("file", Json.str file), ("line", toJson line)]
+        let short := match law with
+          | .str _ x => x
+          | _ => law.toString
+        citedJson := citedJson.push <| Json.mkObj [
+          ("law", Json.str short),
+          ("proofs", Json.arr proofsJson),
+          ("construction_rules", Json.arr ((rules.toList.map nameStr).toArray.qsort (· < ·)
+            |>.map Json.str))]
+    let cited : List (String × Json) :=
+      if citedJson.isEmpty then [] else [("cited_laws", Json.arr citedJson)]
     let family : List (String × Json) := if s.kind == "proposition" then
         [("attached", Json.arr ((attachedTo p).map (Json.str ·.ref)))]
       else [("of", Json.str (refOf s.home))]
@@ -558,7 +804,7 @@ run_cmd do
       ("lean_foundations", Json.arr (foundations.map (Json.str ∘ nameStr))),
       ("shared_steps", Json.arr shared),
       ("enunciation", Json.str (doc.getD "")),
-      ("statement", Json.str statement)]
+      ("statement", Json.str statement)] ++ cited
   let axiomModules := modules.toArray.qsort (fun a b => a.1 < b.1)
   /- The statement of every axiom, and every word those statements and the entries'
      statements are written in. -/
@@ -596,7 +842,9 @@ run_cmd do
     ("opaque", Json.arr ((opaques.map nameStr).qsort (· < ·) |>.map Json.str)),
     ("axiom_types", Json.mkObj axiomTypes.toList),
     ("vocabulary", Json.mkObj words.toList),
-    ("proved_rules", Json.mkObj (provedRules.qsort (·.1 < ·.1)).toList)]
+    ("proved_rules", Json.mkObj (provedRules.qsort (·.1 < ·.1)).toList),
+    ("construction_rules", Json.arr ((construction.toList.map nameStr).toArray.qsort (· < ·)
+      |>.map Json.str))]
   IO.FS.writeFile "facts.json" (out.pretty ++ "\n")
   let count (k : String) := (subjects.filter (·.kind == k)).size
   logInfo m!"certificate: {count "proposition"} propositions, {count "porism"} porisms and \
