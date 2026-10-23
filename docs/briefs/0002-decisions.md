@@ -5589,16 +5589,6 @@ findings:
   failed in CI's `safe-push-tests` job with a `KeyError`, so they read the `ref` with
   `x.get("ref")`, which picks out exactly the entries they picked before.
   `check_fidelity.py` and `safe_push.py` already read an expectation without a `ref`.
-
-  the expectations' new forms and the plants' restoration. The fixture declares fourteen
-  stand-in axioms, one for each case of the definition; they are compiled only into the
-  test's temporary package, which no library of the edition builds, and the lock is
-  unchanged. The new expectation on `construction_rules` reads facts.json's top level and
-  so has no `ref`; five fixtures of `scripts/test_safe_push.py` that picked the lock's
-  III.1 expectations out by `(x["ref"], x["field"])` met it and failed in CI's
-  `safe-push-tests` job with a `KeyError`, so they read the `ref` with `x.get("ref")`,
-  which picks out exactly the entries they picked before. `check_fidelity.py` and
-  `safe_push.py` already read an expectation without a `ref`.
 - **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
   route (b)).** The content change that follows the check above. #150, the owner's issue
   for finishing the answers approved "as prototyped" on 20 October, offers this route by
