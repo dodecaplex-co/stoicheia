@@ -26,9 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # The whole suite has taken 38 to 45 minutes on GitHub's runners, and more on a busy
-    # day: room to spare.
-    timeout-minutes: 150
+    # The whole suite took 38 to 45 minutes on GitHub's runners, and 78 on 23 October;
+    # with #383's train checks it ran past 150, and was cancelled there mid-suite, with no
+    # hang (run 39946930069). Room to spare again, until #233 shards the suite.
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v5
         with:
