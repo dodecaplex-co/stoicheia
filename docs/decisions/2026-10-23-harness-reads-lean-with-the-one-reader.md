@@ -20,10 +20,10 @@
   keep as a hole of code, the statement runs to the end of the text, so the guard
   compares more of it, never less. `risk.py`, which runs alone and can import nothing of
   the repository's, holds a copy of `heath.comment_end`, word for word, and `past_space`
-  steps over each comment by it. All 258 `theorem PropN…` declarations on main, the
-  statements and porisms the guard reads among them, read the same with the new
-  `statement_end` as with the old, so the guard judges nothing differently on the edition
-  as it stands.
+  steps over each comment by it. All 258 `theorem PropN…` declarations in the proposition
+  files on main, the statements and porisms the guard reads among them, read the same with
+  the new `statement_end` as with the old, so the guard judges nothing differently on the
+  edition as it stands.
 
   This entry approves the change to `scripts/safe_push.py`, whose `statement_end` reads
   through `heath.read_lean` and blanks «…» names whole.
