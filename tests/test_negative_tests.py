@@ -911,53 +911,37 @@ class CommentReaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
                         self.questions.comment_end(text, spans[-1][0])
 
-    def test_the_jev_generator_runs_heath_s_own_reader(self):
-        source = b'''raise AssertionError("unrelated top-level code ran")
+    def test_the_jev_generator_s_reader_is_heath_s_word_for_word(self):
+        # The generator reads the evidence commit's heath.py as a helper, which at an older
+        # commit has no reader, so it holds a copy of heath.comment_end, word for word but
+        # for the name (the coordinator's ruling of 23 October 05:20).
+        def tree(path, name):
+            module = ast.parse((REPO / path).read_text(encoding="utf-8"))
+            found = [node for node in module.body
+                     if isinstance(node, ast.FunctionDef) and node.name == name]
+            self.assertEqual(len(found), 1, f"{path}: {name}")
+            found[0].name = "comment_end"
+            return ast.dump(found[0])
+        self.assertEqual(tree("scripts/audit/jev_questions.py", "shared_comment_end"),
+                         tree("scripts/heath.py", "comment_end"))
 
-def comment_end(src, i):
-    return ("controlled reader", src, i)
-'''
-        checked = (REPO / "scripts/heath.py").resolve()
-        with patch.object(self.questions, "read_no_follow", return_value=source) as read:
-            reader = self.questions.shared_function(*self.questions.READER)
-        read.assert_called_once_with(checked)
-        self.assertEqual(reader("prefix /- comment -/ suffix", 7),
-                         ("controlled reader", "prefix /- comment -/ suffix", 7))
-
-    def test_the_jev_generator_prepares_its_reader_before_running_helpers(self):
-        invalid = (
-            ("missing", None, r"heath\.py: helper module is missing"),
-            ("absent", b"def another_function():\n    pass\n",
-             r"defines no single function comment_end"),
-            ("duplicate", b"def comment_end(src, i):\n    pass\n\n"
-                          b"def comment_end(src, i):\n    pass\n",
-             r"defines no single function comment_end"),
+    def test_the_jev_generator_s_reader_reads_as_heath_s(self):
+        # And it reads as heath's does, on a corpus of nested blocks, doc comments,
+        # strings, character literals and «…» names.
+        corpus = (
+            "/-/- -/ import A", "/--/ x -/ y", "/-- doc -/ theorem t", "/-! module -/",
+            "/- a /- nested /- deeper -/ -/ -/ after", "/- unclosed /- -/", "-- line\nnext",
+            "-- last line", 'def s := "/- not a comment -/" -- but this is',
+            "def c := '\"' /- after a character -/", "def c := '(' -- a bracket's character",
+            "def «x /- y» := 1 /- -/", "/-/--/-/", "--/-\n/--\n-/", "/---/ -/", "",
         )
-        helper_names = {name for name, _ in self.questions.HELPERS}
-        for label, reader, message in invalid:
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                audit = root / "scripts/audit"
-                audit.mkdir(parents=True)
-                generator = audit / "jev_questions.py"
-                generator.write_bytes((REPO / "scripts/audit/jev_questions.py").read_bytes())
-                (audit / "jev.py").write_text(
-                    'raise AssertionError("Jev helper ran")\n', encoding="utf-8")
-                if reader is not None:
-                    # heath.py is the reader's file and a helper too (#349): the planted
-                    # reader after a line that fails should the helper ever run first.
-                    (root / "scripts/heath.py").write_bytes(
-                        b'raise AssertionError("heath helper ran")\n' + reader)
-                name = f"jev_questions_invalid_reader_{label}"
-                spec = importlib.util.spec_from_file_location(name, generator)
-                module = importlib.util.module_from_spec(spec)
-                with patch.dict(sys.modules) as modules:
-                    for dependency in helper_names:
-                        modules.pop(dependency, None)
-                    modules[name] = module
-                    with self.assertRaisesRegex(ValueError, message):
-                        spec.loader.exec_module(module)
-                    self.assertFalse(helper_names & modules.keys())
+        heath = negative.check_fidelity.heath
+        for text in corpus:
+            for i in range(len(text)):
+                if text.startswith(("--", "/-"), i):
+                    with self.subTest(text=text, at=i):
+                        self.assertEqual(self.questions.shared_comment_end(text, i),
+                                         heath.comment_end(text, i))
 
     def test_the_jev_generator_delegates_to_heath_s_reader(self):
         source = "prefix /- comment -/ suffix"
@@ -980,14 +964,23 @@ def comment_end(src, i):
         check_fidelity = negative.check_fidelity
         names = ("read_lean", "without_comments", "lean_comments", "comment_end", "_find",
                  "closed_up", "_read_code", "_read_string", "_read_interpolated",
-                 "lean_string")
+                 "lean_string", "CHAR", "ESCAPE", "FIELD", "FIRST", "IDENT", "ID_FIRST",
+                 "ID_REST", "INTERPOLATED", "LETTER_LIKE", "NAME_CHAR", "NAME_RUN",
+                 "NON_ASCII", "NUMBER", "RAW", "REST", "SUBSCRIPT_ALNUM")
         for name in names:
             with self.subTest(name=name):
                 self.assertIs(getattr(check_fidelity, name),
                               getattr(check_fidelity.heath, name))
+        # Nor does check_fidelity bind any of them itself, by a def or an assignment.
         source = (REPO / "scripts/check_fidelity.py").read_text(encoding="utf-8")
-        defined = {node.name for node in ast.walk(ast.parse(source))
-                   if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        defined = set()
+        for node in ast.walk(ast.parse(source)):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                defined.add(node.name)
+            elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                defined |= {n.id for target in targets for n in ast.walk(target)
+                            if isinstance(n, ast.Name)}
         self.assertEqual(sorted(defined & set(names)), [])
         with patch.object(check_fidelity, "lean_comments",
                           wraps=check_fidelity.lean_comments) as read:
