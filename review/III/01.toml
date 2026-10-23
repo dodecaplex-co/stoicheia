@@ -25,6 +25,18 @@ helper = "Prop1.within"
 note = "Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes. Inside `Prop1.construction`, `exists_centre` supplies a centre only for this proof: `Prop1.within` takes III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
 
 [[passage]]
+at = "let CE be bisected at F"
+kind = "helper"
+helper = "BookI.Prop10"
+note = "Euclid bisects AB and CE and draws DC at right angles without references from Heath here. Within `Prop1.construction`, the Lean uses I.10 (`BookI.Prop10`) for both bisections, I.11 (`BookI.Prop11`) for DC, and `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, twice to find C and E through the interior point D."
+
+[[passage]]
+at = "For suppose it is not, but, if possible, let G be the centre"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid supposes a centre G other than F. The Lean takes G from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and supposes G off CE to reach the contradiction."
+
+[[passage]]
 at = "and let GA, GD, GB be joined"
 kind = "case"
 helper = "Prop1.middle"
@@ -32,14 +44,25 @@ note = "Euclid's figure keeps the supposed centre G off AB. On AB it would be AB
 
 [[passage]]
 at = "But the angle FDB is also right"
+kind = "case"
+note = "If AB passes through the centre, F is D and there is no angle FDB, so the Lean takes the angle CDB, right by construction. For \"the greater to the less\" it shows that at D only one straight line is at right angles to DB, wherever G lies, so G is on CE."
+
+[[passage]]
+at = "therefore the angle FDB is equal to the angle GDB"
 kind = "helper"
 helper = "Prop1.perpendicular"
-note = "If AB passes through the centre, F is D and there is no angle FDB, so the Lean takes the angle CDB, right by construction. For \"the greater to the less\" it shows that at D only one straight line is at right angles to DB, wherever G lies, so G is on CE."
+note = "Euclid rules out equal angles when one is greater; `Prop1.perpendicular` proves that the two perpendiculars lie on one straight line, using `onRay_of_angle_eq` and its argument that a part is less than the whole. For G on the other side of AB, the Lean produces CD beyond D by Postulate 2 and makes the adjacent angle right by I.13 and Common Notion 3, for which Heath gives no reference here."
 
 [[passage]]
 at = "Therefore G is not the centre of the circle ABC."
 kind = "grouped"
 note = "The reductio shows that the supposed centre G lies on CE, and the Lean beneath makes it the middle point F. One argument, for any centre G, carries all three sentences."
+
+[[passage]]
+at = "Therefore the point F is the centre of the circle ABC."
+kind = "helper"
+helper = "Prop1.middle"
+note = "Euclid takes for granted that a centre on CE is its middle point. The Lean uses the assumed rules `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), as in the earlier case on AB, then equal radii and `Prop1.middle` identify G with F."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
@@ -52,7 +75,16 @@ case = "AB not through F, with the supposed centre G off CE in the reductio"
 note = "Like Heath's, this figure draws the impossible supposition: G, off CE, as a centre of the circle ABC."
 
 [review]
-stage = "exceptions"
-commit = "1c08feeb"
+stage = "full"
+commit = "f34cfd07"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dfe361062dcb0271"
+run = "brief 0005 stage 5, ship R3 (#29); Prop1.within, Prop1.of_circle and the step by I.13 in Prop1.perpendicular, written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

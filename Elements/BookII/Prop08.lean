@@ -69,7 +69,7 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   obtain ⟨H, Q, O, P, hDQE, hEHF, hAOE, hFPD, hCQH, hOQP, hDCQP, hQOEH⟩ :=
     hp.figure hACD
   have hDAEF := hp.rotate.rotate.rotate
-  obtain ⟨hBAMK, hNKLF⟩ := hDAEF.complements hDKE (between_symm hABD)
+  obtain ⟨hBAMK, -⟩ := hDAEF.complements hDKE (between_symm hABD)
     hAME hELF hFND hDBKN hKMEL
   obtain ⟨hCAOQ, hPQHF⟩ := hDAEF.complements hDQE (between_symm hACD)
     hAOE hEHF hFPD hDCQP hQOEH
@@ -100,10 +100,8 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   have hCH_DF : Parallel CH DF := hDCQP.2.parallel hC_CH hQ_CH hP_DF hD_DF
   have hBL_DF : Parallel BL DF := hDBKN.2.parallel hB_BL hK_BL hN_DF hD_DF
   have hAE_CH : Parallel AE CH := hCAOQ.2.parallel hA_AE hO_AE hQ_CH hC_CH
-  have hAE_BL : Parallel AE BL := hBAMK.2.parallel hA_AE hM_AE hK_BL hB_BL
   have hMN_AD : Parallel MN AD := hDBKN.1.symm.parallel hK_MN hN_MN hD_AD hB_AD
   have hOP_AD : Parallel OP AD := hDCQP.1.symm.parallel hQ_OP hP_OP hD_AD hC_AD
-  have hMN_EF : Parallel MN EF := hKMEL.1.parallel hK_MN hM_MN hE_EF hL_EF
   have hOP_EF : Parallel OP EF := hQOEH.1.parallel hQ_OP hO_OP hE_EF hH_EF
   have hCH_BL : Parallel CH BL := BookI.Prop30.parallel hCH_DF hBL_DF (by
     intro e
