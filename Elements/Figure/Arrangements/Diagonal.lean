@@ -90,8 +90,7 @@ theorem sep_finite {a b V C : Point} {L : Line} (hab : a ≠ b) (ha : OnLine a L
   have hVb : V ≠ b := fun e => hV (Or.inr (Or.inl e))
   by_cases hVL : OnLine V L
   · /- Beyond one end: a straight line through that end other than ab. -/
-    have beyond {a b : Point} (ha : OnLine a L) (hb : OnLine b L) (hVa : V ≠ a)
-        (hVab : Between V a b) :
+    have beyond {a b : Point} (ha : OnLine a L) (hVa : V ≠ a) (hVab : Between V a b) :
         ∃ K : Line, ¬ OnLine V K ∧ ∀ Y : Point, SameSide Y V K → ¬ OnFiniteLine Y a b := by
       have haC : a ≠ C := fun e => hC (e ▸ ha)
       obtain ⟨K, haK, hCK⟩ := Postulate1 a C haC
@@ -105,9 +104,9 @@ theorem sep_finite {a b V C : Point} {L : Line} (hab : a ≠ b) (ha : OnLine a L
       · exact hVb' (same_side_trans hY (pasch2 hb' haK
           (fun hYK => not_on_line_of_same_side hY hYK)))
     rcases between_cases hVa hab hVb hVL ha hb with h' | h' | h'
-    · exact beyond ha hb hVa h'
+    · exact beyond ha hVa h'
     · exact absurd (Or.inr (Or.inr h')) hV
-    · obtain ⟨K, hK, hKY⟩ := beyond hb ha hVb h'
+    · obtain ⟨K, hK, hKY⟩ := beyond hb hVb h'
       exact ⟨K, hK, fun Y hY hYab => hKY Y hY (LoopFacts.onFiniteLine_comm.mp hYab)⟩
   · refine ⟨L, hVL, fun Y hY hYab => ?_⟩
     exact not_on_line_of_same_side hY (LoopFacts.onFiniteLine_onLine hYab ha hb)
@@ -225,7 +224,6 @@ theorem turn {D V : Point} {M N : Line} (hOK : OnLine O K) (hEK : OnLine E K) (h
   obtain ⟨X, hEXV, hX⟩ := crossbar (A := O) (B := E) (C := V) (D := D)
     (SameSideOf.of_line hOE hOK hEK (same_side_trans (same_side_symm hD) (same_side_symm hV)))
     (SameSideOf.of_line hOV hOM hVM hDE)
-  have hOD : O ≠ D := fun e => not_on_line_of_same_side hD (e ▸ hOK)
   have hEN : ¬ OnLine E N := fun hEN =>
     not_on_line_of_same_side hD (line_unique hOE hON hEN hOK hEK ▸ hDN)
   exact ⟨hVN, hEN, pasch3 (between_symm hEXV) (hX.onLine hON hDN)⟩
@@ -715,7 +713,7 @@ theorem ear_edge {ps : List Point} (h : SimpleLoop ps) (hlen : 4 ≤ ps.length) 
       hNM (line_unique hPZ hPN hZN hPM hZM)
     have h₁M := hoff h₁N (ne_of_between hb)
     have h₂M := hoff h₂N (ne_of_between (between_symm hb))
-    obtain ⟨s, hs, hsV, hsZ⟩ : ∃ s : Point, (s = t.1 ∨ s = t.2) ∧ SameSide s V M ∧
+    obtain ⟨s, -, hsV, hsZ⟩ : ∃ s : Point, (s = t.1 ∨ s = t.2) ∧ SameSide s V M ∧
         ∀ Y : Point, Between Z Y s → Between t.1 Y t.2 := by
       rcases same_side_or h₁M h₂M hVM (pasch3 hb hZM) with hs | hs
       · exact ⟨t.1, Or.inl rfl, hs, fun Y hY => between_of_between_left hb (between_symm hY)⟩
