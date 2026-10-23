@@ -44,3 +44,9 @@
   The decisions page's entry of 20 October that says MODEL.md stays pinned whole is true
   of its date. The protected files changed are `scripts/safe_push.py` and
   `scripts/test_safe_push.py`; `docs/WORKFLOW.md` changes too, and is not protected.
+  This entry approves the change to `tests/test_check_train.py`, whose fixture's base
+  gains main's reader of count markers, `scripts/generated_counts.py`: the train checker
+  of [#383](https://github.com/jackChallis/stoicheia/pull/383) reads the model's page as
+  a pinned value by `pinned`, which under this entry's rule asks that reader whether the
+  page's markers stand, and with no reader pins nothing, so its test of a page moving with
+  content needs the reader there.
