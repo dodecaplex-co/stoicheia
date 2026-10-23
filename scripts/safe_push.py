@@ -533,8 +533,8 @@ class NothingToPush(Exception):
 # worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
 # one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
 # repository by the working directory each command names; the one the harness sets itself,
-# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git 2.50's, with
-# GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
+# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
+# 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
 REPOSITORY_VARIABLES = frozenset({
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
     "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
