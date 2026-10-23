@@ -1,5 +1,6 @@
 - **The fidelity and style checks and the Jev generator read where a Lean comment
-  ends with one reader, as Lean 4.35 does (#206).**
+  ends with one reader, as Lean 4.35 does, save the docstrings that heath and render
+  find by a pattern (#206).**
   Lean begins a block comment's body at its fourth character: after `/--` or
   `/-!`, and past the third character of any other `/-`, which it passes over
   (`whitespace` and `finishCommentBlock`, in `Lean/Parser/Basic.lean`). So `/-/- -/` is
@@ -14,9 +15,9 @@
   question generator's `comment_end`. The first two read no strings or character literals
   either. Each took the `/-/-` of `/-/- -/` for two openings: the first read the rest of
   the theorem as remark, the second found no note from there to the end of the file, and
-  the third refused the file as holding an unterminated comment. No tracked Lean file holds
-  `/-/`, so no check passed quietly because of them, but a run boundary could disagree
-  with Lean's.
+  the third refused the file as holding an unterminated comment. No tracked Lean file
+  holds `/-/`, so no check passed quietly because of them, but a run boundary could
+  disagree with Lean's.
 
   Now one function says where a comment ends: `comment_end`, in check_fidelity.py, given
   the place a comment begins, returns where Lean ends it, or nothing for a block that no
@@ -28,10 +29,10 @@
   it had cut each remark at its first `-/` by a pattern. check_style's `lean_note_spans`
   takes its notes from `lean_comments`. The Jev generator's `comment_end` calls
   check_fidelity's, taken alone from that file's checked bytes, since the file imports
-  modules by name that a generator run by path, as with `python3 -I`, cannot import. Where a
-  comment begins is still the generator's own lexer's to say, as before: it reads strings
-  but no character literals, and its refusals for what it may misread, `'"'` among them,
-  stand, as does its refusal of `/--/`.
+  modules by name that a generator run by path, as with `python3 -I`, cannot import.
+  Where a comment begins is still the generator's own lexer's to say, as before: it
+  reads strings but no character literals, and its refusals for what it may misread,
+  `'"'` among them, stand, as does its refusal of `/--/`.
 
   Nothing a check reads in the tree changes. Over every tracked file, `read_lean` gives
   what it gave before, byte for byte, and so do `proof_lines`, `uncarried_runs`,
@@ -84,9 +85,14 @@
   the first line that begins with `end `, `theorem `, `lemma `, `def `, `structure `,
   `/--`, `/-!` or `@[`, even within a remark. These two are left as they are, and to the
   same card. A theorem's docstring that heath does not find fails the fidelity check
-  aloud ("no documented `theorem PropN` found"). An axiom's that render's pattern does not
-  find would be missing from its page without a failure, but none of the 971 docstrings
-  under `Elements/` holds a `/-` before its first `-/`, so none is missed today.
+  aloud ("no documented `theorem PropN` found"), unless heath finds another: it reads no
+  comments, so a `/-- … -/ theorem PropN` written within a remark above the theorem is
+  taken for it, and the theorem's own docstring and `--` lines are compared with
+  nothing; only the stale review record shows the change. That gap is older than this
+  change, and is left to the same card. An axiom's docstring that render's pattern does
+  not find would be missing from its page without a failure, but none of the 971
+  docstrings under `Elements/` holds a `/-` before its first `-/`, so none is missed
+  today.
 
   This entry approves the one comment reader in [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py),
   `comment_end` and `lean_comments`, and that file's `_blank_remarks` and `theorem_block`,
@@ -106,4 +112,5 @@
   a remark written `/-/- … -/` in I.5 before a sentence left with no Lean.
 
   This entry approves the change to [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py),
-  which gains the cases of the shared comment reader and of the three readers that call it.
+  which gains the cases of the shared comment reader and of the three readers that
+  call it.
