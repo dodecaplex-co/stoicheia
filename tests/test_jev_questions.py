@@ -1145,7 +1145,9 @@ class Controls(unittest.TestCase):
                            check=True, capture_output=True)
             generator_path = checkout / 'scripts/audit/jev_questions.py'
             shutil.copyfile(REPOSITORY / 'scripts/audit/jev_questions.py', generator_path)
-            shutil.copyfile(REPOSITORY / 'scripts/check_fidelity.py', checkout / 'scripts/check_fidelity.py')
+            # The generator takes its comment reader from check_fidelity.py (#206).
+            shutil.copyfile(REPOSITORY / 'scripts/check_fidelity.py',
+                            checkout / 'scripts/check_fidelity.py')
             name = 'jev_questions_at_' + revision[:12]
             spec = importlib.util.spec_from_file_location(name, generator_path)
             self.assertIsNotNone(spec)

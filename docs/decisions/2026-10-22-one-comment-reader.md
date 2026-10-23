@@ -1,18 +1,20 @@
-- **The scripts read where a Lean comment ends with one reader, as Lean 4.35 does
-  (#206).** Lean begins a block comment's body at its fourth character: after `/--` or
+- **The fidelity and style checks and the Jev generator read where a Lean comment
+  ends with one reader, as Lean 4.35 does (#206).**
+  Lean begins a block comment's body at its fourth character: after `/--` or
   `/-!`, and past the third character of any other `/-`, which it passes over
   (`whitespace` and `finishCommentBlock`, in `Lean/Parser/Basic.lean`). So `/-/- -/` is
-  one whole comment, and the `-/` of `/--/`
-  closes nothing: the doc comment runs on to a later `-/`. The train of #32 corrected
+  one whole comment, and the `-/` of `/--/` closes nothing: the doc comment runs on to a
+  later `-/`. The train of #32 corrected
   `read_lean` in [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) to read
-  so. Three more readers in the scripts began the body at the third character:
+  so. Three more readers in the scripts, mended here, began the body at the third
+  character:
   `_blank_remarks`, which blanks the remarks of a proposition's proof before its runs of
   `--` lines are read, and so decides where a run ends and which Lean stands beneath it;
   check_style's `lean_note_spans`, which finds the notes the style rules read; and the Jev
   question generator's `comment_end`. The first two read no strings or character literals
   either. Each took the `/-/-` of `/-/- -/` for two openings: the first read the rest of
   the theorem as remark, the second found no note from there to the end of the file, and
-  the third refused the file as holding an unterminated comment. No tracked file holds
+  the third refused the file as holding an unterminated comment. No tracked Lean file holds
   `/-/`, so no check passed quietly because of them, but a run boundary could disagree
   with Lean's.
 
@@ -31,14 +33,27 @@
   but no character literals, and its refusals for what it may misread, `'"'` among them,
   stand, as does its refusal of `/--/`.
 
-  Nothing a check reads changes. Over every tracked file, `read_lean` gives what it gave
-  before, byte for byte, and so do `proof_lines`, `uncarried_runs`, `runs_beneath` and
-  `theorem_block` for each of the 99 propositions, and the Jev generator's index and its
-  328 rows before the controls; `check_fidelity.py` and `check_style.py` print what they
-  printed before. Run over the files of its evidence commit, `39ae65c2`, the generator
-  gives the rows and the manifest it gave before, byte for byte. check_style's notes differ only in two files that it does not read,
+  Nothing a check reads in the tree changes. Over every tracked file, `read_lean` gives
+  what it gave before, byte for byte, and so do `proof_lines`, `uncarried_runs`,
+  `runs_beneath` and `theorem_block` for each of the 99 propositions, and the Jev
+  generator's index and its 328 rows before the controls; `check_fidelity.py` and
+  `check_style.py` print what they printed before. Run over the files of its evidence
+  commit, `39ae65c2`, the generator gives the rows and the manifest it gave before, byte
+  for byte. check_style's notes differ only in two files that it does not read,
   `model/Check/Generator.lean` and `model/Check/RoundTrip.lean`, where the old reader took
   text in string literals for notes.
+
+  Two kinds of text, which no tracked Lean file holds, now read otherwise, and a check
+  can pass on them where it failed before. A `--` line within a remark that nests another,
+  or that runs on past the theorem's end, is remark to `theorem_block` now, as it is to
+  Lean and was already to `proof_lines`, so it is not compared with Heath; one within a
+  plain remark was not compared before either. And the readers now read strings and
+  character literals as the source scan does, so they share its open gaps
+  ([#317](https://github.com/jackChallis/stoicheia/issues/317)): after Lean's token
+  `⊕'`, `×'` or `]'` closed up to a `"`, the scan reads a string that Lean does not,
+  and a remark within it is text, which `proof_lines` takes for Lean beneath a run and
+  check_style for no note, where a reader that read no strings read the remark as Lean
+  does. That needs text by which the same gap already hides code from the source scan.
 
   The cases where the readings could differ are now tests: `/-/- -/`, `/-/ x -/`,
   `/-/-/`, `/--/` before a later `-/`, `/-!/ x -/`, a nested comment, `"/-"` in a string,
@@ -47,7 +62,7 @@
   an interpolated string's hole, and two blocks not closed at the end of a file. Each was
   elaborated in Lean 4.35 as written, alone in a scratch file outside the tree, and its
   expected reading is Lean's: the names after its comments are defined, those within them
-  are unknown, and the two not closed are refused as unterminated comments at the end.
+  are unknown, and the two not closed are refused as unterminated comments.
   The tests feed the shared reader each case, then the three readers that call it, and
   check that the Jev generator runs check_fidelity's own function. Each reader as it was
   fails them. Plant 30 of the negative tests writes a remark `/-/- … -/` in I.5 before a
@@ -59,7 +74,7 @@
   A search of `scripts/` found five more readers of Lean comments, which read otherwise
   and are not changed here. `statement_end` in `scripts/safe_push.py`, the landing tool,
   begins a block's body at its third character too, and reads no character literals, raw
-  strings or «…» names: its change is a card of its own. So is `past_space` in
+  strings or «…» names: its change is left to a card of its own. So is `past_space` in
   `scripts/risk.py`, which reads the header of a Lean file so; after `/-/- -/` it reads no
   import, where Lean reads on. `heath.theorem_span`, and the pattern by which
   `render.load_axiom_docs` and check_style read an axiom's docstring, begin a docstring's
@@ -67,7 +82,11 @@
   holds a nested comment is not found at all; check_style keeps render's pattern, since it
   checks the docstrings that render shows. And `heath.theorem_span` ends a theorem at
   the first line that begins with `end `, `theorem `, `lemma `, `def `, `structure `,
-  `/--`, `/-!` or `@[`, even within a remark.
+  `/--`, `/-!` or `@[`, even within a remark. These two are left as they are, and to the
+  same card. A theorem's docstring that heath does not find fails the fidelity check
+  aloud ("no documented `theorem PropN` found"). An axiom's that render's pattern does not
+  find would be missing from its page without a failure, but none of the 971 docstrings
+  under `Elements/` holds a `/-` before its first `-/`, so none is missed today.
 
   This entry approves the one comment reader in [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py),
   `comment_end` and `lean_comments`, and that file's `_blank_remarks` and `theorem_block`,
@@ -78,6 +97,10 @@
 
   This entry approves the change to [`scripts/audit/jev_questions.py`](../../scripts/audit/jev_questions.py),
   whose `comment_end` calls check_fidelity's, taken alone from that file.
+
+  This entry approves the change to [`tests/test_jev_questions.py`](../../tests/test_jev_questions.py),
+  which copies check_fidelity.py beside today's generator in its checkout of the
+  evidence commit, since the generator takes its comment reader from that file.
 
   This entry approves plant 30 of [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
   a remark written `/-/- … -/` in I.5 before a sentence left with no Lean.

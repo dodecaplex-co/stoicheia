@@ -536,9 +536,10 @@ def comment_end(src: str, i: int) -> int | None:
     docstrings and nested blocks among them, just past the `-/` that closes it, or None
     if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
     and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
-    whole comment and the `-/` of `/--/` closes nothing. The scripts that read where a
-    Lean comment ends all call this (#206); it uses nothing else of this file, for
-    scripts/audit/jev_questions.py takes it alone."""
+    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
+    `read_lean` and `lean_comments`, check_style's notes and the Jev generator call this
+    (#206); it uses nothing else of this file, for scripts/audit/jev_questions.py takes
+    it alone."""
     if src.startswith("--", i):
         end = src.find("\n", i)
         return len(src) if end < 0 else end

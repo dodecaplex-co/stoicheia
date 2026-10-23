@@ -794,7 +794,7 @@ class CommentReaderTests(unittest.TestCase):
     strings or character literals, could read otherwise than Lean 4.35. Each expected
     reading is Lean's: each text was elaborated in Lean 4.35 as written, alone in a scratch
     file outside the tree, where the names after its comments were defined, those within
-    them unknown, and each of UNCLOSED refused as an unterminated comment at its end. Then
+    them unknown, and each of UNCLOSED refused as an unterminated comment. Then
     the three readers that call it, check_fidelity's `_blank_remarks`, check_style's
     `lean_note_spans` and the Jev generator's `comment_end`, each read them so too."""
 

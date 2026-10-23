@@ -151,7 +151,7 @@ def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     return result
 
 
-# The one reader of where a Lean comment ends, which the scripts share (#206). The file
+# check_fidelity's reader of where a Lean comment ends, shared with it (#206). The file
 # imports heath and generated_counts by name, which a generator run by path, as with
 # `python3 -I`, cannot import, so the function is taken alone and nothing else of it runs.
 READER = ('jev_questions_reader', 'scripts/check_fidelity.py', 'comment_end')
