@@ -1,4 +1,4 @@
-- **A train's checks never inherit a hook's git variables
+- **A train's checks discard a hook's repository variables
   ([#355](https://github.com/jackChallis/stoicheia/issues/355)).** `safe_push.tool_env()`,
   the environment every check of the pre-flight runs with, copied the caller's whole
   environment, so under a hook it carried `GIT_DIR`, `GIT_INDEX_FILE` and their kin, naming
@@ -9,9 +9,11 @@
   worktree's git directory, took the repository for a bare one and wrote
   `core.bare = true` into the main clone's shared configuration. The safety boundary now
   sits at the pre-flight: `tool_env()` keeps no variable of git's but
-  `GIT_NO_REPLACE_OBJECTS`, which safe_push sets on purpose, so every program it launches
-  as a check finds its repository by its working directory. The git commands safe_push
-  runs itself are unchanged.
+  `GIT_NO_REPLACE_OBJECTS`, present under the launcher or after a hand-over and otherwise
+  only if the caller set it, so every program it launches as a check finds its repository
+  by its working directory. The git commands safe_push runs itself are unchanged. This
+  replaces only the [earlier entry's](2026-10-21-scan-no-replace.md) account of the
+  checks' inherited environment; its rules for safe_push's own git commands stand.
 
   This entry approves the change to `scripts/safe_push.py`, whose `tool_env()` drops every
   `GIT_*` variable but those `KEPT_GIT_VARIABLES` names.
