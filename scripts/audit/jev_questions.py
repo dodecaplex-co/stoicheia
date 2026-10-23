@@ -23,9 +23,10 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
-resolve inside the repository. Both helpers' paths pass those checks, and must name regular
-files, before either helper runs; so does the reader's, before it is defined. Each Lean
-file's header is read by a small parser following Lean 4.35's grammar, before any masking:
+resolve inside the repository. Both helpers' paths and the reader's pass those checks and
+must name regular files; their accepted code is read and compiled before any of it runs.
+Each Lean file's header is read by a small parser following Lean 4.35's grammar, before any
+masking:
 an optional `module`, then imports in the four forms
 `import`, `public import`, `meta import` and `public meta import`, each naming one module of
 plain or «...» components and ending its line, with ordinary comments between the words. A

@@ -1016,10 +1016,10 @@ class CallReconciler(LeanFiles):
                          'Elements.Q', {'mk', 'a', 'b'})
 
     def test_a_doc_comment_or_token_the_masking_reads_otherwise_is_refused(self):
-        # Lean's doc comment opens with all of `/--`, so in `/--/ -- -/` it ends at the `-/`,
-        # where the masking's ends at `/--/` and a line comment opens; and Lean reads a
-        # notation's `/--+` whole, where the masking opens a comment. Each would hide
-        # `matches`, and the masked text after it is in the plain forms.
+        # The shared masking now reads `/--/ -- -/` as Lean does, but the generator keeps
+        # refusing `/--/`. Lean reads a notation's `/--+` whole, where the masking opens a
+        # comment. Each form could hide `matches` from a reader that accepted it, and the
+        # masked text after it is in the plain forms.
         for text, refused in (
                 ('inductive Q : Bool → Type where\n  /--/ -- -/ | mk : Q <| 5 matches 0\n'
                  '  | Known.bar 0', 'doc comment opening /--/'),
