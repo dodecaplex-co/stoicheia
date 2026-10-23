@@ -93,3 +93,9 @@
   names that brief 0008's question 7, as its section 3 corrects it, forbids,
   `Tacit.inside_of_between`, `Tacit.outside_of_between`, `Tacit.centre_unique` and
   `sorryAx`. The pin of `Audit/Centre.lean` holds without change.
+
+  **23 October 2026, factual correction.** The claim above that no proof in `Elements/`
+  calls III.1 or `Prop1.of_circle` is too broad. `Prop1.of_circle` itself still calls
+  `Prop1` at
+  [Elements/BookIII/Prop01.lean:273](../../Elements/BookIII/Prop01.lean#L273). The five
+  targeted proofs, III.2, III.4, III.8, III.14 and III.17, no longer call either theorem.

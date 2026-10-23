@@ -1391,3 +1391,12 @@ items 1 to 6 are done, but for the reason given for III.2's expectation in
 stands and whose owner is asked to change it. The row for #131 in the opening table,
 "analysis only", and the last sentence of the section on III.8, that its proof takes the
 centre by III.1, are of this report's date.
+
+## Factual correction to the #131 addendum
+
+*23 October 2026.*
+
+The claim above that no proof in `Elements/` calls III.1 or `Prop1.of_circle` is too
+broad. `Prop1.of_circle` itself still calls `Prop1` at
+[Elements/BookIII/Prop01.lean:273](../../Elements/BookIII/Prop01.lean#L273). The five
+targeted proofs, III.2, III.4, III.8, III.14 and III.17, no longer call either theorem.
