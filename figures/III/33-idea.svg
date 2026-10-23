@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.33 at a glance</title>
-  <desc>Lay the given angle at C (red), here acute, on AB at A, as BAD. The circle that touches AD at A (blue) and passes through B cuts off a segment AEB (yellow) whose angles all equal it.</desc>
+  <desc>Lay the given angle at C (red), here acute, on AB at A, as BAD. The circle that touches AD (blue) at A and passes through B cuts off a segment AEB (yellow) whose angles all equal it.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="256.0" cy="149.84" r="112.27" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M34.0,158.0 L64.0,158.0 A30,30 0 0,0 53.3,135.0 Z" fill="#d0312d"/>
