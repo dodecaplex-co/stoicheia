@@ -3,7 +3,6 @@ import Elements.Figure.Circles
 import Elements.BookIII.Squares
 import Elements.BookI.Prop04
 import Elements.BookI.Prop11
-import Elements.BookIII.Prop01
 import Elements.BookIII.Prop16
 import Elements.BookI.Prop13
 
@@ -43,7 +42,9 @@ theorem Prop17 {A : Point} {BCD : Circle} (hA : OutsideCircle A BCD) :
   -- Let A be the given point, and BCD the given circle;
   -- thus it is required to draw from the point A a straight line touching the circle BCD.
   -- For let the centre E of the circle be taken; [III. 1]
-  obtain ⟨-, -, E, -, -, -, -, -, hE, -⟩ := Prop1.of_circle BCD
+  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
+     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
+  obtain ⟨E, hE⟩ := exists_centre BCD
   -- let AE be joined, and with centre E and distance EA let the circle AFG be described;
   have hEA : E ≠ A := fun e => hA.1 (e ▸ centre_inside hE)
   obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA

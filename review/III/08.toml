@@ -7,7 +7,7 @@ fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where neither the convex order nor the concave reaches: N and the point it is compared with on different circumferences, or one of them a point of contact. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`); the companion takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart."
+note = "Euclid's argument, but the centre M, which Euclid takes by III.1 (Heath's reference), comes from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart, as in the companion's step `Prop8.partner`; and the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where neither the convex order nor the concave reaches: N and the point it is compared with on different circumferences, or one of them a point of contact. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"
@@ -16,9 +16,15 @@ note = "\"Nearer\" is the less angle at D with the ray DA, unsigned. The convex 
 
 [[passage]]
 at = "For let the centre of the circle ABC be taken"
+kind = "different"
+helper = "Tacit.exists_centre"
+note = "Euclid takes the centre M by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and the statement, which asks of every centre that it lie between G and A, puts M there."
+
+[[passage]]
+at = "let ME, MF, MC, MK, ML, MH be joined"
 kind = "case"
 helper = "Prop8.on_diameter"
-note = "Euclid takes M by III.1 and joins radii to points off DA. The Lean also treats E = G and K = A in the greatest and least comparisons: `Prop8.on_diameter`, using `Prop2.triangle` (III.2, which Heath does not cite here), leaves only the two ends of the diameter, and `len_lt_of_between` makes DG less than DA."
+note = "Euclid joins radii to points off DA. The Lean also treats E = G and K = A in the greatest and least comparisons: `Prop8.on_diameter`, using `Prop2.triangle` (III.2, which Heath does not cite here), leaves only the two ends of the diameter, and `len_lt_of_between` makes DG less than DA."
 
 [[passage]]
 at = "Then, since AM is equal to EM"
@@ -123,10 +129,10 @@ note = "N marks the supposed third point of Euclid's reductio, with DN equal to 
 
 [review]
 stage = "full"
-commit = "d166f843"
+commit = "eed076538"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:279314587c3b647d"
-run = "card #332, ship ER (#125, #347): re-read after Euclid's route moved into Elements/; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex)"
+lean = "sha256:a7394b36b6e60ea4"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"
 
 [review.items]
 statement = "pass"
