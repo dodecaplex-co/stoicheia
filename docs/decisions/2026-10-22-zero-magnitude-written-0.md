@@ -19,4 +19,15 @@
   magnitude, of length, angle, area or any kind, and none is in a proposition's own
   statement. The other 19 are the counts by which I.4's and I.8's superposition numbers
   its symbols; [#312](https://github.com/jackChallis/stoicheia/issues/312) is to take them
-  out. This entry claims no approval of the owner.
+  out. The scans were run again after the figures' promotion landed (#342), which changed
+  the sentence before this clause to its present form: the counts are the same.
+
+  The sentence also names its scope now
+  ([#338](https://github.com/jackChallis/stoicheia/issues/338)): it is a proposition's
+  statement and the geometric steps of its proof in which no coordinates or real numbers
+  appear and no number measures a magnitude. Beneath those steps numbers serve the
+  machinery: outside Books I to III, the foundations' superposition theory numbers its
+  symbols (`Fin 2` and the index `0` in `valuation_encodes`, in
+  `Elements/Foundations/Superposition/Restriction.lean`), and Book Zero's proofs pass a
+  count to a tactic (`congr 1`, in `Elements/Figure/OnCircles.lean`). Read literally,
+  the sentence was false there too. This entry claims no approval of the owner.

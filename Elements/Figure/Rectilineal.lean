@@ -18,7 +18,16 @@ So a figure glued together is a figure whose triangles lie apart, the same trian
 any figure given with triangles that lie apart is proved for a glued one in one step. That
 Euclid's and Oliver Byrne's division of a figure from one corner is a fitted figure, under
 two conditions, is `Fitted.fan`; its proof cites I.13, so it stands beside I.45, in
-`Elements/BookI/Prop45.lean`, before the companion that uses it.
+`Elements/BookI/Prop45.lean`, before the companion that uses it. The bridge
+`Prop45.fan_boundary`, at the end of that file, adds that the figure it makes is the one
+bounded by the closed line through its corners in order.
+
+A figure may also be given by its outline alone (`Foundations/Figures.lean`). Every figure
+given with triangles that lie apart has an outline with exactly their region
+(`apart_has_outline`), and every division of an outline gives one sum, its area
+(`Outline.area`, `area_eq`, from the content theorem `Apart.area_eq_of_same_region`), so the
+sum of a figure's triangles is the area of the figure alone, whichever division it is given
+with. These are proved in `Elements/Figure/Divisions.lean` and `Content.lean`.
 
 Nothing in Book Zero cites a proposition of the *Elements*.
 -/
