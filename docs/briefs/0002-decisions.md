@@ -5692,11 +5692,6 @@ findings:
   [`tests/test_screen.py`](../../tests/test_screen.py) took III.2 as the row of
   `Audit/screen.py`'s list `KNOWN` that a run must find. After the second retirement the
   screen, which tries only axioms, no longer closes III.2 or III.6, since the rules that
-  closed them are theorems, and `KNOWN` keeps III.5 alone. The two cases now take the
-  first row of `KNOWN`, whichever it is, and assert the same of it as before: closed only
-  by its bare try it is lost, and not closed it is lost. They pass with the list before
-  the retirement and after it; no assertion is removed.
-
   closed them are theorems, and `KNOWN` keeps III.5 alone. With the retirement,
   Generalities 4 is a theorem, so the screen no longer closes brief 0008's restated III.5
   either, which needs that rule to finish: `KNOWN` is then stale until a check change gives
