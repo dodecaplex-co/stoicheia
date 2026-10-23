@@ -1451,8 +1451,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       scan reads what the push sends: every git command `safe_push.py` runs itself, the
       scan's among them, reads with git's replacement objects off, whatever the caller's
       environment holds (#256), its `git status` check among them. The programs it runs
-      as checks keep the environment they are given, which holds `GIT_NO_REPLACE_OBJECTS`
-      under the launcher or after a hand-over, and otherwise only if the caller set it;
+      as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS`, which
+      is present under the launcher or after a hand-over and otherwise only if the caller
+      set it, so that a check finds its repository by its working directory (#355).
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
@@ -1597,6 +1598,69 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       what the list lacks waits for the list to grow, in a pull request of its own. Check
       code changed with judged content is kept apart, pinned values or not. The guards'
       two checks in step 3 run the same way.
+
+      *origin/main's pass, cached* (#224). With `--main-checks-cache`, origin/main's pass
+      of step 4, both its loops, the checks and the negative tests, is kept in
+      `~/.cache/stoicheia/main-checks/` and reused when the same trees come again, as
+      they do when the coordinator's dry run of a train is followed by its push, at one
+      head against one main. Only the runs that land a train pass the flag (the
+      coordinator ruled): the coordinator's dry run of the train and its push. It serves
+      only a change of R3 to R5, whose step 4 runs in full, landed from a branch not
+      named `train/*`, as a `batch/*` landing is (a `train/*` branch's train check runs
+      in the harness's own process, so it has no cache): for R0 to R2, which leave step
+      4 to CI, the flag reads, writes and makes nothing, and sets no sandbox. Step 3's
+      pass and the commit's own pass run every time; on a hit, the commit's own pass
+      builds what the skipped pass would have built. An entry's name is the SHA-256 of its
+      key, which the harness computes, taking nothing from the tree as code: origin/main's
+      commit; the tree the pass runs on (the commit's, with origin/main's copies of the
+      check inputs it changes), and the commit's own tree, which `git status` and
+      `git ls-files` compare it with; the harness's blob; the toolchain
+      (`lean-toolchain`, `lean --version`, `lake --version`, the `lean` elan resolves);
+      the Python, the platform, Git, the checks' `PATH`, `LANG`, `LANGUAGE`, and the
+      variables whose names begin `STOICHEIA_`, `LEAN`, `LAKE`, `PYTHON` or `LC_`, but
+      the harness's own, which no check reads (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`,
+      `STOICHEIA_PYTHON`), and the terminal's (`LC_TERMINAL`, `LC_TERMINAL_VERSION`); and
+      the lists of checks. An entry is used only when it is a
+      regular file of the user's, mode 0600, its key is this run's and hashes to its
+      name, its digest matches it, its harness is the one running, its written time is a
+      valid `YYYY-MM-DD HH:MM UTC`, and its steps are that pass's, each once and in order,
+      each "ok" or "note", with a time a step could take and text the run can write and
+      print; otherwise, when it is larger than 16 MiB (and so never read), or when it
+      cannot be read at all, the pass runs again, the run says why, and the entry is
+      written afresh. A hit is
+      reported, for the pull request's record, and its steps carry their recorded
+      outcomes, notes as notes, so `keep_apart` judges them as it would have; a note
+      points to the copy of its log the run writes. The directory must be a real one,
+      owned by the user, mode 0700, reached through no symbolic link, and on the device
+      of the directory above it. Once the class is read by origin/main's `risk.py`, the
+      harness loads origin/main's count-marker reader and its dependencies, and retains
+      it for that repository and base. Both happen outside the sandbox but before any of
+      the commit's code; the cache is then opened, and from then on every command the
+      pre-flight starts runs under macOS's `sandbox-exec`, with a profile under which no
+      command may write the directory, nor rename or change a directory above it (which
+      would carry the cache away), and the harness starts no process but through it and
+      imports no module but a builtin, each other it needs being imported when it starts.
+      A `train/*` branch has no cache: its train check loads origin/main's
+      `check_train.py` into the harness after the commit's code has run (#383), so the
+      flag sets no sandbox for it, and the run goes on as without the flag.
+      Where the sandbox cannot be had (not macOS, no
+      `sandbox-exec`, already inside a sandbox, or a profile that does not stop a write to
+      the directory or the one above it), there is no cache that run, and the pre-flight
+      is otherwise unchanged.
+      The digest is no signature, and the sandbox stops only this: the commands a
+      flagged run starts writing the cache directly. It does not stop a run without the
+      flag, a ship's own dry run among them, which starts its commands with no sandbox,
+      nor a flagged run of a `train/*` branch, which sets none; nor anything code run as
+      the same user does outside a flagged run; nor anything a
+      flagged run's code leaves for a later command to run before its sandbox starts: the
+      launcher in `.git/stoicheia/`, `alias.safe-push` in `.git/config`, a program
+      earlier on the `PATH`, the harness copy in `~/.cache/stoicheia/harness/`, a module
+      in the harness's own directory, which Python searches first, or in Python's standard
+      library (the user's own under Homebrew), or Python's start-up files. That is the
+      exposure the `--merge` step-4 record already
+      has, a local file any code run as the user can write. A profile that allows writes
+      only where the checks need them, or a cache owned by another Unix user, could
+      narrow it; either is for the owner to decide.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the
@@ -1778,14 +1842,14 @@ and closes the fork's with a link to it.
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
 in `preflight/`, which `--branch` and `--merge` write and only `--merge` reads (step 4,
-above); origin/main's harness, when it runs
-in place of another copy, is written to `harness/`, named by its blobs.
-`sh scripts/install_hooks.sh` installs the launcher and the pre-push hook: the hook
-refuses every push to main, scans a
-push to any other branch (its name included) with origin/main's copy of the secret scan
-(`safe_push.py --scan-push`), copied out of git and run with git's replacement objects
-off (#256), whichever remote it goes to (another remote's main is never run, and without
-origin/main's copy the push is refused), and refuses to push or delete a tag. With the
+above); origin/main's harness, when it runs in place of another copy, is written to
+`harness/`, named by its blobs; and, with `--main-checks-cache`, origin/main's pass of
+step 4 in `main-checks/`. `sh scripts/install_hooks.sh` installs the launcher and the
+pre-push hook: the hook refuses every push to main, scans a push to any other branch (its
+name included) with origin/main's copy of the secret scan (`safe_push.py --scan-push`),
+copied out of git and run with git's replacement objects off (#256), whichever remote it
+goes to (another remote's main is never run, and without origin/main's copy the push is
+refused), and refuses to push or delete a tag. With the
 owner's OK for a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin
 refs/tags/<tag>`, and the hook still scans the commits it points to and an annotated
 tag's message. An installed hook or launcher takes a change to its source in
