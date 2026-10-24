@@ -106,9 +106,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `1634107840b7`, 2026-10-23, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `3d61e0f793b7`, 2026-10-24, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,747,443** configurations met an axiom's hypotheses (1,537,544 in the search, 2,528,836 exhaustive, 681,063 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 699,495 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 in the search, 2,528,836 exhaustive, 681,063 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 502,055 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -128,70 +128,39 @@ In the plane: **4,747,443** configurations met an axiom's hypotheses (1,537,544 
 | `Tacit.add_lt_add_right` | 28,346 | · | · | 9,528 |
 | `Tacit.exists_point` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_point_on_line` | 60,000 | · | · | 20,000 |
-| `Tacit.exists_point_on_line_off_line` | 43 | · | · | 13,361 |
-| `Tacit.exists_point_between` | 25,432 | · | · | 4,858 |
-| `Tacit.exists_point_same_side` | 916 | · | · | 8,126 |
-| `Tacit.exists_point_opposite_side` | 988 | · | · | 7,992 |
-| `Tacit.exists_point_on_circle` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_point_inside_circle` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_centre` | 60,000 | · | · | 20,000 |
-| `Tacit.line_circle_between` | 2,784 | 44,088 | 44,974 | 3,842 |
-| `Tacit.line_circle_beyond` | 7,225 | 80,320 | 57,135 | 9,609 |
-| `Tacit.circles_meet_same_side` | 364 | 216,488 | 40,033 | 8,980 |
-| `Tacit.circles_meet_opposite_side` | 397 | · | · | 8,852 |
-| `Tacit.line_unique` | 17,498 | 600 | · | 1,892 |
-| `Tacit.centre_inside` | 28,567 | · | · | 4,148 |
-| `Tacit.inside_not_on` | 33,290 | · | · | 9,313 |
-| `Tacit.between_symm` | 4,790 | 304 | · | 11,396 |
-| `Tacit.ne_of_between` | 4,791 | · | · | 11,325 |
-| `Tacit.ne_of_between_ends` | 4,804 | · | · | 11,379 |
-| `Tacit.not_between_of_between` | 4,735 | 304 | · | 11,410 |
-| `Tacit.on_line_of_between` | 5,466 | · | · | 387 |
-| `Tacit.on_line_of_between_ends` | 5,486 | · | · | 389 |
-| `Tacit.between_of_between_left` | 676 | · | · | 4,783 |
-| `Tacit.between_of_between_right` | 675 | · | · | 4,036 |
-| `Tacit.between_cases` | 16,409 | 912 | · | 2,180 |
-| `Tacit.not_between_of_between_between` | 1,748 | · | · | 5,078 |
-| `Tacit.same_side_refl` | 950 | · | · | 7,930 |
-| `Tacit.same_side_symm` | 326 | · | · | 4,442 |
-| `Tacit.not_on_line_of_same_side` | 363 | 45,192 | · | 4,380 |
-| `Tacit.same_side_trans` | 223 | 724,792 | 33,327 | 5,214 |
-| `Tacit.same_side_or` | 7 | · | · | 1,859 |
-| `Tacit.pasch1` | 6 | · | · | 3,423 |
-| `Tacit.pasch2` | 295 | 3,872 | 8,435 | 1,418 |
-| `Tacit.pasch3` | 5,814 | · | · | 1,646 |
-| `Tacit.pasch4` | 228 | · | · | 2,188 |
-| `Tacit.triple_incidence1` | 0 | · | · | 1,103 |
-| `Tacit.triple_incidence2` | 0 | · | · | 1,110 |
-| `Tacit.between_of_inside_chord` | 262 | 3,228 | 37,732 | 8,069 |
-| `Tacit.outside_of_between` | 457 | 281,664 | 47,802 | 2,108 |
-| `Tacit.lines_meet_of_opposite_sides` | 18 | 26,248 | 39,362 | 4,427 |
-| `Tacit.line_meets_circle_of_inside` | 28,053 | · | · | 4,903 |
-| `Tacit.circles_meet_of_on_inside_outside` | 802 | · | · | 1,007 |
-| `Tacit.circles_meet` | 1,399 | 10,668 | 1,587 | 2,554 |
-| `Tacit.eq_of_len_eq_zero` | 41,899 | · | · | 11,525 |
+| `Tacit.line_circle_between` | 2,860 | 44,088 | 44,974 | 3,799 |
+| `Tacit.line_circle_beyond` | 7,266 | 80,320 | 57,135 | 9,633 |
+| `Tacit.circles_meet_same_side` | 381 | 216,488 | 40,033 | 8,929 |
+| `Tacit.line_unique` | 17,462 | 600 | · | 1,948 |
+| `Tacit.between_symm` | 4,808 | 304 | · | 11,386 |
+| `Tacit.not_between_of_between` | 4,812 | 304 | · | 11,444 |
+| `Tacit.between_cases` | 16,420 | 912 | · | 2,154 |
+| `Tacit.not_on_line_of_same_side` | 315 | 45,192 | · | 4,389 |
+| `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
+| `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
+| `Tacit.between_of_inside_chord` | 239 | 3,228 | 37,732 | 8,315 |
+| `Tacit.outside_of_between` | 453 | 281,664 | 47,802 | 2,023 |
+| `Tacit.lines_meet_of_opposite_sides` | 22 | 26,248 | 39,362 | 4,489 |
+| `Tacit.circles_meet` | 1,389 | 10,668 | 1,587 | 2,551 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
 | `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
 | `Tacit.angle_symm` | 15,382 | 14,400 | · | 6,966 |
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_swap` | 60,000 | · | · | 20,000 |
-| `Tacit.area_congruent` | 54,643 | 375,479 | 94,050 | 10,879 |
-| `Tacit.len_add_of_between` | 4,666 | 304 | · | 9,913 |
-| `Tacit.circle_eq` | 819 | 2,448 | 27,089 | 4,335 |
-| `Tacit.on_circle_of_len_eq` | 2,494 | · | · | 6,612 |
-| `Tacit.inside_of_len_lt` | 3,022 | · | · | 3,577 |
-| `Tacit.len_lt_of_inside` | 2,940 | · | · | 3,568 |
-| `Tacit.angle_eq_zero_of_same_ray` | 15,121 | 1,208 | · | 2,678 |
-| `Tacit.same_ray_of_angle_eq_zero` | 15,311 | 1,208 | · | 2,727 |
-| `Tacit.angle_add_of_inside` | 7 | 77,960 | 24,987 | 3,828 |
-| `Tacit.angle_eq_of_same_rays` | 6,803 | 60,032 | 8,676 | 4,172 |
-| `Tacit.area_eq_zero_of_on_line` | 24,766 | 2,112 | · | 4,734 |
-| `Tacit.on_line_of_area_eq_zero` | 24,710 | 2,112 | · | 4,529 |
-| `Tacit.area_add_of_between` | 21 | 6,176 | 55,499 | 8,520 |
-| `Tacit.between_of_area_add` | 17 | · | · | 8,455 |
-| `Tacit.superposition` | 112 | 363,888 | 71,970 | 8,563 |
+| `Tacit.area_congruent` | 54,706 | 375,479 | 94,050 | 10,867 |
+| `Tacit.len_add_of_between` | 4,735 | 304 | · | 9,716 |
+| `Tacit.circle_eq` | 820 | 2,448 | 27,089 | 4,357 |
+| `Tacit.angle_eq_zero_of_same_ray` | 15,158 | 1,208 | · | 2,713 |
+| `Tacit.same_ray_of_angle_eq_zero` | 15,098 | 1,208 | · | 2,724 |
+| `Tacit.angle_add_of_inside` | 2 | 77,960 | 24,987 | 3,856 |
+| `Tacit.angle_eq_of_same_rays` | 6,875 | 60,032 | 8,676 | 4,135 |
+| `Tacit.area_eq_zero_of_on_line` | 24,845 | 2,112 | · | 4,683 |
+| `Tacit.on_line_of_area_eq_zero` | 24,513 | 2,112 | · | 4,705 |
+| `Tacit.area_add_of_between` | 20 | 6,176 | 55,499 | 8,475 |
+| `Tacit.superposition` | 98 | 363,888 | 71,970 | 8,669 |
 
 Separately, **9,525,564** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
