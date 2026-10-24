@@ -336,6 +336,7 @@ python3 -I tests/test_release_gate.py
 python3 -I tests/test_jev_models.py
 python3 scripts/audit/jev.py self-test
 python3 -I tests/test_screen.py
+python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition
 python3 -I tests/test_acceptance_limits.py
 python3 -I tests/test_check_superposition_pins.py
 python3 -I scripts/check_superposition_pins.py
@@ -372,6 +373,18 @@ CI's `check` job. The reader stays one self-contained file of the standard libra
 the pre-flight runs it alone, out of Git; step 3 of the pre-flight runs the commit's own
 reader so, and refuses the commit when it cannot read the commit's registry, before a
 broken reader can merge.
+
+**One check needs the YAML parser.** The test that every step after a job's lane step
+carries the lane's condition
+([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
+`scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned in
+`scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after elan and
+before the run of the checks; to run the sequence yourself, or the pre-flight, which runs
+it too, install it once:
+
+```sh
+python3 -m pip install -r scripts/requirements-test_safe_push.txt
+```
 
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole

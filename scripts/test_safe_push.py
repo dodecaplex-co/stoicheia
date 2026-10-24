@@ -416,6 +416,10 @@ ELAN_INSTALL = (
     " | sh -s -- -y --default-toolchain none",
     'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
 )
+# The pinned YAML parser, which the check of #346 (Units' lane-condition test, a file of the
+# registry) needs: the last line of the setup, after elan (the coordinator's rulings of 24
+# October 02:35 and 02:40).
+PIP_INSTALL = ("python3 -m pip install -r scripts/requirements-test_safe_push.txt",)
 
 
 def is_modeled_setup(step: WorkflowStep) -> bool:
@@ -445,6 +449,7 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
         raise AssertionError("CI check job has an environment override")
     setup_order = (*SETUP_ACTIONS, None)  # The actions, then the elan install.
     setup_index = 0
+    parser_installed = False
     commands = []
     for step in job.steps:
         if step.has_condition:
@@ -464,10 +469,21 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
                 raise AssertionError("CI check setup sequence differs from the required prefix")
             setup_index += 1
             continue
+        if step.uses is None and step.run == PIP_INSTALL:
+            # The pinned parser's install comes once, straight after the elan install.
+            if commands:
+                raise AssertionError(f"CI check step {step.name!r} is setup after the first check")
+            if setup_index != len(setup_order):
+                raise AssertionError("CI check setup prefix is incomplete before the parser's "
+                                     "install")
+            if parser_installed:
+                raise AssertionError("CI check setup sequence differs from the required prefix")
+            parser_installed = True
+            continue
         if step.uses is not None or RUN_CHECKS not in step.run:
             raise AssertionError(f"CI check step {step.name!r} is neither the run of the "
                                  "registry's checks nor the modelled setup")
-        if setup_index != len(setup_order):
+        if setup_index != len(setup_order) or not parser_installed:
             raise AssertionError("CI check setup prefix is incomplete before the first check")
         if step.run != (RUN_CHECKS,):
             raise AssertionError(f"CI check step {step.name!r} has an unsupported run body")
@@ -10277,6 +10293,20 @@ class Units(unittest.TestCase):
         def reverse_setup_actions(workflow, job):
             job["steps"][:2] = reversed(job["steps"][:2])
 
+        parser = PIP_INSTALL[0]
+
+        def move_parser(after):
+            def move(workflow, job):
+                step = step_running(job, parser)
+                job["steps"].remove(step)
+                if after:
+                    job["steps"].insert(job["steps"].index(step_running(job, certificate)) + 1,
+                                        step)
+                else:
+                    elan = next(s for s in job["steps"] if "elan-init.sh" in s.get("run", ""))
+                    job["steps"].insert(job["steps"].index(elan), step)
+            return move
+
         cases = (
             ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
             ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
@@ -10322,6 +10352,24 @@ class Units(unittest.TestCase):
                  env=override), "has an environment override"),
             ("job container", lambda workflow, job: job.update(container="example/stub"),
              "unmodeled settings"),
+            # The pinned parser's install (#346): that one line, once, straight after elan.
+            ("another requirements file",
+             lambda workflow, job: step_running(job, parser).update(
+                 run="python3 -m pip install -r requirements.txt"), unmodeled),
+            ("an extra package",
+             lambda workflow, job: step_running(job, parser).update(run=parser + " six"),
+             unmodeled),
+            ("the parser's install after the run", move_parser(after=True),
+             "setup prefix is incomplete"),
+            ("the parser's install twice",
+             lambda workflow, job: job["steps"].insert(
+                 job["steps"].index(step_running(job, parser)),
+                 step_running(job, parser).copy()), "setup sequence differs"),
+            ("the parser's install before elan", move_parser(after=False),
+             "setup prefix is incomplete"),
+            ("no parser's install",
+             lambda workflow, job: job["steps"].remove(step_running(job, parser)),
+             "setup prefix is incomplete"),
         )
         for label, mutate, message in cases:
             with self.subTest(label=label):

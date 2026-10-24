@@ -1,0 +1,10 @@
+# Check that in every workflow each job's lane step comes first and every step after it
+# carries the lane's condition, so that a pull request adding a step without it, as #339's
+# did, fails on its own path (#346). The test reads the workflows with the pinned YAML
+# parser, which CI's check job installs (scripts/requirements-test_safe_push.txt), and
+# clones the repository in a few seconds.
+order = 135
+name = "python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition"
+job = "check"
+command = ["python3", "scripts/test_safe_push.py", "Units.test_every_step_after_the_lane_step_carries_its_condition"]
+section8 = "python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition"
