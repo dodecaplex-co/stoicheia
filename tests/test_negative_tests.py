@@ -16,6 +16,7 @@ reader the scripts share is fed the texts on which a reader could read a Lean co
 otherwise than Lean does, each with Lean's own reading.
 """
 
+import ast
 import importlib.util
 import io
 import json
@@ -1329,15 +1330,16 @@ class BookZeroImportTests(unittest.TestCase):
 
 
 class CommentReaderTests(unittest.TestCase):
-    """The one reader of Lean comments that the scripts share, check_fidelity's
-    `comment_end`, read through `lean_comments` and `read_lean`, without Lean (#206): the
+    """The one reader of Lean comments that the scripts share, heath's `comment_end`
+    (check_fidelity's until #349), read through `lean_comments` and `read_lean`, without Lean (#206): the
     texts on which a reader that began a block's body at its third character, or read no
     strings or character literals, could read otherwise than Lean 4.35. Each expected
     reading is Lean's: each text was elaborated in Lean 4.35 as written, alone in a scratch
     file outside the tree, where the names after its comments were defined, those within
     them unknown, and each of UNCLOSED refused as an unterminated comment. Then
-    the three readers that call it, check_fidelity's `_blank_remarks`, check_style's
-    `lean_note_spans` and the Jev generator's `comment_end`, each read them so too."""
+    the three readers that call it, or a copy of it, check_fidelity's `_blank_remarks`,
+    check_style's `lean_note_spans` and the Jev generator's `comment_end`, each read them
+    so too."""
 
     # (a text, the comments Lean reads in it, in order, the names it defines and those it
     # does not, which stand within a comment)
@@ -1451,54 +1453,39 @@ class CommentReaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
                         self.questions.comment_end(text, spans[-1][0])
 
-    def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
-        source = b'''raise AssertionError("unrelated top-level code ran")
+    def test_the_jev_generator_s_reader_is_heath_s_word_for_word(self):
+        # The generator reads the evidence commit's heath.py as a helper, which at an older
+        # commit has no reader, so it holds a copy of heath.comment_end, word for word but
+        # for the name (the coordinator's ruling of 23 October 05:20).
+        def tree(path, name):
+            module = ast.parse((REPO / path).read_text(encoding="utf-8"))
+            found = [node for node in module.body
+                     if isinstance(node, ast.FunctionDef) and node.name == name]
+            self.assertEqual(len(found), 1, f"{path}: {name}")
+            found[0].name = "comment_end"
+            return ast.dump(found[0])
+        self.assertEqual(tree("scripts/audit/jev_questions.py", "shared_comment_end"),
+                         tree("scripts/heath.py", "comment_end"))
 
-def comment_end(src, i):
-    return ("controlled reader", src, i)
-'''
-        checked = (REPO / "scripts/check_fidelity.py").resolve()
-        with patch.object(self.questions, "read_no_follow", return_value=source) as read:
-            reader = self.questions.shared_function(*self.questions.READER)
-        read.assert_called_once_with(checked)
-        self.assertEqual(reader("prefix /- comment -/ suffix", 7),
-                         ("controlled reader", "prefix /- comment -/ suffix", 7))
-
-    def test_the_jev_generator_prepares_its_reader_before_running_helpers(self):
-        invalid = (
-            ("missing", None, r"check_fidelity\.py: helper module is missing"),
-            ("absent", b"def another_function():\n    pass\n",
-             r"defines no single function comment_end"),
-            ("duplicate", b"def comment_end(src, i):\n    pass\n\n"
-                          b"def comment_end(src, i):\n    pass\n",
-             r"defines no single function comment_end"),
+    def test_the_jev_generator_s_reader_reads_as_heath_s(self):
+        # And it reads as heath's does, on a corpus of nested blocks, doc comments,
+        # strings, character literals and «…» names.
+        corpus = (
+            "/-/- -/ import A", "/--/ x -/ y", "/-- doc -/ theorem t", "/-! module -/",
+            "/- a /- nested /- deeper -/ -/ -/ after", "/- unclosed /- -/", "-- line\nnext",
+            "-- last line", 'def s := "/- not a comment -/" -- but this is',
+            "def c := '\"' /- after a character -/", "def c := '(' -- a bracket's character",
+            "def «x /- y» := 1 /- -/", "/-/--/-/", "--/-\n/--\n-/", "/---/ -/", "",
         )
-        helper_names = {name for name, _ in self.questions.HELPERS}
-        for label, reader, message in invalid:
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                audit = root / "scripts/audit"
-                audit.mkdir(parents=True)
-                generator = audit / "jev_questions.py"
-                generator.write_bytes((REPO / "scripts/audit/jev_questions.py").read_bytes())
-                (root / "scripts/heath.py").write_text(
-                    'raise AssertionError("heath helper ran")\n', encoding="utf-8")
-                (audit / "jev.py").write_text(
-                    'raise AssertionError("Jev helper ran")\n', encoding="utf-8")
-                if reader is not None:
-                    (root / "scripts/check_fidelity.py").write_bytes(reader)
-                name = f"jev_questions_invalid_reader_{label}"
-                spec = importlib.util.spec_from_file_location(name, generator)
-                module = importlib.util.module_from_spec(spec)
-                with patch.dict(sys.modules) as modules:
-                    for dependency in helper_names:
-                        modules.pop(dependency, None)
-                    modules[name] = module
-                    with self.assertRaisesRegex(ValueError, message):
-                        spec.loader.exec_module(module)
-                    self.assertFalse(helper_names & modules.keys())
+        heath = negative.check_fidelity.heath
+        for text in corpus:
+            for i in range(len(text)):
+                if text.startswith(("--", "/-"), i):
+                    with self.subTest(text=text, at=i):
+                        self.assertEqual(self.questions.shared_comment_end(text, i),
+                                         heath.comment_end(text, i))
 
-    def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
+    def test_the_jev_generator_delegates_to_heath_s_reader(self):
         source = "prefix /- comment -/ suffix"
         offset = source.index("/-")
         sentinel = object()
@@ -1511,6 +1498,37 @@ def comment_end(src, i):
                                         r"^unterminated Lean comment$"):
                 self.questions.comment_end(source, offset)
         shared.assert_called_once_with(source, offset)
+
+    def test_check_fidelity_reads_lean_with_heath_s_reader_alone(self):
+        # #349: the reader is heath's. check_fidelity imports it under the names it had,
+        # the very objects, and defines none of them itself, so that no second reader can
+        # drift apart from it; its own caller, _blank_remarks, reads comments through it.
+        check_fidelity = negative.check_fidelity
+        names = ("read_lean", "without_comments", "lean_comments", "comment_end", "_find",
+                 "closed_up", "_read_code", "_read_string", "_read_interpolated",
+                 "lean_string", "CHAR", "ESCAPE", "FIELD", "FIRST", "IDENT", "ID_FIRST",
+                 "ID_REST", "INTERPOLATED", "LETTER_LIKE", "NAME_CHAR", "NAME_RUN",
+                 "NON_ASCII", "NUMBER", "RAW", "REST", "SUBSCRIPT_ALNUM")
+        for name in names:
+            with self.subTest(name=name):
+                self.assertIs(getattr(check_fidelity, name),
+                              getattr(check_fidelity.heath, name))
+        self.assertIs(check_fidelity.WORD, check_fidelity.heath.WORD_CHAR)
+        # Nor does check_fidelity bind any of them itself, by a def or an assignment.
+        source = (REPO / "scripts/check_fidelity.py").read_text(encoding="utf-8")
+        defined = set()
+        for node in ast.walk(ast.parse(source)):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                defined.add(node.name)
+            elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                defined |= {n.id for target in targets for n in ast.walk(target)
+                            if isinstance(n, ast.Name)}
+        self.assertEqual(sorted(defined & set(names)), [])
+        with patch.object(check_fidelity, "lean_comments",
+                          wraps=check_fidelity.lean_comments) as read:
+            check_fidelity._blank_remarks("theorem t : True := trivial -- a remark\n")
+        read.assert_called_once()
 
 
 PLANT = '''{doc}

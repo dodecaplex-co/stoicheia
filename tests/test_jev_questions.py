@@ -1145,9 +1145,8 @@ class Controls(unittest.TestCase):
                            check=True, capture_output=True)
             generator_path = checkout / 'scripts/audit/jev_questions.py'
             shutil.copyfile(REPOSITORY / 'scripts/audit/jev_questions.py', generator_path)
-            # The generator takes its comment reader from check_fidelity.py (#206).
-            shutil.copyfile(REPOSITORY / 'scripts/check_fidelity.py',
-                            checkout / 'scripts/check_fidelity.py')
+            # The generator holds its own copy of the comment reader (#349), so nothing but
+            # itself is copied into the evidence commit's checkout.
             name = 'jev_questions_at_' + revision[:12]
             spec = importlib.util.spec_from_file_location(name, generator_path)
             self.assertIsNotNone(spec)

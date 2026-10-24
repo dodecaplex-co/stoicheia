@@ -9,17 +9,20 @@ public import Model.Laws
 by hand before the generator existed, and `exists_centre`, translated by hand and proved in
 the plane before it joined the library. Each law here is the library's, word for word, with
 `S.Point` for `Elements.Point`, `S.OnCircle` for `Elements.OnCircle`, and so on, and the
-printed original is quoted above it, from `Certificate/axioms.lock`. The defined words the
-laws use (`S.CirclesMeet`, `S.OppositeSides`, `S.OutsideCircle`) are the generated ones,
-from `Model/Laws.lean`.
+printed original is quoted above it, from `Certificate/axioms.lock` for a retained axiom, or
+its unchanged theorem type for a retired rule. The defined words the laws use
+(`S.CirclesMeet`, `S.OppositeSides`, `S.OutsideCircle`) are the generated ones, from
+`Model/Laws.lean`.
 
 These laws are kept as the independent check they were written to be. `Check/Hand.lean`
 puts the library's own words in for `S` and asks Lean whether each result is the original
-declaration, and asks too whether each is the law the generator writes, the field of
-`Laws` it stands for; `Check/RoundTrip.lean` compares each with the generated law by syntax,
-binder kinds and names included. The build fails if any of these fails. The proofs in the
-plane of these laws are stated with them, and Lean checks, where `Model/Assembly.lean`
-gathers them, that each proves its field of `Laws`. The other laws are stated the same way,
+declaration. For each retained axiom it asks too whether this is the law the generator
+writes, the field of `Laws` it stands for; `Check/RoundTrip.lean` compares these with the
+generated laws by syntax, binder kinds and names included. The retired rules are compared
+directly with their theorem types by `comparePlanted`, including binder kinds. The build
+fails if any of these fails. The plane proofs use the hand translations, and
+`Model/Assembly.lean` gathers those of the retained axioms into their fields of `Laws`.
+The other laws are stated the same way,
 with the hand translations of `Model/Laws/`, each checked against its generated law in
 `Check/`, or directly against its library declaration for a retired axiom. The retired
 rules keep their concrete plane proofs and audits as derived facts, with no generated
@@ -32,6 +35,10 @@ Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si), with our th
 Intersections 8 and 9, which say on which side of the line of centres a crossing point
 lies. With them are the eight magnitude laws, which test the translation of the instances
 and of the kinds of magnitude, and the rule that every circle has a centre.
+
+Intersection 4 and Intersections 9 are now proved in `Elements/Figure/Incidence.lean`:
+the former from Intersection 5, Circle 1 and `line_circle_between`; the latter by choosing
+a point on the opposite side and applying the retained Intersections 8 to it.
 -/
 
 @[expose] public section
@@ -51,7 +58,7 @@ def circles_meet : Prop :=
     S.InsideCircle A β → S.OnCircle B β → S.CirclesMeet α β
 
 /-- `Elements.Tacit.circles_meet_of_on_inside_outside` (Intersection 4, corrected), by
-hand. The lock prints it as `∀ {A B : Elements.Point} {α β : Elements.Circle},
+hand. The theorem's unchanged type is `∀ {A B : Elements.Point} {α β : Elements.Circle},
 Elements.OnCircle A α → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) →
 Elements.InsideCircle A β → Elements.OutsideCircle B β → Elements.CirclesMeet α β`. -/
 def circles_meet_of_on_inside_outside : Prop :=
@@ -69,8 +76,8 @@ def circles_meet_same_side : Prop :=
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬ S.OnLine B L →
     ∃ A : S.Point, S.OnCircle A α ∧ S.OnCircle A β ∧ S.SameSide A B L
 
-/-- `Elements.Tacit.circles_meet_opposite_side` (Intersections 9), by hand. The lock prints
-it as `∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line},
+/-- `Elements.Tacit.circles_meet_opposite_side` (Intersections 9), by hand. The theorem's unchanged type
+is `∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line},
 Elements.CirclesMeet α β → Elements.Centre C α → Elements.Centre D β → Elements.OnLine C L →
 Elements.OnLine D L → Not (Elements.OnLine B L) → Exists fun (A : Elements.Point) => And
 (Elements.OnCircle A α) (And (Elements.OnCircle A β) (Elements.OppositeSides A B L))`. -/

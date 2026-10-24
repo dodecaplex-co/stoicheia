@@ -5,10 +5,13 @@ public import Model.Signature
 /-!
 # The metric length laws, translated by hand
 
-Each statement retains the binders and guards printed in `Certificate/axioms.lock`,
-also recorded in `facts.json`'s `axiom_types`. `Check/Lengths.lean` compares these hand
-translations with the original declarations and the generated laws. The generator's
-round trip also checks their syntax, including implicit and explicit binders.
+Each statement retains its original binders and guards. `len_self` and `len_symm`
+remain axioms in `Certificate/axioms.lock`; `eq_of_len_eq_zero` is now proved in
+`Elements/Figure/RuleBase.lean` from Postulate 3 and the proved circle rules: distinct
+points at no distance would put a circle's centre on its circumference.
+`Check/Lengths.lean` compares the hand translations with the original declarations,
+the retained axioms with the generated laws, and the retired rule directly with its
+theorem type, including binder kinds.
 -/
 
 @[expose] public section
@@ -17,7 +20,7 @@ namespace Model.Hand
 
 variable (S : Signature)
 
-/-- `Elements.Tacit.eq_of_len_eq_zero` (Metric 1), hand-translated. The lock prints it as
+/-- `Elements.Tacit.eq_of_len_eq_zero` (Metric 1), hand-translated. The theorem's unchanged type is
 `∀ {A B : Elements.Point}, Eq (Elements.len A B) 0 → Eq A B`. -/
 def eq_of_len_eq_zero : Prop :=
   ∀ {A B : S.Point}, S.len A B = (0 : S.Length) → A = B

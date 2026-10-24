@@ -12,8 +12,8 @@ Ten synthetic defect controls change generated rows only. Expectations report th
 review records' claims and remain local, as do provenance, mutations and coverage.
 
 Run from anywhere with Python 3.11 or later, using only the standard library, the
-repository's heath.py and jev.py, imported by path, and the comment reader the scripts
-share, `comment_end`, taken alone from the repository's check_fidelity.py:
+repository's heath.py and jev.py, imported by path, and a copy, word for word, of the
+comment reader the scripts share, heath.py's `comment_end`:
 
     python3 scripts/audit/jev_questions.py --commit REV
     python3 scripts/audit/jev_questions.py --commit REV --check
@@ -23,8 +23,8 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
-resolve inside the repository. Both helpers' paths and the reader's pass those checks and
-must name regular files; their accepted code is read and compiled before any of it runs.
+resolve inside the repository. Both helpers' paths pass those checks and must name
+regular files; their accepted code is read and compiled before any of it runs.
 Each Lean file's header is read by a small parser following Lean 4.35's grammar, before any
 masking:
 an optional `module`, then imports in the four forms
@@ -158,44 +158,39 @@ def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     return _execute_modules(_prepare_modules(helpers))
 
 
-# check_fidelity's reader of where a Lean comment ends, shared with it (#206). The file
-# imports heath and generated_counts by name, which a generator run by path, as with
-# `python3 -I`, cannot import, so the function is taken alone and nothing else of it runs.
-READER = ('jev_questions_reader', 'scripts/check_fidelity.py', 'comment_end')
-
-
-def _prepare_function(name: str, path: str, function: str) -> tuple[str, object]:
-    resolved = evidence_path(path)
-    require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
-    tree = ast.parse(read_no_follow(resolved), str(resolved))
-    found = [node for node in tree.body
-             if isinstance(node, ast.FunctionDef) and node.name == function]
-    require(len(found) == 1, f'{path}: defines no single function {function}')
-    compiled = compile(ast.Module(found, type_ignores=[]), str(resolved), 'exec',
-                       dont_inherit=True)
-    return name, compiled
-
-
-def _execute_function(prepared: tuple[str, object]):
-    name, compiled = prepared
-    namespace = {'__name__': name}
-    exec(compiled, namespace)
-    functions = [value for value in namespace.values() if callable(value)]
-    require(len(functions) == 1, f'{name}: prepared no single function')
-    return functions[0]
-
-
-def shared_function(name: str, path: str, function: str):
-    """Check a helper's path, then define its top-level `function` alone, from the bytes
-    read."""
-    return _execute_function(_prepare_function(name, path, function))
+# The scripts' one reader of where a Lean comment ends is heath.py's `comment_end`
+# (#206, #349). The generator must read the evidence commit's heath.py as a helper,
+# which at an older commit has no reader, so it holds its own copy, word for word but
+# for the name, which tests/test_negative_tests.py holds to heath's by its source and
+# by what it reads (the coordinator's ruling of 23 October 05:20).
+def shared_comment_end(src: str, i: int) -> int | None:
+    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
+    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
+    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
+    docstrings and nested blocks among them, just past the `-/` that closes it, or None
+    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
+    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
+    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
+    `read_lean` and `lean_comments`, and check_style's notes call this (#206). It uses
+    nothing else of this file, so that a program that cannot import it holds a copy, word
+    for word, which its tests hold to this one: the Jev generator, and risk.py from
+    #349's second train."""
+    if src.startswith("--", i):
+        end = src.find("\n", i)
+        return len(src) if end < 0 else end
+    j, nested = i + 3, 1
+    while j < len(src):
+        pair = src[j:j + 2]
+        nested += (pair == "/-") - (pair == "-/")
+        j += 2 if pair in ("/-", "-/") else 1
+        if not nested:
+            return j
+    return None
 
 
 try:
     prepared_helpers = _prepare_modules(HELPERS)
-    prepared_reader = _prepare_function(*READER)
     heath, jev = _execute_modules(prepared_helpers)
-    shared_comment_end = _execute_function(prepared_reader)
 except (Refusal, OSError) as error:
     if __name__ != '__main__':
         raise
@@ -341,7 +336,7 @@ KEYWORD_TOKENS = frozenset('''
 
 def comment_end(src: str, i: int) -> int:
     """Return the end of the line comment or nested block comment that starts at i, as Lean
-    reads it (check_fidelity.py's `comment_end`)."""
+    reads it (`shared_comment_end`, heath.py's `comment_end` word for word)."""
     end = shared_comment_end(src, i)
     require(end is not None, 'unterminated Lean comment')
     return end

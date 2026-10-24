@@ -1,101 +1,70 @@
-# commit: 4cc96bc07abed7ac0febe16cbdf728b40576aaf4 (harness files as committed)
-# harness: 31348f7c08c3b02819d24eb75ac8e02ce8dfc6dc02c937c726e2d8181f93b8a3
+# commit: 1df5d14ba85a3aafb98930e0113ceec1fcdfd50f (harness files as committed)
+# harness: 6a680d3f099549d1ace213c657905c3087aec6d9a845044ecee698a6f0accbc6
 # python: 3.14.2 (CPython, Darwin arm64)
-# date: 2026-10-22
+# date: 2026-10-24
 
-configurations meeting an axiom's hypotheses in the plane: 6,650,199
-  search-seed1: 512,171
-  search-seed2: 512,754
-  search-seed3: 512,619
-  exhaustive: 3,688,278
-  structured: 1,424,377
+configurations meeting an axiom's hypotheses in the plane: 4,427,399
+  search-seed1: 405,923
+  search-seed2: 405,997
+  search-seed3: 405,580
+  exhaustive: 2,528,836
+  structured: 681,063
 counterexamples in the plane: 0; mutations caught: 15 of 15
 
-Axiom                                    Search, seeds 1-3  Exhaustive  Structured             Hyperbolic
-Postulate1                                          18,156         600           ·                  8,270
-Postulate2                                          25,446         600           ·                  4,851
-Postulate3                                          18,204         600           ·                  8,445
-Postulate4                                               0       1,072      14,711                  5,875
-Postulate5                                               4     144,984      46,580  6,166 met, 1,189 fail
-Definition15                                         2,485       2,448      27,114                  6,845
-Tacit.add_assoc                                     60,000           ·           ·                 20,000
-Tacit.add_comm                                      60,000           ·           ·                 20,000
-Tacit.add_zero                                      60,000           ·           ·                 20,000
-Tacit.lt_irrefl                                     60,000           ·           ·                 20,000
-Tacit.lt_trans                                       5,651           ·           ·                  2,635
-Tacit.lt_trichotomy                                 60,000           ·           ·                 20,000
-Tacit.not_lt_zero                                   60,000           ·           ·                 20,000
-Tacit.add_lt_add_right                              28,346           ·           ·                  9,528
-Tacit.exists_point                                  60,000           ·           ·                 20,000
-Tacit.exists_point_on_line                          60,000           ·           ·                 20,000
-Tacit.exists_point_on_line_off_line                     43           ·      89,876                 13,361
-Tacit.exists_point_between                          25,432           ·      72,507                  4,858
-Tacit.exists_point_same_side                           916           ·      89,521                  8,126
-Tacit.exists_point_opposite_side                       988           ·      89,623                  7,992
-Tacit.exists_point_on_circle                        60,000           ·           ·                 20,000
-Tacit.exists_point_inside_circle                    60,000           ·           ·                 20,000
-Tacit.exists_centre                                 60,000           ·           ·                 20,000
-Tacit.line_circle_between                            2,784      44,088      44,974                  3,842
-Tacit.line_circle_beyond                             7,225      80,320      57,135                  9,609
-Tacit.circles_meet_same_side                           364     216,488      40,033                  8,980
-Tacit.circles_meet_opposite_side                       397     216,488      40,177                  8,852
-Tacit.line_unique                                   17,498         600           ·                  1,892
-Tacit.centre_inside                                 28,567          72           ·                  4,148
-Tacit.inside_not_on                                 33,290       1,260           ·                  9,313
-Tacit.between_symm                                   4,790         304           ·                 11,396
-Tacit.ne_of_between                                  4,791         304           ·                 11,325
-Tacit.ne_of_between_ends                             4,804         304           ·                 11,379
-Tacit.not_between_of_between                         4,735         304           ·                 11,410
-Tacit.on_line_of_between                             5,466         304       7,215                    387
-Tacit.on_line_of_between_ends                        5,486         304       7,275                    389
-Tacit.between_of_between_left                          676         128      36,856                  4,783
-Tacit.between_of_between_right                         675         128      43,514                  4,036
-Tacit.between_cases                                 16,409         912           ·                  2,180
-Tacit.not_between_of_between_between                 1,748         560      48,699                  5,078
-Tacit.same_side_refl                                   950       3,160           ·                  7,930
-Tacit.same_side_symm                                   326      45,192           ·                  4,442
-Tacit.not_on_line_of_same_side                         363      45,192           ·                  4,380
-Tacit.same_side_trans                                  223     724,792      33,327                  5,214
-Tacit.same_side_or                                       7     595,104      14,059                  1,859
-Tacit.pasch1                                             6      17,160      28,583                  3,423
-Tacit.pasch2                                           295       3,872       8,435                  1,418
-Tacit.pasch3                                         5,814       3,856      15,576                  1,646
-Tacit.pasch4                                           228       3,552      20,921                  2,188
-Tacit.triple_incidence1                                  0      77,960       7,925                  1,103
-Tacit.triple_incidence2                                  0      77,960       8,043                  1,110
-Tacit.between_of_inside_chord                          262       3,228      37,732                  8,069
-Tacit.outside_of_between                               457     281,664      47,802                  2,108
-Tacit.lines_meet_of_opposite_sides                      18      26,248      39,362                  4,427
-Tacit.line_meets_circle_of_inside                   28,053      30,204           ·                  4,903
-Tacit.circles_meet_of_on_inside_outside                802      49,616         358                  1,007
-Tacit.circles_meet                                   1,399      10,668       1,587                  2,554
-Tacit.eq_of_len_eq_zero                             41,899          25           ·                 11,525
-Tacit.len_self                                      60,000          25           ·                 20,000
-Tacit.len_symm                                      60,000         625           ·                 20,000
-Tacit.angle_symm                                    15,614      14,400           ·                  7,148
-Tacit.angle_le_two_right                            60,000      15,625           ·                 20,000
-Tacit.area_degenerate                               60,000         625           ·                 20,000
-Tacit.area_rotate                                   60,000      15,625           ·                 20,000
-Tacit.area_swap                                     60,000      15,625           ·                 20,000
-Tacit.area_congruent                                54,643     375,479      94,050                 10,879
-Tacit.len_add_of_between                             4,666         304           ·                  9,913
-Tacit.circle_eq                                        819       2,448      27,089                  4,335
-Tacit.on_circle_of_len_eq                            2,494       2,448      27,123                  6,612
-Tacit.inside_of_len_lt                               3,022       5,776      19,704                  3,577
-Tacit.len_lt_of_inside                               2,940       5,776      19,736                  3,568
-Tacit.angle_eq_zero_of_same_ray                     15,121       1,208           ·                  2,678
-Tacit.same_ray_of_angle_eq_zero                     15,311       1,208           ·                  2,727
-Tacit.angle_add_of_inside                                7      77,960      24,987                  3,828
-Tacit.angle_eq_of_same_rays                          6,803      60,032       8,676                  4,172
-Tacit.area_eq_zero_of_on_line                       24,766       2,112           ·                  4,734
-Tacit.on_line_of_area_eq_zero                       24,710       2,112           ·                  4,529
-Tacit.area_add_of_between                               21       6,176      55,499                  8,520
-Tacit.between_of_area_add                               17       6,176      56,023                  8,455
-Tacit.superposition                                    112     363,888      71,970                  8,563
+Axiom                               Search, seeds 1-3  Exhaustive  Structured             Hyperbolic
+Postulate1                                     18,156         600           ·                  8,270
+Postulate2                                     25,446         600           ·                  4,851
+Postulate3                                     18,204         600           ·                  8,445
+Postulate4                                          0       1,072      14,711                  5,875
+Postulate5                                          4     144,984      46,580  6,166 met, 1,189 fail
+Definition15                                    2,485       2,448      27,114                  6,845
+Tacit.add_assoc                                60,000           ·           ·                 20,000
+Tacit.add_comm                                 60,000           ·           ·                 20,000
+Tacit.add_zero                                 60,000           ·           ·                 20,000
+Tacit.lt_irrefl                                60,000           ·           ·                 20,000
+Tacit.lt_trans                                  5,651           ·           ·                  2,635
+Tacit.lt_trichotomy                            60,000           ·           ·                 20,000
+Tacit.not_lt_zero                              60,000           ·           ·                 20,000
+Tacit.add_lt_add_right                         28,346           ·           ·                  9,528
+Tacit.exists_point                             60,000           ·           ·                 20,000
+Tacit.exists_point_on_line                     60,000           ·           ·                 20,000
+Tacit.exists_point_inside_circle               60,000           ·           ·                 20,000
+Tacit.exists_centre                            60,000           ·           ·                 20,000
+Tacit.line_circle_between                       2,860      44,088      44,974                  3,799
+Tacit.line_circle_beyond                        7,266      80,320      57,135                  9,633
+Tacit.circles_meet_same_side                      381     216,488      40,033                  8,929
+Tacit.line_unique                              17,462         600           ·                  1,948
+Tacit.between_symm                              4,808         304           ·                 11,386
+Tacit.not_between_of_between                    4,812         304           ·                 11,444
+Tacit.between_cases                            16,420         912           ·                  2,154
+Tacit.not_on_line_of_same_side                    315      45,192           ·                  4,389
+Tacit.same_side_trans                             211     724,792      33,327                  5,113
+Tacit.pasch2                                      318       3,872       8,435                  1,401
+Tacit.between_of_inside_chord                     239       3,228      37,732                  8,315
+Tacit.outside_of_between                          453     281,664      47,802                  2,023
+Tacit.lines_meet_of_opposite_sides                 22      26,248      39,362                  4,489
+Tacit.circles_meet                              1,389      10,668       1,587                  2,551
+Tacit.len_self                                 60,000          25           ·                 20,000
+Tacit.len_symm                                 60,000         625           ·                 20,000
+Tacit.angle_symm                               15,382      14,400           ·                  6,966
+Tacit.angle_le_two_right                       60,000      15,625           ·                 20,000
+Tacit.area_degenerate                          60,000         625           ·                 20,000
+Tacit.area_rotate                              60,000      15,625           ·                 20,000
+Tacit.area_congruent                           54,706     375,479      94,050                 10,867
+Tacit.len_add_of_between                        4,735         304           ·                  9,716
+Tacit.circle_eq                                   820       2,448      27,089                  4,357
+Tacit.angle_eq_zero_of_same_ray                15,158       1,208           ·                  2,713
+Tacit.same_ray_of_angle_eq_zero                15,098       1,208           ·                  2,724
+Tacit.angle_add_of_inside                           2      77,960      24,987                  3,856
+Tacit.angle_eq_of_same_rays                     6,875      60,032       8,676                  4,135
+Tacit.area_eq_zero_of_on_line                  24,845       2,112           ·                  4,683
+Tacit.on_line_of_area_eq_zero                  24,513       2,112           ·                  4,705
+Tacit.area_add_of_between                          20       6,176      55,499                  8,475
+Tacit.superposition                                98     363,888      71,970                  8,669
 
-configurations meeting a derived property's hypotheses: 6,887,189
-  exhaustive: 6,633,328
-  structured: 253,861
+configurations meeting a derived property's hypotheses: 9,525,564
+  exhaustive: 7,819,222
+  structured: 1,706,342
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
 | `derived.adjacent_eq_of_right` | 1,072 | 25,166 |
@@ -106,3 +75,34 @@ configurations meeting a derived property's hypotheses: 6,887,189
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
 | `derived.inside_of_angle_add` | 77,960 | 25,019 |
+| `derived.area_swap` | 15,625 | 100,000 |
+| `derived.between_of_area_add` | 6,176 | 56,023 |
+| `derived.between_of_between_left` | 128 | 36,856 |
+| `derived.between_of_between_right` | 128 | 43,514 |
+| `derived.centre_inside` | 72 | 20,150 |
+| `derived.circles_meet_of_on_inside_outside` | 49,616 | 358 |
+| `derived.circles_meet_opposite_side` | 216,488 | 40,177 |
+| `derived.eq_of_len_eq_zero` | 25 | 43,929 |
+| `derived.exists_point_between` | 600 | 72,507 |
+| `derived.exists_point_on_circle` | 72 | 100,000 |
+| `derived.exists_point_on_line_off_line` | 19,460 | 89,876 |
+| `derived.exists_point_opposite_side` | 3,160 | 89,623 |
+| `derived.exists_point_same_side` | 3,160 | 89,521 |
+| `derived.inside_not_on` | 1,260 | 39,905 |
+| `derived.inside_of_len_lt` | 5,776 | 19,704 |
+| `derived.len_lt_of_inside` | 5,776 | 19,736 |
+| `derived.line_meets_circle_of_inside` | 30,204 | 69,874 |
+| `derived.ne_of_between` | 304 | 99,883 |
+| `derived.ne_of_between_ends` | 304 | 99,885 |
+| `derived.not_between_of_between_between` | 560 | 48,699 |
+| `derived.on_circle_of_len_eq` | 2,448 | 27,123 |
+| `derived.on_line_of_between` | 304 | 7,215 |
+| `derived.on_line_of_between_ends` | 304 | 7,275 |
+| `derived.pasch1` | 17,160 | 28,583 |
+| `derived.pasch3` | 3,856 | 15,576 |
+| `derived.pasch4` | 3,552 | 20,921 |
+| `derived.same_side_or` | 595,104 | 14,059 |
+| `derived.same_side_refl` | 3,160 | 80,714 |
+| `derived.same_side_symm` | 45,192 | 54,827 |
+| `derived.triple_incidence1` | 77,960 | 7,925 |
+| `derived.triple_incidence2` | 77,960 | 8,043 |
