@@ -1207,7 +1207,14 @@ are:
   block must name the harness commit's blob, give a passing verdict, and show every full
   check that harness runs, by its own `CHECKS` and `NEGATIVE` lists, with no failure; a
   block written before the `Verdict` line existed does not pass, so its pull request
-  needs a fresh pre-flight. The block is a declaration: anyone who can edit the pull
+  needs a fresh pre-flight. A block that left the full checks to CI passes in their
+  place only for a train of R0 to R2: the `LOW_CLASSES` of its harness must hold the
+  class it names, and two diffs, each classed by main's `scripts/risk.py` with the
+  train's labels, must be R0 to R2 and change no check input and no protected path but
+  judged content: the block's own, from its base to its head, and what the entry's merge
+  brings into the group, from the merge's first parent, as CI's risk job classes a pull
+  request's merge commit. The group's own CI run is classed R5, so every check runs on
+  the group before it merges. The block is a declaration: anyone who can edit the pull
   request's body can type one, and the judge checks it for consistency with the
   repository, not as proof that a pre-flight ran. Its authenticity must be held by
   something a group cannot change, as above, before the queue is turned on. A `train/`
