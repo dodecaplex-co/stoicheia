@@ -1129,6 +1129,9 @@ def circle_source_faults(facts) -> list[str]:
             if any(s.get("name") == name for s in steps):
                 faults.append(f"{CIRCLE_SOURCE} itself names {name} ({rule}) among its "
                               "shared steps")
+            if name in inherited:
+                faults.append(f"{CIRCLE_SOURCE} itself rests on {name} ({rule}) among its "
+                              "inherited axioms")
             if name in lemmas:
                 faults.append(f"{CIRCLE_SOURCE} itself names {name} ({rule}) among the "
                               "lemmas it inherits through")
@@ -1166,7 +1169,7 @@ def check_lock(facts, path: Path = LOCK):
                 continue
             rule_cites = cites.get(name)
             if not (name_list(dependencies) and canonical_ref_list(rule_cites)
-                    and CIRCLE_SOURCE in rule_cites):
+                    and rule_cites == sorted(rule_cites) and CIRCLE_SOURCE in rule_cites):
                 fail(f"{name} ({rule}): proved without another forbidden circle rule "
                      f"beneath it that is an axiom in {rel(path)}, or a proof that cites "
                      f"{CIRCLE_SOURCE}, so entries using it cannot be refused by their axioms "
@@ -1360,7 +1363,15 @@ def check_entries(facts, by_ref) -> None:
             if axiom in p["axioms"]:
                 fail(f"{ref}: rests on {axiom} ({rule}), forbidden for every entry")
         if ref not in PLACEMENT_ENTRIES:
-            for step in p.get("shared_steps", []):
+            steps = p.get("shared_steps", [])
+            if not isinstance(steps, list):
+                fail(f"{ref}: its `shared_steps` is not a list")
+                steps = []
+            for i, step in enumerate(steps, 1):
+                if not fact_location(step, brings_in=True):
+                    fail(f"{ref}: its `shared_steps` member {i} is not an object with name, "
+                         "file, line and reference-list `brings_in`")
+                    continue
                 if placement_step(step):
                     fail(f"{ref}: calls on {step.get('name')} ({step.get('file')}), but only "
                          "III.24 may call on placement or a lemma of the `Placement` "
