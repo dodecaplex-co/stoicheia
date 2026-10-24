@@ -1,0 +1,6 @@
+# Check every relative link and anchor.
+order = 180
+name = "python3 scripts/check_links.py"
+job = "check"
+command = ["python3", "scripts/check_links.py"]
+section8 = "python3 scripts/check_links.py"

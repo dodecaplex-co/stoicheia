@@ -1,0 +1,9 @@
+# Check Jev's client against a stand-in for the service, with a key it makes up. The
+# self-test needs no network and no key: among other things, it checks that the key appears
+# in no output, that a dry run sends nothing, and that a row's expected answer is never
+# sent.
+order = 120
+name = "python3 scripts/audit/jev.py self-test"
+job = "check"
+command = ["python3", "scripts/audit/jev.py", "self-test"]
+section8 = "python3 scripts/audit/jev.py self-test"
