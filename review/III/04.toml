@@ -23,7 +23,7 @@ note = "If B is on A's side of FE, the equal right angles put B on EA; otherwise
 at = "which is impossible."
 kind = "helper"
 helper = "onRay_of_angle_eq"
-note = "Euclid rejects equal angles when one is part of the other; `onRay_of_angle_eq` proves, by angle addition and Common Notion 5, that equal angles on the same side of FE put their other arms on one ray. The Lean places B or D on A's side using the assumed rule `Tacit.pasch3` (System E, Pasch 3) and `same_side_of_opposite_sides`, then the assumed rule `Tacit.line_unique` (System E, Generalities 1) would make AC and BD one straight line."
+note = "Euclid rejects equal angles when one is part of the other; `onRay_of_angle_eq` proves, by angle addition and Common Notion 5, that equal angles on the same side of FE put their other arms on one ray. The Lean places B or D on A's side using `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`, and `same_side_of_opposite_sides`, then the assumed rule `Tacit.line_unique` (System E, Generalities 1) would make AC and BD one straight line."
 
 [[passage]]
 at = "Therefore AC, BD do not bisect one another."

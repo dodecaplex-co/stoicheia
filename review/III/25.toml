@@ -6,7 +6,7 @@ fingerprint = "sha256:45e8f59e48cffdcc"
 
 [route]
 kind = "euclid"
-note = "The core is Euclid's construction, in his three cases. His step \"[III. 9]\", that the circle described is the one the segment came from, is the companion `Prop25.complete`, by III.9 and `circle_eq`. `Prop25.of_circle` runs the core on the arc of a given circle, the meeting fact coming from `Prop25.meets` [III. 2]. The core puts B and C on its circle by `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), a rule we assume. The completion uses two more assumed rules: `Tacit.exists_centre`, from Definitions I.15 and I.16 and not a rule of System E, and `Tacit.circle_eq` (System E, Diagram-segment 2)."
+note = "The core is Euclid's construction, in his three cases. His step \"[III. 9]\", that the circle described is the one the segment came from, is the companion `Prop25.complete`, by III.9 and `circle_eq`. `Prop25.of_circle` runs the core on the arc of a given circle, the meeting fact coming from `Prop25.meets` [III. 2]. The core puts B and C on its circle by `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), proved in `Elements/Figure/RuleBase.lean`. The completion uses two assumed rules: `Tacit.exists_centre`, from Definitions I.15 and I.16 and not a rule of System E, and `Tacit.circle_eq` (System E, Diagram-segment 2)."
 
 [representation]
 tags = ["segment-with-circle", "angle-measure"]
@@ -58,7 +58,7 @@ note = "The core describes the circle with centre E through A (Postulate 3), and
 at = "And it is manifest that the segment ABC is less than a semicircle"
 kind = "carried"
 helper = "Prop25.kind"
-note = "The core puts E across AC from B by `Tacit.pasch3`, the rule we assume as System E, Pasch 3; `Prop25.kind` proves `Arc.Less` and that the circumference measures less than two right angles, using I.32, III.2, III.20 and III.21, for which Heath prints no references here. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
+note = "The core puts E across AC from B by `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`; `Prop25.kind` proves `Arc.Less` and that the circumference measures less than two right angles, using I.32, III.2, III.20 and III.21, for which Heath prints no references here. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
 [[passage]]
 at = "D will be the centre of the completed circle"

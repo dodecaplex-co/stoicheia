@@ -15,13 +15,13 @@ note = "The segment cut off from the given circle is named by its points B, A an
 at = "Let EF be drawn touching ABC at the point B"
 kind = "helper"
 helper = "Prop16.porism"
-note = "Euclid draws EF touching at B; the Lean uses I.11 for the perpendicular and III.16's porism for contact, neither with a printed reference from Heath here. The centre rule mentioned above, applied beneath the setting-out, is `Tacit.exists_centre`, which we assume from Definitions I.15 and I.16 with no System E counterpart; `Tacit.exists_point_on_circle`, the rule we assume as System E, Points 7, supplies B."
+note = "Euclid draws EF touching at B; the Lean uses I.11 for the perpendicular and III.16's porism for contact, neither with a printed reference from Heath here. The centre rule mentioned above, applied beneath the setting-out, is `Tacit.exists_centre`, which we assume from Definitions I.15 and I.16 with no System E counterpart; `Tacit.exists_point_on_circle` (System E, Points 7), proved in `Elements/Figure/CirclePoints.lean`, supplies B."
 
 [[passage]]
 at = "and on the straight line FB"
 kind = "helper"
 helper = "Prop16"
-note = "Heath prints I.23 for copying the angle, but no reference to III.16 for the interior point used here. The Lean takes the other end of the diameter through B and then C by `Tacit.line_circle_beyond` (System E, Intersections 5), with the centre within by `Tacit.centre_inside` (System E, Generalities 3), both rules we assume."
+note = "Heath prints I.23 for copying the angle, but no reference to III.16 for the interior point used here. The Lean takes the other end of the diameter through B and then C by `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, with the centre within by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`."
 
 [[passage]]
 at = "the angle FBC is equal to the angle constructed in the alternate segment BAC"
@@ -33,7 +33,7 @@ note = "Euclid takes an angle in the alternate segment BAC. The Lean first choos
 at = "But the angle FBC is equal to the angle at D"
 kind = "helper"
 helper = "OnRay.of_sameSideOf"
-note = "Euclid identifies BC with the ray on which he copied the angle; beneath the copying sentence the Lean puts C on the centre's side of EF, since otherwise `OppositeSides.exists_between` would give a crossing of OC with EF within the circle by `InsideCircle.of_between_centre`, contrary to `Touches.not_inside`. The crossing uses `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4), both rules we assume; `OnRay.of_sameSideOf` then identifies the ray, so `angle_onRay_right` gives the copied angle."
+note = "Euclid identifies BC with the ray on which he copied the angle; beneath the copying sentence the Lean puts C on the centre's side of EF, since otherwise `OppositeSides.exists_between` would give a crossing of OC with EF within the circle by `InsideCircle.of_between_centre`, contrary to `Touches.not_inside`. The crossing uses `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1), a rule we assume, and `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`; `OnRay.of_sameSideOf` then identifies the ray, so `angle_onRay_right` gives the copied angle."
 
 [figure]
 case = "an acute given angle, with BAC the greater segment"

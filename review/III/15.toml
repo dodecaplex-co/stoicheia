@@ -48,7 +48,7 @@ note = "Euclid uses the equality of the radii ME and FE, and EN and EG, without 
 at = "and the angle MEN greater than the angle FEG"
 kind = "helper"
 helper = "Prop15.half"
-note = "Euclid reads the larger angle from the figure without a reference from Heath; during construction, the Lean puts M on F's side of EK and N on G's by `Tacit.pasch3`, the rule we assume as System E, Pasch 3, and the side rules. The Lean uses I.13 and I.17 to prove MN and FG cannot meet, then `Parallel.sameSide` puts F and G on K's side of MN and Pasch 3 puts E across MN from K, hence from F and G; `Prop15.half` twice uses these placements and III.2 to put the crossings of EF and EG between M and L and between N and L, and the Lean adds the two angle inequalities."
+note = "Euclid reads the larger angle from the figure without a reference from Heath; during construction, the Lean puts M on F's side of EK and N on G's by `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`, and the side rules. The Lean uses I.13 and I.17 to prove MN and FG cannot meet, then `Parallel.sameSide` puts F and G on K's side of MN and Pasch 3 puts E across MN from K, hence from F and G; `Prop15.half` twice uses these placements and III.2 to put the crossings of EF and EG between M and L and between N and L, and the Lean adds the two angle inequalities."
 
 [figure]
 case = "AD a diameter, neither BC nor FG through E, and EH less than EK"

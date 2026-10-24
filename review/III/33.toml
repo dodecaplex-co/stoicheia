@@ -27,19 +27,19 @@ note = "Euclid copies the acute angle at A. The Lean uses I.23, for which Heath 
 at = "Let AE be drawn at right angles to DA"
 kind = "helper"
 helper = "Postulate5"
-note = "Euclid draws the perpendiculars and bisects AB without printed references from Heath; the Lean uses I.11 and I.10. For the meeting described above, `BookI.Prop24.within` puts AB within the right angle at A, `angle_add_of_within` and Common Notion 5 make EAF acute, and `crossbar` with `Tacit.pasch3` (System E, Pasch 3) puts AE across AB from D; that rule and `Postulate5` (System E §3.6, diagram-angle transfer rule 5) are rules we assume."
+note = "Euclid draws the perpendiculars and bisects AB without printed references from Heath; the Lean uses I.11 and I.10. For the meeting described above, `BookI.Prop24.within` puts AB within the right angle at A, `angle_add_of_within` and Common Notion 5 make EAF acute, and `crossbar` with `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`, puts AE across AB from D; `Postulate5` (System E §3.6, diagram-angle transfer rule 5) is a rule we assume."
 
 [[passage]]
 at = "Therefore the circle described with centre G and distance GA will pass through B also."
 kind = "grouped"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid first says the circle will pass through B, then draws it. The Lean prepares GB equal to GA here and carries both sentences by Postulate 3 and `Tacit.on_circle_of_len_eq`, the rule we assume as System E, Diagram-segment 3, beneath the next sentence."
+note = "Euclid first says the circle will pass through B, then draws it. The Lean prepares GB equal to GA here and carries both sentences by Postulate 3 and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), proved in `Elements/Figure/RuleBase.lean`, beneath the next sentence."
 
 [[passage]]
 at = "Let it be drawn, and let it be ABE"
 kind = "helper"
 helper = "Tacit.line_circle_beyond"
-note = "Euclid's E is the other end of the diameter AE. The Lean takes E beyond G from A by `Tacit.line_circle_beyond` (System E, Intersections 5), with G within the circle by `Tacit.centre_inside` (System E, Generalities 3), both rules we assume."
+note = "Euclid's E is the other end of the diameter AE. The Lean takes E beyond G from A by `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, with G within the circle by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`."
 
 [[passage]]
 at = "let EB be joined"
@@ -56,7 +56,13 @@ note = "Euclid copies the right angle at A. The Lean again uses I.23, for which 
 at = "let AB be bisected at F, and with centre F"
 kind = "helper"
 helper = "BookI.Prop10"
-note = "Euclid bisects AB and draws the circle; the Lean uses I.10, then Postulate 3 and `Tacit.on_circle_of_len_eq`, the assumed rule named above, to put B on it. `Prop2.sameSide` chooses E on D's side of AB by III.2; Heath prints no reference to I.10 or III.2 here."
+note = "Euclid bisects AB and draws the circle; the Lean uses I.10, then Postulate 3 and `Tacit.on_circle_of_len_eq`, the proved rule named above, to put B on it. `Prop2.sameSide` chooses E on D's side of AB by III.2; Heath prints no reference to I.10 or III.2 here."
+
+[[passage]]
+at = "Therefore the straight line AD touches the circle ABE"
+kind = "carried"
+note = "The Lean proves that AD touches the circle by III.16's porism; no later step uses this contact."
+unused = ["htouchR"]
 
 [[passage]]
 at = "and on the straight line AB, and at the point A, let the angle BAD"
@@ -68,13 +74,14 @@ note = "Euclid copies the obtuse angle at A. The Lean again uses I.23, for which
 at = "let AE be drawn at right angles to AD"
 kind = "helper"
 helper = "Postulate5"
-note = "Euclid draws the perpendiculars and bisects AB again; the Lean uses I.11 and I.10, for which Heath prints no references here, and `Postulate5`, a rule we assume, for their meeting. `BookI.Prop24.within` puts AE within BAD; after DA is produced beyond A, `crossbar`, `Tacit.pasch3` (System E, Pasch 3) and `Tacit.same_side_or` (System E, Same side 5), both assumed rules, place AB within the adjacent right angle, so `angle_add_of_within` and Common Notion 5 make EAF acute."
+note = "Euclid draws the perpendiculars and bisects AB again; the Lean uses I.11 and I.10, for which Heath prints no references here, and `Postulate5`, a rule we assume, for their meeting. `BookI.Prop24.within` puts AE within BAD; after DA is produced beyond A, `crossbar`, the proved rule `Tacit.pasch3` (System E, Pasch 3) and `Tacit.same_side_or` (System E, Same side 5), proved in `Elements/Figure/Incidence.lean`, place AB within the adjacent right angle, so `angle_add_of_within` and Common Notion 5 make EAF acute."
 
 [[passage]]
 at = "Therefore the circle described with centre G and distance GA will pass through B also;"
+unused = ["E", "hE", "hE_LX", "hEGA"]
 kind = "helper"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid draws the circle through A and B, with E again the other end of its diameter. The Lean uses Postulate 3 and the same assumed rules as in the acute case: `Tacit.on_circle_of_len_eq` for B, and `Tacit.line_circle_beyond` with `Tacit.centre_inside` for E."
+note = "Euclid draws the circle through A and B, with E again the other end of its diameter. The Lean uses Postulate 3 and the same rules as in the acute case: the proved rule `Tacit.on_circle_of_len_eq` for B, and the assumed rule `Tacit.line_circle_beyond` with the proved rule `Tacit.centre_inside` for E."
 
 [[passage]]
 at = "therefore the angle BAD is equal to the angle constructed in the alternate segment AHB"

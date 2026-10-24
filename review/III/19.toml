@@ -15,7 +15,7 @@ note = "The statement gives DE touching at C and CA at right angles to it. For E
 at = "and let CF be joined"
 kind = "helper"
 helper = "Touches.not_inside"
-note = "Euclid joins CF with F off the tangent, as the figure shows. The Lean proves F off DE by `Touches.not_inside` and `Tacit.centre_inside`, the rule we assume as System E, Generalities 3; CF itself is named by its ends."
+note = "Euclid joins CF with F off the tangent, as the figure shows. The Lean proves F off DE by `Touches.not_inside` and `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`; CF itself is named by its ends."
 
 [[passage]]
 at = "But the angle ACE is also right"

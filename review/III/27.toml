@@ -15,7 +15,7 @@ note = "\"In equal circles\" is kept from Euclid, and the proof uses it through 
 at = "and on the straight line BG, and at the point G on it"
 kind = "helper"
 helper = "OnRay.exists_len_eq"
-note = "Euclid constructs BGK by I.23 and takes K on the circle; I.23 in the Lean gives only the direction of GK. `OnRay.exists_len_eq` takes GK equal to GB, using Postulate 3 and the assumed rules `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.line_circle_beyond` (System E, Intersections 5), and `Tacit.on_circle_of_len_eq`, the rule we assume as System E, Diagram-segment 3, puts K on ABC."
+note = "Euclid constructs BGK by I.23 and takes K on the circle; I.23 in the Lean gives only the direction of GK. `OnRay.exists_len_eq` takes GK equal to GB, using Postulate 3 and `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), also proved there, puts K on ABC."
 
 [[passage]]
 at = "Now equal angles stand on equal circumferences"
