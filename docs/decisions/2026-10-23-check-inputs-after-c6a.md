@@ -7,7 +7,7 @@
   `full`. It also gives contact within the definition that
   [brief 0008](../briefs/0008-centre.md) chose in its question 16: `TouchesInternally` now
   asks for a point of the inner circle within the outer, beside no point of it outside.
-  Three check inputs still described the edition as it stood before that train. This
+  Four check inputs still described the edition as it stood before that train. This
   change brings each up to date and carries no content, so it lands in a pull request of
   its own, after the train, as a check change must. This closes #214.
 
@@ -29,9 +29,9 @@
   did, and a partial III.16 or III.31 is now refused, whatever its tags. Two new cases
   pin that: each record is full and passes P3, and each, made partial in memory with
   `mixed-angles-omitted` or with `mixed-angles-local`, is refused. Since
-  [#249](https://github.com/jackChallis/stoicheia/issues/249) ACCEPTANCE is a check input
-  and a protected path, so its table, `ALLOWED_LIMITS` and their test change together in
-  this one check change.
+  [#249](https://github.com/jackChallis/stoicheia/issues/249), ACCEPTANCE has been a
+  check input and a protected path, so its table, `ALLOWED_LIMITS` and their test change
+  together in this one check change.
 
   Third, the worked example for III.16 said that III.16 "is partial". Its prose now says
   that III.16 was partial at `d040117`, and a new paragraph after the example says what
