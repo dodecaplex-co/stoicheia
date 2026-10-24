@@ -109,3 +109,24 @@
 
   This entry approves the change to `Audit/screen.py`, whose `CIRCLE` list drops Circle 3
   and whose account of its runs gives the counts of this lock.
+
+  The numerical model's results were written again on this harness:
+  `python3 -I tests/model/run.py --full --write` ran at commit `962c8c890a38`, and every
+  check passed, with no counterexample in the plane, all 15 mutations caught, and in the
+  hyperbolic plane `Postulate5` failing alone, as it must. With one law fewer drawing on
+  the random numbers, the search's three seeds and the hyperbolic run meet the other laws'
+  hypotheses a little differently, so the plane's axiom total moves from 4,097,933 to
+  4,098,108; the derived properties' stays at 9,855,030. MODEL.md carries the counts as
+  the run wrote them.
+
+  This entry approves, one at a time, each result file that this run wrote:
+  - `tests/model/results/angle_check.txt`, from the angle check at this commit;
+  - `tests/model/results/exhaustive.txt`, from the exhaustive enumeration at this commit;
+  - `tests/model/results/grid_check.txt`, from the lattice check at this commit;
+  - `tests/model/results/hyperbolic.txt`, from the hyperbolic plane at this commit;
+  - `tests/model/results/mutations.txt`, from the mutation run at this commit;
+  - `tests/model/results/search-seed1.txt`, from seed 1 of the search at this commit;
+  - `tests/model/results/search-seed2.txt`, from seed 2 of the search at this commit;
+  - `tests/model/results/search-seed3.txt`, from seed 3 of the search at this commit;
+  - `tests/model/results/structured.txt`, from the structured run at this commit;
+  - and `tests/model/results/summary.txt`, the table of all of them at this commit.
