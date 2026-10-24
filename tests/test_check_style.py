@@ -29,14 +29,14 @@ it, put to the script's own patterns and functions:
   as "does not use" for one, "neither … nor" for two and "none of" for more, and words
   III.24's application of one segment to another by `placement` only from what its
   facts.json entry shows, read afresh for each root;
-* the route cases: render.py counts the steps a modified route changes, one for each
-  passage its record argues another way, on the page, in the book's summary and in the
-  certificate's key, and where the record counts none says "with a step changed" on the
-  page and "one or more" in the book's summary;
 * the figure cases: render.py's caption under Euclid's figure says "Drawn for one case"
   before the case the record's [figure] names, or "Drawn for every case" where the record
   says `every_case`, and heath.py refuses an `every_case` that is not true or false, or
   that has no `case` for the caption to name;
+* the route cases: render.py counts the steps a modified route changes, one for each
+  passage its record argues another way, on the page, in the book's summary and in the
+  certificate's key, and where the record counts none says "with a step changed" on the
+  page and "one or more" in the book's summary;
 * the clearance cases: S26 finds a stroke through a letter, or nearer it than 2 less half
   its width (given as an attribute or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
