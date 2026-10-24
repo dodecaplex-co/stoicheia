@@ -1,0 +1,6 @@
+# Check the contracts (references, porisms, review terms and records).
+order = 70
+name = "python3 scripts/heath.py"
+job = "check"
+command = ["python3", "scripts/heath.py"]
+section8 = "python3 scripts/heath.py"

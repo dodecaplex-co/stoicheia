@@ -1,0 +1,7 @@
+# Check the overlap catalogue's audit lemmas. Audit/ is a library nothing imports, outside
+# the default build.
+order = 20
+name = "lake build Audit"
+job = "check"
+command = ["lake", "build", "Audit"]
+section8 = "lake build Audit"
