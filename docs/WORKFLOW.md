@@ -571,7 +571,37 @@ every train and group as unreadable.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
-  beside other contributors' builds in a shared tree.
+  beside other contributors' builds in a shared tree. Each break is a plant, a file of its
+  own, `scripts/negative/<name>.py`, its name lower-case letters, digits and underscores,
+  beginning with a letter: its description as the module docstring (what it plants, which
+  check must refuse it and what that check must say); `import negative_tests as nt`,
+  through which it reaches the shared helpers (`nt.ROOT`, `nt.replace_once`,
+  `nt.expect_failure` and the others); `BUILDS`, True only when it runs `lake build`; and
+  `def plant() -> None:`, which plants the change, in the real files or a copy of them,
+  runs the check and puts everything back in `finally`. To add a plant, add one such file;
+  no other file of the suite is edited, for there is no number to choose and no list to
+  edit. The suite lists the folder and runs the plants that do not run `lake build`, by
+  name, before those that do, by name, each named with its file and timed. Run one alone
+  with `python3 scripts/negative_tests.py --plant <name>`, which keeps the check that the
+  work tree returns to its entry Git status, and closes by saying how many of the plants it
+  ran. The suite fails, naming the file, on a file that does not load, on a file that
+  changes a name of the runner or of the modules it shares as it loads or as its plant
+  runs, on a `plant()` that changes the failures or refusals recorded before it, on a
+  `plant()` that raises `SystemExit`, after which the run goes on, and on a plant whose
+  change no check refuses; the names are looked at once more after the closing check of
+  the tree, where a change fails the run with no file to name. That last guard catches a plant that runs no check, or returns before its
+  first; it does not catch one that calls `nt.refused` with no check behind it, nor one
+  that drops some of its cases, so review still reads each plant's cases. The guards
+  catch a mistake, not a file written to deceive: a plant's file runs in the runner's
+  process with its full power, so the security review reads each plant's file as code of
+  the runner. They do not see a shared object changed in place other than those two lists
+  (a helper's `__code__` replaced, a dict of a helper module changed), nor a process ended
+  by `os._exit` or a signal, which is not caught in process and leaves with the status it
+  chooses; review reads each plant's file for them. Like any file under `scripts/`, a
+  plant's file is a protected path ([section 10](#landing-work-pull-requests)): the pull
+  request that adds, changes or deletes one names it, by its whole path, in a new decision
+  entry ("Decision entries", in section 10), carries the label `security-review` and
+  records a `/security-review`.
 - **The model tests read the lock.** `tests/model/laws.toml` names a law for each axiom of
   `Certificate/axioms.lock`, and `tests/model/lock.sha256` pins the lock's hash, so a
   change to an axiom fails the `model` job until the model follows it, in the same pull
@@ -620,13 +650,20 @@ every train and group as unreadable.
   prose change are not added. `CommentReaderTests` in `tests/test_negative_tests.py` holds
   the cases for the Lean-comment reader shared by the fidelity check, the style check and
   the Jev question generator; `negative_tests.py` runs that file before it plants faults.
-- **The certificate's coincidence cases need built foundations.**
+- **The certificate's cases need built foundations.**
   `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
   and through transformers, with negative controls for derivations that supply no step,
   while keeping the axiom fields unchanged. It rejects reached helpers from
   `Staging.Hidden`, and from a `Lean.Hidden` compiled outside the Lean toolchain, while
   allowing unused imports from foreign modules and reached declarations of the
-  toolchain's own. It needs the
+  toolchain's own. It reads `construction_rules` from a fixture's own axioms, one for each
+  case of the [definition](FORMALIZATION.md#construction-rules), counted or not as it says,
+  and `cited_laws` from entries that cite laws through one shared theorem or law by law,
+  each law with its proofs and the construction rules beneath them; a proof reached only
+  through another entry is not found, and a law named with no proof found fails the run.
+  Without Lean, it reads the forms of `tests/certificate_expectations.json` as
+  `check_fidelity.py` does, and an expectation that is malformed, unmet or asks nothing
+  fails. It needs the
   foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
   job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
   delivered.
@@ -666,8 +703,8 @@ every train and group as unreadable.
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
   tests the counts and markers without Lean. Count markers do not overlap README.md's
   generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
-  the tests before planting; its `--counts-only` option runs these plants and the file-only
-  regressions without a build.
+  the tests before planting; its `--counts-only` option runs the count plant,
+  `scripts/negative/count_markers.py`, and the file-only regressions without a build.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
   file in `docs/decisions/` (section 10, "Decision entries") before it writes, so CI's
   `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
@@ -1434,10 +1471,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       are as they were). When they are the only check inputs a pull request changes,
       origin/main's failure is noted, and its own copies must pass. The expectations are
       checked one way only, each for what it says, so they count as pinned values only
-      while every one of origin/main's stays, by its `ref` and `field`, with its
-      `includes` and `excludes` the same or grown and only the values of `count.is` and
-      `equals` changed (new expectations are fine); an expectation dropped or loosened is
-      a check change. A law of the model moves only with its axiom: a line of `laws.toml`,
+      while every one of origin/main's stays, by its `ref`, `field` and `law` (a `ref` or a
+      `law` added or dropped is another expectation), with its `includes` and `excludes`
+      the same or grown and only the values of `count.is` and `equals` changed (new
+      expectations are fine); an expectation dropped or loosened is a check change. A law
+      of the model moves only with its axiom: a line of `laws.toml`,
       and the law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`, the
       two harnesses that check every law, count as pinned values only where the same pull
       request adds, removes or restates that axiom's entry in the lock, the law's code
