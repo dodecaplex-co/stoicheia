@@ -206,14 +206,6 @@ def quad_along(P0, d, c):
     return al * al - rho * k * ga, -2 * al * be + 2 * rho * k * de, be * be + rho * k * ep
 
 
-def line_meets_circle(L, c):
-    """two points in common exactly when F_circ goes negative on L (its minimum is at a rational t)"""
-    P0, d = line_base(L)
-    A0, A1, A2 = quad_along(P0, d, c)
-    t = -A1 / (2 * A2)
-    return A0 + A1 * t + A2 * t * t < 0
-
-
 def dec(x):
     x = Fr(x)
     return Decimal(x.numerator) / Decimal(x.denominator)
@@ -548,23 +540,6 @@ def gs_p4(rng):
     return None if r is None else dict(A=r[0], B=r[1], C=r[2], D=r[3])
 
 
-def gs_ti(withE=False):
-    def g(rng):
-        A = rand_pt(rng)
-        L = g_line_thru(rng, A)
-        M = g_line_thru(rng, A) if rng.random() < 0.9 else L
-        Nn = g_line_thru(rng, A) if rng.random() < 0.9 else M
-        d = dict(A=A, B=g_pt_on(rng, L, [A]), C=g_pt_on(rng, M, [A]), D=g_pt_on(rng, Nn, [A]), L=L, M=M, N=Nn)
-        if withE:
-            E = rand_pt(rng)
-            if rng.random() < 0.5 and d['C'] != d['D']:
-                t = Fr(rng.randint(1, 4), 5)
-                E = (d['C'][0] + t * (d['D'][0] - d['C'][0]), d['C'][1] + t * (d['D'][1] - d['C'][1]))
-            d['E'] = E
-        return d
-    return g
-
-
 def gs_angle(rng):
     A = rand_pt(rng)
     L = g_line_thru(rng, A)
@@ -599,13 +574,6 @@ def gs_pasch(rng):
     pool = [A, B, C]
     L = g_line_thru(rng, rng.choice(pool)) if rng.random() < 0.4 else g_line_thru(rng, rand_pt(rng))
     return dict(A=A, B=B, C=C, L=L)
-
-
-def gs_pasch4(rng):
-    B = rand_pt(rng)
-    L = g_line_thru(rng, B)
-    M = g_line_thru(rng, B) if rng.random() < 0.9 else L
-    return dict(A=g_pt_on(rng, M, [B]), B=B, C=g_pt_on(rng, M, [B]), L=L, M=M)
 
 
 def gs_cong(rng):
@@ -646,6 +614,21 @@ def gs_chord(rng):
 
 def gs_convex(kind):
     def g(rng):
+        # Two kinds draw no circle: the lines of pasch4 and of the triple incidence laws.
+        # They are kinds of a generator the other laws use, so that they need no generator
+        # of their own.
+        if kind == 'pasch4':   # two lines through B, and A and C on the second
+            B = rand_pt(rng)
+            L = g_line_thru(rng, B)
+            M = g_line_thru(rng, B) if rng.random() < 0.9 else L
+            return dict(A=g_pt_on(rng, M, [B]), B=B, C=g_pt_on(rng, M, [B]), L=L, M=M)
+        if kind == 'ti':   # three lines through A, and B, C and D on them
+            A = rand_pt(rng)
+            L = g_line_thru(rng, A)
+            M = g_line_thru(rng, A) if rng.random() < 0.9 else L
+            Nn = g_line_thru(rng, A) if rng.random() < 0.9 else M
+            return dict(A=A, B=g_pt_on(rng, L, [A]), C=g_pt_on(rng, M, [A]), D=g_pt_on(rng, Nn, [A]),
+                        L=L, M=M, N=Nn)
         c = g_circle(rng)
         if kind == 'opposite':
             A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
@@ -1002,7 +985,27 @@ def _(c):
 @axiom('exists_point_on_circle', dict(al=C_))
 def _(c):
     al, rng = c['al'], c['_rng']
-    ws = {pt_on_circle(al, rng) for _ in range(4)} | {SEEDS[al]}
+
+    def second(P0):
+        # pt_on_circle(al, rng), written out: a second rational point of the conic through
+        # the known point P0, along a small integer direction d, from quad_along's A1 and A2
+        C = centre(al)
+        k = 1 - C[0] ** 2 - C[1] ** 2
+        rho = al[2]
+        for _ in range(6):
+            d = (rng.randint(-3, 3), rng.randint(-3, 3))
+            if d == (0, 0):
+                continue
+            a = 1 - C[0] * P0[0] - C[1] * P0[1]
+            be = C[0] * d[0] + C[1] * d[1]
+            de = P0[0] * d[0] + P0[1] * d[1]
+            ep = d[0] ** 2 + d[1] ** 2
+            A1, A2 = -2 * a * be + 2 * rho * k * de, be * be + rho * k * ep
+            t = -A1 / A2   # A0 = 0, since P0 is on the circle
+            if t != 0:
+                return (P0[0] + t * d[0], P0[1] + t * d[1])
+        return P0
+    ws = {second(SEEDS[al]) for _ in range(4)} | {SEEDS[al]}
     return len(ws) >= 2 and all(w is not None and on_circle(w, al) and in_disc(w) for w in ws)
 
 
@@ -1263,7 +1266,7 @@ def _(c):
     return not same_side(A, C, L)
 
 
-@axiom('pasch4', dict(A=P, B=P, C=P, L=L_, M=L_), gs_pasch4)
+@axiom('pasch4', dict(A=P, B=P, C=P, L=L_, M=L_), gs_convex('pasch4'))
 def _(c):
     A, B, C, L, M = (c[k] for k in 'ABCLM')
     if not (L != M and on_line(B, L) and on_line(B, M) and on_line(A, M) and on_line(C, M)
@@ -1272,25 +1275,23 @@ def _(c):
     return between(A, B, C)
 
 
-def _ti_hyp(c):
+@axiom('triple_incidence1', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_), gs_convex('ti'))
+def _(c):
     A, B, C, D, L, M, Nn = (c[k] for k in 'ABCDLMN')
-    return (on_line(A, L) and on_line(A, M) and on_line(A, Nn) and on_line(B, L) and on_line(C, M)
-            and on_line(D, Nn))
-
-
-@axiom('triple_incidence1', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_), gs_ti())
-def _(c):
-    if not (_ti_hyp(c) and same_side(c['C'], c['D'], c['L']) and same_side(c['B'], c['C'], c['N'])):
+    if not (on_line(A, L) and on_line(A, M) and on_line(A, Nn) and on_line(B, L) and on_line(C, M)
+            and on_line(D, Nn) and same_side(C, D, L) and same_side(B, C, Nn)):
         return None
-    return not same_side(c['B'], c['D'], c['M'])
+    return not same_side(B, D, M)
 
 
-@axiom('triple_incidence2', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_), gs_ti())
+@axiom('triple_incidence2', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_), gs_convex('ti'))
 def _(c):
-    if not (_ti_hyp(c) and same_side(c['C'], c['D'], c['L']) and not same_side(c['B'], c['D'], c['M'])
-            and not on_line(c['D'], c['M']) and c['B'] != c['A']):
+    A, B, C, D, L, M, Nn = (c[k] for k in 'ABCDLMN')
+    if not (on_line(A, L) and on_line(A, M) and on_line(A, Nn) and on_line(B, L) and on_line(C, M)
+            and on_line(D, Nn) and same_side(C, D, L) and not same_side(B, D, M)
+            and not on_line(D, M) and B != A):
         return None
-    return same_side(c['B'], c['C'], c['N'])
+    return same_side(B, C, Nn)
 
 
 
@@ -1333,7 +1334,23 @@ def _(c):
     A, L, al = c['A'], c['L'], c['al']
     if not (inside(A, al) and on_line(A, L)):
         return None
-    return line_meets_circle(L, al)
+    # The line meets the circle twice exactly when F_circ goes negative along it, written out
+    # from line_base's foot P0 and direction d and quad_along's coefficients: its least value
+    # is at a rational t.
+    a, b, cc = L
+    n2 = a * a + b * b
+    P0, d = (Fr(-a * cc, n2), Fr(-b * cc, n2)), (-b, a)
+    C = centre(al)
+    k = 1 - C[0] ** 2 - C[1] ** 2
+    rho = al[2]
+    a0 = 1 - C[0] * P0[0] - C[1] * P0[1]
+    be = C[0] * d[0] + C[1] * d[1]
+    ga = 1 - P0[0] ** 2 - P0[1] ** 2
+    de = P0[0] * d[0] + P0[1] * d[1]
+    ep = d[0] ** 2 + d[1] ** 2
+    A0, A1, A2 = a0 * a0 - rho * k * ga, -2 * a0 * be + 2 * rho * k * de, be * be + rho * k * ep
+    t = -A1 / (2 * A2)
+    return A0 + A1 * t + A2 * t * t < 0
 
 
 @axiom('circles_meet_of_on_inside_outside', dict(A=P, B=P, al=C_, be=C_), gs_cm('oio'))
