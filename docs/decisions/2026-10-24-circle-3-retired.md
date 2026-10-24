@@ -19,8 +19,9 @@
   `Prop2.within`, since that corollary has its statement; Points 9
   (`Tacit.exists_point_outside_circle`), with its private helper `inside_point_of_chord`;
   and Intersection 2 (`Tacit.line_meets_circle_of_opposite_sides`), with its private
-  helper `circle_intersections_of_inside`. Their proofs are as they were, now calling a
-  theorem where they called an axiom. `between_at_crossing`, which Triple incidence 3 in
+  helper `circle_intersections_of_inside`. The proofs of Points 9 and Intersection 2 keep
+  their steps, but take the one that Circle 3 took from III.2 itself, by `Prop2` and
+  `Prop2.within`, so nothing in the file uses Circle 3. `between_at_crossing`, which Triple incidence 3 in
   Circles.lean calls as well and which uses no rule about circles, stays there as a public
   Book Zero lemma with a docstring of its own. `Elements/Figure/OnCircles.lean` loses
   `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
@@ -112,8 +113,8 @@
 
   The numerical model's results were written again on this harness:
   `python3 -I tests/model/run.py --full --write` ran at commit `962c8c890a38`, and every
-  check passed, with no counterexample in the plane, all 15 mutations caught, and in the
-  hyperbolic plane `Postulate5` failing alone, as it must. With one law fewer drawing on
+  check passed: the plane gave no counterexample, the 15 mutations were all caught, and
+  only `Postulate5` failed in the hyperbolic plane, as it must. With one law fewer drawing on
   the random numbers, the search's three seeds and the hyperbolic run meet the other laws'
   hypotheses a little differently, so the plane's axiom total moves from 4,097,933 to
   4,098,108; the derived properties' stays at 9,855,030. MODEL.md carries the counts as

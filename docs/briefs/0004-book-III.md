@@ -231,14 +231,15 @@ cites a proposition goes beside the propositions, and its docstring ends with wh
 cites.
 
 **Book Zero, `Elements/Figure/OnCircles.lean`** (cites no proposition, declares no axiom):
-`Triangle.of_onCircle` (three points of a circle are not on one straight line),
-`exists_onCircle_oppositeSidesOf`, `exists_onCircle_sameSideOf` (a straight line in a
-circle has points of it on each side), `circumference_congr`, `standing_congr`,
-`standing_eq_circumference`, `EqualCircles.radii`, `.symm`, `.refl`, `Touches.not_inside`,
-`Touches.of_collinear`. The first three rest on System E's Circle 2, which contains III.2,
-and no proposition uses them: the propositions take the same facts from III.2's
-corollaries, with no supplied centre (`Prop2.triangle`, `Prop2.oppositeSide`,
-`Prop2.sameSide`, and `Prop2.within` for ends on or within the circle).
+`circumference_congr`, `standing_congr`, `standing_eq_circumference`, `EqualCircles.radii`,
+`.symm`, `.refl`, `Touches.not_inside`, `Touches.of_collinear`. Until 24 October 2026 it
+also held Triangle.of_onCircle (three points of a circle are not on one straight line),
+exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf (a straight line in a
+circle has points of it on each side), which rested on System E's Circle 2, which contains
+III.2, and which no proposition used. They were taken out when Circle 2 and Circle 3 were
+proved after III.2 (#294): the propositions take the same facts from III.2's corollaries,
+with no supplied centre (`Prop2.triangle`, `Prop2.oppositeSide`, `Prop2.sameSide`, and
+`Prop2.within` for ends on or within the circle).
 **`Elements/Figure/Chords.lean`**, from stage 3 of [brief 0006](0006-statements.md):
 `Arc.congr_side` and `Arc.Congruent.congr_side` (only the side names a segment). The
 brief's two other facts for it rest on III.2, and come after it: `Prop24.chord_cases` (a
@@ -496,6 +497,10 @@ is left out, being nearly everywhere):
 `inside_of_between`, is now proved from Circle 3 in `Elements/Figure/Circles.lean`.
 III.2's current axiom overlap is with Circle 3, `outside_of_between`, which gives it
 at once; the published proof still follows Euclid without that axiom.
+
+24 October 2026: Circle 3 is no longer an axiom. It is proved after III.2, from
+`Prop2.within`, in `Elements/BookIII/Prop02.lean`, with Circle 2 beside it (#294), so
+III.2 has no axiom overlap now; the table keeps its earlier snapshot.
 
 | Proposition | Statement | Argument | Overlap | Tags | Planned |
 |---|---|---|---|---|---|

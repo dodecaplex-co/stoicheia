@@ -78,7 +78,7 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
-  Intersections rule lets a proof take a point where they do. Thirty-nine rules are now theorems
+  Intersections rule lets a proof take a point where they do. Forty rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given by its outline (`Outline`, in
@@ -201,7 +201,9 @@ corollaries after I.13. The other five retired rules are proved in Book Zero's
 `Circles.lean`. By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
 many books in front of us."), 31 more rules became
 theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
-`CirclePoints.lean`, proved that day. With our own rule that every
+`CirclePoints.lean`, proved that day. On 24 October 2026 Circle 3 followed, proved after
+III.2 in `Elements/BookIII/Prop02.lean`, with Circle 2, Points 9 and Intersection 2 moved
+beside it. With our own rule that every
 circle has a centre, the lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of

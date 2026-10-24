@@ -178,8 +178,9 @@ theorem Prop2.sameSide {B C K : Point} {α : Circle}
 /-! ## Rules that III.2 gives back
 
 System E's Circle 2 and Circle 3 say what III.2 proves, so they are proved here, after
-it, under their own names, with Points 9 and Intersection 2, whose proofs use Circle 3.
-Nothing before III.2 may use them: a use cites III.2. -/
+it, under their own names, with Points 9 and Intersection 2, whose proofs used Circle 3
+and now take its step from III.2 itself. Nothing before III.2 may use them: a use cites
+III.2. -/
 
 /-- Once a straight line has left a circle, it does not come back (System E, Circle 3):
 with A on or within the circle, and C, between A and B, not within it, B is outside the
@@ -209,15 +210,15 @@ private theorem inside_point_of_chord (α : Circle) (avoid : List Point) :
     exact hCB (e ▸ List.mem_singleton_self B)
   obtain ⟨L, hBL, hCL⟩ := Postulate1 B C hBC
   obtain ⟨A, _, hBAC, hA⟩ := exists_point_between hBL hCL hBC avoid
-  refine ⟨A, Classical.byContradiction (fun h => ?_), hA⟩
-  exact (outside_of_between (Or.inr hB) h hBAC).2 hC
+  exact ⟨A, Prop2 hB hC A hBAC, hA⟩
 
 /-- A point can be taken outside a circle while avoiding any finite list of points
 (System E, Points 9). This was an assumption until 19 October 2026, and is proved from
-Points 7 and 3, Postulates 1 and 2, and Circle 3, so since 24 October 2026 from III.2:
-take an interior point between two points on the circle, then produce a straight line
-from it beyond the circumference. Postulate 2 chooses the endpoint outside the given
-list. -/
+Points 7 and 3, Postulates 1 and 2, and III.2, which took the place of Circle 3 on
+24 October 2026: take a point between two points on the circle, within it by III.2, then
+produce a straight line from it beyond the circumference. Postulate 2 chooses the endpoint
+outside the given list, and the endpoint is outside the circle: were it within the circle
+or on it, the point of the circle between would be within it, by III.2 again. -/
 theorem _root_.Elements.Tacit.exists_point_outside_circle (α : Circle) (avoid : List Point) :
     ∃ A : Point, OutsideCircle A α ∧ A ∉ avoid := by
   obtain ⟨B, hB, _⟩ := inside_point_of_chord α []
@@ -225,7 +226,8 @@ theorem _root_.Elements.Tacit.exists_point_outside_circle (α : Circle) (avoid :
   have hBC : B ≠ C := fun e => inside_not_on (e ▸ hB) hC
   obtain ⟨L, hBL, hCL⟩ := Postulate1 B C hBC
   obtain ⟨A, _, hBCA, hA⟩ := Postulate2 hBL hCL hBC avoid
-  exact ⟨A, outside_of_between (Or.inl hB) (fun h => inside_not_on h hC) hBCA, hA⟩
+  exact ⟨A, ⟨fun hA' => inside_not_on (Prop2.within (Or.inl hB) (Or.inl hA') hBCA) hC,
+    fun hA' => inside_not_on (Prop2.within (Or.inl hB) (Or.inr hA') hBCA) hC⟩, hA⟩
 
 /-- Two opposite extensions from an interior point meet the circumference distinctly. -/
 private theorem circle_intersections_of_inside {A : Point} {L : Line} {α : Circle}
@@ -239,10 +241,10 @@ private theorem circle_intersections_of_inside {A : Point} {L : Line} {α : Circ
 
 /-- A straight line separating two points on or inside a circle cuts the circle
 (System E, Intersection 2). This was an assumption until 19 October 2026, and is proved
-from Intersection 1, the order of collinear points, Pasch 2, Circle 3 and Intersections 5,
-so since 24 October 2026 from III.2. The crossing lies between the given points and is
-inside the circle; producing the straight line in both directions gives two distinct
-circumference points. -/
+from Intersection 1, the order of collinear points, Pasch 2, III.2 and Intersections 5;
+III.2 took the place of Circle 3 on 24 October 2026. The crossing lies between the given
+points, and so within the circle by III.2; producing the straight line in both directions
+gives two distinct circumference points. -/
 theorem _root_.Elements.Tacit.line_meets_circle_of_opposite_sides {A B : Point} {L : Line}
     {α : Circle} (hA : InsideCircle A α ∨ OnCircle A α)
     (hB : InsideCircle B α ∨ OnCircle B α) (h : OppositeSides A B L) : LineMeetsCircle L α := by
@@ -251,11 +253,6 @@ theorem _root_.Elements.Tacit.line_meets_circle_of_opposite_sides {A B : Point} 
   obtain ⟨hLM, X, hXL, hXM⟩ := lines_meet_of_opposite_sides h hAM hBM
   have hAXB : Between A X B := between_at_crossing hLM hXL hXM hAM hBM hAB
     (fun e => h.1 (e ▸ hXL)) (fun e => h.2.1 (e ▸ hXL)) h.2.2
-  have hX : InsideCircle X α := by
-    apply Classical.byContradiction
-    intro hn
-    have ho := outside_of_between hA hn hAXB
-    exact hB.elim ho.1 ho.2
-  exact circle_intersections_of_inside hX hXL
+  exact circle_intersections_of_inside (Prop2.within hA hB hAXB) hXL
 
 end Elements.BookIII
