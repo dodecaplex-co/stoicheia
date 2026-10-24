@@ -1441,8 +1441,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       stand in for it, until a follow-up card removes them; a registry at origin/main
       that cannot be read, or whose reader fails or gives no check, refuses the
       pre-flight. The check scripts and what they expect (`scripts/`,
-      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and the registry,
-      `checks/`) are origin/main's
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, the registry,
+      `checks/`, and since #249 `docs/ACCEPTANCE.md`, whose table of the limitations
+      allowed `tests/test_acceptance_limits.py` ties to `check_acceptance.py`) are
+      origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1679,8 +1681,11 @@ and `model/Model.lean` join them, because they pin the model's proofs to `propex
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
 build. Since 22 October (#229), `checks/`, the registry of CI's `check` job, joins them,
 so that a check added or removed, or with its command, job or order changed, is named
-file by file; it is a check input too (step 4, above). A change to any of them needs a
-new line in the decisions page or a dated entry
+file by file; it is a check input too (step 4, above). Since 22 October (#249),
+`docs/ACCEPTANCE.md` joins them, a check input as well: its table of the limitations
+allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
+`tests/test_acceptance_limits.py` ties together, change in one pull request, a check
+change. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a
 relative link that resolves from the folder of the file that names it, `docs/briefs/`
 for the page and `docs/decisions/` for an entry, to exactly that path: for

@@ -6107,6 +6107,29 @@ class ProtectedPaths(Edge):
         self.assertFalse(safe_push.stamp_only(WORK, first, taken, path))
         self.assertIn(path, safe_push.judged_files(WORK, first, taken))
 
+    def test_acceptance_and_its_check_change_together_as_a_check_change(self):
+        # #249: ACCEPTANCE's table of the limitations allowed, check_acceptance.py's
+        # ALLOWED_LIMITS and tests/test_acceptance_limits.py, which ties the two, change in
+        # one pull request, each half failing the test alone. Nothing in it is judged, so a
+        # failure with origin/main's copies is noted, never kept apart; a page of the
+        # edition beside them is judged, and is kept apart.
+        failing = "python3 -I tests/test_acceptance_limits.py"
+        sha = self.commit("An allowance removed, from the table and the check", {
+            "docs/ACCEPTANCE.md": self.text("docs/ACCEPTANCE.md") + "\nA line for the test.\n",
+            "scripts/check_acceptance.py": self.text("scripts/check_acceptance.py")
+            + "\n# for the test\n",
+            "tests/test_acceptance_limits.py": self.text("tests/test_acceptance_limits.py")
+            + "\n# for the test\n"})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        refused, out = self.kept_apart(sha, failing)
+        self.assertFalse(refused, out)
+        sha = self.commit("And a page of the edition", {
+            "mishnah/I/01.md": self.text("mishnah/I/01.md") + "\nA line for the test.\n"})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), ["mishnah/I/01.md"])
+        refused, out = self.kept_apart(sha, failing)
+        self.assertTrue(refused, out)
+        self.assertIn("mishnah/I/01.md", out)
+
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from
         # the commit's checkout, its copy hands over to origin/main's, which refuses it.
@@ -6136,12 +6159,13 @@ class ProtectedPaths(Edge):
                      "model/Model/Audit.lean", "model/Model.lean",
                      "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
                      "model/lock.sha256", "checks/01-lake-build.toml", "checks/README.md",
-                     "checks/99-a-new-check.toml"):
+                     "checks/99-a-new-check.toml", "docs/ACCEPTANCE.md"):
             self.assertTrue(safe_push.is_protected(path), path)
-        # The registry is a check input too, never judged content (#229).
-        self.assertTrue(safe_push.under("checks/01-lake-build.toml", safe_push.CHECK_INPUTS))
-        self.assertFalse(safe_push.under("checks/01-lake-build.toml",
-                                         safe_push.PROTECTED_JUDGED))
+        # The registry is a check input too, never judged content (#229), and so is
+        # ACCEPTANCE, whose table test_acceptance_limits ties to ALLOWED_LIMITS (#249).
+        for path in ("checks/01-lake-build.toml", "docs/ACCEPTANCE.md"):
+            self.assertTrue(safe_push.under(path, safe_push.CHECK_INPUTS), path)
+            self.assertFalse(safe_push.under(path, safe_push.PROTECTED_JUDGED), path)
         # One home: WORKFLOW.md's "Protected paths" names every one of them, and the
         # template points to it rather than copying the list.
         workflow = (SOURCE / "docs" / "WORKFLOW.md").read_text()
@@ -6164,7 +6188,8 @@ class ProtectedPaths(Edge):
                      "model/Model/Audit.lean.orig", "model/Model/Audit.lean/Hand.lean",
                      "model/Model.lean.orig", "model/Model.lean/Hand.lean",
                      "model/Check/Hand.lean", "model/.gitignore", "docs/reports/overlaps.md",
-                     "checksx/a.toml", "docs/checks/a.toml"):
+                     "checksx/a.toml", "docs/checks/a.toml",
+                     "docs/ACCEPTANCE.md.orig", "docs/STYLE.md"):
             self.assertFalse(safe_push.is_protected(path), path)
         self.assertTrue(set(safe_push.PROTECTED_JUDGED) <= set(safe_push.PROTECTED))
 
