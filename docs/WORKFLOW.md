@@ -333,6 +333,8 @@ python3 -I tests/test_jev_models.py
 python3 scripts/audit/jev.py self-test
 python3 -I tests/test_screen.py
 python3 -I tests/test_acceptance_limits.py
+python3 -I tests/test_check_superposition_pins.py
+python3 -I scripts/check_superposition_pins.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain                 # prints nothing
@@ -664,6 +666,47 @@ every train and group as unreadable.
   commit deep, does not hold. Two more of them now fail at any depth, on main too, at the
   I.40 mutation anchor; their repair is card #350. The file can join a job with the whole
   history once those failures are repaired.
+- **The restriction's theorems are pinned by their statements.**
+  `python3 -I scripts/check_superposition_pins.py` checks that every theorem and definition
+  brief 0009's section "The restriction theorem" names has a statement pin in
+  `Audit/Superposition.lean`, under its full name in `Elements.Superposition`, its one
+  namespace (a pin of the same name in another, such as `Elements.BookI`, does not count):
+  an `info:` docstring, a bare `#guard_msgs in`, then `#check` for a theorem, or `#print`
+  for a definition, since `#check` shows only a definition's type. The two definitions the
+  section names, `Rule.Figure` and `Interpretation.Embedding`, are held to `#print` by name:
+  each counts as pinned only by its `#print` pin, which it must have, and a `#check` pin of
+  either is refused with its line, whatever it prints. A `#print` pin shows one level and
+  does not pin the definitions its body or fields name, so each of the two must also open
+  its print as Lean's does today, `Rule.Figure` with `def` and `Interpretation.Embedding`
+  with `structure`: `Embedding` cannot become a `def` that names a new structure, though
+  `Rule.Figure`'s body could still name a new definition. Any other `#check` pin is refused
+  with its line when Lean's print of its type, in the docstring, ends in a sort or opens a
+  binder with an arrow, as in `{P : Type} →`, where a proposition has `∀`: either shows a
+  definition. These signs are only a backstop for a definition the section names later,
+  since a sort spelt through a name, as in `id Type`, prints as written and shows neither.
+  A theorem's pin must use `#check @`: a `#print` whose Lean header says `theorem`,
+  including after attributes or declaration modifiers, is refused with its line, as is an
+  unrecognized printer header. `Placed`, `Val.place` and `Metric.names`, which theorems the
+  section names read, must have `#print` pins too. A statement pin whose docstring holds
+  `⋯` or `[...]`, where Lean
+  cut its print short, is refused with its line, wherever the option that cut it was set;
+  an option that hides part of a print with no mark, such as `pp.piBinderTypes false`,
+  could be set only outside the file, in the lakefile, a protected file, so that protection
+  holds it off, not this check. A pin inside a line, block, nested or module comment, which
+  Lean never runs, never counts, and is refused with its line wherever the script reads it
+  as a pin (one with an inner comment between quotation marks can escape the refusal, and
+  still counts for nothing); ordinary comments remain allowed. The file may hold nothing but its leading imports, ordinary comments and pins
+  (a docstring, a bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`);
+  anything else is
+  refused with its line, such as a `set_option` of any kind (some shorten what Lean
+  prints), a namespace (a theorem in it can take a pinned name), any declaration, `#eval`,
+  `#exit` or a `#guard_msgs` with options. `Audit.lean` must import the file, or
+  `lake build Audit` does not run its pins. That build checks that each pin is what Lean
+  prints; the script checks that the pins exist and that nothing in the file changes what
+  they print or name, so that a theorem the brief names cannot be weakened under the same
+  name with only its axioms pinned, or with only a pin of that name in another namespace,
+  nor any of the five definitions above changed under a pin of its type alone. Its cases,
+  `python3 -I tests/test_check_superposition_pins.py`, need no Lean and run first.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
