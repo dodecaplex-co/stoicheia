@@ -5845,6 +5845,8 @@ class ProtectedPaths(Edge):
     """(1) The guards and the check scripts are origin/main's; a protected path changes
     only with a decisions entry naming it, and the label."""
 
+    RETAINED_AXIOM = "Tacit.line_unique"
+
     def test_protected_change_without_a_decision_refused(self):
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
@@ -6059,14 +6061,18 @@ class ProtectedPaths(Edge):
         certificate's expectations moved with it, with a decisions line naming them."""
         lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
         expect = "tests/certificate_expectations.json"
-        new_lean = self.text(lean) + "\n-- A re-proof that no longer needs area_swap.\n"
+        new_lean = self.text(lean) + "\n-- A re-proof that no longer needs line_unique.\n"
         stamped = re.sub(r'(?m)^lean = "[^"]*"',
                          f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
         facts = json.loads(self.text("facts.json"))
+        removed = 0
         for p in facts["propositions"]:
             if p["ref"] in ("III.1", "III.1 Por."):
-                p["axioms"].remove("Tacit.area_swap")
+                self.assertIn(self.RETAINED_AXIOM, p["axioms"])
+                p["axioms"].remove(self.RETAINED_AXIOM)
+                removed += 1
+        self.assertEqual(removed, 2)
         expectations = json.loads(self.text(expect))
         for ref in ("III.1", "III.1 Por."):
             pin = next(x for x in expectations["expectations"]
@@ -6074,7 +6080,7 @@ class ProtectedPaths(Edge):
             self.assertEqual(pin["count"]["prefix"], "Tacit.")
             pin["count"]["is"] -= 1
             if "equals" in pin:
-                pin["equals"].remove("Tacit.area_swap")
+                pin["equals"].remove(self.RETAINED_AXIOM)
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
@@ -6112,20 +6118,22 @@ class ProtectedPaths(Edge):
     EXPECT = "tests/certificate_expectations.json"
 
     def test_expectation_dropped_with_its_regression_kept_apart(self):
-        # This test deliberately injects circle_eq, a locked tacit rule absent from III.1's
-        # axiom list, and drops the corresponding axioms expectations. It verifies that this
-        # check change must remain separate from the content change. A retired theorem name
-        # such as centre_unique cannot be the injection: the commit's own pass refuses it.
+        # This test deliberately injects angle_le_two_right, a locked tacit rule absent from
+        # III.1's axiom list both before and after the second axiom retirement (after it,
+        # III.1 rests on circle_eq), and drops the corresponding axioms expectations. It
+        # verifies that this check change must remain separate from the content change. A
+        # retired theorem name such as centre_unique cannot be the injection: the commit's
+        # own pass refuses it.
         lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
-        new_lean = self.text(lean) + "\n-- A re-proof that uses circle_eq.\n"
+        new_lean = self.text(lean) + "\n-- A re-proof that uses angle_le_two_right.\n"
         stamped = re.sub(r'(?m)^lean = "[^"]*"',
                          f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
         facts = json.loads(self.text("facts.json"))
         for p in facts["propositions"]:
             if p["ref"] == "III.1":
-                self.assertNotIn("Tacit.circle_eq", p["axioms"])
-                p["axioms"] = sorted(p["axioms"] + ["Tacit.circle_eq"])
+                self.assertNotIn("Tacit.angle_le_two_right", p["axioms"])
+                p["axioms"] = sorted(p["axioms"] + ["Tacit.angle_le_two_right"])
         data = json.loads(self.text(self.EXPECT))
         count = next(x["count"]["is"] for x in data["expectations"]
                      if (x.get("ref"), x["field"]) == ("III.1", "axioms") and "count" in x)
@@ -6135,7 +6143,7 @@ class ProtectedPaths(Edge):
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    self.EXPECT: json.dumps(data, indent=2, ensure_ascii=False) + "\n"}
         changes.update(self.decision(f"`{self.EXPECT}`: tidied."))
-        self.regenerated_commit("III.1 uses circle_eq, its expectation dropped", changes)
+        self.regenerated_commit("III.1 uses angle_le_two_right, its expectation dropped", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
                                  "drops or loosens an expectation")
         self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
@@ -6200,12 +6208,12 @@ class ProtectedPaths(Edge):
             "the counts moved": moved,
             "an equals moved": lambda d: entry(d, "III.1 Por.", "of").update(equals="III.2"),
             "its includes grown": lambda d: entry(d, "I.5", "inherited")["includes"].append(
-                "Tacit.area_swap"),
+                self.RETAINED_AXIOM),
             "its excludes grown": lambda d: entry(d, "III.1")["excludes"].append(
-                "Tacit.area_swap"),
+                self.RETAINED_AXIOM),
             "a field added": lambda d: entry(d, "III.1", "attached").update(excludes=["III.2"]),
             "an expectation added": lambda d: d["expectations"].append(
-                {"ref": "III.2", "field": "axioms", "includes": ["Tacit.area_swap"],
+                {"ref": "III.2", "field": "axioms", "includes": [self.RETAINED_AXIOM],
                  "why": "A new expectation, for the test."}),
             "a why reworded": lambda d: entry(d, "III.1").update(why="Reworded."),
         }
@@ -6522,9 +6530,12 @@ class ProtectedPaths(Edge):
     METRIC = "Elements/Foundations/Tacit/Metric.lean"
     MODEL_RUN = "python3 -I tests/model/run.py --fast"
     RUN_MARK = "\n# ======================= run =======================\n"
-    CENTRE_INSIDE = ("@axiom('centre_inside', dict(A=P, al=C_))\ndef _(c):\n"
-                     "    if not is_centre(c['A'], c['al']):\n"
-                     "        return None\n    return inside(c['A'], c['al'])\n")
+    RETAINED_LAW_ENTRY = '"Tacit.line_unique" = "line_unique"\n'
+    LINE_UNIQUE = ("@axiom('line_unique', dict(A=P, B=P, L=L_, M=L_))\ndef _(c):\n"
+                   "    A, B, L, M = c['A'], c['B'], c['L'], c['M']\n"
+                   "    if not (A != B and on_line(A, L) and on_line(B, L) and "
+                   "on_line(A, M) and on_line(B, M)):\n"
+                   "        return None\n    return L == M\n")
     LEN_SELF = {SEARCH: "@axiom('len_self', dict(A=P))\ndef _(c):\n"
                         "    return d2(c['A'], c['A']) == 0\n\n\n",
                 HYPERBOLIC: "@axiom('len_self', dict(A=P))\ndef _(c):\n"
@@ -6564,8 +6575,8 @@ class ProtectedPaths(Edge):
             self.LOCK: lock,
             self.HASH: re.sub(r"(?m)^[0-9a-f]{64}(?=  Certificate/axioms\.lock$)", digest,
                               self.text(self.HASH)),
-            self.LAWS: self.replaced(self.LAWS, '"Tacit.pasch4" = "pasch4"\n',
-                                     '"Tacit.pasch4" = "pasch4"\n'
+            self.LAWS: self.replaced(self.LAWS, self.RETAINED_LAW_ENTRY,
+                                     self.RETAINED_LAW_ENTRY +
                                      '"Tacit.planted_law" = "planted_law"\n'),
             self.SEARCH: self.planted_law(self.SEARCH),
             self.HYPERBOLIC: self.planted_law(self.HYPERBOLIC),
@@ -6613,12 +6624,12 @@ class ProtectedPaths(Edge):
             self.assertRegex(r.stdout, rf"(?m)^planted_law +{samples} +[1-9]\d* +0$")
 
     def test_law_loosened_beside_an_axiom_kept_apart(self):
-        # The same pull request, with centre_inside's law in search.py made to pass whatever
+        # The same pull request, with line_unique's law in search.py made to pass whatever
         # it meets: a law changed while its axiom stands is a check change, kept apart.
         changes = self.planted_axiom()
-        self.assertEqual(changes[self.SEARCH].count(self.CENTRE_INSIDE), 1)
+        self.assertEqual(changes[self.SEARCH].count(self.LINE_UNIQUE), 1)
         changes[self.SEARCH] = changes[self.SEARCH].replace(
-            self.CENTRE_INSIDE, self.CENTRE_INSIDE.replace("inside(c['A'], c['al'])", "True"))
+            self.LINE_UNIQUE, self.LINE_UNIQUE.replace("L == M", "True"))
         self.regenerated_commit("Add an axiom, and loosen another's law", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
                                  self.METRIC, "beyond the laws that move with their axioms",
@@ -6650,14 +6661,14 @@ class ProtectedPaths(Edge):
                 self.assertNotEqual(old, new)
                 return dict(planted, **{path: planted[path].replace(old, new, 1)})
             return change
-        loose = self.CENTRE_INSIDE.replace("inside(c['A'], c['al'])", "True")
+        loose = self.LINE_UNIQUE.replace("L == M", "True")
         mine = "    pts = [c['A']]\n    pts.append(c['A'])\n"
         len_self = self.LEN_SELF[self.SEARCH]
         len_symm = ("@axiom('len_symm', dict(A=P, B=P))\ndef _(c):\n"
                     "    return d2(c['A'], c['B']) == d2(c['B'], c['A'])\n\n\n")
         weakened = {
-            "another law loosened in search.py": edit(self.SEARCH, self.CENTRE_INSIDE, loose),
-            "another law loosened in hyperbolic.py": edit(self.HYPERBOLIC, self.CENTRE_INSIDE,
+            "another law loosened in search.py": edit(self.SEARCH, self.LINE_UNIQUE, loose),
+            "another law loosened in hyperbolic.py": edit(self.HYPERBOLIC, self.LINE_UNIQUE,
                                                           loose),
             "the search's box shrunk, outside any law": edit(self.SEARCH, "BOX = 6\n",
                                                              "BOX = 1\n"),
@@ -6665,7 +6676,8 @@ class ProtectedPaths(Edge):
                 "tests/model/model.py": self.replaced("tests/model/model.py", "EPS = 1e-9\n",
                                                       "EPS = 1e-3\n")}),
             "an axiom that stands made to fail in the hyperbolic plane": edit(
-                self.LAWS, 'fails = ["Postulate5"]', 'fails = ["Postulate5", "Tacit.centre_inside"]'),
+                self.LAWS, 'fails = ["Postulate5"]',
+                f'fails = ["Postulate5", "{self.RETAINED_AXIOM}"]'),
             "two laws swapped": edit(self.LAWS, '"Tacit.len_self" = "len_self"\n'
                                      '"Tacit.len_symm" = "len_symm"\n',
                                      '"Tacit.len_self" = "len_symm"\n'
