@@ -9205,7 +9205,7 @@ class HermeticModule(unittest.TestCase):
     def test_the_module_under_a_global_ignore_and_attributes(self):
         # #376: git reads its default global ignore and attributes files with the global
         # configuration shut out, from $XDG_CONFIG_HOME/git, or from ~/.config/git when
-        # XDG_CONFIG_HOME is unset or empty. Planted in either place, under a HOME of the
+        # XDG_CONFIG_HOME is unset or empty. Planted in both places at once, under a HOME of the
         # test's own, rules for new.txt, the file Registry's dirty-tree test makes and
         # run_checks.py's `git status` must list, change no test's result: that test and
         # test_git_reads_no_global_ignore_or_attributes, run in a process of their own,

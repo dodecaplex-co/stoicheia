@@ -19,8 +19,8 @@
   environment as it is, but `safe_push.py` and the launcher drop it with git's other
   repository variables, so there `XDG_CONFIG_HOME` alone shuts the files out. `HOME`
   stays the runner's. The checks `safe_push.py` starts through `tool_env()`, which drops
-  `GIT_CONFIG_GLOBAL`, still read `~/.gitconfig`, and any excludes or attributes file it
-  names; the dirty-tree and freshness checks' `git status` runs through `run()`, which
+  `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_NOSYSTEM`, still read `~/.gitconfig` and the system
+  configuration, and any excludes or attributes file they name; the dirty-tree and freshness checks' `git status` runs through `run()`, which
   keeps `GIT_CONFIG_GLOBAL`, and is not among them.
 
   `HermeticModule`, the class that runs the module in a process of its own, gains a
