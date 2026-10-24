@@ -66,9 +66,10 @@
   renders the block, and finds the copy agreeing as the tree does. The new check runs in
   its own pull request's CI, and joins the pre-flight once it merges.
 
-  What it gives up. On GitHub the `check` job shows one step where it showed one for
-  each check, twenty-two by 23 October: each check is a group of that step's log, and a failure names its check there and in an
-  error annotation. And a registry at origin/main that could not be read would hold every
+  What it gives up. On GitHub the `check` job shows one step where on 23 October it
+  showed twenty-two, one for each check but the render and the check of a clean worktree,
+  which shared one: each check is a group of that step's log, and a failure names its
+  check there and in an error annotation. And a registry at origin/main that could not be read would hold every
   train, of every class, its own repair among them, since step 3 reads the registry in
   every class, so that repair would need the owner's leave to land without the pre-flight.
   `render.py` and CI's run of the registry load the reader from `scripts/` and read the
