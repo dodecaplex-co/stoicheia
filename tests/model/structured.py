@@ -391,42 +391,68 @@ def g_centres():
 print(f"{'axiom / derived property':40s} {'samples':>8s} {'hyp':>8s} {'cex':>5s}")
 run('Postulate4', g_p4)
 run('Postulate5', g_p5)
-for n in ['triple_incidence1', 'triple_incidence2']:
+for n in ['derived.triple_incidence1', 'derived.triple_incidence2']:
     run(n, g_ti)
 run('derived.triple_incidence3', lambda: g_ti(True))
-for n in ['pasch1', 'pasch2', 'pasch3', 'same_side_or', 'same_side_trans', 'on_line_of_between', 'on_line_of_between_ends']:
+for n in ['derived.pasch1', 'pasch2', 'derived.pasch3', 'derived.same_side_or', 'same_side_trans', 'derived.on_line_of_between', 'derived.on_line_of_between_ends']:
     run(n, g_pasch())
-run('pasch4', g_pasch4)
+run('derived.pasch4', g_pasch4)
 run('angle_add_of_inside', g_angle2)
 run('derived.inside_of_angle_add', g_angle2)
 run('derived.adjacent_eq_of_right', g_adj)
 run('angle_eq_of_same_rays', g_rays)
 run('area_add_of_between', g_area_line)
-run('between_of_area_add', g_area_line)
+run('derived.between_of_area_add', g_area_line)
 run('area_congruent', g_cong)
 run('between_of_inside_chord', g_chord)
 run('derived.inside_of_between', g_convex('in'))
 run('outside_of_between', g_convex('out'))
 run('circles_meet_same_side', g_cm('side'))
-run('circles_meet_opposite_side', g_cm('side'))
+run('derived.circles_meet_opposite_side', g_cm('side'))
 run('derived.not_same_side_of_circles_meet', g_cm('nss'))
-run('circles_meet_of_on_inside_outside', g_cm('oio'))
+run('derived.circles_meet_of_on_inside_outside', g_cm('oio'))
 run('circles_meet', g_cm('five'))
 run('line_circle_between', g_lc)
 run('line_circle_beyond', g_lc)
 run('derived.line_meets_circle_of_opposite_sides', g_lmc_opp)
 run('superposition', g_sup)
-run('exists_point_on_line_off_line', g_two_lines)
-run('exists_point_between', g_seg)
-run('exists_point_same_side', g_pt_line)
-run('exists_point_opposite_side', g_pt_line)
+run('derived.exists_point_on_line_off_line', g_two_lines)
+run('derived.exists_point_between', g_seg)
+run('derived.exists_point_same_side', g_pt_line)
+run('derived.exists_point_opposite_side', g_pt_line)
 run('lines_meet_of_opposite_sides', g_lines_meet)
-for n in ['between_of_between_left', 'between_of_between_right', 'not_between_of_between_between']:
+for n in ['derived.between_of_between_left', 'derived.between_of_between_right', 'derived.not_between_of_between_between']:
     run(n, g_between)
-for n in ['Definition15', 'circle_eq', 'on_circle_of_len_eq', 'inside_of_len_lt', 'len_lt_of_inside']:
+for n in ['Definition15', 'circle_eq', 'derived.on_circle_of_len_eq', 'derived.inside_of_len_lt', 'derived.len_lt_of_inside']:
     run(n, g_circ_pts)
 # Appended so the existing generators keep their random sequence.
 run('derived.centre_unique', g_centres)
 run('derived.exists_point_outside_circle', lambda: dict(al=circ()))
+
+def g_inside_line():
+    c = circ([rp()])
+    A = centre(c)
+    if rng.random() < 0.5:
+        A = any_pt([A])
+    return dict(A=A, L=line_thru(A), al=c)
+
+
+def g_two_pts():
+    A = rp()
+    return dict(A=A, B=A if rng.random() < 0.3 else any_pt([A]), C=any_pt([A]))
+
+
+# The rules prepared for retirement that this search did not yet sample, as derived properties.
+for n in ['derived.ne_of_between', 'derived.ne_of_between_ends']:
+    run(n, g_between)
+for n in ['derived.same_side_refl', 'derived.same_side_symm']:
+    run(n, g_pasch())
+for n in ['derived.centre_inside', 'derived.inside_not_on']:
+    run(n, g_centres)
+run('derived.eq_of_len_eq_zero', g_two_pts)
+run('derived.area_swap', g_two_pts)
+run('derived.line_meets_circle_of_inside', g_inside_line)
+run('derived.exists_point_on_circle', lambda: dict(al=circ()))
+
 print('structured total counterexamples:', sum(r[2] for r in results))
 print('never met:', [r[0] for r in results if r[1] == 0])
