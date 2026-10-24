@@ -88,6 +88,9 @@ RULES = [
             # The registry of checks, one file per check of CI's `check` job (#229): adding
             # or changing a check is a change to the checks, whatever else it touches.
             "checks/*",
+            # ACCEPTANCE's table of the limitations allowed, which tests/test_acceptance_limits.py
+            # ties to check_acceptance.py's ALLOWED_LIMITS: a check input (#249).
+            "docs/ACCEPTANCE.md",
             # A rule of these can hide a file from the whole-worktree cleanliness check, or
             # change how Git reads one, so they are checks, not docs.
             ".gitignore", "*/.gitignore", ".gitattributes", "*/.gitattributes"]),
@@ -95,7 +98,7 @@ RULES = [
             "*.lean"]),
     ("R1", ["heath/*", "mishnah/*", "review/*", "figures/*", "book/*", "facts.json",
             "CERTIFICATE.md", "GRAPH.md", "docs/reports/*", "docs/decisions/*", "docs/briefs/*",
-            "docs/ACCEPTANCE.md", "docs/STYLE.md", "docs/FORMALIZATION.md", "docs/program.toml",
+            "docs/STYLE.md", "docs/FORMALIZATION.md", "docs/program.toml",
             "docs/PROGRAM.md", "reading/*"]),
     ("R0", ["docs/*", "README.md", "CONTRIBUTING.md", "AGENTS.md", "CLAUDE.md", "NOTICE",
             "CITATION.cff", "LICENSE*", "assets/*"]),
