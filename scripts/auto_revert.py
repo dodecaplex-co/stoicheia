@@ -60,7 +60,8 @@ from urllib.parse import unquote
 PROTECTED = (
     "scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
     "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-    "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/", "Audit/", "Audit.lean",
+    "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/",
+    "docs/ACCEPTANCE.md", "Audit/", "Audit.lean",
     "model/Model/Audit.lean", "model/Model.lean", "model/lakefile.toml",
     "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
     "model/lock.sha256",
