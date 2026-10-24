@@ -53,10 +53,10 @@ note = "The two remaining angle equalities follow inside the placement from the 
 
 [review]
 stage = "full"
-commit = "5d067711"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:4a660815ef61d204"
-run = "brief 0009 stage full, ship F2 question-4 re-read"
+commit = "f31cf9cf"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:ef9d655927fc2bb3"
+run = "brief 0009 stage full, ship F2 question-4 re-read; card 312, the symbols given by Symbols.ofList (no numeral in the proof), written by Claude Opus 5.5 at f31cf9cf, read with the whole record by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220); ship F2, reader F2-312cx, independent re-read at f31cf9cf"
 
 [review.items]
 statement = "pass"

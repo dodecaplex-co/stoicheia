@@ -111,103 +111,16 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Check every proof
-        run: lake build
-
-      - name: Check the overlap catalogue's audit lemmas
-        # Audit/ is a library nothing imports, outside the default build.
-        run: lake build Audit
-
-      - name: Check the staged statements, which await their proofs, still build
-        # Staging is a library nothing imports, outside the default build
-        # (docs/WORKFLOW.md, section 2).
-        run: lake build Staging
-
-      - name: Compute the certificate, and check its dependency walk against Lean's
-        # Facts.lean exits 1 if any entry's axioms differ from its own and its citations'.
-        run: lake env lean Certificate/Facts.lean
-
-      - name: Check coincidence steps and module boundaries, rejecting reached Staging.Hidden and Lean.Hidden helpers and allowing unused foreign imports
-        run: python3 -I tests/test_certificate.py
-
-      - name: The citation sweep finds a planted unused have, a discarded join, a `have _ :=` and a concealing helper, and passes its controls
-        # Its plants are Lean outside the tree, built against the library above. It reads
-        # the proofs' citations and the bindings records declare in `unused`, which a
-        # proof or a records change can move, so it runs here, for every class, not in
-        # the `negative` job, which checks out only for R3 and above (docs/WORKFLOW.md,
-        # section 8).
-        run: python3 scripts/sweep_citations.py --self-test
-
-      - name: List the candidates for dummy citations, artificial hypothesis uses and concealing helpers in Elements/
-        # Report only, the list in the log: the release gate runs it with
-        # --fail-on-undeclared (docs/WORKFLOW.md, section 10).
-        run: python3 scripts/sweep_citations.py
-
-      - name: Check every proof again, by Lean's kernel, and by nanoda admitting only the locked axioms and Lean's three
-        # leanchecker --fresh replays the whole environment of Elements, Lean's own
-        # included, through Lean's kernel; nanoda, written separately, checks the whole
-        # export. --self-test withholds Postulate 5 and expects nanoda to fail on it.
-        run: python3 scripts/check_kernel.py --self-test
-
-      - name: Check the contracts (references, porisms, review terms and records)
-        run: python3 scripts/heath.py
-
-      - name: Check the Lean still quotes Heath; the house rules, the policies for every entry, the lock of the axioms and the statements' words, and the review records
-        # The wording of the reader-facing pages is check_style.py's (S5), the next step.
-        run: python3 scripts/check_fidelity.py
-
-      - name: Check the style check's own reading, case by case, of phrases however a line wraps them and of letters on angles' wedges
-        # tests/test_check_style.py needs no Lean; it runs first, so that a rule found
-        # reading its cases wrongly stops the job before the style check's verdict.
-        run: python3 -I tests/test_check_style.py
-
-      - name: Check the unfinished work and release gates, case by case
-        # These cases need no Lean and no network; unreadable issues must hold a release.
-        run: python3 -I tests/test_release_gate.py
-
-      - name: Check the Jev client keeps no answer without its model's identifier
-        # These cases need no key and no network: run, score and a resumed run each refuse
-        # an answer whose model is missing, empty or not a string.
-        run: python3 -I tests/test_jev_models.py
-
-      - name: Check Jev's client against a stand-in for the service, with a key it makes up
-        # The self-test needs no network and no key: among other things, it checks that the
-        # key appears in no output, that a dry run sends nothing, and that a row's expected
-        # answer is never sent.
-        run: python3 scripts/audit/jev.py self-test
-
-      - name: Check the overlap screen's tries and its reading of Lean's logs, case by case
-        # tests/test_screen.py needs no Lean: it puts Audit/screen.py's own functions to small
-        # inputs. The screen itself needs Lean, takes minutes, and is not run here.
-        run: python3 -I tests/test_screen.py
-
-      - name: Check the limitations acceptance item P3 allows, case by case
-        # tests/test_acceptance_limits.py needs no Lean: it checks check_acceptance.py's list
-        # against docs/ACCEPTANCE.md's table, and P3 on review records varied in memory.
-        run: python3 -I tests/test_acceptance_limits.py
-
-      - name: Check the house style's hard rules
-        # S12 asks Lean about the names in every text it reads, the audit lemmas of the
-        # overlap catalogue among them, so it runs on the built tree, after Audit.
-        run: python3 scripts/check_style.py
-
-      - name: Check the generated pages are up to date, and that no check left the worktree changed
-        # `git status` sees new and deleted files as well as changed ones, over the whole
-        # worktree, as the pre-flight's step "git status --porcelain is empty" does: the
-        # generated pages (README.md and docs/PROGRAM.md are generated in part: render.py
-        # fills README's scope markers and PROGRAM.md's status table), the count markers
-        # render.py renews in other pages, and any file a step above wrote. The build's
-        # .lake/ and Python's caches are ignored by .gitignore.
-        run: |
-          python3 scripts/render.py
-          git status --porcelain
-          test -z "$(git status --porcelain)"
-
-      - name: Check the decisions page repeats no dated heading
-        run: python3 scripts/check_queue.py --tree .
-
-      - name: Check every relative link and anchor
-        run: python3 scripts/check_links.py
+      - name: Run the check job's sequence, one check for each file in checks/, in its order, each a group of the log, stopping at the first that fails
+        # The registry of checks (docs/WORKFLOW.md, section 8): each file of checks/ is one
+        # check, with its command, its job and its line of section 8, and a comment saying
+        # what it is for. This run reads the pull request's own registry, as it follows the
+        # pull request's own copy of this workflow; the pre-flight runs main's registry,
+        # read out of Git, never the pull request's
+        # (docs/decisions/2026-10-22-check-registry.md). Among the checks, render.py and
+        # then `git status --porcelain`, over the whole worktree, which must print nothing:
+        # the generated pages are up to date, and no check left the worktree changed.
+        run: python3 scripts/run_checks.py --job check
 
   negative:
     # Break the project on purpose, and check that every break is caught: in full for a

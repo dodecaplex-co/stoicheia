@@ -70,10 +70,9 @@ CLASSES = {
 
 # Ordered: the first match wins. Highest-risk rules first, so a specific file is never caught
 # by a broader, lighter rule. scripts/risk.py is R5 because it decides which checks run.
-# So will be scripts/registry.py, whose copy at main is to decide the pre-flight's sequence
-# of checks, and scripts/run_checks.py, which is to be CI's `check` job; the registry they
-# read, checks/, is R3, so that adding a check stays a change to the checks (#229). They are
-# ruled here first, before the registry comes, so that main judges the train bringing it.
+# So are scripts/registry.py, whose copy at main decides the pre-flight's sequence of
+# checks, and scripts/run_checks.py, which is CI's `check` job; the registry they read,
+# checks/, is R3, so that adding a check stays a change to the checks (#229).
 # lakefile.lean is R4 with the other build files, not R2 by `*.lean`: the repository has
 # none, but Lake reads one in preference to lakefile.toml. scripts/check_model_kernel.py is
 # R4, not R3 by `scripts/*`, because CI's formal-model job, which runs it, runs for R4 and R5.

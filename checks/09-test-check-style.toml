@@ -1,0 +1,9 @@
+# Check the style check's own reading, case by case, of phrases however a line wraps them
+# and of letters on angles' wedges. tests/test_check_style.py needs no Lean; it runs before
+# the style check, so that a rule found reading its cases wrongly stops the sequence before
+# the style check's verdict.
+order = 90
+name = "python3 -I tests/test_check_style.py"
+job = "check"
+command = ["python3", "-I", "tests/test_check_style.py"]
+section8 = "python3 -I tests/test_check_style.py"

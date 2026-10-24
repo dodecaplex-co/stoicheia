@@ -1,0 +1,8 @@
+# Check the Jev client keeps no answer without its model's identifier. These cases need no
+# key and no network: run, score and a resumed run each refuse an answer whose model is
+# missing, empty or not a string.
+order = 110
+name = "python3 -I tests/test_jev_models.py"
+job = "check"
+command = ["python3", "-I", "tests/test_jev_models.py"]
+section8 = "python3 -I tests/test_jev_models.py"
