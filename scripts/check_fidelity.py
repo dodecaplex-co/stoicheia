@@ -1131,7 +1131,9 @@ def check_lock(facts, path: Path = LOCK):
         elif any(other != name and other in lock[0] and other in proved[name]
                  for other in FORBIDDEN_CIRCLE_RULES):
             continue
-        elif not (isinstance(cites.get(name), list) and CIRCLE_SOURCE in cites[name]):
+        elif not (isinstance(cites.get(name), list)
+                  and all(isinstance(cite, str) for cite in cites[name])
+                  and CIRCLE_SOURCE in cites[name]):
             fail(f"{name} ({rule}): proved without another forbidden circle rule "
                  f"beneath it that is an axiom in {rel(path)}, or a proof that cites "
                  f"{CIRCLE_SOURCE}, so entries using it cannot be refused by their axioms "

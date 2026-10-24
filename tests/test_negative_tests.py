@@ -795,6 +795,11 @@ class CircleRuleTests(unittest.TestCase):
             with self.subTest(cites=cites):
                 self.refuses_as_unproved(self.fixture((self.inside,), {self.outside: []}, cites))
 
+    def test_a_mixed_citation_list_counts_as_citing_nothing(self):
+        facts = self.fixture((self.inside,), {self.outside: []},
+                             {self.outside: ["III.2", 7]})
+        self.refuses_as_unproved(facts)
+
     def test_a_malformed_iii2_entry_is_refused_without_a_crash(self):
         def facts(propositions):
             return self.fixture((self.inside,), {self.outside: []}, {self.outside: ["III.2"]},
