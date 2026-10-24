@@ -94,10 +94,11 @@ note = "K marks the supposed third point of Euclid's reductio, with FK equal to 
 
 [review]
 stage = "full"
-commit = "18c7a5cf"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c17359dc02a3b53d"
-run = "brief 0005 stage 5, ship R3 (#29)"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 18c7a5cf"
+text = "sha256:5969aa52c7a4c8b2"
 
 [review.items]
 statement = "pass"

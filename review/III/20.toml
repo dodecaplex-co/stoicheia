@@ -56,10 +56,11 @@ case = "E within the angle BAC and outside the angle BDC"
 
 [review]
 stage = "full"
-commit = "e572d5c0"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:ccd8afe1c9a04254"
-run = "brief 0005 stage 5, ship R3 (#29)"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0"
+text = "sha256:c6867555489fe8c7"
 
 [review.items]
 statement = "pass"
