@@ -10167,8 +10167,13 @@ class Units(unittest.TestCase):
             self.assertEqual("strategy" in job, name == SHARD_JOB, name)
         self.assertEqual(jobs["safe-push-tests"]["needs"], SHARD_JOB)
         self.assertEqual(jobs[safe_push.SUITE_REPORT_JOB]["needs"], list(safe_push.SUITE_JOBS))
-        self.assertEqual([j["name"] for j in SUITE_JOBS],
+        # The green run of the stand-in for gh: the jobs the gate names, the report, and one
+        # job for each shard of the matrix, named as GitHub names them.
+        shards = [f"{SHARD_JOB} ({k})" for k in range(1, ci_shard_count(jobs) + 1)]
+        self.assertEqual([j["name"] for j in SUITE_JOBS if j["name"] not in shards],
                          [*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB])
+        self.assertEqual([j["name"] for j in SUITE_JOBS if j["name"].startswith(SHARD_JOB)],
+                         shards)
 
     # E2a (#276): a job whose step `lane` reads the change's class does its work only when
     # that step says to run in full, so every step after it carries this condition (#346).
