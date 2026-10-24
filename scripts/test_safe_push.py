@@ -902,26 +902,28 @@ def hermetic_git(xdg: Path) -> None:
 
     Nor does it read git's default global ignore and attributes files (#376), which git
     reads with the global configuration shut out: $XDG_CONFIG_HOME/git/ignore and
-    attributes, or ~/.config/git's when XDG_CONFIG_HOME is unset. A rule there could hide
-    a file a test makes from `git status`, and so from the dirty-tree and freshness tests.
-    XDG_CONFIG_HOME names `xdg`, an empty directory made here, under TMP and removed with
-    it; it is no variable of git's, so every process inherits it, safe_push.py's own git,
-    its checks and the launcher among them. core.excludesFile names the null device too,
-    as HookEnvironment's -c option does, and so does core.attributesFile, both through
-    GIT_CONFIG_COUNT: that reaches every git started with this environment as it is, but
-    not those that safe_push.py and the launcher start, which drop GIT_CONFIG_COUNT with
-    git's other repository variables (#357, #359), so that there XDG_CONFIG_HOME alone
-    shuts the files out. A test that wants an excludes or attributes file of its own
-    names it with -c, which git reads after GIT_CONFIG_COUNT; one set in a repository's
-    own configuration loses to GIT_CONFIG_COUNT. HOME stays the runner's.
+    attributes, or ~/.config/git's when XDG_CONFIG_HOME is unset or empty. A rule there
+    could hide a file a test makes from `git status`, and so from the dirty-tree and
+    freshness tests. XDG_CONFIG_HOME names `xdg`, an empty directory made here, under TMP
+    and removed with it; it is no variable of git's, so every process started with the
+    module's environment keeps it, safe_push.py's own git, its checks and the launcher
+    among them. core.excludesFile names the null device too, as HookEnvironment's -c
+    option does, and so does core.attributesFile, both through GIT_CONFIG_COUNT: that
+    reaches every git started with this environment as it is, but not those that
+    safe_push.py and the launcher start, which drop GIT_CONFIG_COUNT with git's other
+    repository variables (#357, #359), so that there XDG_CONFIG_HOME alone shuts the
+    files out. A test that wants an excludes or attributes file of its own names it with
+    -c, which git reads after GIT_CONFIG_COUNT; one set in a repository's own
+    configuration loses to GIT_CONFIG_COUNT. HOME stays the runner's.
 
     With the global and system configuration shut out, git takes safe.directory only from
     its command line or GIT_CONFIG_COUNT, never from a repository's own configuration, so
     a checkout owned by another user stops setUpModule at its first git command, with
     git's "detected dubious ownership": run the tests as the checkout's owner. The module
-    sets no safe.directory of its own: `*` would let every git it starts use a repository
-    another user owns, which is what git's check of ownership is for, and the tests' own
-    clones, made by the user running them, need none."""
+    sets no safe.directory of its own: `*`, set through GIT_CONFIG_COUNT, would let every
+    git started with the module's environment as it is use a repository another user
+    owns, which is what git's check of ownership is for, and the tests' own clones, made
+    by the user running them, need none."""
     for name in [name for name in os.environ if name.startswith("GIT_")]:
         del os.environ[name]
     xdg.mkdir()
@@ -934,6 +936,9 @@ def hermetic_git(xdg: Path) -> None:
 def setUpModule():
     global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
     TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
+    # unittest skips tearDownModule when setUpModule fails, but runs the module's cleanups,
+    # after tearDownModule otherwise, when TMP is already gone.
+    unittest.addModuleCleanup(shutil.rmtree, TMP, ignore_errors=True)
     hermetic_git(TMP / "xdg")
     if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
         # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
@@ -9200,8 +9205,8 @@ class HermeticModule(unittest.TestCase):
     def test_the_module_under_a_global_ignore_and_attributes(self):
         # #376: git reads its default global ignore and attributes files with the global
         # configuration shut out, from $XDG_CONFIG_HOME/git, or from ~/.config/git when
-        # XDG_CONFIG_HOME is unset. Planted in either place, under a HOME of the test's
-        # own, rules for new.txt, the file Registry's dirty-tree test makes and
+        # XDG_CONFIG_HOME is unset or empty. Planted in either place, under a HOME of the
+        # test's own, rules for new.txt, the file Registry's dirty-tree test makes and
         # run_checks.py's `git status` must list, change no test's result: that test and
         # test_git_reads_no_global_ignore_or_attributes, run in a process of their own,
         # pass.
@@ -9246,7 +9251,9 @@ class HermeticModule(unittest.TestCase):
         # gives it no ignore rule and no attribute, whatever the runner's global ignore
         # and attributes files say (the planted run above names it in both).
         with tempfile.TemporaryDirectory(dir=TMP) as tmp:
-            repo = Path(tmp)
+            repo, other = Path(tmp) / "repo", Path(tmp) / "xdg"
+            for folder in (repo, other / "git"):
+                folder.mkdir(parents=True)
             git(repo, "init", "-q")
             (repo / "deep" / "er").mkdir(parents=True)
             (repo / "deep" / "er" / "new.txt").write_text("A new file.\n")
@@ -9257,6 +9264,18 @@ class HermeticModule(unittest.TestCase):
                               (ignored.returncode, ignored.stdout),
                               git(repo, "check-attr", "-a", "deep/er/new.txt")),
                              ("?? deep/\n", "?? deep/\n", (1, ""), ""))
+            # The second guard: the module's git names the null device as its excludes and
+            # attributes files, through GIT_CONFIG_COUNT, so a git that keeps the module's
+            # environment but is given another XDG_CONFIG_HOME, whose git/ignore and
+            # git/attributes name the file, still lists it and gives it no attribute.
+            (other / "git" / "ignore").write_text("new.txt\n")
+            (other / "git" / "attributes").write_text("new.txt -diff\n")
+            env = dict(os.environ, XDG_CONFIG_HOME=str(other))
+            files = [git(repo, "config", "--get", key, check=False)
+                     for key in ("core.excludesFile", "core.attributesFile")]
+            self.assertEqual((files, git(repo, "status", "--porcelain", env=env),
+                              git(repo, "check-attr", "-a", "deep/er/new.txt", env=env)),
+                             ([os.devnull + "\n"] * 2, "?? deep/\n", ""))
 
 
 @unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
