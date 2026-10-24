@@ -78,10 +78,6 @@ one angle. -/
 abbrev cites : List Cited :=
   [.lenSymm, .angleSymm, .areaCongruent, .neOfLen, .rayUnique, .rayOfAngle, .rayOfAngleSide]
 
-/-- Every law I.4's derivation cites is among those `Cited.holds_of_drawsNothing` proves, whose
-axioms include no rule that constructs. -/
-theorem cites_drawNothing : ∀ c ∈ cites, c.drawsNothing = true := by decide
-
 end Prop4
 
 open Prop4 in
@@ -228,10 +224,20 @@ theorem Prop4 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   have hC : Derives cites Δ (pos (.angle a c b d f e)) :=
     .angle_trans (.angle_symm Kept.angle₂) (.angle_congr Coincidence.step .eq_refl hC'F hB'E)
   /- Four equalities among the figure's symbols: they leave the placement, and b′, c′ and
-     ac′ stay behind. The laws cited are supplied by their proofs, from Book Zero and the
-     foundations; the guards are the triangle ABC, D and E on DE, D not E, and F off DE. -/
-  have hcites : ∀ c ∈ cites, c.Holds primitives := fun c hc =>
-    Cited.holds_of_drawsNothing c (cites_drawNothing c hc)
+     ac′ stay behind. The laws cited are supplied by their proofs, one each, from Book Zero
+     and the foundations; the guards are the triangle ABC, D and E on DE, D not E, and F off
+     DE. -/
+  have hcites : ∀ c ∈ cites, c.Holds primitives := by
+    intro c hc
+    simp only [cites, List.mem_cons, List.mem_nil_iff, or_false] at hc
+    rcases hc with rfl | rfl | rfl | rfl | rfl | rfl | rfl
+    · exact Cited.holds_lenSymm
+    · exact Cited.holds_angleSymm
+    · exact Cited.holds_areaCongruent
+    · exact Cited.holds_neOfLen
+    · exact Cited.holds_rayUnique
+    · exact Cited.holds_rayOfAngle
+    · exact Cited.holds_rayOfAngleSide
   have out := fun {φ : Metric Pt}
       (dφ : Derives cites Δ (pos (φ.map Name.given).toAtom)) =>
     Tacit.superposition.apply hcites dφ v hABC hD_DE hE_DE hDE hF_DE hΓ
