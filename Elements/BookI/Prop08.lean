@@ -31,23 +31,16 @@ namespace Prop8
 /-- The points of I.8's figure, as symbols: the corners of the two triangles. -/
 inductive Pt where
   | a | b | c | d | e | f
+  deriving DecidableEq
 
 /-- The straight line of I.8's figure, as a symbol: EF, along which BC is laid. -/
 inductive Ln where
   | ef
+  deriving DecidableEq
 
-instance : Symbols Pt where
-  card := 6
-  index
-    | .a => 0 | .b => 1 | .c => 2 | .d => 3 | .e => 4 | .f => 5
-  symbol i := [Pt.a, .b, .c, .d, .e, .f].getD i.val .a
-  symbol_index p := by cases p <;> rfl
+instance : Symbols Pt := Symbols.ofList [.a, .b, .c, .d, .e, .f] (by intro p; cases p <;> decide)
 
-instance : Symbols Ln where
-  card := 1
-  index _ := 0
-  symbol _ := .ef
-  symbol_index l := by cases l; rfl
+instance : Symbols Ln := Symbols.ofList [.ef] (by intro l; cases l <;> decide)
 
 /-- A, in the placement. -/
 abbrev a : Name Pt := .given .a
