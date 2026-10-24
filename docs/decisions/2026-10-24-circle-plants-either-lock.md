@@ -21,7 +21,7 @@
   the statement it keeps as a theorem, before restoring the lock as it found it. No plant
   is dropped and no expected refusal is loosened: each case wants the words it wanted, and
   the first case of `circle_proved.py` now asks for a citation of nothing in both states,
-  as it always meant to. It belongs to #294, within #152.
+  as it always meant to. Both plants serve #294's retirement of Circle 3.
 
   This entry approves the change to `scripts/negative/circle_renamed.py`, which renames
   Circle 3 in the lock and the copy's tables of axioms while it is locked, and in the copy's
