@@ -597,10 +597,10 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Aud
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
-Circle 3 renamed in the lock; Circle 2 proved without Circle 3 beneath it, with a
-matching case that still rests on locked Circle 3 and must pass; and both proved with
-neither beneath, citing nothing or an III.2 that rests on Circle 3, with a matching case
-citing the real III.2 that must pass;
+Circle 3 renamed in the lock; Circle 2 proved with neither Circle 3 beneath it nor III.2
+cited, with a matching case that still rests on locked Circle 3 and must pass; and both
+proved with neither beneath, citing nothing or an III.2 that rests on Circle 3, with a
+matching case citing the real III.2 that must pass;
 placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each

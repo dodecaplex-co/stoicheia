@@ -85,10 +85,10 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); none rests on Circle 2 or Circle 3, each of which must be
-     an axiom in the lock or a proved rule resting on another forbidden circle rule
-     that remains an axiom in the lock; only III.24 has placement, or a lemma of the `Placement`
-     namespace or of placement's files, among its shared steps;
+     after I.29, and may); none rests on Circle 2 or Circle 3, and each of those rules
+     follows one of the allowed routes in docs/FORMALIZATION.md, section 7, "Circle 2 and
+     Circle 3"; only III.24 has placement, or a lemma of the `Placement` namespace or of
+     placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold;
