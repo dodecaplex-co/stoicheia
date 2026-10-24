@@ -8,9 +8,11 @@ The negative suite runs these first. Temporary files stand in for Lake outputs;
 simulated builds delete, replace and create them before failing or being interrupted.
 A temporary repository stands in for the pre-flight's pass with origin/main's checks,
 whose work tree lacks the files a commit adds under the check inputs while Git's index
-still lists them.
+still lists them. The comment reader the scripts share is fed the texts on which a reader
+could read a Lean comment otherwise than Lean does, each with Lean's own reading.
 """
 
+import importlib.util
 import io
 import json
 import os
@@ -355,6 +357,174 @@ class RestorationTests(unittest.TestCase):
                 for rel, data in originals.items():
                     self.assertEqual((self.root / rel).read_bytes(), data)
                 self.assertEqual(self.files(), saved)
+
+    def test_law_plants_restore_sources_and_outputs(self):
+        # The plant in two clean laws' proofs (#150), at each of its stages: whether the
+        # planted build, the probe that prints the pins, the audit build or the certificate
+        # run fails or is interrupted, or the run goes through to check_fidelity.py, and
+        # whatever the restoration build does, the law proofs, the audit pins and
+        # facts.json come back, and so do the outputs when the restoration build fails.
+        rels = ("Elements/Figure/Superposition.lean", "Audit/Superposition.lean", "facts.json")
+        originals = {rel: (REPO / rel).read_bytes() for rel in rels}
+        names = [m[2] for m in negative.AUDIT_PIN.finditer(originals[rels[1]].decode())]
+        self.assertTrue(names)
+        steps = ("baseline", "planted", "probe", "audit", "certificate", "fidelity")
+        caught = ("✗ I.4: its construction_rules for the cited law lenSymm is ['Postulate1'], "
+                  "not []\n✗ I.8: its construction_rules for the cited law lenSymm is "
+                  "['Postulate1'], not []\n✗ I.4: its construction_rules for the cited law "
+                  "angleSymm is ['Tacit.circles_meet'], not []\n")
+        cases = [(stage, outcome, restoring)
+                 for stage in ("planted", "probe", "audit", "certificate")
+                 for outcome in ("failed", "interrupted")
+                 for restoring in ("success", "failed", "interrupted")]
+        cases += [(None, "completed", restoring)
+                  for restoring in ("success", "failed", "interrupted")]
+        for stage, outcome, restoring in cases:
+            with self.subTest(stage=stage, outcome=outcome, restoring=restoring):
+                for rel, data in originals.items():
+                    self.write(self.root / rel, data)
+                for path in self.build.rglob("*"):
+                    if path.is_file():
+                        path.unlink()
+                self.outputs("Elements/Figure/Superposition")
+                saved = self.files()
+                calls = []
+
+                def ends(step, cmd, ok):
+                    """The step's result: its failure or interruption at `stage`."""
+                    if step != stage:
+                        return ok
+                    self.damage_outputs()
+                    if outcome == "interrupted":
+                        raise KeyboardInterrupt(f"{step} interrupted")
+                    return subprocess.CompletedProcess(cmd, 1, "", f"{step} failed")
+
+                def run(*cmd):
+                    calls.append(cmd)
+                    step = steps[len(calls) - 1] if len(calls) <= len(steps) else None
+                    done = subprocess.CompletedProcess(cmd, 0, "", "")
+                    if cmd == ("lake", "build", "Elements", "Audit"):
+                        # The restoration build, with every source back.
+                        for rel, data in originals.items():
+                            self.assertEqual((self.root / rel).read_bytes(), data)
+                        if restoring == "success":
+                            return done
+                        return self.failed_rebuild(restoring == "interrupted")
+                    if step in ("baseline", "fidelity"):
+                        self.assertEqual(cmd, (sys.executable, "scripts/check_fidelity.py"))
+                        if step == "baseline":
+                            # The unplanted tree's problems, read before anything is planted.
+                            for rel, data in originals.items():
+                                self.assertEqual((self.root / rel).read_bytes(), data)
+                            return subprocess.CompletedProcess(cmd, 0, "✓ fidelity\n", "")
+                        return subprocess.CompletedProcess(cmd, 1, caught, "")
+                    if step == "planted":
+                        self.assertEqual(cmd, ("lake", "build"))
+                        laws = (self.root / rels[0]).read_text()
+                        self.assertIn("have _planted := @Postulate1", laws)
+                        self.assertIn("have _planted := @Tacit.circles_meet", laws)
+                        return ends(step, cmd, done)
+                    if step == "probe":
+                        self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+                        probe = Path(cmd[3])
+                        self.assertEqual(probe.name, "Pins.lean")
+                        self.assertNotEqual(probe.parent, self.root)
+                        printed = [line.split(" ", 2)[2]
+                                   for line in probe.read_text().splitlines()
+                                   if line.startswith("#print axioms ")]
+                        self.assertEqual(printed, names)
+                        out = "".join(f"{probe}:{i}:0: info: '{n}' depends on axioms: "
+                                      f"[propext, Elements.Postulate1]\n"
+                                      for i, n in enumerate(names, 2))
+                        return ends(step, cmd, subprocess.CompletedProcess(cmd, 0, out, ""))
+                    if step == "audit":
+                        self.assertEqual(cmd, ("lake", "build", "Audit"))
+                        audit = (self.root / rels[1]).read_text()
+                        self.assertEqual(audit.count("[propext, Elements.Postulate1]"),
+                                         len(names))
+                        return ends(step, cmd, done)
+                    self.assertEqual(step, "certificate")
+                    self.assertEqual(cmd, ("lake", "env", "lean", "Certificate/Facts.lean"))
+                    (self.root / "facts.json").write_text("{}\n")
+                    return ends(step, cmd, done)
+
+                interrupted = "interrupted" in (outcome, restoring)
+                with patch.object(negative, "run", side_effect=run):
+                    if interrupted:
+                        with self.assertRaises(KeyboardInterrupt):
+                            negative.construction_in_clean_laws()
+                    else:
+                        negative.construction_in_clean_laws()
+                reached = len(steps) if stage is None else steps.index(stage) + 1
+                self.assertEqual(len(calls), reached + 1)
+                self.assertEqual(calls[-1], ("lake", "build", "Elements", "Audit"))
+                for rel, data in originals.items():
+                    self.assertEqual((self.root / rel).read_bytes(), data)
+                if restoring != "success":
+                    self.assertEqual(self.files(), saved)
+                if stage is None and restoring == "success":
+                    self.assertEqual(negative.failures, [])
+                negative.failures.clear()
+
+    @staticmethod
+    def axiom_pin(name, axioms="[propext]"):
+        return (f"/--\ninfo: '{name}' depends on axioms: {axioms}\n-/\n"
+                f"#guard_msgs in\n#print axioms {name}\n")
+
+    STATEMENT_PIN = ("/--\ninfo: Elements.law : ∀ c ∈ cites, c.Holds primitives\n-/\n"
+                     "#guard_msgs in\n#check Elements.law\n")
+
+    def test_audit_pins_never_run_across_a_statement_pin(self):
+        # #150's review: a statement pin (`#guard_msgs in` over `#check`) before an axiom
+        # pin must be neither read into its message nor rewritten.
+        rel = "Audit/Pins.lean"
+        text = ("import Elements\n\n" + self.STATEMENT_PIN + "\n" + self.axiom_pin("Elements.a")
+                + "\n" + self.STATEMENT_PIN + "\n" + self.axiom_pin("Elements.b"))
+        self.write(self.root / rel, text.encode())
+        found = list(negative.AUDIT_PIN.finditer(text))
+        self.assertEqual([m[2] for m in found], ["Elements.a", "Elements.b"])
+        for m in found:
+            self.assertNotIn("#check", m[0])
+
+        def run(*cmd):
+            self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+            return subprocess.CompletedProcess(cmd, 0, "".join(
+                f"{cmd[3]}:{i}:0: info: '{n}' depends on axioms: [propext, Elements.P]\n"
+                for i, n in enumerate(("Elements.a", "Elements.b"), 2)), "")
+        with patch.object(negative, "run", side_effect=run):
+            changed = negative.rewritten_pins(rel)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(changed, text.replace("[propext]", "[propext, Elements.P]"))
+        self.assertEqual(changed.count(self.STATEMENT_PIN), 2)
+
+    def test_every_print_axioms_must_be_read_as_a_pin(self):
+        # A `#print axioms` the pattern does not read as a pin fails the plant, before Lean
+        # is run, rather than being left as it was.
+        rel = "Audit/Pins.lean"
+        self.write(self.root / rel, ("import Elements\n\n" + self.axiom_pin("Elements.a")
+                                     + "\n#print axioms Elements.b\n").encode())
+        with patch.object(negative, "run", side_effect=AssertionError("Lean was run")):
+            self.assertIsNone(negative.rewritten_pins(rel))
+        self.assertEqual(negative.failures, [
+            f"printing the pins of {rel}: 2 `#print axioms` commands, but 1 pins read; "
+            "update this test"])
+        negative.failures.clear()
+        text = ("import Elements\n\n" + self.axiom_pin("Elements.a")
+                + "\n" + self.axiom_pin("Elements.b"))
+        self.write(self.root / rel, text.encode())
+
+        def run(*cmd):
+            self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+            self.assertEqual(Path(cmd[3]).read_text().splitlines(), [
+                "import Elements", "#print axioms Elements.a", "#print axioms Elements.b"])
+            return subprocess.CompletedProcess(cmd, 0, "".join(
+                f"{cmd[3]}:{i}:0: info: '{name}' depends on axioms: [propext, Elements.P]\n"
+                for i, name in enumerate(("Elements.a", "Elements.b"), 2)), "")
+
+        with patch.object(negative, "run", side_effect=run):
+            changed = negative.rewritten_pins(rel)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(changed, text.replace("[propext]", "[propext, Elements.P]"))
 
     def test_certificate_plant_restores_source_on_interruption(self):
         source = self.root / "Certificate/Facts.lean"
@@ -783,6 +953,191 @@ class BookZeroImportTests(unittest.TestCase):
         self.assertEqual(self.findings("import Elements.Figure.Lines\n"), [])
         self.assertEqual(self.findings("import Elements.BookI.Prop01\n",
                                        "Elements/BookI/Prop02.lean"), [])
+
+
+class CommentReaderTests(unittest.TestCase):
+    """The one reader of Lean comments that the scripts share, check_fidelity's
+    `comment_end`, read through `lean_comments` and `read_lean`, without Lean (#206): the
+    texts on which a reader that began a block's body at its third character, or read no
+    strings or character literals, could read otherwise than Lean 4.35. Each expected
+    reading is Lean's: each text was elaborated in Lean 4.35 as written, alone in a scratch
+    file outside the tree, where the names after its comments were defined, those within
+    them unknown, and each of UNCLOSED refused as an unterminated comment. Then
+    the three readers that call it, check_fidelity's `_blank_remarks`, check_style's
+    `lean_note_spans` and the Jev generator's `comment_end`, each read them so too."""
+
+    # (a text, the comments Lean reads in it, in order, the names it defines and those it
+    # does not, which stand within a comment)
+    CASES = (
+        ("/-/- -/ def after_slash_dash : Nat := 1\n", ["/-/- -/"], ["after_slash_dash"], []),
+        ("/-/ x -/ def after_slash : Nat := 2\n", ["/-/ x -/"], ["after_slash"], []),
+        ("/-/-/ def after_slash_dash_slash : Nat := 3\n", ["/-/-/"],
+         ["after_slash_dash_slash"], []),
+        ("/--/ def hidden_in_doc : Nat := 0 -/ def after_doc_slash : Nat := 4\n",
+         ["/--/ def hidden_in_doc : Nat := 0 -/"], ["after_doc_slash"], ["hidden_in_doc"]),
+        ("/-!/ x -/ def after_module_doc_slash : Nat := 5\n", ["/-!/ x -/"],
+         ["after_module_doc_slash"], []),
+        ("/- /- -/ def hidden_in_nested : Nat := 0 -/ def after_nested : Nat := 6\n",
+         ["/- /- -/ def hidden_in_nested : Nat := 0 -/"], ["after_nested"],
+         ["hidden_in_nested"]),
+        ('def opener_in_string : String := "/-" def after_string : Nat := 7\n', [],
+         ["opener_in_string", "after_string"], []),
+        ('def closer_after_quote : Nat := 8 /- "-/ def after_quote : Nat := 9 -- "\n',
+         ['/- "-/', '-- "'], ["closer_after_quote", "after_quote"], []),
+        ("def dash_char : Char := '-'/- a remark -/ def after_dash_char : Nat := 10\n",
+         ["/- a remark -/"], ["dash_char", "after_dash_char"], []),
+        ("def slash_char : Char := '/'-- a remark\ndef after_slash_char : Nat := 11\n",
+         ["-- a remark"], ["slash_char", "after_slash_char"], []),
+        ("def quote_char : Char := '\"' /- \"-/ def after_quote_char : Nat := 12 -- \"\n",
+         ['/- "-/', '-- "'], ["quote_char", "after_quote_char"], []),
+        ("/- -- -/ def after_dashes_in_block : Nat := 13\n", ["/- -- -/"],
+         ["after_dashes_in_block"], []),
+        ("-- /-\ndef after_opener_in_line : Nat := 14\n", ["-- /-"],
+         ["after_opener_in_line"], []),
+        ('def in_hole : String := s!"{(1 : Nat) /- c -/}" def after_hole : Nat := 15\n',
+         ["/- c -/"], ["in_hole", "after_hole"], []),
+    )
+    # Likewise, each with its last comment not closed, which runs to the end.
+    UNCLOSED = (
+        ("def before_unclosed : Nat := 1\n/- unclosed /- -/\ndef hidden_unclosed : Nat := 0\n",
+         ["/- unclosed /- -/\ndef hidden_unclosed : Nat := 0\n"], ["before_unclosed"],
+         ["hidden_unclosed"]),
+        ("def before_bare : Nat := 1\n/-", ["/-"], ["before_bare"], []),
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        import check_style
+        cls.check_style = check_style
+        spec = importlib.util.spec_from_file_location(
+            "jev_questions_comment_reader", REPO / "scripts/audit/jev_questions.py")
+        cls.questions = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = cls.questions
+        cls.addClassCleanup(sys.modules.pop, spec.name, None)
+        spec.loader.exec_module(cls.questions)
+
+    def spans(self, text, comments):
+        """Each of `comments`, read from `text` in order, as its offsets in it."""
+        found, at = [], 0
+        for comment in comments:
+            at = text.index(comment, at)
+            found.append((at, at + len(comment)))
+            at += len(comment)
+        return found
+
+    def cases(self):
+        """Each case, with its comments' offsets and whether its last comment is closed."""
+        for (text, comments, defined, hidden), closed in (
+                [(case, True) for case in self.CASES]
+                + [(case, False) for case in self.UNCLOSED]):
+            yield text, self.spans(text, comments), defined, hidden, closed
+
+    def test_each_comment_ends_where_lean_ends_it(self):
+        for text, spans, _, _, closed in self.cases():
+            with self.subTest(text=text):
+                self.assertEqual(negative.check_fidelity.lean_comments(text), spans)
+                for start, end in spans[:None if closed else -1]:
+                    self.assertEqual(negative.check_fidelity.comment_end(text, start), end)
+                if not closed:
+                    self.assertEqual(spans[-1][1], len(text))
+                    self.assertIsNone(negative.check_fidelity.comment_end(text, spans[-1][0]))
+
+    def test_read_lean_shows_the_names_lean_defines_and_no_other(self):
+        for text, _, defined, hidden, _ in self.cases():
+            with self.subTest(text=text):
+                words = set(re.findall(r"\w+", negative.check_fidelity.read_lean(text)[0]))
+                self.assertLessEqual(set(defined), words)
+                self.assertFalse(set(hidden) & words)
+
+    def test_plain_string_braces_create_no_speculative_comment(self):
+        comment = "/- not_a_comment -/"
+        text = f'def s : String := "{{ {comment} }}"\n'
+        expected = text.replace(comment, " " * len(comment))
+        strings = []
+        self.assertEqual(negative.check_fidelity.lean_comments(text), [])
+        self.assertEqual(negative.check_fidelity._blank_remarks(text), text)
+        self.assertEqual(self.check_style.lean_note_spans(text), [])
+        self.assertEqual(negative.check_fidelity.read_lean(text, strings), (expected, []))
+        self.assertEqual(strings, [(text.index('"'), f"{{ {comment} }}")])
+
+    def test_the_readers_that_call_it_read_each_case_so(self):
+        for text, spans, _, _, closed in self.cases():
+            blocks = [(i, j) for i, j in spans if text.startswith("/-", i)]
+            remarks = list(text)
+            for i, j in blocks:
+                remarks[i:j] = ["\n" if ch == "\n" else " " for ch in text[i:j]]
+            ended = spans if closed else spans[:-1]
+            notes = [(i + (3 if text.startswith(("/--", "/-!"), i) else 2), j - 2)
+                     for i, j in blocks if (i, j) in ended]
+            with self.subTest(text=text):
+                self.assertEqual(negative.check_fidelity._blank_remarks(text), "".join(remarks))
+                self.assertEqual(self.check_style.lean_note_spans(text), notes)
+                for i, j in ended:
+                    self.assertEqual(self.questions.comment_end(text, i), j)
+                if not closed:
+                    with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
+                        self.questions.comment_end(text, spans[-1][0])
+
+    def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
+        source = b'''raise AssertionError("unrelated top-level code ran")
+
+def comment_end(src, i):
+    return ("controlled reader", src, i)
+'''
+        checked = (REPO / "scripts/check_fidelity.py").resolve()
+        with patch.object(self.questions, "read_no_follow", return_value=source) as read:
+            reader = self.questions.shared_function(*self.questions.READER)
+        read.assert_called_once_with(checked)
+        self.assertEqual(reader("prefix /- comment -/ suffix", 7),
+                         ("controlled reader", "prefix /- comment -/ suffix", 7))
+
+    def test_the_jev_generator_prepares_its_reader_before_running_helpers(self):
+        invalid = (
+            ("missing", None, r"check_fidelity\.py: helper module is missing"),
+            ("absent", b"def another_function():\n    pass\n",
+             r"defines no single function comment_end"),
+            ("duplicate", b"def comment_end(src, i):\n    pass\n\n"
+                          b"def comment_end(src, i):\n    pass\n",
+             r"defines no single function comment_end"),
+        )
+        helper_names = {name for name, _ in self.questions.HELPERS}
+        for label, reader, message in invalid:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                audit = root / "scripts/audit"
+                audit.mkdir(parents=True)
+                generator = audit / "jev_questions.py"
+                generator.write_bytes((REPO / "scripts/audit/jev_questions.py").read_bytes())
+                (root / "scripts/heath.py").write_text(
+                    'raise AssertionError("heath helper ran")\n', encoding="utf-8")
+                (audit / "jev.py").write_text(
+                    'raise AssertionError("Jev helper ran")\n', encoding="utf-8")
+                if reader is not None:
+                    (root / "scripts/check_fidelity.py").write_bytes(reader)
+                name = f"jev_questions_invalid_reader_{label}"
+                spec = importlib.util.spec_from_file_location(name, generator)
+                module = importlib.util.module_from_spec(spec)
+                with patch.dict(sys.modules) as modules:
+                    for dependency in helper_names:
+                        modules.pop(dependency, None)
+                    modules[name] = module
+                    with self.assertRaisesRegex(ValueError, message):
+                        spec.loader.exec_module(module)
+                    self.assertFalse(helper_names & modules.keys())
+
+    def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
+        source = "prefix /- comment -/ suffix"
+        offset = source.index("/-")
+        sentinel = object()
+        with patch.object(self.questions, "shared_comment_end", return_value=sentinel) as shared:
+            self.assertIs(self.questions.comment_end(source, offset), sentinel)
+        shared.assert_called_once_with(source, offset)
+
+        with patch.object(self.questions, "shared_comment_end", return_value=None) as shared:
+            with self.assertRaisesRegex(self.questions.Refusal,
+                                        r"^unterminated Lean comment$"):
+                self.questions.comment_end(source, offset)
+        shared.assert_called_once_with(source, offset)
 
 
 if __name__ == "__main__":

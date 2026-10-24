@@ -63,17 +63,28 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   off the letters (`hAB : A ≠ B`, `hA_BCD`).
 - Magnitudes are lengths, angles and areas, `‖A B‖`, `∠ A B C`, `△ A B C`, with `∟` the
   right angle and Book II's `rect` and `sq`: they add and compare, and nothing more. "Greater
-  than … by" is an equation (the less with the excess is the greater). No coordinates or
-  real numbers appear in a statement or a proof, and no number measures a length, an angle
-  or an area. Counts may appear, natural numbers, of a figure's corners and of what
-  they make, since a count is part of what "a figure of n sides" means: the corners
-  of a closed line of sides, or within a triangle, and a corner's place in their list,
-  turned round some number of steps; the sides a ray or a finite straight line crosses
-  (`crossingCount`); the closed lines round a point (`Outline.depth`); and the tiles and
-  triangles of a division, with the sides they share. Counts are added and compared, and
-  two are compared by their remainders on division by two, as
-  `crossing_parity_independent` compares two crossing counts. They are part of how a figure
-  is defined, not of Euclid's argument
+  than … by" is an equation (the less with the excess is the greater). In a proposition's
+  statement and the geometric steps of its proof, no coordinates or real numbers appear,
+  and no number measures a length, an angle or an area. Beneath those steps, numbers may
+  serve the machinery and say nothing of a figure: the superposition rule numbers its
+  symbols (`Symbols`, in `Elements/Foundations/Superposition/Soundness.lean`), so I.4 and
+  I.8 number the points and straight lines of their figures beside their proofs
+  (`card := 6`, and `.a => 0` to `.f => 5`;
+  [#312](https://github.com/jackChallis/stoicheia/issues/312) is to take them out), as
+  `valuation_encodes` writes a literal over two numbered symbols (`Fin 2`, in
+  `Elements/Foundations/Superposition/Restriction.lean`); and a tactic may take a count,
+  as `congr 1` does in Book Zero. The zero magnitude is written `0`, in some laws,
+  definitions, helpers and proofs: it stands for no magnitude (no length, no angle, no
+  area), never for a number Euclid uses. So `‖A B‖ ≠ 0` says that AB is not nothing, and
+  `0 < ∠ A C B` that the angle ACB is not nothing. Counts may appear, natural numbers, of
+  a figure's corners and of what they make, since a count is part of what "a figure of n
+  sides" means: the corners of a closed line of sides, or within a triangle, and a
+  corner's place in their list, turned round some number of steps; the sides a ray or a
+  finite straight line crosses (`crossingCount`); the closed lines round a point
+  (`Outline.depth`); and the tiles and triangles of a division, with the sides they share.
+  Counts are added and compared, and two are compared by their remainders on division by
+  two, as `crossing_parity_independent` compares two crossing counts. They are part of how
+  a figure is defined, not of Euclid's argument
   ([decision of 22 October 2026](decisions/2026-10-22-figures-promoted.md)).
 - Each book's phrases, and how its statements say them, are in its brief.
 
@@ -237,7 +248,7 @@ The representations Books I–III rest on:
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
-| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data or from the rule, which they use wherever a call of III.1 would do no work, Heath's "[III. 1]" staying on the page as his reference ([decision of 22 October 2026](decisions/2026-10-22-iii1-calls-dropped.md)) | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
@@ -301,7 +312,13 @@ construction, its premises, and the diagram fact or lemma it needed.
 - **Unused hypotheses and surprising dependencies are review prompts, not verdicts.** An
   unused hypothesis may mean the route is not Euclid's, or that our representation makes it
   redundant (III.27 holds for any two circles as stated). Say so in the handback;
-  the record tags it `redundant-hypothesis` where that is the truth.
+  the record tags it `redundant-hypothesis` where that is the truth. A hypothesis of
+  Euclid's that goes unused in his own argument as well as ours stays as he states it,
+  with no tag, for the tag marks a redundancy our representation makes
+  ([decisions, 22 October 2026](decisions/2026-10-22-euclids-idle-hypotheses.md)). In
+  III.8, Euclid's proof and ours compare DE with DF on the concave circumference without
+  using that F, the more remote, is on it, and DK with DL on the convex circumference
+  without using that L, the more remote, is on it.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
 - **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
@@ -672,11 +689,11 @@ rest, and these stay open, each example built in Lean 4.35 as written:
   `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
   `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
   and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
-  the list above names, `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting` and
-  `#guard`, are refused closed up or not. A fixed list of the rest would not do: which
-  `#` tokens Lean has depends on what the file imports (`#widget` comes with
-  `import Lean`, not with `Init` alone), and a file may declare a longer one, so the list
-  would misread a file that lacks one and could hide the code after it
+  the list above refuses in every form, `#eval`, `#exit`, `#guard_panic`, `#time`,
+  `#with_exporting` and `#guard`, are refused closed up or not. A fixed list of the rest
+  would not do: which `#` tokens Lean has depends on what the file imports (`#widget`
+  comes with `import Lean`, not with `Init` alone), and a file may declare a longer one,
+  so the list would misread a file that lacks one and could hide the code after it
   (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
   closes the hole).
 - Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
@@ -798,3 +815,30 @@ interpretation in which the other axioms hold and the result's own statement fai
 hypotheses met; that the postulate fails there is not enough, and a result whose statement
 stays true there needs a different analysis. The kind is numerical until a proof replaces
 it, and even then the pages keep "this proof uses".
+
+### Construction rules
+
+A construction rule is an axiom whose conclusion asserts that something exists. Set aside
+the axiom's leading "for all" binders and the hypotheses of its implications, and unfold
+this project's definitions in what remains: `CirclesMeet`, `LineMeetsCircle`, `LinesMeet`,
+`Collinear`, and an instance that gives an order its meaning. The axiom is a construction
+rule when an `∃` then stands in positive position. `And` and `Or` keep a position's sign;
+`Not` and the left of an implication reverse it; either side of an `Iff` counts at both.
+Only an `∃` written out, or one those definitions give, is counted: an existence stated
+another way, as `¬ ∀ x, ¬ P x` or by an axiom that is not a proposition, would not be, and
+no axiom in the lock states one so. Any other structure or inductive type is read as a word and never unfolded: what its
+fields or constructors say is not read. So Postulates 1, 2, 3 and 5, the rules that give a
+point (`exists_point` and its kin) and the rules that conclude that two circles, a straight
+line and a circle, or two straight lines meet are construction rules. A rule that concludes
+`Triangle`, which denies that three points lie on one straight line, is not; nor is one
+that assumes an existence only in a hypothesis. Nor is `Tacit.superposition`, and only
+because a structure is a word: it concludes the structure `Superposition.Rule`, whose one
+field assumes a triangle, and a triangle assumed, read through `Collinear`, would put an
+`∃` in positive position.
+
+The certificate computes the list from Lean's statements of the axioms
+(`construction_rules`), and, for each law that I.4's and I.8's derivations cite inside the
+placement, the construction rules beneath that law's proof (`cited_laws`;
+[FIELDS](../Certificate/FIELDS.md)). Like the rest of the certificate, these are facts
+about our proofs' dependencies. A law whose proof uses a construction rule still asserts
+no existence, and citing it draws nothing in the placement (brief 0009, question 4).

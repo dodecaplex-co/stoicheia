@@ -22,7 +22,8 @@ every six hours.
    beneath it is refused by name, while Circle 2 proved from Circle 3 still in the lock
    passes; and placement among III.26's shared steps is caught, while III.24, given it
    too, is not blamed.
-4. A changed Lean file makes its review record stale (I.1).
+4. A changed Lean file makes its review record stale (I.1). So does an edited note in
+   I.1's record; a comment added to the record and a stamp moved do not.
 5. III.16's review record without the passage that declares its angle clauses, of
    whatever kind, leaves a run of `--` lines with no Lean beneath it undeclared.
 6. A remark planted in I.5 between two sentences that share one step of Lean leaves the
@@ -179,7 +180,9 @@ every six hours.
     repository is set up is reported, and the plant stops there. The token is built as
     the plant runs, so this file passes the scan itself. Only item 17's plants run under
     --counts-only; this one runs with the rest, before the plants that build.
-29. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
+29. A repeated dated heading in the decisions page makes `check_queue.py --tree .`
+    refuse with exit 1.
+30. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
     proposition in each spelling Lean 4.35 accepts that the rule once passed: two
     spaces, a line break, a remark, a line comment or a nested remark between the words,
     nothing before «…» or a remark, `«Elements»`, `«BookI»` and a second import on one
@@ -193,6 +196,26 @@ every six hours.
     line, while a file holding the same import only in a comment, a remark, a string and
     a «…» name, beside a Book Zero import of its own, is not named at all. The files are
     read, not built, and removed after.
+31. A remark written `/-/- … -/`, which Lean reads as one whole remark, planted in I.5
+    between the Lean of one sentence and the next sentence, and a plain remark after that
+    sentence, which leaves it with no Lean: the sentence is caught, and the one after the
+    second remark, which keeps its Lean, is not, nor is any passage of I.5's record said
+    to begin no sentence (#206). A reader that began the first remark's body at its third
+    character, as `_blank_remarks` did before the scripts shared one comment reader, took
+    its `/-/-` for two openings, read everything after it in the theorem as remark, missed
+    the sentence, and found three of the record's passages beginning no sentence.
+32. One build with a construction rule planted in two clean laws' proofs: Postulate 1 in
+    Metric 3's (`Cited.holds_lenSymm`), `Tacit.circles_meet` in Metric 4's
+    (`Cited.holds_angleSymm`). Every pin of `Audit/Superposition.lean` is rewritten to
+    what Lean then prints, and `lake build Audit` must pass, so the pins cannot see the
+    plants. The certificate recomputed, `check_fidelity.py` fails on the expectations on
+    `cited_laws`, Metric 3's law in I.4 and in I.8 and Metric 4's in I.4, each with its
+    construction rule, and on nothing the unplanted tree did not already show.
+33. I.7's law, `.prop7`, removed from `Prop8.cites`, with the arm of I.8's case split that
+    proves it: Lean refuses I.8's file, as `lake build` would, at the derivation's citation
+    of the law (`Derives.prop7`), whose `by decide` finds `Cited.prop7 ∈ cites` false. The
+    build catches it, before the certificate runs; the expectation on I.8's `cited_laws`
+    is not reached.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -208,11 +231,11 @@ withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-Tests 10, 14, 15 and 21 attempt a restoration build; if it fails or is interrupted, every
-file in `.lake/build` returns to its saved contents and presence or absence before
+Tests 10, 14, 15, 21 and 22 attempt a restoration build; if it fails or is interrupted,
+every file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
 removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
-plant and tests 18 and 21 report elapsed time, restoration included. An outer
+plant and tests 18, 21 and 22 report elapsed time, restoration included. An outer
 `finally` compares Git status with the entry status, including on interruption, without
 replacing an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
@@ -224,6 +247,7 @@ Standard library only; Python 3.11 or later, for the review records.
 import argparse
 import base64
 import hashlib
+from collections import Counter
 import json
 import os
 import re
@@ -239,6 +263,7 @@ import check_fidelity
 import check_kernel
 import generated_counts
 import heath
+import review_stamp
 
 ROOT = heath.ROOT
 PLANTED = ROOT / "Elements" / "Foundations" / "Tacit" / "Planted.lean"
@@ -511,6 +536,23 @@ def broken_link() -> None:
         path.write_bytes(saved)
 
 
+def queue_repeated_heading() -> None:
+    """The tree scan must refuse a date heading repeated in the decisions page."""
+    rel = "docs/briefs/0002-decisions.md"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    heading = next(line for line in saved.splitlines() if line.startswith(b"## "))
+    try:
+        path.write_bytes(saved + b"\n" + heading + b"\n")
+        result = run(sys.executable, "scripts/check_queue.py", "--tree", ".")
+        expect_failure("a repeated dated heading in the decisions page", result,
+                       rel, "repeated dated heading")
+        if result.returncode != 1:
+            failures.append(f"queue repeated heading: expected exit 1, got {result.returncode}")
+    finally:
+        path.write_bytes(saved)
+
+
 def generated_files() -> set[Path]:
     paths = set()
     for rel in GENERATED:
@@ -693,6 +735,40 @@ def wrong_radii() -> None:
         expect_failure("the README's wrong radii in I.1", run("lake", "env", "lean", rel), "error")
     finally:
         (ROOT / rel).write_text(saved)
+
+
+# I.7's law taken out of I.8's list, with the arm of its case split that proves it, and the
+# derivation's citation of the law, where Lean must refuse it.
+PROP7_PLANT = (
+    ("abbrev cites : List Cited := [.lenSymm, .neOfLen, .rayUnique, .prop7]\n",
+     "abbrev cites : List Cited := [.lenSymm, .neOfLen, .rayUnique]\n"),
+    ("    rcases hc with rfl | rfl | rfl | rfl\n", "    rcases hc with rfl | rfl | rfl\n"),
+    ("    · exact Prop8.holds_prop7\n", ""),
+)
+PROP7_CITED = "    .prop7 Guard.ne_DG Guard.on_D Guard.on_G hGD_side hGE_DE hGF_DF\n"
+
+
+def prop7_uncited() -> None:
+    """`.prop7` removed from `Prop8.cites`, and the arm of I.8's case split that proves
+    I.7's law with it, so that nothing else fails: Lean refuses I.8's file, as `lake build`
+    would, at the derivation's citation of the law (`Derives.prop7`), whose `by decide`
+    finds `Cited.prop7 ∈ cites` false. The build catches it, before the certificate runs,
+    so the expectation on I.8's `cited_laws` is not what catches it (#150)."""
+    rel = "Elements/BookI/Prop08.lean"
+    path = ROOT / rel
+    saved = path.read_text()
+    planted = saved
+    for old, new in PROP7_PLANT:
+        assert planted.count(old) == 1, f"{rel}: expected one {old!r}"
+        planted = planted.replace(old, new)
+    assert planted.count(PROP7_CITED) == 1, f"{rel}: expected one citation of I.7's law"
+    line = planted[:planted.index(PROP7_CITED)].count("\n") + 1
+    try:
+        path.write_text(planted)
+        expect_failure("`.prop7` removed from I.8's cited laws", run("lake", "env", "lean", rel),
+                       f"{rel}:{line}:", "Cited.prop7 ∈ cites", "is false")
+    finally:
+        path.write_text(saved)
 
 
 def entry(facts: dict, ref: str) -> dict:
@@ -1883,6 +1959,79 @@ def stale_lean() -> None:
         path.write_text(saved)
 
 
+def edited_note() -> None:
+    """An edited note under a current `text` stamp. I.1's record is given its `text` stamp
+    first if it has none yet (docs/WORKFLOW.md, section 6), so the test holds before and
+    after the records are migrated; then the first letter of its first note changes case,
+    and the check must say the record changed. With a comment added and its stamp moved,
+    and its words as they were, the check must say what it says of the record unchanged:
+    the same outcome, the same lines naming I.1 or its record, and no traceback."""
+    path = heath.review_path("I", 1)
+    saved = path.read_text()
+    stamped = review_stamp.set_stamp(saved, "review", "text", heath.text_hash(saved))
+    lines = stamped.split("\n")
+    at = next((i for i, line in enumerate(lines) if line.startswith('note = "')), None)
+    # One letter changed, not a word added: the note keeps its length, so it stays within
+    # heath.NOTE_LIMIT, and the check finds the edit, not the length.
+    start = len('note = "')
+    planted = None if at is None else \
+        lines[at][:start] + lines[at][start:start + 1].swapcase() + lines[at][start + 1:]
+    if planted is None or planted == lines[at]:
+        failures.append("an edited note: review/I/01.toml has no `note` beginning with a "
+                        "letter; update this test")
+        return
+    edited = lines[:at] + [planted] + lines[at + 1:]
+    try:
+        path.write_text("\n".join(edited))
+        expect_failure("an edited note in a review record", fidelity(),
+                       "I.1: its record has changed since it was reviewed")
+        # The words as they were, under a current `text` stamp: what the check says then.
+        path.write_text(stamped)
+        baseline = fidelity()
+        before = naming_i1(baseline.stdout + baseline.stderr)
+        # The same words with a comment above them and the `text` stamp first in
+        # [review]: comments and layout are not the record's text.
+        moved = [line for line in lines if not line.startswith("text = ")]
+        review = moved.index("[review]")
+        moved.insert(review + 1, f'text = "{heath.text_hash(saved)}"')
+        moved.insert(0, "# A comment planted by scripts/negative_tests.py.")
+        path.write_text("\n".join(moved))
+        result = fidelity()
+        out = result.stdout + result.stderr
+        # On a contributor's branch the baseline may name I.1 too, say for a changed
+        # Prop01.lean: the lines naming I.1 must then be the same lines, as many times and
+        # in the same order.
+        after = naming_i1(out)
+        added = list((Counter(after) - Counter(before)).elements())
+        missing = list((Counter(before) - Counter(after)).elements())
+        if result.returncode != baseline.returncode or after != before or "Traceback" in out:
+            detail = []
+            if result.returncode != baseline.returncode:
+                detail.append(f"exit {result.returncode}, not {baseline.returncode} as with "
+                              "the record unchanged")
+            if added:
+                detail.append(f"also says {added!r}")
+            if missing:
+                detail.append(f"no longer says {missing!r}")
+            if after != before and not added and not missing:
+                detail.append("says the same lines in another order")
+            if "Traceback" in out:
+                detail.append("a traceback")
+            failures.append("a comment and a moved stamp in I.1's record: not as the record "
+                            f"unchanged ({'; '.join(detail)})")
+            print(out[-3000:])
+        else:
+            print("✓ a comment and a moved stamp in I.1's record: not called a change")
+    finally:
+        path.write_text(saved)
+
+
+def naming_i1(out: str) -> list[str]:
+    """The lines of a check's output that name I.1 or its review record."""
+    return [line for line in out.splitlines()
+            if re.search(r"\bI\.1\b|review/I/01\.toml", line)]
+
+
 def missing_files() -> None:
     """I.1's figure, idea figure and mishnah, each taken away in turn: Book I is complete,
     so `check_fidelity.py` names the one missing, and not the other two."""
@@ -1963,6 +2112,32 @@ def remark_ends_run() -> None:
         expect_failure("a sentence with no Lean before a remark in I.5", fidelity(),
                        f"I.5: the `--` lines from {first!r} ({rel}:{line}) have no Lean",
                        unwanted=("I.5: the `--` lines from 'the remainder BF",))
+    finally:
+        (ROOT / rel).write_text(saved)
+
+
+def slashed_remark() -> None:
+    """A remark written `/-/- … -/` in I.5, which Lean reads whole, before a sentence
+    that a plain remark then leaves with no Lean: the sentence must be caught, and the
+    sentence after the plain remark, which keeps its Lean, must not be, nor any passage of
+    I.5's record said to begin no sentence. A reader that took the `/-/-` for two openings
+    read the rest of the theorem as remark (#206)."""
+    rel = "Elements/BookI/Prop05.lean"
+    first = "and in these AB is equal to AC,"
+    second = "the remainder BF is equal to the remainder CG."
+    saved = replace_once(rel, f"  -- {first}\n  -- {second}\n",
+                         "  /-/- Planted by scripts/negative_tests.py: Lean ends this "
+                         "remark here. -/\n"
+                         f"  -- {first}\n"
+                         "  /- Planted too: these words have no Lean. -/\n"
+                         f"  -- {second}\n")
+    try:
+        planted = (ROOT / rel).read_text()
+        line = planted[:planted.index(f"-- {first}")].count("\n") + 1
+        expect_failure("a sentence with no Lean after a `/-/- … -/` remark in I.5", fidelity(),
+                       f"I.5: the `--` lines from {first!r} ({rel}:{line}) have no Lean",
+                       unwanted=("I.5: the `--` lines from 'the remainder BF",
+                                 "does not begin a sentence of the `--` lines of theorem Prop5"))
     finally:
         (ROOT / rel).write_text(saved)
 
@@ -2055,6 +2230,121 @@ def planted_assumptions() -> None:
             rebuild_restored("the restored files build", outputs)
         finally:
             planted_outputs.restore()
+
+
+# An audit pin: the message `#print axioms` gives, as `#guard_msgs` holds it. The message
+# stops at the first end of a docstring, so a pin never runs across another `#guard_msgs`
+# (a statement pin's `#check`) to the next `#print axioms`.
+AUDIT_PIN = re.compile(r"/--\n(info: (?:(?!\n-/\n).)*?)\n-/\n#guard_msgs in\n"
+                       r"#print axioms (\S+)\n", re.S)
+# Each clean law's proof, and the construction rule planted in it: the text that begins its
+# proof, and what replaces it.
+LAW_PLANTS = (
+    ("Postulate1", ":= fun v _ => len_symm (v.pt .A) (v.pt .B)\n",
+     ":= by\n  have _planted := @Postulate1\n  exact fun v _ => len_symm (v.pt .A) (v.pt .B)\n"),
+    ("Tacit.circles_meet",
+     "theorem Cited.holds_angleSymm : Cited.angleSymm.Holds primitives := by\n",
+     "theorem Cited.holds_angleSymm : Cited.angleSymm.Holds primitives := by\n"
+     "  have _planted := @Tacit.circles_meet\n"),
+)
+
+
+def rewritten_pins(rel: str) -> str | None:
+    """The audit file `rel` with every `#print axioms` pin rewritten to what Lean prints now,
+    as an author would after changing a proof: Lean prints the pinned names in a probe file
+    with the audit file's own imports, so each must be declared in what it imports, as
+    every name Audit/Superposition.lean pins is. Each message begins with its name, quoted,
+    and runs to the next. Every `#print axioms` command of the file must be read as a pin.
+    None, with the failure recorded, if they cannot all be read or printed."""
+    text = (ROOT / rel).read_text()
+    imports = [line for line in text.splitlines() if line.startswith("import ")]
+    names = [m[2] for m in AUDIT_PIN.finditer(text)]
+    commands = len(re.findall(r"^#print axioms ", text, re.M))
+    if len(names) != commands:
+        failures.append(f"printing the pins of {rel}: {commands} `#print axioms` commands, "
+                        f"but {len(names)} pins read; update this test")
+        return None
+    with tempfile.TemporaryDirectory(prefix="stoicheia-pins-") as tmp:
+        probe = Path(tmp) / "Pins.lean"
+        probe.write_text("\n".join(imports + [f"#print axioms {n}" for n in names]) + "\n")
+        result = run("lake", "env", "lean", str(probe))
+    if not expect_success(f"printing the pins of {rel}", result):
+        return None
+    out = re.sub(r"^\S*Pins\.lean:\d+:\d+: info: ", "", result.stdout, flags=re.M)
+    starts, at = [], 0
+    for name in names:
+        found = re.compile(rf"^'{re.escape(name)}' ", re.M).search(out, at)
+        if found is None:
+            break
+        starts.append(found.start())
+        at = found.end()
+    if not names or len(starts) != len(names) or out[:starts[0]].strip():
+        failures.append(f"printing the pins of {rel}: expected one message for each of "
+                        f"{len(names)} pins, in order, and nothing else")
+        print(result.stdout[-3000:])
+        return None
+    fresh = iter("info: " + out[a:b].rstrip() for a, b in zip(starts, starts[1:] + [len(out)]))
+    return AUDIT_PIN.sub(lambda m: m[0].replace(m[1], next(fresh), 1), text)
+
+
+def problems(result: subprocess.CompletedProcess) -> set[str]:
+    """The problems a check_fidelity.py run lists, one line each."""
+    return {line.strip() for line in result.stdout.splitlines() if line.strip().startswith("✗ ")}
+
+
+def construction_in_clean_laws() -> None:
+    """Postulate 1 planted in the proof of Metric 3's law, and `Tacit.circles_meet` in Metric
+    4's, two laws I.4 cites (I.8 cites the first too), with every pin of
+    Audit/Superposition.lean rewritten to what Lean then prints. The audit builds, so its
+    pins cannot see the plants; the certificate's expectations on `cited_laws` catch each,
+    by its entry and law, and check_fidelity.py finds nothing else that the unplanted tree
+    did not already show (#150)."""
+    rel, audit = "Elements/Figure/Superposition.lean", "Audit/Superposition.lean"
+    baseline = problems(fidelity())
+    saved = {p: (ROOT / p).read_text() for p in (rel, audit, "facts.json")}
+    outputs = BuildOutputs()
+    try:
+        for _, old, new in LAW_PLANTS:
+            replace_once(rel, old, new)
+        if not expect_success("the planted laws build", run("lake", "build")):
+            return
+        changed = rewritten_pins(audit)
+        if changed is None:
+            return
+        if changed == saved[audit]:
+            failures.append("the planted laws: no pin of Audit/Superposition.lean changed; "
+                            "update this test")
+            return
+        (ROOT / audit).write_text(changed)
+        if not expect_success("the planted laws' audit, its pins rewritten to match",
+                              run("lake", "build", "Audit")):
+            return
+        if not expect_success("the planted laws' certificate",
+                              run("lake", "env", "lean", "Certificate/Facts.lean")):
+            return
+        result = fidelity()
+        caught = {"Postulate 1 in the proof of Metric 3's law, its pins rewritten": (
+                      "I.4: its construction_rules for the cited law lenSymm is "
+                      "['Postulate1'], not []",
+                      "I.8: its construction_rules for the cited law lenSymm is "
+                      "['Postulate1'], not []"),
+                  "Tacit.circles_meet in the proof of Metric 4's law, its pins rewritten": (
+                      "I.4: its construction_rules for the cited law angleSymm is "
+                      "['Tacit.circles_meet'], not []",)}
+        for name, wanted in caught.items():
+            expect_failure(name, result, *wanted)
+        expected = [w for wanted in caught.values() for w in wanted]
+        others = sorted(p for p in problems(result) - baseline
+                        if not any(p.startswith(f"✗ {w}") for w in expected))
+        if others:
+            failures.append("the planted laws: check_fidelity.py also reported "
+                            + "; ".join(others))
+        else:
+            print("✓ the planted laws: nothing but the cited_laws expectations caught them")
+    finally:
+        for p, text in saved.items():
+            (ROOT / p).write_text(text)
+        rebuild_restored("the restored laws build", outputs, "Elements", "Audit")
 
 
 def certificate_constructor_counting() -> None:
@@ -2251,6 +2541,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_risk.py")):
         return 1
     print("✓ risk class regressions passed (without Lean)")
+    if not expect_success("lock regressions",
+                          run(sys.executable, "-I", "tests/test_axiom_lock.py")):
+        return 1
+    print("✓ lock regressions passed (without Lean)")
     if args.counts_only:
         count_markers()
         if failures:
@@ -2267,6 +2561,7 @@ def main(argv=()) -> int:
         count_markers()
         secret_behind_a_replacement()
         wrong_radii()
+        prop7_uncited()
         weakened_postulate()
         changed_word()
         stale_statement()
@@ -2275,8 +2570,10 @@ def main(argv=()) -> int:
         circle_renamed()
         placement_called()
         stale_lean()
+        edited_note()
         undeclared_run()
         remark_ends_run()
+        slashed_remark()
         native_decide()
         forbidden_commands()
         book_zero_imports()
@@ -2291,11 +2588,12 @@ def main(argv=()) -> int:
         carriage_return_comment()
         placement_named()
         figure_names_and_arcs()
+        queue_repeated_heading()
         missing_files()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
                      changed_audit_pin, corrupt_olean, certificate_constructor_counting,
-                     ill_typed_proof):
+                     ill_typed_proof, construction_in_clean_laws):
             started = perf_counter()
             try:
                 test()

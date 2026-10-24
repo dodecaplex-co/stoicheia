@@ -3637,6 +3637,130 @@ findings:
   on condition that its reviews and /no-mistakes pass with no blocking finding; the
   independent review judged that it is not a weakening of keep_apart.
 
+- **Checked trains, and the merge queue's judge, land first.** On 20 October the owner
+  said, in order:
+
+  > "I'm fine with merge queue as long as there are additional checks for not overwriting, batching, etc."
+  >
+  > "I'd feel better about a series of trains and those batching in queues and problems auto revert."
+  >
+  > "I want to make sure that things have been thoroughly checked, so we are only looking at integration tests and the specific gaps of new things."
+
+  So a train, a branch that merges branches each already checked (its reviews, its
+  `/no-mistakes` at its head, its own checks), is the unit that lands several changes
+  together, and the checks land first: this change brings the train check and the merge
+  queue's judge. It turns no queue on; the train rules and `--tree` apply at once to
+  every `train/*` and every pre-flight. The post-merge workflow, the automatic revert
+  and `safe_push.py`'s queue mode follow in a pull request of their own, which lands as
+  an ordinary one: it meets the `--tree` step and the offline cases, not the judge,
+  which runs only on merge groups. [WORKFLOW](../WORKFLOW.md), sections 8 and 10, gives
+  the whole account, with how to build a train that passes; in short:
+
+  - *Trains.* A `train/*` branch needs `--body-file` on every `--branch` run, dry runs
+    and updates included; the file is read once, as UTF-8, before the checks. Its body
+    gains `Members` (each member's head and its three reviews) and `What is new` (the
+    checks, rules, propositions and foundations it changes). Step "3. train" of the
+    pre-flight runs origin/main's `scripts/check_train.py` before the full checks, with
+    six rules: each member is merged exactly once and has exactly one row; each of the
+    train's merges has two parents and adds or resolves nothing outside the generated
+    files (README.md and PROGRAM.md only between their markers) and the decisions page
+    (with its entry files under `docs/decisions/` only once origin/main has that
+    directory), Git's automatic merge reading merge attributes from origin/main, never
+    from the checkout or a member's `.gitattributes`; the train's own commits change only
+    those; each `/code-review` and `/security-review` cell names, by 7 to 40 lower-case
+    hexadecimal digits that a reader sees (not in an HTML tag or comment, or a link's
+    destination), a commit of the member's own history (its head, or an ancestor
+    of it not on origin/main), gives some visible verdict or findings beyond that name,
+    is not only a placeholder and holds nowhere, in any case, "pending", "TBD", "to
+    come", "not needed" or "N/A", `/no-mistakes` says `passed at` the member's own head
+    or `not run: <reason>` with five words or more, and `/security-review` says "Not
+    required" only where no protected path changed, against any of the member's merge bases with main, a member with a protected path
+    naming its commit there and saying "Not required" nowhere in the cell; checks and the
+    content they judge travel apart, even when origin/main's checks pass; and
+    `What is new` covers the diff. Beyond the commit, the review cells are the
+    coordinator's words, read for their form. While origin/main has no train check,
+    every train is refused, one adding the check too: no commit's own copy ever judges
+    it. `--merge` checks the train's current body again, and refuses if any later read
+    of the body before the merge differs. A branch not named `train/*` meets none of
+    these rules, though every branch's `--body-file` is now read once, as UTF-8, before
+    the checks, and refused if it cannot be read.
+  - *The judge.* `scripts/check_queue.py`, which the new `queue-integrity` job takes
+    from a group's base and runs without running any of the group's scripts, checks (a)
+    that no train's change is overwritten, by reverting and reapplying it against every
+    merge base it has with the group's base (generated files by regeneration, and every
+    decisions line a train adds kept in order); (b) that each entry's pre-flight block
+    names its head, as its base the newest commit of main's first-parent chain that the
+    head contains, and a harness that is that base or a later main commit, with a
+    passing verdict and every check that harness runs passing, and that each train's
+    `Members` are still its actual merges; (c) that the group is main and the queued
+    entries ahead, in order, as plain merge commits; and (d) that no dated decisions
+    heading repeats, read line by line, never as the page renders, so that the reading
+    can only over-approximate: a line that could render as a level-one or level-two
+    heading counts, in code, HTML and every container too, its leading whitespace and
+    container markers taken off (`>`, list markers, and GFM's task markers and footnote
+    markers); a line of spaces and tabs is blank, and no other; its text must be plain,
+    ASCII letters, digits, spaces and `. , : ; ' ( ) - /` only, or the page is refused,
+    naming the line; an underline's text is every line back to the previous blank one,
+    each with its list numbers and footnote markers, which may be a paragraph's own text;
+    a heading is dated when its text contains a date, and two with the same date are
+    refused, naming both; every year from 1900 to 2199 in a heading must be the year of a
+    date the check reads, in its own line, so that a date written another way
+    (`20/10/2026`) is refused, never passed; and an HTML heading tag of level one or two anywhere on the page is
+    refused, so the page quotes one only in prose, as character references (the pages'
+    freshness and conflict markers are the `check` job's). Every merge it computes reads
+    merge attributes from the group's base, and judging a group it reads the decisions
+    page, like every file, from Git's objects, never from the checkout, which the group's
+    attributes shape; `--tree`, which reads the checkout, refuses as unreadable a page
+    with an attribute that can change how a checkout writes it. The pre-flight block
+    is a declaration that anyone who can edit the pull request's body can type: the
+    judge checks it for consistency, not as proof that a pre-flight ran. And GitHub runs
+    the group's own copy of the workflow file, so the judge's verdict, and any check of
+    that evidence added to it, counts only while the group's `ci.yml` still calls it.
+    The protection of `.github/`, `scripts/` and `tests/`, and the authenticity of the
+    pre-flight's evidence, must be held by something a group cannot change: a ruleset
+    requiring code-owner review, with a `CODEOWNERS` file naming the owner for those
+    paths; a required workflow pinned to main, if the account offers one; or a status
+    posted by an App that runs main's code. The owner chooses which, and the queue must
+    not be turned on until one exists. No entry may come from another repository or be
+    written by a bot, nor, while it is queued, be put in the queue or last edited by
+    one, save one exception: an automatic revert from the configured App bot
+    (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label, whose
+    tree is exactly the revert of a failed post-merge push's merges, while an open
+    `main-red` issue names that run. `--gaps` runs the tests of each changed check, with
+    no token in their environment, and prints the changed propositions' acceptance
+    items.
+  - *Now.* `queue-integrity` runs the offline cases of `tests/test_check_queue.py` and
+    `tests/test_check_train.py` on pull requests and pushes, after installing the YAML
+    parser pinned in `scripts/requirements-test_safe_push.txt`, with which they read
+    `ci.yml`; on a merge group it installs nothing, so the Python that runs the judge
+    holds nothing the group names. It judges groups only once CI runs on `merge_group`,
+    which comes with the queue. The queue stays off until the owner turns it on, and not
+    before CI runs on `merge_group`. The step
+    `python3 scripts/check_queue.py --tree .` is now in the `check` job and in
+    safe_push's `CHECKS`, after the generated pages' status, so WORKFLOW's section 8, CI
+    and the pre-flight keep one list; a negative test plants a repeated dated heading
+    and expects it refused. Both checks need Git 2.42 or later.
+  - *The block.* A new pre-flight block's marker carries `harness=<commit>`, the main
+    commit whose harness ran it (today, its base), and the block gains a
+    `Verdict: PASS.` line. safe_push still reads blocks written before, their base
+    standing in for the harness; the judge does not accept them, since they have no
+    `Verdict` line, so such a pull request needs a fresh pre-flight before it is queued.
+  - *Test plumbing.* On macOS, `scripts/test_safe_push.py` runs the Git that `xcrun`
+    selects rather than the `/usr/bin/git` shim, which leaves a file in the temporary
+    directory that a dry run's clean-up check would see. It changes no check.
+
+  Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, and the
+  train rules and the new step only add refusals. The protected files this change adds
+  or changes:
+  `.github/workflows/ci.yml`,
+  `scripts/check_queue.py`,
+  `scripts/check_train.py`,
+  `scripts/negative_tests.py`,
+  `scripts/safe_push.py`,
+  `scripts/test_safe_push.py`,
+  `tests/test_check_queue.py`,
+  `tests/test_check_train.py`.
+
 - **Decision entries, one file each (tooling).** Nearly every pull request appended to
   this page, so two queued together collide at its end. On main's first-parent history at
   `250292bc`, 23 of the 29 merged pull requests numbered #98 to #148 changed this page,
@@ -4861,6 +4985,100 @@ findings:
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
   [`docs/FORMALIZATION.md`](../FORMALIZATION.md) and this page.
 
+- **A review stamp covers the record's own text.** A record's stamps went stale when its
+  statements or its Lean file changed, but not when the record itself was edited, so a
+  note, a scope or a passage could change under "Reviewed at" with no one reading it. Two
+  lanes found it on 18 October, the one correcting the errors from Argon's review
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)) and the fidelity runs
+  ([#61](https://github.com/jackChallis/stoicheia/issues/61)), and we thank them both
+  ([#77](https://github.com/jackChallis/stoicheia/issues/77)). A record now carries a
+  fourth stamp, `text` in `[review]`: `heath.text_hash` of the record as TOML reads it,
+  with `[review]` and `fingerprint` set aside, so that writing a stamp, or moving a record
+  from the stage `exceptions` to `full`, never changes the text it stamps, and with
+  comments and layout aside ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps",
+  whose two worked examples now carry it as test values).
+  [`scripts/review_stamp.py`](../../scripts/review_stamp.py) writes it with the other
+  stamps, and, whenever `--commit` names a commit, checks that the commit named is in the
+  history of HEAD, and both the Lean file and the record at that commit (before, it checked
+  the Lean file only, and only when the commit changed).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) fails on a record whose
+  text no longer matches its stamp: "its record has changed since it was reviewed".
+  [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
+  values; [`scripts/render.py`](../../scripts/render.py) counts such a record as not
+  current, and writes nothing new; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  is unchanged, and fails P2 on that finding of `check_fidelity.py`'s, as
+  [ACCEPTANCE](../ACCEPTANCE.md), P2, now says;
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
+  I.1's record and expects it caught, and a comment and a moved stamp not;
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp.
+  That widens its `stamp_only` a little: a stamp line added or moved now counts as a stamp
+  alone, where before it was judged, so that the records' `text` stamps travel past
+  `keep_apart` as the other stamps do. Two guards hold it, and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
+  is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
+  that a line shaped as a stamp inside a multi-line string, which changes the record's
+  words, is judged. Its account of the records in a pull request's body counts `text` as a
+  stamp: a record whose stamps alone change, its commit kept, is listed as "its stamps
+  written, its commit kept at …", which is what the migration below does to it; one that
+  loses a stamp, as "a stamp taken away"; and one whose words change under a kept commit,
+  as "touched, not re-stamped". The required box on the review records
+  in [`.github/pull_request_template.md`](../../.github/pull_request_template.md), and its
+  comment under "Review records", therefore now admit a record that "gained only its
+  `text` stamp from `scripts/review_stamp.py --migrate-text`", so that the migration's
+  pull request can tick that box truly. Once this lands, any pull request open with the
+  box's old words must have that box rewritten in its body before `--merge`, which
+  otherwise refuses it as missing the box's new words. After this lands, an open pull
+  request whose body's records part was written with the old words is refreshed with
+  `git safe-push --branch` before `--merge`, which otherwise fails its body as out of date.
+  This is a check change on its own: it changes no record.
+- **The `text` stamps' migration, and what it does not do.** The existing records are not
+  stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a
+  record's stamp commit is in the history of HEAD and its text at that commit (`git show
+  <commit>:review/<book>/NN.toml`, its `[review]` table and fingerprint aside) is its text
+  now: the hash then records what its reviewer read, and no new reading. It reads the
+  commit by its full id, so a branch or tag named as the commit is never read in its
+  place. A record whose text it cannot confirm is listed as needing a reader, and is never
+  stamped by the migration. A stamp commit that is absent or ambiguous is instead a
+  problem, and so, for a record without `text`, is one that a shallow clone cannot place
+  in the history of HEAD: the command exits 1 without listing that record for a reader.
+  Missing history is fetched, or, for an ambiguous id, a reader identifies the intended
+  commit without guessing, reads the record and stamps it with enough of the id to name
+  that commit alone, before running it again.
+  On main at `756bdbae` it would write 92 records; seven were edited after their stamp
+  commit and need a reader: II.2, II.6, II.7, II.8 and II.10, whose passages name Book I's
+  helpers as `BookI.…` since the renaming of 19 October; III.4, whose notes changed their
+  quotation marks and a word; and III.13, whose `[figure]` note was written after the
+  commit its page names. The migration waits for the branches in flight that re-stamp
+  records, the Book III cascade's re-stamps (ship C7) and axiom wave two, as it waited for
+  train Tw2 (Book I's Postulate 1 joins), landed as
+  [#193](https://github.com/jackChallis/stoicheia/pull/193).
+  It reads each record's own stamp commit, so it treats their stamps as any other, and it
+  runs on main after them, in a records pull request of its own. Then a reader reads and
+  stamps the records it lists, and with them #77's item 3: III.13's `[figure]` note read
+  against [`figures/III/13.svg`](../../figures/III/13.svg) and Heath's figure, and its page
+  re-rendered, so that its "Reviewed" row names the new commit. Then, in a check change of
+  its own, `text` is required like the other stamps: `check_fidelity.py` fails a record
+  without it, in place of its note naming them, and `check_acceptance.py` asks it of a
+  record at P2. That change also takes out every place that lets a record go without
+  `text`, or says "for now": `render.record_current`'s clause counting a record with no
+  `text` as current; `text` in `heath.FIELDS`, which becomes a stamp, with the comment
+  above FIELDS and `validate_review`'s "for now"; `check_fidelity.py`'s docstring, which
+  says a record with no `text` stamp yet is named in a note; SCHEMA's "for now" in the
+  `text` row, and its paragraph on the records stamped before `text`;
+  [WORKFLOW](../WORKFLOW.md), section 6's "Until every record carries `text`"; ACCEPTANCE
+  P2's "once it carries one"; [CONTRIBUTING](../../CONTRIBUTING.md)'s "once it carries its `text` stamp";
+  [PROGRAM](../PROGRAM.md)'s "where a record carries a `text` stamp"; and the template's
+  words for the migration. It also considers covering `[review]`'s `stage` and `items` by
+  `text`: a page words its "Reviewed" row from `stage`, and P11 to P16 count `items`, yet
+  neither is caught by any stamp now (SCHEMA, "Stamps"). Until that change, failing on
+  the records without `text` would stop main, so `check_fidelity.py` names each record
+  without it in a note, and fails only on a `text` that no longer matches. P2's
+  requirement waits too: asked now, it would fail all 99 records, where main passes 62,
+  and the 372 review items of those 62 (P11 to P16) with them; and while every record
+  failed it, the `acceptance` job's ratchet could not catch a regression in those items
+  as the branches above land.
+  The branch carries the work of the lane of 18 October that first built it, with thanks.
+
 - **A figure that draws every case says so
   ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
   [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
@@ -4895,7 +5113,6 @@ findings:
   `scripts/heath.py`,
   `review/SCHEMA.md`,
   `tests/test_check_style.py`.
-
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
@@ -4980,7 +5197,6 @@ findings:
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
-
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
@@ -5000,7 +5216,6 @@ findings:
   `centre_unique` is left to the reader of `Prop1.construction` and the lemmas it calls, as
   `Audit/Centre.lean` now says; a pin on the proved rules each entry uses is #168's. The pinned
   list itself is unchanged by the merge.
-
 - **The scaffold follows the restated Book III statements.** The protected file
   [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
   0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
@@ -5021,7 +5236,6 @@ findings:
   and `tests/` confirms that no check reads the scaffold's Book III strings. The scaffold
   creates only missing files, so it never rewrites a proof. This change lands before the
   content it describes, in a pull request of its own, since `scripts/` is a check input.
-
 - **Brief 0008, step 6: a drawn arc needs no centre (19 October 2026).** As
   [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
   [`Elements/Foundations/DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean)
@@ -5168,7 +5382,6 @@ findings:
   axiom.
   `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. An
   independent reader read the record afresh and stamped it at `05b34dc0`.
-
 - **The citation sweep ([#32](https://github.com/jackChallis/stoicheia/issues/32)).**
   `scripts/sweep_citations.py`, standard library only, lists the candidates that brief
   0005's stage 5 names and [FORMALIZATION](../FORMALIZATION.md), section 5, forbids: the
@@ -5318,3 +5531,84 @@ findings:
   `scripts/heath.py`,
   `scripts/check_fidelity.py`,
   `review/SCHEMA.md`.
+
+- **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
+  routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
+  in the content change that follows this one, and the certificate records what each cited
+  law's proof uses. Route (a) would have kept a flag that, under the permissive reading the
+  owner approved on 20 October ("as prototyped"), carries no logical weight, and a check of
+  it would only confirm a classification nothing depends on; the computed record serves both
+  the reader and the second retirement wave, after which four of I.4's seven laws are proved
+  with construction rules. "Construction rule" is now defined in
+  [FORMALIZATION](../FORMALIZATION.md#construction-rules), section 9: an axiom whose
+  conclusion asserts existence once the project's definitions are unfolded, a structure or
+  inductive type read as a word, and only an `∃` written out or given by a definition
+  counted. This check change lands first, under WORKFLOW, section 10.
+  Protected files changed:
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
+  `construction_rules` (21 of the 80 axioms at this revision, the centre rule
+  `Tacit.exists_centre` among them) and, for I.4 and I.8, a
+  `cited_laws` field: each law the entry's own Lean cites, its proofs (name, file and line,
+  from Lean's declarations) and the construction rules beneath them; a law the entry names
+  with no proof found fails the run.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields and the walk.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) gains
+  eight expectations: I.4's seven cited laws and I.8's four, I.7's law carrying Postulate 1,
+  the three laws that stay clean (Metric 3, 4 and 9) with no construction rule in I.4,
+  Metric 3 likewise in I.8, and the construction rules themselves; an expectation may now read one cited law
+  (`law`) or a top-level field (no `ref`). [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py)
+  reads those forms and now refuses an expectation that asks nothing (none of `includes`,
+  `excludes`, `equals` or `count`), which used to pass: a check defect, fixed.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `kept_expectations` reads an
+  expectation by its `ref`, `field` and `law`, so retargeting one no longer counts as
+  keeping it; only tighter. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)
+  tests that. [`scripts/render.py`](../../scripts/render.py) shows the cited laws on I.4's
+  and I.8's pages; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  follows the new field. [`scripts/negative_tests.py`](../../scripts/negative_tests.py)
+  plants a construction rule in two clean laws' proofs with every audit pin rewritten to
+  match, so only the new expectations can catch it, and plants I.7's law removed from I.8's
+  list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
+  with its fixture `tests/fixtures/CertificateCited.lean`,
+  and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
+  the expectations' new forms and the plants' restoration. The fixture declares seventeen
+  stand-in axioms: one for each of the sixteen cases of the definition that it lists, and
+  the fixture's own law of I.7. They are compiled only into the test's temporary package,
+  which no library of the edition builds, and the lock is unchanged. A review correction
+  makes the projection reader follow a projection at the head of a structure value, as
+  when a structure is nested in another or a field is a function, and apply the field it
+  names to the projection's arguments. Three of the stand-in axioms exercise it: an
+  inherited order instance, reached through nested structures; a projection reached
+  through nested structures and through a function's arguments; and, beside it, a field of
+  the same structure that asserts no existence and must not be read in its place. A second
+  correction substitutes a `let` at the head of a structure value or of an application
+  into its body, so that a definition given through a `let` is read through it; two more
+  of the stand-in axioms now exercise a `let`-bound structure and a `let` at an
+  application's head. The new expectation on `construction_rules` reads facts.json's top
+  level and so has no `ref`; five lookups, in four places, in `scripts/test_safe_push.py`
+  that picked the lock's III.1 expectations out by `(x["ref"], x["field"])` met it and
+  failed in CI's `safe-push-tests` job with a `KeyError`, so they read the `ref` with
+  `x.get("ref")`, which picks out exactly the entries they picked before.
+  `check_fidelity.py` and `safe_push.py` already read an expectation without a `ref`.
+- **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
+  route (b)).** The content change that follows the check above. #150, the owner's issue
+  for finishing the answers approved "as prototyped" on 20 October, offers this route by
+  name: retire `drawsNothing`, `holds_of_drawsNothing` and `cites_drawNothing`, which carry
+  no logical weight under the permissive reading, and let I.4 prove its laws one by one, as
+  I.8 does. So the definition `Cited.drawsNothing` leaves
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean),
+  in the foundations, with the theorem `Cited.holds_of_drawsNothing` from
+  [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean) and
+  `Prop4.cites_drawNothing` from [`Elements/BookI/Prop04.lean`](../../Elements/BookI/Prop04.lean),
+  whose derivation now discharges each cited law by its own theorem. No statement, no
+  `Cited` law and no other definition changes, and the lock is unchanged.
+  [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)'s
+  part 3 now points to question 4 and to `cited_laws` instead of saying that every law I.4
+  cites is proved with no rule that constructs; `Elements/BookI/Prop08.lean`'s note says
+  that I.7 draws its own lines and cites I.5. The protected file changed is
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean): its two pins of the retired
+  declarations go, every per-law pin and the pins of I.4 and I.8 stay exact, and its header
+  says which construction rules each law uses is computed by the certificate. Brief 0009
+  carries a dated note and points to the definition in FORMALIZATION. At this revision
+  every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
+  second retirement wave changes that for four of them, and its landing records it.
+  I.4's and I.8's records were read again in full and stamped by an independent reader.
