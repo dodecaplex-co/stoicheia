@@ -15,12 +15,12 @@ and a straight line that touches a circle meets it at a point of contact and has
 within it. They follow from Definition 15, System E's rules for circles, and the definitions
 of Book III.
 
-Two more facts that Book III takes for granted need III.2, and follow it in its file: three points of a circle are not
-on one straight line (`BookIII.Prop2.triangle`), and a straight line in a circle has points
-of the circle on each side of it (`BookIII.Prop2.oppositeSide` and `BookIII.Prop2.sameSide`).
-Book Zero proved them here for any circle from Circle 2 until 24 October 2026, when
-Circle 2 and Circle 3 were proved from III.2, after it, and the copies here, which nothing
-used, were taken out.
+Two more facts that Book III takes for granted need III.2, and follow it in its file:
+three points of a circle are not on one straight line (`BookIII.Prop2.triangle`), and a
+straight line in a circle has points of the circle on each side of it
+(`BookIII.Prop2.oppositeSide` and `BookIII.Prop2.sameSide`). Book Zero proved them here
+for any circle from Circle 2 until 24 October 2026, when Circle 2 and Circle 3 were proved
+from III.2, after it, and the copies here, which nothing used, were taken out.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.

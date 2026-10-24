@@ -21,14 +21,14 @@
   and Intersection 2 (`Tacit.line_meets_circle_of_opposite_sides`), with its private
   helper `circle_intersections_of_inside`. The proofs of Points 9 and Intersection 2 keep
   their steps, but take the one that Circle 3 took from III.2 itself, by `Prop2` and
-  `Prop2.within`, so nothing in the file uses Circle 3. `between_at_crossing`, which Triple incidence 3 in
-  Circles.lean calls as well and which uses no rule about circles, stays there as a public
-  Book Zero lemma with a docstring of its own. `Elements/Figure/OnCircles.lean` loses
-  `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
-  `exists_onCircle_sameSideOf`, which rested on Circle 2 and had no user in `Elements/`,
-  `Staging/`, `Audit/` or `model/`; III.2's corollaries `Prop2.triangle`,
-  `Prop2.oppositeSide` and `Prop2.sameSide` give the same facts for any circle, as the
-  module text of OnCircles.lean now says.
+  `Prop2.within`, so nothing in the file uses Circle 3. `between_at_crossing`, which
+  Triple incidence 3 in Circles.lean calls as well and which uses no rule about circles,
+  stays there as a public Book Zero lemma with a docstring of its own.
+  `Elements/Figure/OnCircles.lean` loses `Triangle.of_onCircle`,
+  `exists_onCircle_oppositeSidesOf` and `exists_onCircle_sameSideOf`, which rested on
+  Circle 2 and had no user in `Elements/`, `Staging/`, `Audit/` or `model/`; III.2's
+  corollaries `Prop2.triangle`, `Prop2.oppositeSide` and `Prop2.sameSide` give the same
+  facts for any circle, as the module text of OnCircles.lean now says.
 
   Why it is safe. The route was laid by the entry of 23 October,
   [the circle rules from III.2](2026-10-23-circle-rules-from-iii2.md): `check_lock` takes a
@@ -113,12 +113,12 @@
 
   The numerical model's results were written again on this harness:
   `python3 -I tests/model/run.py --full --write` ran at commit `fd91db4a13e2`, and every
-  check passed: the plane gave no counterexample, the 15 mutations were all caught, and
-  only `Postulate5` failed in the hyperbolic plane, as it must. With one law fewer drawing on
-  the random numbers, the search's three seeds and the hyperbolic run meet the other laws'
-  hypotheses a little differently, so the plane's axiom total moves from 4,097,933 to
-  4,098,108; the derived properties' stays at 9,855,030. MODEL.md carries the counts as
-  the run wrote them.
+  check passed: no configuration of the plane broke an axiom, each of the 15 weakened
+  statements was caught, and in the hyperbolic plane only `Postulate5` failed, as it must.
+  With one law fewer drawing on the random numbers, the search's three seeds and the
+  hyperbolic run meet the other laws' hypotheses a little differently, so the plane's
+  axiom total moves from 4,097,933 to 4,098,108; the derived properties' stays at
+  9,855,030. MODEL.md carries the counts as the run wrote them.
 
   This entry approves, one at a time, each result file that this run wrote:
   - `tests/model/results/angle_check.txt`, from the angle check at this commit;

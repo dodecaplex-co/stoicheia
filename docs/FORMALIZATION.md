@@ -763,14 +763,14 @@ proof to the assumptions it uses.
 | `not_same_side_of_circles_meet` | Circle 4 | Definition I.15 gives equal distances from each centre, `circle_eq` tells the centres apart, and I.7 excludes two common points on the same side. Proved after I.7 in [`Prop07.lean`](../Elements/BookI/Prop07.lean). |
 | `centre_unique` | Generalities 2 | Two supposed centres bisect the same straight line through the circle by Definition I.15. Equal doubles have equal halves, and the strict order of lengths forces the centres to coincide. Proved from the foundations in [`Circles.lean`](../Elements/Figure/Circles.lean). |
 | `inside_of_between` | Circle 2 | III.2's corollary `Prop2.within`, III.2 for points on or within the circle. Proved after III.2 in [`Prop02.lean`](../Elements/BookIII/Prop02.lean) since 24 October 2026; from 19 October it was proved from Circle 3 in `Circles.lean`. |
-| `exists_point_outside_circle` | Points 9 | Points on the circle enclose an interior point; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and Circle 3 puts the new point outside. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean` before. |
-| `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points (Book Zero's `between_at_crossing`); Circle 3 puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean` before. |
+| `exists_point_outside_circle` | Points 9 | A point between two points on the circle is within it, by III.2; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and III.2, by `Prop2.within`, puts the new point outside. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean`, from Circle 3, before. |
+| `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points (Book Zero's `between_at_crossing`); III.2, by `Prop2.within`, puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean`, from Circle 3, before. |
 | `triple_incidence3` | Triple incidence 3 | Angle addition and positivity, Intersection 1, and the order and side rules locate a crossing and carry its side relation to the given point. Proved in `Circles.lean`. |
 | `inside_of_angle_add` | Diagram-angle 2, converse | I.13, angle addition, positivity and the side rules exclude each way the point could lie outside the angle. Proved after I.13 in `Prop13.lean`; the forward rule, `angle_add_of_inside`, stays an axiom. |
 
 The proofs of Points 9 (`exists_point_outside_circle`) and Intersection 2
-(`line_meets_circle_of_opposite_sides`) both use Circle 3, and so, since 24 October 2026,
-III.2. The certificate's walk passes through proved rules, so no proposition, porism or
+(`line_meets_circle_of_opposite_sides`) used Circle 3; since 24 October 2026 they take
+that step from III.2 itself (`Prop2`, `Prop2.within`). The certificate's walk passes through proved rules, so no proposition, porism or
 companion before III.2 may use either of them, as with Circle 2 and Circle 3 themselves
 (section 7).
 
