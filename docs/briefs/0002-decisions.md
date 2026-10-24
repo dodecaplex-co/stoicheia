@@ -3761,6 +3761,144 @@ findings:
   `tests/test_check_queue.py`,
   `tests/test_check_train.py`.
 
+- **The merge queue, and a revert when main fails.** The checks landed first, in the
+  entry above, which quotes the owner's three sentences of 20 October; this change brings
+  the rest, judged by them: CI on merge groups, the post-merge workflow and its automatic
+  revert, and `safe_push.py`'s queue mode. [WORKFLOW](../WORKFLOW.md), sections 8 and 10,
+  gives the whole account; in short:
+
+  - *CI.* `.github/workflows/ci.yml` runs on `pull_request` and `merge_group`, and is
+    called by the post-merge workflow on main (`workflow_call`), no longer on every
+    branch push, which ran the same checks twice for each push. Its token is read-only,
+    and no checkout keeps it in its git config (`persist-credentials: false`).
+    `acceptance` runs on every event it runs on, comparing with the main that its step
+    "Identify main for this event" names: the first parent of a pull request's merge, a
+    group's base, or a main push's `before`. `queue-integrity` runs the offline cases of
+    `tests/test_auto_revert.py` too, and judges each group. The new job `queue-gaps`
+    prints the changed propositions' acceptance items and runs the tests of each
+    changed check. Those tests are the group's own code, and on Linux a process can
+    read its parent's environment, where A's `--gaps` held the token while it ran them;
+    so main's `check_queue.py --gaps --plan` now chooses them in the step that holds
+    the token, running none, and the job's last step, which holds none (nor does any
+    step after the choosing), runs them with `--run-plan`, which refuses to run a test
+    while any variable named with `TOKEN` is set. That keeps the token out of the
+    tests' environment, files, caches and artifacts, but not out of the job: the runner
+    process holds it until the job ends, beneath every step, so the token is read-only
+    by design (contents, pull requests, actions and issues, each read only). Before
+    that step the job installs main's pinned YAML parser, which the queue's tests
+    import, with `python3 -I -m pip` run from the runner's temporary directory, so that
+    nothing in the group's checkout runs in pip's place. `queue-gaps` may take 75
+    minutes and `queue-integrity` 20, and the queue's status check timeout is to be 150
+    (`acceptance`'s 60, then `queue-gaps`' 75, and 15 for runners), all to be measured
+    again on the queue's trial. With "only merge non-failing pull requests", a train
+    merges only when its own group passed; GitHub removes a failing group's last train
+    and rebuilds the groups after it.
+  - *The CI model.* `scripts/test_safe_push.py` holds CI's `check` job, safe_push's
+    `CHECKS` and WORKFLOW's section 8 to one list, and allowed no input on the check
+    job's checkout. It now allows exactly one, `persist-credentials: false`, the boolean
+    itself: it changes no commit and no file the checks read, and only keeps the job's
+    token out of the checkout's git config, a power taken away. Any other value of it,
+    or any other input, is still refused as unmodeled, with a case for each, and a new
+    test requires it on every checkout of both workflows.
+  - *After the merge.* `.github/workflows/post-merge.yml` runs the integration tests on
+    each push to main. If they fail, it opens an issue labelled `blocks-release` and
+    `main-red`; with the revert App's key (in the `auto-revert` environment, main only),
+    the previous main's `scripts/auto_revert.py`, trusted only when its own post-merge
+    run passed, reverts the push's merges on a `revert/` branch, reading merge
+    attributes from the previous main (Git 2.42 or later), and queues the revert. The
+    judge admits it only as the exact revert of a failed push of two-parent merges, and
+    only while an open `main-red` issue names that run on its own `Run:` line, by this
+    repository's address: its one merge base with main must be the push's tip, and the
+    commits from that tip to its head exactly the reverts, one for each merge, newest
+    first, and at most one commit that keeps the decisions record, with no merge. The
+    decisions record is history, only ever added to, so a revert never removes a
+    decision's text: the revert keeps `docs/decisions/` and this page as at the failed
+    push's tip, as the advice for a revert by hand on tooling/decision-entries restores
+    both from origin/main, and the judge, in `scripts/check_queue.py`, accepts exactly
+    that difference and no other: a revert that takes a train's lines off this page, or
+    changes it otherwise, refuses. A revert that would break a relative link of the kept
+    record, one that resolves at the failed push's tip, would fail its own link check:
+    the script pushes none, and its issue names the links and says to revert by hand.
+    While an open `main-red` issue exists, the judge also refuses every queued entry
+    but that revert and a declared fix (below), so trains queued before main went red
+    leave the queue. When main has moved on during a post-merge run whose integration
+    passed, that is, when main's tip, read afresh, is readable and another commit, its
+    clear job and `auto_revert.py --clear --after` change no label and pass, naming that
+    commit and its post-merge run, which decides, or saying that no such run can be read
+    yet. Otherwise a clear removes `main-red` only from an issue whose exact
+    `After: <40 hex>` line names the successful commit or one of its ancestors, and reads
+    main again before each removal; a missing or unreadable line, or one that names
+    another commit, keeps the label. A clear that fails at main's own tip still fails, as
+    new tests of both check, and so does one that cannot read the tip. So the clear test's
+    expected exit changes from 2 to 0 for a moved main only; approved by the coordinator
+    on 21 October as a correction of new behaviour, not a weakened check: the test,
+    `test_clear_old_success_does_not_clear_new_main`, still requires that no label is
+    removed, and now also that its message names the later push's run. The
+    workflow that holds the key is read from main, so code that has landed there could
+    take it; the App is bounded instead: no bypass, no permission to write contents at
+    all (the job's own token pushes the revert branch), and the judge's refusal of any
+    entry a bot wrote, queued, edited or renamed, save that revert. Since the revert
+    job is one of the failed run's own jobs, the judge may find that run still in
+    progress: it reads the run again every 15 seconds, for up to 10 minutes, and
+    judges it once completed. A run that concluded failure
+    admits its revert and any other conclusion refuses it; a run not completed by then
+    refuses it too, and the revert leaves the queue. So the queue's status check
+    timeout must allow that wait, on top of the jobs' own work.
+  - *The merge.* When main's rules require a merge queue, `git safe-push --merge` keeps
+    every gate, checks the head against the newest commit of main's first-parent chain
+    that it contains, which its pre-flight recorded, enqueues it with its head pinned,
+    and follows it to a verified merge or an ejection. In both modes it
+    refuses while main is red, save the fix: a pull request whose body has the line
+    `Fixes main-red: #<n>`, where GitHub shows it, naming every open `main-red` issue
+    and no other, and whose own CI passes. With the queue off only a merge moves main's
+    tip, so without that exit nothing could land the fix. A record no longer stands in
+    for the full checks of a head that changes the checks or a protected path, since
+    only the pre-flight runs origin/main's copies on it.
+
+  The measurements. Of the last 30 merged pull requests (#98 to #148), 24 changed this
+  page, 14 `book/`, 13 `README.md`, 11 `docs/PROGRAM.md`, 8 `facts.json`, 7
+  `CERTIFICATE.md` and 3 `GRAPH.md`. Of 29 consecutive pairs, 16 would have conflicted
+  had they been queued together: 13 on this page alone, and 3 with other files as well
+  (`book/`, `docs/FORMALIZATION.md`, `scripts/audit/jev.py`, once each). The 13 pairs
+  that merged cleanly all rendered clean under `render.py` (`facts.json`, which Lean
+  computes, was not recomputed). A pull request was checked up to five times: the dry
+  run (2.7 to 8.6 minutes, once 14), the push's pre-flight again on the same commit, CI
+  on the branch push, CI on the pull request (its longest job, `negative`, 5.3 minutes)
+  and CI on main after the merge. This change removes the branch-push run, the only one
+  that was pure duplication. The pre-flight with origin/main's copies stays, since a
+  branch cannot weaken the checks that judge it; the push's second pre-flight stays too,
+  since the dry run's record is a file the checks it ran could have written; CI on the
+  pull request stays; the group's run is the only one on the exact tree that merges; and
+  the post-merge run is the owner's auto-revert.
+
+  Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, save
+  three. In queue mode a head need not contain the latest main (the queue builds each
+  group on it), and is judged against the newest commit of main's first-parent chain
+  that it contains, not its merge base with main, which lies off that chain when a
+  member was merged on its own before its train: so `--merge`'s own checks, its train
+  check and the judge compare against one base. `--merge` takes the
+  body's pre-flight summary as current when it names this head, its base and harness
+  held to the judge's own rule, read on current main, in both modes (the base the
+  newest commit of main's first-parent chain that the head contains, the harness that
+  base or a later commit of the chain; with the queue off, both main's tip), and for a
+  train shows its train step passing, even when the full checks ran again at the merge,
+  which leaves that summary true. So a summary the judge would refuse is never current,
+  and one it would accept is, its base the one the merge checks against. And a body
+  edited in GitHub's
+  page, which keeps CRLF line ends, is up to date when it differs from the parts
+  safe_push writes by line ends alone. With the queue off `--merge` merges as before,
+  save the new pause while main is red and its one exit. The queue stays off until the
+  owner turns it on, with the steps the coordinator holds. The protected files this
+  change adds or changes:
+  `.github/workflows/ci.yml`,
+  `.github/workflows/post-merge.yml`,
+  `scripts/auto_revert.py`,
+  `scripts/check_queue.py`,
+  `scripts/safe_push.py`,
+  `scripts/test_safe_push.py`,
+  `tests/test_auto_revert.py`,
+  `tests/test_check_queue.py`.
+
 - **Decision entries, one file each (tooling).** Nearly every pull request appended to
   this page, so two queued together collide at its end. On main's first-parent history at
   `250292bc`, 23 of the 29 merged pull requests numbered #98 to #148 changed this page,
@@ -5642,3 +5780,49 @@ findings:
   definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
   which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
   by an independent reader.
+
+- **The numerical checks, made ready for the second axiom retirement.** This preparation
+  keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
+  change lands in a pull request of its own before the retirement it judges. The 31 laws
+  due to become theorems also have derived properties, so their numerical checks survive
+  removal from the axiom registry. Protected files changed relative to main:
+  [`tests/model/derived.py`](../../tests/model/derived.py) keeps each of those 31 laws'
+  predicates word for word, alongside the eight already retained;
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) call each by its
+  `derived.` name on the existing configurations and newly sample the laws they did not
+  yet reach, five in the exhaustive harness and ten in the structured harness;
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records the 39 derived properties
+  and the two harnesses' counts. No check is weakened: comparing each new derived
+  predicate's body with its law in `tests/model/search.py` found all 31 byte-identical,
+  with the same parameters, guards and conclusions. The eight earlier predicates stay
+  unchanged. The added samples let the unchanged `tests/model/run.py` requirement hold
+  for every derived property: each exhaustive or structured run must report it with its
+  hypotheses met and no counterexample, independently of the axiom registry.
+- **The safe-push harness, made ready for the second axiom retirement.**
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now plants its added law
+  beside `Tacit.line_unique`, uses that surviving law for mutation and expected-failure
+  fixtures in both numerical models, and uses the same surviving dependency for its III.1
+  re-proof and certificate-expectation fixtures. Its fixture for an expectation dropped
+  with its regression injects `Tacit.angle_le_two_right` in place of `Tacit.circle_eq`:
+  after the second retirement III.1 rests on `circle_eq` (through `centre_inside` and
+  `radius_ne_zero`), and the fixture needs a locked rule that III.1 uses neither before nor
+  after it. Every test case, exact replacement, count decrement and rejection expectation
+  remains in place.
+- **The style check's scope test, made ready for the second axiom retirement.**
+  [`tests/test_check_style.py`](../../tests/test_check_style.py)'s case that a rule no
+  proposition page shows is outside the rendered-docstring scope used
+  `Tacit.exists_point_inside_circle`; after the second retirement I.1 and every entry
+  after it rest on that rule, so the page shows it and the case would fail. The case now
+  names Circle 3, `Tacit.outside_of_between`, which has a docstring and on which
+  `scripts/check_fidelity.py` forbids every entry to rest, so no page can show it before
+  the retirement or after. The case still asserts that a rule with a docstring is left out
+  of the scope when no page shows it; nothing else changes.
+- **The overlap screen's tests, made ready for the second axiom retirement.** Two cases of
+  [`tests/test_screen.py`](../../tests/test_screen.py) took III.2 as the row of
+  `Audit/screen.py`'s list `KNOWN` that a run must find. After the second retirement the
+  screen, which tries only axioms, no longer closes III.2 or III.6, since the rules that
+  closed them are theorems, and `KNOWN` keeps III.5 alone. The two cases now take the
+  first row of `KNOWN`, whichever it is, and assert the same of it as before: closed only
+  by its bare try it is lost, and not closed it is lost. They pass with the list before
+  the retirement and after it; no assertion is removed.

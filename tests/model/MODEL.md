@@ -57,7 +57,7 @@ hypotheses keep out the cases the conventions cannot fix.
 The programs take an axiom, build configurations of points, lines and circles, keep those
 that satisfy its hypotheses, and check its conclusion. Where the conclusion says that a
 point exists, the program constructs one and checks it. The exhaustive and structured
-harnesses also run eight predicates independently as retained derived properties. They
+harnesses also run 39 predicates independently as retained derived properties. They
 preserve the existing numerical checks and configurations for those laws, but do not
 depend on the corresponding declarations remaining in the axiom registry.
 
@@ -69,15 +69,15 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps the eight numerical predicates prepared to survive
-  axiom retirement, under names beginning `derived.`.
-- **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 71
-  predicates in all: 63 axiom laws and eight retained derived properties, with degenerate
+- **[derived.py](derived.py)** keeps 39 numerical predicates under names beginning
+  `derived.`: eight for retired axioms and 31 prepared to survive the second retirement.
+- **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
+  predicates in all: 37 axiom laws and 39 retained derived properties, with degenerate
   configurations included.
-- **[structured.py](structured.py)** builds each axiom's or retained property's pattern of
-  hypotheses on purpose, where chance rarely meets them (three straight lines through one
-  point, a right angle, two circles through a common point), over a large lattice and over
-  fractions.
+- **[structured.py](structured.py)** builds the hypotheses of 18 axiom laws and all 39
+  retained derived properties on purpose, where chance rarely meets them (three straight
+  lines through one point, a right angle, two circles through a common point), over a
+  large lattice and over fractions.
 - **[mutations.py](mutations.py)** weakens 15 statements on purpose, each by changing a
   hypothesis or a conclusion: fourteen rules, assumed or now proved, and the placement that
   supports superposition (M9). It checks that each weakened statement has a counterexample.
@@ -88,9 +88,9 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[hyperbolic.py](hyperbolic.py)** runs every axiom in the hyperbolic plane
   ([below](#the-hyperbolic-plane)).
 - **[run.py](run.py)** runs them all and checks the results, including every retained
-  property in both the exhaustive and structured reports. It reports their totals apart
-  from the axiom totals. Before the programs run, two checks tie the axiom harness to the
-  Lean: [laws.toml](laws.toml) names a law for each axiom, exactly the axioms of
+  property with its hypotheses met in each exhaustive or structured run. It reports their
+  totals apart from the axiom totals. Before the programs run, two checks tie the axiom
+  harness to the Lean: [laws.toml](laws.toml) names a law for each axiom, exactly the axioms of
   `Certificate/axioms.lock` and of `facts.json`, and search.py and hyperbolic.py each
   implement exactly those laws; and [lock.sha256](lock.sha256) pins the lock, which holds
   every axiom's exact statement. When an axiom changes, this run fails until the model has
@@ -106,9 +106,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `4cc96bc07abe`, 2026-10-22, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `a4031521074f`, 2026-10-23, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **6,650,199** configurations met an axiom's hypotheses (1,537,544 in the search, 3,688,278 exhaustive, 1,424,377 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 699,495 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,747,443** configurations met an axiom's hypotheses (1,537,544 in the search, 2,528,836 exhaustive, 681,063 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 699,495 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -128,61 +128,61 @@ In the plane: **6,650,199** configurations met an axiom's hypotheses (1,537,544 
 | `Tacit.add_lt_add_right` | 28,346 | · | · | 9,528 |
 | `Tacit.exists_point` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_point_on_line` | 60,000 | · | · | 20,000 |
-| `Tacit.exists_point_on_line_off_line` | 43 | · | 89,876 | 13,361 |
-| `Tacit.exists_point_between` | 25,432 | · | 72,507 | 4,858 |
-| `Tacit.exists_point_same_side` | 916 | · | 89,521 | 8,126 |
-| `Tacit.exists_point_opposite_side` | 988 | · | 89,623 | 7,992 |
+| `Tacit.exists_point_on_line_off_line` | 43 | · | · | 13,361 |
+| `Tacit.exists_point_between` | 25,432 | · | · | 4,858 |
+| `Tacit.exists_point_same_side` | 916 | · | · | 8,126 |
+| `Tacit.exists_point_opposite_side` | 988 | · | · | 7,992 |
 | `Tacit.exists_point_on_circle` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_point_inside_circle` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_centre` | 60,000 | · | · | 20,000 |
 | `Tacit.line_circle_between` | 2,784 | 44,088 | 44,974 | 3,842 |
 | `Tacit.line_circle_beyond` | 7,225 | 80,320 | 57,135 | 9,609 |
 | `Tacit.circles_meet_same_side` | 364 | 216,488 | 40,033 | 8,980 |
-| `Tacit.circles_meet_opposite_side` | 397 | 216,488 | 40,177 | 8,852 |
+| `Tacit.circles_meet_opposite_side` | 397 | · | · | 8,852 |
 | `Tacit.line_unique` | 17,498 | 600 | · | 1,892 |
-| `Tacit.centre_inside` | 28,567 | 72 | · | 4,148 |
-| `Tacit.inside_not_on` | 33,290 | 1,260 | · | 9,313 |
+| `Tacit.centre_inside` | 28,567 | · | · | 4,148 |
+| `Tacit.inside_not_on` | 33,290 | · | · | 9,313 |
 | `Tacit.between_symm` | 4,790 | 304 | · | 11,396 |
-| `Tacit.ne_of_between` | 4,791 | 304 | · | 11,325 |
-| `Tacit.ne_of_between_ends` | 4,804 | 304 | · | 11,379 |
+| `Tacit.ne_of_between` | 4,791 | · | · | 11,325 |
+| `Tacit.ne_of_between_ends` | 4,804 | · | · | 11,379 |
 | `Tacit.not_between_of_between` | 4,735 | 304 | · | 11,410 |
-| `Tacit.on_line_of_between` | 5,466 | 304 | 7,215 | 387 |
-| `Tacit.on_line_of_between_ends` | 5,486 | 304 | 7,275 | 389 |
-| `Tacit.between_of_between_left` | 676 | 128 | 36,856 | 4,783 |
-| `Tacit.between_of_between_right` | 675 | 128 | 43,514 | 4,036 |
+| `Tacit.on_line_of_between` | 5,466 | · | · | 387 |
+| `Tacit.on_line_of_between_ends` | 5,486 | · | · | 389 |
+| `Tacit.between_of_between_left` | 676 | · | · | 4,783 |
+| `Tacit.between_of_between_right` | 675 | · | · | 4,036 |
 | `Tacit.between_cases` | 16,409 | 912 | · | 2,180 |
-| `Tacit.not_between_of_between_between` | 1,748 | 560 | 48,699 | 5,078 |
-| `Tacit.same_side_refl` | 950 | 3,160 | · | 7,930 |
-| `Tacit.same_side_symm` | 326 | 45,192 | · | 4,442 |
+| `Tacit.not_between_of_between_between` | 1,748 | · | · | 5,078 |
+| `Tacit.same_side_refl` | 950 | · | · | 7,930 |
+| `Tacit.same_side_symm` | 326 | · | · | 4,442 |
 | `Tacit.not_on_line_of_same_side` | 363 | 45,192 | · | 4,380 |
 | `Tacit.same_side_trans` | 223 | 724,792 | 33,327 | 5,214 |
-| `Tacit.same_side_or` | 7 | 595,104 | 14,059 | 1,859 |
-| `Tacit.pasch1` | 6 | 17,160 | 28,583 | 3,423 |
+| `Tacit.same_side_or` | 7 | · | · | 1,859 |
+| `Tacit.pasch1` | 6 | · | · | 3,423 |
 | `Tacit.pasch2` | 295 | 3,872 | 8,435 | 1,418 |
-| `Tacit.pasch3` | 5,814 | 3,856 | 15,576 | 1,646 |
-| `Tacit.pasch4` | 228 | 3,552 | 20,921 | 2,188 |
-| `Tacit.triple_incidence1` | 0 | 77,960 | 7,925 | 1,103 |
-| `Tacit.triple_incidence2` | 0 | 77,960 | 8,043 | 1,110 |
+| `Tacit.pasch3` | 5,814 | · | · | 1,646 |
+| `Tacit.pasch4` | 228 | · | · | 2,188 |
+| `Tacit.triple_incidence1` | 0 | · | · | 1,103 |
+| `Tacit.triple_incidence2` | 0 | · | · | 1,110 |
 | `Tacit.between_of_inside_chord` | 262 | 3,228 | 37,732 | 8,069 |
 | `Tacit.outside_of_between` | 457 | 281,664 | 47,802 | 2,108 |
 | `Tacit.lines_meet_of_opposite_sides` | 18 | 26,248 | 39,362 | 4,427 |
-| `Tacit.line_meets_circle_of_inside` | 28,053 | 30,204 | · | 4,903 |
-| `Tacit.circles_meet_of_on_inside_outside` | 802 | 49,616 | 358 | 1,007 |
+| `Tacit.line_meets_circle_of_inside` | 28,053 | · | · | 4,903 |
+| `Tacit.circles_meet_of_on_inside_outside` | 802 | · | · | 1,007 |
 | `Tacit.circles_meet` | 1,399 | 10,668 | 1,587 | 2,554 |
-| `Tacit.eq_of_len_eq_zero` | 41,899 | 25 | · | 11,525 |
+| `Tacit.eq_of_len_eq_zero` | 41,899 | · | · | 11,525 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
 | `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
 | `Tacit.angle_symm` | 15,614 | 14,400 | · | 7,148 |
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_swap` | 60,000 | 15,625 | · | 20,000 |
+| `Tacit.area_swap` | 60,000 | · | · | 20,000 |
 | `Tacit.area_congruent` | 54,643 | 375,479 | 94,050 | 10,879 |
 | `Tacit.len_add_of_between` | 4,666 | 304 | · | 9,913 |
 | `Tacit.circle_eq` | 819 | 2,448 | 27,089 | 4,335 |
-| `Tacit.on_circle_of_len_eq` | 2,494 | 2,448 | 27,123 | 6,612 |
-| `Tacit.inside_of_len_lt` | 3,022 | 5,776 | 19,704 | 3,577 |
-| `Tacit.len_lt_of_inside` | 2,940 | 5,776 | 19,736 | 3,568 |
+| `Tacit.on_circle_of_len_eq` | 2,494 | · | · | 6,612 |
+| `Tacit.inside_of_len_lt` | 3,022 | · | · | 3,577 |
+| `Tacit.len_lt_of_inside` | 2,940 | · | · | 3,568 |
 | `Tacit.angle_eq_zero_of_same_ray` | 15,121 | 1,208 | · | 2,678 |
 | `Tacit.same_ray_of_angle_eq_zero` | 15,311 | 1,208 | · | 2,727 |
 | `Tacit.angle_add_of_inside` | 7 | 77,960 | 24,987 | 3,828 |
@@ -190,10 +190,10 @@ In the plane: **6,650,199** configurations met an axiom's hypotheses (1,537,544 
 | `Tacit.area_eq_zero_of_on_line` | 24,766 | 2,112 | · | 4,734 |
 | `Tacit.on_line_of_area_eq_zero` | 24,710 | 2,112 | · | 4,529 |
 | `Tacit.area_add_of_between` | 21 | 6,176 | 55,499 | 8,520 |
-| `Tacit.between_of_area_add` | 17 | 6,176 | 56,023 | 8,455 |
+| `Tacit.between_of_area_add` | 17 | · | · | 8,455 |
 | `Tacit.superposition` | 112 | 363,888 | 71,970 | 8,563 |
 
-Separately, **6,887,189** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **9,525,564** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -205,6 +205,37 @@ Separately, **6,887,189** configurations met a retained derived property's hypot
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
 | `derived.inside_of_angle_add` | 77,960 | 25,019 |
+| `derived.area_swap` | 15,625 | 100,000 |
+| `derived.between_of_area_add` | 6,176 | 56,023 |
+| `derived.between_of_between_left` | 128 | 36,856 |
+| `derived.between_of_between_right` | 128 | 43,514 |
+| `derived.centre_inside` | 72 | 20,150 |
+| `derived.circles_meet_of_on_inside_outside` | 49,616 | 358 |
+| `derived.circles_meet_opposite_side` | 216,488 | 40,177 |
+| `derived.eq_of_len_eq_zero` | 25 | 43,929 |
+| `derived.exists_point_between` | 600 | 72,507 |
+| `derived.exists_point_on_circle` | 72 | 100,000 |
+| `derived.exists_point_on_line_off_line` | 19,460 | 89,876 |
+| `derived.exists_point_opposite_side` | 3,160 | 89,623 |
+| `derived.exists_point_same_side` | 3,160 | 89,521 |
+| `derived.inside_not_on` | 1,260 | 39,905 |
+| `derived.inside_of_len_lt` | 5,776 | 19,704 |
+| `derived.len_lt_of_inside` | 5,776 | 19,736 |
+| `derived.line_meets_circle_of_inside` | 30,204 | 69,874 |
+| `derived.ne_of_between` | 304 | 99,883 |
+| `derived.ne_of_between_ends` | 304 | 99,885 |
+| `derived.not_between_of_between_between` | 560 | 48,699 |
+| `derived.on_circle_of_len_eq` | 2,448 | 27,123 |
+| `derived.on_line_of_between` | 304 | 7,215 |
+| `derived.on_line_of_between_ends` | 304 | 7,275 |
+| `derived.pasch1` | 17,160 | 28,583 |
+| `derived.pasch3` | 3,856 | 15,576 |
+| `derived.pasch4` | 3,552 | 20,921 |
+| `derived.same_side_or` | 595,104 | 14,059 |
+| `derived.same_side_refl` | 3,160 | 80,714 |
+| `derived.same_side_symm` | 45,192 | 54,827 |
+| `derived.triple_incidence1` | 77,960 | 7,925 |
+| `derived.triple_incidence2` | 77,960 | 8,043 |
 <!-- counts:end -->
 
 The full output of each program, headed with the commit, the seeds and the Python that
@@ -608,7 +639,7 @@ the model follows the axiom in the same pull request as the Lean:
    own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
    or restated so that its law reads other letters, that program must drop or re-key the
    law first, in a pull request of its own, before the axiom moves. That preparation is
-   already complete for the eight predicates in [derived.py](derived.py): both programs
+   already complete for the 39 predicates in [derived.py](derived.py): both programs
    call their `derived.` names, and `run.py` requires each report independently of the
    axiom registry.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with

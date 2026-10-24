@@ -1,0 +1,8 @@
+# Check the house style's hard rules. S12 asks Lean about the names in every text it reads,
+# the audit lemmas of the overlap catalogue among them, so it runs on the built tree, after
+# Audit.
+order = 150
+name = "python3 scripts/check_style.py"
+job = "check"
+command = ["python3", "scripts/check_style.py"]
+section8 = "python3 scripts/check_style.py"

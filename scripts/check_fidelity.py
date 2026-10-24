@@ -125,6 +125,13 @@ from pathlib import Path
 from typing import NamedTuple
 
 import heath
+# #206's reader, heath's since #349: see the note where it stood.
+from heath import (CHAR, ESCAPE, FIELD, FIRST, IDENT, ID_FIRST, ID_REST, INTERPOLATED,
+                   LETTER_LIKE, NAME_CHAR, NAME_RUN, NON_ASCII, NUMBER, RAW, REST,
+                   SUBSCRIPT_ALNUM, read_lean, without_comments, lean_comments,
+                   comment_end, _find, closed_up, _read_code, _read_string,
+                   _read_interpolated, lean_string)
+from heath import WORD_CHAR as WORD
 import generated_counts
 
 ROOT = heath.ROOT
@@ -370,79 +377,12 @@ def check_fidelity() -> None:
                      + first_difference(got, expected))
 
 
-# Lean's tokens, as its tokenizer starts them: an identifier begins with a letter or `_`,
-# a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
-# digit, so that the `'` after one begins a character literal. A string just after one of
-# INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-# An identifier's parts are joined by a `.` before a word character other than a digit.
-# After a term, an adjacent `.` can begin a projection field: Lean reads `p.1` as `p` and
-# the field `.1`, its digits alone (FIELD). It can also be a declared notation token. When
-# the number after it runs past FIELD through `_` or an exponent, keep NUMBER's longer
-# boundary, which is the reading Lean's longest parser can select for that notation; an
-# ordinary projection such as `p.1.succ` keeps FIELD. Lean's field index never begins with
-# 0, so `.0x1`, `.0b1` or `.01` after a `.` is always a number. Whitespace or a comment
-# ends the adjacency on which a projection depends.
-# A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
-# hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
-# never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
-# `p.1set_option` as `p`, `.1` and `set_option`, so a number or field with a letter, a
-# digit or `_` just after it is blanked: the scan's `\b` then sees the word after it
-# begin (#197).
-# A name is made of the characters Lean 4.35 takes for one, `isIdFirst` to begin it and
-# `isIdRest` to go on (Init/Meta/Defs.lean): ID_FIRST and ID_REST, range by range. Outside
-# a name, any other character that Python's `\w` takes for a letter or a digit, as the `¹`
-# of the postfix `⁻¹`, which no name holds, the `ₐ` of `:=ₐ`, which no name begins with,
-# Mathlib's `ᗮ` or a `λ`, Lean reads as part of a token or not at all, so it is blanked:
-# Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, and the scan's `\b` then sees
-# `set_option` begin (#234).
-# check_rules conservatively refuses a string literal in the approximate span of a command
-# that may declare tokens when its text ends in a character a name may hold
-# (DECLARES_TOKENS). Lean's own tokens, and those of a library the file imports, are not
-# read as tokens: docs/FORMALIZATION.md, section 7, says which of them the scan may misread.
-LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters, but λ
-               "\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"    # Greek capitals, but Π and Σ
-               "\u03ca-\u03fb"                             # Coptic
-               "\u1f00-\u1ffe"                             # polytonic Greek
-               "\u2100-\u214f"                             # the letterlike symbols
-               "\U0001d49c-\U0001d59f"                     # script, double-struck, Fraktur
-               "\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u00ff"   # Latin-1 letters, but × and ÷
-               "\u0100-\u017f")                            # Latin Extended-A
-# isSubScriptAlnum: the subscript digits ₀ to ₉, the subscript letters ₐ to ₜ, ᵢ to ᵪ and ⱼ.
-SUBSCRIPT_ALNUM = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a\u2c7c"
-ID_FIRST = "A-Za-z_" + LETTER_LIKE                          # isIdFirst
-ID_REST = ID_FIRST + "0-9'!?" + SUBSCRIPT_ALNUM             # isIdRest
-# The scan's name, though, stops before a character of those ranges that `\w` does not take,
-# as `℃`, `№` or `⅋`, 96 in all, which no file uses: Lean reads the longest token it knows,
-# so after a token ending in one, as `+℃`, which check_rules refuses when the file declares
-# it, or one a library declares, it reads `2 +℃1set_option` as `2`, `+℃`, `1` and
-# `set_option`, and a scan that took `℃1set_option` for one name would miss the command, as
-# the scan before #234 did not.
-# Ending a name early, or blanking a character, can only show the scan more words, but
-# where what follows, closed up, is a character literal, a raw string, or an `s!`, `m!`,
-# `f!` or `throwError` before a string: Lean may read on through the `'`, the `r` or the
-# word as part of a name or a token, so that a `"` or `}` the scan takes for a literal's
-# text opens a string or closes a hole (`a℃'}'`, `⁻¹'"'`), or a string the scan reads
-# with holes is a plain one (`a℃s!"{"`). Such a place is known by the run of name
-# characters just before it, which holds a character outside ASCII (`closed_up`): there
-# the scan refuses the literal or the raw string, and reads the string after such a word
-# as a plain one, refused if Lean could read its braces as holes (#234).
-FIRST, REST = f"(?=\\w)[{ID_FIRST}]", f"(?:(?=[\\w'!?])[{ID_REST}])"
-IDENT = re.compile(f"{FIRST}{REST}*(?:\\.{FIRST}{REST}*)*")
-NAME_CHAR = re.compile(f"[\\w{ID_REST}]")
-NAME_RUN = re.compile(f"[\\w{ID_REST}]+")
-NON_ASCII = re.compile(r"[^\x00-\x7f]")
-NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
-                    r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
-                    r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
-FIELD = re.compile(r"[1-9][0-9]*")
-WORD = re.compile(r"\w")
-RAW = re.compile(r'r(#*)"')
-CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
-INTERPOLATED = {"s!", "m!", "f!", "throwError"}
-# The escapes of a Lean 4.35 string literal (`quotedCharCoreFn`): `\\`, `\"`, `\'`, `\n`,
-# `\t` and `\r`, `\x` and two hexadecimal digits, `\u` and four, and a gap, a `\` before a
-# line feed, which Lean reads, with the blanks after it, as nothing.
-ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|(\n[ \t\r\n]*)|(.))", re.S)
+# Lean's tokens, and #206's one reader of Lean's comments, strings, literals and
+# names, are heath.py's: it travels with the landing tool's harness, so that the harness
+# can read Lean with it too (#349; the coordinator's ruling of 22 October 23:50). They
+# are imported at the top of this file under the names they had here, including the
+# reader's WORD, imported from heath.py's WORD_CHAR so as not to shadow heath.WORD.
+
 # An approximate token-declaration span (#234). Lean reads the longest token it knows, so after
 # `infixl:65 " +x " => Nat.add` it reads `2 +x1set_option` as `2`, `+x`, `1` and
 # `set_option`, where the scan, which does not read a file's tokens, reads `+` and the name
@@ -479,226 +419,6 @@ DECLARATION_END = re.compile(
     f"=>|@\\[|#[A-Za-z]|(?<![{ID_REST}.])(?:{'|'.join(COMMAND_WORDS)})"
     f"(?![{ID_REST}])(?!\\.[{ID_FIRST}«])")
 NAME = re.compile(r"«[^»]*(?:»|\Z)")
-
-
-def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
-    """The Lean as Lean's tokenizer reads it, with its comments (`--` to the end of the
-    line, and `/- … -/` blocks, docstrings and nested ones among them), the text of its
-    string and character literals, raw strings among them, and each `[` or `]` in a «…»
-    name blanked; the code in an interpolated string's `{…}` holes is kept. Newlines stay,
-    so lines keep their numbers. Also the offset of each string the scan cannot read for
-    certain: one with a `{`, not after INTERPOLATED, whose two readings, plain and with
-    holes, end in different places, since its braces may be text or holes of code; and of
-    each character literal or raw string closed up to a name or token that Lean may read
-    on through its `'` or its `r` (`closed_up`).
-    `strings`, if given, gains each string literal read as code, raw strings among them,
-    as its offset and its text as Lean reads it (`lean_string`), for `declared_tokens`."""
-    marks: list[tuple[str, int, int]] = []
-    _read_code(src, 0, marks)
-    out, unsure = list(src), []
-    for kind, i, j in marks:
-        if kind == "comment":
-            continue
-        if kind == "unsure":
-            unsure.append(i)
-            continue
-        if kind in ("string", "raw"):
-            if strings is not None and kind == "raw":
-                strings.append((i, src[i:j]))
-            elif strings is not None:
-                closed = j - 1 > i and src[j - 1] == '"'
-                strings.append((i, lean_string(src[i + 1:j - 1 if closed else j])))
-            continue
-        for k in range(i, j):
-            if out[k] != "\n" and (kind == "text" or out[k] in "[]"):
-                out[k] = " "
-    return "".join(out), unsure
-
-
-def without_comments(src: str) -> str:
-    """The Lean with its comments and the text of its string literals blanked, as
-    `read_lean` reads it: what `scripts/render.py` searches for a declaration's uses, so a
-    name in a comment, a docstring or a string is no use."""
-    return read_lean(src)[0]
-
-
-def lean_comments(src: str) -> list[tuple[int, int]]:
-    """Each comment of the Lean `src`, in order, as `read_lean` reads them: its offset
-    and the offset where it ends (`comment_end`), the end of `src` for a block that no
-    `-/` closes. A comment in an interpolated string's hole is one; a `--` or `/-` within
-    a comment, a string or a character literal begins none."""
-    marks: list[tuple[str, int, int]] = []
-    _read_code(src, 0, marks)
-    return [(i, j) for kind, i, j in marks if kind == "comment"]
-
-
-def comment_end(src: str, i: int) -> int | None:
-    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
-    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
-    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
-    docstrings and nested blocks among them, just past the `-/` that closes it, or None
-    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
-    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
-    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
-    `read_lean` and `lean_comments`, check_style's notes and the Jev generator call this
-    (#206); it uses nothing else of this file, for scripts/audit/jev_questions.py takes
-    it alone."""
-    if src.startswith("--", i):
-        end = src.find("\n", i)
-        return len(src) if end < 0 else end
-    j, nested = i + 3, 1
-    while j < len(src):
-        pair = src[j:j + 2]
-        nested += (pair == "/-") - (pair == "-/")
-        j += 2 if pair in ("/-", "-/") else 1
-        if not nested:
-            return j
-    return None
-
-
-def _find(src: str, s: str, i: int) -> int:
-    """The offset of `s` in `src` from `i` on, or the end of `src`."""
-    k = src.find(s, i)
-    return len(src) if k < 0 else k
-
-
-@functools.lru_cache(maxsize=8)
-def closed_up(src: str) -> bytes:
-    """For each offset of `src`, and its end, 1 where the run of name characters just
-    before it (NAME_CHAR) holds a character outside ASCII: one the reader blanks, as `¹`,
-    one of the 96 before which it ends a name, as `℃`, or a letter of a name it may have
-    ended there. Lean may read on through what begins at such an offset, as part of the
-    name or of a token, where the scan begins something new; ASCII alone, a name is read
-    whole and a number ends where Lean ends it. In one pass, however long the runs."""
-    out = bytearray(len(src) + 1)
-    for run in NAME_RUN.finditer(src):
-        if odd := NON_ASCII.search(src, run.start(), run.end()):
-            out[odd.end():run.end() + 1] = b"\x01" * (run.end() - odd.start())
-    return bytes(out)
-
-
-def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
-    """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
-    that offset. `marks` gains the text of each comment and literal ("text"), each
-    comment again ("comment", `comment_end`), each «…» name ("name"), each string,
-    character literal or raw string the scan cannot read for certain ("unsure"), and each
-    string literal, from its opening quote past its closing one ("string"), and raw
-    string's text ("raw")."""
-    depth, previous, can_project, field_dot = 0, "", False, False
-    closed = closed_up(src)
-    while i < len(src):
-        c, j = src[i], i + 1
-        if src.startswith(("--", "/-"), i):
-            end = comment_end(src, i)
-            j = len(src) if end is None else end
-            marks.append(("text", i, j))
-            marks.append(("comment", i, j))
-            can_project, field_dot = False, False
-        elif c == '"':
-            j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
-            marks.append(("string", i, j))
-            can_project, field_dot = True, False
-        elif m := RAW.match(src, i):
-            close = '"' + m[1]
-            k = _find(src, close, m.end())
-            if closed[i]:
-                marks.append(("unsure", i, k))
-            marks.append(("text", m.end(), k))
-            marks.append(("raw", m.end(), k))
-            j, previous = min(k + len(close), len(src)), c
-            can_project, field_dot = True, False
-        elif c == "«":
-            j = min(_find(src, "»", i) + 1, len(src))
-            marks.append(("name", i, j))
-            previous = src[i:j]
-            can_project, field_dot = True, False
-        elif m := IDENT.match(src, i):
-            # An `s!` or its kin where Lean may read on through it begins no interpolated
-            # string for certain (`closed_up`).
-            j, previous = m.end(), "" if closed[i] else m[0]
-            can_project, field_dot = True, False
-        elif m := NUMBER.match(src, i):
-            if field_dot and (field := FIELD.match(src, i)):
-                tail = src[field.end():m.end()]
-                if "_" not in tail and "e" not in tail and "E" not in tail:
-                    m = field
-            j, previous = m.end(), m[0]
-            if WORD.match(src, j):
-                marks.append(("text", i, j))
-            can_project, field_dot = True, False
-        elif WORD.match(c):
-            # Outside a name, a character `\w` takes that no name begins with, as the `¹`
-            # that ends `⁻¹`: blanked. After such a token Lean may read `.1` as a field.
-            marks.append(("text", i, j))
-            previous = c
-            can_project, field_dot = True, False
-        elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
-            if closed[i]:
-                marks.append(("unsure", i, m.end()))
-            marks.append(("text", i + 1, m.end() - 1))
-            j, previous = m.end(), c
-            can_project, field_dot = True, False
-        elif c == "}" and hole and not depth:
-            return i
-        elif not c.isspace():
-            depth += (c == "{") - (c == "}")
-            previous = c
-            if c == ".":
-                field_dot, can_project = can_project, False
-            else:
-                can_project, field_dot = c in ")]}·⟩›", False
-        else:
-            can_project, field_dot = False, False
-        i = j
-    return len(src)
-
-
-def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
-    """Read the string at `i` and return the offset past it: with its holes, as an
-    interpolated string, if it follows INTERPOLATED or both readings end in one place."""
-    plain = i + 1
-    while plain < len(src) and src[plain] != '"':
-        plain += 2 if src[plain] == "\\" else 1
-    plain = min(plain + 1, len(src))
-    holes: list[tuple[str, int, int]] = []
-    end = _read_interpolated(src, i, holes)
-    if end == plain or (interpolated and end is not None):
-        marks += holes if interpolated else [mark for mark in holes if mark[0] != "comment"]
-        return end
-    marks.append(("text", i + 1, plain))
-    if "{" in src[i:plain]:
-        marks.append(("unsure", i, plain))
-    return plain
-
-
-def _read_interpolated(src: str, i: int, marks: list) -> int | None:
-    """The offset past the string at `i` read as an interpolated string, with its text
-    marked and its holes read as code; None if it does not close."""
-    j = start = i + 1
-    while j < len(src):
-        if src[j] == "\\":
-            j += 2
-        elif src[j] == '"':
-            marks.append(("text", start, j))
-            return j + 1
-        elif src[j] == "{":
-            marks.append(("text", start, j))
-            j = _read_code(src, j + 1, marks, hole=True)
-            if j >= len(src):
-                return None
-            j = start = j + 1
-        else:
-            j += 1
-    return None
-
-
-def lean_string(body: str) -> str:
-    """A string literal's text between its quotes, as Lean reads it (ESCAPE)."""
-    def escape(m: re.Match) -> str:
-        if m[1] or m[2]:
-            return chr(int(m[1] or m[2], 16))
-        return "" if m[3] else {"n": "\n", "t": "\t", "r": "\r"}.get(m[4], m[4])
-    return ESCAPE.sub(escape, body)
 
 
 def declared_tokens(code: str, strings: list) -> list[tuple[int, str, str]]:

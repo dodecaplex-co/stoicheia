@@ -4328,7 +4328,8 @@ class Scopes(unittest.TestCase):
         """Rendered-docstring scope follows the axioms shown on proposition pages."""
         shown = {doc.name for docs in style.rendered_docstrings().values() for doc in docs}
         self.assertIn("Tacit.add_assoc", shown)
-        self.assertNotIn("Tacit.exists_point_inside_circle", shown)
+        # Circle 3 has a docstring, and check_fidelity.py forbids every entry to rest on it.
+        self.assertNotIn("Tacit.outside_of_between", shown)
 
     def test_report_classification_keeps_mishnah_enforcement(self):
         """The report's syntax and namespace classification cannot excuse a mishnah name."""

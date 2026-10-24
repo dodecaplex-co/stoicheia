@@ -79,6 +79,10 @@ order, and the first that fails stops it with a message saying why:
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
+   - the commit's registry of checks reads, by the commit's own scripts/registry.py, as
+     the pre-flight of every later train will read it once the commit is origin/main's
+     (guard_registry): render.py and CI load the reader from scripts/ and read the
+     worktree, so a reader that works only so would pass them both;
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
      deleted unless the decisions record gains a new line naming it, as a protected path
      is named;
@@ -115,7 +119,14 @@ order, and the first that fails stops it with a message saying why:
    judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
    ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
    sequence of docs/WORKFLOW.md, section 8, in that worktree, and
-   `negative_tests.py` in a second one, each step timed. The checks run with
+   `negative_tests.py` in a second one, each step timed. The sequence is CI's `check`
+   job's as origin/main's registry of checks lists it (checks/, one file per check, read
+   out of git by origin/main's scripts/registry.py, run from a temporary directory: never
+   the commit's registry or reader, so that a change cannot alter the checks its own
+   pre-flight runs), then the `model` job's (check_sequence;
+   docs/decisions/2026-10-22-check-registry.md).
+   While origin/main holds no registry, the lists built in here stand in for it; when it
+   holds one that cannot be read, the pre-flight refuses. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
    below); when the commit changes any of those, they run again with the commit's own
    copies, which must pass. A check that fails with origin/main's copies is noted for the
@@ -202,6 +213,15 @@ GitHub does not name or origin/main does not hold, an interruption before GitHub
 or GitHub not to be asked, or answering with no state of its own, is "merge state
 unknown", with no revert advised. Afterwards that merge commit is checked to join the
 base and the head checked, with the head's tree.
+
+When main's rules require a merge queue, --merge keeps these gates, checks the head
+against the newest commit of origin/main's first-parent chain that it contains, as the
+queue's judge does, and enqueues it with expectedHeadOid pinned.
+It follows the queue to a verified merge or an ejection; an unreadable or timed out
+verdict is exit 3. In both modes, open main-red issues or a failed completed post-merge
+run at main's tip refuse every merge but the fix's: a pull request whose body has the
+line "Fixes main-red: #<n>", naming every open main-red issue and no other, and whose
+own CI passes, as every merge's must. Unreadable rules or main-health answers refuse too.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
@@ -353,11 +373,13 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
-# checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
-# added, removed, or with its command, job or order changed, is named in a decisions entry.
+# checks/ is the registry of CI's `check` job, one file per check (#229): a check added,
+# removed, or with its command, job or order changed, is named in a decisions entry.
 # docs/ACCEPTANCE.md's table of the limitations allowed is what tests/test_acceptance_limits.py
 # ties to check_acceptance.py's ALLOWED_LIMITS, so it is a check input, protected as one
-# (#249). PROTECTED_JUDGED, below, joins them.
+# (#249). PROTECTED_JUDGED, below, joins them. scripts/auto_revert.py keeps its own copy of the
+# two, in this order, since it must not import the revision it reverts; a change here is
+# made there too (tests/test_auto_revert.py compares them).
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
              "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/",
@@ -377,9 +399,10 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
 # The checks and what they expect: origin/main's copies judge the commit (step 4). The
-# registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
-# check change, kept apart from what the checks judge. So is docs/ACCEPTANCE.md, whose table
-# of allowed limitations and check_acceptance.py's ALLOWED_LIMITS change together (#249).
+# registry, checks/, is one of them: a commit that changes it is a check change, kept apart
+# from what the checks judge, and the sequence step 4 runs is origin/main's registry in any
+# case (check_sequence). So is docs/ACCEPTANCE.md, whose table of allowed limitations and
+# check_acceptance.py's ALLOWED_LIMITS change together (#249).
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
                 "checks/", "docs/ACCEPTANCE.md")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
@@ -452,12 +475,15 @@ SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
-GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
-# Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
-# STATUS_MARKERS); the rest of each is written by hand.
+GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md",
+             "docs/WORKFLOW.md")
+# Of these, three are generated only between their markers (render.py's SCOPE_MARKERS and
+# STATUS_MARKERS, and registry.py's MARKERS, between which render.py writes section 8's
+# first command block from the registry of checks); the rest of each is written by hand.
 GENERATED_REGIONS = {
     "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
     "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
+    "docs/WORKFLOW.md": re.compile(r"<!-- checks -->\n.*?<!-- /checks -->", re.S),
 }
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them (both shortened by the tests)
@@ -465,9 +491,19 @@ CI_WATCH_INTERVAL = "30"  # seconds between `gh pr checks --watch` refreshes
 HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new head
 TAIL = 40                 # lines of a failed step's output to print
 
-# The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job, but for the model job's `results_check.py`, which only
-# CI runs until it joins this list (WORKFLOW, section 8). Change it with them.
+# The registry of CI's `check` job, one file per check, and its one reader, both read at
+# origin/main for step 4 (check_sequence; docs/decisions/2026-10-22-check-registry.md).
+REGISTRY = "checks"
+REGISTRY_READER = "scripts/registry.py"
+REGISTRY_TIMEOUT = 120    # seconds a registry.py, origin/main's or the commit's, may take
+# The name of the registry's one `empty` entry, the check that `git status --porcelain`
+# prints nothing; no command may bear it (check_sequence, FRESHNESS).
+EMPTY_CHECK = "git status --porcelain is empty"
+# The `check` job's sequence, built in: it stands in for the registry only while
+# origin/main holds none, so that the train that adds the registry is judged by the
+# sequence every train was judged by before it. Units pins it to a list of its own, as it
+# pins MODEL_JOB and NEGATIVE, so that the registry grows without it. A follow-up card
+# removes these lines once the registry is on main.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
@@ -488,11 +524,21 @@ CHECKS = [
     ("python3 -I tests/test_screen.py", [PY, "-I", "tests/test_screen.py"]),
     ("python3 -I tests/test_acceptance_limits.py",
      [PY, "-I", "tests/test_acceptance_limits.py"]),
+    ("python3 -I tests/test_check_superposition_pins.py",
+     [PY, "-I", "tests/test_check_superposition_pins.py"]),
+    ("python3 -I scripts/check_superposition_pins.py",
+     [PY, "-I", "scripts/check_superposition_pins.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
-    ("git status --porcelain is empty", None),
+    (EMPTY_CHECK, None),
     ("python3 scripts/check_queue.py --tree .", [PY, "scripts/check_queue.py", "--tree", "."]),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
+]
+# CI's `model` job, run after the `check` job's sequence, in the same worktree. The
+# registry holds the `check` job's checks alone, so this stays here, as NEGATIVE does. It
+# leaves out the model job's `results_check.py`, which only CI runs until it joins this
+# list (WORKFLOW, section 8).
+MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
 # CI's `negative` job, in a second disposable worktree: negative_tests.py plants breaks
@@ -575,13 +621,14 @@ NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 
 
 def run(cmd, cwd, *, env=None, input=None, binary=False,
-        capture=True, keep=()) -> subprocess.CompletedProcess:
+        capture=True, keep=(), timeout=None) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here, but origin/main's risk.py, which
     risk_class runs with a time limit, and the Git read that loads origin/main's
     count-marker reader, both before the main-checks cache is opened. While the cache is
     in use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may
-    not write the cache: git, the guards' check_fidelity.py and render.py, every step of
-    the full checks, gh. So the commands a flagged run starts cannot write the cache
+    not write the cache: git, the guards' check_fidelity.py and render.py, the readers of
+    the registry of steps 3 and 4 (the commit's own being the commit's code), every step
+    of the full checks, gh. So the commands a flagged run starts cannot write the cache
     directly. The sandbox does not stop a run without the flag (a ship's own dry run
     among them), which starts its commands with no sandbox; nor anything code run as the
     same user does outside a flagged run; nor anything a flagged run's code leaves for a
@@ -611,8 +658,11 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
         env = own_env(env, keep)
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    # A time limit only when one is given: the CI watch, among others, has none, and its
+    # call carries none (tests/test_release_gate.py).
+    limit = {} if timeout is None else {"timeout": timeout}
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
-                          text=not binary)
+                          text=not binary, **limit)
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
@@ -2254,7 +2304,7 @@ BASE_PASS = " (origin/main's checks)"
 # changed (render.py's output, or the certificate that writes facts.json), not a check's
 # verdict. render.py failing outright (step 3's "render.py", step 4's "python3
 # scripts/render.py") is a verdict: it checks docs/program.toml, for one.
-FRESHNESS = ("generated pages", "git status --porcelain is empty")
+FRESHNESS = ("generated pages", EMPTY_CHECK)
 
 
 def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
@@ -2452,31 +2502,31 @@ def law_code(text: str | bytes | None) -> tuple[list[str], dict] | None:
 LAW_GLOBALS = {
     "tests/model/search.py": {
         "call": frozenset({
-            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "_ti_hyp", "ang",
+            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "ang",
             "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
             "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
             "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
-            "length", "line_circle_points", "line_meets_circle", "line_through",
-            "lines_meet", "lval", "mag_vals", "on_circle", "on_line", "opposite", "outside",
-            "same_side", "sgn", "sub", "triangle"}),
+            "length", "line_circle_points", "line_through",
+            "lines_meet", "mag_vals", "on_circle", "on_line", "opposite", "outside",
+            "same_side", "sub", "triangle"}),
         "value": frozenset({"RA"}),
     },
     "tests/model/hyperbolic.py": {
         "call": frozenset({
             "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
-            "_ti_hyp", "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
+            "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
             "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
             "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
-            "is_centre", "is_right", "line_meets_circle", "line_through", "lines_meet",
+            "is_centre", "is_right", "line_through", "lines_meet",
             "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
-            "opposite", "outside", "pt_on_circle", "pt_on_line", "pts_on_line",
+            "opposite", "outside", "pt_on_line", "pts_on_line",
             "roots_along", "same_side", "triangle", "unit_toward"}),
         "table": frozenset({"SEEDS"}),
         "generator": frozenset({
             "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
             "gs_cong", "gs_lc", "gs_lines_meet", "gs_p4", "gs_p5", "gs_pasch",
-            "gs_pasch4", "gs_rays", "gs_sup"}),
-        "generator maker": frozenset({"gs_cm", "gs_convex", "gs_ti"}),
+            "gs_rays", "gs_sup"}),
+        "generator maker": frozenset({"gs_cm", "gs_convex"}),
     },
 }
 LAW_BUILTINS = frozenset({"abs", "all", "any", "float", "len", "range", "set", "tuple"})
@@ -2914,15 +2964,18 @@ CLASS_LINE = re.compile(r"(R[0-5]) (\S.*)")
 PATH_LINE = re.compile(r"  (R[0-5]) (.+)")
 
 
-def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
+def risk_class(repo, base: str, sha: str, labels: set[str] | None, *,
+               diff_base: str | None = None) -> Risk:
     """The class of the change `git diff base...sha`, as origin/main's scripts/risk.py
     gives it (`risk.py --diff`, as CI's risk job runs it): its copy at `base`, read out of
     git and run from a temporary directory, never the commit's, so that a change cannot
-    lower its own class by editing the classifier. A label can only raise the class: a
-    pull request labelled release is R5, and so is one whose labels cannot be read. A base
-    with no scripts/risk.py is R5, and so is any failure to compute the class (fail
-    closed): Git failing, the script failing or printing no class, a class below that of a
-    file it lists, a timeout."""
+    lower its own class by editing the classifier. With `diff_base`, the change classed is
+    `git diff diff_base...sha` instead, the classifier still read at `base`: so the queue's
+    judge classes an entry's block and its merge into the group by main's copy. A label
+    can only raise the class: a pull request labelled release is R5, and so is one whose
+    labels cannot be read. A base with no scripts/risk.py is R5, and so is any failure to
+    compute the class (fail closed): Git failing, the script failing or printing no class,
+    a class below that of a file it lists, a timeout; with `diff_base` or without."""
     t = time.time()
 
     def r5(why: str) -> Risk:
@@ -2943,11 +2996,12 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
     source = run(["git", "cat-file", "blob", meta[2].decode()], repo, binary=True)
     if source.returncode != 0:
         return r5(f"git could not read origin/main's {RISK}")
+    start = base if diff_base is None else diff_base
     with tempfile.TemporaryDirectory(prefix="stoicheia-risk-") as tmp:
         script = Path(tmp) / "risk.py"
         script.write_bytes(source.stdout)
         try:
-            r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
+            r = subprocess.run([PY, "-I", str(script), "--diff", start, sha], cwd=repo,
                                env=without_replacements(), capture_output=True, text=True,
                                errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
@@ -2996,6 +3050,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     guard_entries(repo, base, sha, rep)
+    guard_registry(repo, sha, rep, base)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, wt, inputs)) as each:
         for label, fail, excludes in each:
@@ -3060,14 +3115,176 @@ def copy_build(src: Path, dst: Path) -> None:
         shutil.rmtree(dst / ".lake", ignore_errors=True)
 
 
-def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) -> None:
+class CheckList(NamedTuple):
+    steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
+    why: str                                     # where they came from, for the step line
+    built_in: bool = False                       # CHECKS: the revision holds no registry
+
+
+def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
+    """The checks step 4 runs on a commit against `base`, origin/main: the `check` job's,
+    as base's registry lists them, then the `model` job's (MODEL_JOB). The registry,
+    checks/, and its reader, scripts/registry.py, are base's: the reader is read out of git
+    and run from a temporary directory, and reads the registry out of git at base, both
+    with git's replacement objects off; never the commit's registry or reader, nor the
+    worktree's, so that a change cannot alter the checks its own pre-flight runs. With
+    neither at base (the train that adds them), the built-in CHECKS (built_in). A Refusal
+    when base holds either and the registry cannot be read: the other missing or not a
+    regular file or folder, the reader failing, outlasting its time or printing anything
+    but a list of checks of the `check` job, or no check at all. Never an empty list.
+
+    The names are held here as well as by the reader, which a train may change: the
+    `empty` entry, and only it, is named EMPTY_CHECK, and every other entry's name is its
+    command's words joined by spaces, so that no command is ever named as a step whose
+    failure FRESHNESS passes over. Step 3 reads the commit's own registry so too, `whose`
+    naming it (guard_registry)."""
+    def refuse(why: str):
+        raise Refusal(f"{whose}'s registry of checks could not be read: {why}")
+
+    listed = run(["git", "ls-tree", "-z", "--full-tree", base, "--", REGISTRY,
+                  REGISTRY_READER], repo, binary=True)
+    if listed.returncode != 0:
+        refuse(f"git could not list {whose} {base[:12]}: "
+               f"{printable_text(listed.stderr.decode(errors='replace').strip())}")
+    found = {}
+    for record in listed.stdout.split(b"\0"):
+        if record:
+            meta, _, path = record.partition(b"\t")
+            found[os.fsdecode(path)] = meta.split()
+    if not found:
+        return CheckList(CHECKS + MODEL_JOB, f"the {len(CHECKS)} built into this harness, "
+                         f"since {whose} {base[:12]} holds no registry yet ({REGISTRY}/ "
+                         f"and {REGISTRY_READER}), then the model job's", True)
+    reader, folder = found.get(REGISTRY_READER), found.get(REGISTRY)
+    if (reader is None or len(reader) != 3 or reader[0] not in (b"100644", b"100755")
+            or reader[1] != b"blob"):
+        refuse(f"{whose} {base[:12]} holds {REGISTRY}/ but no regular file "
+               f"{REGISTRY_READER} to read it")
+    if folder is None or len(folder) != 3 or folder[1] != b"tree":
+        refuse(f"{whose} {base[:12]} holds {REGISTRY_READER} but no folder {REGISTRY}/")
+    source = run(["git", "cat-file", "blob", reader[2].decode()], repo, binary=True)
+    if source.returncode != 0:
+        refuse(f"git could not read {whose}'s {REGISTRY_READER}")
+    with tempfile.TemporaryDirectory(prefix="stoicheia-registry-") as tmp:
+        script = Path(tmp) / "registry.py"
+        script.write_bytes(source.stdout)
+        # Through run(), so that under the main-checks cache's sandbox it runs sandboxed,
+        # as every command does (#392): read as bytes, decoded leniently, as before.
+        try:
+            r = run([PY, "-I", str(script), "--rev", base, "--json", str(repo)], repo,
+                    env=without_replacements(), binary=True, timeout=REGISTRY_TIMEOUT)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            refuse(f"its {REGISTRY_READER} could not be run: {type(e).__name__}")
+    out = r.stdout.decode(errors="replace")
+    err = r.stderr.decode(errors="replace")
+    if r.returncode != 0:
+        said = (err.strip().splitlines() or [""])[-1]
+        refuse(f"its {REGISTRY_READER} exited {r.returncode}"
+               + (f": {printable_text(said)[:300]}" if said else ""))
+    try:
+        entries = json.loads(out)
+    except json.JSONDecodeError:
+        entries = None
+    if not isinstance(entries, list):
+        refuse(f"its {REGISTRY_READER} printed no list of checks")
+    steps: list[tuple[str, list[str] | None]] = []
+    for item in entries:
+        name = item.get("name") if isinstance(item, dict) else None
+        command, empty = (item.get("command"), item.get("empty")) if name else (None, None)
+        words = isinstance(command, list) and bool(command) and all(
+            isinstance(w, str) and w for w in command)
+        if (not isinstance(name, str) or not name or not name.isprintable()
+                or not ((empty is True and command is None) or (empty is False and words))):
+            refuse(f"its {REGISTRY_READER} printed an entry that is not a check: "
+                   f"{printable_text(str(item))[:200]}")
+        if item.get("job") != "check":
+            refuse(f"its {REGISTRY_READER} gives {printable_text(name)} to the job "
+                   f"{printable_text(str(item.get('job')))}, which the pre-flight does not run")
+        if empty and name != EMPTY_CHECK:
+            refuse(f"its {REGISTRY_READER} gives the `empty` check the name "
+                   f"{printable_text(name)[:200]!r}, not {EMPTY_CHECK!r}")
+        if not empty and name != " ".join(command):
+            refuse(f"its {REGISTRY_READER} names a check {printable_text(name)[:200]!r}, "
+                   "not its command's words joined by spaces")
+        if not empty and name in FRESHNESS:
+            refuse(f"its {REGISTRY_READER} gives a command the name {name!r}, which only "
+                   "the `empty` check may bear: a failure of a step of that name is "
+                   "passed over when a check change is kept apart (FRESHNESS)")
+        steps.append((name, None if empty else
+                       [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
+    if not steps:
+        refuse(f"its {REGISTRY_READER} gives no check")
+    if len({name for name, _ in steps}) != len(steps):
+        refuse(f"its {REGISTRY_READER} gives two checks of one name")
+    return CheckList(steps + MODEL_JOB, f"the {len(steps)} of {whose}'s registry, "
+                     f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
+                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+
+
+def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
+    """The commit's registry of checks reads as the pre-flight of every later train will
+    read it once the commit is origin/main's: by check_sequence at the commit, the
+    commit's own scripts/registry.py taken out of git and run alone from a temporary
+    directory, reading the commit's checks/ out of git. render.py and CI's run_checks.py
+    load the reader from scripts/ and read the worktree, so a reader that imports a module
+    beside it, or that fails only on a revision, passes them both, and once merged would
+    refuse every train, its own repair among them. Every class runs this.
+    Skipped only while the commit holds neither the registry nor its reader, when the lists
+    built in stand in for it, as they did before the registry came."""
+    t = time.time()
+    try:
+        own = check_sequence(repo, sha, "the commit")
+    except Refusal as e:
+        # Against origin/main (or, without it, the commit's parent): a commit that changes
+        # neither the folder nor the reader holds origin/main's registry, and the fault is
+        # main's; else the commit's own. Any doubt reads as the commit's.
+        old = base or (f"{sha}^" if git_ok(repo, "rev-parse", "--verify", "-q", f"{sha}^")
+                       else None)
+        try:
+            changed = changed_files(repo, old, sha, REGISTRY, REGISTRY_READER) if old \
+                else [("?", REGISTRY)]
+        except Exception:
+            changed = [("?", REGISTRY)]
+        whose = (f"{e}; so it would refuse the pre-flight of every train once it is "
+                 f"origin/main's, as {REGISTRY_READER} reads it there, alone and out of git "
+                 "(check_sequence)") if changed else (
+                 f"{e}; the commit changes neither {REGISTRY}/ nor {REGISTRY_READER}, so the "
+                 "registry it holds is origin/main's, which fails to read: a repair of the "
+                 "registry on main comes first")
+        rep.add("3", "registry of checks", "FAIL", whose, time.time() - t)
+        return
+    if own.built_in:
+        rep.add("3", "registry of checks", "skip", f"the commit holds neither {REGISTRY}/ "
+                f"nor {REGISTRY_READER}", time.time() - t)
+    else:
+        rep.add("3", "registry of checks", "ok", f"{len(own.steps) - len(MODEL_JOB)} checks, "
+                f"as the commit's own {REGISTRY_READER} reads them alone and out of git, as "
+                "a later pre-flight will", time.time() - t)
+
+
+def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
+    """check_sequence for the commit, as a step line: ok with how many and from where, or
+    FAIL and a Refusal."""
+    t = time.time()
+    try:
+        checks = check_sequence(ctx.repo, ctx.base)
+    except Refusal as e:
+        rep.add("4", "check list", "FAIL", str(e), time.time() - t)
+        raise
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}",
+            time.time() - t)
+    return checks.steps
+
+
+def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
+                sequence: list[tuple[str, list[str] | None]]) -> None:
     def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
 
     # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
     # kept for it on a miss; keep_apart then reads its steps as it reads them run.
-    cache = main_checks(ctx, wt, inputs, rep) if CACHE is not None else None
+    cache = main_checks(ctx, wt, inputs, rep, sequence) if CACHE is not None else None
 
     def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
         if label == BASE_PASS and cache is not None and cache.hit:
@@ -3084,7 +3301,7 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
     # the worktree back before the worktree is removed.
     with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
         for label, fail, excludes in each:
-            checks(CHECKS, wt, label, fail, excludes, 10)
+            checks(sequence, wt, label, fail, excludes, 10)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
@@ -3342,9 +3559,11 @@ def environment(repo) -> dict:
     }
 
 
-def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
+def main_checks_fields(ctx, wt: Path, inputs, sequence: list[tuple[str, list[str] | None]]
+                       ) -> tuple[dict | None, str]:
     """The fields of the key of origin/main's pass on this commit, computed by the harness
-    and never read from the tree as code; or None, and why there is no key."""
+    and never read from the tree as code; or None, and why there is no key. Its checks are
+    `sequence`, the checks step 4 runs (check_list), and its negative tests NEGATIVE."""
     if HARNESS_BLOB is None:
         return None, "the harness running is not origin/main's"
     lean = toolchain(ctx.repo, ctx.sha, wt)
@@ -3362,7 +3581,7 @@ def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
             "harness_blob": HARNESS_BLOB,
             "toolchain": lean,
             "environment": environment(ctx.repo),
-            "checks": [[name, cmd] for name, cmd in CHECKS],
+            "checks": [[name, cmd] for name, cmd in sequence],
             "negative": [[name, cmd] for name, cmd in NEGATIVE],
         }
     except Refusal as e:
@@ -3374,9 +3593,10 @@ ENTRY_FIELDS = frozenset({"key", "written", "steps", "digest"})
 STEP_FIELDS = frozenset({"name", "outcome", "detail", "seconds", "log"})
 
 
-def base_pass_names() -> list[str]:
-    """origin/main's pass of step 4, step by step: CHECKS, then NEGATIVE."""
-    return [name + BASE_PASS for name, _ in [*CHECKS, *NEGATIVE]]
+def base_pass_names(fields: dict) -> list[str]:
+    """origin/main's pass of step 4, step by step, as the key `fields` names it: its checks,
+    then its negative tests."""
+    return [name + BASE_PASS for name, _ in [*fields["checks"], *fields["negative"]]]
 
 
 STEP_SECONDS = 7 * 24 * 3600    # the longest a recorded step may have taken: a week
@@ -3444,7 +3664,7 @@ def entry_problem(entry, key: str, fields: dict) -> str | None:
     if not isinstance(steps, list) or not all(
             isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
         return "its steps are not of this format"
-    if [s["name"] for s in steps] != base_pass_names():
+    if [s["name"] for s in steps] != base_pass_names(fields):
         return "its steps are not origin/main's pass, each step once and in order"
     for s in steps:
         if s["outcome"] not in ("ok", "note"):
@@ -3563,7 +3783,7 @@ class MainChecks:
 
     def collect(self, rep: Report, out) -> None:
         """The step origin/main's pass has just run, recorded for the entry."""
-        names = base_pass_names()
+        names = base_pass_names(self.fields)
         s = rep.steps[-1] if rep.steps else None
         if self.spoiled or s is None or len(self.steps) >= len(names) \
                 or s.name != names[len(self.steps)] or s.outcome not in ("ok", "note") \
@@ -3578,7 +3798,7 @@ class MainChecks:
         under the sandbox, by the harness its key names; a note if it cannot be."""
         if self.hit or self.done:
             return
-        if not self.spoiled and len(self.steps) < len(base_pass_names()):
+        if not self.spoiled and len(self.steps) < len(base_pass_names(self.fields)):
             return      # the negative tests' loop is still to run
         self.done = True
         why = self.spoiled or self.unwritable()
@@ -3608,14 +3828,15 @@ class MainChecks:
         return dir_problem(CACHE) or ""
 
 
-def main_checks(ctx, wt: Path, inputs, rep: Report) -> MainChecks | None:
+def main_checks(ctx, wt: Path, inputs, rep: Report,
+                sequence: list[tuple[str, list[str] | None]]) -> MainChecks | None:
     """The cache's answer for origin/main's pass on this commit, reported in one line, for
     the pull request's record: a hit; a miss, and why; or why the cache does not serve."""
     if not inputs:
         rep.add("4", "main-checks cache", "skip", "the commit changes no check input: there "
                 "is no pass with origin/main's copies to reuse")
         return None
-    fields, why = main_checks_fields(ctx, wt, inputs)
+    fields, why = main_checks_fields(ctx, wt, inputs, sequence)
     if fields is None:
         rep.add("4", "main-checks cache", "note", f"not used for this commit: {why}; "
                 "origin/main's checks run in full")
@@ -3687,10 +3908,14 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                         "self-test and the rest of section 8 on the pull request before "
                         "the merge, and --merge waits for them green; the negative tests "
                         "run on main after the merge and on the cadence")
-            elif test_mode:
-                rep.add("4", "full local checks", "skip", "internal test flag, local origin")
             else:
-                full_checks(ctx, wt, parent, g.check_inputs, rep, logs)
+                # origin/main's registry, read under the internal test flag too, so that
+                # the tests see which checks the full path would run.
+                checks = check_list(ctx, rep)
+                if test_mode:
+                    rep.add("4", "full local checks", "skip", "internal test flag, local origin")
+                else:
+                    full_checks(ctx, wt, parent, g.check_inputs, rep, logs, checks)
     return Preflight(g.statements, g.protected, short)
 
 
@@ -3709,6 +3934,8 @@ class Context(NamedTuple):
     branch: str | None = None
     gh: tuple = ("gh",)
     remote_branch: str | None = None    # the branch on origin before the push
+    queue: bool = False
+    harness_sha: str | None = None     # origin/main's tip, before queue_base changes base
 
 
 def is_local(url: str) -> bool:
@@ -3877,7 +4104,10 @@ def train_input(ctx: Context, body: str | None) -> str | None:
 
 def train_check(ctx: Context, body: str, rep: Report) -> None:
     """Run origin/main's train checker on the commit and the body. While origin/main has
-    none, every train is refused: no commit's own copy ever runs in its place."""
+    none, every train is refused: no commit's own copy ever runs in its place. In queue
+    mode the base compared against is the newest commit of main's chain that the head
+    contains (queue_base), the judge's base too, perhaps older than main's tip, whose
+    checker (ctx.harness_sha's) is the one that runs."""
     rep.heading("3. train")
     started = time.time()
     try:
@@ -3886,7 +4116,7 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
             # the commit's code may have written the harness's directory under the sandbox.
             raise Refusal("the train check cannot run once the main-checks cache's sandbox "
                           "is set")
-        source = harness_train(ctx.repo, ctx.base)
+        source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
         if source is None:
             raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
                           "checked: land the train checker first, then the train")
@@ -3907,6 +4137,36 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
         rep.add("3", "train", "FAIL", str(e), time.time() - started)
         raise Refusal(f"the train check refused: {e}") from e
     rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
+
+
+def block_current(ctx: Context, m, record: dict) -> bool:
+    """Is the body's pre-flight summary a true account of this head? It must name this
+    head and, for a train, show the train step passing. Its base and harness are held to
+    the queue's judge's rule (check_queue.preflight), read on this run's main: the base
+    is the newest commit of main's first-parent chain that the head contains, which is
+    what the pre-flight records (origin/main's tip, which the head held), and the
+    harness that base or a later commit of the same chain. So a summary the judge would
+    refuse is never current here, and one it would accept is current; in queue mode its
+    base is the one this merge checks against (queue_base), even when the head's merge
+    base with main lies off main's chain (a member merged before its train). Without the
+    queue the base and the harness are both main's tip, as the head holds it. That the
+    full checks ran again here, and passed, leaves a summary of the same head and base
+    true."""
+    if not m:
+        return False
+    sha, base, harness = m.group(1), m.group(2), m.group(3) or m.group(2)
+    if sha != ctx.sha:
+        return False
+    # A branch renamed train/ after its pre-flight has a summary with no train step.
+    if (ctx.branch or "").startswith("train/") and not TRAIN_ROW.search(m.group(0)):
+        return False
+    main = record.get("harness_sha") or ctx.harness_sha or ctx.base
+    chain = git(ctx.repo, "rev-list", "--first-parent", main).split()
+    held = set(git(ctx.repo, "rev-list", ctx.sha).split())
+    newest = next((tip for tip in chain if tip in held), None)
+    if base != newest or harness not in chain or chain.index(harness) > chain.index(base):
+        return False
+    return ctx.queue or (base, harness) == (ctx.base, main)
 
 
 def merge_train_input(ctx: Context, view: dict) -> str | None:
@@ -4028,7 +4288,8 @@ def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
         gh_ready(gh, repo, test_mode)
         tags = remote_refs(repo, "--tags")
     check_installed(repo, base, rep)
-    return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch)
+    return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch,
+                   harness_sha=base)
 
 
 # --------------------------------------------------------------------------------------
@@ -4116,6 +4377,8 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
                    r"(?: sha=(\w+) base=(\w+)(?: harness=(\w+))?)? -->"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
+# The train step's row in that summary, as preflight_block writes it when it passed.
+TRAIN_ROW = re.compile(r"(?m)^\| 3\. train \| ok \| [0-9.]* \|[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
 STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
@@ -4169,8 +4432,9 @@ def put_block(body: str, block: str) -> str:
 
 def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
     """Does the change touch what render.py writes in `path`, and does it touch the rest,
-    written by hand? Only README.md and PROGRAM.md have a rest: render.py writes them only
-    between their markers, and every other generated file whole."""
+    written by hand? Only the files of GENERATED_REGIONS have a rest (README.md,
+    docs/PROGRAM.md and docs/WORKFLOW.md): render.py writes them only between their
+    markers, and every other generated file whole."""
     pattern = GENERATED_REGIONS.get(path)
     if pattern is None:
         return True, False
@@ -4552,13 +4816,17 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
     if checked is not None:
         steps = [s for s in steps if s[0] != "4"] + \
             [list(s) for s in checked.get("steps", []) if s and s[0] == "4"]
-        notes += [list(n) for n in checked.get("notes", []) if list(n) not in notes]
+        notes += [[s.name, f"{s.outcome}, {s.detail}"] for s in rep.steps
+                  if s.stage == "4" and s.outcome == "skip"]
+        notes += [list(n) for n in checked.get("notes", [])
+                  if n[0] != "full local checks" and list(n) not in notes]
     return {
         "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
         "full": (full and not pre.short) or bool(checked and checked.get("full")),
         "class": risk.cls, "class_why": risk.why, "short": pre.short,
         "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "harness": HARNESS, "harness_blob": HARNESS_BLOB,
+        "harness_sha": ctx.harness_sha or ctx.base,
         "steps": steps, "notes": notes,
         "protected": pre.protected, "statements": pre.statements,
     }
@@ -4571,13 +4839,35 @@ def checks_record(record: dict | None, test_mode: bool, risk: Risk) -> dict | No
     while the class, `risk`, recomputed now by origin/main's risk.py for that commit
     against that base, is still R0 to R2. The record is a local file anything run as the
     user could write, so it never stands in for the secret scan or the guards, and CI runs
-    the same checks."""
-    if record is None or HARNESS_BLOB is None or record.get("harness_blob") != HARNESS_BLOB:
+    the same checks. A record of any other shape stands in for nothing."""
+    if not isinstance(record, dict) or HARNESS_BLOB is None \
+            or record.get("harness_blob") != HARNESS_BLOB:
+        return None
+    steps = record.get("steps")
+    if not isinstance(steps, list) or any(
+            not isinstance(s, list) or len(s) != 4 or s[0] not in ("2", "3", "4")
+            or not isinstance(s[1], str) or not s[1] or s[2] not in ("ok", "skip")
+            or (s[3] is not None and (type(s[3]) not in (int, float)
+                                     or not math.isfinite(s[3]) or s[3] < 0))
+            for s in steps):
+        return None
+    notes = record.get("notes")
+    if not isinstance(notes, list) or any(
+            not isinstance(n, list) or len(n) != 2
+            or any(not isinstance(x, str) for x in n) for n in notes):
+        return None
+    if any(not isinstance(record.get(k), str) or not record[k].strip()
+           for k in ("harness", "time")):
         return None
     if record.get("short"):
         low = record.get("class") in LOW_CLASSES and risk.cls in LOW_CLASSES
         return record if low else None
-    return record if record.get("full") or test_mode else None
+    if not (record.get("full") is True or test_mode):
+        return None
+    full_steps = [s for s in steps if s[0] == "4"]
+    if not full_steps or any(s[2] != "ok" and not test_mode for s in full_steps):
+        return None
+    return record
 
 
 def full_record(record: dict | None, test_mode: bool) -> bool:
@@ -4595,9 +4885,10 @@ def save_record(record: dict) -> None:
 def load_record(sha: str, base: str) -> dict | None:
     try:
         record = json.loads(record_path(sha, base).read_text())
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return None
-    return record if record.get("sha") == sha and record.get("base") == base else None
+    return record if isinstance(record, dict) and record.get("sha") == sha \
+        and record.get("base") == base else None
 
 
 # --------------------------------------------------------------------------------------
@@ -5282,10 +5573,12 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
         raise Refusal(f"origin ({origin}) is not on GitHub: there is no pull request to merge")
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
-    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh)
+    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base)
+    queued = queue_enabled(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
                    "isCrossRepository,title")
+    main_health(ctx, rep, (view or {}).get("body"))
     if not view or view.get("state") != "OPEN":
         raise Refusal(f"pull request #{number} is not open ({(view or {}).get('state')})")
     if view.get("baseRefName") != "main" or view.get("isCrossRepository"):
@@ -5297,6 +5590,9 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
         run(["git", "fetch", "origin", f"refs/heads/{branch}"], repo)
     if rev_parse(repo, f"{head}^{{commit}}") is None:
         raise Refusal(f"the head {head[:12]} of #{number} is not here after `git fetch origin`")
+    if queued:
+        base = queue_base(ctx, head)
+        ctx = ctx._replace(base=base, queue=True)
     if not git_ok(repo, "merge-base", "--is-ancestor", base, head):
         raise Refusal(f"origin/main ({base[:12]}) is not an ancestor of #{number}'s head "
                       f"({head[:12]}): merge origin/main into {branch} (a merge commit), run "
@@ -5304,7 +5600,9 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     commits = int(git(repo, "rev-list", "--count", f"{base}..{head}").strip())
     rep.add("1", "pull request", "ok", f"#{number} \"{view.get('title')}\": {branch} at "
             f"{head[:12]}, {plural(commits, 'commit')} onto origin/main {base[:12]}")
-    check_installed(repo, base, rep)
+    # The installed copies are compared with current main's, not with the older base a
+    # queued head is checked against.
+    check_installed(repo, ctx.harness_sha, rep)
     return ctx._replace(sha=head, commits=commits, branch=branch), view
 
 
@@ -5356,7 +5654,10 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 "an account could have, and the merge commit's subject names it: look with "
                 f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
-    template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+    # The template in force is current main's (the harness's), also in queue mode, where
+    # ctx.base may be an older main (queue_base): a box main added since binds this merge.
+    policy = ctx.harness_sha or ctx.base
+    template = show(ctx.repo, policy, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
     problems = checklist_problems(body, template, bool(protected))
     if problems:
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
@@ -5576,6 +5877,345 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
     return commit
 
 
+def api_json(ctx: Context, endpoint: str, *args, missing: bool = False):
+    """Read the API strictly. `gh api` takes a full endpoint, not the pr command's -R."""
+    try:
+        r = run([*ctx.gh, "api", endpoint, *args], ctx.repo)
+    except (OSError, UnicodeError) as e:
+        raise Refusal(f"could not read GitHub's {endpoint}: {e}") from e
+    try:
+        answer = json.loads(r.stdout)
+    except (ValueError, TypeError):
+        answer = None
+    if r.returncode:
+        absent = (isinstance(answer, dict) and answer.get("status") in (404, "404")) or \
+            re.search(r"\bHTTP 404\b", r.stderr)
+        if missing and absent:
+            return None
+        raise Refusal(f"could not read GitHub's {endpoint}: {r.stderr.strip() or r.stdout[:200]}")
+    if answer is None:
+        raise Refusal(f"GitHub's {endpoint} did not give a readable JSON answer")
+    if isinstance(answer, dict) and answer.get("errors"):
+        raise Refusal(f"GitHub's {endpoint} reported errors")
+    return answer
+
+
+def api_pages(answer, name: str) -> list:
+    """Flatten a paginated, slurped array only after validating every page."""
+    if not isinstance(answer, list) or not answer or any(not isinstance(p, list) for p in answer):
+        raise Refusal(f"unreadable {name}: expected pages of entries")
+    return [entry for page in answer for entry in page]
+
+
+def queue_enabled(ctx: Context, rep: Report) -> bool:
+    """Read main's effective rules, refusing an unreadable rule even after a queue rule."""
+    rules = api_pages(api_json(ctx, f"repos/{ctx.github}/rules/branches/main",
+                               "--paginate", "--slurp"), "main rules")
+    for rule in rules:
+        if not isinstance(rule, dict) or not isinstance(rule.get("type"), str) \
+                or not rule["type"].strip() or \
+                ("parameters" in rule and not isinstance(rule["parameters"], dict)):
+            raise Refusal("unreadable main rules: each rule must name its type")
+    queued = any(rule["type"] == "merge_queue" for rule in rules)
+    rep.add("1", "merge queue", "ok", "required by main's rules" if queued else
+            "not required by main's rules")
+    return queued
+
+
+# A pull request that fixes a red main says so in its body, on a line of its own that
+# GitHub shows: "Fixes main-red: #12", or "Fixes main-red: #12, #15".
+MAIN_RED_FIX = re.compile(r"Fixes main-red: (#[1-9][0-9]*(?:, #[1-9][0-9]*)*)\.?")
+
+
+def main_red_fix(body: str) -> set[int] | None:
+    """The main-red issues a pull request's body declares it fixes, read as GitHub shows
+    the body (visible), so that a line in a comment or in code is not one; None when it
+    declares none. More than one such line, or one not in the form, refuses."""
+    lines = [line.strip() for line in visible(body or "").splitlines()
+             if line.strip().startswith("Fixes main-red")]
+    if not lines:
+        return None
+    m = MAIN_RED_FIX.fullmatch(lines[0]) if len(lines) == 1 else None
+    numbers = [int(n) for n in re.findall(r"#([0-9]+)", m.group(1))] if m else []
+    if not m or len(set(numbers)) != len(numbers):
+        raise Refusal("unreadable main-red fix: write one line `Fixes main-red: #<n>`, "
+                      "naming each open main-red issue once")
+    return set(numbers)
+
+
+def main_health(ctx: Context, rep: Report, body: str | None = None) -> None:
+    """Refuse red or unreadable main: open issues and completed post-merge runs at its tip.
+    While main is red, only its fix lands: a pull request whose body (`body`) declares it
+    fixes every open main-red issue, and no other (main_red_fix). Its own CI, which the
+    gates require to pass, and in queue mode its group's, then check it on main."""
+    issues = api_pages(api_json(
+        ctx, f"repos/{ctx.github}/issues?state=open&labels=main-red&per_page=100",
+        "--paginate", "--slurp"), "main-red issues")
+    red = []
+    for issue in issues:
+        if not isinstance(issue, dict) or type(issue.get("number")) is not int \
+                or issue["number"] < 1 or issue.get("state") != "open" \
+                or not isinstance(issue.get("labels"), list) \
+                or any(not isinstance(label, dict) or not isinstance(label.get("name"), str)
+                       or not label["name"].strip() for label in issue["labels"]) \
+                or "main-red" not in {label["name"] for label in issue["labels"]} \
+                or ("pull_request" in issue and not isinstance(issue["pull_request"], dict)):
+            raise Refusal("unreadable main-red issue entry")
+        if "pull_request" not in issue:
+            red.append(issue["number"])
+    workflow = ".github/workflows/post-merge.yml"
+    absent = not git(ctx.repo, "ls-tree", ctx.base, "--", workflow).strip()
+    pages = api_json(ctx, f"repos/{ctx.github}/actions/workflows/post-merge.yml/runs"
+                     f"?branch=main&head_sha={ctx.base}&per_page=100",
+                     "--paginate", "--slurp", missing=absent)
+    if pages is None:
+        red_or_fix(rep, red, None, "no post-merge workflow", body)
+        return
+    if not isinstance(pages, list) or not pages:
+        raise Refusal("unreadable post-merge runs: expected pages")
+    completed, seen = [], set()
+    total = None
+    for page in pages:
+        if not isinstance(page, dict) or type(page.get("total_count")) is not int \
+                or page["total_count"] < 0 or not isinstance(page.get("workflow_runs"), list):
+            raise Refusal("unreadable post-merge runs page")
+        if total is not None and page["total_count"] != total:
+            raise Refusal("unreadable post-merge runs: the count changed between pages")
+        total = page["total_count"]
+        for entry in page["workflow_runs"]:
+            if not isinstance(entry, dict) or any(type(entry.get(key)) is not int
+                    or entry[key] < 1 for key in ("id", "run_number", "run_attempt")) \
+                    or entry.get("head_sha") != ctx.base or entry.get("head_branch") != "main" \
+                    or entry.get("status") not in ("completed", "queued", "in_progress",
+                                                   "waiting", "requested", "pending"):
+                raise Refusal("unreadable post-merge run entry")
+            if entry["id"] in seen:
+                raise Refusal("unreadable post-merge runs: a run appears twice")
+            seen.add(entry["id"])
+            if entry["status"] == "completed":
+                if entry.get("conclusion") not in ("success", "failure", "neutral", "cancelled",
+                        "skipped", "timed_out", "action_required", "stale", "startup_failure"):
+                    raise Refusal("unreadable post-merge run conclusion")
+                completed.append(entry)
+            elif entry.get("conclusion") is not None:
+                raise Refusal("unreadable unfinished post-merge run conclusion")
+    if len(seen) != total:
+        raise Refusal("unreadable post-merge runs: the pages do not cover the reported count")
+    failed = None
+    if completed:
+        latest = max(completed, key=lambda entry: (entry["run_number"], entry["run_attempt"]))
+        if latest["conclusion"] not in ("success", "neutral", "skipped"):
+            failed = (f"post-merge run {latest['id']} at {ctx.base[:12]} "
+                      f"concluded {latest['conclusion']}")
+        detail = f"latest completed post-merge run {latest['id']} concluded {latest['conclusion']}"
+    else:
+        detail = "no completed post-merge run at main's tip"
+    red_or_fix(rep, red, failed, detail, body)
+
+
+def red_or_fix(rep: Report, red: list[int], failed: str | None, detail: str,
+               body: str | None) -> None:
+    """main_health's verdict: green; or red, refused, unless the pull request's body
+    declares it fixes exactly the open main-red issues. A failed run with no open issue
+    has none to declare: its issue is labelled main-red again first."""
+    if not red and failed is None:
+        rep.add("1", "main health", "ok", "no main-red issues; " + detail)
+        return
+    why = "main is red: " + "; ".join(
+        (["open main-red issues " + ", ".join(f"#{n}" for n in red)] if red else [])
+        + ([failed] if failed else []))
+    fixes = main_red_fix(body or "")
+    if fixes is None:
+        raise Refusal(f"{why}. Only its fix lands: a pull request whose body has the line "
+                      "`Fixes main-red: #<n>`, naming every open main-red issue")
+    if not red:
+        raise Refusal(f"{why}, and no open main-red issue names it for this fix to declare: "
+                      "label the failed run's issue main-red again")
+    if fixes != set(red):
+        raise Refusal(f"{why}; this pull request declares it fixes "
+                      + ", ".join(f"#{n}" for n in sorted(fixes))
+                      + ", which is not every open main-red issue and no other")
+    rep.add("1", "main health", "note", f"{why}; this pull request declares it fixes them, "
+            "and lands as their fix, its own CI passing")
+
+
+def queue_base(ctx: Context, head: str) -> str:
+    """A queued head is checked against the newest commit of current main's first-parent
+    chain that it contains: the base its pre-flight recorded, origin/main's tip then, and
+    the base the queue's judge holds that summary to and runs its train check against
+    (check_queue.preflight). So --merge's own checks, its train check and the judge
+    compare against one base, even when the head's merge base with main lies off the
+    chain (a member merged on its own before its train)."""
+    held = set(git(ctx.repo, "rev-list", head).split())
+    chain = git(ctx.repo, "rev-list", "--first-parent", ctx.base).split()
+    base = next((tip for tip in chain if tip in held), None)
+    if base is None or not FULL_OID.fullmatch(base):
+        raise Refusal("the queued head contains no commit of origin/main's first-parent chain")
+    return base
+
+
+QUEUE_POLL = 10
+# A group's CI can take as long as the queue's status check timeout, 150 minutes
+# (WORKFLOW, section 10, "Turning it on"), and a train behind a group that fails waits
+# for its own group to be built and run again: twice that, in seconds.
+QUEUE_TIMEOUT = 18000
+
+
+def queue_view(ctx: Context, number: int) -> dict:
+    """Read the pull request and its queue entry in one GraphQL snapshot."""
+    owner, name = ctx.github.split("/")
+    query = """query($owner:String!, $name:String!, $number:Int!) {
+      repository(owner:$owner, name:$name) { pullRequest(number:$number) {
+        id state headRefOid headRefName baseRefName mergeCommit { oid }
+        mergeQueueEntry { id headCommit { oid } }
+      } }
+    }"""
+    answer = api_json(ctx, "graphql", "-f", f"query={query}", "-f", f"owner={owner}",
+                      "-f", f"name={name}", "-F", f"number={number}")
+    try:
+        view = answer["data"]["repository"]["pullRequest"]
+        if not isinstance(view, dict) or not isinstance(view.get("id"), str) or not view["id"] \
+                or view.get("state") not in PR_STATES or view.get("headRefOid") != ctx.sha \
+                or view.get("headRefName") != ctx.branch or view.get("baseRefName") != "main" \
+                or "mergeQueueEntry" not in view:
+            raise ValueError("missing or changed pull request fields")
+        entry = view["mergeQueueEntry"]
+        if entry is not None and (not isinstance(entry, dict)
+                or not isinstance(entry.get("id"), str) or not entry["id"]):
+            raise ValueError("malformed queue entry")
+        if entry is not None:
+            queue_group(entry)
+    except (KeyError, TypeError, ValueError) as e:
+        raise Refusal(f"unreadable queue state for #{number}: {e}") from e
+    return view
+
+
+def enqueue(ctx: Context, view: dict) -> dict:
+    """Pin the checked head in the enqueue mutation and validate its acknowledgement."""
+    query = """mutation($id:ID!, $head:GitObjectID!) {
+      enqueuePullRequest(input:{pullRequestId:$id, expectedHeadOid:$head}) {
+        mergeQueueEntry { id headCommit { oid } pullRequest { id headRefOid } }
+      }
+    }"""
+    answer = api_json(ctx, "graphql", "-f", f"query={query}", "-f", f"id={view['id']}",
+                      "-f", f"head={ctx.sha}")
+    try:
+        entry = answer["data"]["enqueuePullRequest"]["mergeQueueEntry"]
+        if not isinstance(entry["id"], str) or not entry["id"] \
+                or entry["pullRequest"]["id"] != view["id"] \
+                or entry["pullRequest"]["headRefOid"] != ctx.sha:
+            raise ValueError("the acknowledgement does not name the checked head")
+        queue_group(entry)
+    except (KeyError, TypeError, ValueError) as e:
+        raise Refusal(f"unreadable enqueue acknowledgement: {e}") from e
+    return entry
+
+
+def queue_group(entry: dict) -> str | None:
+    """Read a queue entry's current group head, which may not have been made yet."""
+    commit = entry.get("headCommit")
+    if commit is None:
+        return None
+    if not isinstance(commit, dict) or not isinstance(commit.get("oid"), str) \
+            or not FULL_OID.fullmatch(commit["oid"]):
+        raise Refusal("unreadable queue group head")
+    return commit["oid"]
+
+
+def queue_checks(ctx: Context, group: str | None) -> str:
+    """Include checks of the last observed group, if readable, after its entry is gone."""
+    if group is None:
+        return "the failing group's checks are not readable"
+    try:
+        pages = api_json(ctx, f"repos/{ctx.github}/commits/{group}/check-runs?per_page=100",
+                         "--paginate", "--slurp")
+        if not isinstance(pages, list) or not pages:
+            raise ValueError("missing check pages")
+        checks = []
+        for page in pages:
+            if not isinstance(page, dict) or not isinstance(page.get("check_runs"), list):
+                raise ValueError("unreadable check page")
+            for check in page["check_runs"]:
+                if not isinstance(check, dict) or not isinstance(check.get("name"), str) \
+                        or check.get("status") not in ("queued", "in_progress", "completed") \
+                        or not isinstance(check.get("conclusion"), (str, type(None))):
+                    raise ValueError("unreadable check entry")
+                checks.append(f"{check['name']}: {check.get('conclusion') or check['status']}")
+        return f"group {group[:12]} checks: " + "; ".join(checks) if checks else \
+            "the failing group's checks are not readable"
+    except Exception:
+        return "the failing group's checks are not readable"
+
+
+def verify_queue_merge(ctx: Context, number: int, view: dict, rep: Report) -> str:
+    """The named merge must be on main, with exactly two parents and the checked head second."""
+    merged = view.get("mergeCommit")
+    oid = merged.get("oid") if isinstance(merged, dict) else None
+    if not isinstance(oid, str) or not FULL_OID.fullmatch(oid):
+        raise Refusal(f"GitHub names no full merge commit for queued #{number}")
+    git(ctx.repo, "fetch", "origin")
+    main = rev_parse(ctx.repo, "refs/remotes/origin/main^{commit}")
+    if not main or rev_parse(ctx.repo, f"{oid}^{{commit}}") is None \
+            or not git_ok(ctx.repo, "merge-base", "--is-ancestor", oid, main):
+        raise Refusal(f"origin/main does not hold the merge commit GitHub names for #{number}")
+    parents = git(ctx.repo, "rev-list", "--parents", "-n", "1", oid).split()[1:]
+    if len(parents) != 2 or parents[1] != ctx.sha:
+        raise Refusal(f"queued merge {oid[:12]} does not have the checked head as second parent")
+    rep.add("5", "main", "ok", f"{oid[:12]} on origin/main, with {ctx.sha[:12]} as second parent")
+    return oid
+
+
+def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode: bool,
+               body: str | None) -> int:
+    """Enqueue once, then follow a known entry to merge or ejection, with bounded polling.
+    `body`, the gates' last read, may declare the pull request a red main's fix."""
+    asked = False
+    result, code = "refused", 1
+    try:
+        if dry_run:
+            rep.add("4", "enqueue", "skip", f"dry run: would enqueue #{number}, head {ctx.sha}")
+            result, code = "passed every gate (dry run, not queued)", 0
+        else:
+            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep)
+            main_health(ctx._replace(base=tip), rep, body)
+            view = queue_view(ctx, number)
+            if view["state"] != "OPEN":
+                raise Refusal(f"#{number} is no longer open")
+            entry = view["mergeQueueEntry"]
+            asked = True
+            if entry is None:
+                entry = enqueue(ctx, view)
+            group = queue_group(entry)
+            rep.add("4", "enqueue", "ok", f"#{number} queued with head {ctx.sha}")
+            deadline = time.time() + QUEUE_TIMEOUT
+            while True:
+                view = queue_view(ctx, number)
+                if view["state"] == "MERGED":
+                    oid = verify_queue_merge(ctx, number, view, rep)
+                    result, code = f"merged #{number} as {oid[:12]}", 0
+                    break
+                if view["state"] == "OPEN" and view["mergeQueueEntry"] is None:
+                    detail = queue_checks(ctx, group)
+                    rep.add("4", "merge queue", "FAIL", f"#{number} ejected; {detail}")
+                    result, code = f"ejected #{number}; {detail}", 1
+                    break
+                if view["state"] != "OPEN":
+                    raise Refusal(f"#{number} is {view['state']}; no queue verdict is known")
+                group = queue_group(view["mergeQueueEntry"]) or group
+                if time.time() >= deadline:
+                    raise Refusal(f"timed out following #{number}")
+                time.sleep(QUEUE_POLL)
+    except (Exception, KeyboardInterrupt) as e:
+        if asked:
+            result, code = f"queued; verdict not followed ({e})", 3
+            print(f"\nQueued; verdict not followed: {e}")
+        else:
+            result, code = f"refused ({e})", 1
+            print(f"\nREFUSED: {e}")
+    summary(rep, "queue dry run" if dry_run else "queue", ctx.sha, ctx.base, result, "")
+    return code
+
+
 # --------------------------------------------------------------------------------------
 # Step 6: the summary and the log outside the repository
 
@@ -5730,8 +6370,20 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         earlier = load_record(ctx.sha, ctx.base)
         checked = checks_record(earlier, test_mode, risk)
         release_needs_full_record(ctx, number, labels, checked, earlier, test_mode, rep)
+        # The record is a file the checks it ran could have written. When the head
+        # changes the checks themselves, CI runs the head's copies, never origin/main's,
+        # so only the pre-flight can find that origin/main's checks fail on it: the full
+        # checks run again here rather than trust the record.
+        # So too for a head that changes any protected path: CI runs the head's own
+        # workflow (.github/) as well as its own checks.
+        if checked is not None and any(under(p, CHECK_INPUTS) or is_protected(p)
+                                       for _, p in changed_files(repo, ctx.base, ctx.sha)):
+            rep.add("3", "full checks record", "note", "the head changes the checks or a "
+                    "protected path, so the full checks run again, not the record of the "
+                    "pre-flight")
+            checked = None
         if checked is None:
-            gates(ctx, number, rep)     # before the long checks, so a draft fails at once
+            view = gates(ctx, number, rep)   # before long checks, so a draft fails at once
         rep.heading("3. The pre-flight of the head")
         # The secret scan and the guards run on the head every time: the record is a
         # local file, and the pre-flight ran the commit's own code (its checks, and Lean
@@ -5774,19 +6426,22 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         if merge_train_input(ctx, body_view) != train_body:
             raise Refusal("the train's body changed during the checks: run --merge again")
         body = body_view.get("body") or ""
-        template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+        template = show(ctx.repo, ctx.harness_sha or ctx.base, TEMPLATE) \
+            or show(ctx.repo, ctx.sha, TEMPLATE)
         if unfinished_section(body, template) != unfinished_section(view.get("body") or "",
                                                                     template):
             raise Refusal(f"#{number}'s Unfinished work changed after the gates read it: "
                           "run --merge again")
         m = BLOCK.search(body)
         new = refreshed(body, describe(ctx, pre))
-        if checked is None or not m or (m.group(1), m.group(2)) != (ctx.sha, ctx.base):
+        if not block_current(ctx, m, record):
             new = put_block(new, preflight_block(ctx.sha, ctx.base, record))
         if unfinished_section(new, template) != unfinished_section(body, template):
             raise Refusal(f"refreshing #{number}'s parts would change its Unfinished work: "
                           "put safe_push's markers back where the template has them")
-        if new != body:
+        # A body edited in GitHub's page has CRLF line ends, and the parts are written
+        # afresh with LF: the parts are up to date when they differ by line ends alone.
+        if new.replace("\r\n", "\n") != body.replace("\r\n", "\n"):
             rep.add("3", "body", "FAIL", "its pre-flight summary or the parts safe_push "
                     f"wrote are out of date: run `git safe-push --branch {ctx.branch}` to "
                     "refresh them, then run --merge again")
@@ -5812,12 +6467,15 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         labels = current_labels
         kind = next((k for k in KIND_LABELS if k in labels), None)
         rep.heading("4. Merge")
+        if ctx.queue:
+            return queue_main(ctx, number, rep, dry_run, test_mode, view.get("body"))
         if dry_run:
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "
                     f"({ctx.sha[:12]}) with a merge commit, and delete {ctx.branch}")
             result, code = "passed every gate (dry run, not merged)", 0
         else:
             main_unmoved(ctx)
+            main_health(ctx, rep, view.get("body"))
             merging, started = "asked", time.time()
             r = merge(ctx, number, view)
             oid = merge_outcome(ctx, number, rep, r, started)
