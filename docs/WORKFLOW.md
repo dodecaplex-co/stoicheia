@@ -444,6 +444,7 @@ requests"](#landing-work-pull-requests), step 4). `check`, `model`, `acceptance`
 `queue-integrity` runs its offline cases on every pull request and its judge on every
 group, and `queue-gaps` does its work on merge groups only. `negative` runs in full for
 R3, R4 and R5.
+`formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
 `Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
 class to a file of the main package that the formal model imports, directly or through
 others: `risk` reads them from the model's import lines, at both ends of the change, so

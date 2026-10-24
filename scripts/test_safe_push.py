@@ -1763,7 +1763,13 @@ real_preconditions = safe_push.preconditions
 def preconditions(repo, commit, branch, dry_run, test_mode, rep, title=None):
     return real_preconditions(repo, commit, branch, dry_run, True, rep, title)
 safe_push.preconditions = preconditions
-safe_push.CHECKS = [("test full checks", [sys.executable, "-c", "print('checked')"])]
+# The fixture's main holds the registry, so step 4's sequence is read from it, as usual,
+# and its step line kept; the small command runs in its place.
+real_check_list = safe_push.check_list
+def check_list(ctx, rep):
+    real_check_list(ctx, rep)
+    return [("test full checks", [sys.executable, "-c", "print('checked')"])]
+safe_push.check_list = check_list
 safe_push.NEGATIVE = [("test negative checks", [sys.executable, "-c", "print('checked')"])]
 sys.exit(safe_push.main(sys.argv[2:]))
 """
@@ -11065,8 +11071,8 @@ class Units(unittest.TestCase):
         workflow = yaml.safe_load(source)
         next(step for step in workflow["jobs"]["check"]["steps"]
              if step.get("uses") == "actions/checkout@v5").pop("with")
-        self.assertEqual(enforced_check_commands(
-            normalized_check_job(yaml.safe_dump(workflow)), checks), checks)
+        self.assertEqual(enforced_check_commands(normalized_check_job(yaml.safe_dump(workflow))),
+                         [RUN_CHECKS])
 
     def test_every_checkout_keeps_no_token(self):
         # CI's jobs and the post-merge workflow's run with a read-only token; none leaves
