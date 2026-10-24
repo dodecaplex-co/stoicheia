@@ -5642,3 +5642,49 @@ findings:
   definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
   which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
   by an independent reader.
+
+- **The numerical checks, made ready for the second axiom retirement.** This preparation
+  keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
+  change lands in a pull request of its own before the retirement it judges. The 31 laws
+  due to become theorems also have derived properties, so their numerical checks survive
+  removal from the axiom registry. Protected files changed relative to main:
+  [`tests/model/derived.py`](../../tests/model/derived.py) keeps each of those 31 laws'
+  predicates word for word, alongside the eight already retained;
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) call each by its
+  `derived.` name on the existing configurations and newly sample the laws they did not
+  yet reach, five in the exhaustive harness and ten in the structured harness;
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records the 39 derived properties
+  and the two harnesses' counts. No check is weakened: comparing each new derived
+  predicate's body with its law in `tests/model/search.py` found all 31 byte-identical,
+  with the same parameters, guards and conclusions. The eight earlier predicates stay
+  unchanged. The added samples let the unchanged `tests/model/run.py` requirement hold
+  for every derived property: each exhaustive or structured run must report it with its
+  hypotheses met and no counterexample, independently of the axiom registry.
+- **The safe-push harness, made ready for the second axiom retirement.**
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now plants its added law
+  beside `Tacit.line_unique`, uses that surviving law for mutation and expected-failure
+  fixtures in both numerical models, and uses the same surviving dependency for its III.1
+  re-proof and certificate-expectation fixtures. Its fixture for an expectation dropped
+  with its regression injects `Tacit.angle_le_two_right` in place of `Tacit.circle_eq`:
+  after the second retirement III.1 rests on `circle_eq` (through `centre_inside` and
+  `radius_ne_zero`), and the fixture needs a locked rule that III.1 uses neither before nor
+  after it. Every test case, exact replacement, count decrement and rejection expectation
+  remains in place.
+- **The style check's scope test, made ready for the second axiom retirement.**
+  [`tests/test_check_style.py`](../../tests/test_check_style.py)'s case that a rule no
+  proposition page shows is outside the rendered-docstring scope used
+  `Tacit.exists_point_inside_circle`; after the second retirement I.1 and every entry
+  after it rest on that rule, so the page shows it and the case would fail. The case now
+  names Circle 3, `Tacit.outside_of_between`, which has a docstring and on which
+  `scripts/check_fidelity.py` forbids every entry to rest, so no page can show it before
+  the retirement or after. The case still asserts that a rule with a docstring is left out
+  of the scope when no page shows it; nothing else changes.
+- **The overlap screen's tests, made ready for the second axiom retirement.** Two cases of
+  [`tests/test_screen.py`](../../tests/test_screen.py) took III.2 as the row of
+  `Audit/screen.py`'s list `KNOWN` that a run must find. After the second retirement the
+  screen, which tries only axioms, no longer closes III.2 or III.6, since the rules that
+  closed them are theorems, and `KNOWN` keeps III.5 alone. The two cases now take the
+  first row of `KNOWN`, whichever it is, and assert the same of it as before: closed only
+  by its bare try it is lost, and not closed it is lost. They pass with the list before
+  the retirement and after it; no assertion is removed.
