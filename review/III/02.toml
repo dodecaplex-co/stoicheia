@@ -54,10 +54,11 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "full"
-commit = "eed076538"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:9d7858b2be8cebc1"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"
+commit = "81424ad0a"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:03307d9e71d6c0dc"
+run = "card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:9835f462d8ba1fe3"
 
 [review.items]
 statement = "pass"
