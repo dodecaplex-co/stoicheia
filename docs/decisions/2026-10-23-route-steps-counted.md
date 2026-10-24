@@ -27,8 +27,8 @@
   summary says "one or more", and the certificate's key names that label only while some
   record uses it. As of 23 October 2026 no record does.
 
-  Nothing is loosened: no check, test, expected value, lock or schema changes, and no
-  review record, Lean file, statement or line of Heath's. Books I and II have no modified
+  Nothing is loosened: no check or test is weakened, and no expected value, lock, schema,
+  review record, Lean file, statement or line of Heath's changes. Books I and II have no modified
   route, and their pages are unchanged. The regenerated pages differ from main's in the
   route's words alone. The table in brief 0004 and the decisions page's entry "When a
   route is 'one step changed'" are dated records and stay as they are. This closes #380.
