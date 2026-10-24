@@ -38,11 +38,10 @@
   checks out the whole history, keeps no token, and installs Python 3.12 and the pinned
   YAML parser; each runs its part under `set -o pipefail`, its output kept by `tee` in a
   log of its own, and keeps its list and its log as artifacts for 35 days, a shard run
-  again replacing both. Whether a later attempt of the run can fetch a list an earlier
-  attempt kept is GitHub's to say, and nothing relies on it: by the coordinator's ruling
-  of 24 October 04:40, a run re-run with "re-run all jobs" is judged afresh, and one
-  re-run with "re-run failed jobs", whose proof may not see the other shards' earlier
-  lists, then stays red, for the proof never passes on lists it cannot see.
+  again replacing both. The verdict and report have `actions: read` and authenticate
+  their downloads for the current run, so a rerun of failed jobs combines the failed
+  shard's replacement artifacts with the retained lists and logs from the shards that
+  passed in an earlier attempt.
   `safe-push-tests`, the name the release's gate and the report read, now needs the
   shards and runs whatever they did: it checks out the commit they ran, fetches every
   list, and runs the coverage proof whatever the shards' result. It is
@@ -75,7 +74,11 @@
   `||`, `!` and parentheses, and the verdict's script run under bash for every
   result of the matrix. A model of a whole run, `CadenceRun`, runs the workflow's own jobs
   and steps, with stand-ins for the shards' tests, the artifacts and `gh`, and the
-  verdict's and the report's scripts under bash. On it stand three planted reds: a test
+  verdict's and the report's scripts under bash. The artifact stand-in distinguishes an
+  attempt-scoped download from an authenticated run-scoped one; its failed-jobs rerun
+  checks that one shard's replacement list joins the seven retained lists, the coverage
+  proof and verdict pass, and the report can fetch the retained logs. On it stand three
+  planted reds: a test
   failing in one shard makes the verdict and the run red, and the report opens the issue
   labelled `blocks-release`, or comments on the one open, naming that test; a shard's list
   lost once kept makes the proof fail, naming the shard, and the run red, though every
