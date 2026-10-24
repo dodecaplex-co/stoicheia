@@ -146,11 +146,23 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
 # These rules contain III.2; no certificate entry may rest on either, even through a
-# helper. Certificate names omit the leading `Elements.`.
+# helper. Certificate names omit the leading `Elements.`. Each stays an axiom in the lock,
+# or is a theorem (`proved_rules`) proved in one of two ways. Proved from the other rule
+# while that one is still a locked axiom, it brings that axiom into the axioms of every
+# entry using it, which refuses the entry. Proved by a proof that cites III.2
+# (`proved_rule_cites`), with III.2 proved and resting on neither rule, it needs no axiom
+# beneath it, and that is safe: an entry using such a rule cites III.2 through it, for
+# Facts.lean's `directDeps`, the walk that finds an entry's citations, passes through the
+# Tacit theorems. So the later-citation check refuses it in Books I and II and in III.1,
+# porisms and companions included; III.2 cannot use it, since Lean admits no circular
+# proof, and the route is refused if III.2's entry rests on either rule; after III.2 the
+# use is an honest citation.
 FORBIDDEN_CIRCLE_RULES = {
     "Tacit.inside_of_between": "Circle 2",
     "Tacit.outside_of_between": "Circle 3",
 }
+# The proposition that proves both, as a proved rule's `proved_rule_cites` gives it.
+CIRCLE_SOURCE = "III.2"
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -1054,6 +1066,45 @@ def foundations(module: str) -> bool:
     return module.startswith("Elements.Foundations.")
 
 
+def circle_source_faults(facts) -> list[str]:
+    """Why III.2's entry in facts.json cannot be the proof a forbidden circle rule is
+    proved from: it is missing, it is not proved, or it rests on a forbidden circle rule
+    itself, through its axioms, a shared step or a lemma it inherits an axiom through (the
+    circular case). Empty when it can. A malformed field is a fault, never a crash."""
+    entries = facts.get("propositions")
+    found = [p for p in entries if isinstance(p, dict) and p.get("ref") == CIRCLE_SOURCE] \
+        if isinstance(entries, list) else []
+    if not found:
+        return [f"{CIRCLE_SOURCE} has no entry in facts.json"]
+    faults = []
+    for p in found:
+        if p.get("status") != "proved":
+            faults.append(f"{CIRCLE_SOURCE} is {p.get('status')!r}, not \"proved\"")
+        axioms, steps, inherited = p.get("axioms"), p.get("shared_steps"), p.get("inherited")
+        if not isinstance(axioms, list):
+            faults.append(f"{CIRCLE_SOURCE}'s `axioms` is not a list")
+            axioms = []
+        if not isinstance(steps, list) or not all(isinstance(s, dict) for s in steps):
+            faults.append(f"{CIRCLE_SOURCE}'s `shared_steps` is not a list of objects")
+            steps = []
+        if not isinstance(inherited, dict) or not all(
+                isinstance(lems, list) and all(isinstance(lem, dict) for lem in lems)
+                for lems in inherited.values()):
+            faults.append(f"{CIRCLE_SOURCE}'s `inherited` is not an object of lists of objects")
+            inherited = {}
+        lemmas = [lem.get("name") for lems in inherited.values() for lem in lems]
+        for name, rule in FORBIDDEN_CIRCLE_RULES.items():
+            if name in axioms:
+                faults.append(f"{CIRCLE_SOURCE} itself rests on {name} ({rule}) among its axioms")
+            if any(s.get("name") == name for s in steps):
+                faults.append(f"{CIRCLE_SOURCE} itself names {name} ({rule}) among its "
+                              "shared steps")
+            if name in lemmas:
+                faults.append(f"{CIRCLE_SOURCE} itself names {name} ({rule}) among the "
+                              "lemmas it inherits through")
+    return list(dict.fromkeys(faults))
+
+
 def check_lock(facts, path: Path = LOCK):
     """Compare the lock with facts.json's `axiom_types` and `vocabulary`, both ways.
     Returns the number of assumptions the lock holds, or None if it cannot be read."""
@@ -1067,17 +1118,27 @@ def check_lock(facts, path: Path = LOCK):
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
     proved = facts.get("proved_rules", {})
+    # What each proved rule cites; a missing or malformed list cites nothing.
+    cites = facts.get("proved_rule_cites")
+    cites = cites if isinstance(cites, dict) else {}
     for name, rule in FORBIDDEN_CIRCLE_RULES.items():
         if name in lock[0]:
             continue
         if name not in proved:
             fail(f"{name} ({rule}): not an axiom in {rel(path)} or a proved rule in "
                  "facts.json (if the rule was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
-        elif not any(other != name and other in lock[0] and other in proved[name]
-                     for other in FORBIDDEN_CIRCLE_RULES):
+        elif any(other != name and other in lock[0] and other in proved[name]
+                 for other in FORBIDDEN_CIRCLE_RULES):
+            continue
+        elif not (isinstance(cites.get(name), list) and CIRCLE_SOURCE in cites[name]):
             fail(f"{name} ({rule}): proved without another forbidden circle rule "
-                 f"beneath it that is an axiom in {rel(path)}, so entries using it "
-                 "cannot be refused by their axioms")
+                 f"beneath it that is an axiom in {rel(path)}, or a proof that cites "
+                 f"{CIRCLE_SOURCE}, so entries using it cannot be refused by their axioms "
+                 "or by their citations")
+        else:
+            for fault in circle_source_faults(facts):
+                fail(f"{name} ({rule}): proved by a proof that cites {CIRCLE_SOURCE}, "
+                     f"but {fault}, so the rule is not proved from a sound {CIRCLE_SOURCE}")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")

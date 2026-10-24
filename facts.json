@@ -706,6 +706,15 @@
    "Tacit.superposition",
    "Tacit.triple_incidence1",
    "Tacit.triple_incidence2"]},
+ "proved_rule_cites":
+ {"Tacit.triple_incidence3": [],
+  "Tacit.not_same_side_of_circles_meet": ["I.7"],
+  "Tacit.line_meets_circle_of_opposite_sides": [],
+  "Tacit.inside_of_between": [],
+  "Tacit.inside_of_angle_add": ["I.13"],
+  "Tacit.exists_point_outside_circle": [],
+  "Tacit.centre_unique": [],
+  "Tacit.adjacent_eq_of_right": ["I.13"]},
  "propositions":
  [{"status": "proved",
    "statement":

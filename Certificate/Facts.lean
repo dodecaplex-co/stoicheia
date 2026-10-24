@@ -824,8 +824,11 @@ run_cmd do
       | none => pure ""
     words := words.push (nameStr w, Json.str s!"{kind} : {type}{value}")
   /- Proved tacit rules keep their names when they leave the axiom lock. Record what
-     Lean finds beneath each, so the policy check can still refuse a forbidden rule. -/
+     Lean finds beneath each, so the policy check can still refuse a forbidden rule, and
+     the entries each cites, found by the entries' own walk, `directDeps`: what an entry
+     citing through a proved rule is found to cite, the rule's own list shows. -/
   let mut provedRules : Array (String × Json) := #[]
+  let mut provedRuleCites : Array (String × Json) := #[]
   for (n, ci) in env.constants.toList do
     -- Only this project's own tacit rules, by declaring module, as `isLocal` decides; a
     -- listing, not a walk, so a constant from another module is skipped here, not refused.
@@ -836,6 +839,9 @@ run_cmd do
       let axs := euclidOnly (← collectAxioms n)
       provedRules := provedRules.push
         (nameStr n, toJson ((axs.map nameStr).qsort (· < ·)))
+      let cites := (← directDeps env toolchain entrySet n).cites
+      provedRuleCites := provedRuleCites.push
+        (nameStr n, toJson ((cites.toList.map refOf).toArray.qsort (· < ·)))
   let out := Json.mkObj [("lean_version", Json.str Lean.versionString),
     ("propositions", Json.arr entries),
     ("axiom_modules", Json.mkObj (axiomModules.toList.map fun (n, m) => (n, Json.str m))),
@@ -843,6 +849,7 @@ run_cmd do
     ("axiom_types", Json.mkObj axiomTypes.toList),
     ("vocabulary", Json.mkObj words.toList),
     ("proved_rules", Json.mkObj (provedRules.qsort (·.1 < ·.1)).toList),
+    ("proved_rule_cites", Json.mkObj (provedRuleCites.qsort (·.1 < ·.1)).toList),
     ("construction_rules", Json.arr ((construction.toList.map nameStr).toArray.qsort (· < ·)
       |>.map Json.str))]
   IO.FS.writeFile "facts.json" (out.pretty ++ "\n")
