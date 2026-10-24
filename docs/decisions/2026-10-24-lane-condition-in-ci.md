@@ -19,8 +19,10 @@
   it once. The test of the `check` job's shape allowed no setup step
   beyond checkout, Python and elan; by the coordinator's ruling of 24 October 02:40, it
   now allows that one install, exactly that line, once, straight after elan, with no
-  condition, environment, shell or working directory. Every refusal it made before still
-  stands, with the same message, and six new planted cases are refused: the install of
+  condition, environment, shell or working directory. Existing planted refusal cases
+  remain refused, but removing elan now reports "CI check setup prefix is incomplete before
+  the parser's install" instead of "CI check setup prefix is incomplete before the first
+  check." Six new planted cases are refused: the install of
   another requirements file, an extra package on the line, the install after the run of
   the checks, the install twice, the install before elan, and no install. With the guard
   that refuses each taken out, its case was seen to be accepted. The train is of class R5,
