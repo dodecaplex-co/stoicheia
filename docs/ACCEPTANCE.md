@@ -146,7 +146,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | B1 | Pages | machine | The book's index (with its introduction) and front matter, and README.md's completion summary for the book, are exactly what `render.py` makes. They are generated from facts.json and the records, so the summary is true to them. The introduction, the index and the front matter pass `check_style.py` (S18 and S19 among its rules), and their links resolve. |
 | B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's upper bound on an angle, used in I.47, for example; or its now-proved right-angle rule, used in 17 proofs from II.1 on, 16 calling it themselves) are read by no record, and not counted. |
 | B3 | Read-through | review | Read straight through, the book flows, and the voice is common. |
-| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below and the overlaps of III.2's kind. I.45 and II.14 have been full since 22 October 2026, through their outline companions, which take a figure given by its outline alone (#116). |
+| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: the overlaps of III.2's kind, and any allowed below, where none is now. I.45 and II.14 have been full since 22 October 2026, through their outline companions, which take a figure given by its outline alone (#116). |
 
 ## For the whole edition
 
@@ -161,18 +161,22 @@ All 99 of Books I–III, each with its porism and its companions.
 
 ## The limitations allowed
 
-P3 allows these statements short of full, each with the tag that says why, and no others.
-The list in the script (`ALLOWED_LIMITS` in `scripts/check_acceptance.py`) changes with
-this table, in a change to the check of its own.
+P3 allows a statement short of full only when this table names it, with the tag that says
+why; the table names none now. The list in the script (`ALLOWED_LIMITS` in
+`scripts/check_acceptance.py`) changes with this table, in a change to the check of its
+own.
 
 | Proposition | Scope | Tag | Why |
 |---|---|---|---|
-| III.16 | partial | `mixed-angles-omitted` | The angle of the semicircle and the horn-like angle are angles of a straight line and a circumference, which our angles are not; a prototype of mixed angles is to decide whether they become full (issue #57). |
-| III.31 | partial | `mixed-angles-omitted` | The angles of the greater and the less segment, likewise. |
 
-If the prototype carries III.16 and III.31 to full, their rows go. An overlap is no
-limitation of scope: it is a disclosure, declared in the record's `[overlap]` and the
-overlap catalogue, and P4 and B2 check that it is.
+I.45 and II.14 were allowed restricted, with `figure-with-dissection`, until their outline
+companions were proved and reviewed (#116). III.16 and III.31 were allowed partial, with
+`mixed-angles-omitted`, until their mixed-angle clauses were stated and proved
+([brief 0011](briefs/0011-mixed-angles.md), issue #57). All four records are full, their
+rows have gone, and P3 now refuses any of them short of full.
+
+An overlap is no limitation of scope: it is a disclosure, declared in the record's
+`[overlap]` and the overlap catalogue, and P4 and B2 check that it is.
 
 ## Recording a review item
 

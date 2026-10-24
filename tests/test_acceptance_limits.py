@@ -37,10 +37,8 @@ class AllowedLimits(unittest.TestCase):
                 "but for the limitations docs/ACCEPTANCE.md names"]
 
     def test_allowed_limits_and_table(self):
-        expected = {
-            "III.16": ("partial", "mixed-angles-omitted"),
-            "III.31": ("partial", "mixed-angles-omitted"),
-        }
+        # Every allowance has gone (#116, #162): the script and the table name none.
+        expected = {}
         self.assertEqual(acceptance.ALLOWED_LIMITS, expected)
         text = (ROOT / "docs/ACCEPTANCE.md").read_text(encoding="utf-8")
         section = text.split("## The limitations allowed\n", 1)[1].split("\n## ", 1)[0]
@@ -51,6 +49,22 @@ class AllowedLimits(unittest.TestCase):
              for ref, scope, tag, why in rows],
             [(ref, scope, tag) for ref, (scope, tag) in expected.items()],
         )
+
+    def test_an_allowed_row_asks_its_scope_and_tag(self):
+        # The table is empty, so a made-up row keeps P3's two refusals for a listed
+        # proposition tested: the scope not allowed, and the allowed scope without its tag.
+        with patch.object(acceptance, "ALLOWED_LIMITS",
+                          {"III.16": ("partial", "mixed-angles-omitted")}):
+            self.assertEqual(
+                self.p3_failures("III.16", "partial", ["mixed-angles-omitted"]), [])
+            for tags in ([], ["mixed-angles-local"]):
+                with self.subTest(tags=tags):
+                    self.assertEqual(self.p3_failures("III.16", "partial", tags), [
+                        "a partial statement allowed only as `mixed-angles-omitted`, "
+                        "and the record does not carry that tag",
+                    ])
+            self.assertEqual(self.p3_failures("III.16", "restricted", ["mixed-angles-omitted"]),
+                             self.unlisted("restricted"))
 
     def test_figures_short_of_full_fail_whatever_tags(self):
         # #116: the allowance for I.45 and II.14 is withdrawn, so a restricted or partial
@@ -69,42 +83,41 @@ class AllowedLimits(unittest.TestCase):
                 with self.subTest(ref=ref, tags=tags):
                     self.assertEqual(self.p3_failures(ref, "full", tags), [])
 
-    def test_partial_mixed_angles_with_tag_pass(self):
+    def test_mixed_angles_full_pass(self):
+        # III.16 and III.31 state their mixed angles, so their records are full.
         for ref in ("III.16", "III.31"):
             with self.subTest(ref=ref):
-                self.assertEqual(
-                    self.p3_failures(ref, "partial", ["mixed-angles-omitted"]), [])
+                book, number = ref.split(".")
+                record = acceptance.heath.load_review(book, int(number), require_stamp=False)
+                self.assertEqual(record["statement"]["scope"], "full")
+                self.assertEqual(self.p3_failures(
+                    ref, "full", record["representation"]["tags"],
+                    route=record["route"]["kind"]), [])
 
-    def test_partial_mixed_angles_without_tag_fail(self):
+    def test_mixed_angles_short_of_full_fail_whatever_tags(self):
+        # #162: their allowance has gone, so a partial or restricted statement of either
+        # fails as any limitation the table does not name, with the old tag or another.
         for ref in ("III.16", "III.31"):
-            for tags in ([], ["mixed-angles-local"], ["figure-with-dissection"]):
-                with self.subTest(ref=ref, tags=tags):
-                    self.assertEqual(self.p3_failures(ref, "partial", tags), [
-                        "a partial statement allowed only as `mixed-angles-omitted`, "
-                        "and the record does not carry that tag",
-                    ])
-
-    def test_restricted_mixed_angles_fail(self):
-        for ref in ("III.16", "III.31"):
-            for tags in ([], ["mixed-angles-omitted"]):
-                with self.subTest(ref=ref, tags=tags):
-                    self.assertEqual(self.p3_failures(ref, "restricted", tags),
-                                     self.unlisted("restricted"))
+            for scope in ("restricted", "partial"):
+                for tags in ([], ["mixed-angles-omitted"], ["mixed-angles-local"],
+                             ["figure-with-dissection"]):
+                    with self.subTest(ref=ref, scope=scope, tags=tags):
+                        self.assertEqual(self.p3_failures(ref, scope, tags),
+                                         self.unlisted(scope))
 
     def test_alternative_route_still_fails(self):
         alternative = ["the route is an alternative argument, which is no deliberate "
                        "limitation of Books I-III: Euclid's own argument is due"]
-        for ref, scope, tag in (("I.45", "full", "figure-with-dissection"),
-                                ("II.14", "full", "figure-with-dissection"),
-                                ("III.16", "partial", "mixed-angles-omitted"),
-                                ("III.31", "partial", "mixed-angles-omitted")):
+        cases = (("I.45", "figure-with-dissection"), ("II.14", "figure-with-dissection"),
+                 ("III.16", "mixed-angles-omitted"), ("III.31", "mixed-angles-omitted"))
+        for ref, tag in cases:
             with self.subTest(ref=ref):
                 self.assertEqual(
-                    self.p3_failures(ref, scope, [tag], route="alternative"), alternative)
-        for ref in ("I.45", "II.14"):
+                    self.p3_failures(ref, "full", [tag], route="alternative"), alternative)
+        for ref, tag in cases:
             with self.subTest(ref=ref, scope="restricted"):
                 self.assertEqual(self.p3_failures(
-                    ref, "restricted", ["figure-with-dissection"], route="alternative"),
+                    ref, "restricted", [tag], route="alternative"),
                     self.unlisted("restricted") + alternative)
 
 
