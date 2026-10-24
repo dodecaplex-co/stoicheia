@@ -1,0 +1,10 @@
+# Regenerate the pages, for the next entry's check that they were up to date: the book
+# pages, CERTIFICATE.md, GRAPH.md, README.md's scope rows, PROGRAM.md's status table,
+# section 8's first command block of docs/WORKFLOW.md, written from this registry, and the
+# count markers in other pages. A failure of render.py itself, its check of
+# docs/program.toml or of docs/decisions/ among them, is a verdict.
+order = 160
+name = "python3 scripts/render.py"
+job = "check"
+command = ["python3", "scripts/render.py"]
+section8 = "python3 scripts/render.py"
