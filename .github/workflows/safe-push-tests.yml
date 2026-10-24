@@ -67,9 +67,11 @@ jobs:
       - name: Keep the list of the tests this shard ran, for the proof
         # Kept when a test failed too, so that the proof names it. A shard that stops
         # before its end writes no list and keeps none, and the proof then fails. A shard
-        # run again replaces its list. Kept for 35 days, beyond the 30 in which GitHub lets
-        # a run's failed jobs be run again: those run again only the failed shards and the
-        # jobs after them, whose proof needs the other shards' lists still kept.
+        # run again replaces its list. Kept for 35 days. Whether a later attempt of the run
+        # can fetch a list an earlier attempt kept is GitHub's to say, and nothing relies on
+        # it: a rerun of all the jobs is judged afresh, and a rerun of the failed jobs
+        # alone, whose proof may not see the other shards' earlier lists, then stays red,
+        # for the proof never passes on lists it cannot see.
         if: always()
         uses: actions/upload-artifact@v5
         with:
@@ -103,10 +105,10 @@ jobs:
     #   outcome, and the proof fails on a K from 1 to N with no list, so a shard that did
     #   not run, or stopped before its end, fails it; and on any test that did not pass, so
     #   a shard one of whose tests failed fails it too.
-    # Neither can pass with a shard missing. Both are needed: a list a shard kept in an
-    # earlier attempt of the run stays when, in a rerun of all the jobs, that shard is
-    # cancelled before it keeps a new one, so the proof alone could pass; and the matrix's
-    # result says nothing of which tests ran.
+    # Neither can pass with a shard missing. Both are needed: should a later attempt see a
+    # list an earlier one kept, that list stays when, in a rerun of all the jobs, its
+    # shard is cancelled before it keeps a new one, so the proof alone could pass; and the
+    # matrix's result says nothing of which tests ran.
     needs: safe-push-shards
     if: always()
     runs-on: ubuntu-latest

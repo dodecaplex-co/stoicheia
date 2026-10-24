@@ -38,21 +38,26 @@
   checks out the whole history, keeps no token, and installs Python 3.12 and the pinned
   YAML parser; each runs its part under `set -o pipefail`, its output kept by `tee` in a
   log of its own, and keeps its list and its log as artifacts for 35 days, a shard run
-  again replacing both. `safe-push-tests`, the name the release's gate and the report
-  read, now needs the shards and runs whatever they did: it checks out the commit they
-  ran, fetches every list, and runs the coverage proof whatever the shards' result. It is
+  again replacing both. Whether a later attempt of the run can fetch a list an earlier
+  attempt kept is GitHub's to say, and nothing relies on it: by the coordinator's ruling
+  of 24 October 04:40, a run re-run with "re-run all jobs" is judged afresh, and one
+  re-run with "re-run failed jobs", whose proof may not see the other shards' earlier
+  lists, then stays red, for the proof never passes on lists it cannot see.
+  `safe-push-tests`, the name the release's gate and the report read, now needs the
+  shards and runs whatever they did: it checks out the commit they ran, fetches every
+  list, and runs the coverage proof whatever the shards' result. It is
   green only when GitHub's result for the matrix is success, which it is only when every
   shard succeeded, and the proof passed; a shard that failed, was cancelled, stopped at
   its limit or was skipped, or a list missing, makes it red, never skipped, and the run's
   conclusion red with it. Both judgements stay, and the job's comment says why: the proof
   fails on a shard of the matrix with no list and on any test that did not pass, while
-  the matrix's result catches a shard cancelled in a rerun of all the jobs whose list from
-  the earlier attempt still stands. The `report` job needs the same three jobs as before,
-  keeps its title, its leave to write issues, which no other job has, and its running no
-  code of the repository, still names the red jobs, and now reads the failing tests from
-  every shard's log, fetched by pattern. `scripts/safe_push.py` is unchanged: its release
-  gate already holds every job of the run but `report` to have passed, the shards among
-  them, beside the three jobs it names.
+  the matrix's result catches a shard cancelled in a rerun of all the jobs, should its
+  list from the earlier attempt still be seen. The `report` job needs the same three jobs
+  as before, keeps its title, its leave to write issues, which no other job has, and its
+  running no code of the repository, still names the red jobs, and now reads the failing
+  tests from every shard's log, fetched by pattern. `scripts/safe_push.py` is unchanged:
+  its release gate already holds every job of the run but `report` to have passed, the
+  shards among them, beside the three jobs it names.
 
   The card's second part, running only the test classes that a change touches, is left
   out: it would choose tests for a pull request, and no pull request has run the suite
@@ -75,7 +80,8 @@
   labelled `blocks-release`, or comments on the one open, naming that test; a shard's list
   lost once kept makes the proof fail, naming the shard, and the run red, though every
   shard succeeded; and a shard cancelled in a rerun, or the shards skipped, makes the
-  verdict red, though the first attempt's lists still pass the proof. Each of the three
+  verdict red, even where the model lets the first attempt's lists be seen and pass the
+  proof. Each of the three
   was seen to fail with its guard taken out in a scratch copy: the report's condition on
   the verdict's result, the verdict job's `always()`, the proof's demand for a list from
   every shard, and the verdict's reading of the matrix's result. `CadenceReport` now deals
