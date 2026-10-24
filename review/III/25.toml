@@ -84,10 +84,11 @@ every_case = true
 
 [review]
 stage = "full"
-commit = "4063cad6"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:239c66918e1815cb"
-run = "brief 0005 stage 5, ship R3 (#29); lines 92, 174 and 194 of Prop25.lean, of unknown family, read also by GPT-6 Astra (Codex)"
+run = "brief 0005 stage 5, ship R3 (#29); lines 92, 174 and 194 of Prop25.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4063cad6"
+text = "sha256:fea6a4327f6ad99c"
 
 [review.items]
 statement = "pass"

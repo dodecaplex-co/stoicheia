@@ -32,10 +32,11 @@ case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC
 
 [review]
 stage = "full"
-commit = "1f8fa897"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c6ea841e06026dc5"
-run = "brief 0005 stage 5, ship R3 (#29)"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897"
+text = "sha256:7b66b5a45ca3dd80"
 
 [review.items]
 statement = "pass"
