@@ -95,7 +95,7 @@ restated as `Elements.Superposition.Rule Elements.primitives`; the regenerated v
 keeps its 208 entries, and the certificate has 41 expectations. The audit pins of
 `Audit/Superposition.lean` that named retired rules now record what Lean prints. No
 superposition statement changes here, and the review of the cited laws' proofs that round 4
-ties to this landing is the first note above.
+ties to this landing is the note of 21 October on the second retirement wave above.
 
 **Round 4's correction.** The owner approved questions 2, 4 and 5 "as prototyped", and
 asked that the prototyped work be finished in an issue of its own, #150. There each answer
@@ -355,8 +355,8 @@ three of its straight lines and be proved without drawing any of them (below), a
 is drawn inside the placement. The side serves the law's first half, `rayOfAngle`; the
 second, `rayOfAngleSide`, uses none. Since the second retirement, the proofs of both halves
 draw other straight lines, outside the placement, one of them through the law's point P,
-which in I.4 is C′ (the first note above); citing the law still draws nothing in the
-placement. Its model obligation is now proved: wherever the triangle can be laid
+which in I.4 is C′ (the note of 21 October on the second retirement wave above); citing
+the law still draws nothing in the placement. Its model obligation is now proved: wherever the triangle can be laid
 down, the straight line through D and C′ must exist too, which Postulate 1 gives, since D is
 not C′. The owner approved this kept side, as prototyped, under question 5 on 20 October
 2026. That cost is checked by reading the model's proof; #150 tracks a theorem for it.
@@ -473,8 +473,9 @@ show those construction rules law by law; the supporting prose and audit pins mu
 reviewed again. Under the stricter reading of question 4, this would affect I.4 as well as I.8.
 Retired axioms must not be restored to preserve the earlier classification. That review
 belongs to the second wave's landing ("Landing"), and #150 tracks it. *Done at that
-landing* (the first note above): the four laws are as named here, `cited_laws` and the
-audit pins record their construction rules, and no retired axiom is restored.
+landing* (the note of 21 October on the second retirement wave above): the four laws are
+as named here, `cited_laws` and the audit pins record their construction rules, and no
+retired axiom is restored.
 
 ## How I.4 and I.8 keep Euclid's arguments
 
@@ -891,7 +892,7 @@ regenerated; the record of each condition is:
   `Staging/Superposition/Derivations.lean` by carrying needed geometric support into
   `Elements/Figure/Superposition.lean`, not by restoring the prototype. Preserve both
   waves' root imports, and restore no retired axiom. *Done at the second wave's landing*
-  (the first note above).
+  (the note of 21 October on the second retirement wave above).
 - **The combined sources are regenerated.** The exact outputs and the six records read
   again at `bd86a7b6` are recorded in the
   [decisions entry](0002-decisions.md#20-october-2026). Regenerate and recheck them again
@@ -1022,7 +1023,8 @@ from round 2. The other items record the delivered design or the continuing proc
    too, in the four laws named under "What the laws' proofs draw". The
    classification, set by hand, was retired on 21 October 2026; the certificate's
    `cited_laws` gives each law's construction rules, and #150 tracks the review at the
-   second wave's landing, recorded in the first note above.
+   second wave's landing, recorded in the note of 21 October on the second retirement
+   wave above.
 5. **The side laid down, approved 20 October 2026.** The owner accepted the prototype's
    kept side AC as a straight line through D and C′, so the angle-to-ray argument draws no
    line inside the placement. The model proves
