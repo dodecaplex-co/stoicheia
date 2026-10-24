@@ -5612,6 +5612,7 @@ findings:
   every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
   second retirement wave changes that for four of them, and its landing records it.
   I.4's and I.8's records were read again in full and stamped by an independent reader.
+
 - **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
   question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
   placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,

@@ -1,0 +1,7 @@
+# Check the staged statements, which await their proofs, still build. Staging is a library
+# nothing imports, outside the default build (docs/WORKFLOW.md, section 2).
+order = 30
+name = "lake build Staging"
+job = "check"
+command = ["lake", "build", "Staging"]
+section8 = "lake build Staging"
