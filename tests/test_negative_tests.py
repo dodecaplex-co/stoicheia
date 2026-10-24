@@ -1018,6 +1018,72 @@ class CircleRuleTests(unittest.TestCase):
                 self.assertEqual(self.lock.read_bytes(), saved)
                 self.assertEqual((self.root / "facts.json").read_bytes(), saved_facts)
 
+    def test_circle_plant_locks_circle3_once_it_is_proved_from_iii2(self):
+        # Circle 3 retired after III.2: neither rule in the lock, and facts.json giving
+        # both as proved rules that cite III.2, as the walk finds them. The plant must
+        # still make Circle 2 cite nothing, and put Circle 3 back in the lock and in the
+        # tables of axioms for the case that rests on it.
+        facts = self.fixture((), {self.inside: [], self.outside: []},
+                             {self.inside: ["III.2"], self.outside: ["III.2"]})
+        (self.root / "facts.json").write_text(json.dumps(facts))
+        saved = self.lock.read_bytes()
+        saved_facts = (self.root / "facts.json").read_bytes()
+        self.errors[:] = ["a previous finding"]
+        locks, original = [], negative.check_fidelity.check_lock
+
+        def check_lock(facts, path):
+            locks.append(negative.check_fidelity.read_lock(path)[0])
+            return original(facts, path)
+        with patch.object(negative.check_fidelity, "check_lock", side_effect=check_lock) as check:
+            plant("circle_proved")()
+        self.assertEqual(check.call_count, 2)
+        calls = [call.args[0] for call in check.call_args_list]
+        for call, dependencies, lock in zip(calls, ([], [self.outside]), locks):
+            self.assertEqual(call["proved_rules"][self.inside], dependencies)
+            self.assertEqual(call["proved_rule_cites"][self.inside], [])
+            self.assertNotIn(self.outside, call["proved_rules"])
+            self.assertNotIn(self.outside, call["proved_rule_cites"])
+            self.assertIn(self.outside, call["axiom_types"])
+            self.assertEqual(call["axiom_types"][self.outside], lock[self.outside])
+            self.assertNotIn(self.inside, lock)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(self.errors, ["a previous finding"])
+        self.assertEqual(self.lock.read_bytes(), saved)
+        self.assertEqual((self.root / "facts.json").read_bytes(), saved_facts)
+
+    def test_renamed_plant_renames_circle3_where_the_certificate_keeps_it(self):
+        renamed = "Tacit.Circle.outside_of_between"
+        for retired in (False, True):
+            with self.subTest(retired=retired):
+                facts = self.fixture(() if retired else (self.outside,),
+                                     {self.outside: []} if retired else None,
+                                     {self.outside: ["III.2"]} if retired else None)
+                facts["axiom_modules"] = {name: "Elements.Foundations.Tacit.Diagram"
+                                          for name in facts["axiom_types"]}
+                (self.root / "facts.json").write_text(json.dumps(facts))
+                saved = self.lock.read_bytes()
+                seen = []
+
+                def fidelity(*args):
+                    self.assertEqual(args[0], "--facts")
+                    seen.append((json.loads(Path(args[1]).read_text()),
+                                 negative.check_fidelity.read_lock(self.lock)[0]))
+                    return subprocess.CompletedProcess(
+                        [], 1, f"✗ {self.outside} (Circle 3): not an axiom in "
+                        "Certificate/axioms.lock\n", "")
+                with patch.object(negative, "fidelity", side_effect=fidelity):
+                    plant("circle_renamed")()
+                (copy, lock), = seen
+                tables = (("proved_rules", "proved_rule_cites") if retired
+                          else ("axiom_types", "axiom_modules"))
+                for table in tables:
+                    self.assertIn(renamed, copy[table])
+                    self.assertNotIn(self.outside, copy[table])
+                self.assertEqual(renamed in lock, not retired)
+                self.assertNotIn(self.outside, lock)
+                self.assertEqual(negative.failures, [])
+                self.assertEqual(self.lock.read_bytes(), saved)
+
     def test_circle_plant_restores_on_failure_or_interrupt(self):
         for retired in (False, True):
             for exception in (RuntimeError, KeyboardInterrupt):
