@@ -1,5 +1,13 @@
 # Brief 0009: a restricted rule of superposition
 
+*22 October 2026, #312: I.4 and I.8 write no number. Where "A finite symbolic context"
+below says that a proof names its symbols with an inductive type of its own "and numbers
+them once", the numbering is now done for it: `Symbols.ofList`, in `Soundness.lean`, takes
+the list of the figure's lettered points, or of its straight lines, and computes their count
+and places, so that neither proof writes a count or a position
+([the decision](../decisions/2026-10-22-superposition-symbols-from-list.md)). `Symbols`,
+`Rule.apply`, the rule, the lock and every statement are unchanged.*
+
 *21 October 2026, #150, question 2: part 4 of the restriction is now a theorem.
 `Rule.Figure` is the statement of `Rule.infer` without its cited-law hypothesis, tied to the
 locked rule by `Rule.iff_figure`, and `Rule.Figure.restrict` proves that it passes to any part

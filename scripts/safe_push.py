@@ -79,6 +79,10 @@ order, and the first that fails stops it with a message saying why:
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
+   - the commit's registry of checks reads, by the commit's own scripts/registry.py, as
+     the pre-flight of every later train will read it once the commit is origin/main's
+     (guard_registry): render.py and CI load the reader from scripts/ and read the
+     worktree, so a reader that works only so would pass them both;
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
      deleted unless the decisions record gains a new line naming it, as a protected path
      is named;
@@ -115,7 +119,14 @@ order, and the first that fails stops it with a message saying why:
    judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
    ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
    sequence of docs/WORKFLOW.md, section 8, in that worktree, and
-   `negative_tests.py` in a second one, each step timed. The checks run with
+   `negative_tests.py` in a second one, each step timed. The sequence is CI's `check`
+   job's as origin/main's registry of checks lists it (checks/, one file per check, read
+   out of git by origin/main's scripts/registry.py, run from a temporary directory: never
+   the commit's registry or reader, so that a change cannot alter the checks its own
+   pre-flight runs), then the `model` job's (check_sequence;
+   docs/decisions/2026-10-22-check-registry.md).
+   While origin/main holds no registry, the lists built in here stand in for it; when it
+   holds one that cannot be read, the pre-flight refuses. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
    below); when the commit changes any of those, they run again with the commit's own
    copies, which must pass. A check that fails with origin/main's copies is noted for the
@@ -129,7 +140,8 @@ order, and the first that fails stops it with a message saying why:
    the model's law names, and a law's code in the two harnesses that check every law
    (MODEL_LAW_CODE), only while each law changed moves with its axiom; the Markdown of
    the check inputs that are not code (COUNTED_PROSE) only while nothing but the values
-   between its count markers changes), which move with the content they pin. A crash of
+   between its count markers changes, and the model's page, whose prose may change too,
+   only while its count markers stand), which move with the content they pin. A crash of
    origin/main's render.py, its check of docs/program.toml among them, is a verdict.
    Step 3's two checks run the same way. With --main-checks-cache, for R3 to R5 (the
    classes that run this step in full), but not on a train/* branch, whose train check
@@ -352,8 +364,8 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
-# checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
-# added, removed, or with its command, job or order changed, is named in a decisions entry.
+# checks/ is the registry of CI's `check` job, one file per check (#229): a check added,
+# removed, or with its command, job or order changed, is named in a decisions entry.
 # docs/ACCEPTANCE.md's table of the limitations allowed is what tests/test_acceptance_limits.py
 # ties to check_acceptance.py's ALLOWED_LIMITS, so it is a check input, protected as one
 # (#249). PROTECTED_JUDGED, below, joins them.
@@ -376,16 +388,18 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
 # The checks and what they expect: origin/main's copies judge the commit (step 4). The
-# registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
-# check change, kept apart from what the checks judge. So is docs/ACCEPTANCE.md, whose table
-# of allowed limitations and check_acceptance.py's ALLOWED_LIMITS change together (#249).
+# registry, checks/, is one of them: a commit that changes it is a check change, kept apart
+# from what the checks judge, and the sequence step 4 runs is origin/main's registry in any
+# case (check_sequence). So is docs/ACCEPTANCE.md, whose table of allowed limitations and
+# check_acceptance.py's ALLOWED_LIMITS change together (#249).
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
                 "checks/", "docs/ACCEPTANCE.md")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
 # laws; `results_check.py` holds them to one commit and the present harness, and
-# `check_fidelity.py` the page's count markers to what they count. The certificate's
+# `check_fidelity.py` the page's count markers to what they count. A change to the page is
+# a pinned value only while the same markers stand in it (counts_moved). The certificate's
 # expectations are checked one way only, each for what it says, so a change to them is a
 # pinned value only while it keeps every expectation origin/main has (kept_expectations).
 # The model's law names are compared with the lock both ways, but a line of them changed
@@ -393,10 +407,10 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # is a pinned value only while each line changed moves with its axiom's entry in the lock
 # (laws_move_with_axioms). The values between count markers in the Markdown of
 # COUNTED_PROSE, below, are compared exactly with the files they count (check_fidelity.py),
-# so a change to that Markdown is a pinned value only while nothing but those values
-# changes (counts_moved). A change to the content they pin moves them with it, in the same
-# pull request; they stay protected (a decisions line, security-review, the lock's guard),
-# and the commit's own checks must pass.
+# so a change to that Markdown, the model's page aside, is a pinned value only while
+# nothing but those values changes (counts_moved). A change to the content they pin moves
+# them with it, in the same pull request; they stay protected (a decisions line,
+# security-review, the lock's guard), and the commit's own checks must pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
 MODEL_HASH = "tests/model/lock.sha256"
 MODEL_LAWS = "tests/model/laws.toml"
@@ -410,11 +424,11 @@ PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
 MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 # The check inputs that are not code: Certificate/FIELDS.md and review/SCHEMA.md say what
 # the certificate and the records hold, and Markdown under tests/ is prose too
-# (tests/model/MODEL.md, the only one today, is pinned whole). render.py fills the count
-# markers in their Markdown, as COUNT_READER defines them, and check_fidelity.py holds
-# each value to the files it counts: a new word in the lock moves FIELDS.md's count of
-# the words with it, in no other order. scripts/ is check code: a count there is never
-# pinned.
+# (tests/model/MODEL.md, the only one today, is pinned whole but for its count markers,
+# which must stand). render.py fills the count markers in their Markdown, as COUNT_READER
+# defines them, and check_fidelity.py holds each value to the files it counts: a new word
+# in the lock moves FIELDS.md's count of the words with it, in no other order. scripts/ is
+# check code: a count there is never pinned.
 COUNTED_PROSE = ("Certificate/", "review/SCHEMA.md", "tests/")
 COUNT_READER = "scripts/generated_counts.py"
 COUNT_READERS: dict[tuple[str, str], object] = {}
@@ -450,12 +464,15 @@ SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
-GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
-# Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
-# STATUS_MARKERS); the rest of each is written by hand.
+GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md",
+             "docs/WORKFLOW.md")
+# Of these, three are generated only between their markers (render.py's SCOPE_MARKERS and
+# STATUS_MARKERS, and registry.py's MARKERS, between which render.py writes section 8's
+# first command block from the registry of checks); the rest of each is written by hand.
 GENERATED_REGIONS = {
     "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
     "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
+    "docs/WORKFLOW.md": re.compile(r"<!-- checks -->\n.*?<!-- /checks -->", re.S),
 }
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them (both shortened by the tests)
@@ -463,9 +480,19 @@ CI_WATCH_INTERVAL = "30"  # seconds between `gh pr checks --watch` refreshes
 HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new head
 TAIL = 40                 # lines of a failed step's output to print
 
-# The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job, but for the model job's `results_check.py`, which only
-# CI runs until it joins this list (WORKFLOW, section 8). Change it with them.
+# The registry of CI's `check` job, one file per check, and its one reader, both read at
+# origin/main for step 4 (check_sequence; docs/decisions/2026-10-22-check-registry.md).
+REGISTRY = "checks"
+REGISTRY_READER = "scripts/registry.py"
+REGISTRY_TIMEOUT = 120    # seconds a registry.py, origin/main's or the commit's, may take
+# The name of the registry's one `empty` entry, the check that `git status --porcelain`
+# prints nothing; no command may bear it (check_sequence, FRESHNESS).
+EMPTY_CHECK = "git status --porcelain is empty"
+# The `check` job's sequence, built in: it stands in for the registry only while
+# origin/main holds none, so that the train that adds the registry is judged by the
+# sequence every train was judged by before it. Units pins it to a list of its own, as it
+# pins MODEL_JOB and NEGATIVE, so that the registry grows without it. A follow-up card
+# removes these lines once the registry is on main.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
@@ -486,11 +513,21 @@ CHECKS = [
     ("python3 -I tests/test_screen.py", [PY, "-I", "tests/test_screen.py"]),
     ("python3 -I tests/test_acceptance_limits.py",
      [PY, "-I", "tests/test_acceptance_limits.py"]),
+    ("python3 -I tests/test_check_superposition_pins.py",
+     [PY, "-I", "tests/test_check_superposition_pins.py"]),
+    ("python3 -I scripts/check_superposition_pins.py",
+     [PY, "-I", "scripts/check_superposition_pins.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
-    ("git status --porcelain is empty", None),
+    (EMPTY_CHECK, None),
     ("python3 scripts/check_queue.py --tree .", [PY, "scripts/check_queue.py", "--tree", "."]),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
+]
+# CI's `model` job, run after the `check` job's sequence, in the same worktree. The
+# registry holds the `check` job's checks alone, so this stays here, as NEGATIVE does. It
+# leaves out the model job's `results_check.py`, which only CI runs until it joins this
+# list (WORKFLOW, section 8).
+MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
 # CI's `negative` job, in a second disposable worktree: negative_tests.py plants breaks
@@ -573,13 +610,14 @@ NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 
 
 def run(cmd, cwd, *, env=None, input=None, binary=False,
-        capture=True, keep=()) -> subprocess.CompletedProcess:
+        capture=True, keep=(), timeout=None) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here, but origin/main's risk.py, which
     risk_class runs with a time limit, and the Git read that loads origin/main's
     count-marker reader, both before the main-checks cache is opened. While the cache is
     in use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may
-    not write the cache: git, the guards' check_fidelity.py and render.py, every step of
-    the full checks, gh. So the commands a flagged run starts cannot write the cache
+    not write the cache: git, the guards' check_fidelity.py and render.py, the readers of
+    the registry of steps 3 and 4 (the commit's own being the commit's code), every step
+    of the full checks, gh. So the commands a flagged run starts cannot write the cache
     directly. The sandbox does not stop a run without the flag (a ship's own dry run
     among them), which starts its commands with no sandbox; nor anything code run as the
     same user does outside a flagged run; nor anything a flagged run's code leaves for a
@@ -609,8 +647,11 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
         env = own_env(env, keep)
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    # A time limit only when one is given: the CI watch, among others, has none, and its
+    # call carries none (tests/test_release_gate.py).
+    limit = {} if timeout is None else {"timeout": timeout}
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
-                          text=not binary)
+                          text=not binary, **limit)
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
@@ -2252,7 +2293,7 @@ BASE_PASS = " (origin/main's checks)"
 # changed (render.py's output, or the certificate that writes facts.json), not a check's
 # verdict. render.py failing outright (step 3's "render.py", step 4's "python3
 # scripts/render.py") is a verdict: it checks docs/program.toml, for one.
-FRESHNESS = ("generated pages", "git status --porcelain is empty")
+FRESHNESS = ("generated pages", EMPTY_CHECK)
 
 
 def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
@@ -2774,11 +2815,13 @@ def count_markers(repo, base):
 def counts_moved(repo, base, sha, path: str) -> bool:
     """Is the commit's change to `path`, Markdown of COUNTED_PROSE, confined to the values
     between its count markers, as origin/main's generated_counts reads them
-    (count_markers)? The file stays a regular file of the same mode, the same markers stand
-    by name and in order, every byte outside their values is as it was, and a value moves.
-    A marker added, removed or renamed, any other byte changed, a file added or deleted, or
-    one either side cannot read, is not. The commit's own check_fidelity.py holds each
-    value to the files it counts."""
+    (count_markers)? (For the model's page, do those markers stand?) The file stays a
+    regular file of the same mode, the same markers stand by name and in order, every byte
+    outside their values is as it was, and a value moves. The model's page (MODEL_PAGE) is
+    its account of the laws, pinned whole for its prose, so there only the markers must
+    stand (#187). A marker added, removed, renamed or reordered, any other byte changed but
+    in the model's page, a file added or deleted, or one either side cannot read, is not.
+    The commit's own check_fidelity.py holds each value to the files it counts."""
     if not (path.endswith(".md") and under(path, COUNTED_PROSE)):
         return False
     raw = git(repo, "diff", "--raw", "-z", "--no-renames", base, sha, "--", f":(literal){path}")
@@ -2794,6 +2837,8 @@ def counts_moved(repo, base, sha, path: str) -> bool:
         found = [read(text, path) for text in texts]
     except (UnicodeDecodeError, ValueError):
         return False
+    if path == MODEL_PAGE:
+        return [m.name for m in found[0]] == [m.name for m in found[1]]
 
     def outside(text: str, markers) -> list[str]:
         cuts = [0, *(i for m in markers for i in (m.value_start, m.value_end)), len(text)]
@@ -2803,16 +2848,19 @@ def counts_moved(repo, base, sha, path: str) -> bool:
 
 def pinned(repo, base, sha, path: str) -> bool:
     """Is the commit's change to the check input `path` a value pinned to the edition? The
-    lock, the model's hash of it, and its page and results, always; the certificate's
-    expectations, while the change keeps every one origin/main has (kept_expectations);
-    the model's law names, and a law's code in the two harnesses that check every law,
-    while each law changed moves with its axiom (laws_move_with_axioms); and the Markdown
-    of the check inputs that are not code, while nothing but the values between its count
-    markers changes (counts_moved). A file under scripts/ never is."""
+    lock, the model's hash of it, and its results, always; its page, while the same count
+    markers stand in it (counts_moved); the certificate's expectations, while the change
+    keeps every one origin/main has (kept_expectations); the model's law names, and a
+    law's code in the two harnesses that check every law, while each law changed moves
+    with its axiom (laws_move_with_axioms); and the Markdown of the check inputs that are
+    not code, while nothing but the values between its count markers changes
+    (counts_moved). A file under scripts/ never is."""
     if path == EXPECTATIONS:
         return kept_expectations(show(repo, base, path), show(repo, sha, path))
     if path == MODEL_LAWS or path in MODEL_LAW_CODE:
         return laws_move_with_axioms(repo, base, sha, path)
+    if path == MODEL_PAGE:
+        return counts_moved(repo, base, sha, path)
     return under(path, PINNED) or counts_moved(repo, base, sha, path)
 
 
@@ -2830,11 +2878,12 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
     what each expectation says, so the commit's own pass could never catch it. Nor is a
-    count marker added, removed or renamed, or any other byte of that Markdown changed:
-    the commit's own pass checks the values alone. Check code changed with judged content
-    is kept apart, pinned values or not; and so is a law of the model changed while its
-    axiom stands, for the commit's own pass could not catch that either. True when it
-    refuses."""
+    count marker added, removed, renamed or reordered, in that Markdown or in the model's
+    page, nor any other byte of that Markdown changed (the page's prose moves with its
+    laws): the commit's own pass checks the values alone, each against the marker that
+    holds it. Check code changed with judged content is kept apart, pinned values or
+    not; and so is a law of the model changed while its axiom stands, for the commit's own
+    pass could not catch that either. True when it refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -2856,7 +2905,8 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     laws = [p for p in inputs if (p == MODEL_LAWS or p in MODEL_LAW_CODE)
             and not pinned(repo, base, sha, p)]
     counted = [p for p in inputs if p.endswith(".md") and under(p, COUNTED_PROSE)
-               and not pinned(repo, base, sha, p)]
+               and p != MODEL_PAGE and not pinned(repo, base, sha, p)]
+    marked = MODEL_PAGE in inputs and not pinned(repo, base, sha, MODEL_PAGE)
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}"
@@ -2867,16 +2917,19 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
                "name), which is a check change" if laws else "")
             + (f"; and it changes {', '.join(counted)} beyond the values between count "
                "markers, which is a check change" if counted else "")
+            + (f"; and it adds, removes, renames or reorders a count marker of {MODEL_PAGE} "
+               "(or adds or deletes the file, changes its mode, or leaves it unreadable), "
+               "which is a check change" if marked else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
             f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "
             f"of {EXPECTATIONS}, none of its expectations dropped or loosened, the values "
             f"between count markers in the Markdown of {', '.join(COUNTED_PROSE[:-1])} and "
-            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the "
-            f"model's account, {MODEL_PAGE} and {MODEL_RESULTS}) move with the content they "
-            f"pin, and so does a law of the model, its line of {MODEL_LAWS} and its code in "
-            f"{' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, \"Landing "
-            "work: pull requests\")")
+            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the model's account, "
+            f"{MODEL_PAGE}, its count markers standing, and {MODEL_RESULTS}) move with the "
+            f"content they pin, and so does a law of the model, its line of {MODEL_LAWS} and "
+            f"its code in {' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, "
+            "\"Landing work: pull requests\")")
     return True
 
 
@@ -2982,6 +3035,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     guard_entries(repo, base, sha, rep)
+    guard_registry(repo, sha, rep, base)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, wt, inputs)) as each:
         for label, fail, excludes in each:
@@ -3046,14 +3100,176 @@ def copy_build(src: Path, dst: Path) -> None:
         shutil.rmtree(dst / ".lake", ignore_errors=True)
 
 
-def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) -> None:
+class CheckList(NamedTuple):
+    steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
+    why: str                                     # where they came from, for the step line
+    built_in: bool = False                       # CHECKS: the revision holds no registry
+
+
+def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
+    """The checks step 4 runs on a commit against `base`, origin/main: the `check` job's,
+    as base's registry lists them, then the `model` job's (MODEL_JOB). The registry,
+    checks/, and its reader, scripts/registry.py, are base's: the reader is read out of git
+    and run from a temporary directory, and reads the registry out of git at base, both
+    with git's replacement objects off; never the commit's registry or reader, nor the
+    worktree's, so that a change cannot alter the checks its own pre-flight runs. With
+    neither at base (the train that adds them), the built-in CHECKS (built_in). A Refusal
+    when base holds either and the registry cannot be read: the other missing or not a
+    regular file or folder, the reader failing, outlasting its time or printing anything
+    but a list of checks of the `check` job, or no check at all. Never an empty list.
+
+    The names are held here as well as by the reader, which a train may change: the
+    `empty` entry, and only it, is named EMPTY_CHECK, and every other entry's name is its
+    command's words joined by spaces, so that no command is ever named as a step whose
+    failure FRESHNESS passes over. Step 3 reads the commit's own registry so too, `whose`
+    naming it (guard_registry)."""
+    def refuse(why: str):
+        raise Refusal(f"{whose}'s registry of checks could not be read: {why}")
+
+    listed = run(["git", "ls-tree", "-z", "--full-tree", base, "--", REGISTRY,
+                  REGISTRY_READER], repo, binary=True)
+    if listed.returncode != 0:
+        refuse(f"git could not list {whose} {base[:12]}: "
+               f"{printable_text(listed.stderr.decode(errors='replace').strip())}")
+    found = {}
+    for record in listed.stdout.split(b"\0"):
+        if record:
+            meta, _, path = record.partition(b"\t")
+            found[os.fsdecode(path)] = meta.split()
+    if not found:
+        return CheckList(CHECKS + MODEL_JOB, f"the {len(CHECKS)} built into this harness, "
+                         f"since {whose} {base[:12]} holds no registry yet ({REGISTRY}/ "
+                         f"and {REGISTRY_READER}), then the model job's", True)
+    reader, folder = found.get(REGISTRY_READER), found.get(REGISTRY)
+    if (reader is None or len(reader) != 3 or reader[0] not in (b"100644", b"100755")
+            or reader[1] != b"blob"):
+        refuse(f"{whose} {base[:12]} holds {REGISTRY}/ but no regular file "
+               f"{REGISTRY_READER} to read it")
+    if folder is None or len(folder) != 3 or folder[1] != b"tree":
+        refuse(f"{whose} {base[:12]} holds {REGISTRY_READER} but no folder {REGISTRY}/")
+    source = run(["git", "cat-file", "blob", reader[2].decode()], repo, binary=True)
+    if source.returncode != 0:
+        refuse(f"git could not read {whose}'s {REGISTRY_READER}")
+    with tempfile.TemporaryDirectory(prefix="stoicheia-registry-") as tmp:
+        script = Path(tmp) / "registry.py"
+        script.write_bytes(source.stdout)
+        # Through run(), so that under the main-checks cache's sandbox it runs sandboxed,
+        # as every command does (#392): read as bytes, decoded leniently, as before.
+        try:
+            r = run([PY, "-I", str(script), "--rev", base, "--json", str(repo)], repo,
+                    env=without_replacements(), binary=True, timeout=REGISTRY_TIMEOUT)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            refuse(f"its {REGISTRY_READER} could not be run: {type(e).__name__}")
+    out = r.stdout.decode(errors="replace")
+    err = r.stderr.decode(errors="replace")
+    if r.returncode != 0:
+        said = (err.strip().splitlines() or [""])[-1]
+        refuse(f"its {REGISTRY_READER} exited {r.returncode}"
+               + (f": {printable_text(said)[:300]}" if said else ""))
+    try:
+        entries = json.loads(out)
+    except json.JSONDecodeError:
+        entries = None
+    if not isinstance(entries, list):
+        refuse(f"its {REGISTRY_READER} printed no list of checks")
+    steps: list[tuple[str, list[str] | None]] = []
+    for item in entries:
+        name = item.get("name") if isinstance(item, dict) else None
+        command, empty = (item.get("command"), item.get("empty")) if name else (None, None)
+        words = isinstance(command, list) and bool(command) and all(
+            isinstance(w, str) and w for w in command)
+        if (not isinstance(name, str) or not name or not name.isprintable()
+                or not ((empty is True and command is None) or (empty is False and words))):
+            refuse(f"its {REGISTRY_READER} printed an entry that is not a check: "
+                   f"{printable_text(str(item))[:200]}")
+        if item.get("job") != "check":
+            refuse(f"its {REGISTRY_READER} gives {printable_text(name)} to the job "
+                   f"{printable_text(str(item.get('job')))}, which the pre-flight does not run")
+        if empty and name != EMPTY_CHECK:
+            refuse(f"its {REGISTRY_READER} gives the `empty` check the name "
+                   f"{printable_text(name)[:200]!r}, not {EMPTY_CHECK!r}")
+        if not empty and name != " ".join(command):
+            refuse(f"its {REGISTRY_READER} names a check {printable_text(name)[:200]!r}, "
+                   "not its command's words joined by spaces")
+        if not empty and name in FRESHNESS:
+            refuse(f"its {REGISTRY_READER} gives a command the name {name!r}, which only "
+                   "the `empty` check may bear: a failure of a step of that name is "
+                   "passed over when a check change is kept apart (FRESHNESS)")
+        steps.append((name, None if empty else
+                       [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
+    if not steps:
+        refuse(f"its {REGISTRY_READER} gives no check")
+    if len({name for name, _ in steps}) != len(steps):
+        refuse(f"its {REGISTRY_READER} gives two checks of one name")
+    return CheckList(steps + MODEL_JOB, f"the {len(steps)} of {whose}'s registry, "
+                     f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
+                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+
+
+def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
+    """The commit's registry of checks reads as the pre-flight of every later train will
+    read it once the commit is origin/main's: by check_sequence at the commit, the
+    commit's own scripts/registry.py taken out of git and run alone from a temporary
+    directory, reading the commit's checks/ out of git. render.py and CI's run_checks.py
+    load the reader from scripts/ and read the worktree, so a reader that imports a module
+    beside it, or that fails only on a revision, passes them both, and once merged would
+    refuse every train, its own repair among them. Every class runs this.
+    Skipped only while the commit holds neither the registry nor its reader, when the lists
+    built in stand in for it, as they did before the registry came."""
+    t = time.time()
+    try:
+        own = check_sequence(repo, sha, "the commit")
+    except Refusal as e:
+        # Against origin/main (or, without it, the commit's parent): a commit that changes
+        # neither the folder nor the reader holds origin/main's registry, and the fault is
+        # main's; else the commit's own. Any doubt reads as the commit's.
+        old = base or (f"{sha}^" if git_ok(repo, "rev-parse", "--verify", "-q", f"{sha}^")
+                       else None)
+        try:
+            changed = changed_files(repo, old, sha, REGISTRY, REGISTRY_READER) if old \
+                else [("?", REGISTRY)]
+        except Exception:
+            changed = [("?", REGISTRY)]
+        whose = (f"{e}; so it would refuse the pre-flight of every train once it is "
+                 f"origin/main's, as {REGISTRY_READER} reads it there, alone and out of git "
+                 "(check_sequence)") if changed else (
+                 f"{e}; the commit changes neither {REGISTRY}/ nor {REGISTRY_READER}, so the "
+                 "registry it holds is origin/main's, which fails to read: a repair of the "
+                 "registry on main comes first")
+        rep.add("3", "registry of checks", "FAIL", whose, time.time() - t)
+        return
+    if own.built_in:
+        rep.add("3", "registry of checks", "skip", f"the commit holds neither {REGISTRY}/ "
+                f"nor {REGISTRY_READER}", time.time() - t)
+    else:
+        rep.add("3", "registry of checks", "ok", f"{len(own.steps) - len(MODEL_JOB)} checks, "
+                f"as the commit's own {REGISTRY_READER} reads them alone and out of git, as "
+                "a later pre-flight will", time.time() - t)
+
+
+def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
+    """check_sequence for the commit, as a step line: ok with how many and from where, or
+    FAIL and a Refusal."""
+    t = time.time()
+    try:
+        checks = check_sequence(ctx.repo, ctx.base)
+    except Refusal as e:
+        rep.add("4", "check list", "FAIL", str(e), time.time() - t)
+        raise
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}",
+            time.time() - t)
+    return checks.steps
+
+
+def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
+                sequence: list[tuple[str, list[str] | None]]) -> None:
     def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
 
     # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
     # kept for it on a miss; keep_apart then reads its steps as it reads them run.
-    cache = main_checks(ctx, wt, inputs, rep) if CACHE is not None else None
+    cache = main_checks(ctx, wt, inputs, rep, sequence) if CACHE is not None else None
 
     def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
         if label == BASE_PASS and cache is not None and cache.hit:
@@ -3070,7 +3286,7 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
     # the worktree back before the worktree is removed.
     with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
         for label, fail, excludes in each:
-            checks(CHECKS, wt, label, fail, excludes, 10)
+            checks(sequence, wt, label, fail, excludes, 10)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
@@ -3328,9 +3544,11 @@ def environment(repo) -> dict:
     }
 
 
-def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
+def main_checks_fields(ctx, wt: Path, inputs, sequence: list[tuple[str, list[str] | None]]
+                       ) -> tuple[dict | None, str]:
     """The fields of the key of origin/main's pass on this commit, computed by the harness
-    and never read from the tree as code; or None, and why there is no key."""
+    and never read from the tree as code; or None, and why there is no key. Its checks are
+    `sequence`, the checks step 4 runs (check_list), and its negative tests NEGATIVE."""
     if HARNESS_BLOB is None:
         return None, "the harness running is not origin/main's"
     lean = toolchain(ctx.repo, ctx.sha, wt)
@@ -3348,7 +3566,7 @@ def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
             "harness_blob": HARNESS_BLOB,
             "toolchain": lean,
             "environment": environment(ctx.repo),
-            "checks": [[name, cmd] for name, cmd in CHECKS],
+            "checks": [[name, cmd] for name, cmd in sequence],
             "negative": [[name, cmd] for name, cmd in NEGATIVE],
         }
     except Refusal as e:
@@ -3360,9 +3578,10 @@ ENTRY_FIELDS = frozenset({"key", "written", "steps", "digest"})
 STEP_FIELDS = frozenset({"name", "outcome", "detail", "seconds", "log"})
 
 
-def base_pass_names() -> list[str]:
-    """origin/main's pass of step 4, step by step: CHECKS, then NEGATIVE."""
-    return [name + BASE_PASS for name, _ in [*CHECKS, *NEGATIVE]]
+def base_pass_names(fields: dict) -> list[str]:
+    """origin/main's pass of step 4, step by step, as the key `fields` names it: its checks,
+    then its negative tests."""
+    return [name + BASE_PASS for name, _ in [*fields["checks"], *fields["negative"]]]
 
 
 STEP_SECONDS = 7 * 24 * 3600    # the longest a recorded step may have taken: a week
@@ -3430,7 +3649,7 @@ def entry_problem(entry, key: str, fields: dict) -> str | None:
     if not isinstance(steps, list) or not all(
             isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
         return "its steps are not of this format"
-    if [s["name"] for s in steps] != base_pass_names():
+    if [s["name"] for s in steps] != base_pass_names(fields):
         return "its steps are not origin/main's pass, each step once and in order"
     for s in steps:
         if s["outcome"] not in ("ok", "note"):
@@ -3549,7 +3768,7 @@ class MainChecks:
 
     def collect(self, rep: Report, out) -> None:
         """The step origin/main's pass has just run, recorded for the entry."""
-        names = base_pass_names()
+        names = base_pass_names(self.fields)
         s = rep.steps[-1] if rep.steps else None
         if self.spoiled or s is None or len(self.steps) >= len(names) \
                 or s.name != names[len(self.steps)] or s.outcome not in ("ok", "note") \
@@ -3564,7 +3783,7 @@ class MainChecks:
         under the sandbox, by the harness its key names; a note if it cannot be."""
         if self.hit or self.done:
             return
-        if not self.spoiled and len(self.steps) < len(base_pass_names()):
+        if not self.spoiled and len(self.steps) < len(base_pass_names(self.fields)):
             return      # the negative tests' loop is still to run
         self.done = True
         why = self.spoiled or self.unwritable()
@@ -3594,14 +3813,15 @@ class MainChecks:
         return dir_problem(CACHE) or ""
 
 
-def main_checks(ctx, wt: Path, inputs, rep: Report) -> MainChecks | None:
+def main_checks(ctx, wt: Path, inputs, rep: Report,
+                sequence: list[tuple[str, list[str] | None]]) -> MainChecks | None:
     """The cache's answer for origin/main's pass on this commit, reported in one line, for
     the pull request's record: a hit; a miss, and why; or why the cache does not serve."""
     if not inputs:
         rep.add("4", "main-checks cache", "skip", "the commit changes no check input: there "
                 "is no pass with origin/main's copies to reuse")
         return None
-    fields, why = main_checks_fields(ctx, wt, inputs)
+    fields, why = main_checks_fields(ctx, wt, inputs, sequence)
     if fields is None:
         rep.add("4", "main-checks cache", "note", f"not used for this commit: {why}; "
                 "origin/main's checks run in full")
@@ -3673,10 +3893,14 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                         "self-test and the rest of section 8 on the pull request before "
                         "the merge, and --merge waits for them green; the negative tests "
                         "run on main after the merge and on the cadence")
-            elif test_mode:
-                rep.add("4", "full local checks", "skip", "internal test flag, local origin")
             else:
-                full_checks(ctx, wt, parent, g.check_inputs, rep, logs)
+                # origin/main's registry, read under the internal test flag too, so that
+                # the tests see which checks the full path would run.
+                checks = check_list(ctx, rep)
+                if test_mode:
+                    rep.add("4", "full local checks", "skip", "internal test flag, local origin")
+                else:
+                    full_checks(ctx, wt, parent, g.check_inputs, rep, logs, checks)
     return Preflight(g.statements, g.protected, short)
 
 
@@ -4155,8 +4379,9 @@ def put_block(body: str, block: str) -> str:
 
 def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
     """Does the change touch what render.py writes in `path`, and does it touch the rest,
-    written by hand? Only README.md and PROGRAM.md have a rest: render.py writes them only
-    between their markers, and every other generated file whole."""
+    written by hand? Only the files of GENERATED_REGIONS have a rest (README.md,
+    docs/PROGRAM.md and docs/WORKFLOW.md): render.py writes them only between their
+    markers, and every other generated file whole."""
     pattern = GENERATED_REGIONS.get(path)
     if pattern is None:
         return True, False
