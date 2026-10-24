@@ -1071,7 +1071,9 @@ def circle_source_faults(facts) -> list[str]:
     """Why III.2's entry in facts.json cannot be the proof a forbidden circle rule is
     proved from: it is missing, it is not proved, or it rests on a forbidden circle rule
     itself, through its axioms, a shared step or a lemma it inherits an axiom through (the
-    circular case). Empty when it can. A malformed field is a fault, never a crash."""
+    circular case). Empty when it can. For traversal, axioms must be a list, shared_steps
+    a list of objects, and inherited an object of lists of objects; another outer shape is
+    a fault, never a crash."""
     entries = facts.get("propositions")
     found = [p for p in entries if isinstance(p, dict) and p.get("ref") == CIRCLE_SOURCE] \
         if isinstance(entries, list) else []
@@ -1119,7 +1121,8 @@ def check_lock(facts, path: Path = LOCK):
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
     proved = facts.get("proved_rules", {})
-    # What each proved rule cites; a missing or malformed list cites nothing.
+    # What each proved rule cites. A missing or non-object field, or a missing or non-list
+    # value for the rule, supplies no citation; list contents receive no further validation.
     cites = facts.get("proved_rule_cites")
     cites = cites if isinstance(cites, dict) else {}
     for name, rule in FORBIDDEN_CIRCLE_RULES.items():

@@ -22,10 +22,12 @@
   is refused exactly as before. The new route has refusals of its own, each naming the
   rule and III.2: three, when III.2 has no entry in the certificate, when III.2 is not
   proved, or when III.2 itself rests on either rule, among its axioms, its shared steps or
-  the lemmas it inherits an axiom through, the circular case; and one more for each of
-  III.2's `axioms`, `shared_steps` and `inherited` that is malformed, refused without a
-  crash. A missing or malformed `proved_rule_cites` counts as citing nothing. And an
-  entry using a rule proved from III.2 still cannot come before III.2. The walk that finds an entry's citations passes
+  the lemmas it inherits an axiom through, the circular case. Before that traversal,
+  III.2's `axioms` must be a list, its `shared_steps` a list of objects, and its
+  `inherited` an object of lists of objects; another outer shape is refused without a
+  crash. A missing or non-object `proved_rule_cites`, or a missing or non-list value for
+  the rule, supplies no citation; the contents of those lists receive no additional
+  validation. And an entry using a rule proved from III.2 still cannot come before III.2. The walk that finds an entry's citations passes
   through the Tacit theorems, so the entry cites III.2 through the rule, and the check on
   later citations refuses it in Books I and II and in III.1, porisms and companions
   included; III.2 itself cannot use it, for Lean admits no circular proof. After III.2
