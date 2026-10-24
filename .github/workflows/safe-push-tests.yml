@@ -102,7 +102,7 @@ jobs:
     #   lists run once and passed. Each list carries its shard's K and N and each test's
     #   outcome, and the proof fails on a K from 1 to N with no list, so a shard that did
     #   not run, or stopped before its end, fails it; and on any test that did not pass, so
-    #   a failed shard fails it too.
+    #   a shard one of whose tests failed fails it too.
     # Neither can pass with a shard missing. Both are needed: a list a shard kept in an
     # earlier attempt of the run stays when, in a rerun of all the jobs, that shard is
     # cancelled before it keeps a new one, so the proof alone could pass; and the matrix's

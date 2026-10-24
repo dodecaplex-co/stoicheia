@@ -543,9 +543,11 @@ PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
 # A green run of the safe-push-tests workflow, as GitHub's API gives it, with its jobs: the
 # stand-in for gh gives it at every head unless a test says otherwise, as it gives PASSING
 # (a release's merge gate asks for one at its head, #301). `report` runs only for a red
-# run on main, so a green one skips it.
+# run on main, so a green one skips it. The shards are jobs of the run too, named as GitHub
+# names a matrix's jobs (#233).
 SUITE_JOBS = [{"name": n, "status": "completed", "conclusion": "success"}
-              for n in ("safe-push-tests", "negative-tests", "formal-model-kernel")] + \
+              for n in ("safe-push-tests", "negative-tests", "formal-model-kernel",
+                        *(f"safe-push-shards ({k})" for k in range(1, 9)))] + \
     [{"name": "report", "status": "completed", "conclusion": "skipped"}]
 GREEN_SUITE = {"id": 501, "status": "completed", "conclusion": "success", "jobs": SUITE_JOBS}
 
@@ -8526,6 +8528,11 @@ class RiskPreflight(Edge):
                   "negative-tests failure"),
                  ({"suite_runs": {"*": [with_job(506, "formal-model-kernel", "skipped")]}},
                   "formal-model-kernel skipped"),
+                 # A shard that failed or was cancelled holds the release, as any job does.
+                 ({"suite_runs": {"*": [with_job(509, "safe-push-shards (3)", "failure")]}},
+                  "safe-push-shards (3) failure"),
+                 ({"suite_runs": {"*": [with_job(510, "safe-push-shards (8)", "cancelled")]}},
+                  "safe-push-shards (8) cancelled"),
                  # A run of a workflow that dropped a job, or that ran one trivial job alone:
                  # each of the workflow's three jobs must be there.
                  ({"suite_runs": {"*": [dict(GREEN_SUITE, id=507, jobs=[
@@ -10148,8 +10155,9 @@ class Units(unittest.TestCase):
         # workflow must show passed: every job of the workflow but `report`, which needs
         # them all, and the shards (#233), which `safe-push-tests` needs, and which the
         # gate, like any job it does not name, holds to have passed. GitHub names a job with
-        # no name and no matrix by its id, as the gate reads it; a workflow that renames,
-        # splits or adds a job changes SUITE_JOBS too.
+        # no name and no matrix by its id, as the gate reads it; a workflow that renames or
+        # splits one of the jobs SUITE_JOBS names, or adds a job the gate must name, changes
+        # SUITE_JOBS too.
         workflow = yaml.safe_load((SOURCE / safe_push.SUITE_PATH).read_text())
         jobs = workflow["jobs"]
         self.assertEqual(set(jobs), {*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB,
@@ -12180,9 +12188,11 @@ class Shards(unittest.TestCase):
                 ["Renamed.test_old_name", "ok"])))[1],
                 [f"Renamed.test_old_name ran in shard {count}, but unittest's loader does "
                  "not list it here."])
-            self.assertEqual(
-                planted("failed", edit(2, lambda ran: ran[0].__setitem__(1, "FAIL")))[1],
-                [f"{second} did not pass in shard 2: FAIL."])
+            for word in ("FAIL", "ERROR", "unexpected success", "unfinished"):
+                self.assertEqual(
+                    planted(f"failed {word}",
+                            edit(2, lambda ran, word=word: ran[0].__setitem__(1, word)))[1],
+                    [f"{second} did not pass in shard 2: {word}."])
             self.assertEqual(
                 planted("a list missing", lambda directory: (directory / "ran-4.json").unlink())[1],
                 [left_no_list(4)] + [f"{key} ran in no shard." for key in keys

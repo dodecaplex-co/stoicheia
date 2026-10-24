@@ -65,8 +65,8 @@
   outcome; that the times read from a few lines of a CI log are those its timestamps
   give; that the dealing is the same whatever order its inputs come in; that each form of
   the command line stands alone; and that the shard job and the verdict job are as above,
-  their steps run as GitHub runs them under a model of its conditions, which now reads
-  `||`, `!` and parentheses as well, and the verdict's script run under bash for every
+  their steps run as GitHub runs them under a model of its conditions, which reads `&&`,
+  `||`, `!` and parentheses, and the verdict's script run under bash for every
   result of the matrix. A model of a whole run, `CadenceRun`, runs the workflow's own jobs
   and steps, with stand-ins for the shards' tests, the artifacts and `gh`, and the
   verdict's and the report's scripts under bash. On it stand three planted reds: a test
