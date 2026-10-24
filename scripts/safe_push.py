@@ -2964,15 +2964,18 @@ CLASS_LINE = re.compile(r"(R[0-5]) (\S.*)")
 PATH_LINE = re.compile(r"  (R[0-5]) (.+)")
 
 
-def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
+def risk_class(repo, base: str, sha: str, labels: set[str] | None, *,
+               diff_base: str | None = None) -> Risk:
     """The class of the change `git diff base...sha`, as origin/main's scripts/risk.py
     gives it (`risk.py --diff`, as CI's risk job runs it): its copy at `base`, read out of
     git and run from a temporary directory, never the commit's, so that a change cannot
-    lower its own class by editing the classifier. A label can only raise the class: a
-    pull request labelled release is R5, and so is one whose labels cannot be read. A base
-    with no scripts/risk.py is R5, and so is any failure to compute the class (fail
-    closed): Git failing, the script failing or printing no class, a class below that of a
-    file it lists, a timeout."""
+    lower its own class by editing the classifier. With `diff_base`, the change classed is
+    `git diff diff_base...sha` instead, the classifier still read at `base`: so the queue's
+    judge classes an entry's block and its merge into the group by main's copy. A label
+    can only raise the class: a pull request labelled release is R5, and so is one whose
+    labels cannot be read. A base with no scripts/risk.py is R5, and so is any failure to
+    compute the class (fail closed): Git failing, the script failing or printing no class,
+    a class below that of a file it lists, a timeout; with `diff_base` or without."""
     t = time.time()
 
     def r5(why: str) -> Risk:
@@ -2993,11 +2996,12 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
     source = run(["git", "cat-file", "blob", meta[2].decode()], repo, binary=True)
     if source.returncode != 0:
         return r5(f"git could not read origin/main's {RISK}")
+    start = base if diff_base is None else diff_base
     with tempfile.TemporaryDirectory(prefix="stoicheia-risk-") as tmp:
         script = Path(tmp) / "risk.py"
         script.write_bytes(source.stdout)
         try:
-            r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
+            r = subprocess.run([PY, "-I", str(script), "--diff", start, sha], cwd=repo,
                                env=without_replacements(), capture_output=True, text=True,
                                errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
