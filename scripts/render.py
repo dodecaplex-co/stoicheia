@@ -193,19 +193,37 @@ STATUS_LINE = {
 # words are the same everywhere a reader meets them: whole (as Euclid states it),
 # restricted, in part.
 SCOPE_WORD = {"full": "whole", "restricted": "restricted", "partial": "in part"}
-ROUTE_WORD = {"euclid": "Euclid's", "modified": "Euclid's, one step changed",
-              "alternative": "different"}
+ROUTE_WORD = {"euclid": "Euclid's", "modified": "Euclid's", "alternative": "different"}
 # A proposition Heath prints in brackets as a later addition (I.40, III.12) has no
 # argument of Euclid's to follow: its proof follows the argument Heath prints.
-ROUTE_WORD_BRACKETED = {"euclid": "the text's", "modified": "the text's, one step changed",
+ROUTE_WORD_BRACKETED = {"euclid": "the text's", "modified": "the text's",
                         "alternative": "different"}
+
+
+def different_passages(record):
+    """How many passages of the record the Lean argues another way (`different`): the
+    steps a modified route changes, each listed on its page as "Argued another way"."""
+    return sum(q["kind"] == "different" for q in record["passage"])
+
+
+def steps_changed(record, lead=""):
+    """A modified route's steps, counted from its record, after `lead` ("with "): "one
+    step changed", "two steps changed". review/SCHEMA.md lets a modified route name its
+    step in the route's note alone, with no `different` passage, and then the words are
+    "with a step changed", true with no count; no record does so as of 23 October 2026."""
+    k = different_passages(record)
+    if not k:
+        return "with a step changed"
+    return f"{lead}{number_word(k)} step{'' if k == 1 else 's'} changed"
 
 
 def route_word(record, book, n):
     """The Argument column's word for a record: "Euclid's", or "the text's" for a
-    proposition Heath brackets as an interpolation."""
+    proposition Heath brackets as an interpolation, with the steps a modified route
+    changes: "Euclid's, two steps changed"."""
     words = ROUTE_WORD_BRACKETED if heath.bracketed(book, n) else ROUTE_WORD
-    return words[record["route"]["kind"]]
+    kind = record["route"]["kind"]
+    return f"{words[kind]}, {steps_changed(record)}" if kind == "modified" else words[kind]
 
 
 def whose(book, n):
@@ -994,7 +1012,7 @@ def in_lean_line(p, record, book, n):
     parts = [first]
     if status != "sketched":
         parts.append({"euclid": whose(book, n),
-                      "modified": f"{whose(book, n)}, with one step changed",
+                      "modified": f"{whose(book, n)}, {steps_changed(record, 'with ')}",
                       "alternative": "a different argument"}[route["kind"]])
     if "overlap" in record:
         ov = record["overlap"]
@@ -1075,7 +1093,7 @@ def field_table(book, n, p, record, attached, docs):
             rows.append(("Extra hypotheses", "<br>".join(st["hypotheses"])))
         own = "The argument Heath prints" if heath.bracketed(book, n) else "Euclid's"
         rows.append(("Argument", {"euclid": f"{own}.",
-                                  "modified": f"{own}, with one step changed.",
+                                  "modified": f"{own}, {steps_changed(record, 'with ')}.",
                                   "alternative": "A different argument."}[route["kind"]]
                      + (f" {route['note']}" if route.get("note") else "")))
         rep = record.get("representation")
@@ -1898,7 +1916,13 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
                      "Euclid's argument"]
             if route["modified"]:
                 k = len(route["modified"])
-                parts.append(f"{k} follow{'s' if k == 1 else ''} it with one step changed "
+                # A count every such proof shares is said; otherwise, or where a route
+                # counts no step, "one or more", true of each. Each proof's own count is
+                # on its page and in the certificate's Argument column.
+                counts = {different_passages(records[r]) for r in route["modified"]}
+                steps = ("one or more steps changed" if len(counts) > 1 or 0 in counts
+                         else steps_changed(records[route["modified"][0]]))
+                parts.append(f"{k} follow{'s' if k == 1 else ''} it with {steps} "
                              f"({links(route['modified'])})")
             if route["alternative"]:
                 k = len(route["alternative"])
@@ -2117,6 +2141,11 @@ def certificate_intro(facts, records):
               "the page's Representation row says what follows." if badges else "")
     bracketed = [f"{b}.{n}" for b, (count, _) in BOOKS.items() for n in range(1, count + 1)
                  if heath.bracketed(b, n)]
+    # The key names "with a step changed" only if a modified route counts no step.
+    uncounted = (", and *Euclid's, with a step changed* is his argument changed as the "
+                 "page's Argument row says, with no step counted"
+                 if any(r and r["route"]["kind"] == "modified" and not different_passages(r)
+                        for r in records.values()) else "")
     # What the pages prove a step separately as: a porism, a companion, or either.
     kinds = {carried_ref(facts[ref], q["helper"]).kind for ref, r in records.items()
              if r and ref in facts for q in r["passage"]
@@ -2168,7 +2197,8 @@ def certificate_intro(facts, records):
         "cases Euclid's words admit; *in part* leaves some clause to Euclid's words." + dagger
         + " In \"Argument\", *Euclid's* is his argument, with the lemmas, groupings and "
         "further cases each page notes; *Euclid's, one step changed* is his argument with "
-        "one step argued another way, which the page names; *different* is another proof "
+        "one step argued another way, *Euclid's, two steps changed* with two, and so on, "
+        "each step named on the page" + uncounted + "; *different* is another proof "
         "altogether; and *the text's* is the argument Heath prints for a proposition he "
         f"brackets as a later addition ({and_list(bracketed)}). A porism has a row of its "
         "own under its proposition, with its own certificate, and a proposition counts as "
