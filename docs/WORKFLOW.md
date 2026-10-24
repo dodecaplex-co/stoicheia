@@ -527,8 +527,9 @@ then 150 minutes, and was cancelled there
 runs it as eight shards side by side (#233,
 [the decision](decisions/2026-10-24-safe-push-shards.md)): the `safe-push-shards` job's
 matrix runs `python3 scripts/test_safe_push.py --shard K/N --ran FILE` for each K from 1
-to N, N being written once, in the matrix, whose `strategy.job-total` each shard is given
-as N; each shard may take 60 minutes, and none stops the others when it fails. Every test
+to N, N being written once in the workflow, in the matrix, whose `strategy.job-total`
+each shard is given as N; each shard may take 60 minutes, and none stops the others when
+it fails. Every test
 runs in exactly one shard: `--shard` lists the tests with unittest's own loader, so that a
 new test is never missed, and deals them out by the seconds each took on a GitHub runner,
 kept in `scripts/test_safe_push_times.json`, the heaviest first, each to the shard with the

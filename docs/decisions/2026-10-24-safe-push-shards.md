@@ -32,8 +32,9 @@
   this script's step). Without `--shard` the whole suite runs, as before.
 
   The workflow. Its one job for the suite becomes two. `safe-push-shards` is a matrix of
-  eight, `shard: [1, 2, 3, 4, 5, 6, 7, 8]`, the one place N is written, each shard given N
-  as `strategy.job-total`; none stops the others when it fails, each may take 60 minutes,
+  eight, `shard: [1, 2, 3, 4, 5, 6, 7, 8]`, the one place the workflow writes N, each
+  shard given N as `strategy.job-total`; none stops the others when it fails, each may
+  take 60 minutes,
   checks out the whole history, keeps no token, and installs Python 3.12 and the pinned
   YAML parser; each runs its part under `set -o pipefail`, its output kept by `tee` in a
   log of its own, and keeps its list and its log as artifacts for 35 days, a shard run
