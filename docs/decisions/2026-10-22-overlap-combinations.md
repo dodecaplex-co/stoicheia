@@ -85,10 +85,13 @@
   and names each, with the rules our proof rests on, in the Overlap row and the book's
   summary.
 
-  This entry approves the change to `scripts/negative_tests.py`, whose new plant,
-  `unproved_way`, gives III.5's record a combination the audit does not prove, the rules
-  of `Audit.III_5_crossing` without Definition I.15, which `check_fidelity.py` must
-  refuse.
+  This entry approves the change to `scripts/negative_tests.py`, which keeps the
+  combination of the new plant, `UNPROVED_WAY`, and `with_way`, which writes it into
+  III.5's record, where `tests/test_negative_tests.py` reads them.
+
+  This entry approves the new file `scripts/negative/unproved_way.py`, the plant that gives
+  III.5's record a combination the audit does not prove, the rules of
+  `Audit.III_5_crossing` without Definition I.15, which `check_fidelity.py` must refuse.
 
   This entry approves the change to `tests/test_negative_tests.py`, which puts small Lean
   texts in place of `Audit/Overlaps.lean`, never built, to test how the check reads them
