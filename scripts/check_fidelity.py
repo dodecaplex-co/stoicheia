@@ -1067,6 +1067,32 @@ def foundations(module: str) -> bool:
     return module.startswith("Elements.Foundations.")
 
 
+def name_list(value) -> bool:
+    return isinstance(value, list) and all(isinstance(name, str) for name in value)
+
+
+def canonical_ref_list(value) -> bool:
+    if not isinstance(value, list):
+        return False
+    for ref in value:
+        if not isinstance(ref, str):
+            return False
+        try:
+            if str(heath.parse_ref(ref)) != ref:
+                return False
+        except ValueError:
+            return False
+    return True
+
+
+def fact_location(value, brings_in=False) -> bool:
+    return (isinstance(value, dict)
+            and isinstance(value.get("name"), str)
+            and isinstance(value.get("file"), str)
+            and type(value.get("line")) is int
+            and (not brings_in or canonical_ref_list(value.get("brings_in"))))
+
+
 def circle_source_faults(facts) -> list[str]:
     """Why III.2's entry in facts.json cannot be the proof a forbidden circle rule is
     proved from: it is missing, it is not proved, or it rests on a forbidden circle rule
@@ -1082,16 +1108,19 @@ def circle_source_faults(facts) -> list[str]:
         if p.get("status") != "proved":
             faults.append(f"{CIRCLE_SOURCE} is {p.get('status')!r}, not \"proved\"")
         axioms, steps, inherited = p.get("axioms"), p.get("shared_steps"), p.get("inherited")
-        if not isinstance(axioms, list):
-            faults.append(f"{CIRCLE_SOURCE}'s `axioms` is not a list")
+        if not name_list(axioms):
+            faults.append(f"{CIRCLE_SOURCE}'s `axioms` is not a list of strings")
             axioms = []
-        if not isinstance(steps, list) or not all(isinstance(s, dict) for s in steps):
-            faults.append(f"{CIRCLE_SOURCE}'s `shared_steps` is not a list of objects")
+        if not isinstance(steps, list) or not all(fact_location(s, brings_in=True) for s in steps):
+            faults.append(f"{CIRCLE_SOURCE}'s `shared_steps` is not a list of objects with "
+                          "name, file, line and reference-list `brings_in`")
             steps = []
         if not isinstance(inherited, dict) or not all(
-                isinstance(lems, list) and all(isinstance(lem, dict) for lem in lems)
-                for lems in inherited.values()):
-            faults.append(f"{CIRCLE_SOURCE}'s `inherited` is not an object of lists of objects")
+                isinstance(axiom, str) and isinstance(lems, list)
+                and all(fact_location(lem) for lem in lems)
+                for axiom, lems in inherited.items()):
+            faults.append(f"{CIRCLE_SOURCE}'s `inherited` is not an object of lists of "
+                          "objects with name, file and line")
             inherited = {}
         lemmas = [lem.get("name") for lems in inherited.values() for lem in lems]
         for name, rule in FORBIDDEN_CIRCLE_RULES.items():
@@ -1118,7 +1147,8 @@ def check_lock(facts, path: Path = LOCK):
         fail(f"{rel(path)} is missing: with {DECISION_ENTRY}, write it with "
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
-    proved = facts.get("proved_rules", {})
+    proved = facts.get("proved_rules")
+    proved = proved if isinstance(proved, dict) else {}
     # What each proved rule cites; a missing or malformed list cites nothing.
     cites = facts.get("proved_rule_cites")
     cites = cites if isinstance(cites, dict) else {}
@@ -1128,20 +1158,23 @@ def check_lock(facts, path: Path = LOCK):
         if name not in proved:
             fail(f"{name} ({rule}): not an axiom in {rel(path)} or a proved rule in "
                  "facts.json (if the rule was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
-        elif any(other != name and other in lock[0] and other in proved[name]
-                 for other in FORBIDDEN_CIRCLE_RULES):
-            continue
-        elif not (isinstance(cites.get(name), list)
-                  and all(isinstance(cite, str) for cite in cites[name])
-                  and CIRCLE_SOURCE in cites[name]):
-            fail(f"{name} ({rule}): proved without another forbidden circle rule "
-                 f"beneath it that is an axiom in {rel(path)}, or a proof that cites "
-                 f"{CIRCLE_SOURCE}, so entries using it cannot be refused by their axioms "
-                 "or by their citations")
         else:
-            for fault in circle_source_faults(facts):
-                fail(f"{name} ({rule}): proved by a proof that cites {CIRCLE_SOURCE}, "
-                     f"but {fault}, so the rule is not proved from a sound {CIRCLE_SOURCE}")
+            dependencies = proved[name]
+            if name_list(dependencies) and any(
+                    other != name and other in lock[0] and other in dependencies
+                    for other in FORBIDDEN_CIRCLE_RULES):
+                continue
+            rule_cites = cites.get(name)
+            if not (name_list(dependencies) and canonical_ref_list(rule_cites)
+                    and CIRCLE_SOURCE in rule_cites):
+                fail(f"{name} ({rule}): proved without another forbidden circle rule "
+                     f"beneath it that is an axiom in {rel(path)}, or a proof that cites "
+                     f"{CIRCLE_SOURCE}, so entries using it cannot be refused by their axioms "
+                     "or by their citations")
+            else:
+                for fault in circle_source_faults(facts):
+                    fail(f"{name} ({rule}): proved by a proof that cites {CIRCLE_SOURCE}, "
+                         f"but {fault}, so the rule is not proved from a sound {CIRCLE_SOURCE}")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")

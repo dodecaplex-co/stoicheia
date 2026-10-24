@@ -800,6 +800,20 @@ class CircleRuleTests(unittest.TestCase):
                              {self.outside: ["III.2", 7]})
         self.refuses_as_unproved(facts)
 
+    def test_a_non_reference_citation_counts_as_citing_nothing(self):
+        for cited in (["III.2", "not-a-reference"], ["III.2", "III. 1"]):
+            with self.subTest(cited=cited):
+                facts = self.fixture((self.inside,), {self.outside: []},
+                                     {self.outside: cited})
+                self.refuses_as_unproved(facts)
+
+    def test_malformed_proved_rules_cannot_take_either_route(self):
+        for dependencies in ("Postulate1", ["Postulate1", 7], None, {"Postulate1": True}):
+            with self.subTest(dependencies=dependencies):
+                facts = self.fixture((self.inside,), {self.outside: dependencies},
+                                     {self.outside: ["III.2"]})
+                self.refuses_as_unproved(facts)
+
     def test_a_malformed_iii2_entry_is_refused_without_a_crash(self):
         def facts(propositions):
             return self.fixture((self.inside,), {self.outside: []}, {self.outside: ["III.2"]},
@@ -813,10 +827,21 @@ class CircleRuleTests(unittest.TestCase):
                 ("no status", facts([{k: v for k, v in self.entry("III.2").items()
                                       if k != "status"}]), "III.2 is None, not \"proved\""),
                 ("axioms a string", facts([self.entry("III.2", axioms=self.outside)]),
-                 "III.2's `axioms` is not a list"),
+                 "III.2's `axioms` is not a list of strings"),
+                ("axioms include a number",
+                 facts([self.entry("III.2", axioms=["Postulate1", 7])]),
+                 "III.2's `axioms` is not a list of strings"),
                 ("shared steps a string", facts([self.entry("III.2", shared_steps=self.outside)]),
                  "III.2's `shared_steps` is not a list of objects"),
                 ("shared steps of names", facts([self.entry("III.2", shared_steps=[self.outside])]),
+                 "III.2's `shared_steps` is not a list of objects"),
+                ("shared steps of incomplete objects",
+                 facts([self.entry("III.2", shared_steps=[{}])]),
+                 "III.2's `shared_steps` is not a list of objects"),
+                ("shared step brings in a non-reference",
+                 facts([self.entry("III.2", shared_steps=[{
+                     "name": "BookI.Prop5.base", "file": "Elements/BookI/Helpers.lean",
+                     "line": 27, "brings_in": ["not-a-reference"]}])]),
                  "III.2's `shared_steps` is not a list of objects"),
                 ("inherited a list", facts([self.entry("III.2", inherited=[self.outside])]),
                  "III.2's `inherited` is not an object of lists of objects"),
@@ -825,6 +850,9 @@ class CircleRuleTests(unittest.TestCase):
                  "III.2's `inherited` is not an object of lists of objects"),
                 ("inherited of names",
                  facts([self.entry("III.2", inherited={"Postulate1": [self.outside]})]),
+                 "III.2's `inherited` is not an object of lists of objects"),
+                ("inherited of incomplete objects",
+                 facts([self.entry("III.2", inherited={"Postulate1": [{}]})]),
                  "III.2's `inherited` is not an object of lists of objects")):
             with self.subTest(case=case):
                 self.refuses_circle3(given, "proved by a proof that cites III.2, but " + fault)
