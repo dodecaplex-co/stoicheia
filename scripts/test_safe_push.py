@@ -10171,11 +10171,10 @@ class Units(unittest.TestCase):
 
     def test_every_step_after_the_lane_step_carries_its_condition(self):
         # #339 added steps to CI's negative job without the condition, and every R0 to R2
-        # pull request then failed once it had landed. Now this test finds such a step: on
-        # any branch in seconds (Units), and on main within six hours, on the cadence that
-        # runs this suite. (It fails the pull request that adds the step only once it runs
-        # on the pull request's path, #346.) Every workflow is read; CI's negative and
-        # formal-model jobs must have the lane step, first.
+        # pull request then failed once it had landed. Now this test finds such a step on
+        # every pull request in CI's check job (#346), in seconds when Units is run directly,
+        # and on main within six hours on the cadence that runs this suite. Every workflow
+        # is read; CI's negative and formal-model jobs must have the lane step, first.
         workflows = {path.name: yaml.safe_load(path.read_text())
                      for path in sorted((SOURCE / ".github/workflows").glob("*.y*ml"))}
         for name, workflow in workflows.items():
