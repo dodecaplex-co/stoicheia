@@ -867,8 +867,23 @@ def reset_gh() -> None:
                                     "suite_runs": {"*": [GREEN_SUITE]}, "calls": []}))
 
 
+def hermetic_git() -> None:
+    """The test process's git, and every process it starts, reads no variable of git's
+    that the runner set and no global or system configuration (#360). Run under a hook,
+    the runner's GIT_DIR and GIT_INDEX_FILE named the hook's repository, and the module's
+    own git (setUpModule's clone, config and commit among it) acted on that repository;
+    a global core.hooksPath could reach them too, running its hooks on the tests' commits
+    and taking install_hooks.sh's hooks where it points. Each test that needs a variable
+    of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself."""
+    for name in [name for name in os.environ if name.startswith("GIT_")]:
+        del os.environ[name]
+    os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
+    os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
+
+
 def setUpModule():
     global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
+    hermetic_git()
     if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
         # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
         # that dry-run cleanup still requires an empty temporary directory.
@@ -6176,6 +6191,29 @@ class ProtectedPaths(Edge):
         self.assertFalse(safe_push.stamp_only(WORK, first, taken, path))
         self.assertIn(path, safe_push.judged_files(WORK, first, taken))
 
+    def test_acceptance_and_its_check_change_together_as_a_check_change(self):
+        # #249: ACCEPTANCE's table of the limitations allowed, check_acceptance.py's
+        # ALLOWED_LIMITS and tests/test_acceptance_limits.py, which ties the two, change in
+        # one pull request, each half failing the test alone. Nothing in it is judged, so a
+        # failure with origin/main's copies is noted, never kept apart; a page of the
+        # edition beside them is judged, and is kept apart.
+        failing = "python3 -I tests/test_acceptance_limits.py"
+        sha = self.commit("An allowance removed, from the table and the check", {
+            "docs/ACCEPTANCE.md": self.text("docs/ACCEPTANCE.md") + "\nA line for the test.\n",
+            "scripts/check_acceptance.py": self.text("scripts/check_acceptance.py")
+            + "\n# for the test\n",
+            "tests/test_acceptance_limits.py": self.text("tests/test_acceptance_limits.py")
+            + "\n# for the test\n"})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        refused, out = self.kept_apart(sha, failing)
+        self.assertFalse(refused, out)
+        sha = self.commit("And a page of the edition", {
+            "mishnah/I/01.md": self.text("mishnah/I/01.md") + "\nA line for the test.\n"})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), ["mishnah/I/01.md"])
+        refused, out = self.kept_apart(sha, failing)
+        self.assertTrue(refused, out)
+        self.assertIn("mishnah/I/01.md", out)
+
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from
         # the commit's checkout, its copy hands over to origin/main's, which refuses it.
@@ -6205,12 +6243,13 @@ class ProtectedPaths(Edge):
                      "model/Model/Audit.lean", "model/Model.lean",
                      "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
                      "model/lock.sha256", "checks/01-lake-build.toml", "checks/README.md",
-                     "checks/99-a-new-check.toml"):
+                     "checks/99-a-new-check.toml", "docs/ACCEPTANCE.md"):
             self.assertTrue(safe_push.is_protected(path), path)
-        # The registry is a check input too, never judged content (#229).
-        self.assertTrue(safe_push.under("checks/01-lake-build.toml", safe_push.CHECK_INPUTS))
-        self.assertFalse(safe_push.under("checks/01-lake-build.toml",
-                                         safe_push.PROTECTED_JUDGED))
+        # The registry is a check input too, never judged content (#229), and so is
+        # ACCEPTANCE, whose table test_acceptance_limits ties to ALLOWED_LIMITS (#249).
+        for path in ("checks/01-lake-build.toml", "docs/ACCEPTANCE.md"):
+            self.assertTrue(safe_push.under(path, safe_push.CHECK_INPUTS), path)
+            self.assertFalse(safe_push.under(path, safe_push.PROTECTED_JUDGED), path)
         # One home: WORKFLOW.md's "Protected paths" names every one of them, and the
         # template points to it rather than copying the list.
         workflow = (SOURCE / "docs" / "WORKFLOW.md").read_text()
@@ -6232,7 +6271,8 @@ class ProtectedPaths(Edge):
                      "Audit.leanx", "model/README.md", "model/Model/Hand.lean",
                      "model/Model/Audit.lean.orig", "model/Model/Audit.lean/Hand.lean",
                      "model/Model.lean.orig", "model/Model.lean/Hand.lean",
-                     "model/Check/Hand.lean", "model/.gitignore", "docs/reports/overlaps.md"):
+                     "model/Check/Hand.lean", "model/.gitignore", "docs/reports/overlaps.md",
+                     "docs/ACCEPTANCE.md.orig", "docs/STYLE.md"):
             self.assertFalse(safe_push.is_protected(path), path)
         self.assertTrue(set(safe_push.PROTECTED_JUDGED) <= set(safe_push.PROTECTED))
 
@@ -8305,6 +8345,54 @@ class FullChecks(Edge):
                          "a temporary worktree was left behind")
 
 
+class HermeticModule(unittest.TestCase):
+    """#360: one test of this module, its setUpModule with it, run from a linked worktree
+    under a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, leaves
+    the repository as it was: its HEAD, index and files, and the shared configuration."""
+
+    CHILD = "STOICHEIA_TEST_HERMETIC_CHILD"
+
+    def test_the_module_under_a_hooks_git_dir(self):
+        if os.environ.get(self.CHILD):
+            self.skipTest("the planted run itself")
+        plain = dict(os.environ)  # hermetic already: setUpModule has run
+        def g(*args) -> str:
+            return subprocess.run(["git", *map(str, args)], env=plain, check=True,
+                                  capture_output=True, text=True).stdout
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            main, linked = tmp / "main", tmp / "linked"
+            g("init", "-q", main)
+            (main / "a.txt").write_text("main\n")
+            g("-C", main, "add", "a.txt")
+            g("-C", main, "-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
+              "commit", "-q", "--no-verify", "-m", "main")
+            g("-C", main, "worktree", "add", "-q", "-b", "train", linked)
+            git_dir = Path(g("-C", linked, "rev-parse", "--absolute-git-dir").strip())
+            watched = {"HEAD": git_dir / "HEAD", "index": git_dir / "index",
+                       "config": main / ".git" / "config", "a.txt": linked / "a.txt",
+                       "main's a.txt": main / "a.txt"}
+            before = {name: path.read_bytes() for name, path in watched.items()}
+            heads = (g("-C", main, "rev-parse", "HEAD"), g("-C", linked, "rev-parse", "HEAD"))
+            # As a runner under a hook has it: the hook's variables, and the machine's own
+            # configuration, which hermetic_git shuts out.
+            env = {name: value for name, value in plain.items()
+                   if name not in ("GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_GLOBAL")}
+            env.update(GIT_DIR=str(git_dir), GIT_INDEX_FILE=str(git_dir / "index"),
+                       **{self.CHILD: "1"})
+            r = subprocess.run([sys.executable, str(HERE / "test_safe_push.py"),
+                                "Units.test_source_statement"], cwd=linked, env=env,
+                               capture_output=True, text=True, timeout=900)
+            for name, path in watched.items():
+                self.assertTrue(path.read_bytes() == before[name], f"{name} changed:\n"
+                                + r.stderr[-2000:])
+            self.assertNotIn("bare = true", (main / ".git" / "config").read_text())
+            self.assertEqual((g("-C", main, "rev-parse", "HEAD"),
+                              g("-C", linked, "rev-parse", "HEAD")), heads)
+            self.assertEqual(sorted(p.name for p in linked.iterdir()), [".git", "a.txt"])
+            self.assertEqual(r.returncode, 0, r.stderr[-2000:])
+
+
 @unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
                      or os.environ.get("GITHUB_ACTIONS") == "true",
                      "the report step needs bash and jq, as GitHub's runners have (there, a "
@@ -8382,6 +8470,291 @@ class CadenceReport(unittest.TestCase):
         self.assertTrue(r.returncode != 0 and body is None, (r.returncode, r.stderr))
 
 
+class OwnGitUnderHook(Edge):
+    """safe_push's own commands under a hook (#357): run from a train's linked worktree
+    with a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, a dry
+    run leaves the train's HEAD, its index and the change staged in it as they were."""
+
+    def plain_env(self) -> dict:
+        """clean_env() with no variable of git's, so the test's own git is not the hook's,
+        and no global or system configuration, so no hook or setting of the machine's runs
+        in it (a global core.hooksPath would run on `git worktree add`)."""
+        env = {name: value for name, value in clean_env().items()
+               if not name.startswith("GIT_")}
+        env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        return env
+
+    def dry_run_under_hook(self, work_tree: bool) -> None:
+        plain = self.plain_env()
+        train = TMP / f"hook-train-{self._testMethodName}"
+        git(WORK, "worktree", "add", "-q", "--detach", str(train), BASE, env=plain)
+        self.addCleanup(git, WORK, "worktree", "prune", env=plain, check=False)
+        self.addCleanup(shutil.rmtree, train, ignore_errors=True)
+        self.addCleanup(git, WORK, "worktree", "remove", "--force", str(train), env=plain,
+                        check=False)
+        reading = train / "docs" / "reading.md"
+        reading.write_text(reading.read_text() + "\nA line for the test.\n")
+        git(train, "add", "docs/reading.md", env=plain)
+        git(train, "commit", "-q", "--no-verify", "-m", "A good commit", env=plain)
+        reading.write_text(reading.read_text() + "\nA staged line.\n")
+        git(train, "add", "docs/reading.md", env=plain)
+        status = git(train, "status", "--porcelain", env=plain)
+        self.assertEqual(status, "M  docs/reading.md\n")
+        git_dir = Path(git(train, "rev-parse", "--absolute-git-dir", env=plain).strip())
+        watched = {"the train's HEAD": git_dir / "HEAD",
+                   "the train's index": git_dir / "index",
+                   "the clone's index": WORK / ".git" / "index",
+                   "the shared configuration": WORK / ".git" / "config"}
+        before = {name: path.read_bytes() for name, path in watched.items()}
+        hook = dict(plain, GIT_DIR=str(git_dir), GIT_INDEX_FILE=str(git_dir / "index"))
+        if work_tree:
+            hook["GIT_WORK_TREE"] = str(train)
+        r = subprocess.run([sys.executable, str(SAFE_PUSH), "--_test-skip-checks",
+                            *with_branch(("--dry-run",))], cwd=train, env=hook,
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        for name, path in watched.items():
+            self.assertTrue(path.read_bytes() == before[name], f"{name} changed:\n{out}")
+        self.assertEqual(git(train, "status", "--porcelain", env=plain), status, out)
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("would push", r.stdout)
+
+    def test_a_hooks_git_dir_and_index_leave_the_train_alone(self):
+        # The shape #355's review found: GIT_DIR and GIT_INDEX_FILE alone, naming a linked
+        # worktree's git directory; `git worktree add` then checked the commit out into
+        # the train's index, and its staged change was lost.
+        self.dry_run_under_hook(work_tree=False)
+
+    def test_with_the_hooks_work_tree_too(self):
+        self.dry_run_under_hook(work_tree=True)
+
+    def test_every_variable_git_ties_to_a_repository_is_listed(self):
+        listed = set(git(SOURCE, "rev-parse", "--local-env-vars",
+                         env=self.plain_env()).split())
+        self.assertIn("GIT_DIR", listed)
+        self.assertEqual(sorted(listed - safe_push.REPOSITORY_VARIABLES), [])
+
+    def test_run_gives_no_command_a_repository_variable(self):
+        planted = {name: "/planted" for name in safe_push.REPOSITORY_VARIABLES}
+        seen = []
+        def record(cmd, **kwargs):
+            seen.append((cmd[0], kwargs["env"]))
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        with mock.patch.dict(os.environ, planted), \
+                mock.patch.object(safe_push.subprocess, "run", record):
+            safe_push.run(["git", "status"], WORK)
+            safe_push.run(["gh", "pr", "view"], WORK)
+            safe_push.run(["git", "status"], WORK, env=dict(os.environ))
+            # A check, as run_step starts one: tool_env() keeps GIT_NO_REPLACE_OBJECTS
+            # (#355), and run() must not take it away.
+            safe_push.run(["sh", "-c", "true"], WORK, env=safe_push.tool_env())
+        self.assertEqual([name for name, _ in seen], ["git", "gh", "git", "sh"])
+        for name, env in seen:
+            left = sorted(set(env) & (safe_push.REPOSITORY_VARIABLES
+                                      - {"GIT_NO_REPLACE_OBJECTS"}))
+            self.assertEqual(left, [], name)
+        self.assertEqual([env.get("GIT_NO_REPLACE_OBJECTS") for _, env in seen],
+                         ["1", "/planted", "1", "/planted"])
+        # A variable the harness sets on purpose, named in `keep` (base_tree's temporary
+        # index), passes; every other is still dropped.
+        seen.clear()
+        with mock.patch.dict(os.environ, planted), \
+                mock.patch.object(safe_push.subprocess, "run", record):
+            safe_push.run(["git", "read-tree", "HEAD"], WORK,
+                          env=dict(os.environ, GIT_INDEX_FILE="/its/own/index"),
+                          keep=("GIT_INDEX_FILE",))
+        (_, env), = seen
+        self.assertEqual(env["GIT_INDEX_FILE"], "/its/own/index")
+        self.assertEqual(sorted(set(env) & safe_push.REPOSITORY_VARIABLES),
+                         ["GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS"])
+        # And for a program other than git, through own_env.
+        seen.clear()
+        with mock.patch.dict(os.environ, planted), \
+                mock.patch.object(safe_push.subprocess, "run", record):
+            safe_push.run(["env"], WORK, env=dict(os.environ, GIT_INDEX_FILE="/its/own/index"),
+                          keep=("GIT_INDEX_FILE",))
+        (_, env), = seen
+        self.assertEqual(env["GIT_INDEX_FILE"], "/its/own/index")
+        self.assertEqual(sorted(set(env) & safe_push.REPOSITORY_VARIABLES),
+                         ["GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS"])
+
+    def test_only_base_tree_keeps_a_repository_variable(self):
+        # `keep` lets a variable that ties git to one repository through: only base_tree
+        # may name one, its own temporary GIT_INDEX_FILE, and run() and
+        # without_replacements only pass `keep` along (#357, #392).
+        tree = ast.parse((SOURCE / "scripts" / "safe_push.py").read_text())
+        kept = []
+
+        def visit(node, where):
+            # Each call is counted once, under the innermost function that holds it.
+            for child in ast.iter_child_nodes(node):
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    visit(child, f"{where}.{child.name}" if where else child.name)
+                    continue
+                if (isinstance(child, ast.Call) and isinstance(child.func, ast.Name)
+                        and child.func.id in ("run", "own_env", "without_replacements")):
+                    values = [k.value for k in child.keywords if k.arg in ("keep", None)]
+                    if child.func.id != "run" and len(child.args) > 1:
+                        values.append(child.args[1])
+                    kept.extend((where, ast.unparse(value)) for value in values)
+                visit(child, where)
+        visit(tree, "")
+        self.assertEqual(sorted(kept), [("base_tree.index", "('GIT_INDEX_FILE',)"),
+                                        ("run", "keep"), ("run", "keep"),
+                                        ("without_replacements", "keep")])
+
+    def test_base_tree_uses_only_its_temporary_index(self):
+        # base_tree's temporary index, and no caller's or repository's, in each index
+        # command; beside the source test above, which holds that no other place names a
+        # variable in `keep`.
+        path = "docs/reading.md"
+        sha = self.commit("A changed base-tree input", {
+            path: self.text(path) + "\nA line for the test.\n"})
+        expected = git(WORK, "rev-parse", f"{BASE}^{{tree}}").strip()
+        repository_index = WORK / ".git" / "index"
+        repository_before = repository_index.read_bytes()
+
+        with tempfile.TemporaryDirectory(prefix="caller-index-", dir=TMP) as tmp:
+            caller_index = Path(tmp) / "index"
+            plain = self.plain_env()
+            git(WORK, "read-tree", sha,
+                env=dict(plain, GIT_INDEX_FILE=str(caller_index)))
+            caller_before = caller_index.read_bytes()
+            planted = {name: "/planted" for name in safe_push.REPOSITORY_VARIABLES}
+            planted["GIT_INDEX_FILE"] = str(caller_index)
+            seen = []
+            real_run = subprocess.run
+
+            def record(cmd, **kwargs):
+                result = real_run(cmd, **kwargs)
+                env = kwargs["env"]
+                index = env.get("GIT_INDEX_FILE")
+                seen.append((cmd, env, index is not None and Path(index).is_file()))
+                return result
+
+            with mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push.subprocess, "run", record):
+                tree = safe_push.base_tree(WORK, BASE, sha, [("M", path)])
+
+            self.assertEqual(tree, expected)
+            self.assertEqual(caller_index.read_bytes(), caller_before)
+            self.assertEqual(repository_index.read_bytes(), repository_before)
+
+        temporary_indexes = []
+        for cmd, env, index_exists in seen:
+            operation = next(arg for arg in cmd if arg in
+                             {"read-tree", "ls-tree", "update-index", "write-tree"})
+            left = sorted(set(env) & (safe_push.REPOSITORY_VARIABLES
+                                      - {"GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS"}))
+            self.assertEqual(left, [], operation)
+            self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1", operation)
+            if operation == "ls-tree":
+                self.assertNotIn("GIT_INDEX_FILE", env)
+                continue
+            self.assertTrue(index_exists, operation)
+            temporary_indexes.append(env["GIT_INDEX_FILE"])
+        self.assertEqual(len(set(temporary_indexes)), 1)
+        temporary_index = Path(temporary_indexes[0])
+        self.assertNotEqual(temporary_index, caller_index)
+        self.assertNotEqual(temporary_index, repository_index)
+        self.assertFalse(temporary_index.exists())
+
+    MUTATORS = frozenset({"update", "setdefault", "pop", "popitem", "clear", "__setitem__",
+                          "__delitem__", "__ior__"})
+
+    def bindings(self, function, name: str) -> list:
+        """The values `name` is bound to in `function`: an assignment's, an annotated
+        one's or a walrus's value. A binding that holds no single value (an augmented
+        assignment, unpacking, a for or with target) counts as None, and so does any
+        change to what the name holds: a subscript stored or deleted, or a mutating
+        method called on it."""
+        values = []
+        def stores(target) -> bool:  # the name itself, whether read or stored
+            return isinstance(target, ast.Name) and target.id == name
+        for node in ast.walk(function):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if stores(target):
+                        values.append(node.value)
+                    elif isinstance(target, (ast.Tuple, ast.List)) and any(
+                            stores(e) for e in ast.walk(target)):
+                        values.append(None)
+            elif isinstance(node, (ast.AnnAssign, ast.NamedExpr)) and stores(node.target):
+                values.append(node.value)
+            elif isinstance(node, ast.AugAssign) and stores(node.target):
+                values.append(None)
+            elif isinstance(node, (ast.For, ast.AsyncFor)) and any(
+                    stores(e) for e in ast.walk(node.target)):
+                values.append(None)
+            elif isinstance(node, ast.withitem) and node.optional_vars is not None and any(
+                    stores(e) for e in ast.walk(node.optional_vars)):
+                values.append(None)
+            elif (isinstance(node, ast.Subscript) and stores(node.value)
+                  and isinstance(node.ctx, (ast.Store, ast.Del))):
+                values.append(None)
+            elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                  and stores(node.func.value) and node.func.attr in self.MUTATORS):
+                values.append(None)
+        return values
+
+    def test_every_launch_is_given_a_built_environment(self):
+        # run(), risk.py's launch and the hand-over start the harness's processes: each
+        # names an environment built by own_env() or without_replacements(), never the
+        # caller's as it is (#357).
+        builders = ("own_env", "without_replacements")
+        # Each way a process is started, and where its environment goes: a keyword, or
+        # the position os's functions take it at. One that takes none (os.system, os.execv
+        # and the like) inherits the caller's, and fails here.
+        positional = {"os.execve": 2, "os.execvpe": 2, "os.posix_spawn": 2,
+                      "os.posix_spawnp": 2, "os.spawnve": 3, "os.spawnvpe": 3,
+                      "os.execle": -1, "os.execlpe": -1, "os.spawnle": -1,
+                      "os.spawnlpe": -1}
+        apis = {*positional, "subprocess.run", "subprocess.Popen", "subprocess.call",
+                "subprocess.check_call", "subprocess.check_output",
+                "subprocess.getoutput", "subprocess.getstatusoutput", "os.system",
+                "os.popen", "os.execv", "os.execvp", "os.execl", "os.execlp", "os.spawnv",
+                "os.spawnvp", "os.spawnl", "os.spawnlp", "pty.spawn",
+                "asyncio.create_subprocess_exec", "asyncio.create_subprocess_shell"}
+        tree = ast.parse((SOURCE / "scripts" / "safe_push.py").read_text())
+        launches = []
+        for function in ast.walk(tree):
+            if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            for node in ast.walk(function):
+                if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                        and isinstance(node.func.value, ast.Name)):
+                    continue
+                name = f"{node.func.value.id}.{node.func.attr}"
+                if name in apis:
+                    launches.append((function, name, node))
+        # run()'s own, risk.py's and the hand-over's: the CI watch runs through run()
+        # since #392.
+        self.assertEqual(len(launches), 3, [ast.unparse(n) for _, _, n in launches])
+        for function, name, node in launches:
+            with self.subTest(launch=ast.unparse(node)[:60]):
+                where = f"{name} in {function.name}"
+                if name in positional:
+                    index = positional[name]
+                    fits = len(node.args) > max(index, -index - 1)
+                    env = node.args[index] if fits else None
+                else:
+                    env = next((k.value for k in node.keywords if k.arg == "env"), None)
+                self.assertIsNotNone(env, f"{where} names no environment")
+                if isinstance(env, ast.Name):
+                    # A name (run()'s own env, the hand-over's): every binding of it in the
+                    # function binds a call of one of the builders, and nothing changes
+                    # what it holds afterwards.
+                    values = self.bindings(function, env.id)
+                    self.assertTrue(values, f"{where}: {env.id} is never assigned")
+                    for value in values:
+                        shown = ast.unparse(value) if value is not None else env.id
+                        self.assertIsInstance(value, ast.Call, f"{where}: {shown}")
+                        self.assertIn(ast.unparse(value.func), builders, f"{where}: {shown}")
+                    continue
+                self.assertIsInstance(env, ast.Call, ast.unparse(env))
+                self.assertIn(ast.unparse(env.func), builders, ast.unparse(env))
+
+
 class HookEnvironment(unittest.TestCase):
     """The checks' environment under a hook (#355): a program the pre-flight runs as a
     check, given a hook's GIT_DIR and GIT_INDEX_FILE naming a linked worktree's git
@@ -8434,7 +8807,11 @@ class HookEnvironment(unittest.TestCase):
             heads = (self.git("-C", str(main), "rev-parse", "HEAD"),
                      self.git("-C", str(linked), "rev-parse", "HEAD"))
             git = shlex.join(["git", *self.options])
-            check = (f"{git} init -q && echo inner > b.txt && {git} add b.txt && "
+            # The check writes down the git variables it was started with (#357: run() once
+            # took GIT_NO_REPLACE_OBJECTS from it while tool_env() kept it).
+            seen = tmp / "seen-variables"
+            check = (f"env | grep '^GIT_' | sort > {shlex.quote(str(seen))}; "
+                     f"{git} init -q && echo inner > b.txt && {git} add b.txt && "
                      f"{git} {' '.join(self.IDENT)} commit -q --no-verify -m inner")
             hook = {"GIT_DIR": str(git_dir), "GIT_INDEX_FILE": str(git_dir / "index"),
                     "GIT_NO_REPLACE_OBJECTS": "1",
@@ -8459,6 +8836,7 @@ class HookEnvironment(unittest.TestCase):
             kept = sorted(name for name in env if name.startswith("GIT_"))
             self.assertEqual(kept, ["GIT_NO_REPLACE_OBJECTS"])
             self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1")
+            self.assertEqual(seen.read_text(), "GIT_NO_REPLACE_OBJECTS=1\n")
 
     def test_a_hooks_git_dir_and_index_reach_no_check(self):
         # The incident's shape: GIT_DIR and GIT_INDEX_FILE alone, naming a linked worktree.
@@ -9312,16 +9690,24 @@ class Units(unittest.TestCase):
     def test_run_pins_replacements_off_for_git_alone(self):
         # run() gives a git command core.useReplaceRefs=false on its command line, right
         # after the program, and an environment without replacements; another program is
-        # run as given. Nothing is spawned.
-        with mock.patch.object(safe_push.subprocess, "run") as spawn:
+        # run as given, in the caller's environment less the variables that tie git to one
+        # repository, but GIT_NO_REPLACE_OBJECTS (#357). Nothing is spawned.
+        caller = {"GIT_DIR": "/a-hooks-git-dir", "GIT_NO_REPLACE_OBJECTS": "kept-as-given"}
+        with mock.patch.dict(os.environ, caller), \
+                mock.patch.object(safe_push.subprocess, "run") as spawn:
             safe_push.run(["git", "status"], "/nowhere", env={"HOME": "/home"})
             safe_push.run([sys.executable, "-c", "pass"], "/nowhere")
+            expected = {name: value for name, value in os.environ.items()
+                        if name not in safe_push.REPOSITORY_VARIABLES
+                        or name in safe_push.KEPT_GIT_VARIABLES}
         git_call, other_call = spawn.call_args_list
         self.assertEqual(git_call.args[0], ["git", "-c", "core.useReplaceRefs=false", "status"])
         self.assertEqual(git_call.kwargs["env"],
                          {"HOME": "/home", "GIT_NO_REPLACE_OBJECTS": "1"})
         self.assertEqual(other_call.args[0], [sys.executable, "-c", "pass"])
-        self.assertIsNone(other_call.kwargs["env"])
+        self.assertNotIn("GIT_DIR", other_call.kwargs["env"])
+        self.assertEqual(other_call.kwargs["env"], expected)
+        self.assertEqual(other_call.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"], "kept-as-given")
 
     def test_source_statement(self):
         src = (SOURCE / "Elements" / "BookIII" / "Prop01.lean").read_text()
