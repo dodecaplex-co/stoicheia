@@ -334,7 +334,7 @@ def check_certificate(facts: dict) -> None:
             fail(who, "P8" if "figures/" in msg else "P9", msg)
         else:
             fail(who, "P5", msg)
-    _, found = captured(cf.check_expectations, by_ref)
+    _, found = captured(cf.check_expectations, by_ref, cf.EXPECTATIONS, facts)
     for msg in found:
         fail("edition", "E2", msg)
     _, found = captured(cf.check_reviews, facts, by_ref)
@@ -524,13 +524,35 @@ def staged() -> dict[str, list[str]]:
     return out
 
 
+# A proposition's module, `Elements.Book<book>.Prop<n>`, or a module beneath it, once
+# `cf.folded` has put it in NFKC and case-folded it (#200).
+PROP_MODULE = re.compile(r"elements\.book([ivx]+)\.prop(\d+)(?=\.|$)")
+
+
+def staged_imports(path: str) -> tuple[list[tuple[str, int]], list[int]]:
+    """The propositions the staged file `path` imports, each as its book and number, and
+    the line of each import the scan cannot read for certain. The imports are read as
+    check_fidelity's rule 3 reads Book Zero's (`cf.imports`): from the file's bytes, in the
+    Lean as `cf.read_lean` gives it, so that a comment or a string never makes one, and
+    whitespace, a comment or a name in «…» never hides one; and a module is compared as
+    that rule compares it, in NFKC and case-folded (`cf.folded`)."""
+    code = cf.read_lean(cf.lean_text(ROOT / path))[0]
+    imported, unread = [], []
+    for offset, module in cf.imports(code):
+        if module is None:
+            unread.append(cf.line_of(code, offset))
+        elif m := PROP_MODULE.match(cf.folded(module)):
+            imported.append((m[1].upper(), int(m[2])))
+    return imported, unread
+
+
 def staged_refs(path: str, names: list[str]) -> set[str]:
     """The propositions of Books I-III a staged file's declarations are for: a name with
     `PropN` in it, under `Book<book>`; or, without one, in a file whose folder names the
     book, or which imports `PropN` of one book alone (the prototype of mixed angles
-    declares `MixedAngles.Prop16.…` and imports `Elements.BookIII.Prop16`)."""
-    src = (ROOT / path).read_text(encoding="utf-8")
-    imported = re.findall(r"^import Elements\.Book([IVX]+)\.Prop(\d+)\b", src, re.M)
+    declares `MixedAngles.Prop16.…` and imports `Elements.BookIII.Prop16`), its imports
+    read by `staged_imports`."""
+    imported, _ = staged_imports(path)
     folder = re.search(r"/Book([IVX]+)/", path)
     found = set()
     for name in names:
@@ -539,7 +561,7 @@ def staged_refs(path: str, names: list[str]) -> set[str]:
             continue
         n = int(prop.group(1))
         book = re.search(r"(?:^|\.)Book([IVX]+)(?:\.|$)", name)
-        books = {b for b, k in imported if int(k) == n}
+        books = {b for b, k in imported if k == n}
         b = book.group(1) if book else folder.group(1) if folder else (
             next(iter(books)) if len(books) == 1 else None)
         if b in heath.BOOKS and 1 <= n <= heath.BOOKS[b]:
@@ -659,10 +681,21 @@ def check_propositions(facts: dict, records: dict) -> None:
                  f"{rel}:{line}: cites placement, which only III.24 and the theorems on arcs "
                  "may cite")
 
-    # P10 and E6: nothing left in Staging.
+    check_staging()
+
+
+def check_staging() -> None:
+    """P10 and E6: nothing left in Staging. An import in a staged file that declares
+    anything, which the scan cannot read for certain, fails E6, naming its file and line,
+    since which propositions the file imports cannot then be told; it fails closed, and
+    never lets a file pass."""
     for path, names in staged().items():
         if not names:
             continue
+        for line in staged_imports(path)[1]:
+            fail("edition", "E6", f"{path}:{line}: an import the scan cannot read for "
+                 "certain, so which propositions this file imports cannot be told: each part of the module's name must be a plain name, in «…» or not, "
+                 "and whitespace must follow it")
         found = staged_refs(path, names)
         for ref in sorted(found, key=heath.prop_key):
             fail(ref, "P10", f"{path} still stages declarations for {ref}: once proved, a "

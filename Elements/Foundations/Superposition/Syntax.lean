@@ -186,14 +186,16 @@ that absence into a contradiction, which classical logic turns into points (brie
 "The design").
 
 **What the laws' proofs draw.** Citing a law draws nothing in the placement; the law's own
-proof, a universal statement proved outside it, may. Every law but I.7 is proved from the
-library with no rule that constructs (`Cited.holds_of_drawsNothing`; brief 0009 lists the
-axioms). The law of one ray for one angle names all three of its straight lines, the third
-the one through the point it speaks of, so that its proof draws nothing: in I.4 that straight line
-is the side AC laid down, which the placement supplies. I.7's proof draws the six straight
-lines joining its points, produces two and cites I.5; Euclid's I.8 uses I.7 inside the
-placement (brief 0009, question 4, approved as prototyped on 20 October 2026; its
-finishing is tracked in #150).
+proof, a universal statement proved outside it, may. The rule asks only that each cited law
+hold, whatever its proof draws (brief 0009, question 4, approved as prototyped on
+20 October 2026; its finishing is tracked in #150). Each law is proved by a theorem of its
+own, and the certificate records the construction rules beneath each proof, law by law, for
+the propositions that cite it (`cited_laws` in `facts.json`; docs/FORMALIZATION.md,
+section 9). The law of one ray for one angle names all three of its straight lines, the
+third the one through the point it speaks of, so that its proof need not draw any of them:
+in I.4 that straight line is the side AC laid down, which the placement supplies. I.7's
+proof draws the six straight lines joining its points, produces two and cites I.5; Euclid's
+I.8 uses I.7 inside the placement.
 
 `Derives.sound` shows that every step holds of the very points its symbols stand for, under
 any valuation that makes the context true: the derivation needs no point and no straight
@@ -266,12 +268,6 @@ def Cited.law : Cited → Law
     ⟨[neg (.eq .A .B), pos (.onLine .A .L), pos (.onLine .B .L), pos (.sameSide .C .D .L),
       pos (.len .C .A .D .A), pos (.len .C .B .D .B)],
      pos (.eq .C .D)⟩
-
-/-- The laws whose proofs from the library draw nothing: every law but I.7, whose proof the theorem
-citing it supplies. -/
-def Cited.drawsNothing : Cited → Bool
-  | prop7 => false
-  | _ => true
 
 open Lit
 

@@ -5,7 +5,6 @@ import Elements.BookI.Prop20
 import Elements.BookI.Prop21
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
-import Elements.BookIII.Prop01
 import Elements.BookIII.Prop02
 
 /-!
@@ -37,6 +36,16 @@ circle between it and D and none beyond it. That step follows from Definition II
 not stated in Lean; the comparisons say nothing of the point of contact. The last clause
 does: every point of the circle off DA, a point of contact included, has one partner on the
 other side as far from D, and no third.
+
+That no third straight line from D is equal to DK is proved by Euclid's own step, "which was
+proved impossible". On DA, a third point N would be A or G, and DA is the greatest and DG the
+least. Off DA, DN and the straight line it is compared with, DB or DK, are on one side of
+DA, and where both fall on the convex circumference the nearer to DG is the less, by the
+order proved earlier in the proof, so they cannot be equal. Two points of the concave
+circumference are compared by that circumference's own order in the same way, a case
+Euclid's figure leaves aside. The angles at the centre M decide only the cases neither
+order reaches, by I.24: the two points on different circumferences, or one of them a point
+of contact, which is on neither.
 
 `Prop8.partner` is the step the companion needs: the partner on the other side makes the
 same angle with DA, and is in the same class. Equal distance alone does not carry a
@@ -92,13 +101,13 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
 /-- A point of the circle on the straight line DA is A or G, for no three points of a
 circle lie on one straight line. -/
 theorem Prop8.on_diameter {A G N : Point} {α : Circle} {L : Line}
-    (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
+    (hA : OnCircle A α)
     (hG : OnCircle G α) (hN : OnCircle N α) (hAG : A ≠ G) (hA_L : OnLine A L)
     (hG_L : OnLine G L) (hN_L : OnLine N L) : N = A ∨ N = G := by
   refine Classical.byContradiction fun h => ?_
   have hNA : N ≠ A := fun e => h (Or.inl e)
   have hNG : N ≠ G := fun e => h (Or.inr e)
-  exact Prop2.triangle hα hA hG hN hAG hNG.symm hNA.symm ⟨L, hA_L, hG_L, hN_L⟩
+  exact Prop2.triangle hA hG hN hAG hNG.symm hNA.symm ⟨L, hA_L, hG_L, hN_L⟩
 
 /-- If a point be taken outside a circle and from the point straight lines be drawn through to the
 circle, one of which is through the centre and the others are drawn at random, then, of the
@@ -108,7 +117,7 @@ but, of the straight lines falling on the convex circumference, that between the
 diameter is least, while of the rest the nearer to the least is always less than the more
 remote, and only two equal straight lines will fall on the circle from the point, one on each
 side of the least. -/
-theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8 {A D G : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
     (∀ E : Point, OnCircle E ABC → E ≠ A → ‖D E‖ < ‖D A‖) ∧
@@ -134,8 +143,10 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
   -- less than the more remote, namely DK than DL, and DL than DH.
   -- For let the centre of the circle ABC be taken [III. 1], and let it be M; let ME, MF, MC,
   -- MK, ML, MH be joined.
+  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
+     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
+  obtain ⟨M, hM⟩ := exists_centre ABC
   have hAG : A ≠ G := ne_of_between (between_symm hDGA)
-  obtain ⟨M, -, -, -, hM, -⟩ := Prop1 hABC hA hG hAG
   have hGMA : Between G M A := hGA M hM
   have hDGM : Between D G M := between_cut hDGA hGMA
   have hDMA : Between D M A :=
@@ -159,7 +170,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro E hE hEA
     /- On DA, E must be G: the part DG is less than the whole DA. -/
     by_cases hE_Ld : OnLine E Ld
-    · rcases Prop8.on_diameter hABC hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
       · exact absurd rfl hEA
       · exact len_lt_of_between hDGA
     -- Then, since AM is equal to EM,
@@ -204,7 +215,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro K hK hKG
     /- On DA, K must be A, and DG is a part of DA. -/
     by_cases hK_Ld : OnLine K Ld
-    · rcases Prop8.on_diameter hABC hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
       · exact len_lt_of_between hDGA
       · exact absurd rfl hKG
     -- Next, since MK, KD are greater than MD, [I. 20]
@@ -291,28 +302,67 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     -- DB is also equal to DN,
     have hDB_DN : ‖D B‖ = ‖D N‖ := hDK_DB.symm.trans hDK_DN
     -- that is, the nearer to the least DG equal to the more remote: which was proved impossible.
-    /- I.24 at M rules out equal bases on one side of DA. The two earlier
-       comparisons alone do not cover N on the other circumference, or a
-       straight line DK that touches the circle. -/
-    have uniq : ∀ P, OnCircle P ABC → ¬ OnLine P Ld → ∀ N, OnCircle N ABC →
+    /- Euclid compares DN with DB, on B's side of DA; on K's side, a placing his figure
+       leaves aside, DN is compared with DK in the same way. So let P be B or K, on N's
+       side, with DN equal to DP. -/
+    have one_side : ∀ P, OnCircle P ABC → ¬ OnLine P Ld → ∀ N, OnCircle N ABC →
         SameSide N P Ld → ‖D N‖ = ‖D P‖ → N = P := by
       intro P hP hP_Ld N hN hs hDN
+      have hNP : SameSideOf N P D A := SameSideOf.of_line (ne_of_between_ends hDGA) hD_Ld hA_Ld hs
+      /- Euclid's comparison, with N and P both on the convex circumference. The one making
+         the less angle with DA is the nearer to the least DG, and so the less, by the order
+         on the convex circumference proved above; but DN is equal to DP. -/
+      by_cases hcx : (∃ C : Point, OnCircle C ABC ∧ Between D P C) ∧
+          (∃ C : Point, OnCircle C ABC ∧ Between D N C)
+      · rcases lt_trichotomy (∠ A D N) (∠ A D P) with hl | he | hg
+        · have hlt := convex N P hN hP hcx.2 hcx.1 hNP hl
+          rw [hDN] at hlt
+          exact absurd hlt (lt_irrefl _)
+        · /- Euclid takes DN to be a straight line other than DB, so that one of the two is
+             the nearer. Were the angles ADN and ADP equal, N would lie on the ray DP, as far
+             from D as P is, and so be P itself. -/
+          exact OnRay.eq_of_len_eq (onRay_of_angle_eq hNP he) hDN
+        · have hlt := convex P N hP hN hcx.1 hcx.2 hNP.symm hg
+          rw [hDN] at hlt
+          exact absurd hlt (lt_irrefl _)
+      /- A case Euclid's figure leaves aside: N and P both on the concave circumference, as
+         when K is taken there. The order proved above for that circumference does the same
+         work, the less angle with DA having the greater straight line. -/
+      by_cases hcv : (∃ H : Point, OnCircle H ABC ∧ Between D H P) ∧
+          (∃ H : Point, OnCircle H ABC ∧ Between D H N)
+      · rcases lt_trichotomy (∠ A D N) (∠ A D P) with hl | he | hg
+        · have hlt := concave N P hN hP hcv.2 hcv.1 hNP hl
+          rw [hDN] at hlt
+          exact absurd hlt (lt_irrefl _)
+        · exact OnRay.eq_of_len_eq (onRay_of_angle_eq hNP he) hDN
+        · have hlt := concave P N hP hN hcv.1 hcv.2 hNP.symm hg
+          rw [hDN] at hlt
+          exact absurd hlt (lt_irrefl _)
+      /- A case Euclid's figure leaves aside, which neither order reaches: N and P on
+         different circumferences, or one of them a point where a straight line from D
+         touches the circle, which is on neither. Each order compares two points of one
+         circumference only, for the two points where one straight line from D meets the
+         circle make one angle with DA and are at different distances from D. The angles at
+         the centre M decide it instead: unequal angles there give unequal straight lines
+         from D by I.24, and equal ones put N on the radius MP, so that N is P. -/
       have hN_Ld : ¬ OnLine N Ld := not_on_line_of_same_side hs
-      have hNP : SameSideOf N P M D := SameSideOf.of_line hDM.symm hM_Ld hD_Ld hs
+      have hNP' : SameSideOf N P M D := SameSideOf.of_line hDM.symm hM_Ld hD_Ld hs
       have hMN : ‖M P‖ = ‖M N‖ := (hMA P hP).trans (hMA N hN).symm
       rcases lt_trichotomy (∠ N M D) (∠ P M D) with hl | he | hg
       · have h24 := BookI.Prop24 (tri P hP_Ld) (tri N hN_Ld) hMN rfl hl
         rw [len_symm N D, len_symm P D, hDN] at h24
         exact absurd h24 (lt_irrefl _)
-      · have hray : OnRay N M P := onRay_of_angle_eq hNP (by
+      · have hray : OnRay N M P := onRay_of_angle_eq hNP' (by
           rw [angle_symm hDM (ne_of_centre_of_on hM hN), he,
             angle_symm (ne_of_centre_of_on hM hP) hDM])
         exact OnRay.eq_of_len_eq hray hMN.symm
       · have h24 := BookI.Prop24 (tri N hN_Ld) (tri P hP_Ld) hMN.symm rfl hg
         rw [len_symm N D, len_symm P D, hDN] at h24
         exact absurd h24 (lt_irrefl _)
+    /- On DA itself, N is A or G, and DA is the greatest and DG the least, as proved above,
+       so neither is as far from D as K. -/
     by_cases hN_Ld : OnLine N Ld
-    · rcases Prop8.on_diameter hABC hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
       · have hlt := greatest K hK (fun e => hK_Ld (e ▸ hA_Ld))
         rw [← hDN] at hlt
         exact absurd hlt (lt_irrefl _)
@@ -320,11 +370,11 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
         rw [hDN] at hlt
         exact absurd hlt (lt_irrefl _)
     by_cases hs : SameSide N K Ld
-    · exact Or.inl (uniq K hK hK_Ld N hN hs hDN)
+    · exact Or.inl (one_side K hK hK_Ld N hN hs hDN)
     · have hsB : SameSide N B Ld := same_side_of_opposite_sides
         ⟨hK_Ld, hN_Ld, fun h => hs (same_side_symm h)⟩
         (hBK.symm.oppositeSides hM_Ld hD_Ld)
-      exact Or.inr (uniq B hB hB_Ld N hN hsB hDB_DN.symm)
+      exact Or.inr (one_side B hB hB_Ld N hN hsB hDB_DN.symm)
   -- Therefore no more than two equal straight lines will fall on the circle ABC from the point
   -- D, one on each side of DG the least.
   -- Therefore etc.
@@ -343,7 +393,7 @@ third point of the circle is as far from D, shows that no other point is B; the 
 follows from the equal angles: a point of the circle beyond K on the straight line DK has
 its partner on the ray DB beyond B, and a point of the circle between D and K has its
 partner between D and B. -/
-theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8.partner {A D G K B : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A)
     (hK : OnCircle K ABC) (hB : OnCircle B ABC) (hBK : OppositeSidesOf B K D A)
@@ -353,9 +403,9 @@ theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, 
       (∃ C : Point, OnCircle C ABC ∧ Between D K C)) ∧
     ((∃ H : Point, OnCircle H ABC ∧ Between D H B) ↔
       (∃ H : Point, OnCircle H ABC ∧ Between D H K)) := by
-  have hpartner := (Prop8 hABC hD hA hG hDGA hGA).2.2.2.2
+  have hpartner := (Prop8 hD hA hG hDGA hGA).2.2.2.2
   /- Take the centre M from the given circle. -/
-  obtain ⟨M, hM⟩ := hABC
+  obtain ⟨M, hM⟩ := exists_centre ABC
   have hDMA : Between D M A :=
     between_symm (between_of_between_left (between_symm hDGA)
       (between_symm (hGA M hM)))
@@ -466,7 +516,7 @@ circumference; the comparisons speak only of points with a point of the circle b
 or beyond them, and that a point of contact has neither, which follows from Definition III.2,
 is not stated here. Each point K of the circle off DA has one partner B on the other side
 with DB equal to DK, and no third point of the circle is as far from D. -/
-theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8.general {A D G : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
     (∀ E : Point, OnCircle E ABC → E ≠ A → ‖D E‖ < ‖D A‖) ∧
@@ -482,7 +532,7 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
     (∀ K : Point, OnCircle K ABC → ¬ Collinear D A K → ∃ B : Point, OnCircle B ABC ∧
       OppositeSidesOf B K D A ∧ ‖D B‖ = ‖D K‖ ∧
       ∀ N : Point, OnCircle N ABC → ‖D N‖ = ‖D K‖ → N = K ∨ N = B) := by
-  obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ := Prop8 hABC hD hA hG hDGA hGA
+  obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ := Prop8 hD hA hG hDGA hGA
   have hDA : D ≠ A := ne_of_between_ends hDGA
   obtain ⟨Ld, hD_Ld, hA_Ld⟩ := Postulate1 D A hDA
   /- Two points off DA that are not on one side are on opposite sides. -/
@@ -501,7 +551,7 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
     have hEF' := hopposite E F hE_DA hF_DA hEF
     obtain ⟨B, hB, hBF, hDB, -⟩ := hpartner F hF hF_DA
     have hEB : SameSideOf E B D A := OppositeSidesOf.sameSideOf hEF'.symm hBF.symm
-    obtain ⟨hang, -, hclass⟩ := Prop8.partner hABC hD hA hG hDGA hGA hF hB hBF hDB
+    obtain ⟨hang, -, hclass⟩ := Prop8.partner hD hA hG hDGA hGA hF hB hBF hDB
     have hlt' : ∠ A D E < ∠ A D B := by rw [hang]; exact hlt
     have hless := hconcave E B hE hB hHE (hclass.mpr hLF) hEB hlt'
     rwa [hDB] at hless
@@ -512,7 +562,7 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
     have hKL' := hopposite K L hK_DA hL_DA hKL
     obtain ⟨B, hB, hBL, hDB, -⟩ := hpartner L hL hL_DA
     have hKB : SameSideOf K B D A := OppositeSidesOf.sameSideOf hKL'.symm hBL.symm
-    obtain ⟨hang, hclass, -⟩ := Prop8.partner hABC hD hA hG hDGA hGA hL hB hBL hDB
+    obtain ⟨hang, hclass, -⟩ := Prop8.partner hD hA hG hDGA hGA hL hB hBL hDB
     have hlt' : ∠ A D K < ∠ A D B := by rw [hang]; exact hlt
     have hless := hconvex K B hK hB hKC (hclass.mpr hLF) hKB hlt'
     rwa [hDB] at hless
@@ -520,9 +570,9 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
 /-- The check: the statement of `Prop8` follows from `Prop8.general` (checked by Lean).
 Two points on one side of DA are off it. -/
 example : type_of% @Elements.BookIII.Prop8 := by
-  intro A D G ABC hABC hD hA hG hDGA hGA
+  intro A D G ABC hD hA hG hDGA hGA
   obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ :=
-    Prop8.general hABC hD hA hG hDGA hGA
+    Prop8.general hD hA hG hDGA hGA
   exact ⟨hgreatest,
     fun E F hE hF hHE hLF hEF hlt =>
       hconcave E F hE hF hHE hLF hEF.triangle hEF.symm.triangle hlt,

@@ -11,8 +11,9 @@ at a glance. Helper signatures expose their use, not the work inside their proof
 Ten synthetic defect controls change generated rows only. Expectations report the
 review records' claims and remain local, as do provenance, mutations and coverage.
 
-Run from anywhere with Python 3.11 or later, using only the standard library and the
-repository's heath.py and jev.py, imported by path:
+Run from anywhere with Python 3.11 or later, using only the standard library, the
+repository's heath.py and jev.py, imported by path, and a copy, word for word, of the
+comment reader the scripts share, heath.py's `comment_end`:
 
     python3 scripts/audit/jev_questions.py --commit REV
     python3 scripts/audit/jev_questions.py --commit REV --check
@@ -22,9 +23,19 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
-resolve inside the repository. Both output paths reject symlinks, evidence files, tracked
-files other than the two default outputs, Git metadata, protected paths independently
-of the index, and collisions with each other; an output may be outside the repository.
+resolve inside the repository. Both helpers' paths pass those checks and must name
+regular files; their accepted code is read and compiled before any of it runs.
+Each Lean file's header is read by a small parser following Lean 4.35's grammar, before any
+masking:
+an optional `module`, then imports in the four forms
+`import`, `public import`, `meta import` and `public meta import`, each naming one module of
+plain or «...» components and ending its line, with ordinary comments between the words. A
+doc comment or any other word before an import, `prelude`, `import all`, a block comment
+running on from an import's line, and any `import` after the header outside a «...» name are
+refused. Both output paths reject symlinks,
+evidence files, tracked files other than the two default outputs, Git metadata, protected
+paths independently of the index, and collisions with each other; an output may be
+outside the repository.
 Both outputs are assembled and validated before either is written, using temporary
 files and replacement without following a final symlink.
 The checks cover links and aliases present when it runs, not a concurrent writer racing
@@ -74,19 +85,6 @@ def require(condition: Any, message: str) -> None:
         raise Refusal(message)
 
 
-def module(name: str, path: str):
-    spec = importlib.util.spec_from_file_location(name, ROOT / path)
-    require(spec and spec.loader, f'cannot import {path}')
-    result = importlib.util.module_from_spec(spec)
-    sys.modules[name] = result
-    spec.loader.exec_module(result)
-    return result
-
-
-heath = module('jev_questions_heath', 'scripts/heath.py')
-jev = module('jev_questions_client', 'scripts/audit/jev.py')
-
-
 def dumps(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, allow_nan=False)
 
@@ -126,6 +124,77 @@ def read_no_follow(path: Path) -> bytes:
     """Refuse a final symlink even if it appeared after the component checks."""
     with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as stream:
         return stream.read()
+
+
+HELPERS = (('jev_questions_heath', 'scripts/heath.py'),
+           ('jev_questions_client', 'scripts/audit/jev.py'))
+
+
+def _prepare_modules(helpers: tuple[tuple[str, str], ...]) -> list:
+    checked = []
+    for name, path in helpers:
+        resolved = evidence_path(path)
+        require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
+        checked.append((name, path, resolved))
+    return [(name, path, resolved, compile(read_no_follow(resolved), str(resolved), 'exec',
+                                            dont_inherit=True))
+            for name, path, resolved in checked]
+
+
+def _execute_modules(code: list) -> list:
+    result = []
+    for name, path, resolved, compiled in code:
+        spec = importlib.util.spec_from_file_location(name, resolved)
+        require(spec is not None, f'cannot import {path}')
+        loaded = importlib.util.module_from_spec(spec)
+        sys.modules[name] = loaded
+        exec(compiled, loaded.__dict__)
+        result.append(loaded)
+    return result
+
+
+def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
+    """Check every helper's path, then read and compile each, before any helper runs."""
+    return _execute_modules(_prepare_modules(helpers))
+
+
+# The scripts' one reader of where a Lean comment ends is heath.py's `comment_end`
+# (#206, #349). The generator must read the evidence commit's heath.py as a helper,
+# which at an older commit has no reader, so it holds its own copy, word for word but
+# for the name, which tests/test_negative_tests.py holds to heath's by its source and
+# by what it reads (the coordinator's ruling of 23 October 05:20).
+def shared_comment_end(src: str, i: int) -> int | None:
+    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
+    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
+    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
+    docstrings and nested blocks among them, just past the `-/` that closes it, or None
+    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
+    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
+    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
+    `read_lean` and `lean_comments`, and check_style's notes call this (#206). It uses
+    nothing else of this file, so that a program that cannot import it holds a copy, word
+    for word, which its tests hold to this one: the Jev generator, and risk.py from
+    #349's second train."""
+    if src.startswith("--", i):
+        end = src.find("\n", i)
+        return len(src) if end < 0 else end
+    j, nested = i + 3, 1
+    while j < len(src):
+        pair = src[j:j + 2]
+        nested += (pair == "/-") - (pair == "-/")
+        j += 2 if pair in ("/-", "-/") else 1
+        if not nested:
+            return j
+    return None
+
+
+try:
+    prepared_helpers = _prepare_modules(HELPERS)
+    heath, jev = _execute_modules(prepared_helpers)
+except (Refusal, OSError) as error:
+    if __name__ != '__main__':
+        raise
+    raise SystemExit(f'refused: {error}') from None
 
 
 class Evidence:
@@ -172,14 +241,124 @@ class Evidence:
 
 # A small source lexer, not a Lean elaborator. Masking preserves offsets and line breaks.
 # Strings, nested comments and balanced binders cannot terminate a signature.
-IDENT = r"[^\W\d][\w'₀-₉]*"
+# Lean 4.35's name characters (Init/Meta/Defs.lean, isIdFirst and isIdRest): a name begins
+# with an ASCII letter, `_` or a letter-like character, and goes on with these, ASCII digits,
+# `'`, `!`, `?` and subscripts. The ranges are written as `re` escapes, in Lean's hex values.
+LETTER_LIKE = ('\\u03b1-\\u03ba\\u03bc-\\u03c9\\u0391-\\u039f\\u03a1\\u03a2\\u03a4-\\u03a9'
+               '\\u03ca-\\u03fb\\u1f00-\\u1ffe\\u2100-\\u214f\\U0001d49c-\\U0001d59f'
+               '\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u00ff\\u0100-\\u017f')
+SUBSCRIPTS = '\\u2080-\\u2089\\u2090-\\u209c\\u1d62-\\u1d6a\\u2c7c'
+NAME_REST = 'A-Za-z_' + LETTER_LIKE + "0-9'!?" + SUBSCRIPTS
+IDENT = '[A-Za-z_' + LETTER_LIKE + '][' + NAME_REST + ']*'
+LEAN_NAME = re.compile(IDENT)
 NAME = IDENT + r'(?:\.' + IDENT + r')*'
 TOKEN = re.compile(NAME)
+MODULE_COMPONENT = r'(?:' + IDENT + r'|«[^»\n]+»)'
+MODULE_NAME = re.compile(MODULE_COMPONENT + r'(?:\.' + MODULE_COMPONENT + r')*')
+MODULE_PART = re.compile(MODULE_COMPONENT)
+KEYWORD_LEFT = r'(?<![' + NAME_REST + r'.«])'
+KEYWORD_RIGHT = r'(?![' + NAME_REST + r'»])'
 COMMAND = re.compile(
     r'^(?:@\[[^\n]*?\]\s*)?(?:(?:private|protected|noncomputable|unsafe)\s+)*'
     r'(theorem|lemma|def|abbrev|axiom|opaque|structure|inductive|instance|example|'
-    r'namespace|section|end|open|variable|import|notation\S*|infix\S*|prefix\S*|'
+    r'namespace|section|end|open|variable|notation\S*|infix\S*|prefix\S*|'
     r'postfix\S*|attribute|set_option)\b', re.M)
+# Lean 4.35's module header (Lean/Parser/Module/Syntax.lean) is an optional `module`, an
+# optional `prelude`, then any number of imports, each `[public] [meta] import [all] M`. The
+# generator reads the subset without `prelude` and `all`, each import ending its line.
+HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
+IMPORT_WORD = re.compile(KEYWORD_LEFT + 'import' + KEYWORD_RIGHT)
+QUOTED_NAME = re.compile(r'«[^»\n]*»')
+# A command that can declare a token: a notation whose words before `=>` hold a bar could make
+# a bar an operator, and one whose token joins a name character to another, as `-x` does,
+# could end a word where the patterns below see none; a macro, an elaborator or a binder
+# predicate can give any syntax a meaning.
+SYNTAX_WORD = re.compile(KEYWORD_LEFT
+                         + r'(?:notation|infixl|infixr|infix|prefix|postfix'
+                         + r'|(macro_rules|macro|elab_rules|elab|binder_predicate))'
+                         + KEYWORD_RIGHT)
+# A character of a name, to Lean or to the patterns' \w.
+NAME_CHARACTER = re.compile(r'[\w' + NAME_REST + ']')
+# The whitespace Lean reads between tokens (Lean/Parser/Basic.lean, `whitespace`, which refuses
+# a tab and a carriage return), narrower than Python's: a no-break space may stand in a token.
+WHITESPACE = ' \n'
+# The tokens of Lean 4.35's token table (Lean.Parser.getTokenTable; toolchain 4.35.0, commit
+# eb6cafb7) that begin with a letter or `_`: 282 of the 507 that the toolchain's `lean` lists
+# on a scratch file importing Lean, Std and Lake (Lake.DSL adds none). Lean reads one as a
+# keyword where it begins a name and is at least as long as the name, as `trace[` is.
+KEYWORD_TOKENS = frozenset('''
+    EStack⟨ Macro.trace[ Prop Sort StateRefT Type _ abbrev add_decl_doc assert!
+    assert_not_exists assert_not_imported at attribute aux_def axiom bif
+    binder_predicate binop% binop_lazy% binrel% binrel_no_prop% break
+    builtin_cbv_simproc builtin_cbv_simproc_decl builtin_cbv_simproc_pattern%
+    builtin_dsimproc builtin_dsimproc_decl builtin_grind_propagator builtin_initialize
+    builtin_simproc builtin_simproc_decl builtin_simproc_pattern% by by? by_elab calc
+    catch cbv_eval cbv_simproc cbv_simproc_decl cbv_simproc_pattern% class clear%
+    coinductive coinductive_fixpoint continue date( datespec( datetime( dbg_trace
+    debug_assert! decl_name% declare_bitwise_int_theorems declare_bitwise_uint_theorems
+    declare_command_config_elab declare_command_config_elab_legacy declare_config_elab
+    declare_config_elab_legacy declare_core_config_elab declare_eval_bin
+    declare_eval_bin_bitwise declare_eval_bin_bool_pred declare_int_theorems
+    declare_simp_like_tactic declare_sint_simprocs declare_syntax_cat
+    declare_term_config_elab declare_uint_simprocs declare_uint_theorems decreasing_by
+    def def_eval_config_item default_or_ofNonempty% deprecated_module deprecated_syntax
+    deriving do docs_to_verso dsimproc dsimproc_decl elab elabToSyntax% elab_rules
+    elab_stx_quot else end ensure_expected_type% ensure_type_of% estack⟨ eval_prec
+    eval_prio exact?% example exists export extends f! finally for for_in% for_in'%
+    forall from fun gen_injective_theorems% generalizing grind_annotated grind_pattern
+    grind_propagator have haveI hiding hydrate_opaque_type idbg if import in include
+    include_str inductive inductive_fixpoint inferInstanceAs infix infixl infixr
+    init_grind_norm init_quot initialize instance json% leading_parser leftact% let letI
+    let_delayed let_expr let_fun let_mvar% let_tmp let_λ local logNamedError
+    logNamedErrorAt logNamedWarning logNamedWarningAt m! macro macro_rules match
+    match_expr matches max_prec meta mod_cast monotonicity_by mut mutual namespace
+    nat_lit no_error_if_unused% no_implicit_lambda% no_index nofun nomatch noncomputable
+    nonempty_type nonrec norm_cast_add_elim notation offset( omit opaque open panic!
+    partial partial_fixpoint postfix prefix println! private private_decl% protected
+    public recall recall? recommended_spelling register_builtin_option
+    register_error_explanation register_grind_attr register_label_attr
+    register_linter_set register_option register_parser_alias register_simp_attr
+    register_sym_dsimp register_sym_simp register_sym_simp_attr register_tactic_tag
+    register_try?_tactic renaming repeat reportDbgIssue! reportEMatchIssue! reportIssue!
+    reprove reset_grind_attrs% return rightact% run_cmd run_elab run_meta s!
+    satisfies_binder_pred% scoped seal section sepBy( sepBy1( set_library_suggestions
+    set_option show show_panel_widgets show_term show_term_elab simproc simproc_decl
+    simproc_pattern% sorry struct_inst_default% structure suffices syntax tactic_alt
+    tactic_extension tactic_name tactic_tag termination_by termination_by? test_extern
+    then theorem throwError throwErrorAt throwNamedError throwNamedErrorAt time(
+    timezone( trace[ trace_goal[ trailing_parser try type_of% unicode( unif_hint
+    universe unless unlock_limits unop% unreachable! unsafe unseal until using using!
+    value_of% variable wait_for_expected_type% wait_if_contains_mvar%
+    wait_if_type_contains_mvar% wait_if_type_mvar% where while with with_annotate_term
+    with_decl_name% with_weak_namespace without_expected_type zoned( Σ Σ' λ
+'''.split())
+
+
+def comment_end(src: str, i: int) -> int:
+    """Return the end of the line comment or nested block comment that starts at i, as Lean
+    reads it (`shared_comment_end`, heath.py's `comment_end` word for word)."""
+    end = shared_comment_end(src, i)
+    require(end is not None, 'unterminated Lean comment')
+    return end
+
+
+def string_literals(src: str, start: int, end: int) -> list[str]:
+    """Return the contents of the strings that open in src[start:end], outside comments;
+    start must stand outside every string and comment."""
+    found = []
+    i = start
+    while i < end:
+        if src.startswith(('--', '/-'), i):
+            i = comment_end(src, i)
+        elif src[i] == '"':
+            j = i + 1
+            while j < len(src) and src[j] != '"':
+                j += 2 if src[j] == '\\' else 1
+            found.append(src[i + 1:j])
+            i = j + 1
+        else:
+            i += 1
+    return found
 
 
 def mask(src: str) -> tuple[str, list[tuple[int, int]]]:
@@ -188,23 +367,8 @@ def mask(src: str) -> tuple[str, list[tuple[int, int]]]:
     i = 0
     while i < len(src):
         start = i
-        if src.startswith('--', i):
-            end = src.find('\n', i)
-            i = len(src) if end < 0 else end
-            comments.append((start, i))
-        elif src.startswith('/-', i):
-            depth = 1
-            i += 2
-            while i < len(src) and depth:
-                if src.startswith('/-', i):
-                    depth += 1
-                    i += 2
-                elif src.startswith('-/', i):
-                    depth -= 1
-                    i += 2
-                else:
-                    i += 1
-            require(depth == 0, 'unterminated Lean comment')
+        if src.startswith(('--', '/-'), i):
+            i = comment_end(src, i)
             comments.append((start, i))
         elif src[i] == '"':
             i += 1
@@ -244,6 +408,99 @@ def assignment(clean: str, start: int, end: int) -> int | None:
     return None
 
 
+def header_tokens(src: str, comments: list[tuple[int, int]]):
+    """Yield the tokens of a Lean header as (text, start, end), before any masking.
+
+    Whitespace and ordinary comments separate tokens; each comment is added to comments. A
+    doc comment is one token, and so is a module name, read whole with its «...» components,
+    so that nothing inside them is read as syntax. Any other character is a token by itself.
+    At the end of the text the stream yields ('', len(src), len(src)) for ever.
+    """
+    i = 0
+    while True:
+        while i < len(src) and src[i] in ' \t\r\n':
+            i += 1
+        if i == len(src):
+            yield '', i, i
+            continue
+        if src.startswith(('--', '/-'), i) and not src.startswith(('/--', '/-!'), i):
+            end = comment_end(src, i)
+            comments.append((i, end))
+        elif src.startswith('/-', i):
+            end = comment_end(src, i)
+            yield src[i:end], i, end
+        else:
+            found = MODULE_NAME.match(src, i)
+            end = found.end() if found else i + 1
+            yield src[i:end], i, end
+        i = end
+
+
+def module_path(name: str) -> str | None:
+    """Return the file a module name names, one folder per component, or None if a component
+    could leave its folder."""
+    parts = [part[1:-1] if part.startswith('«') else part for part in MODULE_PART.findall(name)]
+    if any(part in ('.', '..') or '/' in part for part in parts):
+        return None
+    return '/'.join(parts) + '.lean'
+
+
+def lean_source(path: str, raw: str) -> tuple[str, list[tuple[int, int]], list[tuple[str, int, int]]]:
+    """Read a Lean file's header, then mask the file; return the masked text, its comments and
+    its imports, each with its module's file and the span of its words to the end of its line.
+
+    The header is an optional `module`, then any number of `[public] [meta] import M`, each
+    ending its line, with ordinary comments between the words. As in Lean, an import is read
+    only whole, so `public section` after the header ends it. An import naming anything but one
+    module, and an `import` anywhere after the header unless within a whole «...» name, are
+    refused: so is any other word before an import, `prelude`, `import all`, a doc comment
+    among the imports or a block comment that opens on an import's line and closes on a later
+    one. The header is blank in the masked text.
+    """
+    comments: list[tuple[int, int]] = []
+    stream = header_tokens(raw, comments)
+    tokens: list[tuple[str, int, int]] = []
+
+    def token(k: int) -> tuple[str, int, int]:
+        while len(tokens) <= k:
+            tokens.append(next(stream))
+        return tokens[k]
+
+    k = 1 if token(0)[0] == 'module' else 0
+    end = token(0)[2] if k else 0
+    imports = []
+    while True:
+        j = k + (token(k)[0] == 'public')
+        j += token(j)[0] == 'meta'
+        if token(j)[0] != 'import':
+            break
+        name, _, end = token(j + 1)
+        following = token(j + 2)
+        newline = raw.find('\n', end)
+        line_end = len(raw) if newline < 0 else newline + 1
+        file = module_path(name) if MODULE_NAME.fullmatch(name) else None
+        # A block comment opening on the import's line must close there, so that the
+        # import's span ends outside it.
+        require(file and name not in HEADER_WORDS
+                and (not following[0] or '\n' in raw[end:following[1]])
+                and not any(token(k)[1] <= a < line_end and raw.startswith('/-', a)
+                            and '\n' in raw[a:b] for a, b in comments),
+                f'{path}: unsupported import {raw[token(k)[1]:line_end].rstrip()!r}')
+        imports.append((file, token(k)[1], line_end))
+        k = j + 2
+    rest, rest_comments = mask(raw[end:])
+    clean = re.sub(r'[^\n]', ' ', raw[:end]) + rest
+    # A whole «...» name is one identifier, so an `import` within it is no import.
+    names = QUOTED_NAME.sub(lambda found: ' ' * len(found.group()), clean)
+    later = IMPORT_WORD.search(names, end)
+    if later:
+        line_end = raw.find('\n', later.start())
+        line = raw[raw.rfind('\n', 0, later.start()) + 1:len(raw) if line_end < 0 else line_end]
+        raise Refusal(f'{path}: unsupported import {line!r}')
+    comments = [c for c in comments if c[0] < end] + [(a + end, b + end) for a, b in rest_comments]
+    return clean, comments, imports
+
+
 @dataclass(frozen=True)
 class Declaration:
     name: str
@@ -265,6 +522,7 @@ class Index:
         self.evidence = evidence
         self.decls: dict[str, Declaration] = {}
         self.clean: dict[str, str] = {}
+        self.raw: dict[str, str] = {}
         self.imports: dict[str, list[tuple[str, int, int]]] = {}
         self.notation: list[tuple[str, int, int]] = []
         self.visible_cache: dict[str, set[str]] = {}
@@ -276,10 +534,30 @@ class Index:
 
     def add(self, path: str) -> None:
         raw = self.evidence.read(path)
-        clean, comments = mask(raw)
+        # Refused since the masking, which opened a comment with `/-` alone, ended `/--/` at
+        # once where Lean's doc comment runs on to a later `-/`. The masking now reads it as
+        # Lean does (`comment_end`, #206), and the refusal stands.
+        require('/--/' not in raw, f'{path}: unsupported doc comment opening /--/')
+        clean, comments, self.imports[path] = lean_source(path, raw)
         self.clean[path] = clean
+        self.raw[path] = raw
+        # Wherever one stands, local or scoped included. The bar is sought in the raw text, so
+        # within the notation's strings; the `=>` in the masked text, so outside them. Each
+        # string is a token, read without its spaces: it may be a name, or hold no character
+        # of a name, as `‖` and `∠` do, and is refused otherwise.
+        for found in SYNTAX_WORD.finditer(clean):
+            require(not found.group(1), f'{path}: unsupported command {found.group()}')
+            arrow = clean.find('=>', found.end())
+            stop = len(raw) if arrow < 0 else arrow
+            require('|' not in raw[found.start():stop],
+                    f'{path}: unsupported {found.group()} with a bar')
+            for atom in string_literals(raw, found.start(), stop):
+                atom = atom.strip()
+                # Lean reads a token whole, `/--+` too, where the masking opens a comment.
+                require((LEAN_NAME.fullmatch(atom) or not NAME_CHARACTER.search(atom))
+                        and '--' not in atom and '/-' not in atom,
+                        f'{path}: unsupported {found.group()} token {atom!r}')
         commands = list(COMMAND.finditer(clean))
-        self.imports[path] = []
         namespace = ''
         frames: list[tuple[str, int, int]] = []
         contexts: list[tuple[int, int]] = []
@@ -297,10 +575,6 @@ class Index:
             end = len(raw[:stop].rstrip())
             line_end = raw.find('\n', start)
             line_end = len(raw) if line_end < 0 else line_end
-            if kind == 'import':
-                imported = clean[match.end():line_end].strip()
-                self.imports[path].append((imported.replace('.', '/') + '.lean', start, line_end + 1))
-                continue
             if kind in ('namespace', 'section'):
                 frames.append((namespace, len(contexts), len(opens)))
                 if kind == 'namespace':
@@ -370,8 +644,13 @@ class Index:
             if candidate in self.decls:
                 return candidate
         candidates = set()
+        # An opened namespace is named from the root, from Elements, or from the consumer's
+        # namespace or any enclosing it: `open Prop4 in` within Elements.BookI opens
+        # Elements.BookI.Prop4.
+        parts = consumer.namespace.split('.') if consumer.namespace else []
+        scopes = {'', 'Elements.'} | {'.'.join(parts[:n]) + '.' for n in range(1, len(parts) + 1)}
         for opened in (*consumer.opens, *(['Elements', 'Elements.Tacit'] if commentary else [])):
-            for prefix in ('', 'Elements.'):
+            for prefix in sorted(scopes):
                 candidate = prefix + opened + '.' + token
                 if candidate in self.decls:
                     candidates.add(candidate)
@@ -491,27 +770,87 @@ class Calls:
     unit or in a collected signature, repeating to closure. Namespace prefixes do not
     restrict these conservative candidates, and no receiver type is guessed. Constructors
     and named structure projections are quoted through their enclosing declaration, which
-    contains their exact signatures and docstrings. The glossary's supplied definitions
-    also expose their underlying types, including AreParallel within Parallelogram.
+    contains their exact signatures and docstrings. An inductive's constructors are each
+    named after a `|` outside every bracket in the declaration, on a line that opens `  |`,
+    several to a line as `| a | b | c`; there they are declared, not called. An inductive
+    is read only in the plain forms `constructors` names, and refused otherwise. The
+    glossary's supplied definitions also expose their underlying types, including
+    AreParallel within Parallelogram.
 
     The fixed core/projection allowlist is: 1, 2, symm, trans, refl, mp, mpr, elim, left, right,
     ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append, mem_cons,
     mem_cons_of_mem, mem_cons_self, mem_singleton, mem_singleton_self, not_mem_nil,
-    cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc, append_nil, nil_append,
-    cons_append, pairwise_append, pairwise_singleton, byContradiction, epsilon_spec.
-    These names exempt only fields with no project candidate; symm, for example, still
-    collects every eligible geometric signature. Any remaining field is unresolved.
+    mem_nil_iff, forall_mem_cons, cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc,
+    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton,
+    byContradiction, epsilon_spec. These names exempt only fields with no project candidate;
+    symm, for example, still collects every eligible geometric signature. Any remaining field
+    is unresolved.
     """
 
     CORE_FIELDS = frozenset({
         '1', '2', 'symm', 'trans', 'refl', 'mp', 'mpr', 'elim', 'left', 'right', 'ne', 'imp',
         'inl', 'inr', 'resolve_left', 'resolve_right', 'map', 'Pairwise', 'mem_append',
         'mem_cons', 'mem_cons_of_mem', 'mem_cons_self', 'mem_singleton', 'mem_singleton_self',
-        'not_mem_nil', 'cons_ne_nil', 'append_ne_nil_of_right_ne_nil', 'append_assoc',
-        'append_nil', 'nil_append', 'cons_append', 'pairwise_append', 'pairwise_singleton',
-        'byContradiction', 'epsilon_spec',
+        'not_mem_nil', 'mem_nil_iff', 'forall_mem_cons', 'cons_ne_nil',
+        'append_ne_nil_of_right_ne_nil', 'append_assoc', 'append_nil', 'nil_append',
+        'cons_append', 'pairwise_append', 'pairwise_singleton', 'byContradiction', 'epsilon_spec',
     })
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
+    CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
+    CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
+    CLOSERS = {')': '(', ']': '[', '}': '{', '⟩': '⟨', '⦄': '⦃', '⟧': '⟦', '›': '‹'}
+    # The plain forms, the only ones `constructors` reads from an inductive's name to the end
+    # of its constructors: whitespace and name characters; a dot after a name character, a
+    # bracket or a space, and before a name character; the brackets ( ) [ ] { } ⦃ ⦄ ⟨ ⟩; the
+    # symbols : , → ∀ ∈ × + |; and no keyword but those of PLAIN_WORDS. A match is a word, to
+    # be read against KEYWORD_TOKENS, or a dot or a character outside the plain forms.
+    PLAIN_WORDS = frozenset({'Type', 'Prop', 'Sort', 'where', '_'})
+    UNPLAIN = re.compile('(?P<word>' + LEAN_NAME.pattern + ')'
+                         '|(?P<after>(?<![' + WHITESPACE + NAME_REST
+                         + '()\\[\\]{}⦃⦄⟨⟩])\\.)|(?P<before>\\.(?![' + NAME_REST + ']))'
+                         '|[^' + WHITESPACE + NAME_REST + '.()\\[\\]{}⦃⦄⟨⟩:,→∀∈×+|]')
+    # The longest keyword token at a place, as Lean's token table reads it.
+    KEYWORD = re.compile('|'.join(re.escape(token) for token in
+                                  sorted(KEYWORD_TOKENS, key=lambda token: (-len(token), token))))
+    # Words after which a `|` may begin an alternative or a pattern, as in
+    # `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`: of `fun`, `match` or
+    # `match_expr`, of a `let`, `have`, `haveI`, `letI`, `let_fun`, `let_delayed` or `let_tmp`
+    # by equations or of `let_expr`, of `matches`, of a tactic, of `do`, or of a computed field
+    # after `with`. The plain forms hold none of them; a bar after one is refused first, with
+    # that reason.
+    ALTERNATIVES = re.compile(KEYWORD_LEFT
+                              + r'(?:fun|match|match_expr|matches|let|let_expr|have|by'
+                              + r'|do|with|haveI|letI|let_fun|let_delayed|let_tmp)'
+                              + KEYWORD_RIGHT + '|λ')
+    # A line that is blank, opens `  |` or opens with three spaces continues the constructors;
+    # a line opening with a bar after fewer spaces is refused, not taken as their end.
+    CONSTRUCTORS_END = re.compile(r'(?! *$|  \||   )', re.M)
+    # A declaration's keyword, or `recall`, begins a command wherever it stands on its line,
+    # and ends the constructors.
+    COMMAND_WORD = re.compile(KEYWORD_LEFT
+                              + r'(?:def|theorem|abbrev|instance|example|opaque|axiom'
+                              + r'|structure|class|inductive|deriving|mutual|recall)'
+                              + KEYWORD_RIGHT)
+    # Three forms would make the masked text, or the words in it, other than Lean reads them.
+    # A string, a char literal or a «...» name, whose brackets and bars the masking may misread,
+    # and a `»`, which may end a «...» name Lean opened before the inductive.
+    LITERAL = re.compile(r"[\"«»]|(?<![\w'₀-₉!?])'")
+    # A number glued to a word or a quote, as in `0x5matches` or `0'a'`, where Lean ends the
+    # number, so that a keyword after it would go unseen and a quote would open a char literal;
+    # and a quote after a bare `!` or `?`, which opens one, as in `!'a'matches`.
+    GLUED = re.compile(r"(?<![\w'₀-₉!?])(?:[0-9]+(?:[^\W\d]|['!?])|[!?]+')")
+    # A dash or a slash after which the masking opens a comment, after anything but whitespace
+    # or a name character: Lean may read it within a token, as in `\/-`, `//-` or a notation's
+    # `+--`, and open no comment there. After whitespace too Lean reads a notation's `/--+`
+    # whole; the index refuses every notation token holding `--` or `/-`.
+    OPENER = re.compile('--|/-')
+    # Two forms the plain forms leave out are refused first, with a reason of their own: a
+    # word character Lean reads in no name, such as `²` or `ж` (but `λ`, which ALTERNATIVES
+    # reads), a subscript that begins a word, as after `→ₑ`, and `#`, which begins Lean's
+    # commands, each read whole, as `#where` is in `#wheredef`; and a dot glued to a symbol
+    # before a word, as in `..matches` or `⊗.matches`, which the patterns take for a field.
+    FOREIGN = re.compile('[^\\W' + NAME_REST + 'λ]|(?<![\\w\'!?])[' + SUBSCRIPTS + ']|#')
+    DOT = re.compile('(?<=[^\\s\\w' + NAME_REST + '()\\[\\]{}⟨⟩⦃⦄⟦⟧‹›])\\.(?=\\w)')
 
     def __init__(self, index: Index, facts: dict):
         self.index = index
@@ -523,10 +862,129 @@ class Calls:
                       if d.kind in ('def', 'abbrev', 'opaque', 'axiom', 'structure', 'inductive')}
         self.members: dict[str, set[str]] = {}
         for name, d in index.decls.items():
-            if d.kind in ('structure', 'inductive'):
-                pattern = r'^  ' + (r'\| ' if d.kind == 'inductive' else '') + '(' + IDENT + r')\b'
-                for member in re.findall(pattern, index.clean[d.path][d.name_end:d.end], re.M):
-                    self.members.setdefault(member, set()).add(name)
+            if d.kind == 'inductive':
+                found = [m.group(1) for m in self.constructors(index.clean[d.path], d)]
+            elif d.kind == 'structure':
+                found = re.findall(r'^  (' + IDENT + r')(?![' + NAME_REST + '])',
+                                   index.clean[d.path][d.name_end:d.end], re.M)
+            else:
+                continue
+            for member in found:
+                self.members.setdefault(member, set()).add(name)
+
+    def constructors(self, clean: str, d: Declaration) -> list[re.Match]:
+        """Return each constructor name of inductive d: the name after a `|` outside every
+        bracket in the declaration, on a line that opens `  |`.
+
+        The reader accepts only the plain forms main's inductives are written in, and refuses
+        everything else. From the inductive's name to the end of its constructors, the masked
+        text may hold only whitespace and name characters; a dot after a name character, a
+        bracket or a space, and before a name character; the brackets ( ) [ ] { } ⦃ ⦄ ⟨ ⟩;
+        the symbols : , → ∀ ∈ × + |; and no keyword Lean 4.35 reads (KEYWORD_TOKENS) but
+        `Type`, `Prop`, `Sort`, `where` and `_`. An alternative or a pattern after a bar needs
+        `=>` or a keyword, so in these forms each bar outside every bracket separates
+        constructors or stands beside another, as in `||`, which separates none; any other
+        bar is refused, as are constructors at four spaces or on the inductive's own line.
+
+        So that the masked text, and the words in it, are those Lean reads, the
+        declaration's raw text may hold no string, char literal, «...» name or `»`
+        (LITERAL), no number glued to a word or a quote (GLUED), and no comment opening
+        after anything but whitespace or a name character, where Lean may read the dash or
+        slash within a token (OPENER); a comment in it may hold no `{`, and a line comment
+        no `-/`, at which Lean, put within a comment, a «...» name or an interpolated string
+        by something earlier such as `'"'`, would leave it; and the index refuses, in any
+        file it reads, a doc comment opening `/--/`, and a notation token holding `--` or
+        `/-`, which Lean reads whole where the masking opens a comment. Some forms outside
+        the plain forms are refused first, with a reason of their own: those FOREIGN and
+        DOT name, anywhere in the declaration, and a bar after a word ALTERNATIVES names.
+
+        The constructors end before the first line outside every bracket that is not blank
+        and opens neither `  |` nor three spaces, where a deriving clause or a command
+        begins, and before a declaration's keyword or `recall` outside every bracket,
+        wherever it stands on its line, as in `| mk def f`; what follows is read for uses.
+        Brackets are counted from the name across lines, and an unbalanced one is refused.
+        The index refuses a notation whose words before `=>` hold a bar, or whose token joins
+        a name character to another, and every macro, elaborator and binder-predicate
+        command; `scripts/check_fidelity.py`, not this generator, refuses in `Elements/` the
+        attributes that make a declaration an elaborator or a parser, such as
+        `@[term_elab k]`."""
+        require(not self.LITERAL.search(self.index.raw[d.path], d.name_end, d.end),
+                f'{d.path}: unsupported string, char literal or quoted name in {d.name}')
+        require(not self.GLUED.search(clean, d.name_end, d.end),
+                f'{d.path}: unsupported number or literal glued to a word in {d.name}')
+        foreign = self.FOREIGN.search(clean, d.name_end, d.end)
+        if foreign:
+            raise Refusal(f'{d.path}: unsupported character {foreign.group()!r} in {d.name}')
+        raw = self.index.raw[d.path]
+        for found in self.OPENER.finditer(raw, d.name_end, d.end):
+            before = raw[found.start() - 1]
+            require(clean[found.start() - 1] != before or before in WHITESPACE
+                    or NAME_CHARACTER.match(before),
+                    f'{d.path}: unsupported comment glued to {before!r} in {d.name}')
+        # Where the masking misread something before the inductive, as it reads '"', Lean may be
+        # within a comment, a «...» name or an interpolated string at its keyword, and leave it
+        # at `-/`, `»` or `{`. LITERAL refuses `»` and `"`; a comment here may hold no `{`, and a
+        # line comment no `-/`, so Lean leaves none of them where the masking reads no code.
+        i = d.name_end
+        while i < d.end:
+            if raw.startswith(('--', '/-'), i):
+                end = comment_end(raw, i)
+                require('{' not in raw[i:end] and not (raw[i] == '-' and '-/' in raw[i:end]),
+                        f'{d.path}: unsupported {{ or -/ in a comment in {d.name}')
+                i = end
+            else:
+                i += 1
+        require(not self.DOT.search(clean, d.name_end, d.end),
+                f'{d.path}: unsupported dot glued to a symbol in {d.name}')
+        lines = {line.start(): line.end()
+                 for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)}
+        words = {found.start(): found.group()
+                 for found in self.ALTERNATIVES.finditer(clean, d.name_end, d.end)}
+        commands = {found.start() for found in self.COMMAND_WORD.finditer(clean, d.name_end, d.end)}
+        found, stack, line_end, word, stop = [], [], -1, None, d.end
+        for i in range(d.name_end, d.end):
+            if not stack and clean[i - 1] == '\n' and self.CONSTRUCTORS_END.match(clean, i):
+                require(not re.match(r' *\|', clean[i:]),
+                        f'{d.path}: unsupported bar in an inductive, {d.name}')
+                stop = i
+                break
+            line_end = lines.get(i, line_end)
+            c = clean[i]
+            if c in '([{⟨⦃⟦‹':
+                stack.append(c)
+            elif c in self.CLOSERS:
+                require(stack and stack.pop() == self.CLOSERS[c],
+                        f'{d.path}: unbalanced brackets in {d.name}')
+            elif stack:
+                continue
+            elif i in commands:
+                stop = i
+                break
+            elif i in words:
+                word = word or words[i]
+            elif c == '|' and clean[i - 1] not in '|<' and clean[i + 1:i + 2] not in ('|', '>'):
+                # Off a constructor line, line_end is behind i and nothing matches.
+                match = self.CONSTRUCTOR.match(clean, i, line_end)
+                require(word is None, f'{d.path}: unsupported bar after {word!r} in {d.name}')
+                require(match, f'{d.path}: unsupported bar in an inductive, {d.name}')
+                found.append(match)
+        require(not stack, f'{d.path}: unbalanced brackets in {d.name}')
+        for unplain in self.UNPLAIN.finditer(clean, d.name_end, stop):
+            if unplain.lastgroup == 'word':
+                keyword = self.KEYWORD.match(clean, unplain.start(), stop)
+                if (not keyword or keyword.end() < unplain.end()
+                        or keyword.group() in self.PLAIN_WORDS):
+                    continue
+                what = f'the keyword {keyword.group()!r}'
+            elif unplain.lastgroup == 'after':
+                what = f'a dot after {clean[unplain.start() - 1]!r}'
+            elif unplain.lastgroup == 'before':
+                what = f'a dot before {clean[unplain.end():unplain.end() + 1]!r}'
+            else:
+                what = f'the character {unplain.group()!r}'
+            raise Refusal(f'{d.path}: {d.name} holds {what}, outside the plain forms an '
+                          'inductive may hold')
+        return found
 
     def type_names(self, text: str, consumer: Declaration) -> set[str]:
         found = set()
@@ -557,7 +1015,11 @@ class Calls:
                           'position': 'proof' if match.start() >= d.body else 'type',
                           'resolution': resolution})
 
+        declared = ({found.start(1) for found in self.constructors(clean, d)}
+                    if d.kind == 'inductive' else set())
         for match in self.REFERENCE.finditer(clean, d.name_end, d.end):
+            if match.start() in declared:
+                continue
             token = match.group()
             parts = token.split('.')
             after_expression = clean[match.start() - 1:match.start()] == '.'

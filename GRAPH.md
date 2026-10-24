@@ -756,7 +756,7 @@ graph TD
 
 ### From the Lean
 
-225 arrows: 84 also among Heath's references and 141 only in the Lean. The graph draws the 85 arrows between propositions of Book III, 37 solid and 48 dashed; the table under it lists the other 140, to propositions of earlier books.
+228 arrows: 79 also among Heath's references and 149 only in the Lean. The graph draws the 81 arrows between propositions of Book III, 32 solid and 49 dashed; the table under it lists the other 147, to propositions of earlier books.
 
 ```mermaid
 graph TD
@@ -797,11 +797,8 @@ graph TD
   III35["III.35"]
   III36["III.36"]
   III37["III.37"]
-  III1 --> III2
-  III1 --> III4
   III3 --> III4
   III2 -.-> III7
-  III1 --> III8
   III2 -.-> III8
   III1 --> III9
   III2 -.-> III9
@@ -812,12 +809,10 @@ graph TD
   III6 -.-> III12
   III2 --> III13
   III11 --> III13
-  III1 --> III14
   III3 --> III14
   III2 -.-> III15
   III14 --> III15
   III2 -.-> III16
-  III1 --> III17
   III16 --> III17
   III18 --> III19
   III2 -.-> III21
@@ -834,6 +829,9 @@ graph TD
   III23 -.-> III24
   III2 -.-> III25
   III9 --> III25
+  III20 -.-> III25
+  III21 -.-> III25
+  III22 -.-> III25
   III2 -.-> III26
   III20 -.-> III26
   III21 -.-> III26
@@ -842,6 +840,7 @@ graph TD
   III2 -.-> III27
   III20 --> III27
   III21 -.-> III27
+  III22 -.-> III27
   III26 --> III27
   III2 -.-> III28
   III20 -.-> III28
@@ -872,12 +871,9 @@ graph TD
   III2 -.-> III34
   III16 -.-> III34
   III32 --> III34
-  III1 -.-> III35
   III3 --> III35
-  III1 -.-> III36
   III3 --> III36
   III18 --> III36
-  III1 -.-> III37
   III16 --> III37
   III17 -.-> III37
   III18 --> III37
@@ -900,7 +896,7 @@ graph TD
 | [III.10](book/III/10.md) | I.10, I.11, I.13, I.17 | none |
 | [III.11](book/III/11.md) | I.20 | none |
 | [III.12](book/III/12.md) | I.20 | I.20 |
-| [III.14](book/III/14.md) | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47 | I.47 |
+| [III.14](book/III/14.md) | I.3, I.4, I.17, I.19, I.20, I.28, I.34, I.46, I.47 | I.47 |
 | [III.15](book/III/15.md) | I.3, I.11, I.13, I.17, I.19, I.20, I.24 | I.20, I.24 |
 | [III.16](book/III/16.md) | I.5, I.12, I.13, I.17, I.19, I.20, I.23 | I.5, I.17, I.19 |
 | [III.17](book/III/17.md) | I.4, I.11, I.13 | I.4 |
@@ -910,12 +906,12 @@ graph TD
 | [III.22](book/III/22.md) | I.32 | I.32 |
 | [III.23](book/III/23.md) | I.16, I.21 | I.16 |
 | [III.24](book/III/24.md) | I.2, I.3, I.4, I.5, I.7, I.8, I.20, I.22, I.26, I.32 | none |
-| [III.25](book/III/25.md) | I.4, I.6, I.10, I.11, I.13, I.17, I.23 | I.6 |
+| [III.25](book/III/25.md) | I.4, I.5, I.6, I.10, I.11, I.13, I.17, I.23, I.32 | I.6 |
 | [III.26](book/III/26.md) | I.4, I.5, I.32 | I.4 |
-| [III.27](book/III/27.md) | I.23 | I.23 |
+| [III.27](book/III/27.md) | I.5, I.23, I.32 | I.23 |
 | [III.28](book/III/28.md) | I.5, I.8, I.20, I.32 | I.8 |
 | [III.29](book/III/29.md) | I.4, I.5, I.32 | I.4 |
-| [III.30](book/III/30.md) | I.4, I.10, I.11, I.17 | I.4 |
+| [III.30](book/III/30.md) | I.4, I.6, I.10, I.11, I.17, I.32 | I.4 |
 | [III.31](book/III/31.md) | I.5, I.12, I.13, I.17, I.19, I.20, I.32 | I.5, I.17, I.32 |
 | [III.32](book/III/32.md) | I.11, I.13, I.32 | I.32 |
 | [III.33](book/III/33.md) | I.4, I.10, I.11, I.23 | I.4 |
@@ -926,7 +922,7 @@ graph TD
 
 </details>
 
-Heath's references that the Lean does not cite, 2 of his 86: [III.5](book/III/05.md) in [III.10](book/III/10.md); [III.10](book/III/10.md) in [III.24](book/III/24.md).
+Heath's references that the Lean does not cite, 7 of his 86: [III.1](book/III/01.md) in [III.2](book/III/02.md); [III.1](book/III/01.md) in [III.4](book/III/04.md); [III.1](book/III/01.md) in [III.8](book/III/08.md); [III.5](book/III/05.md) in [III.10](book/III/10.md); [III.1](book/III/01.md) in [III.14](book/III/14.md); [III.1](book/III/01.md) in [III.17](book/III/17.md); [III.10](book/III/10.md) in [III.24](book/III/24.md).
 
 <details><summary>The 37 propositions of Book III</summary>
 

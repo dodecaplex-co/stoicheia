@@ -6,7 +6,7 @@ fingerprint = "sha256:75b80d518e57f424"
 
 [route]
 kind = "euclid"
-note = "After I.13, `Elements/BookI/Prop13.lean` proves `Tacit.adjacent_eq_of_right` from I.13 and Common Notion 3, and `Tacit.inside_of_angle_add` from I.13, angle addition, positivity and the side rules. These corollaries retain the former rules' names and types; I.13's statement and argument are unchanged."
+note = "After I.13, the Lean proves two rules of System E from it: `Tacit.adjacent_eq_of_right`, that a right angle is equal to the angle adjacent to it, from I.13 and Common Notion 3; and `Tacit.inside_of_angle_add`, that if the angles BAD and DAC make up the angle BAC then D lies within it, from I.13, the adding of angles, the fact that an angle of a triangle is greater than nothing (`Triangle.angle_pos`), and the rules for the sides of a straight line."
 
 [[passage]]
 at = "I say that the angles CBA, ABD are either two right angles"
@@ -35,10 +35,10 @@ case = "AB leaning towards C, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "7285f05"
-reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:2c2481ea33a0fd8d"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "b7b41f51"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:02663ef3706debd0"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1)"
 
 [review.items]
 statement = "pass"

@@ -6,30 +6,80 @@ fingerprint = "sha256:c3d22dab733dbafc"
 
 [route]
 kind = "euclid"
+note = "Euclid shows the angle in the greater segment less than a right angle at B alone, by I.17. Our statement says it of every point of that segment, so the Lean adds a step here: with a point D of the less segment, III.22 makes the two angles together equal to two right angles, and the angle at D is greater than a right angle."
 
 [representation]
-tags = ["mixed-angles-local", "centre-given"]
+tags = ["mixed-angles-local"]
 note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of a segment is the points within the circle on the segment's side of AC. It is greater than a right angle placed at A along AC, on that side, when near A the right angle lies within it with whole small circles to spare, and less the other way about; the companions prove that the named points give the angles Euclid draws (`MixedAngle.WellFormed`), and claim no addition, ratio or motion of mixed angles. A point is in the greater segment ABC when it is on B's side of AC, and in the less segment when it is on the other side. The centre E is given, as Euclid's setting-out names it."
+
+[[passage]]
+at = "Let ABCD be a circle"
+kind = "helper"
+helper = "Prop2.triangle"
+note = "Euclid joins the points of the circle and uses triangle ABC. The Lean excludes collinearity by `Prop2.triangle`, from III.2, for which Heath prints no reference here."
+
+[[passage]]
+at = "Then, since BE is equal to EA"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid takes the radii BE and EA to be equal without giving a reason. The Lean obtains their equality from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "Again, since CE is equal to EA"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid takes the radii CE and EA to be equal without giving a reason. The Lean again applies `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "Therefore the whole angle BAC is equal to the two angles ABC, ACB"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid adds the two angles at A to make the whole BAC. Since E lies between B and C, `angle_add_of_between` splits BAC at AE, using `Tacit.pasch2` (System E, Pasch 2) to place E within the angle and `Tacit.angle_add_of_inside` (System E, Diagram-angle 2) to add its parts, both rules we assume."
 
 [[passage]]
 at = "and it is the angle in the segment ADC less than the semicircle"
 kind = "case"
-note = "Euclid shows the angle in the greater segment less than a right angle at B alone, by I.17. Our statement says it of every point of that segment, so the Lean adds a step here: with a point D of the less segment, III.22 makes the two angles together equal to two right angles, and the angle at D is greater than a right angle."
+note = "Euclid's figure supplies D; for the further case described above, `Prop2.oppositeSide` supplies a point of the circle across AC from B by III.2, for which Heath prints no reference here. It finds that point by `Tacit.line_circle_beyond` (System E, Intersections 5), and puts it across AC by `Tacit.pasch3` (System E, Pasch 3), both rules we assume."
 
 [[passage]]
 at = "I say further that the angle of the greater segment"
-kind = "helper"
+kind = "carried"
 helper = "Prop31.greater"
 note = "What Euclid calls manifest, that near A the right angle BAC lies within the circle and so within the angle of the greater segment, is proved after the theorem, by the companion, for every straight line in the circle not through the centre, at either end; his figure is the case in which B is the far end of the diameter through C."
 
 [[passage]]
+at = "the angle contained by the circumference ABC and the straight line AC is greater"
+kind = "carried"
+helper = "Prop31.greater"
+note = "Euclid reads the excess over the right angle from his figure; `Prop31.greater_gt_right` proves it with `near_inside_of_angle` and `near_across`, using I.12, I.17, I.19, I.20 and III.2, none referenced by Heath here, after `Prop31.greater` obtains the right angle from the first part of III.31. `Prop31.diameter_through` supplies B using `Tacit.centre_inside` (System E, Generalities 3), `Tacit.line_circle_beyond` (System E, Intersections 5) and `Tacit.pasch2` (System E, Pasch 2); `Tacit.pasch3` (System E, Pasch 3) puts CA produced across AB, and `near_across` uses `Tacit.line_circle_between` (System E, Intersections 4) to find whole small circles of excess, all five named rules assumed."
+
+[[passage]]
 at = "Again, since the angle contained by the straight lines AC, AF is right"
-kind = "helper"
+kind = "carried"
 helper = "Prop31.less"
 note = "Likewise, that the less segment lies wholly within the right angle CAF is proved after the theorem, by the companion. The closing step beneath these sentences returns only the claims of the statement."
 
+[[passage]]
+at = "the angle contained by the straight line CA and the circumference ADC is less"
+kind = "carried"
+helper = "Prop31.less"
+note = "Euclid reads the strict shortfall from his figure; `Prop31.less_lt_right` uses `Tacit.adjacent_eq_of_right` from I.13, then `Prop31.less_nearVertex` and `near_across` use I.12, I.17, I.19, I.20 and III.2, none referenced by Heath here, with the right angle BAC and the diameter supplied as for the greater segment. To contain the less segment within CAF, it puts an interior point on AB between A and B by `Tacit.between_of_inside_chord` (System E, Circle 1), and excludes interior points across AB using `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1), `Tacit.pasch4` (System E, Pasch 4) and `Tacit.pasch2` (System E, Pasch 2), all rules we assume, with III.2 putting the crossing within the circle; the same `near_across` construction supplies whole small circles outside it."
+
+[figure]
+case = "BC a diameter, with B in the greater segment ABC and D in the less segment ADC, as in Heath's figure"
+note = "The figure at a glance finishes by adding the triangle's three angles. Euclid instead compares BAC with the exterior angle FAC."
+
 [review]
-stage = "exceptions"
-commit = "97f6403e"
+stage = "full"
+commit = "2f2c3c2f"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:5a88702fb9967d25"
+lean = "sha256:9a929ce14445d973"
+run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

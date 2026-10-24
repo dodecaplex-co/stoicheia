@@ -4,7 +4,6 @@ import Elements.BookI.Prop05
 import Elements.BookI.Helpers
 import Elements.BookI.Prop16
 import Elements.BookI.Prop19
-import Elements.BookIII.Prop01
 
 /-!
 # Book III, Proposition 2
@@ -42,7 +41,7 @@ theorem Prop2.through_centre {A B D E : Point} {L : Line} (hADB : Between A D B)
 
 /-- If on the circumference of a circle two points be taken at random, the straight line joining the
 points will fall within the circle. -/
-theorem Prop2 {A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) (hA : OnCircle A ABC)
+theorem Prop2 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) :
     ∀ E : Point, Between A E B → InsideCircle E ABC := by
   -- Let ABC be a circle, and let two points A, B be taken at random on its circumference;
@@ -53,8 +52,10 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) 
      the circle. We take up the outside one, and the point F it supplies, below. -/
   -- let the centre of the circle ABC be taken [III. 1], and let it be D; let DA, DB be joined,
   -- and let DFE be drawn through.
+  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
+     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
+  obtain ⟨D, hD⟩ := exists_centre ABC
   have hAB : A ≠ B := ne_of_between_ends hAEB
-  obtain ⟨D, -, -, -, hD, -⟩ := Prop1 hABC hA hB hAB
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   have hE_L := on_line_of_between_ends hAEB hA_L hB_L
   -- Then, since DA is equal to DB,
@@ -113,7 +114,7 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) 
 it. Produced beyond each end that is within, the straight line meets the circle (System E,
 Intersections 5), and the point lies between the two points where it meets it, so within
 the circle by III.2. [III. 2] -/
-theorem Prop2.within {A B C : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
+theorem Prop2.within {A B C : Point} {α : Circle}
     (hA : InsideCircle A α ∨ OnCircle A α) (hB : InsideCircle B α ∨ OnCircle B α)
     (h : Between A C B) : InsideCircle C α := by
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B (ne_of_between_ends h)
@@ -129,29 +130,29 @@ theorem Prop2.within {A B C : Point} {α : Circle} (hα : ∃ O : Point, Centre 
     · obtain ⟨Q, hQ, -, hQBP⟩ := line_circle_beyond hB hB_L hP_L (ne_of_between_ends hPCB)
       exact ⟨Q, hQ, between_of_between_left (between_symm hQBP) hPCB⟩
     · exact ⟨B, hB, hPCB⟩
-  exact Prop2 hα hP hQ C hPCQ
+  exact Prop2 hP hQ C hPCQ
 
 /-- Three points of a circle are not on one straight line: were they, one would lie
 between the other two, and so within the circle, not on it. [III. 2] -/
-theorem Prop2.triangle {A B C : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
+theorem Prop2.triangle {A B C : Point} {α : Circle}
     (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
   rintro ⟨L, hA_L, hB_L, hC_L⟩
   rcases between_cases hAB hBC hAC hA_L hB_L hC_L with h | h | h
-  · exact inside_not_on (Prop2 hα hA hC B h) hB
-  · exact inside_not_on (Prop2 hα hB hC A h) hA
-  · exact inside_not_on (Prop2 hα hA hB C h) hC
+  · exact inside_not_on (Prop2 hA hC B h) hB
+  · exact inside_not_on (Prop2 hB hC A h) hA
+  · exact inside_not_on (Prop2 hA hB C h) hC
 
 /-- A straight line BC in a circle has a point of the circle on the other side of it from
 any point K off it. Take M between B and C; it is within the circle [III. 2], so the
 straight line KM, produced beyond M, meets the circle (System E, Intersections 5), on the
 other side of BC from K (Pasch 3). -/
-theorem Prop2.oppositeSide {B C K : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
+theorem Prop2.oppositeSide {B C K : Point} {α : Circle}
     (hB : OnCircle B α) (hC : OnCircle C α) (hK : Triangle B C K) :
     ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hK.ne₁₂
   obtain ⟨M, hM_L, hBMC, -⟩ := exists_point_between hB_L hC_L hK.ne₁₂ []
-  have hM_in : InsideCircle M α := Prop2 hα hB hC M hBMC
+  have hM_in : InsideCircle M α := Prop2 hB hC M hBMC
   have hK_L : ¬ OnLine K L := hK.off_line hB_L hC_L
   have hKM : K ≠ M := fun e => hK_L (e ▸ hM_L)
   obtain ⟨N, hK_N, hM_N⟩ := Postulate1 K M hKM
@@ -167,11 +168,11 @@ theorem Prop2.oppositeSide {B C K : Point} {α : Circle} (hα : ∃ O : Point, C
 /-- A straight line BC in a circle has a point of the circle on the same side of it as any
 point K off it: take a point on the other side from K, and a point of the circle on the
 other side from that (`Prop2.oppositeSide`). [III. 2] -/
-theorem Prop2.sameSide {B C K : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
+theorem Prop2.sameSide {B C K : Point} {α : Circle}
     (hB : OnCircle B α) (hC : OnCircle C α) (hK : Triangle B C K) :
     ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C := by
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hK []
-  obtain ⟨A, hA_α, hAQ⟩ := Prop2.oppositeSide hα hB hC hQ.triangle
+  obtain ⟨A, hA_α, hAQ⟩ := Prop2.oppositeSide hB hC hQ.triangle
   exact ⟨A, hA_α, OppositeSidesOf.sameSideOf hAQ.symm hQ⟩
 
 end Elements.BookIII

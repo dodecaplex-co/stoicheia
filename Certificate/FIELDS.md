@@ -36,6 +36,7 @@ in Books I-III, I.15, III.1 and III.16.
 | `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
 | `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
 | `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. |
+| `construction_rules` | list of names | **New** (21 October 2026, [#150](https://github.com/jackChallis/stoicheia/issues/150)). The axioms in `axiom_modules` that are [construction rules](../docs/FORMALIZATION.md#construction-rules), found from Lean's statements of them (below). Sorted by string. |
 
 Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
 has always written them: `"Postulate1"`, `"Tacit.circle_eq"`, `"Magnitude.add"`.
@@ -66,6 +67,7 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `shared_steps` | list of objects | The project's own lemmas outside the declaration's namespace that bring in at least one proposition: `name`, `brings_in` (refs), `file`, `line`. For a porism or companion, the parent's own helpers (`Prop1.middle`) count as its own, not as shared steps. |
 | `enunciation` | string | The declaration's docstring. For a proposition it is Heath's enunciation (check_fidelity insists on it); for a porism, our docstring, which quotes Heath's porism; for a companion, our docstring saying what it adds. |
 | `statement` | string | **New.** The declaration's type, printed as below. Review records are fingerprinted from it (`heath.review_fingerprint`). |
+| `cited_laws` | list of objects | **New** (21 October 2026, #150), only on an entry whose own declarations, as `own_axioms` reads them, name a law of `Elements.Superposition.Cited`: today I.4 and I.8. One object for each law they name, in the order of the `Cited` type: `law`, the constructor's name (`"lenSymm"`); `proofs`, the theorems that prove it, each stating exactly `Cited.Holds primitives` of that law (below): `name`, `file`, `line`, as in `shared_steps`, sorted by name; and `construction_rules`, every [construction rule](../docs/FORMALIZATION.md#construction-rules) that `collectAxioms` finds beneath any proof of that law the entry reaches (below), sorted by string. The laws are read from the constants the entry's own Lean names, not through `Derives.map`. A law named with no proof reached fails the run, since an empty list would read as a law proved with no construction rule. |
 
 One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `own_axioms`,
 `inherited`, `common_notions` and `shared_steps`: it reads each declaration's type and
@@ -108,6 +110,37 @@ them, and some rest on tacit rules (C.N. 3 and C.N. 5 use
 `Tacit.add_lt_add_right`). The restricted calculus's marked coincidence steps count as
 C.N. 4; equality substitution justifies them, as it does the three `CommonNotion4`
 theorems. The marker adds no axiom and changes no axiom field.
+
+`construction_rules` reads statements, not proofs. For each axiom in `axiom_modules` it
+takes the statement's conclusion and reads it as the definition of a construction rule
+says, with its polarities: a definition of this project at the head of a term is unfolded
+there, a `let` there is substituted into its body, and a projection of a structure that a
+definition of this project gives (the `≤` of an instance, inherited through another
+structure or not) is read through that definition. Everything else is a leaf that asserts
+no existence: an opaque word, an axiom, a theorem, a constructor, a `match` or recursor
+that is not reduced, Lean's own definitions, and every structure or inductive type but the
+connectives the polarities read (`And`, `Or`, `Iff`, `Exists`), of this project or Lean's,
+which is read as a word and never unfolded: its fields and constructors are not read.
+That is why `Tacit.superposition`, whose statement is the structure `Superposition.Rule`,
+is not a construction rule: the rule's one field assumes a triangle, and `Triangle`, the
+negation of `Collinear`'s `∃`, assumed would put that `∃` in positive position if the
+structure were unfolded. A statement read deeper than 1000 steps, an
+unfolding counting as one, fails the run instead of being followed.
+
+`cited_laws` walks twice. The walk for `own_axioms` gives the entry's own declarations,
+whose `mentions` name the laws, and the lemmas they call on. A second walk from the entry,
+through every declaration of this project and stopping at the other entries, finds every
+proof of each law that the entry reaches. `proofs` lists the proofs the entry's own Lean
+names directly, among its own declarations and the lemmas they call on, when there are any
+and every proof reached lies beneath one of them; otherwise (when the entry's own Lean
+names only a theorem that proves a list of laws, say) it lists every proof reached. Either
+way the proofs listed have every proof reached beneath them, and `construction_rules` is
+what `collectAxioms` finds beneath every proof reached: the run checks that the proofs
+listed have exactly those construction rules beneath them, and fails if they ever differ.
+The field reads theorems, not the term that discharges a law. A law discharged in place, by
+a term that is not such a theorem, while such a theorem is reached elsewhere, would be shown
+with that theorem's proofs and rules, not the term's. Each law I.4 and I.8 cite is
+discharged by a theorem of its own.
 
 ## Printing a statement
 
@@ -167,7 +200,7 @@ value is not printed: that Lean cannot see it is the point. An inductive type's 
 structure's constructors are entries of their own.
 
 At commit d040117 there were 37, all reached from the axioms; with the entries'
-statements, from 17 October 2026, there are <!-- count:vocabulary -->238<!-- /count -->. Among them:
+statements, from 17 October 2026, there are <!-- count:vocabulary -->262<!-- /count -->. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
@@ -185,9 +218,12 @@ axiom is `HAdd.hAdd a b`, and which addition it is lives in `instAddMagnitude`.
 
 - `scripts/check_fidelity.py`: the policies, for every entry; that the porism entries are
   exactly Heath's porisms; that every attached entry of a complete book is proved; the
-  axiom lock; the review stamps.
+  axiom lock; the review stamps; and the facts pinned in
+  `tests/certificate_expectations.json`, among them I.4's and I.8's `cited_laws` and the
+  top-level `construction_rules`.
 - `scripts/render.py`: the pages, CERTIFICATE.md and GRAPH.md. A page's table splits
   what the proof uses itself by `own_axioms` and `inherited`, and its list of tacit
   rules marks each, with the lemmas an inherited rule comes in through; CERTIFICATE.md
-  counts both.
+  counts both. On I.4's and I.8's pages a table gives each law of `cited_laws`, its
+  proofs, linked where Lean declares them, and the construction rules beneath them.
 - `scripts/review_stamp.py` and `heath.review_fingerprint`: the review records' stamps.

@@ -4,6 +4,8 @@
     python3 -I tests/test_jev_questions.py
 
 File access cases use temporary directories and stubs of Git's file and directory queries.
+Import cases index Lean headers written to a temporary directory. Helper cases plant modules
+there that leave a marker if they ever run, and run a copy of the generator beside them.
 The control case generates all rows in memory against the real HEAD and reports its
 duration. No case writes to the repository or its Git metadata.
 """
@@ -40,6 +42,56 @@ COMMENTARY_CHANGES = {
     '12-I.40-commentary': ('our I.38 makes ABC equal to FCE',
                           'our I.38 makes ABC greater than FCE'),
 }
+BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'
+BODY = '\nnamespace Elements\n\nend Elements\n'
+IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean')
+# Each Lean file, with the imports read from it as (imported file, the import's words to the
+# end of its line), or None where it is refused as an unsupported import. Lean 4.35 accepts
+# each file read, and refuses each file refused but those with `import all`, `prelude`, two
+# imports on one line, a `/` in a module name or a block comment running on from an import's
+# line, which the generator does not read.
+HEADERS = (
+    ('import Elements.Base\n' + BODY, [('Base', 'import Elements.Base\n')]),
+    ('module\n\npublic import Elements.Base\n' + BODY,
+     [('Base', 'public import Elements.Base\n')]),
+    ('module\n\nmeta import Elements.Base\n' + BODY, [('Base', 'meta import Elements.Base\n')]),
+    ('module\n\npublic meta import Elements.Base\n' + BODY,
+     [('Base', 'public meta import Elements.Base\n')]),
+    ('module\n\npublic /- between words -/ meta\n  import\n    Elements.Base -- the module\n'
+     + BODY,
+     [('Base', 'public /- between words -/ meta\n  import\n    Elements.Base -- the module\n')]),
+    ('module\n\npublic import Elements.«areas-p5»\n' + BODY,
+     [('areas-p5', 'public import Elements.«areas-p5»\n')]),
+    ('module\n\npublic import Elements.«areas.p5»\n' + BODY,
+     [('areas.p5', 'public import Elements.«areas.p5»\n')]),
+    ('module public import Elements.Base\n' + BODY, [('Base', 'public import Elements.Base\n')]),
+    ('module\n\npublic import Elements.«a"b»\n' + BODY, [('a"b', 'public import Elements.«a"b»\n')]),
+    ('module\n\npublic import Elements.Base', [('Base', 'public import Elements.Base')]),
+    ('module\n\npublic import Elements.Base -- the end',
+     [('Base', 'public import Elements.Base -- the end')]),
+    ('module\n\nimport Elements.Base /- closed here -/\n/- opened on\n  a later line -/\n' + BODY,
+     [('Base', 'import Elements.Base /- closed here -/\n')]),
+    ('module\n\npublic import Elements.Base\n\n'
+     'def named («an import here» : Nat) : Nat := «an import here»\n' + BODY,
+     [('Base', 'public import Elements.Base\n')]),
+    ('module\n\n/- a /- nested -/ comment -/\n  public import Elements.Base\n'
+     'import Elements.«areas-p5» -- the figure\n\n/-! The file. -/\n\npublic section\n' + BODY,
+     [('Base', 'public import Elements.Base\n'),
+      ('areas-p5', 'import Elements.«areas-p5» -- the figure\n')]),
+    *((f'module\n\n{header}\n' + BODY, None) for header in (
+        'meta public import Elements.Base', 'public public import Elements.Base',
+        'private import Elements.Base', '@[expose] import Elements.Base',
+        '@[\nexpose\n]\nimport Elements.Base', 'partial\nimport Elements.Base',
+        'nonrec\nimport Elements.Base', '/-- declaration documentation -/\nimport Elements.Base',
+        'import Elements.Base Elements.Base', 'import all Elements.Base',
+        'import all\n  Elements.Base', 'all\nimport Elements.Base',
+        'public /-- doc -/ import Elements.Base', '/-! The file. -/\nimport Elements.Base',
+        'public /- opened\nclosed -/ import Elements.Base',
+        'prelude\nimport Elements.Base', 'import Elements.Base import Elements.«areas-p5»',
+        'public import Elements.«a/b»', 'theorem t : True := trivial\nimport Elements.Base',
+        'import Elements.Base /- opened here\n  closed on a later line -/')),
+)
+HELPER_NAMES = ('jev_questions_test_first', 'jev_questions_test_second')
 
 
 class FileContainment(unittest.TestCase):
@@ -542,6 +594,528 @@ class FileContainment(unittest.TestCase):
                 del self.metadata['evidence_files'][path.name]
 
 
+class Files(questions.Evidence):
+    """Evidence read from a temporary folder, with no Git."""
+
+    def __init__(self, root):
+        super().__init__('0' * 40)
+        self.root = root
+
+    def read(self, path):
+        return (self.root / path).read_text()
+
+
+class LeanFiles(unittest.TestCase):
+    def index(self, files):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name).resolve()
+        (root / 'Elements').mkdir()
+        for name, text in files.items():
+            (root / 'Elements' / name).write_text(text)
+        with patch.object(questions, 'ROOT', root):
+            return questions.Index(Files(root))
+
+    def calls(self, text):
+        return questions.Calls(self.index({'Proof.lean': text}), {})
+
+
+class Imports(LeanFiles):
+    def test_headers_are_read_with_exact_spans_or_refused(self):
+        targets = {name: BASE if name == 'Base.lean' else BODY for name in IMPORTED}
+        for text, expected in HEADERS:
+            with self.subTest(text=text):
+                if expected is None:
+                    with self.assertRaisesRegex(questions.Refusal, 'unsupported import'):
+                        self.index({**targets, 'Header.lean': text})
+                    continue
+                index = self.index({**targets, 'Header.lean': text})
+                spans = index.imports['Elements/Header.lean']
+                self.assertEqual([(target, text[start:end]) for target, start, end in spans],
+                                 [(f'Elements/{name}.lean', words) for name, words in expected])
+                source = {'excerpts': []}
+                self.assertEqual(index.import_text(source, 'imports', 'Elements/Header.lean'),
+                                 text[spans[0][1]:spans[-1][2]])
+                self.assertEqual(source['excerpts'][0]['end'], spans[-1][2])
+                for target, _, _ in spans:
+                    self.assertIn(target, index.visible('Elements/Header.lean'))
+
+    def test_suffixed_declaration_names_are_visible(self):
+        tools = ('namespace Elements\n\ntheorem helper? : True := trivial\n\n'
+                 'def import! : Nat := 0\n\ndef macro? : Nat := 0\n\nend Elements\n')
+        header = ('import Elements.Tools\n\nnamespace Elements\n\n'
+                  'theorem uses : True := helper?\n\nend Elements\n')
+        index = self.index({'Tools.lean': tools, 'Header.lean': header})
+        self.assertIn('Elements/Tools.lean', index.visible('Elements/Header.lean'))
+        self.assertEqual(index.get('Elements.import!').name, 'Elements.import!')
+        self.assertEqual(index.get('Elements.macro?').name, 'Elements.macro?')
+        start = header.index('helper?')
+        self.assertEqual([(call['name'], call['token'], call['start'], call['end'])
+                          for call in questions.Calls(index, {}).direct('Elements.uses')],
+                         [('Elements.helper?', 'helper?', start, start + len('helper?'))])
+
+
+class CallReconciler(LeanFiles):
+    """The forms of I.4's and I.8's proofs on the superposition branch, the plain forms an
+    inductive may hold, and forms that could hide a use, each in a file Lean 4.35 accepts."""
+
+    def test_every_constructor_on_a_line_is_a_member(self):
+        calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b | c\n\n'
+                           'theorem uses (p : Pt) : p = .c ∨ True := Or.inr trivial\n\n'
+                           'end Elements\n')
+        found = calls.direct('Elements.uses')
+        self.assertEqual(calls.unresolved['Elements.uses'], set())
+        self.assertIn(('c', 'Elements.Pt', 'field candidates via signature closure'),
+                      [(c['token'], c['name'], c['resolution']) for c in found])
+
+    def test_suffixed_constructor_names_and_calls_remain_distinct(self):
+        text = ('namespace Elements\n\ninductive Pt where\n  | mk | mk! | def! | match?\n\n'
+                'def uses : Pt × Pt := (.mk, .mk!)\n\nend Elements\n')
+        calls = self.calls(text)
+        self.assertEqual({member for member, owners in calls.members.items()
+                          if 'Elements.Pt' in owners}, {'mk', 'mk!', 'def!', 'match?'})
+        start_mk = text.index('.mk,') + 1
+        start_mk_bang = text.index('.mk!') + 1
+        self.assertEqual([(call['token'], call['start'], call['end']) for call in
+                          calls.direct('Elements.uses') if call['name'] == 'Elements.Pt'
+                          and call['resolution'] == 'field candidates via signature closure'],
+                         [('mk', start_mk, start_mk + 2),
+                          ('mk!', start_mk_bang, start_mk_bang + 3)])
+
+    def test_open_in_names_a_namespace_within_the_current_one(self):
+        calls = self.calls('namespace Elements.BookI\n\nnamespace Prop4\n\n'
+                           'theorem helper : True := trivial\n\nend Prop4\n\n'
+                           'open Prop4 in\ntheorem Prop4 : True := helper\n\nend Elements.BookI\n')
+        self.assertEqual([c['name'] for c in calls.direct('Elements.BookI.Prop4')],
+                         ['Elements.BookI.Prop4.helper'])
+
+    def test_lean_core_list_lemmas_are_not_missing_names(self):
+        calls = self.calls('namespace Elements\n\ntheorem lists : True := by\n'
+                           '  have h := @List.mem_nil_iff Nat\n'
+                           '  have k := @List.forall_mem_cons Nat\n'
+                           '  trivial\n\nend Elements\n')
+        self.assertEqual(calls.direct('Elements.lists'), [])
+        self.assertEqual(calls.unresolved['Elements.lists'], set())
+
+    def test_an_inductive_does_not_call_its_own_constructors(self):
+        # Each constructor shares its name with an abbreviation declared after it.
+        calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b\n\n'
+                           'abbrev a : Pt := .a\nabbrev b : Pt := .b\n\nend Elements\n')
+        self.assertEqual(calls.direct('Elements.Pt'), [])
+
+    def test_a_bar_of_or_begins_no_constructor(self):
+        # Of the bars the plain forms hold, only one beside another, as in `||`, stands within a
+        # constructor, outside every bracket or within one opened on an earlier line; it
+        # begins no constructor, so each Known.bar after one is a use.
+        text = self.known_bool('inductive Pt where\n  | a | b | c\n'
+                               '  | mk (n : Nat) (h : Nat.beq n 0 || Known.bar n)\n'
+                               '  | odd (n : Nat) (h : Nat.beq n 0\n  || Known.bar n)\n'
+                               '  | even : (n : Nat) → Nat.beq n 0 || Known.bar n → Pt')
+        calls = self.calls(text)
+        self.assertEqual({member for member, owners in calls.members.items()
+                          if 'Elements.Pt' in owners}, {'a', 'b', 'c', 'mk', 'odd', 'even'})
+        uses = [i for i in range(text.index('inductive'), len(text))
+                if text.startswith('Known.bar', i)]
+        self.assertEqual([c['start'] for c in calls.direct('Elements.Pt')
+                          if c['name'] == 'Elements.Known.bar'], uses)
+        self.assertEqual(len(uses), 3)
+
+    def known(self, inductive):
+        return ('namespace Elements\n\n@[match_pattern] def Known.bar (n : Nat) : Nat := n + 1\n\n'
+                f'{inductive}\n\nend Elements\n')
+
+    def known_bool(self, inductive):
+        return ('namespace Elements\n\ndef Known.bar (n : Nat) : Bool := n == 1\n\n'
+                f'{inductive}\n\nend Elements\n')
+
+    def assert_uses(self, text, name, members):
+        calls = self.calls(text)
+        self.assertEqual({member for member, owners in calls.members.items()
+                          if name in owners}, members)
+        uses = [i for i in range(text.index('inductive'), len(text))
+                if text.startswith('Known.bar', i)]
+        self.assertEqual([c['start'] for c in calls.direct(name)
+                          if c['name'] == 'Elements.Known.bar'], uses)
+
+    def test_every_form_outside_the_plain_forms_is_refused(self):
+        # The first reviews' probes, which this branch once read and kept the use of: `||`
+        # beside `==` or `=`; a bar within a bracket opened on an earlier line, or within ⦃ ⦄,
+        # after `fun` or `match`; and, in a family, a pipe, `<|` or `|>`, outside every
+        # bracket. Main's inductives use none of these forms, and each is refused, naming the
+        # first character or keyword outside the plain forms; so are a modifier before a
+        # `def` at four spaces, which Lean reads as a command, and a dot before a brace.
+        for text, name, refused in (
+                (self.known_bool('inductive Pt where\n'
+                                 '  | mk (n : Nat) (h : (n == 0 || Known.bar n) = true)'),
+                 'Pt', "the character '='"),
+                (self.known_bool('inductive Pt where\n  | odd (n : Nat) '
+                                 '(h : match n with | 0 => True | k => Known.bar k = true)'),
+                 'Pt', "the keyword 'match'"),
+                (self.known_bool('inductive Pt where\n'
+                                 '  | even : (n : Nat) → n == 0 || Known.bar n → Pt'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Pt where\n'
+                            '  | mk (f : Nat → Nat := fun\n  | Known.bar n => n\n  | _ => 0)'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Pt where\n  | mk (n : Nat) (h : (match n with\n'
+                            '  | Known.bar k => k\n  | _ => 0) = 0)'), 'Pt', "the keyword 'match'"),
+                (self.known('inductive Pt where\n'
+                            '  | mk ⦃h : id = fun | Known.bar n => n | _ => 0⦄ : Pt'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Pt where\n'
+                            '  | mk (f : Nat → Nat := fun\n  | k => id <| Known.bar k)'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Q : Nat → Type where\n  | mk : Q <| Known.bar 0'),
+                 'Q', "the character '<'"),
+                (self.known('inductive Q : Nat → Type where\n'
+                            '  | a : Q 0 | b : Known.bar 1 |> Q'), 'Q', "the character '>'"),
+                (self.known('inductive Pt where\n  | mk\n    partial def f : Nat → Nat'
+                            + self.EQUATIONS), 'Pt', "the keyword 'partial'"),
+                (self.known('inductive Pt where\n  | mk (n : Nat) (h : n ∈ List.cons.{0} n [])'),
+                 'Pt', "a dot before '{'")):
+            with self.subTest(text=text):
+                self.assert_refused(text, f'Elements/Proof.lean: Elements.{name} holds {refused}, '
+                                    'outside the plain forms an inductive may hold')
+
+    def test_a_bar_outside_every_bracket_begins_a_constructor_only_where_one_can(self):
+        # A command the index reads with the inductive, such as `partial def`, ends its
+        # constructors. After each word ALTERNATIVES names, one row each, a bar outside every
+        # bracket may begin an alternative or a pattern, and is refused with that reason.
+        self.assert_uses(self.known('inductive Pt where\n  | mk\n\npartial def f : Nat → Nat\n'
+                                    '  | Known.bar n => f n\n  | _ => 0'), 'Elements.Pt', {'mk'})
+        family = 'inductive Q : Nat → Type where\n  | mk : Q <| '
+        for inductive, word in (
+                (family + 'match 0 with | Known.bar n => n | _ => 0', 'match'),
+                ('inductive Q : (Nat → Nat) → Type where\n  | mk : Q fun\n'
+                 '  | Known.bar n => n\n  | _ => 0', 'fun'),
+                ('inductive Q : Bool → Type where\n'
+                 '  | mk : Q <| 5 matches 0 | Known.bar 0', 'matches'),
+                ('inductive Q : (Nat → Nat) → Type where\n  | mk : Q λ\n'
+                 '  | Known.bar n => n\n  | _ => 0', 'λ'),
+                (family + 'match_expr Lean.mkNatLit 0 with | Known.bar _ => 0 | _ => 1',
+                 'match_expr'),
+                (family + 'let_expr Nat.succ _ := Lean.mkNatLit 0 | Known.bar 0; 1', 'let_expr'),
+                (family + 'by match 0 with | Known.bar n => exact n | _ => exact 0', 'by'),
+                (family + 'Id.run do match 0 with | Known.bar n => pure n | _ => pure 0', 'do'),
+                ('inductive Q where\n'
+                 '  | a | mk with @[computed_field] f : Q → Nat | _ => Known.bar 0', 'with'),
+                *((family + word + ' f : Nat → Nat | Known.bar n => n | _ => 0; f 0', word)
+                  for word in ('let', 'have', 'haveI', 'letI', 'let_fun', 'let_delayed', 'let_tmp'))):
+            with self.subTest(word=word):
+                # match_expr and let_expr read a Lean.Expr, so their files import Lean.
+                header = 'import Lean\n\n' if word in ('match_expr', 'let_expr') else ''
+                with self.assertRaisesRegex(questions.Refusal,
+                                            f"unsupported bar after '{word}' in Elements.Q"):
+                    self.calls(header + self.known(inductive))
+
+    def test_a_declaration_keyword_ends_the_constructors_wherever_it_stands(self):
+        # Lean reads `def` as a command on a constructor's own line, and at three spaces, and
+        # so `example`, `instance` and `theorem`: each equation after one is the command's, so
+        # its Known.bar is a use.
+        for inductive in ('  | mk def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
+                          '  | mk\n   def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
+                          '  | mk example : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
+                          '  | mk instance : Inhabited (Nat → Nat) where default\n'
+                          '  | Known.bar n => n\n  | _ => 0',
+                          '  | mk theorem t : ∀ n : Nat, n = n\n  | Known.bar n => rfl\n'
+                          '  | _ => rfl'):
+            with self.subTest(inductive=inductive):
+                self.assert_uses(self.known('inductive Pt where\n' + inductive), 'Elements.Pt',
+                                 {'mk'})
+
+    def test_an_inductive_holding_a_literal_or_quoted_name_is_refused(self):
+        # A char literal, a «...» name, a raw string, a '"' or an interpolated string, each
+        # holding one of a balanced pair of brackets, which would leave the second bar outside
+        # every bracket.
+        for g, zero, other in (("def g (_ : Char) (n : Nat) : Nat := n", "g ')' 0", "g '(' n"),
+                               ('def g (_ : Nat → Nat) (n : Nat) : Nat := n',
+                                'g (fun «a)» => 0) 0', 'g (fun «(b» => 0) n'),
+                               ('def g (_ : String) (n : Nat) : Nat := n',
+                                'g r#"")""# 0', 'g r#""(""# n'),
+                               ('def g (_ : Char) (_ : String) (_ : Char) (n : Nat) : Nat := n',
+                                'g \'"\' ")" \'"\' 0', 'g \'"\' "(" \'"\' n'),
+                               ('def g (_ : String) (n : Nat) : Nat := n',
+                                'g s!"{")"}" 0', 'g s!"{"("}" n')):
+            inductive = (f'{g}\n\ninductive Pt where\n  | mk (f : Nat → Nat := '
+                         f'fun | 0 => {zero} | Known.bar n => {other}) : Pt')
+            with self.subTest(inductive=inductive):
+                with self.assertRaisesRegex(questions.Refusal, 'unsupported string, char literal '
+                                            'or quoted name in Elements.Pt'):
+                    self.calls(self.known(inductive))
+
+    def test_a_notation_with_a_bar_and_any_macro_or_elaborator_are_refused(self):
+        # A notation, local or not, can make a bar an operator, and a macro or an elaborator
+        # can give any syntax a meaning, as the macro here gives alternatives with no bar
+        # before them. Each file imports Lean, as the macros and elaborators need.
+        bar = '\n\ninductive Q : Nat → Type where\n  | mk : Q <| 0 | Known.bar 0'
+        pick = '\n\ninductive Q : Nat → Type where\n  | mk : Q pick'
+        for text, refused in (
+                ('infixl:65 " | " => Nat.add' + bar, 'infixl with a bar'),
+                ('local notation:65 a " | " b => Nat.add a b' + bar, 'notation with a bar'),
+                ('open Lean in\n'
+                 'macro "pick " alts:Lean.Parser.Term.matchAltsWhereDecls : term => do\n'
+                 '  let a : TSyntax ``Lean.Parser.Term.matchAlts := ⟨alts.raw[0]⟩\n'
+                 '  `(fun $a:matchAlts)\n\ninductive Q : (Nat → Nat) → Type where\n'
+                 '  | mk : Q <| pick\n  | Known.bar n => n\n  | _ => 0', 'command macro'),
+                ('syntax "pick" : term\n\nmacro_rules | `(pick) => `(0)' + pick,
+                 'command macro_rules'),
+                ('elab "pick" : term => return Lean.mkNatLit 0' + pick, 'command elab'),
+                ('syntax "pick" : term\n\nelab_rules : term | `(pick) => return Lean.mkNatLit 0'
+                 + pick, 'command elab_rules')):
+            with self.subTest(refused=refused):
+                with self.assertRaisesRegex(questions.Refusal, 'unsupported ' + refused):
+                    self.calls('import Lean\n\n' + self.known(text))
+
+    def test_any_other_bar_and_an_unbalanced_bracket_are_refused(self):
+        # Lean accepts constructors at four spaces, and on the inductive's own line, which the
+        # reconciler does not read. A command opening a line within an open bracket, here
+        # `open ... in`, ends the inductive for the index, so its bracket stays open.
+        for inductive, refused in (('\n    | a\n    | b', 'unsupported bar in an inductive, '),
+                                   ('\n| a\n| b', 'unsupported bar in an inductive, '),
+                                   ('\n | a\n | b', 'unsupported bar in an inductive, '),
+                                   (' | a | b', 'unsupported bar in an inductive, '),
+                                   ('\n  | mk ⦃h :\nopen Nat in succ 0 = 1⦄ : Pt',
+                                    'unbalanced brackets in ')):
+            with self.subTest(inductive=inductive):
+                with self.assertRaisesRegex(questions.Refusal, refused + 'Elements.Pt'):
+                    self.calls(self.known('inductive Pt where' + inductive))
+
+    def assert_refused(self, text, message):
+        with self.assertRaises(questions.Refusal) as caught:
+            self.calls(text)
+        self.assertIn(message, str(caught.exception))
+
+    CHARS = ("@[match_pattern] def Known.c : Char := 'x'\n\n"
+             "@[match_pattern] def Known.d : Char := 'y'\n\n")
+    BOOL = 'inductive Q : Bool → Type where\n  | mk : Q <| '
+    EQUATIONS = '\n  | Known.bar n => n\n  | _ => 0'
+
+    def test_a_number_or_a_bare_bang_glued_to_a_word_or_quote_is_refused(self):
+        # Lean ends a number before a letter, so `5matches` is `5` and then `matches`, and
+        # `5def` is `5` and then a command; `!'a'matches` is `!`, a char literal and then
+        # `matches`. Each Known after a bar here is a use the patterns would drop.
+        nat, pair = 'inductive Q : Nat → Type where\n  | mk : Q ', 'def p : Nat × Nat := (5, 6)\n\n'
+        for text in (self.BOOL + '5matches 0 | Known.bar 0',
+                     self.BOOL + '0x5matches 0 | Known.bar 0',
+                     pair + self.BOOL + 'p.1matches 0 | Known.bar 0',
+                     nat + '5def f : Nat → Nat' + self.EQUATIONS,
+                     nat + '5def f : Nat → Nat | Known.bar n => n | _ => 0',
+                     pair + nat + 'p.1def f : Nat → Nat' + self.EQUATIONS,
+                     nat + '5instance : Inhabited (Nat → Nat) where default' + self.EQUATIONS,
+                     self.CHARS + self.BOOL + "!'a'matches Known.c | Known.d"):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), 'unsupported number or literal glued to '
+                                    'a word in Elements.Q')
+
+    def test_a_digit_quote_or_letter_within_a_name_is_read_as_the_name(self):
+        self.assert_uses(self.known("def x2 : Nat := 2\n\ndef h' : Nat := 2\n\n"
+                                    "def x₁ : Nat := 1\n\ndef é : Nat := 1\n\n"
+                                    "inductive Q : Nat → Type where\n"
+                                    "  | mk : Q x2\n  | a : Q h'\n  | s : Q x₁\n  | e : Q é\n"
+                                    "  | b : Q (Known.bar 0)"),
+                         'Elements.Q', {'mk', 'a', 's', 'e', 'b'})
+
+    def test_a_character_lean_reads_in_no_name_and_a_hash_are_refused(self):
+        # Lean's own postfix `⁻¹` ends before `matches`, though `¹` is a word character to the
+        # patterns; Lean's commands `#where` and `#version` are read whole, so each is followed
+        # by a `def` whose equations hold a use; and a subscript cannot begin a name, so after
+        # `∧ₑ`, a token of Std.Do, it begins a word Lean does not read.
+        pt = 'inductive Pt where\n  | mk '
+        for text, character, name in (
+                ('instance : Inv Nat := ⟨Nat.succ⟩\n\ndef x : Nat := 3\n\n' + self.BOOL
+                 + 'x⁻¹matches 0 | Known.bar 0', '¹', 'Q'),
+                (pt + '#wheredef f : Nat → Nat' + self.EQUATIONS, '#', 'Pt'),
+                (pt + '#versiondef f : Nat → Nat' + self.EQUATIONS, '#', 'Pt'),
+                ('inductive Q : Std.Do.ExceptConds .pure → Type where\n'
+                 '  | mk : Q <| Std.Do.ExceptConds.true ∧ₑ Std.Do.ExceptConds.true', 'ₑ', 'Q')):
+            with self.subTest(text=text):
+                header = 'import Std.Do\n\n' if 'Std.Do' in text else ''
+                self.assert_refused(header + self.known(text),
+                                    f'unsupported character {character!r} in Elements.{name}')
+
+    def test_a_token_joining_a_name_character_to_another_and_a_binder_predicate_are_refused(self):
+        # Each token ends a word where the patterns see none, so the Known after a bar is a use
+        # they would drop; a binder predicate declares its token as a macro does. A token that
+        # is a name, such as `nine`, is read as a name.
+        for text, refused in (
+                ('postfix:max "²" => fun n : Nat => n * n\n\ndef x : Nat := 3\n\n' + self.BOOL
+                 + 'x²matches 0 | Known.bar 0', "postfix token '²'"),
+                ('postfix:max "ж" => Nat.succ\n\ndef y : Nat := 3\n\n' + self.BOOL
+                 + 'yжmatches 0 | Known.bar 0', "postfix token 'ж'"),
+                ('notation "-x" => (5 : Nat)\n\n' + self.BOOL + '-xmatches 0 | Known.bar 0',
+                 "notation token '-x'"),
+                (self.CHARS + 'prefix:max "-x" => Char.toNat\n\n' + self.BOOL
+                 + "-x'a'matches 0 | Known.bar 96", "prefix token '-x'"),
+                ('infixl:65 "+x" => Nat.add\n\n' + self.BOOL + '1 +x0matches 0 | Known.bar 0',
+                 "infixl token '+x'"),
+                ('notation "→ₑ" => (5 : Nat)\n\n' + self.BOOL + '→ₑmatches 0 | Known.bar 0',
+                 "notation token '→ₑ'"),
+                (self.CHARS + 'binder_predicate x " -x " y:term => `($x = $y)\n\n'
+                 "inductive Q where\n  | mk : ∀ x -x'a'matches Known.c | Known.d, Q",
+                 'command binder_predicate')):
+            with self.subTest(refused=refused):
+                self.assert_refused(self.known(text), 'Elements/Proof.lean: unsupported ' + refused)
+        self.assert_uses(self.known('notation "nine" => (9 : Nat)\n\n'
+                                    'inductive Q : Nat → Type where\n  | mk : Q nine\n'
+                                    '  | b : Q (Known.bar 0)'), 'Elements.Q', {'mk', 'b'})
+
+    def test_a_recall_ends_the_constructors(self):
+        # Lean reads `recall` as a command wherever it stands, as it does `def`: the equations
+        # after it are the recall's, so each Known.bar in them is a use.
+        f = 'def f : Nat → Nat' + self.EQUATIONS + '\n\n'
+        s = ('structure S where\n  g : Nat → Nat\n\n'
+             'def s : S where\n  g | Known.bar n => n | _ => 0\n\n')
+        for inductive in (f + 'inductive Pt where\n  | mk recall f : Nat → Nat' + self.EQUATIONS,
+                          f + 'inductive Pt where\n  | mk\n   recall f : Nat → Nat'
+                          + self.EQUATIONS,
+                          f + 'inductive Pt where\n'
+                          '  | mk recall f : Nat → Nat | Known.bar n => n | _ => 0',
+                          s + 'inductive Pt where\n'
+                          '  | mk recall s : S where\n  g | Known.bar n => n | _ => 0'):
+            with self.subTest(inductive=inductive):
+                self.assert_uses(self.known(inductive), 'Elements.Pt', {'mk'})
+
+    def test_a_comment_opener_or_dot_glued_to_a_symbol_is_refused(self):
+        # Lean reads `\/`, `//`, `..` and a notation's `+-`, `⊗.` or no-break space and dash
+        # whole, so the dash or the dot after each opens no comment and begins no field: the
+        # masking would hide `match` or `matches`, and the patterns would take `..matches` or
+        # `..def` for a field. The masked text of the row with `∀` is in the plain forms,
+        # which would keep it.
+        prop = 'inductive Q : Prop → Type where\n  | mk : Q <| False \\/-(1 : Int) = 0 ∨ '
+        nat = 'inductive Q : Nat → Type where\n  | mk : Q <| '
+        alternatives = 'match 0 with -- -/\n  | Known.bar n => True\n  | _ => True'
+        for text, refused in (
+                (prop + 'match 0 with /- -/ -- -/\n  | Known.bar n => True\n  | _ => True',
+                 "comment glued to '\\\\'"),
+                (prop + '5 matches 0 -- -/\n  | Known.bar 0', "comment glued to '\\\\'"),
+                (prop + 'match 0 with | Known.bar n => True | _ => True -- -/',
+                 "comment glued to '\\\\'"),
+                ('inductive Q : Type → Type where\n'
+                 '  | mk : Q {x : Int //-x = 0 ∨ ' + alternatives + '}', "comment glued to '/'"),
+                ('infixl:65 " +- " => Int.sub\n\n' + self.BOOL
+                 + '(1 : Int) +--1 == 0 && 5 matches 0\n  | Known.bar 0', "comment glued to '+'"),
+                ('infixl:65 " +- " => Int.sub\n\ninductive Q : Type where\n'
+                 '  | mk : ∀ _ : (1 : Int) +--1 == 0 && 5 matches 0\n  | Known.bar 0, Q',
+                 "comment glued to '+'"),
+                ('infixl:65 "  - " => Int.sub\n\ninductive Q : Type where\n'
+                 '  | mk : ∀ _ : (1 : Int) --1 == 0 && 5 matches 0\n  | Known.bar 0, Q',
+                 "comment glued to '\\xa0'"),
+                (self.BOOL + 'Nat.succ ..matches 0 | Known.bar 0', 'dot glued to a symbol'),
+                (nat + 'Nat.succ ..def f : Nat → Nat' + self.EQUATIONS, 'dot glued to a symbol'),
+                ('notation "⊗." => (5 : Nat)\n\n' + self.BOOL + '⊗.matches 0 | Known.bar 0',
+                 'dot glued to a symbol')):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), f'unsupported {refused} in Elements.Q')
+        # A dot after a bracket or a name, and a comment after a name or a space, keep their uses.
+        self.assert_uses(self.known("def p : Nat × Nat := (5, 6)\n\ndef h' : Nat := 2\n\n"
+                                    'inductive L where\n  | eq (n : Nat)\n\n'
+                                    'inductive Q : L → Nat → Type where\n'
+                                    "  | mk : Q (.eq p.1) (p).2 -- a comment\n"
+                                    "  | a : Q (.eq h') h'-- another\n  /-- A doc. -/\n"
+                                    '  | b : Q (.eq 0) (Known.bar 0) /- a block -/'),
+                         'Elements.Q', {'mk', 'a', 'b'})
+
+    def test_a_doc_comment_or_token_the_masking_reads_otherwise_is_refused(self):
+        # The shared masking now reads `/--/ -- -/` as Lean does, but the generator keeps
+        # refusing `/--/`. Lean reads a notation's `/--+` whole, where the masking opens a
+        # comment. Each form could hide `matches` from a reader that accepted it, and the
+        # masked text after it is in the plain forms.
+        for text, refused in (
+                ('inductive Q : Bool → Type where\n  /--/ -- -/ | mk : Q <| 5 matches 0\n'
+                 '  | Known.bar 0', 'doc comment opening /--/'),
+                ('/--/\ninductive P : Type where -- -/ def g : Bool := 5 matches 0\n'
+                 '  | Known.bar 0', 'doc comment opening /--/'),
+                ('prefix:max "/--+" => id\n\ninductive Q : Type where\n'
+                 '  | mk : ∀ _ : /--+ 5 matches 0 -- -/\n  | Known.bar 0, Q',
+                 "prefix token '/--+'")):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), 'Elements/Proof.lean: unsupported ' + refused)
+
+    def test_a_header_lean_reads_within_a_comment_name_or_string_is_refused(self):
+        # The masking reads '"' as opening a string, so Lean may open a block comment or an
+        # interpolated string within it that the masking reads as code; and a «...» name over two
+        # lines is code to the masking. The inductive is then no inductive to Lean, and the
+        # Known after the bar is in g's `matches`. Lean leaves each at a `-/`, `»` or `{` that a
+        # masked comment hides.
+        for text, refused in (
+                ('def g : Bool := \'"\'.isAlpha || 5 matches 0 /- "\n'
+                 'inductive P : Type where -- -/\n  | Known.bar 0', '{ or -/ in a comment'),
+                ('def g : Bool := (fun «_a\ninductive P : Type where -- » => 5) 0 matches 0\n'
+                 '  | Known.bar 0', 'string, char literal or quoted name'),
+                ('def g : String := \'"\'.toString ++ s!"\n'
+                 'inductive P : Type where -- {5 matches 0\n  | Known.bar 0\n &&\n'
+                 'open Nat in true}" ++ \'"\'.toString', '{ or -/ in a comment'),
+                ('def g : String := \'"\'.toString ++ s!"\n'
+                 'inductive P : Type where /- {5 matches 0 -- -/\n  | Known.bar 0\n &&\n'
+                 'open Nat in true}" ++ \'"\'.toString', '{ or -/ in a comment')):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), f'unsupported {refused} in Elements.P')
+
+
+class HelperModules(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.directory = Path(temporary.name).resolve()
+        self.root = self.directory / 'repository'
+        (self.root / 'scripts/audit').mkdir(parents=True)
+        self.markers = self.directory / 'markers'
+        self.markers.mkdir()
+        for name in HELPER_NAMES:
+            self.addCleanup(sys.modules.pop, name, None)
+
+    def helper(self, path, marker):
+        """Write a module that leaves a marker file if it ever runs."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f'from pathlib import Path\nPath({str(self.markers / marker)!r}).touch()\n')
+
+    def ran(self):
+        return sorted(path.name for path in self.markers.iterdir())
+
+    def load(self, second):
+        with patch.object(questions, 'ROOT', self.root):
+            return questions.helper_modules(tuple(zip(HELPER_NAMES, ('scripts/heath.py', second))))
+
+    def test_no_helper_runs_until_every_helper_path_passes(self):
+        self.helper(self.root / 'scripts/heath.py', 'first')
+        outside = self.directory / 'outside.py'
+        self.helper(outside, 'outside')
+        self.helper(self.directory / 'elsewhere/jev.py', 'elsewhere')
+        (self.root / 'scripts/audit/link.py').symlink_to(outside)
+        (self.root / 'scripts/linked').symlink_to(self.directory / 'elsewhere',
+                                                  target_is_directory=True)
+        refused = (('scripts/audit/link.py', 'symlink'), ('scripts/linked/jev.py', 'symlink'),
+                   (str(outside), 'relative'), ('../outside.py', 'relative'),
+                   ('scripts/audit/missing.py', 'not a regular file'),
+                   ('scripts/audit', 'not a regular file'))
+        for path, message in refused:
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(questions.Refusal, message):
+                    self.load(path)
+                self.assertEqual(self.ran(), [])
+                self.assertFalse(set(HELPER_NAMES) & sys.modules.keys())
+        # With the second path accepted, both helpers run, each from its checked path.
+        self.helper(self.root / 'scripts/audit/jev.py', 'second')
+        first, second = self.load('scripts/audit/jev.py')
+        self.assertEqual(self.ran(), ['first', 'second'])
+        self.assertEqual(Path(first.__file__), self.root / 'scripts/heath.py')
+        self.assertEqual(Path(second.__file__), self.root / 'scripts/audit/jev.py')
+        self.assertIs(sys.modules[HELPER_NAMES[1]], second)
+
+    def test_generator_runs_no_helper_when_a_helper_path_is_refused(self):
+        generator = self.root / 'scripts/audit/jev_questions.py'
+        shutil.copyfile(REPOSITORY / 'scripts/audit/jev_questions.py', generator)
+        self.helper(self.root / 'scripts/heath.py', 'heath')
+        outside = self.directory / 'outside.py'
+        self.helper(outside, 'jev')
+        (self.root / 'scripts/audit/jev.py').symlink_to(outside)
+        result = subprocess.run([sys.executable, '-I', str(generator), '--commit', '0' * 40],
+                                cwd=self.directory, capture_output=True, text=True, timeout=120)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertRegex(result.stderr, r'^refused: .*scripts/audit/jev\.py: symlink component')
+        self.assertEqual(self.ran(), [])
+
+
 class Controls(unittest.TestCase):
     def assert_commentary_controls(self, rows):
         originals = {row['id']: row for row in rows if not row['seeded']}
@@ -571,6 +1145,8 @@ class Controls(unittest.TestCase):
                            check=True, capture_output=True)
             generator_path = checkout / 'scripts/audit/jev_questions.py'
             shutil.copyfile(REPOSITORY / 'scripts/audit/jev_questions.py', generator_path)
+            # The generator holds its own copy of the comment reader (#349), so nothing but
+            # itself is copied into the evidence commit's checkout.
             name = 'jev_questions_at_' + revision[:12]
             spec = importlib.util.spec_from_file_location(name, generator_path)
             self.assertIsNotNone(spec)
