@@ -1401,9 +1401,13 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       change to that Markdown counts as a pinned value while nothing else in it changes
       (the same markers stand, by name and in order, as origin/main's
       `scripts/generated_counts.py` reads them, and every other byte and the file's mode
-      are as they were). When they are the only check inputs a pull request changes,
-      origin/main's failure is noted, and its own copies must pass. The expectations are
-      checked one way only, each for what it says, so they count as pinned values only
+      are as they were). MODEL.md's prose moves with the laws, but its markers are held
+      the same way: a change to it counts as a pinned value only while the same markers
+      stand, by name and in order, the file's mode is as it was and both sides read; a
+      marker added, removed, renamed or reordered is a check change. When pinned values
+      are the only check inputs a pull request changes, origin/main's failure is noted,
+      and its own copies must pass. The expectations are checked one way only, each for
+      what it says, so they count as pinned values only
       while every one of origin/main's stays, by its `ref`, `field` and `law` (a `ref` or a
       `law` added or dropped is another expectation), with its `includes` and `excludes`
       the same or grown and only the values of `count.is` and `equals` changed (new
