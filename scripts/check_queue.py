@@ -3,14 +3,28 @@
 
     python3 scripts/check_queue.py --head <sha> --base <sha> --repo <owner/name>
     python3 scripts/check_queue.py --gaps --head <sha> --base <sha> --repo <owner/name>
+        [--plan <new file>]
+    python3 scripts/check_queue.py --run-plan <file> --head <sha>
     python3 scripts/check_queue.py --tree <dir> [--render]
 
-Group commands require a checkout of the supplied head. --tree checks the decisions page
-line by line (heading_problems): a line that could render as a level-one or level-two
-heading counts, in code too; its text must be plain; every year in it must stand in a
-date the check reads; no two of them may contain the same date; and no HTML <h1> or
-<h2> tag may stand anywhere. --render adds the generated pages' freshness. Conflict
-markers are checked by S23 in check_style.py, in the check job on the same merge group.
+Group commands require a checkout of the supplied head. --gaps chooses the tests of what
+the group changes; with --plan it writes them to a new file and runs nothing, and
+--run-plan runs that file's tests in the checkout of its head, reading no GitHub. No
+test runs while this process's environment holds a variable named with TOKEN: a test
+could read it there or, on Linux, in its parent's environment in /proc. So CI chooses
+the tests in a step that holds the token, to read GitHub, and runs them in a later step
+that holds none. That keeps the token out of the tests' environment, files, caches and
+artifacts, but not out of the job: the runner process holds the job's token until the
+job ends, every step runs beneath it, and a test that can read the runner's memory (a
+hosted runner gives its steps sudo) could read it there. So the token is read-only by
+design: queue-gaps has contents, pull-requests, actions and issues read, and no write.
+
+--tree checks the decisions page line by line (heading_problems): a line that could
+render as a level-one or level-two heading counts, in code too; its text must be plain;
+every year in it must stand in a date the check reads; no two of them may contain the
+same date; and no HTML <h1> or <h2> tag may stand anywhere. --render adds the generated
+pages' freshness. Conflict markers are checked by S23 in check_style.py, in the check
+job on the same merge group.
 
 Every merge-tree reads merge attributes from the group's base, main, never from the
 group's checkout (git --attr-source). Judging a group, every file read comes from Git's
@@ -39,8 +53,26 @@ each of T's merge bases with the group's base (more than one after criss-cross m
 A clean reverse merge alone does not prove preservation: a complete cancellation
 also merges cleanly. Reapplying T must reproduce the group on every non-exempt
 path. Generated files are excluded; added decisions lines must remain a
-subsequence. An automatic revert instead requires an exact git revert tree,
-the failed post-merge run's push range and the configured STOICHEIA_REVERT_BOT.
+subsequence. An automatic revert instead requires the configured STOICHEIA_REVERT_BOT
+and the failed post-merge run's push range, before to after, every commit of which must
+be a two-parent merge, as auto_revert.trains requires. Its one merge base with main must
+be after, the failed push's tip, and after..head exactly the reverts and at most one
+keep commit, with no merge (exact_revert): one commit for each of the push's merges,
+newest first, whose tree is that merge reverted onto the last (git revert -m 1, merge
+attributes read from before, as the revert job reads them), then, only where the
+reverts changed the decisions record, one commit that keeps it. The record is history,
+only ever added to, so docs/decisions/ and the decisions page stay as at after
+(auto_revert.keep_decisions makes the same tree); the commits' messages are not read.
+A failed run that is still in progress, as it is while its own revert job ends, is read
+again every RUN_POLL seconds for up to RUN_WAIT seconds, and refuses if it has not
+completed by then. An open main-red issue must name that run on its own Run: line, by
+this repository's address.
+
+While an open issue is labelled main-red, an ordinary entry lands only as main's fix:
+its body names every open main-red issue, and no other, on the line that
+safe_push.main_red_fix reads (WORKFLOW, "Out of a red main"). No bot may have written an
+ordinary entry, put it in the queue, last edited its body or last renamed it: its title
+goes into main's merge commit.
 
 safe_push records abbreviated harness blobs. They must resolve unambiguously to the
 full blob at the pre-flight's harness commit. The block's base must be the newest
@@ -76,6 +108,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -127,6 +160,16 @@ YEARLIKE = re.compile(r"(?<![0-9])(?:19|20|21)[0-9]{2}(?![0-9])")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
+# The decisions record: its entries (tooling/decision-entries), each a file of its own,
+# and its page. An automatic revert keeps both.
+ENTRIES = "docs/decisions"
+KEPT = (ENTRIES, safe_push.DECISIONS)
+# A failed run still in progress is read again this often, in seconds, for at most this
+# long: the revert job is one of that run's own jobs.
+RUN_POLL = 15
+RUN_WAIT = 600
+# A test file --gaps runs for itself: test_*.py directly under tests/ or scripts/.
+GAP_TEST = re.compile(r"(?:tests|scripts)/test_[^/]+\.py")
 # The attributes with which Git may write a file to a checkout other than as its blob
 # holds it; --tree, which reads the checkout, refuses to read a page that has any of them.
 CHECKOUT_ATTRIBUTES = ("working-tree-encoding", "filter", "ident", "text", "eol", "crlf")
@@ -165,7 +208,9 @@ class GitHub:
                 "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){"
                 'mergeQueue(branch:"main"){entries(first:100){'
                 "nodes{position enqueuer{__typename login} "
-                "pullRequest{number headRefOid editor{__typename login}}} "
+                "pullRequest{number headRefOid editor{__typename login} "
+                "timelineItems(itemTypes:[RENAMED_TITLE_EVENT],last:1){"
+                "nodes{...on RenamedTitleEvent{actor{__typename login}}}}}} "
                 "pageInfo{hasNextPage}}}}}"
             )
             command = ["gh", "api", "graphql", "-f", f"query={query}",
@@ -276,34 +321,44 @@ def queue_entries(answer) -> list[tuple[int, str]]:
         raise ValueError("GitHub: could not read a complete queue in position order") from None
 
 
-def queue_actors(answer) -> dict[int, tuple[bool, bool]]:
-    """Whether a bot put each queued pull request in the queue, and whether a bot last
-    edited its body (False when nobody has), read by GraphQL's type of the actor: GraphQL
-    spells a bot's login without the "[bot]" REST adds, so logins are not compared.
-    Missing or malformed data refuses."""
+def queue_actors(answer) -> dict[int, tuple[bool, bool, bool]]:
+    """Whether a bot put each queued pull request in the queue, whether a bot last
+    edited its body (False when nobody has), and whether a bot last renamed it (False
+    when nobody has: its last title rename, from its timeline), read by GraphQL's type
+    of the actor: GraphQL spells a bot's login without the "[bot]" REST adds, so logins
+    are not compared. Missing or malformed data refuses."""
     try:
         actors = {}
         for node in answer["data"]["repository"]["mergeQueue"]["entries"]["nodes"]:
-            enqueuer, editor = node["enqueuer"], node["pullRequest"]["editor"]
-            for actor, may_be_none in ((enqueuer, False), (editor, True)):
+            pr = node["pullRequest"]
+            enqueuer, editor = node["enqueuer"], pr["editor"]
+            renames = pr["timelineItems"]["nodes"]
+            if not isinstance(renames, list) or len(renames) > 1:
+                raise ValueError
+            renamer = renames[0]["actor"] if renames else None
+            for actor, may_be_none in ((enqueuer, False), (editor, True),
+                                       (renamer, not renames)):
                 if actor is None and may_be_none:
                     continue
                 if not isinstance(actor, dict) or not isinstance(actor["login"], str) \
                         or not actor["login"] or not isinstance(actor["__typename"], str):
                     raise ValueError
-            actors[node["pullRequest"]["number"]] = (
+            actors[pr["number"]] = (
                 enqueuer["__typename"] == "Bot",
-                editor is not None and editor["__typename"] == "Bot")
+                editor is not None and editor["__typename"] == "Bot",
+                renamer is not None and renamer["__typename"] == "Bot")
         return actors
     except (KeyError, TypeError, ValueError):
-        raise ValueError("GitHub: could not read who queued and edited each entry") from None
+        raise ValueError("GitHub: could not read who queued, edited and renamed each "
+                         "entry") from None
 
 
 def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
     """An entry that is not an automatic revert: its head is in this repository, and no
-    bot (the revert App's above all) wrote it, put it in the queue or last edited its
-    body, so the App's key cannot land anything but the revert the queue checks it to
-    be. Trains are written and queued by people."""
+    bot (the revert App's above all) wrote it, put it in the queue, last edited its body
+    or last renamed it (its title goes into main's merge commit), so the App's key
+    cannot land anything but the revert the queue checks it to be. Trains are written,
+    named and queued by people."""
     if pr["head_repo"] != repo_slug:
         raise Refused(f"#{pr['number']}: its head is not in {repo_slug}")
     if pr["author"]["type"] == "Bot":
@@ -315,10 +370,13 @@ def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
         return
     if pr["number"] not in actors:
         raise ValueError(f"GitHub: #{pr['number']} is open but not in the queue read")
-    queued_by_bot, edited_by_bot = actors[pr["number"]]
+    queued_by_bot, edited_by_bot, renamed_by_bot = actors[pr["number"]]
     if queued_by_bot or edited_by_bot:
         raise Refused(f"#{pr['number']}: a bot wrote, queued or edited a pull request that "
                       "is not an automatic revert")
+    if renamed_by_bot:
+        raise Refused(f"#{pr['number']}: a bot last renamed a pull request that is not an "
+                      "automatic revert, and its title goes into main's merge commit")
 
 
 def pull_request(answer, number: int) -> dict:
@@ -637,12 +695,34 @@ def revert_checkout(repo: Path, start: str):
         yield root, env, git
 
 
-def failed_push(api: GitHub, run_id: int) -> tuple[str, str]:
-    """Find the failed main post-merge run's exact push, reading every activity page."""
-    run = api.read("runs", run_id)
+def completed_run(api: GitHub, run_id: int, sleep=time.sleep, clock=time.monotonic) -> dict:
+    """The named run once GitHub reports it completed. The revert job is one of the failed
+    run's own jobs, so its revert can be judged while the run is still in progress: such
+    a run is read again every RUN_POLL seconds for up to RUN_WAIT seconds, and a run not
+    completed by then refuses."""
+    deadline = clock() + RUN_WAIT
+    while True:
+        run = api.read("runs", run_id)
+        try:
+            if type(run["id"]) is not int or run["id"] != run_id \
+                    or not isinstance(run["status"], str):
+                raise ValueError
+        except (KeyError, TypeError, ValueError):
+            raise ValueError("GitHub: could not read the failed run") from None
+        if run["status"] == "completed":
+            return run
+        if clock() >= deadline:
+            raise Refused("auto-revert: the failed run had not completed after "
+                          f"{RUN_WAIT // 60} minutes")
+        sleep(RUN_POLL)
+
+
+def failed_push(api: GitHub, run_id: int, sleep=time.sleep,
+                clock=time.monotonic) -> tuple[str, str]:
+    """Find the failed main post-merge run's exact push, reading every activity page, once
+    the run has completed (completed_run)."""
+    run = completed_run(api, run_id, sleep, clock)
     try:
-        if type(run["id"]) is not int or run["id"] != run_id:
-            raise ValueError
         after = oid(run["head_sha"], "failed run head")
         if any(run[key] != value for key, value in (
                 ("path", ".github/workflows/post-merge.yml"), ("event", "push"),
@@ -674,29 +754,93 @@ def failed_push(api: GitHub, run_id: int) -> tuple[str, str]:
     return found.pop()
 
 
-def red_issue_names(pages, run_id: int) -> None:
-    """Require an open issue labelled main-red that names the failed run: the issue the
-    post-merge workflow opened, which landing waits on; so an old failure, whose issue
-    was closed or whose label was cleared when main passed again, admits no revert."""
+def red_issues(pages) -> list[dict]:
+    """The open issues labelled main-red, from every page of GitHub's answer; a pull
+    request is not one. Missing or malformed data is unreadable."""
     try:
         if not isinstance(pages, list) or not all(isinstance(page, list) for page in pages):
             raise ValueError
-        named = False
-        pattern = re.compile(r"/actions/runs/%d(?![0-9])" % run_id)
+        issues = []
         for issue in (issue for page in pages for issue in page):
-            if not isinstance(issue["body"] or "", str) or issue["state"] != "open" \
+            if type(issue["number"]) is not int or issue["number"] < 1 \
+                    or not isinstance(issue["body"] or "", str) or issue["state"] != "open" \
                     or not any(label["name"] == "main-red" for label in issue["labels"]):
                 raise ValueError
-            if "pull_request" not in issue and pattern.search(issue["body"] or ""):
-                named = True
+            if "pull_request" not in issue:
+                issues.append(issue)
+        return issues
     except (KeyError, TypeError, ValueError):
         raise ValueError("GitHub: could not read the open main-red issues") from None
-    if not named:
-        raise Refused("auto-revert: no open main-red issue names the failed run")
+
+
+def red_issue_names(pages, run_id: int, repo_slug: str) -> None:
+    """Require an open issue labelled main-red that names the failed run: the issue the
+    post-merge workflow opened, which landing waits on; so an old failure, whose issue
+    was closed or whose label was cleared when main passed again, admits no revert. The
+    issue names the run on its own Run: line, the one line of its body that begins so,
+    by this repository's address for the run (an attempt's too): a run of another
+    repository, or an address elsewhere in the body, names nothing."""
+    pattern = re.compile(rf"Run: https://github\.com/{re.escape(repo_slug)}/actions/runs/"
+                         rf"{run_id}(?:/attempts/[1-9][0-9]*)?")
+    for issue in red_issues(pages):
+        lines = [line.rstrip() for line in (issue["body"] or "").splitlines()
+                 if line.startswith("Run:")]
+        if len(lines) == 1 and pattern.fullmatch(lines[0]):
+            return
+    raise Refused("auto-revert: no open main-red issue names the failed run")
+
+
+def red_main_fix(pr: dict, red: list[int]) -> None:
+    """While main is red, an ordinary entry lands only as its fix: its body names every
+    open main-red issue, and no other, as safe_push.main_red_fix reads it. So a train
+    queued before main went red, or queued without safe_push, waits as --merge does."""
+    if not red:
+        return
+    try:
+        fixes = safe_push.main_red_fix(pr["body"])
+    except safe_push.Refusal as error:
+        raise Refused(f"#{pr['number']}: {error}") from None
+    if fixes != set(red):
+        raise Refused(f"#{pr['number']}: main is red (open main-red issues "
+                      + ", ".join(f"#{n}" for n in sorted(red)) + "), and only its fix "
+                      "lands: a pull request whose body has the line `Fixes main-red: "
+                      "#<n>`, naming every open main-red issue and no other")
+
+
+def kept_decisions(git, after: str) -> None:
+    """In the temporary revert checkout, put docs/decisions/ and the decisions page back as
+    they were at `after`, the failed push's tip and the revert's base: the decisions
+    record is history, only ever added to. Nothing else may differ from the exact
+    revert; a path absent at `after` is left absent. The reverts leave their changes
+    staged, which git rm refuses to remove unless forced."""
+    for path in KEPT:
+        git("rm", "-r", "-q", "-f", "--ignore-unmatch", "--", path)
+        if git("ls-tree", after, "--", path):
+            git("checkout", after, "--", path)
+
+
+def revert_commits(repo: Path, after: str, head: str, most: int) -> list[str]:
+    """The commits of after..head, oldest first: a line of one-parent commits from
+    `after`, at most `most` of them. A merge, or a longer line, refuses."""
+    found, current = [], head
+    while current != after:
+        pp = parents(repo, current)
+        if len(pp) != 1 or len(found) >= most:
+            raise Refused("auto-revert: the branch must hold, from the failed push's tip, "
+                          "only one-parent commits: its reverts and at most one keep commit")
+        found.append(current)
+        current = pp[0]
+    return found[::-1]
 
 
 def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
-    """Require the configured bot and exactly the failed run's main merge reversals."""
+    """Require the configured bot and exactly the failed run's main merge reversals: a
+    push of two-parent merges only; a branch whose one merge base with main is the
+    push's tip, `after`; and after..head exactly the reverts, one commit for each merge,
+    newest first, each that merge reverted onto the last (merge attributes read from
+    the push's `before`, as the revert job reads them), then a commit keeping the
+    decisions record as at `after` only where the reverts changed it. No merge and no
+    other commit; the commits' messages are not read."""
     expected = os.environ.get("STOICHEIA_REVERT_BOT", "")
     if not expected or not expected.endswith("[bot]") or pr["author"]["type"] != "Bot" \
             or pr["author"]["login"] != expected or not re.fullmatch(r"revert/\S+", pr["ref"]) \
@@ -728,28 +872,41 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
         raise Refused("auto-revert: failed push range is not on main's first-parent chain")
     expected_merges = []
     for sha in main[main.index(after):main.index(before)]:
-        pp = parents(repo, sha)
-        if len(pp) not in (1, 2):
-            raise Refused("auto-revert: failed push has an unexpected merge shape")
-        if len(pp) == 2:
-            expected_merges.append(sha)
+        if len(parents(repo, sha)) != 2:
+            # auto_revert.trains reverts none of such a push: it is reverted by hand.
+            raise Refused("auto-revert: the failed push holds a commit that is not a "
+                          "two-parent merge")
+        expected_merges.append(sha)
     if named != expected_merges:
         raise Refused("auto-revert: Reverts lines do not equal the failed push's merges")
+    if start != after:
+        raise Refused("auto-revert: the revert's base must be the failed push's tip")
     if pr["ref"] != f"revert/{after[:12]}":
         raise Refused("auto-revert: the branch must be revert/<the failed push's 12 hex>")
-    red_issue_names(api.read("main_red"), run_id)
-    with revert_checkout(repo, start) as (root, env, git):
+    red_issue_names(api.read("main_red"), run_id, api.repo)
+    steps = []
+    with revert_checkout(repo, after) as (root, env, git):
         for sha in named:
-            result = safe_push.run(["git", "-c", "core.hooksPath=/dev/null", "revert",
-                                   "--no-commit", "-m", "1", sha], root, env=env)
+            result = safe_push.run(["git", "-c", "core.hooksPath=/dev/null",
+                                    f"--attr-source={before}", "revert", "--no-commit",
+                                    "-m", "1", sha], root, env=env)
             if result.returncode == 1:
                 raise Refused("auto-revert: named reversals do not apply cleanly")
             if result.returncode:
-                raise ValueError("could not compute the automatic revert")
+                raise ValueError("could not compute the automatic revert "
+                                 "(Git 2.42 or later is needed)")
+            steps.append(git("write-tree"))
+        kept_decisions(git, after)
         wanted = git("write-tree")
     actual = safe_push.git(repo, "rev-parse", f"{pr['head']}^{{tree}}").strip()
     if actual != wanted:
         raise Refused("auto-revert: head is not the exact revert tree (extra change)")
+    commits = revert_commits(repo, after, pr["head"], len(named) + 1)
+    trees = [safe_push.git(repo, "rev-parse", f"{sha}^{{tree}}").strip() for sha in commits]
+    if trees != steps + ([wanted] if steps[-1] != wanted else []):
+        raise Refused("auto-revert: the branch must hold one commit for each named merge, "
+                      "its revert, in order, then a commit keeping the decisions record "
+                      "only where the reverts changed it, and nothing else")
 
 
 def _stripped(line: str) -> tuple[str, str]:
@@ -1029,7 +1186,7 @@ def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) 
     for path in sorted(checks):
         if path in deleted:
             continue
-        if re.fullmatch(r"(?:tests|scripts)/test_[^/]+\.py", path):
+        if GAP_TEST.fullmatch(path):
             candidates = [path]
         elif path == "scripts/safe_push.py":
             candidates = ["scripts/test_safe_push.py"]
@@ -1051,8 +1208,9 @@ def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) 
     return [list(command) for command in sorted(commands)]
 
 
-def gaps(repo: Path, base: str, entries: list[dict]) -> list[str]:
-    """Run focused tests and report acceptance's existing proposition verdicts."""
+def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
+    """Choose the focused tests, and report acceptance's existing proposition verdicts;
+    run nothing (run_gaps runs what this chooses)."""
     checks, propositions, foundations = set(), set(), set()
     deleted = set()
     for pr in entries:
@@ -1087,19 +1245,72 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[str]:
     if foundations:
         print("gaps: foundations covered by model and formal-model: "
               + ", ".join(sorted(foundations)), flush=True)
-    problems = []
     # An entry's deletion excuses no file restored by a later entry in the group.
     tracked = set(safe_push.git(repo, "ls-tree", "-r", "--name-only", "-z", "HEAD").split("\0"))
-    for command in gap_commands(repo, checks, deleted - tracked):
+    return gap_commands(repo, checks, deleted - tracked)
+
+
+def tokens_held() -> list[str]:
+    """The names of this process's environment variables that may hold a token."""
+    return sorted(key for key in os.environ if "TOKEN" in key.upper())
+
+
+def run_gaps(repo: Path, commands: list[list[str]]) -> list[str]:
+    """Run the chosen tests, the group's own code, each once. None runs while this
+    process's environment holds a token: a test could read it there, or, on Linux, in
+    its parent's environment (/proc/<ppid>/environ), so CI runs them with --run-plan in
+    a step that holds none, after the step that reads GitHub has chosen them. The runner
+    process still holds the job's read-only token (the module's docstring)."""
+    held = tokens_held()
+    if held:
+        raise ValueError("gaps: this process's environment holds a token ("
+                         + ", ".join(held) + "), which the tests could read: run them "
+                         "with --run-plan, in a process that holds none")
+    problems = []
+    for command in commands:
         print("gaps: " + shlex.join(command), flush=True)
-        # The group's tests run with no token of the job in their environment.
-        env = {k: v for k, v in os.environ.items() if "TOKEN" not in k.upper()}
-        result = safe_push.run(command, repo, env=env)
+        result = safe_push.run(command, repo, env=dict(os.environ))
         print(result.stdout, end="", flush=True)
         print(result.stderr, end="", file=sys.stderr, flush=True)
         if result.returncode:
             problems.append(f"gaps: {shlex.join(command)} failed (exit {result.returncode})")
     return problems
+
+
+def write_plan(path: Path, head: str, commands: list[list[str]]) -> None:
+    """Record the chosen tests for --run-plan, as JSON naming the group head, in a file
+    that must not exist yet."""
+    with open(path, "x", encoding="utf-8") as plan:
+        json.dump({"head": head, "commands": commands}, plan)
+        plan.write("\n")
+    for command in commands:
+        print("gaps: chosen: " + shlex.join(command), flush=True)
+
+
+def read_plan(repo: Path, head: str, path: Path) -> list[list[str]]:
+    """The commands of a plan written by --gaps --plan for this head: each one that
+    gap_commands chooses, python3 -I and a test_*.py file directly under tests/ or
+    scripts/, or python3 and scripts/test_safe_push.py, naming a regular file of the
+    checkout, each once. Anything else is unreadable."""
+    plan = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(plan, dict) or set(plan) != {"head", "commands"} \
+            or plan["head"] != head or not isinstance(plan["commands"], list):
+        raise ValueError("gaps: the plan is not one for this head")
+    commands = []
+    for command in plan["commands"]:
+        if command == ["python3", "scripts/test_safe_push.py"]:
+            test = command[1]
+        elif isinstance(command, list) and len(command) == 3 \
+                and command[:2] == ["python3", "-I"] and isinstance(command[2], str) \
+                and GAP_TEST.fullmatch(command[2]) and command[2] != "scripts/test_safe_push.py":
+            test = command[2]
+        else:
+            raise ValueError("gaps: the plan holds a command that --gaps does not choose")
+        target = repo / test
+        if command in commands or target.is_symlink() or not target.is_file():
+            raise ValueError(f"gaps: the plan repeats or misnames a test: {test}")
+        commands.append(command)
+    return commands
 
 
 def main(argv=None) -> int:
@@ -1109,17 +1320,32 @@ def main(argv=None) -> int:
     parser.add_argument("--repo")
     parser.add_argument("--github-json", type=Path)
     parser.add_argument("--gaps", action="store_true")
+    parser.add_argument("--plan", type=Path)
+    parser.add_argument("--run-plan", type=Path)
     parser.add_argument("--tree", type=Path)
     parser.add_argument("--render", action="store_true")
     args = parser.parse_args(argv)
     if args.tree is not None:
-        if any((args.head, args.base, args.repo, args.github_json, args.gaps)):
+        if any((args.head, args.base, args.repo, args.github_json, args.gaps, args.plan,
+                args.run_plan)):
             parser.error("--tree accepts only --render")
+    elif args.run_plan is not None:
+        if any((args.base, args.repo, args.github_json, args.gaps, args.plan, args.render)) \
+                or not args.head:
+            parser.error("--run-plan needs --head and accepts nothing else")
     elif not all((args.head, args.base, args.repo)) or args.render:
         parser.error("group checks need --head, --base and --repo; --render belongs to --tree")
+    elif args.plan is not None and not args.gaps:
+        parser.error("--plan belongs to --gaps")
     try:
         if args.tree is not None:
             problems = tree_problems(args.tree.resolve(), args.render)
+        elif args.run_plan is not None:
+            # The group's tests, chosen by --gaps --plan, run here with no GitHub read.
+            repo = Path.cwd()
+            head = oid(args.head, "head")
+            checkout(repo, head)
+            problems = run_gaps(repo, read_plan(repo, head, args.run_plan))
         else:
             if not SLUG.fullmatch(args.repo):
                 raise ValueError("--repo must be owner/name")
@@ -1133,6 +1359,7 @@ def main(argv=None) -> int:
             queue_answer = api.read("queue")
             entries = chain(repo, base, head, api, queue_answer)
             actors = queue_actors(queue_answer)
+            red = None
             for pr in entries:
                 if "auto-revert" in pr["labels"] or pr["ref"].startswith("revert/"):
                     if pr["head_repo"] != args.repo:
@@ -1140,13 +1367,26 @@ def main(argv=None) -> int:
                     exact_revert(repo, pr, api)
                 else:
                     ordinary_entry(pr, actors, args.repo)
+                    if pr["state"] == "OPEN":
+                        # Read once, for the queued entries; a merged one is on main.
+                        if red is None:
+                            red = [issue["number"] for issue in red_issues(
+                                api.read("main_red"))]
+                        red_main_fix(pr, red)
                     preflight(repo, base, pr)
                     intact(repo, base, head, pr)
             # The judge runs none of the group's scripts: the generated pages' freshness
             # is the check job's (render.py and git status, on the same group), so rule
-            # (d) here reads the page's blob only, never the checkout.
-            problems = gaps(repo, base, entries) if args.gaps \
-                else heading_problems(page_blob(repo, head))
+            # (d) here reads the page's blob only, never the checkout. The tests --gaps
+            # chooses are the group's own code: with --plan they are only recorded, for
+            # --run-plan to run.
+            if not args.gaps:
+                problems = heading_problems(page_blob(repo, head))
+            elif args.plan is not None:
+                write_plan(args.plan, head, gaps(repo, base, entries))
+                problems = []
+            else:
+                problems = run_gaps(repo, gaps(repo, base, entries))
     except Refused as error:
         problems = [str(error)]
     except (OSError, UnicodeError, ValueError, safe_push.Refusal) as error:

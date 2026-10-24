@@ -1,13 +1,19 @@
 name: CI
 
 on:
-  # Each commit of a pull request runs once, on the pull request's events; a push runs CI
-  # only on main, after each merge, never on another branch as well, where it ran the same
-  # commit twice (docs/decisions/2026-10-22-checks-by-risk.md). A tag runs nothing here.
-  # git safe-push opens or updates the pull request with each push of its branch.
-  push:
-    branches: [main]
+  # Each commit of a pull request runs once, on the pull request's events; git safe-push
+  # opens or updates the pull request with each push of its branch, and a push of
+  # another branch or of a tag runs nothing here (docs/decisions/2026-10-22-checks-by-risk.md).
+  # Main's run after each merge comes from post-merge.yml, which calls this workflow under
+  # its push to main, so a push trigger here would run main's commit twice. That call is
+  # the risk job's case of a push to main, R5; a merge group, as any other event, falls
+  # to the job's last case, R5 too.
   pull_request:
+  merge_group:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   risk:
@@ -21,8 +27,9 @@ jobs:
     # and every other event are R5, and `negative` and `formal-model` run in full. The label
     # is read from the event that started the run, and git safe-push adds a pull request's
     # labels after it pushes, so a label given with that push counts from the next push.
-    # Main's run after the merge runs `negative` and `formal-model` in full (`acceptance`
-    # runs only on a pull request). A release pull request's run need not be R5: the merge
+    # Main's run after the merge, post-merge.yml's call, runs every job in full, `negative`
+    # and `formal-model` among them (`acceptance` runs on every event CI runs on). A
+    # release pull request's run need not be R5: the merge
     # gate holds a release until the full pre-flight has run on its head and a run there
     # of the safe-push-tests workflow, the head's copy being main's, has passed each of its
     # three jobs: the safe_push tests, the negative tests in full, and the formal model's
@@ -91,6 +98,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       # The review records are read with tomllib, which needs Python 3.11 or later.
       - uses: actions/setup-python@v5
@@ -152,6 +161,8 @@ jobs:
 
       - uses: actions/checkout@v5
         if: steps.lane.outputs.full == 'true'
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         if: steps.lane.outputs.full == 'true'
@@ -179,6 +190,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -246,6 +259,8 @@ jobs:
 
       - uses: actions/checkout@v5
         if: steps.lane.outputs.full == 'true'
+        with:
+          persist-credentials: false
 
       - name: Install Lean (elan)
         if: steps.lane.outputs.full == 'true'
@@ -309,7 +324,6 @@ jobs:
     # Certificate/, review/SCHEMA.md, review/terms.toml), keeping main's values pinned to
     # its content (WORKFLOW, section 10, step 4), so that both are judged alike and a
     # check made stricter, in a pull request of its own, holds nothing back.
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -322,6 +336,7 @@ jobs:
         with:
           # The review records name their commits, which the checker finds in the history.
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -331,6 +346,55 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Identify main for this event
+        # A reusable workflow keeps its caller's event. A queue group compares with
+        # its base; a main push compares with the main tip before that push.
+        run: |
+          python3 -I - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          def sha(value):
+              if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{40}", value) or not value.strip("0"):
+                  raise SystemExit("Cannot identify a non-zero, full commit SHA for acceptance.")
+              if git("rev-parse", "--verify", value + "^{commit}") != value:
+                  raise SystemExit("Acceptance's commit is unavailable.")
+              return value
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as source:
+              event = json.load(source)
+          name = os.environ["GITHUB_EVENT_NAME"]
+          head = git("rev-parse", "HEAD")
+          if name == "pull_request":
+              pull = event["pull_request"]
+              parents = git("rev-list", "--parents", "-n", "1", head).split()
+              if len(parents) == 3 and parents[2] == sha(pull["head"]["sha"]):
+                  main = sha(parents[1])
+              elif head == sha(pull["head"]["sha"]):
+                  main = sha(pull["base"]["sha"])
+              else:
+                  raise SystemExit("Checkout does not identify the pull request's main.")
+          elif name == "merge_group":
+              group = event["merge_group"]
+              if head != sha(group["head_sha"]) or group["base_ref"] != "refs/heads/main":
+                  raise SystemExit("Checkout does not identify this main queue group.")
+              main = sha(group["base_sha"])
+          elif name == "push":
+              if event["ref"] != "refs/heads/main" or event.get("deleted") is not False or head != sha(event["after"]):
+                  raise SystemExit("Acceptance needs the main push's exact checkout.")
+              main = sha(event["before"])
+          else:
+              raise SystemExit("No acceptance base is defined for this event.")
+          subprocess.run(["git", "merge-base", "--is-ancestor", main, head], check=True)
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+              output.write("MAIN_SHA=" + main + "\n")
+          PY
 
       - name: Check the checker's comparison of two runs, case by case
         # tests/test_check_acceptance.py needs no Lean; a comparison read wrongly stops
@@ -362,10 +426,8 @@ jobs:
         # and the model tests (E1, E4) are left out here (--quick): the `check` and
         # `model` jobs hold them on every pull request.
         if: env.ACCEPTANCE_GATE == 'ratchet'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then main_sha=$(git rev-parse HEAD^1); else main_sha="$BASE_SHA"; fi
+          main_sha="$MAIN_SHA"
           main="$RUNNER_TEMP/main"
           git worktree add --detach "$main" "$main_sha"
           # An updated pin belongs to the content it pins. Copying it from the pull
@@ -407,13 +469,16 @@ jobs:
     # requiring code-owner review, with a CODEOWNERS file naming the owner for those
     # paths; a required workflow pinned to main, if the account offers one; or a status
     # posted by an App running main's code. The queue must not be turned on until one
-    # exists. This workflow does not run on merge_group until the queue lands, so for
-    # now only the offline cases run.
+    # exists.
     runs-on: ubuntu-latest
+    # The judge's own reading, and its wait of up to 10 minutes for a revert's run to
+    # complete (WORKFLOW, section 10): to be measured again on the queue's trial.
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: read
-      # An automatic revert's failed run and the open main-red issue that names it.
+      # An automatic revert's failed run and the open main-red issues, which a revert
+      # must name and an ordinary entry must declare it fixes.
       actions: read
       issues: read
     steps:
@@ -427,15 +492,19 @@ jobs:
           python-version: "3.12"
 
       - name: Install the queue tests' pinned YAML parser
+        # Isolated, from the runner's temporary directory: nothing in the checkout (a
+        # pip/ folder, say) can run in pip's place.
         if: github.event_name != 'merge_group'
-        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
 
-      - name: Check the queue and train checks, case by case
-        # On pull requests and pushes: the offline cases, which need no network.
+      - name: Check the queue and train checks, and automatic reverts, case by case
+        # On a pull request and on main: the offline cases, which need no network.
         if: github.event_name != 'merge_group'
         run: |
           python3 -I tests/test_check_queue.py
           python3 -I tests/test_check_train.py
+          python3 -I tests/test_auto_revert.py
 
       - name: Check the group with main's copy of check_queue.py
         if: github.event_name == 'merge_group'
@@ -460,3 +529,91 @@ jobs:
           tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
           test -f "$RUNNER_TEMP/judge/check_queue.py" || exit 2
           python3 -I "$RUNNER_TEMP/judge/check_queue.py" --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
+
+  queue-gaps:
+    # The gaps of what is new, on each merge group: the tests of each check the group
+    # changes, chosen by main's copy of check_queue.py, and the changed propositions'
+    # acceptance items, from the acceptance job's verdicts. These are the group's own
+    # tests: they test, they do not judge. They are its own code too, and on Linux a
+    # process can read its parent's environment (/proc/<ppid>/environ), so the step that
+    # holds the token, to read GitHub, chooses them and runs none; the last step, which
+    # holds no token, nor does any step after the choosing, runs them, and refuses to if
+    # a variable named with TOKEN is in its environment. That keeps the token out of the
+    # tests' environment, files, caches and artifacts, but the runner process holds it
+    # for the whole job, beneath every step: so it is read-only by design, the four
+    # permissions below, all read.
+    needs: acceptance
+    if: always()
+    runs-on: ubuntu-latest
+    # The changed checks' tests, the slowest group (safe_push's, check_queue's and
+    # check_train's at once) near 40 minutes here, and the judge's wait of up to 10
+    # minutes for a revert's run: to be measured again on the queue's trial.
+    timeout-minutes: 75
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      issues: read
+    steps:
+      - name: Require a completed acceptance check
+        env:
+          ACCEPTANCE_RESULT: ${{ needs.acceptance.result }}
+        run: test "$ACCEPTANCE_RESULT" = success
+
+      - uses: actions/checkout@v5
+        if: github.event_name == 'merge_group'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: github.event_name == 'merge_group'
+        with:
+          python-version: "3.12"
+
+      - name: Read acceptance's verdicts
+        if: github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          gh run download "$RUN_ID" --repo "$REPOSITORY" --name acceptance --dir "$RUNNER_TEMP/acceptance"
+          test -s "$RUNNER_TEMP/acceptance/verdicts.json"
+
+      - name: Choose the tests of what is new
+        # Main's check_queue.py reads GitHub with the token, prints the acceptance items,
+        # and writes the tests it chooses to a new file; it runs none of them.
+        if: github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          REPOSITORY: ${{ github.repository }}
+          ACCEPTANCE_VERDICTS: ${{ runner.temp }}/acceptance/verdicts.json
+          STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY" --plan "$RUNNER_TEMP/gaps-plan.json"
+
+      - name: Install the tests' pinned YAML parser, main's pin
+        # After the token's last step: what pip installs could run in any later Python.
+        # Isolated, from the runner's temporary directory: nothing in the group's
+        # checkout (a pip/ folder, say) can run in pip's place.
+        if: github.event_name == 'merge_group'
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"
+
+      - name: Run the tests of what is new
+        # No token here: the tests are the group's own code. Main's check_queue.py runs
+        # the chosen tests and refuses to while a variable named with TOKEN is set.
+        if: github.event_name == 'merge_group'
+        env:
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"
