@@ -16,21 +16,22 @@
   planted before. Once Circle 3 has left the lock, `circle_renamed.py` renames it in the
   copy's `proved_rules` and `proved_rule_cites`, the tables that keep it then, and wants the
   same refusal, that it is not an axiom in the lock (nor a proved rule); and
-  `circle_proved.py` gives Circle 2 an empty `proved_rule_cites` in both cases, and for the
-  case resting on Circle 3 writes Circle 3 back into the lock and into the copy's tables of
-  axioms, with the statement it keeps as a theorem, before restoring the lock as it found
-  it. No plant is dropped and no expected refusal is loosened: each case wants the words it
-  wanted, and the first case of `circle_proved.py` now asks for a citation of nothing in
-  both states, as it always meant to. This is part of #294 and #152.
+  `circle_proved.py` gives Circle 2 an empty `proved_rule_cites` in both cases, and for
+  both cases writes Circle 3 back into the lock and into the copy's tables of axioms, with
+  the statement it keeps as a theorem, before restoring the lock as it found it. No plant
+  is dropped and no expected refusal is loosened: each case wants the words it wanted, and
+  the first case of `circle_proved.py` now asks for a citation of nothing in both states,
+  as it always meant to. It belongs to #294, within #152.
 
   This entry approves the change to `scripts/negative/circle_renamed.py`, which renames
   Circle 3 in the lock and the copy's tables of axioms while it is locked, and in the copy's
   tables of proved rules once it is proved.
 
   This entry approves the change to `scripts/negative/circle_proved.py`, whose Circle 2
-  cites nothing in either case, and which locks Circle 3 for its second case when the lock
-  no longer holds it.
+  cites nothing in either case, and which locks Circle 3 for both cases when the lock no
+  longer holds it.
 
   This entry approves the change to `tests/test_negative_tests.py`, which tests both plants
   with Circle 3 proved from III.2: the lock and the copy each plant hands the check, and
-  the lock restored; each new case fails on the plants as they were.
+  the lock restored, and the restoration of a lock that held neither rule; each new test
+  fails on the plants as they were, in its retired case.

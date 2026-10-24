@@ -5,7 +5,7 @@ beneath it or a citation of III.2, Circle 2 must be refused by name:
 `check_fidelity.check_lock` must say that it is proved without another forbidden circle
 rule. Proved from Circle 3 while Circle 3 is a locked axiom, it must pass; once Circle 3 has
 left the lock, proved after III.2, the plant puts it back in the lock and in the copy's
-tables of axioms, with the statement it keeps, for that case. The check's earlier findings
+tables of axioms, with the statement it keeps, for both cases. The check's earlier findings
 are kept.
 """
 
