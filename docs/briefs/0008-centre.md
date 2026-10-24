@@ -67,6 +67,15 @@ them. No statement, declaration, record or lock changes, so no consumer is affec
   Zero's three lemmas that rest on Circle 2, and no declaration of the Staging library
   rests on Circle 3, by Lean's axiom lists on 21 October.
 
+*Correction, 22 October 2026, for issue #131:* the rule of section 4, "a bracket means
+III.1, none means the rule", with its table's rows for III.2, III.4, III.8 and III.17,
+its row in Appendix B and question 8, is corrected by the coordinator's
+[decision entry of 22 October 2026](../decisions/2026-10-22-iii1-calls-dropped.md): a
+proof takes a centre from the rule wherever a call of III.1 would do no work, and Heath's
+"[III. 1]" stays on the page as his reference. So III.2, III.4, III.8 and III.17 take
+their centres from `exists_centre`, and III.14, whose statement names E, takes none and no
+longer rests on the rule. No statement changes. The frozen text below is kept as history.
+
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
 while the frozen text is retained as history.*

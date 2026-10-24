@@ -171,6 +171,9 @@ and Heath's account of the quarrel over the horn-like angle are explained in the
 
 **19 October 2026, step 6 complete.** These conventions replace the earlier convention
 of supplying a centre merely to have one; the rule's approval of 18 October stands.
+The account through the paragraph on III.1 below is the 19 October account; the
+coordinator's correction of 22 October, after it, supersedes its centre convention for
+III.2, III.4, III.8, III.14 and III.17.
 
 A circle in Lean has a centre by `exists_centre`, the rule approved on 18 October 2026
 in [brief 0008](0008-centre.md). `Postulate3` also makes each circle with its centre.
@@ -204,6 +207,22 @@ circle, it constructs `D`, `C`, `E` and `F` as Euclid does and concludes `Centre
 The statement is the problem's answer with its construction; its content is the reductio,
 which shows that the point found is the centre; the proof takes a centre `G` from
 `exists_centre` for the reductio.
+
+**22 October 2026, #131.** A proof now takes a centre from `exists_centre` wherever a
+call of III.1 would do no work, and Heath's "[III. 1]" stays on the page as his
+reference, by the coordinator's
+[decision of that day](../decisions/2026-10-22-iii1-calls-dropped.md), which corrects
+brief 0008's rule "a bracket means III.1, none means the rule". The convention now
+stands as follows, and no statement changes:
+
+- III.2, III.4, III.8 and III.17 obtain their centres through `exists_centre`; each needs
+  the centre alone, so a call of III.1 would do no work.
+- III.14 uses the centre `E` supplied by its statement and takes no other centre.
+- Heath's brackets remain his references on each page. III.28 and III.29 still take
+  their centres from `EqualCircles`; unbracketed steps such as III.35 to III.37 still use
+  `exists_centre`.
+- III.4 and III.8 apply their universal geometric conditions to the centre obtained
+  through `exists_centre`, with no existence hypothesis.
 
 ## Where the facts live
 
@@ -340,6 +359,9 @@ worth naming. The first mate's report has a note on every statement.
   since Definitions 4 and 5 measure from them; III.14's proof takes the centre by III.1
   all the same (above). The perpendiculars are given, so I.12 is not cited; that the feet
   fall within the straight lines is `foot_between`.
+
+  This is the historical 19 October account. The 22 October correction in "Circles and
+  their centres" supersedes its account of III.14.
 - **III.15** says "the diameter is greatest" together with the more remote `FG` and
   `‖E H‖ < ‖E K‖`, as Euclid does: his proof that `AD` is greater than `BC` goes through
   `MN`, made on `EK` by cutting off `EL` equal to the less `EH` (I.3), so it uses the
