@@ -1,7 +1,8 @@
 """Numerical properties retained independently of the axiom registries.
 
 These predicates keep the guards and conclusions of their search.py checks: the eight retired
-first, then the 31 prepared for retirement while all 79 axioms remain.
+first, then the 31 prepared for retirement while all 79 axioms remain, then Circle 3
+(`outside_of_between`), prepared for its retirement after III.2 while it is still an axiom.
 The exhaustive and structured harnesses report them with a derived. prefix, even
 while the corresponding declarations are still axioms. Their configurations and
 results therefore survive removal of those laws from search.py and hyperbolic.py.
@@ -46,6 +47,13 @@ def inside_of_between(c):
     if not (in_or_on(A, al) and in_or_on(B, al) and between(A, Cc, B)):
         return None
     return inside(Cc, al)
+
+
+def outside_of_between(c):
+    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
+    if not (in_or_on(A, al) and not inside(Cc, al) and between(A, Cc, B)):
+        return None
+    return (not inside(B, al)) and (not on_circle(B, al))
 
 
 def exists_point_outside_circle(c):
@@ -380,6 +388,7 @@ PROPERTIES = {
     'derived.not_same_side_of_circles_meet': not_same_side_of_circles_meet,
     'derived.centre_unique': centre_unique,
     'derived.inside_of_between': inside_of_between,
+    'derived.outside_of_between': outside_of_between,
     'derived.exists_point_outside_circle': exists_point_outside_circle,
     'derived.line_meets_circle_of_opposite_sides': line_meets_circle_of_opposite_sides,
     'derived.triple_incidence3': triple_incidence3,
