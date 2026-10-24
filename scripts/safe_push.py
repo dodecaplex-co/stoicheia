@@ -51,7 +51,13 @@ order, and the first that fails stops it with a message saying why:
    The programs it runs as checks are not: they keep the environment tool_env() copies,
    which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
    otherwise only if the caller set it, and no other variable of git's, so that a check
-   finds its repository by its working directory, never by a hook's GIT_DIR (#355).
+   finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
+   does any command safe_push.py runs itself, git's or another's, get a variable that
+   ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
+   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
+   the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
+   working directory too, the hand-over's included (#357). The harness sets one itself,
+   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -123,7 +129,8 @@ order, and the first that fails stops it with a message saying why:
    the model's law names, and a law's code in the two harnesses that check every law
    (MODEL_LAW_CODE), only while each law changed moves with its axiom; the Markdown of
    the check inputs that are not code (COUNTED_PROSE) only while nothing but the values
-   between its count markers changes), which move with the content they pin. A crash of
+   between its count markers changes, and the model's page, whose prose may change too,
+   only while its count markers stand), which move with the content they pin. A crash of
    origin/main's render.py, its check of docs/program.toml among them, is a verdict.
    Step 3's two checks run the same way. With --main-checks-cache, for R3 to R5 (the
    classes that run this step in full), but not on a train/* branch, whose train check
@@ -348,10 +355,13 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # files from `git status`, and so from the check that the generated pages are current.
 # checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
 # added, removed, or with its command, job or order changed, is named in a decisions entry.
-# PROTECTED_JUDGED, below, joins them.
+# docs/ACCEPTANCE.md's table of the limitations allowed is what tests/test_acceptance_limits.py
+# ties to check_acceptance.py's ALLOWED_LIMITS, so it is a check input, protected as one
+# (#249). PROTECTED_JUDGED, below, joins them.
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/",
+             "docs/ACCEPTANCE.md")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
 # that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
@@ -368,14 +378,16 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
 PROTECTED += PROTECTED_JUDGED
 # The checks and what they expect: origin/main's copies judge the commit (step 4). The
 # registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
-# check change, kept apart from what the checks judge.
+# check change, kept apart from what the checks judge. So is docs/ACCEPTANCE.md, whose table
+# of allowed limitations and check_acceptance.py's ALLOWED_LIMITS change together (#249).
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
-                "checks/")
+                "checks/", "docs/ACCEPTANCE.md")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
 # laws; `results_check.py` holds them to one commit and the present harness, and
-# `check_fidelity.py` the page's count markers to what they count. The certificate's
+# `check_fidelity.py` the page's count markers to what they count. A change to the page is
+# a pinned value only while the same markers stand in it (counts_moved). The certificate's
 # expectations are checked one way only, each for what it says, so a change to them is a
 # pinned value only while it keeps every expectation origin/main has (kept_expectations).
 # The model's law names are compared with the lock both ways, but a line of them changed
@@ -383,10 +395,10 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # is a pinned value only while each line changed moves with its axiom's entry in the lock
 # (laws_move_with_axioms). The values between count markers in the Markdown of
 # COUNTED_PROSE, below, are compared exactly with the files they count (check_fidelity.py),
-# so a change to that Markdown is a pinned value only while nothing but those values
-# changes (counts_moved). A change to the content they pin moves them with it, in the same
-# pull request; they stay protected (a decisions line, security-review, the lock's guard),
-# and the commit's own checks must pass.
+# so a change to that Markdown, the model's page aside, is a pinned value only while
+# nothing but those values changes (counts_moved). A change to the content they pin moves
+# them with it, in the same pull request; they stay protected (a decisions line,
+# security-review, the lock's guard), and the commit's own checks must pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
 MODEL_HASH = "tests/model/lock.sha256"
 MODEL_LAWS = "tests/model/laws.toml"
@@ -400,11 +412,11 @@ PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
 MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 # The check inputs that are not code: Certificate/FIELDS.md and review/SCHEMA.md say what
 # the certificate and the records hold, and Markdown under tests/ is prose too
-# (tests/model/MODEL.md, the only one today, is pinned whole). render.py fills the count
-# markers in their Markdown, as COUNT_READER defines them, and check_fidelity.py holds
-# each value to the files it counts: a new word in the lock moves FIELDS.md's count of
-# the words with it, in no other order. scripts/ is check code: a count there is never
-# pinned.
+# (tests/model/MODEL.md, the only one today, is pinned whole but for its count markers,
+# which must stand). render.py fills the count markers in their Markdown, as COUNT_READER
+# defines them, and check_fidelity.py holds each value to the files it counts: a new word
+# in the lock moves FIELDS.md's count of the words with it, in no other order. scripts/ is
+# check code: a count there is never pinned.
 COUNTED_PROSE = ("Certificate/", "review/SCHEMA.md", "tests/")
 COUNT_READER = "scripts/generated_counts.py"
 COUNT_READERS: dict[tuple[str, str], object] = {}
@@ -476,6 +488,10 @@ CHECKS = [
     ("python3 -I tests/test_screen.py", [PY, "-I", "tests/test_screen.py"]),
     ("python3 -I tests/test_acceptance_limits.py",
      [PY, "-I", "tests/test_acceptance_limits.py"]),
+    ("python3 -I tests/test_check_superposition_pins.py",
+     [PY, "-I", "tests/test_check_superposition_pins.py"]),
+    ("python3 -I scripts/check_superposition_pins.py",
+     [PY, "-I", "scripts/check_superposition_pins.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
@@ -520,12 +536,39 @@ class NothingToPush(Exception):
 # Running commands
 
 
-def without_replacements(env=None) -> dict:
-    """A copy of `env` (os.environ when None) with GIT_NO_REPLACE_OBJECTS=1 and no
-    GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets core.useReplaceRefs=true in
-    config override it, which run() pins off (NO_REPLACE_REFS)."""
-    env = dict(os.environ if env is None else env)
-    env.pop("GIT_REPLACE_REF_BASE", None)
+# The variables that tie git to one repository, as `git rev-parse --local-env-vars` lists
+# them. A hook sets some of them (GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE) for the
+# repository it runs in; left set, they would send safe_push's own commands to that
+# repository and its index: `git worktree add` would check the commit out into a linked
+# worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
+# one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
+# repository by the working directory each command names; the one the harness sets itself,
+# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
+# 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
+REPOSITORY_VARIABLES = frozenset({
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
+    "GIT_INDEX_FILE", "GIT_INTERNAL_SUPER_PREFIX", "GIT_NO_REPLACE_OBJECTS",
+    "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE",
+    "GIT_WORK_TREE"})
+
+
+def own_env(env=None, keep=()) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but those
+    KEPT_GIT_VARIABLES names, so that a check started with tool_env() keeps
+    GIT_NO_REPLACE_OBJECTS (#355, #357), and those `keep` names, which the harness sets
+    itself, on purpose (base_tree's temporary GIT_INDEX_FILE)."""
+    return {name: value for name, value in (os.environ if env is None else env).items()
+            if name not in REPOSITORY_VARIABLES or name in KEPT_GIT_VARIABLES
+            or name in frozenset(keep)}
+
+
+def without_replacements(env=None, keep=()) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but
+    GIT_NO_REPLACE_OBJECTS, set to 1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41
+    still lets core.useReplaceRefs=true in config override it, which run() pins off
+    (NO_REPLACE_REFS)."""
+    env = own_env(env, keep)
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
     return env
 
@@ -536,7 +579,7 @@ NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 
 
 def run(cmd, cwd, *, env=None, input=None, binary=False,
-        capture=True) -> subprocess.CompletedProcess:
+        capture=True, keep=()) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here, but origin/main's risk.py, which
     risk_class runs with a time limit, and the Git read that loads origin/main's
     count-marker reader, both before the main-checks cache is opened. While the cache is
@@ -562,10 +605,14 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
-    # a clean stand-in (#256).
+    # a clean stand-in (#256). No command, git's or another's, gets one of the caller's
+    # variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS; only a name in
+    # `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE), passes (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
         cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
-        env = without_replacements(env)
+        env = without_replacements(env, keep)
+    else:
+        env = own_env(env, keep)
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
@@ -2733,11 +2780,13 @@ def count_markers(repo, base):
 def counts_moved(repo, base, sha, path: str) -> bool:
     """Is the commit's change to `path`, Markdown of COUNTED_PROSE, confined to the values
     between its count markers, as origin/main's generated_counts reads them
-    (count_markers)? The file stays a regular file of the same mode, the same markers stand
-    by name and in order, every byte outside their values is as it was, and a value moves.
-    A marker added, removed or renamed, any other byte changed, a file added or deleted, or
-    one either side cannot read, is not. The commit's own check_fidelity.py holds each
-    value to the files it counts."""
+    (count_markers)? (For the model's page, do those markers stand?) The file stays a
+    regular file of the same mode, the same markers stand by name and in order, every byte
+    outside their values is as it was, and a value moves. The model's page (MODEL_PAGE) is
+    its account of the laws, pinned whole for its prose, so there only the markers must
+    stand (#187). A marker added, removed, renamed or reordered, any other byte changed but
+    in the model's page, a file added or deleted, or one either side cannot read, is not.
+    The commit's own check_fidelity.py holds each value to the files it counts."""
     if not (path.endswith(".md") and under(path, COUNTED_PROSE)):
         return False
     raw = git(repo, "diff", "--raw", "-z", "--no-renames", base, sha, "--", f":(literal){path}")
@@ -2753,6 +2802,8 @@ def counts_moved(repo, base, sha, path: str) -> bool:
         found = [read(text, path) for text in texts]
     except (UnicodeDecodeError, ValueError):
         return False
+    if path == MODEL_PAGE:
+        return [m.name for m in found[0]] == [m.name for m in found[1]]
 
     def outside(text: str, markers) -> list[str]:
         cuts = [0, *(i for m in markers for i in (m.value_start, m.value_end)), len(text)]
@@ -2762,16 +2813,19 @@ def counts_moved(repo, base, sha, path: str) -> bool:
 
 def pinned(repo, base, sha, path: str) -> bool:
     """Is the commit's change to the check input `path` a value pinned to the edition? The
-    lock, the model's hash of it, and its page and results, always; the certificate's
-    expectations, while the change keeps every one origin/main has (kept_expectations);
-    the model's law names, and a law's code in the two harnesses that check every law,
-    while each law changed moves with its axiom (laws_move_with_axioms); and the Markdown
-    of the check inputs that are not code, while nothing but the values between its count
-    markers changes (counts_moved). A file under scripts/ never is."""
+    lock, the model's hash of it, and its results, always; its page, while the same count
+    markers stand in it (counts_moved); the certificate's expectations, while the change
+    keeps every one origin/main has (kept_expectations); the model's law names, and a
+    law's code in the two harnesses that check every law, while each law changed moves
+    with its axiom (laws_move_with_axioms); and the Markdown of the check inputs that are
+    not code, while nothing but the values between its count markers changes
+    (counts_moved). A file under scripts/ never is."""
     if path == EXPECTATIONS:
         return kept_expectations(show(repo, base, path), show(repo, sha, path))
     if path == MODEL_LAWS or path in MODEL_LAW_CODE:
         return laws_move_with_axioms(repo, base, sha, path)
+    if path == MODEL_PAGE:
+        return counts_moved(repo, base, sha, path)
     return under(path, PINNED) or counts_moved(repo, base, sha, path)
 
 
@@ -2789,11 +2843,12 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
     what each expectation says, so the commit's own pass could never catch it. Nor is a
-    count marker added, removed or renamed, or any other byte of that Markdown changed:
-    the commit's own pass checks the values alone. Check code changed with judged content
-    is kept apart, pinned values or not; and so is a law of the model changed while its
-    axiom stands, for the commit's own pass could not catch that either. True when it
-    refuses."""
+    count marker added, removed, renamed or reordered, in that Markdown or in the model's
+    page, nor any other byte of that Markdown changed (the page's prose moves with its
+    laws): the commit's own pass checks the values alone, each against the marker that
+    holds it. Check code changed with judged content is kept apart, pinned values or
+    not; and so is a law of the model changed while its axiom stands, for the commit's own
+    pass could not catch that either. True when it refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -2815,7 +2870,8 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     laws = [p for p in inputs if (p == MODEL_LAWS or p in MODEL_LAW_CODE)
             and not pinned(repo, base, sha, p)]
     counted = [p for p in inputs if p.endswith(".md") and under(p, COUNTED_PROSE)
-               and not pinned(repo, base, sha, p)]
+               and p != MODEL_PAGE and not pinned(repo, base, sha, p)]
+    marked = MODEL_PAGE in inputs and not pinned(repo, base, sha, MODEL_PAGE)
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}"
@@ -2826,16 +2882,19 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
                "name), which is a check change" if laws else "")
             + (f"; and it changes {', '.join(counted)} beyond the values between count "
                "markers, which is a check change" if counted else "")
+            + (f"; and it adds, removes, renames or reorders a count marker of {MODEL_PAGE} "
+               "(or adds or deletes the file, changes its mode, or leaves it unreadable), "
+               "which is a check change" if marked else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
             f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "
             f"of {EXPECTATIONS}, none of its expectations dropped or loosened, the values "
             f"between count markers in the Markdown of {', '.join(COUNTED_PROSE[:-1])} and "
-            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the "
-            f"model's account, {MODEL_PAGE} and {MODEL_RESULTS}) move with the content they "
-            f"pin, and so does a law of the model, its line of {MODEL_LAWS} and its code in "
-            f"{' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, \"Landing "
-            "work: pull requests\")")
+            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the model's account, "
+            f"{MODEL_PAGE}, its count markers standing, and {MODEL_RESULTS}) move with the "
+            f"content they pin, and so does a law of the model, its line of {MODEL_LAWS} and "
+            f"its code in {' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, "
+            "\"Landing work: pull requests\")")
     return True
 
 
@@ -2893,8 +2952,8 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
         script.write_bytes(source.stdout)
         try:
             r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
-                               capture_output=True, text=True, errors="replace",
-                               timeout=RISK_TIMEOUT)
+                               env=without_replacements(), capture_output=True, text=True,
+                               errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
             return r5(f"origin/main's {RISK} could not be run: {type(e).__name__}")
     if r.returncode != 0:
@@ -3188,10 +3247,13 @@ def base_tree(repo, base, sha, changes: list[tuple[str, str]]) -> str:
     commit's, with origin/main's entry for each check input the commit changes, and those
     it adds taken out. Neither the worktree nor the repository's own index is touched."""
     with tempfile.TemporaryDirectory(prefix="stoicheia-index-") as tmp:
-        env = dict(os.environ, GIT_INDEX_FILE=str(Path(tmp) / "index"))
+        # Besides GIT_NO_REPLACE_OBJECTS, the one repository variable the harness sets on
+        # purpose, kept by run() (#357): every other but GIT_NO_REPLACE_OBJECTS is
+        # dropped, a hook's GIT_INDEX_FILE among them.
+        env = dict(own_env(), GIT_INDEX_FILE=str(Path(tmp) / "index"))
 
         def index(*args, input=None) -> str:
-            r = run(["git", *args], repo, env=env, input=input)
+            r = run(["git", *args], repo, env=env, input=input, keep=("GIT_INDEX_FILE",))
             if r.returncode != 0:
                 raise Refusal(f"`git {' '.join(args)}` failed: {r.stderr.strip()}")
             return r.stdout
@@ -3789,7 +3851,8 @@ def harness(repo, base: str, rep: Report) -> None:
           "origin/main's: running origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
-    # checks: so an older harness, whose run() sets neither, has them too (#256).
+    # checks: so an older harness, whose run() sets neither, has them too (#256). No other
+    # variable that ties git to one repository goes with them (#357).
     env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()
