@@ -31,7 +31,8 @@ it, put to the script's own patterns and functions:
   facts.json entry shows, read afresh for each root;
 * the route cases: render.py counts the steps a modified route changes, one for each
   passage its record argues another way, on the page, in the book's summary and in the
-  certificate's key, and says "with a step changed" where the record counts none;
+  certificate's key, and where the record counts none says "with a step changed" on the
+  page and "one or more" in the book's summary;
 * the figure cases: render.py's caption under Euclid's figure says "Drawn for one case"
   before the case the record's [figure] names, or "Drawn for every case" where the record
   says `every_case`, and heath.py refuses an `every_case` that is not true or false, or

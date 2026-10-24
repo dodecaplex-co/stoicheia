@@ -210,7 +210,8 @@ def steps_changed(record, lead=""):
     """A modified route's steps, counted from its record, after `lead` ("with "): "one
     step changed", "two steps changed". review/SCHEMA.md lets a modified route name its
     step in the route's note alone, with no `different` passage, and then the words are
-    "with a step changed", true with no count; no record does so as of 23 October 2026."""
+    "with a step changed", true with no count, and carry their own "with" whatever
+    `lead` is."""
     k = different_passages(record)
     if not k:
         return "with a step changed"
