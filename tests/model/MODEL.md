@@ -107,9 +107,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `1df5d14ba85a`, 2026-10-24, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `6c231d75a3ee`, 2026-10-24, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 in the search, 2,528,836 exhaustive, 681,063 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 502,055 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,097,933** configurations met an axiom's hypotheses (1,217,500 in the search, 2,247,172 exhaustive, 633,261 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 502,055 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -142,7 +142,7 @@ In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 
 | `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
 | `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
 | `Tacit.between_of_inside_chord` | 239 | 3,228 | 37,732 | 8,315 |
-| `Tacit.outside_of_between` | 453 | 281,664 | 47,802 | 2,023 |
+| `Tacit.outside_of_between` | 453 | · | · | 2,023 |
 | `Tacit.lines_meet_of_opposite_sides` | 22 | 26,248 | 39,362 | 4,489 |
 | `Tacit.circles_meet` | 1,389 | 10,668 | 1,587 | 2,551 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
@@ -163,7 +163,7 @@ In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 
 | `Tacit.area_add_of_between` | 20 | 6,176 | 55,499 | 8,475 |
 | `Tacit.superposition` | 98 | 363,888 | 71,970 | 8,669 |
 
-Separately, **9,525,564** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **9,855,030** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -171,6 +171,7 @@ Separately, **9,525,564** configurations met a retained derived property's hypot
 | `derived.not_same_side_of_circles_meet` | 1,704 | 939 |
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
+| `derived.outside_of_between` | 281,664 | 47,802 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
