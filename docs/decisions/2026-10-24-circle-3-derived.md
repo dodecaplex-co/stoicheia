@@ -21,7 +21,7 @@
   9,525,564 to 9,855,030; its search and hyperbolic counts are as before.
   [MODEL.md](../../tests/model/MODEL.md) carries the counts as the run wrote them, and
   says that 40 predicates are kept as derived properties. No law, axiom, test or expected
-  value changes, and no check is loosened. This is part of #294 and #152.
+  value changes, and no check is loosened. It belongs to #294, within #152.
 
   This entry approves the change to `tests/model/derived.py`, which gains the predicate
   `derived.outside_of_between`, the guard and conclusion of Circle 3's law.

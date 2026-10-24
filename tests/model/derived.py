@@ -1,8 +1,9 @@
 """Numerical properties retained independently of the axiom registries.
 
 These predicates keep the guards and conclusions of their search.py checks: the eight retired
-first, then the 31 prepared for retirement while all 79 axioms remain, then Circle 3
-(`outside_of_between`), prepared for its retirement after III.2 while it is still an axiom.
+first, then the 31 prepared for retirement while all 79 axioms remain; and, kept beside
+Circle 2, Circle 3 (`outside_of_between`), prepared for its retirement after III.2 while it
+is still an axiom.
 The exhaustive and structured harnesses report them with a derived. prefix, even
 while the corresponding declarations are still axioms. Their configurations and
 results therefore survive removal of those laws from search.py and hyperbolic.py.
