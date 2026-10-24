@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Restoration regressions for scripts/negative_tests.py, and without Git outside
-temporary repositories.
+"""Restoration regressions for scripts/negative_tests.py, without Lean, and without Git
+outside temporary repositories.
 
     python3 -I tests/test_negative_tests.py
 
-The negative suite runs these first without Lean. Temporary files stand in for Lake
-outputs; simulated builds delete, replace and create them before failing or being
-interrupted. A temporary repository stands in for the pre-flight's pass with origin/main's
-checks, whose work tree lacks the files a commit adds under the check inputs while Git's
-index still lists them. The plants are reached as the suite reaches them, through its loader
+The negative suite runs these first. Temporary files stand in for Lake outputs;
+simulated builds delete, replace and create them before failing or being interrupted.
+A temporary repository stands in for the pre-flight's pass with origin/main's checks,
+whose work tree lacks the files a commit adds under the check inputs while Git's index
+still lists them. The plants are reached as the suite reaches them, through its loader
 of scripts/negative/, and the loader is tested on temporary folders of small plants; one
 test runs the suite as a script, in a temporary copy, to see that its plants share the
 running module and that no bytecode runs in place of the runner or a plant. The comment
