@@ -3,15 +3,23 @@
 19 October 2026: the frozen plan below uses the former baseline of 87 axioms.
 [Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
 names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
-proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
-This note adds no axiom and grants no approval to add one.
+proposed centre-existence axiom would then have taken 79 to 80, and 73 tacit rules to 74.
+Thirty-one more
+rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
+rules. With them, the
+centre-existence axiom would take 48 to 49. This note adds no axiom and grants no approval
+to add one.
 
 `centre_unique` is now proved in `Elements/Figure/Circles.lean`; Circle 4 is proved
 after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,
 which stays an axiom. The old dependency counts must be measured again. A pin excluding
 a retired name from an axiom list no longer detects calls to that theorem; any intended
-restriction on its use needs a separate check proposal. The historical readings and
-frozen statements below are preserved.
+restriction on its use needs a separate check proposal. Section 7's restated III.5 and
+III.6 still cite neither `circle_eq` nor Circle 4, but the axioms pinned for them in
+`Audit/Crossing.lean` now include `circle_eq` and Postulate 3, through proved
+rules such as `centre_inside`; where the frozen text below says they rest on neither, it
+records the state at the freeze. The historical readings and frozen statements below are
+preserved.
 
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*

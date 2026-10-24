@@ -1,4 +1,6 @@
 import Elements.Figure.Parallels
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.Figure.Areas
 
 /-!
