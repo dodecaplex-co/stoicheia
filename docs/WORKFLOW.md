@@ -1416,7 +1416,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
-      the registry of checks that #229 brings) are origin/main's
+      the registry of checks that #229 brings, and since #249 `docs/ACCEPTANCE.md`, whose
+      table of the limitations allowed `tests/test_acceptance_limits.py` ties to
+      `check_acceptance.py`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1442,9 +1444,13 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       change to that Markdown counts as a pinned value while nothing else in it changes
       (the same markers stand, by name and in order, as origin/main's
       `scripts/generated_counts.py` reads them, and every other byte and the file's mode
-      are as they were). When they are the only check inputs a pull request changes,
-      origin/main's failure is noted, and its own copies must pass. The expectations are
-      checked one way only, each for what it says, so they count as pinned values only
+      are as they were). MODEL.md's prose moves with the laws, but its markers are held
+      the same way: a change to it counts as a pinned value only while the same markers
+      stand, by name and in order, the file's mode is as it was and both sides read; a
+      marker added, removed, renamed or reordered is a check change. When pinned values
+      are the only check inputs a pull request changes, origin/main's failure is noted,
+      and its own copies must pass. The expectations are checked one way only, each for
+      what it says, so they count as pinned values only
       while every one of origin/main's stays, by its `ref`, `field` and `law` (a `ref` or a
       `law` added or dropped is another expectation), with its `includes` and `excludes`
       the same or grown and only the values of `count.is` and `equals` changed (new
@@ -1652,7 +1658,10 @@ and the formal model's build files (`model/lakefile.toml`, `model/lakefile.lean`
 the lock the model was last checked against). Since 19 October, `model/Model/Audit.lean`
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
-build. A change to any of them needs a new line in the decisions page or a dated entry
+build. Since 22 October (#249), `docs/ACCEPTANCE.md` joins them, a check input as well:
+its table of the limitations allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
+`tests/test_acceptance_limits.py` ties together, change in one pull request, a check
+change. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a
 relative link that resolves from the folder of the file that names it, `docs/briefs/`
 for the page and `docs/decisions/` for an entry, to exactly that path: for
