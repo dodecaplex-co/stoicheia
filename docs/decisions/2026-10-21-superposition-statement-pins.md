@@ -50,10 +50,17 @@
   Both run in CI's check job ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)),
   in [`scripts/safe_push.py`](../../scripts/safe_push.py)'s list of checks and in WORKFLOW,
   section 8, in the same order.
-  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains two plants, with
-  their regressions in [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py):
-  a guard over every point added to `Rule.Figure`, which must fail inside
-  `Rule.Figure.restrict` while a control, a guard over the figure alone, compiles (this
-  shows the theorem's proof refuses that guard, not that no proof could take it); and a new
-  `Cited` law with no proof, which must fail the build at `Cited.holds_all` and nowhere
-  else. Nothing is loosened.
+  The negative tests gain two plants, with their regressions in
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py): a guard over every
+  point added to `Rule.Figure`, which must fail inside `Rule.Figure.restrict` while a
+  control, a guard over the figure alone, compiles (this shows the theorem's proof refuses
+  that guard, not that no proof could take it); and a new `Cited` law with no proof, which
+  must fail the build at `Cited.holds_all` and nowhere else. Since #205 each plant is a file
+  of its own, so the two were made files when origin/main was merged on 23 October, their
+  code unchanged but for the names they reach through the runner and the guard's closing
+  tick, which now records its refusal through the runner's `refused`, as #205 asks.
+  The plant of the guard is the new file `scripts/negative/figure_guard_over_all_points.py`.
+  The plant of the cited law is the new file `scripts/negative/cited_law_unproved.py`.
+  Their constants, and the two helpers that build the guard's text, stay in
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py), because the regressions
+  read them. Nothing is loosened.
