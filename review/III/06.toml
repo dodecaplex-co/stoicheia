@@ -19,7 +19,7 @@ note = "Diagram-segment 2 with Generalities 4 ends contact within at once; Gener
 [[passage]]
 at = "For, if possible, let it be F"
 kind = "case"
-note = "Contact without ends here: F would be within both circles, which contact without forbids. It is the case Euclid leaves to the reader, and the Lean puts F within each circle by `Tacit.centre_inside`, a rule we assume (System E, Generalities 3)."
+note = "Contact without ends here: F would be within both circles, which contact without forbids. It is the case Euclid leaves to the reader, and the Lean puts F within each circle by the proved rule `Tacit.centre_inside` (System E, Generalities 3)."
 
 [[passage]]
 at = "let FC be joined"
