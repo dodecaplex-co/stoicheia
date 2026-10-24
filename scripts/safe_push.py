@@ -1443,7 +1443,7 @@ def secret_scan(repo, base: str | None, sha: str, rep: Report, allow_rev: str | 
 
 
 OPEN, CLOSE = "([{⟨⦃⦗", ")]}⟩⦄⦘"
-# A «…» name, to the `»` that ends it or the end of the text, as check_fidelity reads one.
+# A «…» name, to the `»` that ends it or the end of the text, as read_lean reads one.
 LEAN_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
