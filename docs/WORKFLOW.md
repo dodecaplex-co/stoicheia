@@ -517,10 +517,8 @@ its one step, and content such as `heath/I/01.md`, the decisions page,
 which they run `check_fidelity.py` and `render.py`; so any change can break them, and the
 next run shows it. They need Git with the whole history and the pinned PyYAML, but no Lean
 and no network; `FullChecks`, the one test that needs Lean, is skipped without
-`STOICHEIA_SLOW_TESTS=1`, there as anywhere. The shards, `negative-tests` and
-`formal-model-kernel` read the repository with no other permission. The verdict also has
-`actions: read`, to fetch the shards' artifacts across attempts of the run; `report` has
-the same beside its leave to write issues. Every checkout keeps no token.
+`STOICHEIA_SLOW_TESTS=1`, there as anywhere. Every job but `report` reads the repository
+with no other permission, and its checkout keeps no token.
 
 **The shards.** In one job, on the cadence, the whole suite took 72 to 78 minutes on
 GitHub's runners, and 137 on a slow one; on as slow a runner it reached the job's limit,
@@ -540,7 +538,11 @@ suite had 288 tests; a test the file does not name, one added or renamed since, 
 median, and each shard's log names it. The proof is built from what the shards ran, not
 from the dealing. Each shard writes the tests it ran, each with its outcome, to the file
 `--ran` names, and keeps it as an artifact, a test having failed or not, for 35 days; and
-it keeps its log, from which the report takes the tests that failed. Then
+it keeps its log, from which the report takes the tests that failed. Whether a later
+attempt of the run can fetch a list an earlier attempt kept is GitHub's to say, and
+nothing relies on it: a run re-run with "re-run all jobs" is judged afresh, and one re-run
+with "re-run failed jobs", whose proof may not see the other shards' earlier lists, then
+stays red, for the proof never passes on lists it cannot see. Then
 the `safe-push-tests` job, which needs the shards and runs whatever they did, checks out
 the commit they ran, as they did, fetches every list and runs
 `python3 scripts/test_safe_push.py --cover DIR`, which lists the tests with unittest's
@@ -553,11 +555,9 @@ failed, was cancelled, stopped at its time limit or was skipped, or a list missi
 the job red, never skipped, and the run red with it. Both are needed: should a later
 attempt see a list an earlier one kept, that list stays when, in a rerun of all the jobs,
 its shard is cancelled before it keeps a new one, so the proof alone could pass; and the
-matrix's result says nothing of which tests ran. The verdict and report authenticate their
-downloads for the current run, so a rerun of failed jobs combines a failed shard's
-replacement list and log with the retained artifacts from the shards that passed in an
-earlier attempt. To run one shard as the cadence does, give its number and the count, as
-in `python3 scripts/test_safe_push.py --shard 3/8`; without `--shard` the whole suite runs.
+matrix's result says nothing of which tests ran. To run one shard as the cadence does, give its
+number and the count, as in `python3 scripts/test_safe_push.py --shard 3/8`; without
+`--shard` the whole suite runs.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
 head commit of every pull request of R3 to R5 (section 10): those of `check` as
