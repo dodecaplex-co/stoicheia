@@ -111,7 +111,6 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     permissions:
-      actions: read
       contents: read
     timeout-minutes: 10
     steps:
@@ -140,11 +139,6 @@ jobs:
           # Each list in a folder of its own, so that none can hide another.
           pattern: safe-push-ran-*
           path: ${{ runner.temp }}/safe-push-ran
-          # The token selects run-scoped lookup, so a failed-jobs rerun sees retained
-          # lists from earlier attempts. Keep the lookup to this repository and run.
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.run_id }}
 
       - name: Prove that every test ran once, in one shard, and passed
         # Against the tests unittest's loader lists at this commit and the matrix's N, it
@@ -277,7 +271,6 @@ jobs:
       cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
-      actions: read
       issues: write
     timeout-minutes: 10
     steps:
@@ -288,10 +281,6 @@ jobs:
           # Each log in a folder of its own.
           pattern: test_safe_push-log-*
           path: ${{ runner.temp }}/log
-          # As above, run-scoped lookup recovers retained logs from earlier attempts.
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.run_id }}
 
       - name: Open or update the blocks-release issue
         shell: bash

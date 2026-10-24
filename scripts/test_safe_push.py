@@ -11827,16 +11827,15 @@ def run_steps(steps: list[dict], context: dict[str, str], passes) -> tuple[list[
     return ran, "cancelled" if cancelled else "failure" if failed else "success"
 
 
-def run_workflow(jobs: dict, context: dict[str, str], runner, given: dict[str, str],
-                 matrix_values: dict[str, list] | None = None) -> dict[str, str]:
+def run_workflow(jobs: dict, context: dict[str, str], runner,
+                 given: dict[str, str]) -> dict[str, str]:
     """A workflow's jobs as GitHub runs them, each after the jobs it needs, which come
     before it: a job in `given` ends as it says; another is skipped when its `if` does not
     hold, by step_runs over the results of the jobs it needs (`failed` saying that one did
-    not succeed), and otherwise runs its steps by run_steps, once for each selected value
-    of its matrix's one dimension when it has one, each run with that value as
-    matrix.<name>, the full count as strategy.job-total, and `runner.temp(job, value)` as
-    its runner.temp, while `runner.passes(job, value, step, read)` says how each step ends.
-    A matrix's result,
+    not succeed), and otherwise runs its steps by run_steps, once for each value of its
+    matrix's one dimension when it has one, each run with that value as matrix.<name>, the
+    count as strategy.job-total, and `runner.temp(job, value)` as its runner.temp, while
+    `runner.passes(job, value, step, read)` says how each step ends. A matrix's result,
     which the jobs that need it read, is failure when a run failed, else cancelled when one
     was cancelled, else success. Each job's result, by id."""
     results: dict[str, str] = {}
@@ -11853,14 +11852,13 @@ def run_workflow(jobs: dict, context: dict[str, str], runner, given: dict[str, s
             results[job_id] = "skipped"
             continue
         matrix = job.get("strategy", {}).get("matrix")
-        [(dimension, all_values)] = matrix.items() if matrix else [(None, [None])]
-        values = (matrix_values or {}).get(job_id, all_values)
+        [(dimension, values)] = matrix.items() if matrix else [(None, [None])]
         ends = []
         for value in values:
             run = dict(here, **{"runner.temp": str(runner.temp(job_id, value))})
             if dimension is not None:
                 run.update({f"matrix.{dimension}": str(value),
-                            "strategy.job-total": str(len(all_values))})
+                            "strategy.job-total": str(len(values))})
             ends.append(run_steps(job["steps"], run, lambda step, read, value=value:
                                   runner.passes(job_id, value, step, read))[1])
         results[job_id] = ("failure" if "failure" in ends
@@ -11907,21 +11905,18 @@ class CadenceRun:
     what it said; a shard among `cancelled` is cancelled as its tests start. The proof is
     cover_command, by the command its step gives. The verdict's and the report's scripts
     run under bash, as GitHub runs them, the report's with a stand-in for gh. Artifacts are
-    kept by attempt; an attempt-scoped fetch sees that attempt alone, while an authenticated
-    run-scoped fetch sees the latest artifact of each name across the run. Each fetched
-    artifact has a folder of its own; an artifact among `lost` is kept and then lost.
-    negative-tests and formal-model-kernel, which need Lean, end as `given` says, success
-    unless it says otherwise."""
+    kept by name in a folder that every attempt of the run shares, as GitHub keeps them,
+    and fetched by pattern, each into a folder of its own; an artifact among `lost` is
+    kept and then lost. negative-tests and formal-model-kernel, which need Lean, end as
+    `given` says, success unless it says otherwise."""
 
     def __init__(self, root: Path):
         self.root, self.attempt = root, 0
-        self.repository, self.run_id = "owner/repo", "1"
         self.artifacts = root / "artifacts"
         self.artifacts.mkdir()
 
     def run(self, *, failing=frozenset(), cancelled=frozenset(), lost=frozenset(),
-            open_issue: int | None = None, given: dict[str, str] | None = None,
-            only_shards: frozenset[int] | None = None) -> dict[str, str]:
+            open_issue: int | None = None, given: dict[str, str] | None = None) -> dict[str, str]:
         """One attempt of the run, on main, every job of the workflow: each job's result."""
         self.attempt += 1
         self.failing, self.cancelled, self.lost = failing, cancelled, lost
@@ -11929,14 +11924,11 @@ class CadenceRun:
         self.said: dict[str, str] = {}
         self.calls: list[str] = []
         self.body: str | None = None
-        self.downloaded: dict[str, dict[str, int]] = {}
         context = {"github.ref": "refs/heads/main", "github.token": "x",
-                   "github.repository": self.repository,
-                   "github.server_url": "https://github.invalid",
-                   "github.run_id": self.run_id, "github.sha": "0" * 40}
+                   "github.repository": "owner/repo", "github.server_url": "https://github.invalid",
+                   "github.run_id": "1", "github.sha": "0" * 40}
         return run_workflow(ci_jobs(), context, self, {
-            "negative-tests": "success", "formal-model-kernel": "success", **(given or {})},
-            {SHARD_JOB: sorted(only_shards)} if only_shards is not None else None)
+            "negative-tests": "success", "formal-model-kernel": "success", **(given or {})})
 
     def temp(self, job: str, value) -> Path:
         path = self.root / f"attempt-{self.attempt}" / f"{job}-{value}"
@@ -11951,7 +11943,7 @@ class CadenceRun:
         if uses.startswith("actions/upload-artifact@"):
             return self.upload(read["with"])
         if uses.startswith("actions/download-artifact@"):
-            return self.download(job, read["with"])
+            return self.download(read["with"])
         if "scripts/test_safe_push.py --shard" in script:
             return self.shard(value, script, temp)
         if "scripts/test_safe_push.py --cover" in script:
@@ -11999,31 +11991,19 @@ class CadenceRun:
         name, source = given["name"], Path(given["path"])
         if not source.is_file():
             return given.get("if-no-files-found", "warn") != "error"
-        kept = self.artifacts / f"attempt-{self.attempt}" / name
+        kept = self.artifacts / name
         if kept.exists() and given.get("overwrite") is not True:
             return False
         shutil.rmtree(kept, ignore_errors=True)
         if name not in self.lost:
-            kept.mkdir(parents=True)
+            kept.mkdir()
             shutil.copy(source, kept / source.name)
         return True
 
-    def download(self, job: str, given: dict) -> bool:
-        authenticated = bool(given.get("github-token"))
-        if authenticated and (given.get("repository") != self.repository
-                              or given.get("run-id") != self.run_id):
-            return False
-        attempts = range(1, self.attempt + 1) if authenticated else [self.attempt]
-        latest = {}
-        for attempt in attempts:
-            folder = self.artifacts / f"attempt-{attempt}"
-            if folder.is_dir():
-                for kept in sorted(folder.iterdir()):
-                    if fnmatch.fnmatchcase(kept.name, given["pattern"]):
-                        latest[kept.name] = (attempt, kept)
-        for name, (attempt, kept) in sorted(latest.items()):
-            shutil.copytree(kept, Path(given["path"]) / name)
-        self.downloaded[job] = {name: attempt for name, (attempt, _) in latest.items()}
+    def download(self, given: dict) -> bool:
+        for kept in sorted(self.artifacts.iterdir()):
+            if fnmatch.fnmatchcase(kept.name, given["pattern"]):
+                shutil.copytree(kept, Path(given["path"]) / kept.name)
         return True
 
     def bash(self, name: str, flags: list[str], script: str, env: dict, temp: Path,
@@ -12054,9 +12034,8 @@ class Shards(unittest.TestCase):
     times do not name among them; each shard lists the tests it ran, and the proof over
     those lists names each test not run once and each list missing; the times are read
     from a CI log; safe-push-tests passes only when every shard succeeded and the proof
-    holds; a partial rerun combines a failed shard's replacement artifacts with the other
-    shards' retained ones; and a run in which a shard's test fails, a shard's list is
-    missing, or a shard is cancelled or skipped is red, and reported."""
+    holds; and a run in which a shard's test fails, a shard's list is missing, or a shard
+    is cancelled or skipped is red, and reported."""
 
     def jobs(self) -> dict:
         return ci_jobs()
@@ -12102,9 +12081,7 @@ class Shards(unittest.TestCase):
             return r.returncode == 0
 
         ran, result = run_steps(self.jobs()[GATHER_JOB]["steps"], {
-            f"needs.{SHARD_JOB}.result": shards, "runner.temp": "RUNNER_TEMP",
-            "github.token": "x", "github.repository": "owner/repo",
-            "github.run_id": "1"}, passes)
+            f"needs.{SHARD_JOB}.result": shards, "runner.temp": "RUNNER_TEMP"}, passes)
         return ran, result, "".join(said)
 
     def shard_context(self, shard: int) -> dict[str, str]:
@@ -12546,21 +12523,12 @@ class Shards(unittest.TestCase):
             {"id": "install",
              "run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},
             {"id": "fetch", "uses": "actions/download-artifact@v5",
-             "with": {"pattern": "safe-push-ran-*", "path": "${{ runner.temp }}/safe-push-ran",
-                      "github-token": "${{ github.token }}",
-                      "repository": "${{ github.repository }}",
-                      "run-id": "${{ github.run_id }}"}},
+             "with": {"pattern": "safe-push-ran-*", "path": "${{ runner.temp }}/safe-push-ran"}},
             {"id": "cover", "if": "always() && steps.install.outcome == 'success'",
              "run": 'python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"'}])
         self.assertEqual(steps[-1]["id"], "verdict")
         report = jobs[safe_push.SUITE_REPORT_JOB]["steps"][0]
         self.assertEqual(report["uses"], "actions/download-artifact@v5")
-        self.assertEqual(jobs[safe_push.SUITE_REPORT_JOB]["permissions"],
-                         {"actions": "read", "issues": "write"})
-        self.assertEqual(report["with"], {
-            "pattern": "test_safe_push-log-*", "path": "${{ runner.temp }}/log",
-            "github-token": "${{ github.token }}", "repository": "${{ github.repository }}",
-            "run-id": "${{ github.run_id }}"})
         count = self.ci_shard_count()
         names = {str(step["with"]["name"]).replace("${{ matrix.shard }}", str(shard))
                  for job in jobs.values() for step in job.get("steps", [])
@@ -12577,7 +12545,7 @@ class Shards(unittest.TestCase):
         self.assertNotIn("name", job, "the job is named by its id: safe-push-tests")
         self.assertEqual(job["needs"], SHARD_JOB)
         self.assertEqual(job["if"], "always()")
-        self.assertEqual(job["permissions"], {"actions": "read", "contents": "read"})
+        self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
         step = job["steps"][-1]
         self.assertEqual(step["id"], "verdict")
@@ -12690,40 +12658,6 @@ class Shards(unittest.TestCase):
                 else:
                     self.assertIn(f"issue comment {open_issue} --body-file ", calls)
                     self.assertNotIn("issue create", calls)
-
-    @unittest.skipUnless(REPORT_TOOLS, REPORT_TOOLS_REASON)
-    def test_a_partial_rerun_uses_the_retained_shards_artifacts(self):
-        failed = "Shards.test_a_failing_test_in_one_shard_turns_the_run_red_and_reports_it"
-        count = self.ci_shard_count()
-        setup, times = load_times()
-        shard = shard_plan([time_key(test) for test in loaded_tests()], count, times,
-                           setup).shard_of[failed]
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            run = CadenceRun(root)
-            first = run.run(failing=frozenset({failed}))
-            self.assertEqual((first[SHARD_JOB], first[GATHER_JOB]), ("failure", "failure"))
-
-            second = run.run(only_shards=frozenset({shard}),
-                             given={"negative-tests": "failure"})
-            self.assertEqual((second[SHARD_JOB], second[GATHER_JOB], second["report"]),
-                             ("success", "success", "success"), run.said)
-            self.assertIn(f"tests unittest's loader lists here ran once, in one of the "
-                          f"{count} shards", run.said["cover"])
-            self.assertIn("Every shard of scripts/test_safe_push.py succeeded.",
-                          run.said["verdict"])
-            self.assertEqual(run.downloaded[GATHER_JOB], {
-                f"safe-push-ran-{number}": 2 if number == shard else 1
-                for number in range(1, count + 1)})
-            self.assertEqual(run.downloaded["report"], {
-                f"test_safe_push-log-{number}": 2 if number == shard else 1
-                for number in range(1, count + 1)})
-
-            attempt_only = root / "attempt-only"
-            self.assertTrue(run.download("attempt-only", {
-                "pattern": "safe-push-ran-*", "path": str(attempt_only)}))
-            self.assertEqual(sorted(path.name for path in attempt_only.iterdir()),
-                             [f"safe-push-ran-{shard}"])
 
     @unittest.skipUnless(REPORT_TOOLS, REPORT_TOOLS_REASON)
     def test_a_missing_list_fails_the_proof_and_turns_the_run_red(self):
