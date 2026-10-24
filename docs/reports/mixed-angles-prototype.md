@@ -97,14 +97,17 @@ slit would count as an excess. A straight line holds no circle, so neither can h
 
 ## 2. What is proved
 
-19 October 2026: the census was measured again at `1e713bb`, after all eight
+19 October 2026: the census was measured again at `1e713bb`, after the first eight
 retirements, using `Lean.collectAxioms` on every theorem in `Elements.MixedAngles`.
-There are still 117 theorems: 13 use no axiom, 5 use only Lean's logical axioms, and
-99 use foundation axioms. The union is now **68 foundation axioms**, each in the
-79-axiom lock, with no `sorryAx` and none of the eight retired names. Only
-`Prop31.any_greater_gt_right` and `Prop31.any_less_lt_right` use Postulate 5.
-This is a fresh census of the proof terms, not a subtraction from the earlier total.
-The table below preserves the earlier measurement of 71.
+There were still 117 theorems: 13 use no axiom, 5 use only Lean's logical axioms, and
+99 use foundation axioms. The union was then **68 foundation axioms**, each in the
+79-axiom lock, with no `sorryAx` and none of the eight retired names. Thirty-one more
+rules became theorems the same day ([the list](../FORMALIZATION.md#rules-now-proved)),
+and the census, measured once more in the same way at `205a25e`, keeps those counts of
+theorems; the union is now **45 foundation axioms**, each in the 48-axiom lock, with no
+`sorryAx`. Only `Prop31.any_greater_gt_right` and `Prop31.any_less_lt_right` use
+Postulate 5. Each is a fresh census of the proof terms, not a subtraction from the
+earlier total. The table below preserves the earlier measurement of 71.
 
 **The census before retirement.** The namespace `Elements.MixedAngles` holds 117 theorems: the 109 written in
 the file, and 8 that Lean generates for the type and the two `@[simp]` lemmas
@@ -345,8 +348,10 @@ go into `Elements.BookIII`, and the rest where condition 3 says.
 are now theorems: Circle 2 follows Circle 3 in `Elements/Figure/Circles.lean`;
 Triple incidence 3 is proved there from angle addition, positivity and the crossing
 and side rules; Diagram-angle 3 follows I.13 in `Elements/BookI/Prop13.lean`.
-The fresh census in section 2 gives 68 foundation axioms. The earlier count of 71
-and the record of the prototype's reviews below remain historical measurements.
+Pasch 3 and 4 and Triple incidence 1 and 2 followed the same day, proved in
+`Elements/Figure/RuleBase.lean` and `Elements/Figure/Incidence.lean`. The fresh census
+in section 2 gives 45 foundation axioms. The earlier counts of 71 and 68 and the record
+of the prototype's reviews below remain historical measurements.
 
 No. Every fact used is already in the foundations or proved from them: the postulates,
 Definition I.15, System E's rules for sides, betweenness, circles, lengths and angles

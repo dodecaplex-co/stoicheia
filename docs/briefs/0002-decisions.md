@@ -5822,7 +5822,234 @@ findings:
   [`tests/test_screen.py`](../../tests/test_screen.py) took III.2 as the row of
   `Audit/screen.py`'s list `KNOWN` that a run must find. After the second retirement the
   screen, which tries only axioms, no longer closes III.2 or III.6, since the rules that
-  closed them are theorems, and `KNOWN` keeps III.5 alone. The two cases now take the
+  closed them are theorems, and `KNOWN` keeps III.5 alone. With the retirement,
+  Generalities 4 is a theorem, so the screen no longer closes brief 0008's restated III.5
+  either, which needs that rule to finish: `KNOWN` is then stale until a check change gives
+  the screen a new canary, tracked in issue #160. The two cases now take the
   first row of `KNOWN`, whichever it is, and assert the same of it as before: closed only
   by its bare try it is lost, and not closed it is lost. They pass with the list before
   the retirement and after it; no assertion is removed.
+- **Thirty-one more axioms retired, 79 to 48.** The owner
+  decided on 19 October 2026: "Please do both. 79 is rather large with so many books in
+  front of us." That is, the eight above, and then the largest further set of
+  retirements under two constraints: Euclid's six (Postulates 1 to 5 and Definition 15)
+  stay explicit assumptions even where they are derivable, and no certificate entry may
+  rest on Circle 2 or Circle 3 (`Tacit.inside_of_between`, `Tacit.outside_of_between`).
+  Like the first retirement (its entries of 20 October above), this one lands as three pull
+  requests; this is the second of the second, after the four preparation entries above. An exact search over every
+  checked derivation, the earlier search's and a second search's that avoids Circle 3, found a
+  largest set of 31; it is a maximum over the derivations found, not a proof that no
+  smaller foundation exists. Among the maximum sets, this one keeps the most of System E's
+  plain incidence and order rules (`line_unique`, `between_symm`, `between_cases`,
+  `not_between_of_between`, `not_on_line_of_same_side`, `same_side_trans`, `pasch2`,
+  `exists_point_on_line`). Each keeps its name and exact type and becomes a theorem in four
+  new Book Zero modules, which `Elements/Figure/Basics.lean` imports, so no proposition
+  statement or import changes: `centre_inside`, `on_circle_of_len_eq`, `same_side_symm`,
+  `exists_point_same_side`, `ne_of_between`, `on_line_of_between_ends`, `pasch4`,
+  `same_side_refl`, `triple_incidence1`, `pasch3`, `inside_not_on` and `eq_of_len_eq_zero`
+  in [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean);
+  `inside_of_len_lt`, `len_lt_of_inside`, `ne_of_between_ends`, `on_line_of_between`,
+  `between_of_between_left`, `between_of_between_right`,
+  `circles_meet_of_on_inside_outside`, `exists_point_opposite_side`,
+  `circles_meet_opposite_side`, `exists_point_between`, `line_meets_circle_of_inside`,
+  `not_between_of_between_between`, `same_side_or`, `triple_incidence2`, `pasch1` and
+  `exists_point_on_line_off_line` in
+  [`Elements/Figure/Incidence.lean`](../../Elements/Figure/Incidence.lean); `area_swap` and
+  `between_of_area_add` in [`Elements/Figure/AreaRules.lean`](../../Elements/Figure/AreaRules.lean);
+  and `exists_point_on_circle` in
+  [`Elements/Figure/CirclePoints.lean`](../../Elements/Figure/CirclePoints.lean), all under
+  `Elements.Tacit`. Across both waves, all 39 keep their original signatures, binder names
+  included: `pasch3` keeps `hB` and `same_side_or` keeps `h`. The 31 replacements use earlier
+  retired rules as proved theorems, and their theorem dependencies are acyclic. No
+  replacement's axiom closure contains a retired axiom, Circle 2, Circle 3 or superposition,
+  and none cites a proposition. No
+  certificate entry rests on Circle 2 or Circle 3, and III.1 and its porism rest on 38
+  tacit rules each. The constraints cost retirements: within the derivations found, every
+  derivation of `between_symm`, `between_of_inside_chord` and `line_circle_between` rests
+  on Circle 3 or none was found, and without the Circle constraint the earlier search's
+  maximum, 34 in all, put Circle 3 under II.14, III.1 and III.2. The axioms leave
+  `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean`, `Metric.lean` and
+  `Transfer.lean`. Protected files changed with them, as values pinned to the axioms:
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and `model/lock.sha256`;
+  [`tests/model/laws.toml`](../../tests/model/laws.toml), and the 31 laws' code in
+  [`tests/model/search.py`](../../tests/model/search.py) and
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
+  order and the rest of each file as it was; [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  follows the smaller lock. The results of `run.py --full --write` are recorded in
+  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
+  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
+  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
+  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
+  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
+  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
+  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
+  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
+  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
+  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules and updates
+  its pinned axiom closures and explanatory comments to follow the retirements, retaining
+  every `#guard_msgs` check.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) changes only the comment counts
+  to 39 retired rules and 48 locked laws, with every individual audit, guard and axiom pin
+  unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) records
+  the measured counts of III.1 and its porism (38 tacit rules each) and gains pins that
+  keep the 31 names out of the axiom lists of III.1, III.1 Por., III.2 and II.14. With the
+  31 now theorems those pins cannot fail, as with the eight's above; the pins that hold are
+  the counts and the exclusion of Circle 3, and pins that can fail are #168, which holds
+  every release until it closes. The numerical check changes landed first, in the
+  preparation above, under WORKFLOW, section 10: the 31 are derived properties in
+  [`tests/model/derived.py`](../../tests/model/derived.py), which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) run by name, with runs
+  added for the ones they did not yet sample. In the formal model, which is content the
+  checks judge and so lands with the retirement, `model/Check/Generator.lean` extends
+  `comparePlanted` to check the hand `LineMeetsCircle`'s type and body against the
+  library's definition before translating it, including binder kinds and without
+  unfolding. `model/Check/Intersections.lean` uses it for Intersections 2
+  and 3, retaining their kernel comparisons through `original`; a guarded regression in
+  `model/Check/RoundTrip.lean`, beside the other planted faults, shows that making
+  Intersection 3's point A explicit passes `rfl` but fails the structural comparison. (On
+  22 October the regression moved there from `model/Check/Intersections.lean`, since main's
+  forbidden-command scan, #271, lets a `#guard_msgs` pin an error only in that file and
+  `model/Model/Audit.lean`.)
+  All 39 retired rules have direct structural comparisons, including binder kinds.
+  The formal model's generated laws, checks and assembly
+  follow from its generator; its proofs in the plane stay, as derived facts, and
+  `model_exists` stays unconditional. Proposition and porism statements, definitions and
+  `--` lines are unchanged. The check inputs this retirement leaves stale, the law
+  allow-list in `scripts/safe_push.py` (nine entries no remaining law uses, so the
+  allow-list unit test of `scripts/test_safe_push.py` fails until they go) and the
+  examples of `Certificate/FIELDS.md` and `review/SCHEMA.md`, follow in a check change of
+  their own, landed after this one.
+  On integration with main after the restricted rule of superposition, at the merge of
+  `d2c45450` with `bae3d09f`, the lock was regenerated, not merged: 48 axioms, with
+  `Tacit.superposition` as main restates it, and the vocabulary unchanged at 208 words.
+  It was then merged with #150's answers to questions 4 and 2, above, which land before it.
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean) takes their structure, with
+  the statement pins and no pin of the retired flag, and updates nine exact pins to what
+  Lean now prints, since the proofs beneath them now reach the assumptions of the retired
+  rules' proofs: `Elements.BookI.Prop4`, `Elements.BookI.Prop8`,
+  `Elements.Superposition.onLine_of_angle_eq_named`, `Cited.holds_neOfLen`,
+  `Cited.holds_rayUnique`, `Cited.holds_rayOfAngle`, `Cited.holds_rayOfAngleSide`,
+  `Prop8.holds_prop7` and `Cited.holds_all`; every guard stays exact, every statement pin
+  passes as it stands, and its header names the four laws whose pins now list
+  construction rules. The review of the cited laws' proofs that brief 0009's round 4 ties
+  to this landing is made here (#150, question 4's reconciliation and question 5's credit
+  to the side). With this retirement, four of the seven laws I.4 cites are proved with
+  construction rules, as question 4's entry above foresaw: `neOfLen` and `rayUnique`,
+  which I.8 cites too, through Metric 1 (`eq_of_len_eq_zero`), and `rayOfAngle` and
+  `rayOfAngleSide` through Same side 2, Triple incidence 2 and Pasch 3. `cited_laws` in
+  `facts.json` lists each law's construction rules, and only `lenSymm`, `angleSymm` and
+  `areaCongruent` have none. The proofs of both halves of one ray for one angle now join
+  the law's point P, in I.4 the placed corner C′, to another point by a straight line:
+  Pasch 3 by `Postulate1` in
+  [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean), and `rayOfAngle`
+  through Same side 5 inside Triple incidence 2. Question 4's permissive reading admits
+  this: citing a law still draws nothing in the placement, and no retired axiom is
+  restored. Every expectation of question 4 still holds: the twelve construction rules it
+  requires stay axioms, and of the six rules it excludes only `Tacit.pasch3` is now a
+  theorem, as its reason says. The sentences that said or implied that I.4's laws are
+  proved with no construction rule are made true of this revision, and the side laid down
+  is credited where it works, to `ray_of_angle` and not to `ray_of_angle_side`, whose law
+  is now proved with a construction: in the docstrings of
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean)
+  and [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean), the
+  coordinator's files, with no statement, `Cited` law or `--` line changed; in brief 0009,
+  by a dated note and corrections in place; and in
+  [`docs/briefs/book-I.md`](book-I.md), `mishnah/I/04.md`, `mishnah/I/08.md` and I.4's
+  record, `review/I/04.toml`, whose text changes.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) keeps main's retirement of `I_2`,
+  `I_3` and `I_23` and of their pins, and states that `III_5_crossing` now rests on
+  Diagram-segment 2. [`Audit/screen.py`](../../Audit/screen.py) drops from its list of
+  circle rules the nine of the 31 it named, which are theorems now, and its docstring
+  gives the rules `grind` refuses after the retirement: six both ways (Postulates 1 to 3
+  and the three `exists_point` rules left) and thirteen more given forward, besides the
+  restricted rule. Run again on the statements of 58018a3 (21 October 2026), before the
+  integration with train C6a below, the screen closed III.5 alone, by Diagram-segment 2:
+  III.2 and III.6 no longer closed, since the rules that closed them, Circle 2 and
+  Generalities 3 and 4, are theorems now and the screen tries only axioms. So its list of
+  rows it must find (`KNOWN`) was set to III.5 alone, a value that moves with the axioms;
+  the two cases of `tests/test_screen.py` that read it were made to hold with the list
+  before the retirement and after it in the preparation, which lands first. On this
+  revision, which holds brief 0008's restated III.5, Generalities 4 is a theorem, so the
+  screen, which tries axioms alone, no longer closes the restated III.5, which needs that
+  rule to finish (a scratch run of III.2, III.5 and III.6 closed none of 690 tries).
+  `KNOWN`, which still names III.5, is stale until a check change gives the screen a new
+  canary, tracked in issue #160. And, already on main, the screen cannot run until its
+  `DEFS` takes the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`,
+  `Arc.measure`, `InSegment`, `LocallyLess`, `LocallyWithin`, `MixedAngle.Exceeds`,
+  `MixedAngle.FallsShort`, `MixedAngle.WellFormed`, `MixedAngle.casesOn`,
+  `MixedAngle.region`, `MixedAngle.vertex`, `NearVertexOpen`, `OnArc`, `OnSideOrLine`,
+  `Places`, `Surrounds` and `WithinAngle`), also in issue #160. The catalogue,
+  [`docs/reports/overlaps.md`](../reports/overlaps.md), records the run and says both, and
+  its III.2 and III.6 rows rest on their audit lemmas as before.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  all 37 of main's expectations, question 4's eight among them, with the measured counts
+  of III.1 and its porism now 38 and the porism's pinned list now its own: the 23 retired
+  names it held leave, and six rules their proofs reach enter (`area_add_of_between`,
+  `area_degenerate` and `area_eq_zero_of_on_line` through `area_swap`, `circle_eq` and
+  `exists_point_inside_circle` through `centre_inside` and `eq_of_len_eq_zero`, and
+  `exists_point_on_line` through `same_side_symm` and `pasch3`). It adds the four pins
+  above, 41 in all. [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
+  `model/README.md` call the 39 "retired rules", and the README counts the 47 direct
+  declaration comparisons; MODEL.md's triple-incidence table, left with no rows, gives way
+  to a sentence, its mutations table's header no longer speaks of a guard, and its example
+  limits search.py to `pasch2`, still a law. `docs/reports/gaps-book-I.md`,
+  `docs/STYLE.md`, `mishnah/intro/I.md` and `mishnah/I/05.md` name what this revision's
+  certificate shows: the lemmas through which I.4 reaches Postulates 2 and 3, and I.5's
+  routes to Postulate 2: in its own Lean, the order rule beneath `OnRay.between_of_len_lt`
+  and Metric 8 (`area_swap`), and through I.4, which it cites. `docs/FORMALIZATION.md` counts the model's planted mutations as
+  MODEL.md does.
+  `model/Model/Laws.lean`, `model/Check/Laws.lean` and `model/Model/Assembly.lean` were
+  written again by the generator: the 48 laws reach 152 words of the vocabulary, the 153
+  of main less `LineMeetsCircle`. Both `lock.sha256` files keep main's comments and are
+  renewed against the regenerated lock, and the numerical results were run again with
+  `run.py --full --write`.
+  This retirement lands after the allow-list preparation, whose entry is
+  [`docs/decisions/2026-10-21-retiring-laws-inlined.md`](../decisions/2026-10-21-retiring-laws-inlined.md):
+  it rewrote the retiring laws so that none calls the nine names it took out of the law
+  allow-list, so the laws this retirement deletes from the two harnesses are the rewritten
+  ones.
+  On integration with main after train C6a (#240),
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) was again regenerated by
+  `--write-lock`, not merged: it holds main's `Tacit.exists_centre` as well, 49 axioms in
+  all, with main's 238 words of vocabulary, and it is main's lock less the 31 lines of the
+  retired axioms; every other axiom and every word is main's byte for byte, and the header
+  names decision entries as main's `--write-lock` now writes it.
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean), which C6a added, has
+  its axiom pins of III.5, III.6 and the bridges set to what Lean now prints, and says that
+  III.5 and III.6 rest on Diagram-segment 2 and Postulate 3 through the proved rules beneath
+  their Book Zero lemmas, though their proofs do not cite that rule.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) takes C6a's audit lemmas of the restated
+  III.5 and III.6, `III_5_radius` among them, with pins set to what Lean now prints: each
+  rests on Diagram-segment 2. [`Audit/screen.py`](../../Audit/screen.py) counts seven rules
+  refused both ways, the six above and `exists_centre`, names 58018a3 as the commit its run
+  of 21 October read, says that the run read III.5 and III.6 as stated before brief 0008
+  restated them, and says, as above, that `KNOWN` is stale on this revision and that the
+  screen cannot run until its `DEFS` takes C6a's 18 words.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) counts 49 locked laws, with
+  `exists_centre` among them. [`tests/model/search.py`](../../tests/model/search.py) is the
+  preparation's file less the laws of the 31 axioms, with main's law for `exists_centre`.
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) is the preparation's file
+  less the same 31 laws, with main's law for `exists_centre`.
+  [`tests/model/laws.toml`](../../tests/model/laws.toml) keeps the line of `exists_centre`,
+  49 laws in all. [`model/lock.sha256`](../../model/lock.sha256) gains a paragraph for this
+  integration and the new hash. [`tests/model/lock.sha256`](../../tests/model/lock.sha256)
+  gains a paragraph for this integration and the new hash.
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) follows the 49 laws, and the ten
+  files of numerical results were written again by `run.py --full --write`:
+  `tests/model/results/angle_check.txt`, `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`, `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`, `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`, `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt` and `tests/model/results/summary.txt`.
+  The generator wrote the model's laws again: 49 laws, reaching the same 152 words.
+  On integration with main at 5e5e51dc (22 October 2026),
+  [`Audit/Centre.lean`](../../Audit/Centre.lean), which main's Book III cascade added, has
+  its pin of III.1's construction set to what Lean now prints: the retired rules leave the
+  list, and `exists_centre` stays in it.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  this train's pins, and main's entries for III.1 and its porism are recounted on
+  `facts.json`: 39 tacit rules for III.1, with `exists_centre`, and 38 for the porism.

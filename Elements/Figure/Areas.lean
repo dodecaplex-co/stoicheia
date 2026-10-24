@@ -1,4 +1,7 @@
 import Elements.Figure.Triangles
+import Elements.Figure.AreaRules
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.Figure.Rays
 
 /-!
