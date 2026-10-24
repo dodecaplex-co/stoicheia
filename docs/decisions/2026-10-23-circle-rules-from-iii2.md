@@ -24,8 +24,8 @@
   proved, or when III.2 itself rests on either rule, among its axioms, its shared steps or
   the lemmas it inherits an axiom through, the circular case; and one more for each of
   III.2's `axioms`, `shared_steps` and `inherited` that is malformed, refused without a
-  crash. A missing or malformed `proved_rule_cites` counts as citing nothing. And an entry using a rule proved from
-  III.2 still cannot come before III.2. The walk that finds an entry's citations passes
+  crash. A missing or malformed `proved_rule_cites` counts as citing nothing. And an
+  entry using a rule proved from III.2 still cannot come before III.2. The walk that finds an entry's citations passes
   through the Tacit theorems, so the entry cites III.2 through the rule, and the check on
   later citations refuses it in Books I and II and in III.1, porisms and companions
   included; III.2 itself cannot use it, for Lean admits no circular proof. After III.2
@@ -48,9 +48,9 @@
   that `check_lock` refuses both rules proved citing nothing or citing an III.2 resting on
   Circle 3, and that it passes them proved from III.2's real entry.
 
-  This entry approves the change to `scripts/negative/circle_proved.py`, whose docstring
-  now says that Circle 2 is planted with no citation in `proved_rule_cites`; the plant's
-  code is unchanged.
+  This entry approves the change to `scripts/negative/circle_proved.py`, whose docstrings
+  now say that Circle 2 keeps the `proved_rule_cites` facts.json gives it, which cites
+  nothing; the plant's code is unchanged.
 
   This entry approves the change to `tests/test_negative_tests.py`, whose circle tests
   plant each case of the new route and test the new plant's three cases and restoration.
