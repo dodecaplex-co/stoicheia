@@ -8,11 +8,6 @@ fingerprint = "sha256:a05b6db601f15015"
 kind = "modified"
 note = "Euclid's argument, but for the centre D: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, a rule we assume, for the proof needs the centre alone."
 
-[overlap]
-rule = "Tacit.outside_of_between"
-kind = "gives"
-note = "System E's Circle 3 (`Tacit.outside_of_between`) gives III.2 at once: if a point between A and B were not within the circle, B would be outside it, contrary to B being on it. Circle 2 (`Tacit.inside_of_between`) is now proved from Circle 3 in `Elements/Figure/Circles.lean`. Our III.2 uses neither that theorem nor Circle 3: it follows Euclid through I.5, I.16 and I.19, with its centre from `Tacit.exists_centre`; III.1 puts its own middle point within the circle by the same argument."
-
 [[passage]]
 at = "For suppose it does not, but, if possible, let it fall outside"
 kind = "grouped"

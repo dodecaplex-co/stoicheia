@@ -9,21 +9,18 @@ import Elements.Foundations.DefinitionsIII
 
 Book III draws straight lines in circles, and reads off its figures where their ends and the
 points of the circle lie. These are the facts it takes for granted that need no proposition:
-three points of a circle are not on one straight line; a straight line in a circle has points
-of the circle on each side of it; a circumference may be named from either side of the
-straight line that cuts it off; equal circles have equal radii; and a straight line that
-touches a circle meets it at a point of contact and has no point within it. They follow
-from Definition 15, System E's rules for circles, and the definitions of Book III.
+a circumference may be named from either side of the straight line that cuts it off; what
+is true of one centre of a circle is true of every centre; equal circles have equal radii;
+and a straight line that touches a circle meets it at a point of contact and has no point
+within it. They follow from Definition 15, System E's rules for circles, and the definitions
+of Book III.
 
-The first two, proved here for any circle, use Circle 2, now proved from System E's
-Circle 3 in `Elements.Figure.Circles`. Circle 3 therefore still gives III.2 at once.
-The propositions take these facts from III.2 instead.
-Its corollaries `BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide` and
-`BookIII.Prop2.sameSide`, like III.2 itself, avoid Circle 3. No certificate entry
-currently rests on Circle 3. I.12 puts the crossing of CD with AB inside the circle
-by comparing its distance from the centre with the radius, then uses the proved
-Intersection 3, obtained in `Elements.Figure.Incidence` by applying `line_circle_beyond`
-in both directions. The proved Intersection 2 has no user in the published proofs.
+Two more such facts need III.2, and follow it in its file: three points of a circle are not
+on one straight line (`BookIII.Prop2.triangle`), and a straight line in a circle has points
+of the circle on each side of it (`BookIII.Prop2.oppositeSide` and `BookIII.Prop2.sameSide`).
+Book Zero proved them here for any circle from Circle 2 until 24 October 2026, when
+Circle 2 and Circle 3 were proved from III.2, after it, and the copies here, which nothing
+used, were taken out.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
@@ -34,51 +31,6 @@ namespace Elements
 open Tacit
 
 variable {A B C D K P Q : Point} {α β : Circle}
-
-/-! ## Points of a circle -/
-
-/-- Three points of a circle are not on one straight line. Were they, one would lie
-between the other two, and so within the circle (Circle 2, proved from Circle 3), not on
-it. For any circle, `BookIII.Prop2.triangle` gives the same by III.2. -/
-theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
-    (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
-  rintro ⟨L, hA_L, hB_L, hC_L⟩
-  rcases between_cases hAB hBC hAC hA_L hB_L hC_L with h | h | h
-  · exact inside_not_on (inside_of_between (Or.inr hA) (Or.inr hC) h) hB
-  · exact inside_not_on (inside_of_between (Or.inr hB) (Or.inr hC) h) hA
-  · exact inside_not_on (inside_of_between (Or.inr hA) (Or.inr hB) h) hC
-
-/-- A straight line BC in a circle has a point of the circle on the other side of it
-from any point K off it. Take M between B and C; it is within the circle
-(Circle 2, proved from Circle 3), so the straight line KM, produced beyond M, meets the circle
-(Intersections 5), on the other side of BC from K (Pasch 3). For any circle,
-`BookIII.Prop2.oppositeSide` gives the same by III.2. -/
-theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α)
-    (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
-  obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hK.ne₁₂
-  obtain ⟨M, hM_L, hBMC, -⟩ := exists_point_between hB_L hC_L hK.ne₁₂ []
-  have hM_in : InsideCircle M α := inside_of_between (Or.inr hB) (Or.inr hC) hBMC
-  have hK_L : ¬ OnLine K L := hK.off_line hB_L hC_L
-  have hKM : K ≠ M := fun e => hK_L (e ▸ hM_L)
-  obtain ⟨N, hK_N, hM_N⟩ := Postulate1 K M hKM
-  obtain ⟨A, hA_α, hA_N, hAMK⟩ := line_circle_beyond hM_in hM_N hK_N hKM
-  /- A is off BC: the straight lines KM and BC meet only at M, and A is on
-     the circle, not within it. -/
-  have hAM : A ≠ M := fun e => inside_not_on hM_in (e ▸ hA_α)
-  have hA_L : ¬ OnLine A L := fun hA_L =>
-    hK_L ((line_unique hAM hA_N hM_N hA_L hM_L) ▸ hK_N)
-  exact ⟨A, hA_α, OppositeSidesOf.of_line hK.ne₁₂ hB_L hC_L
-    ⟨hA_L, hK_L, pasch3 hAMK hM_L⟩⟩
-
-/-- A straight line BC in a circle has a point of the circle on the same side of it as
-any point K off it: take a point on the other side from K, and a point of the circle
-on the other side from that (`exists_onCircle_oppositeSidesOf`). For any circle,
-`BookIII.Prop2.sameSide` gives the same by III.2. -/
-theorem exists_onCircle_sameSideOf (hB : OnCircle B α) (hC : OnCircle C α)
-    (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C := by
-  obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hK []
-  obtain ⟨A, hA_α, hAQ⟩ := exists_onCircle_oppositeSidesOf hB hC hQ.triangle
-  exact ⟨A, hA_α, OppositeSidesOf.sameSideOf hAQ.symm hQ⟩
 
 /-! ## A circumference named from either side -/
 

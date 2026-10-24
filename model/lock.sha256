@@ -123,4 +123,11 @@
 # retired axioms, 49 axioms with main's 262 words of vocabulary; every other axiom and every
 # word is main's byte for byte. The generator writes 49 laws, exists_centre's among them,
 # and Model/Assembly.lean gathers all 49.
-589b8c3791414d63a8c5b735ba9c4d4adddf1c4f7a271eaef918820c9d844965  Certificate/axioms.lock
+#
+# Renewed on 24 October 2026, when Circle 3, Tacit.outside_of_between, became a theorem,
+# proved after III.2 (#294, the coordinator's orders of 24 October): the lock loses its
+# line, 48 axioms with 262 words of vocabulary; every other axiom and every word is
+# unchanged, byte for byte. Its law leaves the generated translation, Check/ compares its
+# hand translations with the theorem's type directly, and the generator writes 48 laws,
+# which Model/Assembly.lean gathers.
+4a48491e378586c3439dfc41c10890517643bc3c0985a20178e397e6328c11c1  Certificate/axioms.lock

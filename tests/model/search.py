@@ -503,16 +503,6 @@ def in_or_on(P_, al):
 
 
 
-@axiom('outside_of_between', dict(A=P, B=P, C=P, al=C_))
-def _(c):
-    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
-    if not (in_or_on(A, al) and not inside(Cc, al) and between(A, Cc, B)):
-        return None
-    return (not inside(B, al)) and (not on_circle(B, al))
-
-
-
-
 # ---- Intersection (diagrammatic)
 @axiom('lines_meet_of_opposite_sides', dict(A=P, B=P, L=L_, M=L_))
 def _(c):

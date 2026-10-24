@@ -882,7 +882,7 @@ RoutesCheck.lean does, but for the constructors of each inductive type it meets,
 that module adds and this one does not: with them added, it too walks 1476 constants. So
 1476 and 1462 are counts of two walks, not of a change. A third scratch module, walking
 beneath all 51 declarations in the same way, found none of Book Zero's three lemmas
-`Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and `exists_onCircle_sameSideOf`
+Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf
 beneath them, and Circle 3 among the axioms of each: so the sentence 5fca8529 writes in
 [docs/reports/overlaps.md](overlaps.md), that the staged theorems reach none of the three,
 holds. These checks built nothing beyond the seven modules and what they import. The style

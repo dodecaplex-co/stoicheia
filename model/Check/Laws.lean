@@ -205,8 +205,6 @@ example : Law.Tacit.not_on_line_of_same_side original =
 example : Law.Tacit.on_line_of_area_eq_zero original =
     type_of% @Elements.Tacit.on_line_of_area_eq_zero := rfl
 
-example : Law.Tacit.outside_of_between original = type_of% @Elements.Tacit.outside_of_between := rfl
-
 example : Law.Tacit.pasch2 original = type_of% @Elements.Tacit.pasch2 := rfl
 
 example : Law.Tacit.same_ray_of_angle_eq_zero original =

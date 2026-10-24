@@ -67,10 +67,8 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   statement and the geometric steps of its proof, no coordinates or real numbers appear,
   and no number measures a length, an angle or an area. Beneath those steps, numbers may
   serve the machinery and say nothing of a figure: the superposition rule numbers its
-  symbols (`Symbols`, in `Elements/Foundations/Superposition/Soundness.lean`), so I.4 and
-  I.8 number the points and straight lines of their figures beside their proofs
-  (`card := 6`, and `.a => 0` to `.f => 5`;
-  [#312](https://github.com/jackChallis/stoicheia/issues/312) is to take them out), as
+  symbols (`Symbols`, in `Elements/Foundations/Superposition/Soundness.lean`), with
+  `Symbols.ofList` computing the numbering from lists of names supplied by I.4 and I.8, as
   `valuation_encodes` writes a literal over two numbered symbols (`Fin 2`, in
   `Elements/Foundations/Superposition/Restriction.lean`); and a tactic may take a count,
   as `congr 1` does in Book Zero. The zero magnitude is written `0`, in some laws,
@@ -424,7 +422,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
+  Definition I.15 and <!-- count:tacit-rules -->42<!-- /count --> tacit rules, <!-- count:axioms -->48<!-- /count --> in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation, save one of our own, added by the
   owner's decision of 18 October 2026: every circle has a centre (`exists_centre`), whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
@@ -575,14 +573,16 @@ dependencies.
   III.24 calls on one.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
-- **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
-  `Tacit.outside_of_between` as an axiom, and no entry before III.2 uses either, whether
-  through its own proof or through a lemma it uses; a rule proved from III.2 may be used
-  after III.2, and the use cites III.2. Each name must stay in the axiom lock, or name a
-  theorem whose `proved_rules` entry in `facts.json` includes another forbidden circle
-  rule still in the lock as an axiom, or whose `proved_rule_cites` entry includes III.2,
-  with III.2 proved and resting on neither rule. Thus a proved rule remains forbidden
-  through the axiom beneath it, or, if it is proved from III.2, every entry that uses it
+- **Circle 2 and Circle 3.** Neither `Tacit.inside_of_between` nor
+  `Tacit.outside_of_between` is an axiom: since 24 October 2026 both are theorems, proved
+  after III.2 in `Elements/BookIII/Prop02.lean`. No entry before III.2 may use either,
+  whether through its own proof or through a lemma it uses, and an entry after III.2 that
+  uses one cites III.2. The check holds this whatever the lock. No entry may rest on either
+  rule as an axiom; and each name must be in the axiom lock, or name a theorem whose
+  `proved_rules` entry in `facts.json` includes another forbidden circle rule still in the
+  lock as an axiom, or whose `proved_rule_cites` entry includes III.2, with III.2 proved
+  and resting on neither rule. Thus a proved rule remains forbidden through the axiom
+  beneath it, or, if it is proved from III.2, as both now are, every entry that uses it
   cites III.2 through it, so that no entry before III.2 can use it (no later citations,
   below); a missing name, a proof with neither, or a proof citing an III.2 that is
   missing, unproved or itself resting on either rule, fails the check.
@@ -598,8 +598,10 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Aud
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
-Circle 3 renamed in the lock; Circle 2 proved with neither Circle 3 beneath it nor III.2
-cited, with a matching case that still rests on locked Circle 3 and must pass; and both
+Circle 3 renamed where the certificate keeps it (in the lock while it was an axiom, among
+the proved rules now); Circle 2 proved with neither Circle 3 beneath it nor III.2
+cited, with a matching case that rests on Circle 3, locked again for it, and must pass;
+and both
 proved with neither beneath, citing nothing or an III.2 that rests on Circle 3, with a
 matching case citing the real III.2 that must pass;
 placement among the shared steps of an entry other than III.24, and a lemma of
@@ -760,16 +762,17 @@ proof to the assumptions it uses.
 | `adjacent_eq_of_right` | Diagram-angle 3 | I.13 makes adjacent angles two right angles; Common Notion 3 removes the given right angle. Proved after I.13 in [`Prop13.lean`](../Elements/BookI/Prop13.lean). |
 | `not_same_side_of_circles_meet` | Circle 4 | Definition I.15 gives equal distances from each centre, `circle_eq` tells the centres apart, and I.7 excludes two common points on the same side. Proved after I.7 in [`Prop07.lean`](../Elements/BookI/Prop07.lean). |
 | `centre_unique` | Generalities 2 | Two supposed centres bisect the same straight line through the circle by Definition I.15. Equal doubles have equal halves, and the strict order of lengths forces the centres to coincide. Proved from the foundations in [`Circles.lean`](../Elements/Figure/Circles.lean). |
-| `inside_of_between` | Circle 2 | Circle 3, `outside_of_between`, would put the second endpoint outside if the middle point were not inside. Proved in `Circles.lean`. Circle 3 stays an axiom. |
-| `exists_point_outside_circle` | Points 9 | Points on the circle enclose an interior point; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and Circle 3 puts the new point outside. Proved in `Circles.lean`. |
-| `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points; Circle 3 puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved in `Circles.lean`. |
+| `inside_of_between` | Circle 2 | III.2's corollary `Prop2.within`, III.2 for points on or within the circle. Proved after III.2 in [`Prop02.lean`](../Elements/BookIII/Prop02.lean) since 24 October 2026; from 19 October it was proved from Circle 3 in `Circles.lean`. |
+| `exists_point_outside_circle` | Points 9 | Points on the circle enclose an interior point; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and Circle 3 puts the new point outside. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean` before. |
+| `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points (Book Zero's `between_at_crossing`); Circle 3 puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean` before. |
 | `triple_incidence3` | Triple incidence 3 | Angle addition and positivity, Intersection 1, and the order and side rules locate a crossing and carry its side relation to the given point. Proved in `Circles.lean`. |
 | `inside_of_angle_add` | Diagram-angle 2, converse | I.13, angle addition, positivity and the side rules exclude each way the point could lie outside the angle. Proved after I.13 in `Prop13.lean`; the forward rule, `angle_add_of_inside`, stays an axiom. |
 
-The current proofs of Points 9 (`exists_point_outside_circle`) and Intersection 2
-(`line_meets_circle_of_opposite_sides`) both depend on Circle 3. The certificate applies
-the Circle 2 and Circle 3 ban transitively, so no proposition, porism or companion may
-depend on either proved rule.
+The proofs of Points 9 (`exists_point_outside_circle`) and Intersection 2
+(`line_meets_circle_of_opposite_sides`) both use Circle 3, and so, since 24 October 2026,
+III.2. The certificate's walk passes through proved rules, so no proposition, porism or
+companion before III.2 may use either of them, as with Circle 2 and Circle 3 themselves
+(section 7).
 
 By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
 many books in front of us"), 31 more rules became theorems, proved that day. They were proved against a lock of 79 axioms, which they took to 48; in the
@@ -815,12 +818,21 @@ contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
 | `between_of_area_add` | Diagram-area 2, converse | In either contrary collinear order, area addition would make each of two areas greater than the other. Proved in `AreaRules.lean`. |
 | `exists_point_on_circle` | Points 7 | Intersect a line through an interior point that avoids every other forbidden point. Proved in [`CirclePoints.lean`](../Elements/Figure/CirclePoints.lean). |
 
+24 October 2026: Circle 3 became a theorem, taking the lock from 49 axioms to 48 (#294;
+[the decision entry](decisions/2026-10-24-circle-3-retired.md)). It keeps its name and
+exact type, and is proved after III.2 in `Prop02.lean`, where Circle 2, Points 9 and
+Intersection 2 (above) moved with it, each keeping its name and type.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `outside_of_between` | Circle 3 | Were the point beyond within the circle or on it, III.2's corollary `Prop2.within` would put the point between within it. Proved after III.2 in [`Prop02.lean`](../Elements/BookIII/Prop02.lean). |
+
 A client that previously imported only the foundations must now import the theorem's
 home. Book Zero still imports no proposition. I.7 cannot be established independently
-through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
-retained Circle 3 axiom, as the [catalogue](reports/overlaps.md) explains.
+through Circle 4, since that theorem now uses I.7; nor III.2 through Circle 2 or Circle 3,
+since both now use III.2, as the [catalogue](reports/overlaps.md) explains.
 
-No certificate entry currently rests on Circle 3. I.12 finds the crossing X of
+No certificate entry uses Circle 2 or Circle 3. I.12 finds the crossing X of
 CD with AB between the centre C and the point D on the circle, proves X inside
 by `InsideCircle.of_between_centre`, and uses Intersection 3
 (`line_meets_circle_of_inside`, proved since the second retirement) to find two points of
@@ -856,7 +868,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->49<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
