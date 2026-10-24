@@ -104,8 +104,9 @@ jobs:
 
       - name: Install the pinned YAML parser the lane-condition check reads the workflows with
         # checks/24-lane-condition.toml runs a test of scripts/test_safe_push.py, which reads
-        # the workflows with this parser (#346).
-        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+        # the workflows with this parser (#346). -P keeps the checkout's root off the import
+        # path, so that a pip.py there cannot run in place of pip, before the checks.
+        run: python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
 
       - name: Run the check job's sequence, one check for each file in checks/, in its order, each a group of the log, stopping at the first that fails
         # The registry of checks (docs/WORKFLOW.md, section 8): each file of checks/ is one

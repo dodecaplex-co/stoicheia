@@ -6,34 +6,44 @@
   step was not failed by it. Now that the registry of checks
   ([#229](https://github.com/jackChallis/stoicheia/issues/229)) lets a check be added as a
   file, the test is a check of its own, at order 135, after `tests/test_screen.py`: CI's
-  `check` job runs it on each pull request, and the pre-flight runs it once it is on main.
-  The coordinator approved this on 22 October at 23:10, as one file of the registry and
-  section 8's regenerated block. The test reads the workflows with PyYAML, which CI's
-  `check` job did not install, so the command would have failed there at its import, as
-  it did when run in a fresh environment without the parser; by the coordinator's ruling
-  of 24 October 02:35, which amends that approval, the job now installs the parser, after
-  elan and before the run of the checks, from the pinned
-  `scripts/requirements-test_safe_push.txt`, the file that CI's `queue-integrity` job and
-  the cadence's `safe-push-tests` job already install. Section 8 says that the check
-  needs the parser, so that a contributor running the sequence or the pre-flight installs
-  it once. The test of the `check` job's shape allowed no setup step
-  beyond checkout, Python and elan; by the coordinator's ruling of 24 October 02:40, it
-  now allows that one install, exactly that line, once, straight after elan, with no
-  condition, environment, shell or working directory. Existing planted refusal cases
-  remain refused, but removing elan now reports "CI check setup prefix is incomplete before
-  the parser's install" instead of "CI check setup prefix is incomplete before the first
-  check." Six new planted cases are refused: the install of
-  another requirements file, an extra package on the line, the install after the run of
-  the checks, the install twice, the install before elan, and no install. With the guard
-  that refuses each taken out, its case was seen to be accepted. The train is of class R5,
-  since it changes the CI workflow.
+  `check` job runs it on each pull request, and once it is on main the pre-flight runs it
+  for each train of class R3 and above. The coordinator approved this on 22 October at
+  23:10, as one file of the registry and section 8's regenerated block.
+
+  The test reads the workflows with PyYAML, which CI's `check` job did not install, so the
+  command would have failed there at its import, as it did when run in a fresh
+  environment without the parser. By the coordinator's ruling of 24 October 02:35, which
+  amends that approval, the job now installs the parser, after elan and before the run of
+  the checks, from the pinned `scripts/requirements-test_safe_push.txt`, the file that
+  CI's `queue-integrity` job and the cadence's `safe-push-tests` job already install.
+  Section 8 says that the check needs the parser, so that a contributor running the
+  sequence or the pre-flight installs it once. The install runs Python with `-P`, by the
+  coordinator's ruling of 24 October 03:35, which amends that of 02:40: without it,
+  `python3 -m pip` puts the checkout's root first on the import path, so a `pip.py`
+  there, which is no protected path, would run in place of pip before the checks, and
+  could make the job pass with none of them run, as the review of this train showed.
+
+  The test of the `check` job's shape allowed no setup step beyond checkout, Python and
+  elan. By the coordinator's ruling of 24 October 02:40, with `-P` since 03:35, it now
+  allows that one install, exactly that line, once, straight after elan, with no
+  condition, environment, shell or working directory. Every case it refused before is
+  still refused. Two kinds of message change: with elan removed, the refusal now reads
+  "CI check setup prefix is incomplete before the parser's install", not "CI check setup
+  prefix is incomplete before the first check"; and the three cases that name a planted
+  step by its place (an unlisted action, and the checkout or the Python setup after the
+  run) name a place one further on, since the job has one step more. Seven new planted
+  cases are refused: the install of another requirements file, an extra package on the
+  line, the install without `-P`, the install after the run of the checks, the install
+  twice, the install before elan, and no install. With the guard that refuses each taken
+  out, its case was seen to be accepted. The train is of class R5, since it changes the
+  CI workflow.
 
   This entry approves the new file `checks/24-lane-condition.toml`, which runs the
   lane-condition test of `scripts/test_safe_push.py` in CI's `check` job at order 135.
 
   This entry approves the change to `.github/workflows/ci.yml`, whose `check` job gains
   one step that installs the pinned YAML parser from
-  `scripts/requirements-test_safe_push.txt` before the run of the checks.
+  `scripts/requirements-test_safe_push.txt`, with `-P`, before the run of the checks.
 
   This entry approves the change to `scripts/test_safe_push.py`, whose model of the
-  `check` job allows that one install, exactly, after elan, with six planted refusals.
+  `check` job allows that one install, exactly, after elan, with seven planted refusals.

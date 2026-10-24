@@ -380,10 +380,10 @@ carries the lane's condition
 `scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned in
 `scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after elan and
 before the run of the checks; to run the sequence yourself, or the pre-flight, which runs
-it too, install it once:
+it for a train of class R3 and above, install it once:
 
 ```sh
-python3 -m pip install -r scripts/requirements-test_safe_push.txt
+python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating

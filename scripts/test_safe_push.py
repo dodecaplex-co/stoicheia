@@ -417,9 +417,10 @@ ELAN_INSTALL = (
     'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
 )
 # The pinned YAML parser, which the check of #346 (Units' lane-condition test, a file of the
-# registry) needs: the last line of the setup, after elan (the coordinator's rulings of 24
-# October 02:35 and 02:40).
-PIP_INSTALL = ("python3 -m pip install -r scripts/requirements-test_safe_push.txt",)
+# registry) needs: the last line of the setup, after elan, with -P, so that a pip.py at the
+# checkout's root cannot run in its place (the coordinator's rulings of 24 October 02:35,
+# 02:40 and 03:35).
+PIP_INSTALL = ("python3 -P -m pip install -r scripts/requirements-test_safe_push.txt",)
 
 
 def is_modeled_setup(step: WorkflowStep) -> bool:
@@ -470,9 +471,8 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
             setup_index += 1
             continue
         if step.uses is None and step.run == PIP_INSTALL:
-            # The pinned parser's install comes once, straight after the elan install.
-            if commands:
-                raise AssertionError(f"CI check step {step.name!r} is setup after the first check")
+            # The pinned parser's install comes once, straight after the elan install; one
+            # after the run is refused there, as the run finds no install before it.
             if setup_index != len(setup_order):
                 raise AssertionError("CI check setup prefix is incomplete before the parser's "
                                      "install")
@@ -10359,6 +10359,9 @@ class Units(unittest.TestCase):
             ("an extra package",
              lambda workflow, job: step_running(job, parser).update(run=parser + " six"),
              unmodeled),
+            ("the install without -P",
+             lambda workflow, job: step_running(job, parser).update(
+                 run=parser.replace(" -P", "")), unmodeled),
             ("the parser's install after the run", move_parser(after=True),
              "setup prefix is incomplete"),
             ("the parser's install twice",
