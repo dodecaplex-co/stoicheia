@@ -42,10 +42,10 @@ note = "This figure draws the impossible supposition: G distinct from D on the s
 
 [review]
 stage = "full"
-commit = "3885a8f6"
-reviewer = "Claude Opus 5.5, independent reader"
-run = "brief 0009 stage full, ship F2 question-2 re-read"
-lean = "sha256:fb99b8aff28988bb"
+commit = "f31cf9cf"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "brief 0009 stage full, ship F2 question-2 re-read; card 312, the symbols given by Symbols.ofList (no numeral in the proof), written by Claude Opus 5.5 at f31cf9cf, read with the whole record by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220); ship F2, reader F2-312cx, independent re-read at f31cf9cf"
+lean = "sha256:a71a979b1e9d70c3"
 
 [review.items]
 statement = "pass"

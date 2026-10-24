@@ -134,6 +134,10 @@ one commit and runs safe_push.py against that origin:
   moved to a value the lock does not give is refused by the commit's own
   check_fidelity.py; a count moved in scripts/, or in code under tests/, is never a pinned
   value; and the markers are read by origin/main's reader, never the commit's;
+- the model's page (#187): an axiom added with its law, tests/model/MODEL.md's account
+  and its counts moved with it, lands as content, its prose free to move; while a count
+  marker of the page added, removed, renamed or reordered, or the page deleted, made executable or
+  left unreadable, is a check change, kept apart;
 - checks scaled to risk (#292, #301): an R1 commit (a line in a review record) and an R2
   one (a proof file, its record stamped) leave step 4 to CI, with their class reported
   and recorded and every guard run; an R3 commit touching a check, and commits of prose
@@ -961,8 +965,23 @@ def reset_gh() -> None:
                                     "suite_runs": {"*": [GREEN_SUITE]}, "calls": []}))
 
 
+def hermetic_git() -> None:
+    """The test process's git, and every process it starts, reads no variable of git's
+    that the runner set and no global or system configuration (#360). Run under a hook,
+    the runner's GIT_DIR and GIT_INDEX_FILE named the hook's repository, and the module's
+    own git (setUpModule's clone, config and commit among it) acted on that repository;
+    a global core.hooksPath could reach them too, running its hooks on the tests' commits
+    and taking install_hooks.sh's hooks where it points. Each test that needs a variable
+    of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself."""
+    for name in [name for name in os.environ if name.startswith("GIT_")]:
+        del os.environ[name]
+    os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
+    os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
+
+
 def setUpModule():
     global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
+    hermetic_git()
     if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
         # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
         # that dry-run cleanup still requires an empty temporary directory.
@@ -6378,6 +6397,94 @@ class ProtectedPaths(Edge):
             second = self.commit("Its count moved")
             self.assertFalse(safe_push.pinned(WORK, first, second, "Certificate/linked.md"))
 
+    # The model's page (#187): pinned whole for its prose, the model's account of its laws,
+    # while its count markers stand, as the other check inputs' do.
+    AXIOM_COUNT = re.compile(r"(<!-- count:axioms -->)([0-9]+)(<!-- /count -->)")
+
+    def model_moved(self) -> str:
+        """A commit from origin/main of an axiom added with its law (planted_axiom), with
+        the pages render.py regenerates from it: MODEL.md gains a line of its account, and
+        each of its counts of the axioms moves."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        sha = self.regenerated_commit("Add an axiom, with its law", self.planted_axiom())
+        old, new = (git(WORK, "show", f"{rev}:{self.PAGE}") for rev in (BASE, sha))
+        self.assertIn("The planted law:", new)
+        self.assertEqual([int(m[2]) for m in self.AXIOM_COUNT.finditer(new)],
+                         [int(m[2]) + 1 for m in self.AXIOM_COUNT.finditer(old)])
+        return sha
+
+    def page_changed(self, moved: str, change, mode: int | None = None) -> str:
+        """A commit on `moved` of MODEL.md changed by `change`, given its text (None deletes
+        the file); `mode`, if given, is the file's new mode."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", moved)
+        result = change(self.text(self.PAGE))
+        if mode is not None:
+            (WORK / self.PAGE).write_text(result)
+            os.chmod(WORK / self.PAGE, mode)
+        return self.commit("MODEL.md changed, for the test",
+                           {} if result is None else {self.PAGE: result},
+                           remove=[self.PAGE] if result is None else ())
+
+    def test_model_page_moves_with_its_markers_standing(self):
+        # An axiom added with its law moves the model's account, a line of MODEL.md, and
+        # its counts of the axioms; its prose may move further. The same markers stand, by
+        # name and in order, so the page is a pinned value and lands with its content.
+        moved = self.model_moved()
+        reworded = self.page_changed(moved, lambda t: t.replace(
+            "Stoicheia's proofs rest on <!-- count:axioms -->",
+            "Stoicheia's proofs now rest on <!-- count:axioms -->", 1))
+        for name, sha in (("the account and its counts moved", moved),
+                          ("a sentence around a marker reworded", reworded)):
+            with self.subTest(name):
+                self.assertTrue(safe_push.pinned(WORK, BASE, sha, self.PAGE))
+                refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+                self.assertFalse(refused, out)
+                self.assertIn("pinned values", out)
+                self.assertIn(self.PAGE, out[out.index("pinned values"):])
+
+    def test_model_page_markers_added_removed_or_renamed_kept_apart(self):
+        # The same change, with a count marker of MODEL.md added, removed, renamed,
+        # reordered or left unclosed, is no pinned value, and keep_apart refuses it when
+        # origin/main's checks fail: the commit's own pass checks each value against the
+        # marker that holds it. The first count of the axioms renamed to tacit-rules, its
+        # value moved to match, would have the page say that the proofs rest on as many
+        # axioms as there are tacit rules, and pass that check. Nor is the page deleted,
+        # made executable or left unreadable.
+        def renamed(text):
+            (tacit,) = re.findall(r"<!-- count:tacit-rules -->([0-9]+)<!-- /count -->", text)
+            return self.AXIOM_COUNT.sub(
+                lambda m: f"<!-- count:tacit-rules -->{tacit}{m[3]}", text, count=1)
+        moved = self.model_moved()
+        weakened = {
+            "a marker added": lambda t: t + (
+                "\nThe lock's words: <!-- count:vocabulary -->91<!-- /count -->.\n"),
+            "a marker removed": lambda t: self.AXIOM_COUNT.sub(lambda m: m[2], t, count=1),
+            "a marker renamed": renamed,
+            "the markers reordered": lambda t: t.replace(
+                "<!-- count:axioms -->", "<!-- count:SWAP -->", 1).replace(
+                "<!-- count:tacit-rules -->", "<!-- count:axioms -->", 1).replace(
+                "<!-- count:SWAP -->", "<!-- count:tacit-rules -->", 1),
+            "a marker unclosed": lambda t: t.replace("<!-- /count -->", "", 1),
+            "the file deleted": lambda t: None,
+        }
+        marker = f"it adds, removes, renames or reorders a count marker of {self.PAGE}"
+        for name, change in weakened.items():
+            with self.subTest(name):
+                sha = self.page_changed(moved, change)
+                self.assertFalse(safe_push.pinned(WORK, BASE, sha, self.PAGE))
+                refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+                self.assertTrue(refused, out)
+                self.assertIn(marker, out)
+                self.assertNotIn("beyond", out)
+                self.assertNotIn("pinned values", out)
+        with self.subTest("the file made executable"):
+            sha = self.page_changed(moved, lambda t: t, mode=0o755)
+            self.assertFalse(safe_push.pinned(WORK, BASE, sha, self.PAGE))
+            refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+            self.assertTrue(refused, out)
+            self.assertIn(marker, out)
+            self.assertNotIn("pinned values", out)
+
     # The model's laws (issue #40): an axiom moves with its law, in one pull request.
     LOCK, HASH = "Certificate/axioms.lock", "tests/model/lock.sha256"
     LAWS, PAGE = "tests/model/laws.toml", "tests/model/MODEL.md"
@@ -8932,6 +9039,54 @@ class FullChecks(Edge):
         self.assertEqual(self.origin_main(), BASE)
         self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 1,
                          "a temporary worktree was left behind")
+
+
+class HermeticModule(unittest.TestCase):
+    """#360: one test of this module, its setUpModule with it, run from a linked worktree
+    under a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, leaves
+    the repository as it was: its HEAD, index and files, and the shared configuration."""
+
+    CHILD = "STOICHEIA_TEST_HERMETIC_CHILD"
+
+    def test_the_module_under_a_hooks_git_dir(self):
+        if os.environ.get(self.CHILD):
+            self.skipTest("the planted run itself")
+        plain = dict(os.environ)  # hermetic already: setUpModule has run
+        def g(*args) -> str:
+            return subprocess.run(["git", *map(str, args)], env=plain, check=True,
+                                  capture_output=True, text=True).stdout
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            main, linked = tmp / "main", tmp / "linked"
+            g("init", "-q", main)
+            (main / "a.txt").write_text("main\n")
+            g("-C", main, "add", "a.txt")
+            g("-C", main, "-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
+              "commit", "-q", "--no-verify", "-m", "main")
+            g("-C", main, "worktree", "add", "-q", "-b", "train", linked)
+            git_dir = Path(g("-C", linked, "rev-parse", "--absolute-git-dir").strip())
+            watched = {"HEAD": git_dir / "HEAD", "index": git_dir / "index",
+                       "config": main / ".git" / "config", "a.txt": linked / "a.txt",
+                       "main's a.txt": main / "a.txt"}
+            before = {name: path.read_bytes() for name, path in watched.items()}
+            heads = (g("-C", main, "rev-parse", "HEAD"), g("-C", linked, "rev-parse", "HEAD"))
+            # As a runner under a hook has it: the hook's variables, and the machine's own
+            # configuration, which hermetic_git shuts out.
+            env = {name: value for name, value in plain.items()
+                   if name not in ("GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_GLOBAL")}
+            env.update(GIT_DIR=str(git_dir), GIT_INDEX_FILE=str(git_dir / "index"),
+                       **{self.CHILD: "1"})
+            r = subprocess.run([sys.executable, str(HERE / "test_safe_push.py"),
+                                "Units.test_source_statement"], cwd=linked, env=env,
+                               capture_output=True, text=True, timeout=900)
+            for name, path in watched.items():
+                self.assertTrue(path.read_bytes() == before[name], f"{name} changed:\n"
+                                + r.stderr[-2000:])
+            self.assertNotIn("bare = true", (main / ".git" / "config").read_text())
+            self.assertEqual((g("-C", main, "rev-parse", "HEAD"),
+                              g("-C", linked, "rev-parse", "HEAD")), heads)
+            self.assertEqual(sorted(p.name for p in linked.iterdir()), [".git", "a.txt"])
+            self.assertEqual(r.returncode, 0, r.stderr[-2000:])
 
 
 @unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))

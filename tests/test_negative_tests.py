@@ -16,6 +16,7 @@ reader the scripts share is fed the texts on which a reader could read a Lean co
 otherwise than Lean does, each with Lean's own reading.
 """
 
+import ast
 import importlib.util
 import io
 import json
@@ -580,6 +581,142 @@ class RestorationTests(unittest.TestCase):
                 commands.assert_not_called()
                 self.assertEqual(source.read_bytes(), original)
 
+    def test_cited_law_plant_restores_source_and_outputs(self):
+        source = self.root / negative.SYNTAX
+        original = (REPO / negative.SYNTAX).read_bytes()
+        for interrupt in (False, True):
+            with self.subTest(interrupt=interrupt):
+                negative.failures.clear()
+                self.write(source, original)
+                self.outputs("Elements/Foundations/Superposition/Syntax")
+                self.outputs("Elements/BookI/Prop08")
+                saved = self.files()
+                def run(*cmd):
+                    self.assertEqual(cmd, ("lake", "build", "Elements.BookI.Prop08"))
+                    if source.read_bytes() == original:
+                        return self.failed_rebuild(interrupt)
+                    self.assertIn(b"  | planted\n", source.read_bytes())
+                    self.damage_outputs()
+                    return subprocess.CompletedProcess(cmd, 1, "", f"error: {negative.HOLDS_ALL}"
+                                                       ":84:2: Missing cases:\nCited.planted\n")
+                with patch.object(negative, "run", side_effect=run) as commands:
+                    if interrupt:
+                        with self.assertRaises(KeyboardInterrupt):
+                            plant("cited_law_unproved")()
+                    else:
+                        plant("cited_law_unproved")()
+                        self.assertEqual(negative.failures, ["the restored I.8 build: exit 1"])
+                self.assertEqual(commands.call_count, 2)
+                self.assertEqual(source.read_bytes(), original)
+                self.assertEqual(self.files(), saved)
+
+    def test_cited_law_refused_elsewhere_is_not_holds_all(self):
+        source = self.root / negative.SYNTAX
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes((REPO / negative.SYNTAX).read_bytes())
+        def run(*cmd):
+            return subprocess.CompletedProcess(cmd, 1, "", (
+                "error: Elements/Figure/Superposition.lean:109:2: Missing cases:\n"
+                f"error: {negative.HOLDS_ALL}:84:2: Missing cases:\nCited.planted\n"))
+        with patch.object(negative, "run", side_effect=run):
+            plant("cited_law_unproved")()
+        self.assertTrue(any("also refused outside" in f and "Elements/Figure/Superposition.lean"
+                            in f for f in negative.failures), negative.failures)
+
+    def test_figure_guard_runs_differ_in_the_guard_alone(self):
+        original = (REPO / negative.RESTRICTION).read_text()
+        control = negative.plant_figure_guard(original, negative.OVER_THE_FIGURE)
+        plant = negative.plant_figure_guard(original, negative.OVER_ALL_POINTS)
+        self.assertEqual(control.replace(negative.OVER_THE_FIGURE, "GUARD"),
+                         plant.replace(negative.OVER_ALL_POINTS, "GUARD"))
+        for text in (control, plant):
+            proof = text[text.index(negative.RESTRICT):]
+            self.assertIn("hh hX hΓ", proof)
+            self.assertIn(negative.THROUGH_THE_EMBEDDING, proof)
+            self.assertTrue(text.endswith(f"#print axioms {negative.RESTRICT_NAME}\n"))
+            # Rule.iff_figure and its docstring are left out, and nothing else.
+            self.assertNotIn(negative.IFF_FIGURE, text)
+            self.assertNotIn("for laws that hold.**", text)
+            self.assertNotIn("\n\n\n", text)
+            self.assertIn("def Rule.Figure", text)
+            self.assertIn("structure Interpretation.Embedding", text)
+        start = original.index("/-- **The rule is its part about the figure")
+        iff = original[start:original.index("\n\n", original.index(negative.IFF_FIGURE))]
+        edited = ["      ¬ I.OnLine (v.pt h) (v.line l) → (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v",
+                  "  intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hΓ"]
+        removed = [line for line in original.splitlines() if line not in plant.splitlines()]
+        self.assertEqual(sorted(removed), sorted(iff.splitlines() + edited))
+
+    def test_figure_guard_needs_the_control_to_compile_and_the_plant_to_fail(self):
+        source = self.root / negative.RESTRICTION
+        original = (REPO / negative.RESTRICTION).read_bytes()
+        proved = (f"'{negative.RESTRICT_NAME}' depends on axioms: "
+                  "[propext, Classical.choice, Quot.sound]\n")
+        sorried = (f"'{negative.RESTRICT_NAME}' depends on axioms: "
+                   "[propext, sorryAx, Classical.choice, Quot.sound]\n")
+        # (label, the control's errors and axioms, the plant's, the failure expected); a
+        # run exits 1 when it has an error, or when a fourth item says so.
+        cases = (
+            ("caught", ([], proved), (["restrict"], sorried), None),
+            ("the control refused inside the theorem", (["restrict"], sorried),
+             (["restrict"], sorried), "the control"),
+            ("the control refused elsewhere", (["other"], proved), (["restrict"], sorried),
+             "the control"),
+            ("the control failing with no error read", ([], proved, 1),
+             (["restrict"], sorried), "the control"),
+            ("the control resting on sorry", ([], sorried), (["restrict"], sorried),
+             "the control"),
+            ("the control's axioms not printed", ([], ""), (["restrict"], sorried),
+             "the control"),
+            ("the plant refused outside the theorem", ([], proved), (["other"], proved),
+             "not caught by Rule.Figure.restrict alone"),
+            ("the plant refused inside and outside", ([], proved),
+             (["restrict", "other"], sorried), "not caught by Rule.Figure.restrict alone"),
+            ("the plant compiled", ([], proved), ([], proved),
+             "not caught by Rule.Figure.restrict alone"),
+            ("the plant refused but proved", ([], proved), (["restrict"], proved),
+             "not caught by Rule.Figure.restrict alone"),
+        )
+        for label, control, planted, expected in cases:
+            with self.subTest(label):
+                negative.failures.clear()
+                self.write(source, original)
+                calls = []
+                def run(*cmd):
+                    self.assertEqual(cmd, ("lake", "env", "lean", negative.RESTRICTION))
+                    text = source.read_text()
+                    is_control = negative.OVER_THE_FIGURE in text
+                    self.assertNotEqual(is_control, negative.OVER_ALL_POINTS in text)
+                    self.assertNotIn(negative.IFF_FIGURE, text)
+                    calls.append(is_control)
+                    line = {"restrict": negative.declaration_lines(text, negative.RESTRICT)[2],
+                            "other": 1}
+                    errors, axioms, *code = control if is_control else planted
+                    return subprocess.CompletedProcess(
+                        cmd, code[0] if code else int(bool(errors)), axioms, "".join(
+                            f"{negative.RESTRICTION}:{line[e]}:5: error: Type mismatch\n"
+                            for e in errors))
+                with patch.object(negative, "run", side_effect=run):
+                    plant("figure_guard_over_all_points")()
+                self.assertEqual(source.read_bytes(), original)
+                if expected is None:
+                    self.assertEqual(negative.failures, [])
+                    self.assertEqual(calls, [True, False])
+                else:
+                    self.assertEqual(len(negative.failures), 1, negative.failures)
+                    self.assertIn(expected, negative.failures[0])
+                    if expected == "the control":
+                        self.assertEqual(calls, [True])
+
+    def test_figure_guard_restores_the_source_when_interrupted(self):
+        source = self.root / negative.RESTRICTION
+        original = (REPO / negative.RESTRICTION).read_bytes()
+        self.write(source, original)
+        with patch.object(negative, "run", side_effect=KeyboardInterrupt), \
+                self.assertRaises(KeyboardInterrupt):
+            plant("figure_guard_over_all_points")()
+        self.assertEqual(source.read_bytes(), original)
+
     def test_failed_regressions_stop_before_any_plant(self):
         loaded, first = stand_in(self.root)
 
@@ -597,6 +734,31 @@ class RestorationTests(unittest.TestCase):
                           ("git", "status", "--porcelain")])
         first.assert_not_called()
         load.assert_not_called()
+
+    def test_counts_only_invokes_no_lake_or_lean_build(self):
+        commands = []
+
+        def run(*cmd):
+            commands.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        # The real plants are loaded, from the repository, and the count plant's run is
+        # stood in for.
+        with patch.object(negative, "run", side_effect=run), \
+                patch.object(negative, "ROOT", REPO), \
+                patch.object(negative, "run_plant") as counts:
+            self.assertEqual(negative.main(("--counts-only",)), 0)
+        self.assertEqual(commands, [
+            (sys.executable, "-I", "tests/test_negative_tests.py"),
+            (sys.executable, "-I", "tests/test_generated_counts.py"),
+            (sys.executable, "-I", "tests/test_decision_entries.py"),
+            (sys.executable, "-I", "tests/test_risk.py"),
+            (sys.executable, "-I", "tests/test_axiom_lock.py"),
+        ])
+        self.assertFalse(any(part in {"lake", "lean"}
+                             for command in commands for part in command))
+        counts.assert_called_once()
+        self.assertEqual(counts.call_args.args[0].name, "count_markers")
 
     def test_final_status_checked_without_replacing_original_exception(self):
         for final in ("unchanged", "changed", "failed", "raised"):
@@ -987,15 +1149,16 @@ class BookZeroImportTests(unittest.TestCase):
 
 
 class CommentReaderTests(unittest.TestCase):
-    """The one reader of Lean comments that the scripts share, check_fidelity's
-    `comment_end`, read through `lean_comments` and `read_lean`, without Lean (#206): the
+    """The one reader of Lean comments that the scripts share, heath's `comment_end`
+    (check_fidelity's until #349), read through `lean_comments` and `read_lean`, without Lean (#206): the
     texts on which a reader that began a block's body at its third character, or read no
     strings or character literals, could read otherwise than Lean 4.35. Each expected
     reading is Lean's: each text was elaborated in Lean 4.35 as written, alone in a scratch
     file outside the tree, where the names after its comments were defined, those within
     them unknown, and each of UNCLOSED refused as an unterminated comment. Then
-    the three readers that call it, check_fidelity's `_blank_remarks`, check_style's
-    `lean_note_spans` and the Jev generator's `comment_end`, each read them so too."""
+    the three readers that call it, or a copy of it, check_fidelity's `_blank_remarks`,
+    check_style's `lean_note_spans` and the Jev generator's `comment_end`, each read them
+    so too."""
 
     # (a text, the comments Lean reads in it, in order, the names it defines and those it
     # does not, which stand within a comment)
@@ -1109,54 +1272,39 @@ class CommentReaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
                         self.questions.comment_end(text, spans[-1][0])
 
-    def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
-        source = b'''raise AssertionError("unrelated top-level code ran")
+    def test_the_jev_generator_s_reader_is_heath_s_word_for_word(self):
+        # The generator reads the evidence commit's heath.py as a helper, which at an older
+        # commit has no reader, so it holds a copy of heath.comment_end, word for word but
+        # for the name (the coordinator's ruling of 23 October 05:20).
+        def tree(path, name):
+            module = ast.parse((REPO / path).read_text(encoding="utf-8"))
+            found = [node for node in module.body
+                     if isinstance(node, ast.FunctionDef) and node.name == name]
+            self.assertEqual(len(found), 1, f"{path}: {name}")
+            found[0].name = "comment_end"
+            return ast.dump(found[0])
+        self.assertEqual(tree("scripts/audit/jev_questions.py", "shared_comment_end"),
+                         tree("scripts/heath.py", "comment_end"))
 
-def comment_end(src, i):
-    return ("controlled reader", src, i)
-'''
-        checked = (REPO / "scripts/check_fidelity.py").resolve()
-        with patch.object(self.questions, "read_no_follow", return_value=source) as read:
-            reader = self.questions.shared_function(*self.questions.READER)
-        read.assert_called_once_with(checked)
-        self.assertEqual(reader("prefix /- comment -/ suffix", 7),
-                         ("controlled reader", "prefix /- comment -/ suffix", 7))
-
-    def test_the_jev_generator_prepares_its_reader_before_running_helpers(self):
-        invalid = (
-            ("missing", None, r"check_fidelity\.py: helper module is missing"),
-            ("absent", b"def another_function():\n    pass\n",
-             r"defines no single function comment_end"),
-            ("duplicate", b"def comment_end(src, i):\n    pass\n\n"
-                          b"def comment_end(src, i):\n    pass\n",
-             r"defines no single function comment_end"),
+    def test_the_jev_generator_s_reader_reads_as_heath_s(self):
+        # And it reads as heath's does, on a corpus of nested blocks, doc comments,
+        # strings, character literals and «…» names.
+        corpus = (
+            "/-/- -/ import A", "/--/ x -/ y", "/-- doc -/ theorem t", "/-! module -/",
+            "/- a /- nested /- deeper -/ -/ -/ after", "/- unclosed /- -/", "-- line\nnext",
+            "-- last line", 'def s := "/- not a comment -/" -- but this is',
+            "def c := '\"' /- after a character -/", "def c := '(' -- a bracket's character",
+            "def «x /- y» := 1 /- -/", "/-/--/-/", "--/-\n/--\n-/", "/---/ -/", "",
         )
-        helper_names = {name for name, _ in self.questions.HELPERS}
-        for label, reader, message in invalid:
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                audit = root / "scripts/audit"
-                audit.mkdir(parents=True)
-                generator = audit / "jev_questions.py"
-                generator.write_bytes((REPO / "scripts/audit/jev_questions.py").read_bytes())
-                (root / "scripts/heath.py").write_text(
-                    'raise AssertionError("heath helper ran")\n', encoding="utf-8")
-                (audit / "jev.py").write_text(
-                    'raise AssertionError("Jev helper ran")\n', encoding="utf-8")
-                if reader is not None:
-                    (root / "scripts/check_fidelity.py").write_bytes(reader)
-                name = f"jev_questions_invalid_reader_{label}"
-                spec = importlib.util.spec_from_file_location(name, generator)
-                module = importlib.util.module_from_spec(spec)
-                with patch.dict(sys.modules) as modules:
-                    for dependency in helper_names:
-                        modules.pop(dependency, None)
-                    modules[name] = module
-                    with self.assertRaisesRegex(ValueError, message):
-                        spec.loader.exec_module(module)
-                    self.assertFalse(helper_names & modules.keys())
+        heath = negative.check_fidelity.heath
+        for text in corpus:
+            for i in range(len(text)):
+                if text.startswith(("--", "/-"), i):
+                    with self.subTest(text=text, at=i):
+                        self.assertEqual(self.questions.shared_comment_end(text, i),
+                                         heath.comment_end(text, i))
 
-    def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
+    def test_the_jev_generator_delegates_to_heath_s_reader(self):
         source = "prefix /- comment -/ suffix"
         offset = source.index("/-")
         sentinel = object()
@@ -1169,6 +1317,37 @@ def comment_end(src, i):
                                         r"^unterminated Lean comment$"):
                 self.questions.comment_end(source, offset)
         shared.assert_called_once_with(source, offset)
+
+    def test_check_fidelity_reads_lean_with_heath_s_reader_alone(self):
+        # #349: the reader is heath's. check_fidelity imports it under the names it had,
+        # the very objects, and defines none of them itself, so that no second reader can
+        # drift apart from it; its own caller, _blank_remarks, reads comments through it.
+        check_fidelity = negative.check_fidelity
+        names = ("read_lean", "without_comments", "lean_comments", "comment_end", "_find",
+                 "closed_up", "_read_code", "_read_string", "_read_interpolated",
+                 "lean_string", "CHAR", "ESCAPE", "FIELD", "FIRST", "IDENT", "ID_FIRST",
+                 "ID_REST", "INTERPOLATED", "LETTER_LIKE", "NAME_CHAR", "NAME_RUN",
+                 "NON_ASCII", "NUMBER", "RAW", "REST", "SUBSCRIPT_ALNUM")
+        for name in names:
+            with self.subTest(name=name):
+                self.assertIs(getattr(check_fidelity, name),
+                              getattr(check_fidelity.heath, name))
+        self.assertIs(check_fidelity.WORD, check_fidelity.heath.WORD_CHAR)
+        # Nor does check_fidelity bind any of them itself, by a def or an assignment.
+        source = (REPO / "scripts/check_fidelity.py").read_text(encoding="utf-8")
+        defined = set()
+        for node in ast.walk(ast.parse(source)):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                defined.add(node.name)
+            elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                defined |= {n.id for target in targets for n in ast.walk(target)
+                            if isinstance(n, ast.Name)}
+        self.assertEqual(sorted(defined & set(names)), [])
+        with patch.object(check_fidelity, "lean_comments",
+                          wraps=check_fidelity.lean_comments) as read:
+            check_fidelity._blank_remarks("theorem t : True := trivial -- a remark\n")
+        read.assert_called_once()
 
 
 PLANT = '''{doc}
