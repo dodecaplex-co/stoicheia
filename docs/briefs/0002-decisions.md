@@ -5589,3 +5589,56 @@ findings:
   failed in CI's `safe-push-tests` job with a `KeyError`, so they read the `ref` with
   `x.get("ref")`, which picks out exactly the entries they picked before.
   `check_fidelity.py` and `safe_push.py` already read an expectation without a `ref`.
+- **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
+  route (b)).** The content change that follows the check above. #150, the owner's issue
+  for finishing the answers approved "as prototyped" on 20 October, offers this route by
+  name: retire `drawsNothing`, `holds_of_drawsNothing` and `cites_drawNothing`, which carry
+  no logical weight under the permissive reading, and let I.4 prove its laws one by one, as
+  I.8 does. So the definition `Cited.drawsNothing` leaves
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean),
+  in the foundations, with the theorem `Cited.holds_of_drawsNothing` from
+  [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean) and
+  `Prop4.cites_drawNothing` from [`Elements/BookI/Prop04.lean`](../../Elements/BookI/Prop04.lean),
+  whose derivation now discharges each cited law by its own theorem. No statement, no
+  `Cited` law and no other definition changes, and the lock is unchanged.
+  [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)'s
+  part 3 now points to question 4 and to `cited_laws` instead of saying that every law I.4
+  cites is proved with no rule that constructs; `Elements/BookI/Prop08.lean`'s note says
+  that I.7 draws its own lines and cites I.5. The protected file changed is
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean): its two pins of the retired
+  declarations go, every per-law pin and the pins of I.4 and I.8 stay exact, and its header
+  says which construction rules each law uses is computed by the certificate. Brief 0009
+  carries a dated note and points to the definition in FORMALIZATION. At this revision
+  every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
+  second retirement wave changes that for four of them, and its landing records it.
+  I.4's and I.8's records were read again in full and stamped by an independent reader.
+
+- **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
+  question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
+  placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,
+  `Rule.Figure.restrict`, and proved. In the foundations,
+  [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)
+  gains the definition `Rule.Figure` (the rule's statement without its cited-law
+  hypothesis), the theorem `Rule.iff_figure` tying it to the locked `Rule`, the structure
+  `Interpretation.Embedding` with its valuation `val` and the lemmas `atom_holds`,
+  `lit_holds`, `metric_holds`, `collinear` and `triangle`, and the theorem
+  `Rule.Figure.restrict`: each instance passes to a part of an interpretation that keeps the
+  primitive relations and magnitudes' equalities, keeps distinct points distinct, and keeps
+  the straight line through two of its distinct points and some straight line through any
+  one. One departure from #150's wording, recorded here: the issue asks that the part keep
+  the straight line through any two of its points; read for two points that may coincide,
+  that clause demands every straight line through a single point, which the rational part
+  of the plane, the brief's own example, lacks. So the structure asks it for two distinct
+  points (`line_through`) and asks only for some straight line through one (`on_line`); the
+  issue's clause implies both, so every part it admits is still covered. The proofs rest on
+  Lean's three axioms only, and Restriction.lean stays a pure module. `Cited.holds_all`, in
+  [`Elements/BookI/Prop08.lean`](../../Elements/BookI/Prop08.lean) after I.8's theorem,
+  gives all eight cited laws in one statement, by cases from the per-law theorems and I.7's
+  (a second departure: #150 names `holds_of_drawsNothing`, retired above); through I.7 it
+  rests on `Tacit.superposition`. `Rule`, the lock and every statement are unchanged, and
+  non-derivability stays unclaimed. The protected file changed is
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean): `#guard_msgs in #check @`
+  statement pins for the fourteen theorems #150 names and the three new ones, the two new
+  definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
+  which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
+  by an independent reader.

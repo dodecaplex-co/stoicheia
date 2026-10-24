@@ -13,9 +13,12 @@ side. The symbols c′ and g name where C and A come down; g is Euclid's G. The
 restricted derivation first makes c′ coincide with f, then uses I.7 to make g
 coincide with d. Only the equality of the angles BAC and EDF leaves the placement.
 
-I.7 is cited as a proved law whose conclusion constructs nothing. Its own proof
-uses constructions through I.5 and I.4; those dependencies remain in this proof.
-Applying the law introduces no new symbol into the hypothetical placement.
+I.7 is cited as a proved law whose statement asserts no existence. Its own proof
+draws: it joins its points with straight lines, produces two of them and cites I.5,
+which draws circles through I.3. Those dependencies remain in this proof, and the
+certificate records the construction rules beneath each cited law's proof
+(`cited_laws`). Applying the law introduces no new symbol into the hypothetical
+placement.
 -/
 
 namespace Elements.BookI
@@ -174,5 +177,19 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   exact out hABC.bca hE_EF hF_EF hEF hD_EF hΓ
   -- If therefore etc.
   -- Q. E. D.
+
+/-- **Every law a derivation may cite holds**, each from its own proof: the seven of Book Zero
+(`Elements/Figure/Superposition.lean`) and I.7, by `Prop8.holds_prop7`. Through I.7 it rests
+on `Tacit.superposition`, the restricted rule itself, since I.7 cites I.5, which rests on I.4.
+I.8's proof does not use it: it proves the four laws it cites, case by case. -/
+theorem _root_.Elements.Superposition.Cited.holds_all : ∀ c : Cited, c.Holds primitives
+  | .lenSymm => Cited.holds_lenSymm
+  | .angleSymm => Cited.holds_angleSymm
+  | .areaCongruent => Cited.holds_areaCongruent
+  | .neOfLen => Cited.holds_neOfLen
+  | .rayUnique => Cited.holds_rayUnique
+  | .rayOfAngle => Cited.holds_rayOfAngle
+  | .rayOfAngleSide => Cited.holds_rayOfAngleSide
+  | .prop7 => Prop8.holds_prop7
 
 end Elements.BookI

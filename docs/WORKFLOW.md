@@ -537,7 +537,37 @@ every train and group as unreadable.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
-  beside other contributors' builds in a shared tree.
+  beside other contributors' builds in a shared tree. Each break is a plant, a file of its
+  own, `scripts/negative/<name>.py`, its name lower-case letters, digits and underscores,
+  beginning with a letter: its description as the module docstring (what it plants, which
+  check must refuse it and what that check must say); `import negative_tests as nt`,
+  through which it reaches the shared helpers (`nt.ROOT`, `nt.replace_once`,
+  `nt.expect_failure` and the others); `BUILDS`, True only when it runs `lake build`; and
+  `def plant() -> None:`, which plants the change, in the real files or a copy of them,
+  runs the check and puts everything back in `finally`. To add a plant, add one such file;
+  no other file of the suite is edited, for there is no number to choose and no list to
+  edit. The suite lists the folder and runs the plants that do not run `lake build`, by
+  name, before those that do, by name, each named with its file and timed. Run one alone
+  with `python3 scripts/negative_tests.py --plant <name>`, which keeps the check that the
+  work tree returns to its entry Git status, and closes by saying how many of the plants it
+  ran. The suite fails, naming the file, on a file that does not load, on a file that
+  changes a name of the runner or of the modules it shares as it loads or as its plant
+  runs, on a `plant()` that changes the failures or refusals recorded before it, on a
+  `plant()` that raises `SystemExit`, after which the run goes on, and on a plant whose
+  change no check refuses; the names are looked at once more after the closing check of
+  the tree, where a change fails the run with no file to name. That last guard catches a plant that runs no check, or returns before its
+  first; it does not catch one that calls `nt.refused` with no check behind it, nor one
+  that drops some of its cases, so review still reads each plant's cases. The guards
+  catch a mistake, not a file written to deceive: a plant's file runs in the runner's
+  process with its full power, so the security review reads each plant's file as code of
+  the runner. They do not see a shared object changed in place other than those two lists
+  (a helper's `__code__` replaced, a dict of a helper module changed), nor a process ended
+  by `os._exit` or a signal, which is not caught in process and leaves with the status it
+  chooses; review reads each plant's file for them. Like any file under `scripts/`, a
+  plant's file is a protected path ([section 10](#landing-work-pull-requests)): the pull
+  request that adds, changes or deletes one names it, by its whole path, in a new decision
+  entry ("Decision entries", in section 10), carries the label `security-review` and
+  records a `/security-review`.
 - **The model tests read the lock.** `tests/model/laws.toml` names a law for each axiom of
   `Certificate/axioms.lock`, and `tests/model/lock.sha256` pins the lock's hash, so a
   change to an axiom fails the `model` job until the model follows it, in the same pull
@@ -639,8 +669,8 @@ every train and group as unreadable.
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
   tests the counts and markers without Lean. Count markers do not overlap README.md's
   generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
-  the tests before planting; its `--counts-only` option runs these plants and the file-only
-  regressions without a build.
+  the tests before planting; its `--counts-only` option runs the count plant,
+  `scripts/negative/count_markers.py`, and the file-only regressions without a build.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
   file in `docs/decisions/` (section 10, "Decision entries") before it writes, so CI's
   `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
@@ -1242,7 +1272,14 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       environment holds (#256), its `git status` check among them. The programs it runs
       as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS`, which
       is present under the launcher or after a hand-over and otherwise only if the caller
-      set it, so that a check finds its repository by its working directory (#355).
+      set it, so that a check finds its repository by its working directory (#355). No
+      command `safe_push.py` runs itself, git's or another's, gets one of the caller's
+      variables that tie git to one repository (`GIT_DIR`, `GIT_INDEX_FILE`,
+      `GIT_WORK_TREE` and the rest that `git rev-parse --local-env-vars` lists), but
+      `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
+      the hook's repository or index: each command finds its repository by its working
+      directory too, the hand-over's included (#357). The harness sets one itself, the
+      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree.
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
@@ -1336,7 +1373,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
-      the registry of checks that #229 brings) are origin/main's
+      the registry of checks that #229 brings, and since #249 `docs/ACCEPTANCE.md`, whose
+      table of the limitations allowed `tests/test_acceptance_limits.py` ties to
+      `check_acceptance.py`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1572,7 +1611,10 @@ and the formal model's build files (`model/lakefile.toml`, `model/lakefile.lean`
 the lock the model was last checked against). Since 19 October, `model/Model/Audit.lean`
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
-build. A change to any of them needs a new line in the decisions page or a dated entry
+build. Since 22 October (#249), `docs/ACCEPTANCE.md` joins them, a check input as well:
+its table of the limitations allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
+`tests/test_acceptance_limits.py` ties together, change in one pull request, a check
+change. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a
 relative link that resolves from the folder of the file that names it, `docs/briefs/`
 for the page and `docs/decisions/` for an entry, to exactly that path: for
