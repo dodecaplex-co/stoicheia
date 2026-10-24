@@ -12,10 +12,11 @@ They also keep the satisfiability and valuation warnings, the two unrestricted
 eliminator observations and the passage to numbered symbols visible. They use only
 Lean's logical axioms; they establish no global non-derivability claim.
 
-The geometric pins record each cited law and the named-lines proof used for I.4.
-Their combined proof uses no construction rule. The last two pins distinguish
-I.4's list of such laws from I.8's adapter of I.7, whose proof uses constructions
-and inherits the restricted rule through I.4.
+The geometric pins record the proof of each cited law, one theorem each, and the
+named-lines proof used for I.4. Which construction rules each law's proof uses is
+computed by the certificate, law by law (`cited_laws` in `facts.json`). The last pin
+records I.8's adapter of I.7, whose proof uses constructions and inherits the
+restricted rule through I.5 and I.4.
 -/
 
 /--
@@ -289,40 +290,6 @@ info: 'Elements.Superposition.Cited.holds_rayOfAngleSide' depends on axioms: [pr
 -/
 #guard_msgs in
 #print axioms Elements.Superposition.Cited.holds_rayOfAngleSide
-
-/--
-info: 'Elements.Superposition.Cited.holds_of_drawsNothing' depends on axioms: [propext,
- Classical.choice,
- Quot.sound,
- Elements.Tacit.add_comm,
- Elements.Tacit.add_lt_add_right,
- Elements.Tacit.add_zero,
- Elements.Tacit.angle_add_of_inside,
- Elements.Tacit.angle_symm,
- Elements.Tacit.area_congruent,
- Elements.Tacit.between_cases,
- Elements.Tacit.eq_of_len_eq_zero,
- Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_self,
- Elements.Tacit.len_symm,
- Elements.Tacit.line_unique,
- Elements.Tacit.lt_irrefl,
- Elements.Tacit.lt_trichotomy,
- Elements.Tacit.not_lt_zero,
- Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.pasch3,
- Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_symm,
- Elements.Tacit.triple_incidence2]
--/
-#guard_msgs in
-#print axioms Elements.Superposition.Cited.holds_of_drawsNothing
-
-/--
-info: 'Elements.BookI.Prop4.cites_drawNothing' depends on axioms: [propext]
--/
-#guard_msgs in
-#print axioms Elements.BookI.Prop4.cites_drawNothing
 
 /--
 info: 'Elements.BookI.Prop8.holds_prop7' depends on axioms: [propext,
