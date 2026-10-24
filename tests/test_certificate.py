@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Focused cases for Certificate/Facts.lean's restricted-calculus C.N. 4 detection.
+"""Focused cases for Certificate/Facts.lean's restricted-calculus C.N. 4 detection, its
+module boundary, and its construction rules and cited laws; and for check_fidelity.py's
+reading of the expectations on them.
 
     export PATH=$HOME/.elan/bin:$PATH
     lake build
@@ -25,6 +27,27 @@ Lean.Hidden that supplies a Common Notion: its root is Lean's, but its .olean is
 toolchain's. The temporary package's Lean root links every other entry to the toolchain's
 own files, so a reached declaration of Lean.Data.Position still ends a walk.
 
+A third fixture, tests/fixtures/CertificateCited.lean, imports the repository's compiled
+foundations themselves. Its own axioms are the cases of a construction rule: existence
+asserted directly, through a definition, through a projection of a structure that a
+definition gives, through a projection reached through nested structures and through a
+function's arguments, through an inherited instance's order, through a let-bound
+structure, through a let at an application's head, twice negated, in an Iff and in an
+Or, each counted; existence negated, outright or by a definition (Triangle), behind an
+implication inside a definition, assumed in a hypothesis, absent, or only in a field the
+statement does not read, none counted. Its entries cite laws through one shared theorem
+that proves a list of laws by cases (I.1), whose proofs the walk finds, and law by law,
+naming each law's proof (I.2), which is listed alone: each law with its proofs, where Lean
+declares them, and the construction rules beneath them, in the order of the Cited type. A
+proof reached only through another entry is not found (I.3); a named proof that leaves
+another proof reached outside it lists every proof reached, with all their rules (I.6);
+and a law named with no proof found fails the run (I.5).
+
+A fourth class reads the forms of tests/certificate_expectations.json as
+scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
+construction rules and a field of facts.json's top level are read, and an expectation that
+is malformed, unmet or asks nothing fails.
+
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
 Standard library only.
@@ -35,11 +58,15 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+import check_fidelity  # noqa: E402
 AXIOM_FIELDS = ("axioms", "direct_axioms", "own_axioms", "inherited", "lean_foundations")
 
 
@@ -270,6 +297,346 @@ class ModuleBoundaryTests(unittest.TestCase):
         result = self.certificate("")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue((self.work / "facts.json").is_file())
+
+
+class ConstructionTests(unittest.TestCase):
+    """The construction rules and the cited laws, on tests/fixtures/CertificateCited.lean
+    over the repository's compiled foundations (#150, question 4)."""
+
+    CONSTRUCTS = ("plain", "circles", "line_circle", "lines", "by_projection",
+                  "by_nested_projection", "by_instance", "twice_negated", "in_iff", "in_or")
+    DOES_NOT = ("triangle", "not_collinear", "empty", "assumed", "equal", "other_field",
+                "prop7_law")
+
+    @classmethod
+    def setUpClass(cls):
+        tmp = tempfile.TemporaryDirectory(prefix="stoicheia-cited-")
+        cls.addClassCleanup(tmp.cleanup)
+        cls.work = Path(tmp.name)
+        cls.env, cls.modules = prepare_package(cls.work)
+        cls.fixture = (ROOT / "tests/fixtures/CertificateCited.lean").read_text()
+        result = cls.certificate("")
+        if result.returncode:
+            raise AssertionError(
+                f"certificate: lake env lean exited {result.returncode}\n"
+                + result.stdout + result.stderr
+            )
+        cls.facts = json.loads((cls.work / "facts.json").read_text())
+        cls.entries = {entry["ref"]: entry for entry in cls.facts["propositions"]}
+
+    @classmethod
+    def certificate(cls, declarations):
+        """Compile the fixture, with `declarations` added before its last line, as the
+        package's Elements module, and run the certificate on it."""
+        body, last = cls.fixture.rstrip("\n").rsplit("\n", 1)
+        (cls.work / "Elements.lean").write_text(f"{body}\n{declarations}\n{last}\n")
+        compile_module(cls.work, cls.env, cls.modules, "Elements")
+        (cls.work / "facts.json").unlink(missing_ok=True)
+        return subprocess.run(
+            ["lake", "env", "lean", "Facts.lean"],
+            cwd=cls.work, env=cls.env, capture_output=True, text=True, timeout=300,
+        )
+
+    def test_rules_asserting_existence_are_construction_rules(self):
+        rules = self.facts["construction_rules"]
+        for name in self.CONSTRUCTS:
+            with self.subTest(axiom=name):
+                self.assertIn(f"CitedFixture.{name}", rules)
+        self.assertIn("Postulate1", rules)
+
+    def test_rule_through_an_inherited_instance_projection(self):
+        self.assertIn("CitedFixture.by_instance", self.facts["construction_rules"])
+
+    def test_rule_through_a_projection_of_a_definitions_structure(self):
+        self.assertIn("CitedFixture.by_projection", self.facts["construction_rules"])
+
+    def test_rule_through_nested_structures_and_a_functions_arguments(self):
+        # `(twoFamily.pick L).holds L α`: the second field of `twoFamily`, a function, is
+        # applied to `L`, and the second field of what it gives is read. Its first field,
+        # which asserts no existence, must not be read in its place.
+        rules = self.facts["construction_rules"]
+        self.assertIn("CitedFixture.by_nested_projection", rules)
+        self.assertNotIn("CitedFixture.other_field", rules)
+
+    def test_rule_through_a_let_bound_structure(self):
+        self.assertIn("CitedFixture.circles", self.facts["construction_rules"])
+
+    def test_rule_through_a_let_at_an_applications_head(self):
+        self.assertIn("CitedFixture.lines", self.facts["construction_rules"])
+
+    def test_rules_not_asserting_existence_are_not(self):
+        rules = self.facts["construction_rules"]
+        for name in self.DOES_NOT:
+            with self.subTest(axiom=name):
+                self.assertNotIn(f"CitedFixture.{name}", rules)
+        for name in ("Postulate4", "Definition15", "Tacit.superposition"):
+            with self.subTest(axiom=name):
+                self.assertNotIn(name, rules)
+
+    def test_construction_rules_are_sorted_axioms(self):
+        rules = self.facts["construction_rules"]
+        self.assertEqual(rules, sorted(set(rules)))
+        for name in rules:
+            with self.subTest(axiom=name):
+                self.assertIn(name, self.facts["axiom_modules"])
+
+    @classmethod
+    def proof(cls, name):
+        """A proof as `proofs` lists it: its name, and where Lean declares it, in the
+        fixture compiled as the package's Elements module."""
+        short = name.split(".", 1)[1]
+        lines = cls.fixture.splitlines()
+        line = next(i for i, text in enumerate(lines, 1)
+                    if text.startswith(f"theorem {short} "))
+        return {"name": name, "file": "Elements.lean", "line": line}
+
+    def test_laws_through_one_shared_theorem(self):
+        self.assertEqual(self.entries["I.1"]["cited_laws"], [
+            {"law": "lenSymm", "proofs": [self.proof("CitedFixture.holds_lenSymm")],
+             "construction_rules": []},
+            {"law": "angleSymm", "proofs": [self.proof("CitedFixture.holds_angleSymm")],
+             "construction_rules": ["Postulate1"]},
+        ])
+
+    def test_laws_one_by_one_in_the_type_order(self):
+        # Metric 3's law is named through its second proof, which the first lies beneath,
+        # so the second alone is listed.
+        self.assertEqual(self.entries["I.2"]["cited_laws"], [
+            {"law": "lenSymm", "proofs": [self.proof("CitedFixture.holds_lenSymm'")],
+             "construction_rules": []},
+            {"law": "prop7", "proofs": [self.proof("BookI.Prop2.holds_prop7")],
+             "construction_rules": ["Tacit.circles_meet"]},
+        ])
+
+    def test_walk_stops_at_other_entries(self):
+        self.assertEqual(self.entries["I.3"]["cited_laws"], [
+            {"law": "lenSymm", "proofs": [self.proof("CitedFixture.holds_lenSymm")],
+             "construction_rules": []},
+        ])
+
+    def test_a_proof_reached_outside_the_named_ones_lists_every_proof(self):
+        # I.6 names the first proof of Metric 3's law, and reaches the drawn one only through
+        # a lemma: every proof reached is listed, with the rules beneath them all.
+        self.assertEqual(self.entries["I.6"]["cited_laws"], [
+            {"law": "lenSymm", "proofs": [self.proof("CitedFixture.holds_lenSymm"),
+                                          self.proof("CitedFixture.holds_lenSymm_drawn")],
+             "construction_rules": ["Postulate2"]},
+        ])
+
+    def test_no_law_no_field(self):
+        self.assertNotIn("cited_laws", self.entries["I.4"])
+
+    def test_law_without_a_proof_fails(self):
+        # I.5 names Metric 3's law, and proves it only through I.2, an entry. The other
+        # tests read the facts setUpClass loaded, so this run changes none of them.
+        result = self.certificate(
+            "namespace BookI\n"
+            "open Superposition in\n"
+            "theorem Prop5 : Cited.lenSymm.Holds primitives ∧ True :=\n"
+            "  ⟨Prop2 _ (by simp [Prop2.cites]), trivial⟩\n"
+            "end BookI"
+        )
+        output = result.stdout + result.stderr
+        self.assertNotEqual(result.returncode, 0, output)
+        self.assertIn(
+            "I.5: its own Lean names the law Elements.Superposition.Cited.lenSymm, but no "
+            "theorem stating exactly `Cited.Holds primitives "
+            "Elements.Superposition.Cited.lenSymm` is reached from it without passing "
+            "through another entry",
+            output,
+        )
+
+
+class ExpectationTests(unittest.TestCase):
+    """check_fidelity.py's reading of tests/certificate_expectations.json, on small facts,
+    without Lean (#150, question 4): a cited law's construction rules, read by its `law`; a
+    field of facts.json's top level, read with no `ref`; and each expectation that is
+    malformed, unmet or asks nothing, failing with its own message."""
+
+    def facts(self, **i4):
+        return {
+            "construction_rules": ["Postulate1", "Tacit.circles_meet"],
+            "propositions": [
+                dict({"ref": "I.4", "axioms": ["Tacit.len_symm"], "cited_laws": [
+                    {"law": "lenSymm", "proofs": [], "construction_rules": []}]}, **i4),
+                {"ref": "I.8", "axioms": ["Postulate1"], "cited_laws": [
+                    {"law": "lenSymm", "proofs": [], "construction_rules": []},
+                    {"law": "prop7", "proofs": [], "construction_rules": ["Postulate1"]}]},
+            ],
+        }
+
+    def problems(self, *expectations, facts=None, top=True):
+        """The problems check_expectations finds in `expectations`, each given a `why`
+        unless it has one, against `facts` (and its top level unless `top` is False)."""
+        facts = facts or self.facts()
+        by_ref = {p["ref"]: (None, p) for p in facts["propositions"]}
+        errors = []
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(check_fidelity, "errors", errors):
+            path = Path(tmp) / "expectations.json"
+            path.write_text(json.dumps({"expectations": [
+                x if "why" in x else dict(x, why="for the test") for x in expectations]}))
+            check_fidelity.check_expectations(by_ref, path, facts if top else None)
+        return errors
+
+    def assertFailsOnce(self, expectation, message, **kwargs):
+        errors = self.problems(expectation, **kwargs)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn(message, errors[0])
+
+    def test_kept_expectations_pass(self):
+        self.assertEqual(self.problems(
+            {"ref": "I.8", "field": "cited_laws", "includes": ["lenSymm", "prop7"],
+             "count": {"prefix": "", "is": 2}},
+            {"ref": "I.4", "field": "cited_laws", "excludes": ["prop7"]},
+            {"ref": "I.8", "field": "cited_laws", "law": "prop7", "includes": ["Postulate1"]},
+            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm", "excludes": [],
+             "equals": []},
+            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm", "includes": [],
+             "count": {"prefix": "", "is": 0}},
+            {"field": "construction_rules", "includes": ["Postulate1"],
+             "excludes": ["Postulate4"]},
+        ), [])
+
+    def test_a_cited_law_is_read_by_its_law(self):
+        self.assertFailsOnce(
+            {"ref": "I.8", "field": "cited_laws", "law": "prop7", "equals": []},
+            "I.8: its construction_rules for the cited law prop7 is ['Postulate1'], not []")
+        self.assertFailsOnce(
+            {"ref": "I.4", "field": "cited_laws", "includes": ["prop7"]},
+            "I.4: its cited_laws should include prop7")
+        self.assertFailsOnce(
+            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm", "includes": ["Postulate1"]},
+            "I.4: its construction_rules for the cited law lenSymm should include Postulate1")
+
+    def test_a_law_not_cited_once_fails(self):
+        missing = {"ref": "I.4", "field": "cited_laws", "law": "prop7", "equals": []}
+        self.assertFailsOnce(missing, "I.4: pinned by")
+        self.assertFailsOnce(missing, "but its cited_laws has no law prop7 with "
+                                      "construction_rules")
+        twice = [{"law": "lenSymm", "proofs": [], "construction_rules": []}] * 2
+        self.assertFailsOnce({"ref": "I.4", "field": "cited_laws", "law": "lenSymm",
+                              "equals": []},
+                             "has no law lenSymm with construction_rules",
+                             facts=self.facts(cited_laws=twice))
+        self.assertFailsOnce({"ref": "I.4", "field": "axioms", "law": "lenSymm", "equals": []},
+                             "but its axioms has no law lenSymm with construction_rules")
+
+    def test_a_law_needs_a_ref(self):
+        self.assertFailsOnce({"field": "construction_rules", "law": "lenSymm", "equals": []},
+                             "a `ref` unless it reads the top level of facts.json (and always "
+                             "with a `law`)")
+
+    def test_the_top_level_is_read_without_a_ref(self):
+        self.assertFailsOnce({"field": "construction_rules", "includes": ["Postulate4"]},
+                             "facts.json: its construction_rules should include Postulate4")
+        self.assertFailsOnce({"field": "construction_rules", "excludes": ["Postulate1"]},
+                             "facts.json: its construction_rules should not include Postulate1")
+        self.assertFailsOnce({"field": "proved_rules", "excludes": ["Postulate1"]},
+                             "facts.json: pinned by")
+        self.assertFailsOnce({"field": "proved_rules", "excludes": ["Postulate1"]},
+                             "but its top level has no field `proved_rules`")
+        self.assertFailsOnce({"field": "construction_rules", "includes": ["Postulate1"]},
+                             "reads the top level of facts.json, which was not given",
+                             top=False)
+
+    def test_a_missing_field_or_entry_fails(self):
+        self.assertFailsOnce({"ref": "I.4", "field": "shared_steps", "excludes": ["x"]},
+                             "I.4: pinned by")
+        self.assertFailsOnce({"ref": "I.4", "field": "shared_steps", "excludes": ["x"]},
+                             "but its entry has no field `shared_steps`")
+        self.assertFailsOnce({"ref": "I.9", "field": "axioms", "excludes": ["x"]},
+                             "I.9: pinned by")
+
+    def test_an_expectation_that_asks_nothing_fails(self):
+        # Before #150's review this passed: an expectation with none of the four asked
+        # nothing, and so could never fail.
+        for expectation in ({"ref": "I.4", "field": "axioms"},
+                            {"ref": "I.4", "field": "axioms", "includes": []},
+                            {"ref": "I.4", "field": "axioms", "excludes": []},
+                            {"ref": "I.4", "field": "axioms", "includes": [],
+                             "excludes": []},
+                            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm"},
+                            {"field": "construction_rules"}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "and an effective predicate: nonempty "
+                                                  "`includes` or `excludes`, or present "
+                                                  "`equals` or `count`")
+
+    def test_a_malformed_expectation_fails(self):
+        for expectation in ({"ref": "I.4", "field": "axioms", "includes": [], "why": None,
+                             "extra": 1},
+                            {"ref": "I.4", "includes": ["Tacit.len_symm"]}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "needs `field` and `why`")
+
+    def test_a_malformed_predicate_fails(self):
+        # A string `excludes` was read letter by letter, and so could never fail.
+        for expectation in ({"ref": "I.4", "field": "axioms", "excludes": "Tacit.len_symm"},
+                            {"ref": "I.4", "field": "axioms", "includes": [1]},
+                            {"ref": "I.4", "field": "axioms", "count": 1},
+                            {"ref": "I.4", "field": "axioms", "count": {"is": "1"}},
+                            {"ref": "I.4", "field": "axioms",
+                             "count": {"pefix": "Tacit.", "is": 1}},
+                            {"ref": "I.4", "field": "axioms",
+                             "count": {"prefix": 1, "is": 1}}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "`includes` and `excludes` must be lists of "
+                                                  "names, and `count` an object with an "
+                                                  "integer `is`")
+
+    def test_a_field_with_no_names_cannot_be_read_by_name(self):
+        # Before #150's review these passed: `shared_steps` was read as its objects' missing
+        # `law`s, and a scalar as no names, so an `excludes` on either could never fail.
+        steps = [{"name": "Prop1.perpendicular", "brings_in": ["I.1"], "file": "f", "line": 1}]
+        facts = self.facts(shared_steps=steps, statement="If two triangles …",
+                           mixed=["Tacit.len_symm", {"law": "lenSymm"}])
+        for expectation in ({"ref": "I.4", "field": "shared_steps",
+                             "excludes": ["Prop1.perpendicular"]},
+                            {"ref": "I.4", "field": "shared_steps",
+                             "includes": ["Prop1.perpendicular"]},
+                            {"ref": "I.4", "field": "statement", "excludes": ["If"]},
+                            {"ref": "I.4", "field": "statement",
+                             "count": {"prefix": "", "is": 0}},
+                            {"ref": "I.4", "field": "mixed", "excludes": ["Tacit.len_symm"]}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "is not a list of names, an object or "
+                                                  "cited_laws, so `includes`, `excludes` and "
+                                                  "`count` cannot read it", facts=facts)
+        self.assertFailsOnce({"ref": "I.4", "field": "statement", "excludes": [],
+                              "equals": "If two triangles"},
+                             "I.4: its statement is 'If two triangles …', not 'If two "
+                             "triangles'", facts=facts)
+        self.assertEqual(self.problems(
+            {"ref": "I.4", "field": "shared_steps", "equals": steps},
+            {"ref": "I.4", "field": "statement", "excludes": [],
+             "equals": "If two triangles …"},
+            {"ref": "I.4", "field": "inherited", "includes": ["Postulate3"],
+             "excludes": ["Postulate1"], "count": {"prefix": "Post", "is": 1}},
+            facts=self.facts(shared_steps=steps, statement="If two triangles …",
+                             inherited={"Postulate3": steps})), [])
+
+    def test_a_malformed_cited_law_fails(self):
+        for cited in ([{"name": "lenSymm", "proofs": [], "construction_rules": []}],
+                      [{"law": None, "proofs": [], "construction_rules": []}],
+                      [{"law": "", "proofs": [], "construction_rules": []}],
+                      ["lenSymm"],
+                      {"lenSymm": []}):
+            facts = self.facts(cited_laws=cited)
+            for expectation in ({"ref": "I.4", "field": "cited_laws", "excludes": ["prop7"]},
+                                {"ref": "I.4", "field": "cited_laws",
+                                 "count": {"prefix": "", "is": 1}}):
+                with self.subTest(cited=cited, expectation=expectation):
+                    self.assertFailsOnce(expectation, "I.4: pinned by", facts=facts)
+                    self.assertFailsOnce(expectation, "but its cited_laws is not a list of "
+                                                      "objects each with a `law` name",
+                                         facts=facts)
+        beside = [{"law": "lenSymm", "proofs": [], "construction_rules": []},
+                  {"proofs": [], "construction_rules": ["Postulate1"]}]
+        self.assertFailsOnce({"ref": "I.4", "field": "cited_laws", "law": "lenSymm",
+                              "equals": []},
+                             "but its cited_laws is not a list of objects each with a `law` "
+                             "name", facts=self.facts(cited_laws=beside))
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """Create the Lean file for each proposition of a book: the statement in Heath's
 letters, Heath's enunciation as its docstring, and every sentence of Euclid's
-proof as a `--` comment, ending in `sorry`. That is the "sketch"; proofs are then
-written between the comments.
+proof as a `--` comment, with approved porisms and companions after it. Each
+declaration ends in `sorry`; proofs are then written between the comments.
 
 Only creates files that don't exist yet, so it never overwrites a proof.
 
@@ -186,12 +186,11 @@ BOOK_II = {
 
 
 # The statements of Book III. A circle takes Heath's letters (`ABC` for the circle ABC).
-# Our circles carry a centre only when a hypothesis gives one: where the setting-out
-# names the centre, or speaks of a straight line through it, the centre is a hypothesis
-# in Heath's letter; otherwise the circle comes with `∃ O, Centre O α` (in Heath's letter
-# for the centre where he has one), and the proof takes the centre by III.1. "Equal
-# circles" is `EqualCircles`; a straight line touching a circle is `Touches`; circles
-# touching one another are `TouchesInternally`, `TouchesExternally` or `CirclesTouch`.
+# A centre is named where the statement uses it. Where a proof needs an unnamed centre,
+# it takes one by III.1 where Heath cites it, and from `exists_centre` otherwise
+# (docs/briefs/0008-centre.md, step 6). "Equal circles" is `EqualCircles`; a straight
+# line touching a circle is `Touches`; circles touching one another are
+# `TouchesInternally`, `TouchesExternally` or `CirclesTouch`.
 # Contact within includes a point of the inner circle within the outer and none outside;
 # contact without has no point within both. `CirclesCut` means meeting at two points with
 # a point of each circle within the other. The circumference BKC is
@@ -201,17 +200,17 @@ BOOK_II = {
 # statement, and the readings of cutting and of contact within and without, are as
 # docs/briefs/0008-centre.md, section 7, restates them.
 BOOK_III = {
-    1: "{A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) (hA : OnCircle A ABC)\n"
+    1: "{A B : Point} {ABC : Circle} (hA : OnCircle A ABC)\n"
        "    (hB : OnCircle B ABC) (hAB : A ≠ B) :\n"
        "    ∃ F C D E : Point, Centre F ABC ∧ Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧\n"
        "      OnCircle E ABC ∧ Between C D E ∧ ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖",
-    2: "{A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) (hA : OnCircle A ABC)\n"
+    2: "{A B : Point} {ABC : Circle} (hA : OnCircle A ABC)\n"
        "    (hB : OnCircle B ABC) :\n"
        "    ∀ E : Point, Between A E B → InsideCircle E ABC",
     3: "{A B E F : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircle A ABC)\n"
        "    (hB : OnCircle B ABC) (hAFB : Between A F B) (hE_AB : ¬ Collinear A B E) :\n"
        "    (‖A F‖ = ‖F B‖ → ∠ A F E = ∟ ∧ ∠ B F E = ∟) ∧ (∠ A F E = ∟ → ‖A F‖ = ‖F B‖)",
-    4: "{A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre F ABCD)\n"
+    4: "{A B C D E : Point} {ABCD : Circle}\n"
        "    (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)\n"
        "    (hD : OnCircle D ABCD) (hAEC : Between A E C) (hBED : Between B E D)\n"
        "    (hB_AC : ¬ Collinear A C B) (hAC : ∀ F : Point, Centre F ABCD → ¬ Collinear A C F)\n"
@@ -230,7 +229,7 @@ BOOK_III = {
        "    (∀ G : Point, OnCircle G ABCD → ¬ Collinear A D G → ∃ H : Point, OnCircle H ABCD ∧\n"
        "      OppositeSidesOf H G A D ∧ ‖F H‖ = ‖F G‖ ∧\n"
        "      ∀ K : Point, OnCircle K ABCD → ‖F K‖ = ‖F G‖ → K = G ∨ K = H)",
-    8: "{A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)\n"
+    8: "{A D G : Point} {ABC : Circle}\n"
        "    (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)\n"
        "    (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :\n"
        "    (∀ E : Point, OnCircle E ABC → E ≠ A → ‖D E‖ < ‖D A‖) ∧\n"
@@ -246,13 +245,13 @@ BOOK_III = {
        "    (∀ K : Point, OnCircle K ABC → ¬ Collinear D A K → ∃ B : Point, OnCircle B ABC ∧\n"
        "      OppositeSidesOf B K D A ∧ ‖D B‖ = ‖D K‖ ∧\n"
        "      ∀ N : Point, OnCircle N ABC → ‖D N‖ = ‖D K‖ → N = K ∨ N = B)",
-    9: "{A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)\n"
+    9: "{A B C D : Point} {ABC : Circle}\n"
        "    (hA : OnCircle A ABC) (hB : OnCircle B ABC)\n"
        "    (hC : OnCircle C ABC) (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C)\n"
        "    (hDA : ‖D A‖ = ‖D B‖) (hDB : ‖D B‖ = ‖D C‖) :\n"
        "    Centre D ABC",
-    10: "{B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre P ABC)\n"
-        "    (hDEF : ∃ P : Point, Centre P DEF) (hB₁ : OnCircle B ABC) (hB₂ : OnCircle B DEF)\n"
+    10: "{B G H : Point} {ABC DEF : Circle}\n"
+        "    (hB₁ : OnCircle B ABC) (hB₂ : OnCircle B DEF)\n"
         "    (hG₁ : OnCircle G ABC) (hG₂ : OnCircle G DEF) (hH₁ : OnCircle H ABC)\n"
         "    (hH₂ : OnCircle H DEF) (hBG : B ≠ G) (hBH : B ≠ H) (hGH : G ≠ H) :\n"
         "    ABC = DEF",
@@ -262,8 +261,7 @@ BOOK_III = {
     12: "{A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Centre G ADE)\n"
         "    (htouch : TouchesExternally ABC ADE A) :\n"
         "    Between F A G",
-    13: "{A B C D : Point} {ABDC EBFD ACK : Circle} (hABDC : ∃ G : Point, Centre G ABDC)\n"
-        "    (hEBFD : ∃ H : Point, Centre H EBFD) (hACK : ∃ O : Point, Centre O ACK) :\n"
+    13: "{A B C D : Point} {ABDC EBFD ACK : Circle} :\n"
         "    ((TouchesInternally ABDC EBFD D ∨ TouchesInternally EBFD ABDC D) →\n"
         "      OnCircle B ABDC → OnCircle B EBFD → B = D) ∧\n"
         "    (TouchesExternally ACK ABDC A → OnCircle C ACK → OnCircle C ABDC → C = A)",
@@ -285,7 +283,7 @@ BOOK_III = {
         "    (hADB : Between A D B) (hE : ¬ Collinear A B E) (hBAE : ∠ B A E = ∟) :\n"
         "    (∀ P : Point, Collinear A E P → P ≠ A → OutsideCircle P ABC) ∧\n"
         "    (∀ F : Point, ¬ Collinear A E F → ∃ G : Point, Collinear A F G ∧ InsideCircle G ABC)",
-    17: "{A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (hA : OutsideCircle A BCD) :\n"
+    17: "{A : Point} {BCD : Circle} (hA : OutsideCircle A BCD) :\n"
         "    ∃ B : Point, OnCircle B BCD ∧ Touches A B BCD",
     18: "{C D E F : Point} {ABC : Circle} (hF : Centre F ABC) (hC : OnCircle C ABC)\n"
         "    (hDE : Touches D E ABC) (hCDE : Collinear D E C) :\n"
@@ -297,29 +295,30 @@ BOOK_III = {
     20: "{A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircle A ABC)\n"
         "    (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hEA : SameSideOf E A B C) :\n"
         "    ∠ B E C = ∠ B A C + ∠ B A C",
-    21: "{A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre F ABCD)\n"
+    21: "{A B D E : Point} {ABCD : Circle}\n"
         "    (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hD : OnCircle D ABCD)\n"
         "    (hE : OnCircle E ABCD) (hAE : SameSideOf A E B D) :\n"
         "    ∠ B A D = ∠ B E D",
-    22: "{A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre O ABCD)\n"
+    22: "{A B C D : Point} {ABCD : Circle}\n"
         "    (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)\n"
         "    (hD : OnCircle D ABCD) (hAC : OppositeSidesOf A C B D) :\n"
         "    ∠ A B C + ∠ A D C = ∟ + ∟ ∧ ∠ B A D + ∠ D C B = ∟ + ∟",
-    23: "{A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centre O ACB)\n"
-        "    (hADB : ∃ O : Point, Centre O ADB) (hA₁ : OnCircle A ACB) (hB₁ : OnCircle B ACB)\n"
-        "    (hC : OnCircle C ACB) (hA₂ : OnCircle A ADB) (hB₂ : OnCircle B ADB)\n"
-        "    (hD : OnCircle D ADB) (hCD : SameSideOf C D A B) (hsim : ∠ A C B = ∠ A D B) :\n"
+    23: "{A B C D : Point} {ACB ADB : Circle} (hA₁ : OnCircle A ACB)\n"
+        "    (hB₁ : OnCircle B ACB) (hC : OnCircle C ACB) (hA₂ : OnCircle A ADB)\n"
+        "    (hB₂ : OnCircle B ADB) (hD : OnCircle D ADB) (hCD : SameSideOf C D A B)\n"
+        "    (hsim : ∠ A C B = ∠ A D B) :\n"
         "    ACB = ADB",
-    24: "{A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, Centre O AEB)\n"
-        "    (hCFD : ∃ O : Point, Centre O CFD) (hA : OnCircle A AEB) (hB : OnCircle B AEB)\n"
-        "    (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)\n"
+    24: "{A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)\n"
+        "    (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)\n"
         "    (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)\n"
         "    (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :\n"
-        "    EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D",
-    25: "{A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC) (hA : OnCircle A ABC)\n"
-        "    (hC : OnCircle C ABC) :\n"
-        "    ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧\n"
-        "      Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧\n"
+        "    Arc.Congruent ⟨AEB, A, B, E⟩ ⟨CFD, C, D, F⟩",
+    25: "{A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)\n"
+        "    (hmeet : ∀ X Y : Point, Between A X C → SameSideOf Y P A C →\n"
+        "      ∃ B : Point, S B ∧ OnRay B X Y) :\n"
+        "    ∃ (B D E : Point) (γ : Circle), S B ∧ SameSideOf B P A C ∧ Between A D C ∧\n"
+        "      ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E γ ∧ OnCircle A γ ∧ OnCircle B γ ∧\n"
+        "      OnCircle C γ ∧ Collinear D B E ∧\n"
         "      (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧\n"
         "      (∠ A B D < ∠ B A D → SameSideOf E B A C)",
     26: "{A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : EqualCircles ABC DEF)\n"
@@ -327,8 +326,11 @@ BOOK_III = {
         "    (hC : OnCircle C ABC) (hD : OnCircle D DEF) (hE : OnCircle E DEF)\n"
         "    (hF : OnCircle F DEF) (hAK : OppositeSidesOf A K B C) (hDL : OppositeSidesOf D L E F) :\n"
         "    (OppositeSidesOf G K B C → OppositeSidesOf H L E F → ∠ B G C = ∠ E H F →\n"
-        "      circumference ABC B K C = circumference DEF E L F) ∧\n"
-        "    (∠ B A C = ∠ E D F → circumference ABC B K C = circumference DEF E L F)",
+        "      circumference ABC B K C = circumference DEF E L F ∧\n"
+        "        Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩) ∧\n"
+        "    (∠ B A C = ∠ E D F →\n"
+        "      circumference ABC B K C = circumference DEF E L F ∧\n"
+        "        Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩)",
     27: "{A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles ABC DEF)\n"
         "    (hG : Centre G ABC) (hH : Centre H DEF) (hA : OnCircle A ABC) (hB : OnCircle B ABC)\n"
         "    (hC : OnCircle C ABC) (hD : OnCircle D DEF) (hE : OnCircle E DEF)\n"
@@ -341,15 +343,16 @@ BOOK_III = {
         "    (hCG : OppositeSidesOf C G A B) (hFH : OppositeSidesOf F H D E) (hAB : ‖A B‖ = ‖D E‖)\n"
         "    (hABC : circumference ABC A G B ≤ circumference ABC A C B)\n"
         "    (hDEF : circumference DEF D H E ≤ circumference DEF D F E) :\n"
-        "    circumference ABC A C B = circumference DEF D F E ∧\n"
-        "      circumference ABC A G B = circumference DEF D H E",
+        "    (circumference ABC A C B = circumference DEF D F E ∧\n"
+        "        Arc.Congruent ⟨ABC, A, B, C⟩ ⟨DEF, D, E, F⟩) ∧\n"
+        "      (circumference ABC A G B = circumference DEF D H E ∧\n"
+        "        Arc.Congruent ⟨ABC, A, B, G⟩ ⟨DEF, D, E, H⟩)",
     29: "{B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles ABC DEF)\n"
         "    (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hE : OnCircle E DEF) (hF : OnCircle F DEF)\n"
         "    (hG : ¬ Collinear B C G) (hH : ¬ Collinear E F H)\n"
         "    (heq : circumference ABC B G C = circumference DEF E H F) :\n"
         "    ‖B C‖ = ‖E F‖",
-    30: "{A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB) (hA : OnCircle A ADB)\n"
-        "    (hB : OnCircle B ADB) :\n"
+    30: "{A B : Point} {ADB : Circle} (hA : OnCircle A ADB) (hB : OnCircle B ADB) :\n"
         "    ∀ P : Point, ¬ Collinear A B P → ∃ D : Point, OnCircle D ADB ∧ SameSideOf D P A B ∧\n"
         "      standing ADB A B D = standing ADB D A B",
     31: "{A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)\n"
@@ -358,35 +361,33 @@ BOOK_III = {
         "    ∠ B A C = ∟ ∧\n"
         "      (∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟) ∧\n"
         "      ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C",
-    32: "{B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre O ABCD)\n"
-        "    (hB : OnCircle B ABCD) (hD : OnCircle D ABCD) (hBD : B ≠ D) (hEF : Touches E F ABCD)\n"
-        "    (hEBF : Between E B F) :\n"
+    32: "{B D E F : Point} {ABCD : Circle} (hB : OnCircle B ABCD)\n"
+        "    (hD : OnCircle D ABCD) (hBD : B ≠ D) (hEF : Touches E F ABCD) (hEBF : Between E B F) :\n"
         "    (∀ A : Point, OnCircle A ABCD → OppositeSidesOf A F B D → ∠ F B D = ∠ B A D) ∧\n"
         "    (∀ C : Point, OnCircle C ABCD → SameSideOf C F B D → ∠ E B D = ∠ D C B)",
     33: "{A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C₂) :\n"
-        "    ∃ (AEB : Circle) (E : Point), (∃ O : Point, Centre O AEB) ∧ OnCircle A AEB ∧\n"
-        "      OnCircle B AEB ∧ OnCircle E AEB ∧ ¬ Collinear A B E ∧ ∠ A E B = ∠ C₁ C C₂",
-    34: "{D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)\n"
-        "    (hD : Triangle D₁ D D₂) :\n"
+        "    ∃ (AEB : Circle) (E : Point), OnCircle A AEB ∧ OnCircle B AEB ∧ OnCircle E AEB ∧\n"
+        "      ¬ Collinear A B E ∧ ∠ A E B = ∠ C₁ C C₂",
+    34: "{D₁ D D₂ : Point} (ABC : Circle) (hD : Triangle D₁ D D₂) :\n"
         "    ∃ A B C : Point, OnCircle A ABC ∧ OnCircle B ABC ∧ OnCircle C ABC ∧ Triangle B A C ∧\n"
         "      ∠ B A C = ∠ D₁ D D₂",
-    35: "{A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre F ABCD)\n"
-        "    (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)\n"
-        "    (hD : OnCircle D ABCD) (hAEC : Between A E C) (hBED : Between B E D) :\n"
+    35: "{A B C D E : Point} {ABCD : Circle} (hA : OnCircle A ABCD)\n"
+        "    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hD : OnCircle D ABCD)\n"
+        "    (hAEC : Between A E C) (hBED : Between B E D) :\n"
         "    rect A E E C = rect D E E B",
-    36: "{A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F ABC)\n"
-        "    (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)\n"
-        "    (hC : OnCircle C ABC) (hDCA : Between D C A) (hDB : Touches D B ABC) :\n"
+    36: "{A B C D : Point} {ABC : Circle} (hD : OutsideCircle D ABC)\n"
+        "    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hDCA : Between D C A)\n"
+        "    (hDB : Touches D B ABC) :\n"
         "    rect A D D C = sq D B",
-    37: "{A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F ABC)\n"
-        "    (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)\n"
-        "    (hC : OnCircle C ABC) (hDCA : Between D C A) (h : rect A D D C = sq D B) :\n"
+    37: "{A B C D : Point} {ABC : Circle} (hD : OutsideCircle D ABC)\n"
+        "    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hDCA : Between D C A)\n"
+        "    (h : rect A D D C = sq D B) :\n"
         "    Touches D B ABC",
 }
 
-# Corollaries that later propositions cite, stated now so that they can be: each follows
-# its proposition in the same file, a docstring and a statement, ending in `sorry`.
-COROLLARIES = {
+# Declarations that follow their proposition in the same file: each has a docstring and a
+# statement ending in `sorry`.
+FOLLOWUPS = {
     ("III", 1): [(
         "porism",
         "The Porism to III.1: \"if in a circle a straight line cut a straight line into two\n"
@@ -408,6 +409,45 @@ COROLLARIES = {
         "{A D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCircle A ABC)\n"
         "    (hE : ¬ Collinear D A E) (hDAE : ∠ D A E = ∟) :\n"
         "    Touches A E ABC",
+    )],
+    ("III", 24): [(
+        "equalCircles",
+        "**III.24, the circles and the measures** (companion of III.24, \"III.24 equalCircles\").\n"
+        "Similar segments on equal straight lines lie in equal circles, and their circumferences are\n"
+        "equal in measure.",
+        "{A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)\n"
+        "    (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)\n"
+        "    (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)\n"
+        "    (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :\n"
+        "    EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D",
+    ), (
+        "equalMeasure",
+        "**Congruent segments have equal circumferences** (companion of III.24, \"III.24\n"
+        "equalMeasure\"). If two drawn segments are congruent, their circumferences are equal in\n"
+        "measure.",
+        "{a b : Arc} (ha : a.Drawn) (hb : b.Drawn)\n"
+        "    (h : Arc.Congruent a b) : a.measure = b.measure",
+    )],
+    ("III", 25): [(
+        "complete",
+        "**III.25's circle is the segment's circle** (companion of III.25, \"III.25 complete\").\n"
+        "Let A, C be points of a circle α, and B a point of its arc on P's side of AC. Any circle γ\n"
+        "through A, B and C is α, and every point of the arc AC on P's side is on γ.",
+        "{A C P B : Point} {α γ : Circle} (hA : OnCircle A α)\n"
+        "    (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩) (hBP : SameSideOf B P A C)\n"
+        "    (hAγ : OnCircle A γ) (hBγ : OnCircle B γ) (hCγ : OnCircle C γ) :\n"
+        "    γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ",
+    ), (
+        "of_circle",
+        "**III.25, handed the whole circle** (companion of III.25, \"III.25 of_circle\").\n"
+        "Handed the circle ABC, the core finds a circle that is ABC itself, so its centre E is the\n"
+        "centre of ABC.",
+        "{A C : Point} {ABC : Circle} (hA : OnCircle A ABC)\n"
+        "    (hC : OnCircle C ABC) :\n"
+        "    ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧\n"
+        "      Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧\n"
+        "      (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧\n"
+        "      (∠ A B D < ∠ B A D → SameSideOf E B A C)",
     )],
 }
 
@@ -462,9 +502,9 @@ def render(book: str, n: int, signature: str) -> str:
     body = []
     for p in proof:
         body.extend(comment_lines(p))
-    corollaries = "".join(
+    followups = "".join(
         f"\n{docstring_text(doc)}\ntheorem Prop{n}.{name} {sig} := by\n  sorry\n"
-        for name, doc, sig in COROLLARIES.get((book, n), []))
+        for name, doc, sig in FOLLOWUPS.get((book, n), []))
     return f"""{chr(10).join(imports)}
 
 /-!
@@ -483,7 +523,7 @@ open Tacit
 theorem Prop{n} {signature} := by
 {chr(10).join(body)}
   sorry
-{corollaries}
+{followups}
 end Elements.Book{book}
 """
 

@@ -578,6 +578,10 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 
 **Cold re-score.** Finally Astra re-reviews the tagged candidate cold, with the same question as before: how well do Books I–III meet the README's goal, 0–100. The owner runs this in ChatGPT. The target is about 95 for each book, and any defect named goes back through the loop.
 
+**Status, 21 October 2026.** The cold re-score is now made as the versioned [review
+rubric](../RUBRIC.md) says, by three reviewers of three model families, and its gate is
+recorded there.
+
 ## Crew, tools and safety
 - **Lean proofs:** Codex sailors, best of two, with Claude bosuns and reviewers, as on the Book III voyages. Placement goes to the strongest prover and to Codex in the order under stage 3, with no time limit (revised 18 October). The sailors read AGENTS.md automatically.
 - **Prose, records, review and design:** Claude agents.

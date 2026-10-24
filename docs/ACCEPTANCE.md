@@ -123,7 +123,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | # | Item | Kind | What passes |
 |---|---|---|---|
 | P1 | Proved | machine | The proposition, its porism and every companion that facts.json attaches to it are `proved`: no `sorry` stands in them or beneath them, so no `sorryAx` is in their dependencies. The page's table under "What it rests on" has a column, the certificate, for each attached entry. Each companion is listed in the record's `companions`, so that the scope counts it. |
-| P2 | A current record | machine | The record reads against [review/SCHEMA.md](../review/SCHEMA.md) and is at the stage `full`, so it classifies every substantive passage and names its run and a reviewer with a role. Its stamps are current: its `fingerprint` matches the statements in facts.json and its `lean` the Lean file (`check_fidelity.py`). Its `commit` is a commit of this repository, in the history of the revision checked. Its `[review] items` use only the keys of P11 to P16. |
+| P2 | A current record | machine | The record reads against [review/SCHEMA.md](../review/SCHEMA.md) and is at the stage `full`, so it classifies every substantive passage and names its run and a reviewer with a role. Its stamps are current: its `fingerprint` matches the statements in facts.json, its `lean` the Lean file and, once it carries one, its `text` the record's own text (`check_fidelity.py`). Its `commit` is a commit of this repository, in the history of the revision checked. Its `[review] items` use only the keys of P11 to P16. |
 | P3 | Full | machine | The statement's scope is `full`, but for the limitations allowed below, each carrying its tag; and the route is Euclid's or `modified`, never `alternative`. |
 | P4 | Disclosed | machine | On the committed page, the line under the enunciation, the field table under "In Lean" and, for a statement in part, the clause map are exactly those that `render.py` makes from the record, so every scope, route, representation and overlap exception the record declares stands in the page's top line and field table. A record with an `unformalized` passage has a `[coverage]` clause map. No sentence of the mishnah says that our statement or the Lean leaves something of Euclid's out (restricts, excludes, omits, leaves out, does not prove or cover, adds an extra hypothesis) when the record declares no departure at all: a scope short of full, a route not Euclid's, an overlap, a scope tag or `hypothesis-dropped`, a `different` or `unformalized` passage. |
 | P5 | Policies | machine | For the proposition, its porism and its companions (`check_fidelity.py`): no later citation; superposition used directly only by I.4 and I.8; nothing before I.29 resting on Postulate 5 or a rule of `Elements.Tacit.Euclidean`; no axiom and no forbidden command in its Lean file. Its entries pass `check_fidelity.py`'s checks of them: each porism Heath prints has its entry, word for word, and each porism and companion is tied to this proposition. Placement is cited only by III.24 and the theorems on arcs: no other file of `Elements/` names it. The lock is E2's. |
@@ -136,7 +136,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | P12 | Passages | review | Each substantive passage is carried, or its helper, grouping, case, alternative or omission is named truly. There are no dummy citations, no artificial hypothesis uses and no helpers that conceal a whole conclusion. |
 | P13 | Representations | review | The representations used here (`rect` and `sq`, arcs, segments, figures given by their corners) have their bridge theorems, placed correctly in the dependency order. `n/a` when the proposition uses none of them. |
 | P14 | Commentary | review | The commentary is accurate, specific to this proposition and in the common voice, explains the hardest block, and quotes and attributes exactly ([STYLE](STYLE.md), sections 3 and 5). |
-| P15 | Figures | review | The figures agree with the proof's geometry and its scope: the case drawn is one the theorem covers, and the caption names it. |
+| P15 | Figures | review | The figures agree with the proof's geometry and its scope: each case drawn is one the theorem covers, the caption names it, and a caption that says every case is drawn is exhaustive. |
 | P16 | Sign-off | review | A reviewer other than the author signs off: the reviewer wrote, prompted and edited none of the claims judged ([WORKFLOW](WORKFLOW.md#1-roles), section 1), and the record names the reviewer, with the role, the run and the commit read. |
 
 ## For each book
@@ -144,7 +144,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | # | Item | Kind | What passes |
 |---|---|---|---|
 | B1 | Pages | machine | The book's index (with its introduction) and front matter, and README.md's completion summary for the book, are exactly what `render.py` makes. They are generated from facts.json and the records, so the summary is true to them. The introduction, the index and the front matter pass `check_style.py` (S18 and S19 among its rules), and their links resolve. |
-| B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's upper bound on an angle, used in I.47, for example; or its now-proved right-angle rule, used in 19 proofs from II.1 on, 18 calling it themselves) are read by no record, and not counted. |
+| B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's upper bound on an angle, used in I.47, for example; or its now-proved right-angle rule, used in 17 proofs from II.1 on, 16 calling it themselves) are read by no record, and not counted. |
 | B3 | Read-through | review | Read straight through, the book flows, and the voice is common. |
 | B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below and the overlaps of III.2's kind. The decisions of 18 October accepted I.45 and II.14 as full under the convention that a figure comes with a checked finite division; the owner's decision of 20 October instead allows them as restricted until the proof from the figure's outline is proved and reviewed (#116). |
 
@@ -157,7 +157,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | E3 | Contracts | machine | `heath.py` passes: references, porisms, review terms and every record, against their contracts. |
 | E4 | Model | machine | `tests/model/run.py --fast` passes, as CI's `model` job runs it. |
 | E5 | The edition's pages | machine | CERTIFICATE.md, GRAPH.md and PROGRAM.md's status table are exactly what `render.py` makes, and the style rules and links hold in the files that belong to no proposition or book (README.md, the generated pages, the notes of the shared Lean modules, the overlap catalogue, the other reports and `review/terms.toml`). |
-| E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired. |
+| E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired; and no staged file that declares anything holds an import the scan cannot read for certain (#200). |
 
 ## The limitations allowed
 
@@ -275,10 +275,13 @@ section 10, step 9): the checklist with no failures, the independent audit, and 
 outside reading. The checklist is this page. The independent audit, by a model family that
 wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), and its
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
-tagged candidate. On the candidate's pull request all five required checks are green,
-with `acceptance` under its full gate. The separate release gate, including the two
-readings and the owner's approval of the notes, is
+release candidate's exact pull-request head commit, identified by its full SHA; how the
+measurement is made, and its gate, are in the [review rubric](RUBRIC.md). On that pull request
+all five required checks are green, with `acceptance` under its full gate. The separate release
+gate, including the two readings and the owner's approval of the notes, is
 [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10.
+The final release tag is made after acceptance and the owner approves the release notes, as
+step 10 requires.
 
 The check that every Lean name a catalogue gives is declared, by asking Lean itself (B2,
 E2), follows Patrick Massot's [leanblueprint](https://github.com/PatrickMassot/leanblueprint),

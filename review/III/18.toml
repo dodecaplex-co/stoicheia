@@ -1,23 +1,54 @@
 # review/III/18.toml
 [statement]
 scope = "full"
-note = "The centre F is given, as Euclid's setting-out takes it."
+note = "The centre F is given; it is off DE because F is within the circle and no point of DE is."
 fingerprint = "sha256:8e256532a8501ef2"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The centre F is given, as Euclid's setting-out takes it; the proof shows it is off DE, since it is within the circle and no point of DE is."
+[[passage]]
+at = "For let a straight line DE touch the circle ABC at the point C"
+kind = "given"
+note = "The statement gives the tangent DE, the contact C and the centre F; the radius FC is named by its ends."
+
+[[passage]]
+at = "For, if not, let FG be drawn from F perpendicular to DE"
+kind = "helper"
+helper = "BookI.Prop12"
+note = "Euclid draws FG perpendicular to DE; the Lean uses I.12, for which Heath prints no reference here. Beneath the setting-out, the Lean first proves F off DE with `Touches.not_inside` and `Tacit.centre_inside`, the rule we assume as System E, Generalities 3."
+
+[[passage]]
+at = "But FC is equal to FB"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid reads B on FG between F and G and takes FC equal to FB. The Lean proves G outside the circle using `Touches.not_inside` and the definition of touching, puts F within it by `Tacit.centre_inside` (System E, Generalities 3) and takes B by `Tacit.line_circle_between` (System E, Intersections 4), both rules we assume, and equates the radii by `Definition15`, Euclid's definition of a circle, which we also assume as a rule."
+
+[[passage]]
+at = "the less than the greater: which is impossible"
+kind = "helper"
+helper = "len_lt_of_between"
+note = "Euclid reads FB as less than FG because B lies between F and G. The Lean obtains that strict inequality from `len_lt_of_between`, using length addition and Common Notion 5, and contradicts the inequality just proved."
 
 [[passage]]
 at = "Therefore FG is not perpendicular to DE."
 kind = "grouped"
 note = "The reductio shows that the foot G of the perpendicular from F is C itself, so FC is that perpendicular, and no other straight line is left to prove."
 
+[figure]
+note = "The figure shows the impossible supposition with G distinct from C: FG is supposed perpendicular to DE, but the perpendicular in the drawn geometry is FC."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "c2bafbb6"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c05e2d0569c0489f"
+run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

@@ -30,6 +30,12 @@ helper = "Tacit.between_of_between_right"
 note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right`, a rule we assume (System E, Between 5), and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
 
 [[passage]]
+at = "therefore the base EB is equal to the base FC"
+kind = "carried"
+note = "The Lean proves that the base EB equals FC here, as Euclid states it; the argument goes on by the triangles' areas, and does not use it again."
+unused = ["hEB_FC"]
+
+[[passage]]
 at = "Let DGE be subtracted from each"
 kind = "helper"
 helper = "area_cut"
@@ -46,10 +52,10 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b62518e5"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:86706a9a57d0ca53"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "1e482112"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:eee60b54fb026d66"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; #248: re-read whole after its Lean note's Proclus credit was narrowed, independent re-read at a9b2b80f (reader RT-r35b); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
 
 [review.items]
 statement = "pass"

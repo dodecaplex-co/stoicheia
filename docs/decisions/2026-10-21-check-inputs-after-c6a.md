@@ -28,7 +28,10 @@
   gone. P3 passes a full record whatever the table holds, so both records pass as they
   did, and a partial III.16 or III.31 is now refused, whatever its tags. Two new cases
   pin that: each record is full and passes P3, and each, made partial in memory with
-  `mixed-angles-omitted` or with `mixed-angles-local`, is refused.
+  `mixed-angles-omitted` or with `mixed-angles-local`, is refused. Since
+  [#249](https://github.com/jackChallis/stoicheia/issues/249) ACCEPTANCE is a check input
+  and a protected path, so its table, `ALLOWED_LIMITS` and their test change together in
+  this one check change.
 
   Third, the worked example for III.16 said that III.16 "is partial". Its prose now says
   that III.16 was partial at `d040117`, and a new paragraph after the example says what
@@ -55,5 +58,7 @@
   It approves the past tense and the new paragraph of the worked
   example in `review/SCHEMA.md`.
   It approves the two rows taken out of `ALLOWED_LIMITS` in `scripts/check_acceptance.py`.
+  It approves the two rows taken out of the table "The limitations allowed" in
+  `docs/ACCEPTANCE.md`, and the paragraph after that table which says they have gone.
   It approves the shorter expected table and the two new
   cases of `tests/test_acceptance_limits.py`.

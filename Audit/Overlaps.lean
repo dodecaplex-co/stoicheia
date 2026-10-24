@@ -71,11 +71,9 @@ theorem I_7 : type_of% @Elements.BookI.Prop7 := by
 within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
 This is Astra's proof from the outside review, now using Circle 2 as a theorem of
 Circle 3. The overlap with Circle 3 remains. Our III.2 follows Euclid, by I.5, I.16
-and I.19, and rests on neither Circle 2 nor Circle 3: III.1, which finds its centre, puts
-the middle point of a straight line in the circle within it by III.2's own argument
-(`Prop1.within`). -/
+and I.19, takes its centre from the rule, and rests on neither Circle 2 nor Circle 3. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
-  fun _ hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
+  fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
 /-- **III.2 from Circle 3.** A straight line that has left a circle does not come back
 (`outside_of_between`, Circle 3): with one point on or within the circle and a second
@@ -83,7 +81,7 @@ point not within it, any point beyond the second is outside. It is Circle 2 turn
 Were a point between two points of the circle not within it, the second point of the
 circle would be outside the circle, and so not on it. -/
 theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
-  fun _ hA hB _ hAEB => Classical.byContradiction fun hE =>
+  fun hA hB _ hAEB => Classical.byContradiction fun hE =>
     (outside_of_between (Or.inr hA) hE hAEB).2 hB
 
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
@@ -158,8 +156,8 @@ theorem III_26_any {A B C D E F G H K L : Point} {ABC DEF : Circle}
       rw [BookIII.Circumference.centre hG hB hC hGK, BookIII.Circumference.centre hH hE hF hHL,
         h],
    fun h => by
-      rw [BookIII.Circumference.eq ⟨G, hG⟩ hA hB hC hAK,
-        BookIII.Circumference.eq ⟨H, hH⟩ hD hE hF hDL, h]⟩
+      rw [BookIII.Circumference.eq hA hB hC hAK,
+        BookIII.Circumference.eq hD hE hF hDL, h]⟩
 
 /- III.26 itself does not follow from `III_26_any`, and no longer holds for any two circles:
 it concludes that the circumferences are congruent as well as equal in measure, and in
@@ -178,8 +176,8 @@ theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
     (heq : standing ABC B A C = standing DEF E D F) :
     ∠ B A C = ∠ E D F ∧
       (SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F) := by
-  rw [BookIII.Circumference.standing ⟨G, hG⟩ hA hB hC hBAC.acb,
-    BookIII.Circumference.standing ⟨H, hH⟩ hD hE hF hEDF.acb] at heq
+  rw [BookIII.Circumference.standing hA hB hC hBAC.acb,
+    BookIII.Circumference.standing hD hE hF hEDF.acb] at heq
   have hangle : ∠ B A C = ∠ E D F := Magnitude.eq_of_add_self_eq heq
   refine ⟨hangle, fun hGA hHD => ?_⟩
   rw [BookIII.Prop20 hG hA hB hC hGA, BookIII.Prop20 hH hD hE hF hHD, hangle]
@@ -194,23 +192,22 @@ F, makes up the whole circle (`Circumference.whole`). The first clause of
 `Prop24.equalCircles`, that the circles are equal, needs the equal bases, and so does III.24
 itself, which concludes that the segments are congruent. -/
 theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
-    (hAEB : ∃ O : Point, Centre O AEB) (hCFD : ∃ O : Point, Centre O CFD)
     (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD)
     (hD : OnCircle D CFD) (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E)
     (hF_CD : ¬ Collinear C D F) (hsim : ∠ A E B = ∠ C F D) :
     circumference AEB A E B = circumference CFD C F D := by
-  obtain ⟨X, hX, hXE⟩ := BookIII.Prop2.oppositeSide hAEB hA hB hE_AB
-  obtain ⟨Y, hY, hYF⟩ := BookIII.Prop2.oppositeSide hCFD hC hD hF_CD
-  have w₁ := BookIII.Circumference.whole hAEB hA hB hXE
-  have w₂ := BookIII.Circumference.whole hCFD hC hD hYF
-  rw [BookIII.Circumference.eq hAEB hE hA hB hXE.symm] at w₁
-  rw [BookIII.Circumference.eq hCFD hF hC hD hYF.symm, ← hsim] at w₂
+  obtain ⟨X, hX, hXE⟩ := BookIII.Prop2.oppositeSide hA hB hE_AB
+  obtain ⟨Y, hY, hYF⟩ := BookIII.Prop2.oppositeSide hC hD hF_CD
+  have w₁ := BookIII.Circumference.whole hA hB hXE
+  have w₂ := BookIII.Circumference.whole hC hD hYF
+  rw [BookIII.Circumference.eq hE hA hB hXE.symm] at w₁
+  rw [BookIII.Circumference.eq hF hC hD hYF.symm, ← hsim] at w₂
   exact CommonNotion3 (w₁.trans w₂.symm) rfl
 
 example : type_of% @Elements.BookIII.Prop24.equalCircles :=
-  fun hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
-    ⟨(BookIII.Prop24.equalCircles hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
-     III_24_measure hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hsim⟩
+  fun hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
+    ⟨(BookIII.Prop24.equalCircles hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
+     III_24_measure hA hB hE hC hD hF hE_AB hF_CD hsim⟩
 
 /-! ## III.30 by the measure
 
@@ -230,7 +227,7 @@ construction is Euclid's: AB is bisected at C (I.10), CD drawn at right angles t
 meets the given circumference at D, C being within the circle (III.2), and I.4 makes the
 angles at A and B equal. -/
 theorem III_30_measure : type_of% @Elements.BookIII.Prop30 := by
-  intro A B ADB hADB hA hB P hP
+  intro A B ADB hA hB P hP
   have hABP : Triangle A B P := hP
   have hAB : A ≠ B := hABP.ne₁₂
   /- C bisects AB; CX is at right angles to it, on P's side. -/
@@ -240,7 +237,7 @@ theorem III_30_measure : type_of% @Elements.BookIII.Prop30 := by
   obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hC_L⟩ hP
   /- C is within the circle (III.2), so XC produced beyond C to Y meets the circle at D,
      beyond C from Y, on X's side of AB. -/
-  have hC_in : InsideCircle C ADB := BookIII.Prop2 hADB hA hB C hACB
+  have hC_in : InsideCircle C ADB := BookIII.Prop2 hA hB C hACB
   have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
   have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
   obtain ⟨N, hC_N, hX_N⟩ := Postulate1 C X hCX
@@ -276,8 +273,8 @@ theorem III_30_measure : type_of% @Elements.BookIII.Prop30 := by
       ← angle_onRay_left (OnRay.of_between hACB) hABD.ne₁₃.symm, hA₁,
       angle_onRay_left (OnRay.of_between (between_symm hACB)) hABD.ne₂₃.symm]
   /- Each half is twice the angle standing on it, and the angles are equal. -/
-  rw [BookIII.Circumference.standing hADB hB hA hD hABD.acb,
-    BookIII.Circumference.standing hADB hA hD hB hABD.cba, hbase]
+  rw [BookIII.Circumference.standing hB hA hD hABD.acb,
+    BookIII.Circumference.standing hA hD hB hABD.cba, hbase]
 
 /-! ## A rule that a proposition gives back -/
 
@@ -460,10 +457,10 @@ info: 'Audit.III_26_any' depends on axioms: [propext,
  Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
@@ -530,10 +527,10 @@ info: 'Audit.III_27_any' depends on axioms: [propext,
  Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
@@ -600,10 +597,10 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
  Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
@@ -670,10 +667,10 @@ info: 'Audit.III_30_measure' depends on axioms: [propext,
  Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,

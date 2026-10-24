@@ -4,7 +4,8 @@ the small contracts the other scripts share:
 * references: `parse_ref`, `prop_key` ("I.40", "III.1 Por.", "I.40 general");
 * Heath's porisms: `heath_porisms`, `heath_porism`;
 * the main theorem of a Lean file: `theorem_span`;
-* fingerprints of statements and files: `fingerprint`, `review_fingerprint`, `file_hash`;
+* fingerprints of statements, files and records: `fingerprint`, `review_fingerprint`,
+  `file_hash`, `text_hash`;
 * the review records, review/<book>/NN.toml: `load_review`, `validate_review`,
   `load_terms` (the schema is review/SCHEMA.md).
 
@@ -17,6 +18,7 @@ examples in review/SCHEMA.md, review/terms.toml and every review record present.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -296,6 +298,26 @@ def file_hash(path) -> str:
     return _sha(Path(path).read_bytes())
 
 
+def text_hash(source: str) -> str:
+    """A review record's `text` stamp: a short hash of what the record says, read from
+    `source`, its TOML. Every section counts but [review], which holds the stamps and the
+    reviewer's account of the reading, and [statement] counts without its `fingerprint`,
+    a stamp of the statements; so writing a stamp never changes the text it stamps.
+    Comments, layout and the order of keys do not count: the record as TOML reads it is
+    written as JSON with its keys sorted, and hashed. Raises ValueError when `source` is
+    not valid TOML."""
+    tomllib = _toml()
+    try:
+        record = tomllib.loads(source)
+    except tomllib.TOMLDecodeError as e:
+        raise ValueError(f"not valid TOML: {e}") from None
+    record.pop("review", None)
+    if isinstance(record.get("statement"), dict):
+        record["statement"].pop("fingerprint", None)
+    return _sha(json.dumps(record, sort_keys=True, ensure_ascii=False, separators=(",", ":"),
+                           default=str).encode())
+
+
 # The review records, review/<book>/NN.toml. review/SCHEMA.md says what each field
 # means; this is the machine's half of it.
 
@@ -311,10 +333,16 @@ VERDICTS = ("pass", "fail", "n/a")
 TAG_KINDS = ("scope", "representation")
 COMMIT = re.compile(r"[0-9a-f]{7,40}")
 WORD = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
+# A name as a proof binds it, for a passage's `unused`: one Lean identifier, with no dots,
+# as `hCHG_EHC` or `FC`, or `this`, the name of a `have` that gives none.
+BOUND_NAME = re.compile(r"[^\W\d][\w'!?₀-₉]*")
 
-_STR, _LIST, _TABLE = "string", "list", "table"
+_STR, _LIST, _TABLE, _NAMES, _BOOL = "string", "list", "table", "names", "boolean"
 # Each section's keys, as (type, required). A "stamp" key is written by
 # scripts/review_stamp.py, and required unless an unstamped record is asked for.
+# [review] `text` is a stamp too, but not yet required: the records stamped before it
+# gain it from `review_stamp.py --migrate-text`, or from a reader (docs/WORKFLOW.md,
+# section 6), and it becomes "stamp" once every record carries it.
 FIELDS = {
     "statement": {"scope": (_STR, True), "hypotheses": (_LIST, False),
                   "omitted": (_LIST, False), "note": (_STR, False),
@@ -327,10 +355,11 @@ FIELDS = {
     "coverage": {"checked": (_LIST, False), "explains": (_LIST, False),
                  "text_only": (_LIST, False)},
     "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
-                "note": (_STR, False)},
-    "figure": {"case": (_STR, False), "note": (_STR, False)},
+                "note": (_STR, False), "unused": (_NAMES, False)},
+    "figure": {"case": (_STR, False), "every_case": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
-               "reviewer": (_STR, True), "run": (_STR, False), "items": (_TABLE, False)},
+               "text": (_STR, False), "reviewer": (_STR, True), "run": (_STR, False),
+               "items": (_TABLE, False)},
 }
 REQUIRED = ("statement", "route", "review")
 
@@ -434,6 +463,20 @@ def _shape(record, require_stamp: bool) -> list[str]:
                 bad(f"{label}: `{key}` must be a list of non-empty strings")
             elif kind == _TABLE and not isinstance(v, dict):
                 bad(f"{label}: `{key}` must be a table")
+            elif kind == _NAMES:
+                if not (isinstance(v, list) and v and all(isinstance(x, str) for x in v)):
+                    bad(f"{label}: `{key}` must be a non-empty list of names; leave it out "
+                        "when there are none")
+                    continue
+                for x in v:
+                    if x == "_" or not BOUND_NAME.fullmatch(x):
+                        bad(f"{label}: `{key}`: {x!r} is not a name as a proof binds it: one "
+                            "Lean identifier, as 'hAB_FC' or 'FC', or 'this' for a `have` "
+                            "that gives no name")
+                for x in sorted({x for x in v if v.count(x) > 1}):
+                    bad(f"{label}: `{key}` lists {x!r} twice")
+            elif kind == _BOOL and not isinstance(v, bool):
+                bad(f"{label}: `{key}` must be true or false")
     return problems
 
 
@@ -444,10 +487,11 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
     hypotheses, omitted and companions, [coverage]'s three lists, `passage` and
     [review] items, each empty when not given. Raises ReviewError naming every fault.
 
-    With require_stamp=False the stamp keys (fingerprint, commit, lean) may be absent,
-    for scripts/review_stamp.py to write. Whether the stamps are current (the
-    fingerprint against facts.json, `lean` against the file) is check_fidelity's
-    business, not this function's."""
+    With require_stamp=False `fingerprint`, `commit` and `lean` may be absent, for
+    scripts/review_stamp.py to write. `text`, also a stamp, may be absent either way, for
+    now (see FIELDS). Whether the stamps are current (the fingerprint against facts.json,
+    `lean` against the file, `text` against the record) is check_fidelity's business, not
+    this function's."""
     where = where or _rel(review_path(book, n))
     problems = _shape(record, require_stamp)
     if problems:
@@ -560,9 +604,15 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
             if plain(q) not in enunciation and plain(q) not in proof_text:
                 bad(f"[coverage]: text_only {q!r} is not quoted from Heath")
 
-    # [figure]
-    if "figure" in record and not record["figure"]:
-        bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
+    # [figure]: `every_case` says only which words lead the caption, so the section still
+    # needs a `case` or a `note`, and `every_case` the `case` that names the cases drawn.
+    if "figure" in record:
+        fig = record["figure"]
+        if "case" not in fig and "note" not in fig:
+            bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
+        if fig.get("every_case") and "case" not in fig:
+            bad("[figure]: `every_case` needs the `case` that names the cases the figure "
+                "draws, for the caption \"Drawn for every case: …\"")
 
     # [[passage]]
     seen = set()
@@ -598,6 +648,8 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         bad("[review]: `commit` is a git commit, 7 to 40 lower-case hex digits")
     if "lean" in rv and not HASH.fullmatch(rv["lean"]):
         bad("[review]: `lean` is 'sha256:' and 16 hex digits")
+    if "text" in rv and not HASH.fullmatch(rv["text"]):
+        bad("[review]: `text` is 'sha256:' and 16 hex digits")
     if rv["stage"] == "full" and ("run" not in rv or "," not in rv["reviewer"]):
         bad("[review]: a full review names its `run`, and its `reviewer` with a role, as "
             "'Claude Opus 5.5, records crew', so the reviewer can be told from the authors")
@@ -672,10 +724,16 @@ def _self_test() -> int:
     for book, n, block in _schema_examples():
         examples += 1
         try:
-            validate_review(tomllib.loads(block), book, n,
-                            where=f"review/SCHEMA.md, the example for {book}.{n}")
+            example = validate_review(tomllib.loads(block), book, n,
+                                      where=f"review/SCHEMA.md, the example for {book}.{n}")
         except (ReviewError, tomllib.TOMLDecodeError) as e:
             faults.append(str(e))
+            continue
+        # The examples' `text` stamps are the test values of text_hash.
+        if example["review"].get("text") != text_hash(block):
+            faults.append(f"review/SCHEMA.md, the example for {book}.{n}: its `text` is "
+                          f"{example['review'].get('text', '(none)')}, but text_hash gives "
+                          f"{text_hash(block)}")
     # [overlap] `kind`: required, one of the catalogue's three kinds, and "step" with its
     # note. A record with no kind is rejected, so no page words an overlap by a guess.
     for overlap, ok in [({"rule": "Tacit.circle_eq", "kind": "gives"}, True),
@@ -692,6 +750,23 @@ def _self_test() -> int:
             validate_review(record, "I", 7, require_stamp=False, where="a test record")
             if not ok:
                 faults.append(f"validate_review accepts [overlap] {overlap}")
+        except ReviewError as e:
+            if ok:
+                faults.append(str(e))
+    # [[passage]] `unused`: a non-empty list of distinct names, each as a proof binds it.
+    # Whether the Lean beneath binds them is check_fidelity's business.
+    for unused, ok in [(["FC", "GB"], True), (["this"], True), (["hAB_FC'", "h₁"], True),
+                       ([], False), ("FC", False), (["FC", "FC"], False), ([""], False),
+                       (["_"], False), (["h FC"], False), (["hAB.1"], False),
+                       (["2FC"], False), ([["FC"]], False)]:
+        record = {"statement": {"scope": "full"}, "route": {"kind": "euclid"},
+                  "passage": [{"at": "and let the straight lines FC, GB be joined",
+                               "kind": "carried", "unused": unused}],
+                  "review": {"stage": "exceptions", "reviewer": "Claude Opus 5.5"}}
+        try:
+            validate_review(record, "I", 5, require_stamp=False, where="a test record")
+            if not ok:
+                faults.append(f"validate_review accepts [[passage]] unused = {unused!r}")
         except ReviewError as e:
             if ok:
                 faults.append(str(e))

@@ -6,10 +6,11 @@ Lean quotes Heath word for word; the record says whether the Lean statement mean
 Euclid's enunciation means, and how each passage of his argument appears in the Lean.
 The page shows it under the enunciation, before the reader meets the green check.
 
-A record is tied to what its reviewer read by two hashes, one of the statements and one
-of the Lean file. When either changes, the record has to be read again. Python reads
-the records with `tomllib` (Python 3.11 or later), and `heath.load_review(book, n)` checks
-each against this page. The record's tags come from [terms.toml](terms.toml).
+A record is tied to what its reviewer read by three hashes: one of the statements, one of
+the Lean file, and one of the record's own text. When any of them changes, the record has
+to be read again. Python reads the records with `tomllib` (Python 3.11 or later), and
+`heath.load_review(book, n)` checks each against this page. The record's tags come from
+[terms.toml](terms.toml).
 
 Where to begin: with Heath's enunciation and the Lean statement, each read on its own,
 before any commentary about how they agree. "None" is a perfectly good answer for an
@@ -146,6 +147,7 @@ One table for each passage declared, in the order of the proof.
 | `kind` | see below | yes | How the Lean carries the passage. |
 | `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`. In a carried passage, the proposition's porism or one of its companions, proved on its own, written in one of three ways: `"Prop16.porism"`, `"BookIII.Prop16.porism"` or `"Elements.BookIII.Prop16.porism"`. |
 | `note` | string | unless carried | One or two plain sentences, shown on the page under "How the Lean follows the text". |
+| `unused` | list of names | no | The bindings this passage declares as standing for Euclid's words and not used again, each as the proof writes it: `"FC"`, `"hCHG_EHC"`, or `"this"` for a `have` that gives no name. For the citation sweep and reviewers; the page does not show it. |
 
 - **carried**: the Lean beneath carries out the inference or construction. Declared only
   where that needs saying, as for a step proved as its own theorem, which the passage
@@ -175,14 +177,36 @@ own", or, for several, "where a porism and two companions are proved as theorems
 own". It counts theorems, not passages: a companion that carries two passages is one
 companion.
 
+`unused` is for `scripts/sweep_citations.py`, which lists every binding of a proof that
+nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sentence of
+Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
+of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
+`#` comment. `unused` is a key, which the records' `text` stamp will cover once
+[#77](https://github.com/jackChallis/stoicheia/issues/77) lands; TOML does not read a
+comment, so that stamp would never see one change. `heath.load_review` checks that
+`unused` lists distinct names, each one Lean identifier; `scripts/check_fidelity.py`,
+that the Lean beneath the run binds each, so a declaration cannot outlive its binding.
+The page does not show the key, but it does show the passage: one added only to hold
+`unused` is listed under "How the Lean follows the text", led by "Carried", as every
+passage is.
+
+```toml
+[[passage]]
+at = "and let the straight lines FC, GB be joined"
+kind = "carried"
+note = "The Lean joins FC and GB by Postulate 1, as Euclid asks; no later step uses them."
+unused = ["FC", "GB"]
+```
+
 ### `[figure]`
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `case` | string | no | The case the figure shows, when the theorem covers several. The caption names it. |
+| `case` | string | no | The case the figure shows, when the theorem covers several, or, with `every_case`, the cases it draws. The caption names it. |
+| `every_case` | boolean | no | True when the figure draws every case the theorem covers, side by side or on one figure, as III.25's draws Euclid's three: the caption then reads "Drawn for every case: …" rather than "Drawn for one case: …". Needs a `case`. |
 | `note` | string | no | Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean does; shown under the figure (docs/STYLE.md, section 7). |
 
-The section needs at least one of the two, and is left out when it has neither.
+The section needs a `case` or a `note`, or both, and is left out when it has neither.
 
 ### `[review]`: who read it, and what they read
 
@@ -191,6 +215,7 @@ The section needs at least one of the two, and is left out when it has neither.
 | `stage` | `"exceptions"` or `"full"` | yes | See "Two stages". |
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
+| `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. A record stamped before it may lack it for now (below). |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
@@ -205,10 +230,25 @@ item".
 
 ## Stamps
 
-`fingerprint`, `commit` and `lean` are stamps: `scripts/review_stamp.py` writes them, so
-nobody computes a hash by hand. Keep each on a line of its own, `key = "value"`, so the
-script can rewrite it in place. Before stamping, `heath.load_review(book, n,
+`fingerprint`, `commit`, `lean` and `text` are stamps: `scripts/review_stamp.py` writes
+them, so nobody computes a hash by hand. Keep each on a line of its own, `key = "value"`,
+so the script can rewrite it in place. Before stamping, `heath.load_review(book, n,
 require_stamp=False)` reads a record without them.
+
+`text` covers the record's own words, so that an edit to a note, a scope or a passage
+makes the record stale as surely as a change to the Lean. It is `heath.text_hash` of the
+record as TOML reads it, with `[review]` set aside, which holds the stamps and the
+reviewer's account of the reading, and with `fingerprint` set aside, which stamps the
+statements: so writing a stamp never changes the text it stamps. Comments, layout and the
+order of keys are not part of the text; every key and value of the other sections is.
+`[review]`'s own `stage`, `reviewer`, `run` and `items` are not part of the text: a change to them
+after the stamp is not caught by `text`, and is seen only by whoever reviews the pull
+request.
+
+A record stamped before `text` was introduced may lack it until it gains it as
+[WORKFLOW](../docs/WORKFLOW.md), section 6, says; `scripts/check_fidelity.py` names each
+record without it in a note. Once every record carries `text`, it is required like the
+other stamps.
 
 ## What the machine checks
 
@@ -227,14 +267,16 @@ require_stamp=False)` reads a record without them.
 - a modified or alternative route has a `note`, as does every passage not carried; a
   helper passage names its `helper`; a passage argued another way (`different`) is not
   under a route of `euclid`;
+- a passage's `unused` lists distinct names, each one Lean identifier, or `this`;
 - a restricted or partial statement has a `short`;
 - a record at stage `full` names its `run`, and its `reviewer` names a role;
 - stamps have their form.
 
 `python3 scripts/heath.py` checks the worked examples below and every record present.
 `scripts/check_fidelity.py` adds what needs facts.json and the Lean files: that every
-proposition has a record, that the stamps are current (if not, "statement changed since
-reviewed"), and that every run of `--` lines with no Lean beneath it is declared.
+proposition has a record, that the stamps are current (if not, that its statement, its
+Lean file or its record "has changed since it was reviewed"), and that every run of `--`
+lines with no Lean beneath it is declared.
 `scripts/render.py` reads a carried passage's `helper` as the porism or a companion
 facts.json attaches to the proposition, and stops, naming the proposition and the helper,
 on any other.
@@ -253,7 +295,8 @@ These two show the shape of a record; they are not the records themselves, which
 `review/III/16.toml` and `review/I/40.toml`. Their stamps were computed at commit
 d040117, and serve as test values: at that commit, `heath.review_fingerprint` gives
 `sha256:9fd59073303dbcdc` for III.16 (its statement, then III.16 Por.'s) and
-`sha256:5ea666d96871b7f8` for I.40.
+`sha256:5ea666d96871b7f8` for I.40. Their `text` is `heath.text_hash` of each example as
+printed here, which `python3 scripts/heath.py` checks.
 
 At d040117, III.16 was partial: the clause about the angle of the semicircle and the
 horn-like angle was not stated, its porism was proved on its own, and one run of sentences
@@ -310,6 +353,7 @@ note = "Proved as its own theorem, with its own certificate entry, III.16 Por."
 stage = "exceptions"
 commit = "d040117"
 lean = "sha256:061379c1f0411141"
+text = "sha256:47c9097b39a8fcc7"
 reviewer = "Claude Opus 5.5"
 ```
 
@@ -343,6 +387,7 @@ case = "the bases BC and CE meeting at C, as in Heath's figure"
 stage = "exceptions"
 commit = "d040117"
 lean = "sha256:5f353abf9022b4fd"
+text = "sha256:39fcf9b00f4bf715"
 reviewer = "Claude Opus 5.5"
 ```
 

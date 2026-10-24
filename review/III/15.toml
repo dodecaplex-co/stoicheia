@@ -1,27 +1,69 @@
 # review/III/15.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the diameter AD is shown greater than BC only beside a second straight line FG in the circle, more remote from the centre than BC: F and G on the circle, K the foot of the perpendicular EK, and `hnearer : ‖E H‖ < ‖E K‖`",
-]
-note = "The diameter's bound on BC is proved beside a straight line FG more remote than BC, as Euclid sets it out; that some such FG exists is not proved in Lean."
-short = "the diameter's bound only beside a more remote straight line"
-fingerprint = "sha256:8f609380c65c4ddf"
+scope = "full"
+note = "E and feet H, K are given; nearer means EH less than EK. `Prop15.le_diameter` bounds any straight line; `Prop15.nearer` includes a diameter at no distance."
+companions = ["III.15 le_diameter", "III.15 nearer"]
+fingerprint = "sha256:c0f5cead6405c5bd"
 
 [route]
 kind = "euclid"
+note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC by III.14, and uses I.20 and I.24 to compare it with AD and FG. `Prop15.le_diameter` uses I.20 on BE and EC when BC does not pass through E; if BC is a diameter it equals AD, and if B and C coincide its length is zero. `Prop15.nearer` uses `Prop15` when neither straight line passes through the centre and `Prop15.le_diameter` when BC is a diameter; FG, being more remote, cannot pass through E. `Prop15` and `Prop15.nearer` rest on `Tacit.exists_centre` through III.2 and its corollary `Prop2.within`, which `Prop15.half` uses; `Prop15.le_diameter` does not."
 
-[representation]
-tags = ["centre-given"]
-note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and \"nearer\" is `‖E H‖ < ‖E K‖`."
+[[passage]]
+at = "For from the centre E let EH, EK be drawn"
+kind = "helper"
+helper = "foot_between"
+note = "The statement supplies EH and EK; `foot_between` supplies the order F, K, G that Euclid reads from the figure. Its proof uses I.17 and I.19, for which Heath prints no reference here, and then `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
 
 [[passage]]
 at = "Then, since BC is nearer to the centre and FG more remote"
 kind = "given"
-note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
+note = "The statement assumes that EH is less than EK (`‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
+
+[[passage]]
+at = "Let EL be made equal to EH"
+kind = "helper"
+helper = "Tacit.line_circle_beyond"
+note = "Euclid cuts off EL and takes the perpendicular through L to meet the circle at M and N; Heath prints no reference here for I.3, I.11 or III.2, which the Lean uses to cut off EL, draw the perpendicular and put K within the circle. `InsideCircle.of_between_centre_of_inside` puts L, between E and K, within it; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, supplies both meetings, and `Prop15.perp` extends the right angle to both directions along MN by I.13."
+
+[[passage]]
+at = "Again, since AE is equal to EM, and ED to EN"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii AE and EM, and ED and EN, without giving a reason. The Lean obtains both equalities from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "AD is equal to ME, EN"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid makes the diameter AD from the radii AE and ED. The Lean adds them by `Tacit.len_add_of_between`, the rule we assume as System E, Diagram-segment 1, and replaces them by the equal radii ME and EN."
+
+[[passage]]
+at = "And, since the two sides ME, EN are equal"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii ME and FE, and EN and EG, without giving a reason. The Lean obtains both equalities from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "and the angle MEN greater than the angle FEG"
+kind = "helper"
+helper = "Prop15.half"
+note = "Euclid reads the larger angle from the figure without a reference from Heath; during construction, the Lean puts M on F's side of EK and N on G's by `Tacit.pasch3`, the rule we assume as System E, Pasch 3, and the side rules. The Lean uses I.13 and I.17 to prove MN and FG cannot meet, then `Parallel.sameSide` puts F and G on K's side of MN and Pasch 3 puts E across MN from K, hence from F and G; `Prop15.half` twice uses these placements and III.2 to put the crossings of EF and EG between M and L and between N and L, and the Lean adds the two angle inequalities."
+
+[figure]
+case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
-stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:2bcd0eb0d33c230e"
+stage = "full"
+commit = "3027a105"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:2a71c56e1b84004f"
+run = "card #131, ship ER: its note re-read after III.1's call was dropped"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
