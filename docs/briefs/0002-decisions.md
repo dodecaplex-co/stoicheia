@@ -5532,6 +5532,87 @@ findings:
   `scripts/check_fidelity.py`,
   `review/SCHEMA.md`.
 
+- **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
+  routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
+  in the content change that follows this one, and the certificate records what each cited
+  law's proof uses. Route (a) would have kept a flag that, under the permissive reading the
+  owner approved on 20 October ("as prototyped"), carries no logical weight, and a check of
+  it would only confirm a classification nothing depends on; the computed record serves both
+  the reader and the second retirement wave, after which four of I.4's seven laws are proved
+  with construction rules. "Construction rule" is now defined in
+  [FORMALIZATION](../FORMALIZATION.md#construction-rules), section 9: an axiom whose
+  conclusion asserts existence once the project's definitions are unfolded, a structure or
+  inductive type read as a word, and only an `∃` written out or given by a definition
+  counted. This check change lands first, under WORKFLOW, section 10.
+  Protected files changed:
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
+  `construction_rules` (21 of the 80 axioms at this revision, the centre rule
+  `Tacit.exists_centre` among them) and, for I.4 and I.8, a
+  `cited_laws` field: each law the entry's own Lean cites, its proofs (name, file and line,
+  from Lean's declarations) and the construction rules beneath them; a law the entry names
+  with no proof found fails the run.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields and the walk.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) gains
+  eight expectations: I.4's seven cited laws and I.8's four, I.7's law carrying Postulate 1,
+  the three laws that stay clean (Metric 3, 4 and 9) with no construction rule in I.4,
+  Metric 3 likewise in I.8, and the construction rules themselves; an expectation may now read one cited law
+  (`law`) or a top-level field (no `ref`). [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py)
+  reads those forms and now refuses an expectation that asks nothing (none of `includes`,
+  `excludes`, `equals` or `count`), which used to pass: a check defect, fixed.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `kept_expectations` reads an
+  expectation by its `ref`, `field` and `law`, so retargeting one no longer counts as
+  keeping it; only tighter. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)
+  tests that. [`scripts/render.py`](../../scripts/render.py) shows the cited laws on I.4's
+  and I.8's pages; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  follows the new field. [`scripts/negative_tests.py`](../../scripts/negative_tests.py)
+  plants a construction rule in two clean laws' proofs with every audit pin rewritten to
+  match, so only the new expectations can catch it, and plants I.7's law removed from I.8's
+  list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
+  with its fixture `tests/fixtures/CertificateCited.lean`,
+  and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
+  the expectations' new forms and the plants' restoration. The fixture declares seventeen
+  stand-in axioms: one for each of the sixteen cases of the definition that it lists, and
+  the fixture's own law of I.7. They are compiled only into the test's temporary package,
+  which no library of the edition builds, and the lock is unchanged. A review correction
+  makes the projection reader follow a projection at the head of a structure value, as
+  when a structure is nested in another or a field is a function, and apply the field it
+  names to the projection's arguments. Three of the stand-in axioms exercise it: an
+  inherited order instance, reached through nested structures; a projection reached
+  through nested structures and through a function's arguments; and, beside it, a field of
+  the same structure that asserts no existence and must not be read in its place. A second
+  correction substitutes a `let` at the head of a structure value or of an application
+  into its body, so that a definition given through a `let` is read through it; two more
+  of the stand-in axioms now exercise a `let`-bound structure and a `let` at an
+  application's head. The new expectation on `construction_rules` reads facts.json's top
+  level and so has no `ref`; five lookups, in four places, in `scripts/test_safe_push.py`
+  that picked the lock's III.1 expectations out by `(x["ref"], x["field"])` met it and
+  failed in CI's `safe-push-tests` job with a `KeyError`, so they read the `ref` with
+  `x.get("ref")`, which picks out exactly the entries they picked before.
+  `check_fidelity.py` and `safe_push.py` already read an expectation without a `ref`.
+- **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
+  route (b)).** The content change that follows the check above. #150, the owner's issue
+  for finishing the answers approved "as prototyped" on 20 October, offers this route by
+  name: retire `drawsNothing`, `holds_of_drawsNothing` and `cites_drawNothing`, which carry
+  no logical weight under the permissive reading, and let I.4 prove its laws one by one, as
+  I.8 does. So the definition `Cited.drawsNothing` leaves
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean),
+  in the foundations, with the theorem `Cited.holds_of_drawsNothing` from
+  [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean) and
+  `Prop4.cites_drawNothing` from [`Elements/BookI/Prop04.lean`](../../Elements/BookI/Prop04.lean),
+  whose derivation now discharges each cited law by its own theorem. No statement, no
+  `Cited` law and no other definition changes, and the lock is unchanged.
+  [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)'s
+  part 3 now points to question 4 and to `cited_laws` instead of saying that every law I.4
+  cites is proved with no rule that constructs; `Elements/BookI/Prop08.lean`'s note says
+  that I.7 draws its own lines and cites I.5. The protected file changed is
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean): its two pins of the retired
+  declarations go, every per-law pin and the pins of I.4 and I.8 stay exact, and its header
+  says which construction rules each law uses is computed by the certificate. Brief 0009
+  carries a dated note and points to the definition in FORMALIZATION. At this revision
+  every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
+  second retirement wave changes that for four of them, and its landing records it.
+  I.4's and I.8's records were read again in full and stamped by an independent reader.
+
 - **The numerical checks, made ready for the second axiom retirement.** This preparation
   keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
   change lands in a pull request of its own before the retirement it judges. The 31 laws

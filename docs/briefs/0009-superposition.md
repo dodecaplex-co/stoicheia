@@ -16,6 +16,19 @@ conditional on /no-mistakes and an independent Codex read of the model lane. The
 states what we formalised; the brief, the review records and the pages must agree with it
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
+*21 October 2026: for question 4 of #150, the coordinator takes route (b)
+([decisions](0002-decisions.md#21-october-2026), 21 October 2026).* The hand-set flag
+`Cited.drawsNothing`, the theorem `Cited.holds_of_drawsNothing` that proved the laws it
+marked, and I.4's check of it, `Prop4.cites_drawNothing`, are retired. Under the permissive
+reading the owner approved, `Rule` asks only that each cited law hold, so the flag carried
+no logical weight; what it recorded was a judgement made by eye from the pinned axiom
+closures, which no check confirmed. I.4 now proves its laws one by one, as I.8 does, and
+the certificate computes, for I.4 and I.8, the construction rules beneath each cited law's
+proof (`cited_laws` in `facts.json`), with "construction rule" defined in
+[FORMALIZATION.md](../FORMALIZATION.md#construction-rules), section 9. The lines below that
+spoke of the flag as present now record its retirement; what they record of earlier
+revisions stands.
+
 **Baseline update, 20 October 2026: A1 has landed.** The integration merge at
 `bd86a7b6` has the restricted-rule revision `9fc4bdc9` as one parent and
 `tooling/superposition-model-check` at `5a848389` as the other. The tooling parent carries
@@ -34,12 +47,13 @@ separately retires the construction shortcuts for I.2, I.3 and I.23. A2 has not 
 asked that the prototyped work be finished in an issue of its own, #150. There each answer
 that is still a reading, a flag set by hand or an unchecked sentence becomes a theorem, a
 computed check or a true record. Until then, part 4 of the restriction is an inspection of
-`Rule.infer` as locked in `Certificate/axioms.lock`, not a theorem; `Cited.drawsNothing` is
-a classification set by hand, whose values `Prop4.cites_drawNothing` evaluates but whose
-meaning is judged by eye from the audit's pinned axiom closures; and the cost of the kept
-side is checked by reading the model's proof. Non-derivability stays unclaimed. "Landing"
-gives the order: the first retirement wave, then this replacement, then the second wave,
-whose landing carries the review of `drawsNothing` and the audit pins.
+`Rule.infer` as locked in `Certificate/axioms.lock`, not a theorem; `Cited.drawsNothing` was
+a classification set by hand, whose values `Prop4.cites_drawNothing` evaluated but whose
+meaning was judged by eye from the audit's pinned axiom closures, until its retirement on
+21 October 2026 (above); and the cost of the kept side is checked by reading the model's
+proof. Non-derivability stays unclaimed. "Landing" gives the order: the first retirement
+wave, then this replacement, then the second wave, whose landing carries the review of the
+cited laws' construction rules (`cited_laws`) and the audit pins.
 
 **Round 3's correction.** Round 2 described a hypothesis in six prototype files; the branch
 now declares `Tacit.superposition : Superposition.Rule primitives` in the foundations.
@@ -335,9 +349,10 @@ two-rule presentation, which would need an argument of its own (Astra).
 Citing a law draws nothing in the placement: the step puts symbols already there for its
 letters. The law's own proof is a universal statement proved outside the placement, and
 Astra asked that such proofs be inspected rather than assumed admissible. `#print axioms`,
-at this revision, for each law's proof (a construction rule is an axiom whose conclusion
-asserts that something exists: the Postulates 1, 2, 3 and 5, the `exists_point` rules, the
-intersection rules; the restated `superposition` no longer asserts an existential):
+at this revision, for each law's proof (a construction rule as
+[FORMALIZATION.md](../FORMALIZATION.md#construction-rules), section 9, defines it, and as
+the certificate's `construction_rules` lists them; the restated `superposition` is not
+one):
 
 | Law | Proof | Construction rules it uses |
 |---|---|---|
@@ -347,8 +362,9 @@ intersection rules; the restated `superposition` no longer asserts an existentia
 | One ray for one angle, both halves | `onLine_of_angle_eq_named` in `Elements/Figure/Superposition.lean`, and Pasch 3 for the side | none |
 | I.7 | the edition's I.7, supplied by the theorem that cites it | Postulates 1, 2 and 3 and seven other construction rules; it also rests on the restricted superposition rule through I.5 and I.4 |
 
-`Cited.holds_of_drawsNothing` proves every law but I.7 in one theorem; its `#print axioms`
-lists 23 axioms, Lean's three among them, and no construction rule. In round 1, one ray for
+Each law but I.7 is proved by a theorem of its own in `Elements/Figure/Superposition.lean`,
+and the certificate lists the construction rules beneath each law's proof (`cited_laws`);
+at this revision it lists none for any law I.4 cites. In round 1, one ray for
 one angle was proved through Book Zero's `onRay_of_angle_eq`, which draws the straight lines
 DE, DF and DP (Postulate 1, and `exists_point` through `Triangle.angle_pos`): with P the
 laid-down C′, that drew through a point of the placement. Round 2 states the law with its
@@ -359,12 +375,13 @@ construction.
 points (Postulate 1), finds where AD and CB cross (an intersection rule), produces AC and AD
 (Postulate 2), and cites I.5, which cuts off with I.3 and so uses its circles (Postulate 3).
 Inside I.8's placement, I.7's point C is G, the laid-down corner. The I.7 *statement* asserts
-no existence, and citing it draws nothing in the placement. Every law I.4's derivation
-cites draws nothing (`Prop4.cites_drawNothing`); I.8's cites I.7, where Euclid's argument
-uses it ("But they cannot be so constructed. [I. 7]", the reference Heath's). The owner
-approved this permissive reading, as prototyped, under question 4 on 20 October 2026.
-`Cited.drawsNothing` is set by hand; #150 tracks checking it against the laws' proofs, or
-retiring it.
+no existence, and citing it draws nothing in the placement. At this revision every law
+I.4's derivation cites is proved with no construction rule, as `cited_laws` shows; I.8's
+cites I.7, where Euclid's argument uses it ("But they cannot be so constructed. [I. 7]",
+the reference Heath's). The owner approved this permissive reading, as prototyped, under
+question 4 on 20 October 2026. `Cited.drawsNothing`, which classified the laws by hand,
+was retired on 21 October 2026 (#150, route (b)): the certificate computes each law's
+construction rules instead.
 
 **A1 leaves these cited-law dependencies unchanged.** I.4's named-line ray proof uses
 the retained `triple_incidence2` and `angle_add_of_inside`, not the retired
@@ -382,9 +399,9 @@ axioms used by the cited laws with construction rules: `same_side_symm` uses
 `rayOfAngle` and `rayOfAngleSide` in I.4; I.8 also cites the first two. Of I.4's
 seven laws, only `lenSymm`, `angleSymm` and `areaCongruent` then have proofs without
 construction rules. This describes that A2 revision, not this A1 merge, and its
-dependencies must be checked again at A2's landing. `Cited.drawsNothing` is a classification,
-not a proof-term inspection; it and its supporting prose and audit pins must be reviewed
-again. Under the stricter reading of question 4, this would affect I.4 as well as I.8.
+dependencies must be checked again at A2's landing. The certificate's `cited_laws` will
+show those construction rules law by law; the supporting prose and audit pins must be
+reviewed again. Under the stricter reading of question 4, this would affect I.4 as well as I.8.
 Retired axioms must not be restored to preserve the earlier classification. That review
 belongs to the second wave's landing ("Landing"), and #150 tracks it.
 
@@ -761,7 +778,8 @@ regenerated; the record of each condition is:
   This merge reconciles that landed baseline's edits to the lock, model, numerical laws,
   audit and overlap catalogue. The replacement lands next.
   The second wave, `lean/retire-axioms-2`, which reduces 79 to 48, lands after the
-  replacement. Its landing carries the review of `drawsNothing` and of the audit pins once
+  replacement. Its landing carries the review of the cited laws' construction rules
+  (`cited_laws`) and of the audit pins once
   `same_side_symm`, `pasch3`, `eq_of_len_eq_zero` and `triple_incidence2` acquire the
   construction dependencies described above (#150). Review `neOfLen`, `rayUnique`,
   `rayOfAngle` and `rayOfAngleSide` in I.4 and the first two in I.8, with fresh per-law
@@ -890,14 +908,17 @@ from round 2. The other items record the delivered design or the continuing proc
    inside the placement, whatever its proof constructs.
    Thus I.8 uses I.7 on its hypothetical corner, following Euclid's argument. The stricter
    alternative permits only laws proved without construction rules. The prototype's
-   suggested test, `∀ c ∈ cites, c.drawsNothing = true`, expresses that only while the
-   classification agrees with the actual proofs. It would reject this I.8 route, requiring
+   suggested test, `∀ c ∈ cites, c.drawsNothing = true`, expressed that only while the
+   classification agreed with the actual proofs; with the flag retired, the stricter
+   reading would ask that every cited law's `construction_rules` in `cited_laws` be
+   empty. It would reject this I.8 route, requiring
    another argument labelled as such. At `aa96ab8` I.4's cited laws pass that classification;
    after `lean/retire-axioms-2`, the construction dependencies of `same_side_symm`,
    `pasch3`, `triple_incidence2` and `eq_of_len_eq_zero` bring I.4 within this decision
    too, in the four laws named under "What the laws' proofs draw". The
-   classification is set by hand; #150 tracks checking it against the proofs, or retiring
-   it, and the review at the second wave's landing.
+   classification, set by hand, was retired on 21 October 2026; the certificate's
+   `cited_laws` gives each law's construction rules, and #150 tracks the review at the
+   second wave's landing.
 5. **The side laid down, approved 20 October 2026.** The owner accepted the prototype's
    kept side AC as a straight line through D and C′, so the angle-to-ray argument draws no
    line inside the placement. The model proves
