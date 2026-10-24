@@ -66,8 +66,8 @@
   renders the block, and finds the copy agreeing as the tree does. The new check runs in
   its own pull request's CI, and joins the pre-flight once it merges.
 
-  What it gives up. On GitHub the `check` job shows one step where it showed seventeen:
-  each check is a group of that step's log, and a failure names its check there and in an
+  What it gives up. On GitHub the `check` job shows one step where it showed one for
+  each check, twenty-two by 23 October: each check is a group of that step's log, and a failure names its check there and in an
   error annotation. And a registry at origin/main that could not be read would hold every
   train, of every class, its own repair among them, since step 3 reads the registry in
   every class, so that repair would need the owner's leave to land without the pre-flight.
@@ -177,6 +177,20 @@
   check that the decisions page repeats no dated heading, which
   [#383](https://github.com/jackChallis/stoicheia/pull/383) put in the check job after the
   worktree check and before the links check, where its order of 175 keeps it.
+
+  This entry approves `checks/22-test-check-superposition-pins.toml`, the superposition
+  pin check's own cases.
+
+  This entry approves `checks/23-check-superposition-pins.toml`, the check that each
+  theorem and definition brief 0009's restriction section names is pinned.
+
+  [#404](https://github.com/jackChallis/stoicheia/pull/404) added those two checks to the
+  `check` job as loose steps of `.github/workflows/ci.yml`, after the cases of item P3 and
+  before the style check, and to the built-in `CHECKS`. Here they become two files of the
+  registry, whose orders of 143 and 146 keep them in that place, and not steps of the
+  workflow, whose `check` job runs the registry alone. They stay in the built-in list too,
+  and the tests pin that list with them, since it is the sequence the pre-flight runs
+  while origin/main holds no registry.
 
   On 22 October 2026 the coordinator ruled that WORKFLOW section 8's command block between
   the `<!-- checks -->` markers is generated output, and that a train that changes

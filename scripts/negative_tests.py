@@ -83,19 +83,21 @@ generated_counts.absent_tracked's, which check_fidelity.py and render.py follow 
 tracked Markdown they read.
 
 These faults exercise the style and link checks, page freshness, an audit pin, a
-complete book's figures and mishnah, and leanchecker's loading of compiled files and its
-kernel replay, as well as check_fidelity.py's, which most plants run. `check_kernel.py`'s
-own `--self-test` withholds Postulate 5 from nanoda alone.
+complete book's figures and mishnah, leanchecker's loading of compiled files and its
+kernel replay, part 4 of the restriction and the proof of every cited law, as well as
+check_fidelity.py's, which most plants run. `check_kernel.py`'s own `--self-test`
+withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-The five that build, changed_audit_pin, construction_in_clean_laws, corrupt_olean,
-ill_typed_proof and planted_assumptions, attempt a restoration build; if it fails or is
-interrupted, every file in `.lake/build` returns to its saved contents and presence or
-absence before the plant, including dependent modules, hashes and traces. planted_assumptions always
-restores or removes `Planted.*` outputs in a nested `finally`. Every plant reports its
-elapsed time, restoration included. An outer `finally` compares Git status with the entry status, including on interruption, without
-replacing an exception already in flight.
+The six that build, changed_audit_pin, cited_law_unproved, construction_in_clean_laws,
+corrupt_olean, ill_typed_proof and planted_assumptions, attempt a restoration build; if it
+fails or is interrupted, every file in `.lake/build` returns to its saved contents and
+presence or absence before the plant, including dependent modules, hashes and traces.
+planted_assumptions always restores or removes `Planted.*` outputs in a nested `finally`.
+Every plant reports its elapsed time, restoration included. An outer `finally` compares
+Git status with the entry status, including on interruption, without replacing an
+exception already in flight.
 Temporary-directory regressions run before the plants, without Lean. Exits non-zero if a
 fault goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
@@ -191,6 +193,67 @@ BOOK_ZERO_TEXT = ("Elements/Figure/PlantedImportText.lean",
                   "/- import Elements.BookI.Prop01 -/\n"
                   'def plantedImportText : String := "import Elements.BookI.Prop01"\n'
                   "def «import Elements.BookI.Prop01» : Nat := 1\n")
+
+
+# The restriction's names and guards for figure_guard_over_all_points, and its helpers
+# plant_figure_guard and declaration_lines. Here, not in
+# scripts/negative/figure_guard_over_all_points.py, because tests/test_negative_tests.py
+# reads them.
+RESTRICTION = "Elements/Foundations/Superposition/Restriction.lean"
+RESTRICT = "theorem Rule.Figure.restrict"
+IFF_FIGURE = "theorem Rule.iff_figure"
+RESTRICT_NAME = "Elements.Superposition.Rule.Figure.restrict"
+# The two guards `figure_guard_over_all_points` adds to `Rule.Figure`. The control speaks of the figure's own points and
+# straight line, as the embedding keeps them; the plant ranges over every point: the
+# straight line through D and G holds no other point.
+OVER_THE_FIGURE = ("(I.Between (v.pt d) (v.pt a) (v.pt g) → "
+                   "I.SameSide (v.pt b) (v.pt h) (v.line l))")
+OVER_ALL_POINTS = "(∀ X : I.Point, I.OnLine X (v.line l) → X = v.pt d ∨ X = v.pt g)"
+# In both runs the proof of `Rule.Figure.restrict` introduces the new guard as `hX` and
+# passes it from J to I through the embedding.
+THROUGH_THE_EMBEDDING = ("(by simpa [Interpretation.Embedding.val, e.onLine_iff, e.between_iff, "
+                         "e.sameSide_iff] using hX)")
+
+
+def plant_figure_guard(text: str, guard: str) -> str:
+    """The restriction's text with `guard` added to `Rule.Figure` after the guards, the proof
+    of `Rule.Figure.restrict` taking it as `hX` and passing it through the embedding,
+    `Rule.iff_figure` and its docstring left out, and `#print axioms` of
+    `Rule.Figure.restrict` appended, to show whether it was proved."""
+    iff = declaration_lines(text, IFF_FIGURE)
+    lines = text.split("\n")
+    # Line numbers from 1: the docstring opens at `doc`, and a blank line follows the proof.
+    doc = max(n for n in range(1, iff.start) if lines[n - 1].startswith("/--"))
+    assert lines[iff.stop - 1] == "", f"{RESTRICTION}: expected a blank line after {IFF_FIGURE}"
+    text = "\n".join(lines[:doc - 1] + lines[iff.stop:])
+    edits = (
+        ("¬ I.OnLine (v.pt h) (v.line l) → (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v",
+         f"¬ I.OnLine (v.pt h) (v.line l) →\n      {guard} →\n"
+         "      (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v"),
+        ("intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hΓ",
+         "intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hX hΓ"),
+        ("(fun hh' => hh (e.onLine_iff.1 hh'))\n    fun ℓ hℓ",
+         f"(fun hh' => hh (e.onLine_iff.1 hh'))\n    {THROUGH_THE_EMBEDDING}\n    fun ℓ hℓ"),
+    )
+    for old, new in edits:
+        assert text.count(old) == 1, f"{RESTRICTION}: expected one {old!r}; update this test"
+        text = text.replace(old, new)
+    return text + f"\n#print axioms {RESTRICT_NAME}\n"
+
+
+def declaration_lines(text: str, head: str) -> range:
+    """The lines of the declaration that starts with `head`, up to the next blank line."""
+    assert text.count(head) == 1, f"{RESTRICTION}: expected one {head!r}; update this test"
+    start = text.index(head)
+    end = text.find("\n\n", start)
+    first = text[:start].count("\n") + 1
+    return range(first, text[:end if end >= 0 else len(text)].count("\n") + 2)
+
+
+# The files cited_law_unproved plants in and expects the refusal from. Here, not in
+# scripts/negative/cited_law_unproved.py, because tests/test_negative_tests.py reads them.
+SYNTAX = "Elements/Foundations/Superposition/Syntax.lean"
+HOLDS_ALL = "Elements/BookI/Prop08.lean"
 
 
 def run(*cmd: str) -> subprocess.CompletedProcess:
