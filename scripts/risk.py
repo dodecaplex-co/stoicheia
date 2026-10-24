@@ -70,10 +70,9 @@ CLASSES = {
 
 # Ordered: the first match wins. Highest-risk rules first, so a specific file is never caught
 # by a broader, lighter rule. scripts/risk.py is R5 because it decides which checks run.
-# So will be scripts/registry.py, whose copy at main is to decide the pre-flight's sequence
-# of checks, and scripts/run_checks.py, which is to be CI's `check` job; the registry they
-# read, checks/, is R3, so that adding a check stays a change to the checks (#229). They are
-# ruled here first, before the registry comes, so that main judges the train bringing it.
+# So are scripts/registry.py, whose copy at main decides the pre-flight's sequence of
+# checks, and scripts/run_checks.py, which is CI's `check` job; the registry they read,
+# checks/, is R3, so that adding a check stays a change to the checks (#229).
 # lakefile.lean is R4 with the other build files, not R2 by `*.lean`: the repository has
 # none, but Lake reads one in preference to lakefile.toml. scripts/check_model_kernel.py is
 # R4, not R3 by `scripts/*`, because CI's formal-model job, which runs it, runs for R4 and R5.
@@ -89,6 +88,9 @@ RULES = [
             # The registry of checks, one file per check of CI's `check` job (#229): adding
             # or changing a check is a change to the checks, whatever else it touches.
             "checks/*",
+            # ACCEPTANCE's table of the limitations allowed, which tests/test_acceptance_limits.py
+            # ties to check_acceptance.py's ALLOWED_LIMITS: a check input (#249).
+            "docs/ACCEPTANCE.md",
             # A rule of these can hide a file from the whole-worktree cleanliness check, or
             # change how Git reads one, so they are checks, not docs.
             ".gitignore", "*/.gitignore", ".gitattributes", "*/.gitattributes"]),
@@ -96,7 +98,7 @@ RULES = [
             "*.lean"]),
     ("R1", ["heath/*", "mishnah/*", "review/*", "figures/*", "book/*", "facts.json",
             "CERTIFICATE.md", "GRAPH.md", "docs/reports/*", "docs/decisions/*", "docs/briefs/*",
-            "docs/ACCEPTANCE.md", "docs/STYLE.md", "docs/FORMALIZATION.md", "docs/program.toml",
+            "docs/STYLE.md", "docs/FORMALIZATION.md", "docs/program.toml",
             "docs/PROGRAM.md", "reading/*"]),
     ("R0", ["docs/*", "README.md", "CONTRIBUTING.md", "AGENTS.md", "CLAUDE.md", "NOTICE",
             "CITATION.cff", "LICENSE*", "assets/*"]),

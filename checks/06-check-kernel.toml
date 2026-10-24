@@ -1,0 +1,9 @@
+# Check every proof again, by Lean's kernel, and by nanoda admitting only the locked axioms
+# and Lean's three. leanchecker --fresh replays the whole environment of Elements, Lean's
+# own included, through Lean's kernel; nanoda, written separately, checks the whole export.
+# --self-test withholds Postulate 5 and expects nanoda to fail on it.
+order = 60
+name = "python3 scripts/check_kernel.py --self-test"
+job = "check"
+command = ["python3", "scripts/check_kernel.py", "--self-test"]
+section8 = "python3 scripts/check_kernel.py --self-test"
