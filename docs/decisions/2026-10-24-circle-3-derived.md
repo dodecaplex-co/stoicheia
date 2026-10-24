@@ -12,7 +12,7 @@
   an axiom, and `run.py` still finds its hypotheses met. This lands first, in a check
   change of its own, so that the retirement changes only the values pinned to the lock.
 
-  `python3 -I tests/model/run.py --full --write` ran at commit `6c231d75a3ee`, the
+  `python3 -I tests/model/run.py --full --write` ran at commit `bfa20bf2a4e9`, the
   harness as this change leaves it, and every check passed: the plane gave no
   counterexample, all 15 mutations were caught, and in the hyperbolic plane `Postulate5`
   alone failed, as it must. Circle 3's 281,664 exhaustive and 47,802 structured
