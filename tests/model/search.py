@@ -391,7 +391,8 @@ def _(c):
     B, L = c['B'], c['L']
     if on_line(B, L):
         return None
-    s = sgn(lval(B, L))
+    v = L[0] * B[0] + L[1] * B[1] + L[2]   # the line's value at B, as model.py's lval
+    s = (v > 0) - (v < 0)                  # and its sign, as sgn
     ws = [(B[0] + k * s * L[0], B[1] + k * s * L[1]) for k in (1, 2, 3)]
     return all(same_side(w, B, L) for w in ws)
 
@@ -401,8 +402,7 @@ def _(c):
     B, L = c['B'], c['L']
     if on_line(B, L):
         return None
-    s = sgn(lval(B, L))
-    v = lval(B, L)
+    v = L[0] * B[0] + L[1] * B[1] + L[2]   # the line's value at B, as model.py's lval
     n2 = L[0] ** 2 + L[1] ** 2
     ws = [(B[0] - Fr(k * v, n2) * L[0], B[1] - Fr(k * v, n2) * L[1]) for k in (2, 3, 4)]
     return all(opposite(w, B, L) for w in ws)
@@ -656,25 +656,23 @@ def _(c):
 
 
 # ---- Triple incidence
-def _ti_hyp(c):
-    A, B, Cc, D, L, M, N = (c[k] for k in 'ABCDLMN')
-    return (on_line(A, L) and on_line(A, M) and on_line(A, N) and on_line(B, L) and on_line(Cc, M)
-            and on_line(D, N))
-
-
 @axiom('triple_incidence1', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_))
 def _(c):
-    if not (_ti_hyp(c) and same_side(c['C'], c['D'], c['L']) and same_side(c['B'], c['C'], c['N'])):
+    A, B, Cc, D, L, M, N = (c[k] for k in 'ABCDLMN')
+    if not (on_line(A, L) and on_line(A, M) and on_line(A, N) and on_line(B, L) and on_line(Cc, M)
+            and on_line(D, N) and same_side(Cc, D, L) and same_side(B, Cc, N)):
         return None
-    return not same_side(c['B'], c['D'], c['M'])
+    return not same_side(B, D, M)
 
 
 @axiom('triple_incidence2', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_))
 def _(c):
-    if not (_ti_hyp(c) and same_side(c['C'], c['D'], c['L']) and not same_side(c['B'], c['D'], c['M'])
-            and not on_line(c['D'], c['M']) and c['B'] != c['A']):
+    A, B, Cc, D, L, M, N = (c[k] for k in 'ABCDLMN')
+    if not (on_line(A, L) and on_line(A, M) and on_line(A, N) and on_line(B, L) and on_line(Cc, M)
+            and on_line(D, N) and same_side(Cc, D, L) and not same_side(B, D, M)
+            and not on_line(D, M) and B != A):
         return None
-    return same_side(c['B'], c['C'], c['N'])
+    return same_side(B, Cc, N)
 
 
 
@@ -721,7 +719,8 @@ def _(c):
     A, L, al = c['A'], c['L'], c['al']
     if not (inside(A, al) and on_line(A, L)):
         return None
-    return line_meets_circle(L, al)
+    v = L[0] * al[0] + L[1] * al[1] + L[2]   # the centre's value, as model.py's line_meets_circle
+    return v * v < al[2] * (L[0] ** 2 + L[1] ** 2)
 
 
 @axiom('circles_meet_of_on_inside_outside', dict(A=P, B=P, al=C_, be=C_))
