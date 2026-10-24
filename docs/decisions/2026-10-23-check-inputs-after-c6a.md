@@ -40,7 +40,11 @@
   cases that #410's module kept for III.16 and III.31 (a partial record with the tag
   passes, one without it is refused for the tag, a restricted one is refused), and the
   case on the alternative route now gives all four propositions a full statement, and
-  then a restricted one, which is refused for both reasons. Since
+  then a restricted one, which is refused for both reasons. With the table empty, no
+  real row would test what P3 does with a listed proposition, so another new case lists
+  III.16 in a made-up table, in memory alone: partial with `mixed-angles-omitted`, it
+  passes; partial without the tag, it is refused for the tag; restricted, it is refused
+  as a scope the table does not name. Since
   [#249](https://github.com/jackChallis/stoicheia/issues/249), ACCEPTANCE has been a
   check input and a protected path, so its table, `ALLOWED_LIMITS` and their test change
   together in this one check change.
@@ -73,5 +77,5 @@
   It approves the two rows taken out of the table "The limitations allowed" in
   `docs/ACCEPTANCE.md`, the sentence before that table, the paragraph after it, and the
   new wording of item B4.
-  It approves the empty expected table, the two new cases in place of three, and the
-  changed case on the alternative route in `tests/test_acceptance_limits.py`.
+  It approves the empty expected table, the three new cases, the three cases removed, and
+  the changed case on the alternative route in `tests/test_acceptance_limits.py`.

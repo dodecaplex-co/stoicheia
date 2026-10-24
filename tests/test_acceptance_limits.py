@@ -50,6 +50,22 @@ class AllowedLimits(unittest.TestCase):
             [(ref, scope, tag) for ref, (scope, tag) in expected.items()],
         )
 
+    def test_an_allowed_row_asks_its_scope_and_tag(self):
+        # The table is empty, so a made-up row keeps P3's two refusals for a listed
+        # proposition tested: the scope not allowed, and the allowed scope without its tag.
+        with patch.object(acceptance, "ALLOWED_LIMITS",
+                          {"III.16": ("partial", "mixed-angles-omitted")}):
+            self.assertEqual(
+                self.p3_failures("III.16", "partial", ["mixed-angles-omitted"]), [])
+            for tags in ([], ["mixed-angles-local"]):
+                with self.subTest(tags=tags):
+                    self.assertEqual(self.p3_failures("III.16", "partial", tags), [
+                        "a partial statement allowed only as `mixed-angles-omitted`, "
+                        "and the record does not carry that tag",
+                    ])
+            self.assertEqual(self.p3_failures("III.16", "restricted", ["mixed-angles-omitted"]),
+                             self.unlisted("restricted"))
+
     def test_figures_short_of_full_fail_whatever_tags(self):
         # #116: the allowance for I.45 and II.14 is withdrawn, so a restricted or partial
         # statement of either fails as any limitation the table does not name.
