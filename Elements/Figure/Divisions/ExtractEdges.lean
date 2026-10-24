@@ -396,7 +396,6 @@ theorem elem_overlap {P Q P' Q' X : Point} (he : Elem R P Q) (he' : Elem R P' Q'
   obtain ⟨ℓ, hPℓ, hQℓ⟩ := Postulate1 P Q hPQ
   by_cases hcol : OnLine P' ℓ ∧ OnLine Q' ℓ
   · /- On one straight line: each end of either is an end of the other. -/
-    have hXℓ := on_line_of_between_ends hX hPℓ hQℓ
     have key : ∀ {A B : Point}, A ∈ verts R → OnLine A ℓ → Between A X B →
         (∀ V ∈ verts R, ¬ Between A V B) → A = P ∨ A = Q := by
       intro A B hA hAℓ hAXB hAB
@@ -504,7 +503,7 @@ theorem mult_le_two {P Q : Point} (hPQ : P ≠ Q) : mult R (P, Q) ≤ 2 := by
     obtain ⟨ht₁, hi₁⟩ := hmem t₁ (by simp)
     obtain ⟨ht₂, hi₂⟩ := hmem t₂ (by simp)
     obtain ⟨ht₃, hi₃⟩ := hmem t₃ (by simp)
-    obtain ⟨u₁, v₁, w₁, hr₁, hw₁, hu₁, hv₁, ho₁⟩ := third_off R ht₁ hPQ hi₁ hPℓ hQℓ
+    obtain ⟨u₁, v₁, w₁, hr₁, hw₁, -, -, ho₁⟩ := third_off R ht₁ hPQ hi₁ hPℓ hQℓ
     obtain ⟨u₂, v₂, w₂, hr₂, hw₂, hu₂, hv₂, ho₂⟩ := third_off R ht₂ hPQ hi₂ hPℓ hQℓ
     obtain ⟨u₃, v₃, w₃, hr₃, hw₃, hu₃, hv₃, ho₃⟩ := third_off R ht₃ hPQ hi₃ hPℓ hQℓ
     have h12 : ¬ SameSide w₁ w₂ ℓ := fun h' =>

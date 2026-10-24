@@ -331,7 +331,7 @@ def check_certificate(facts: dict) -> None:
             fail(who, "P8" if "figures/" in msg else "P9", msg)
         else:
             fail(who, "P5", msg)
-    _, found = captured(cf.check_expectations, by_ref)
+    _, found = captured(cf.check_expectations, by_ref, cf.EXPECTATIONS, facts)
     for msg in found:
         fail("edition", "E2", msg)
     _, found = captured(cf.check_reviews, facts, by_ref)
