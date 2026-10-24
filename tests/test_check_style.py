@@ -33,6 +33,10 @@ it, put to the script's own patterns and functions:
   before the case the record's [figure] names, or "Drawn for every case" where the record
   says `every_case`, and heath.py refuses an `every_case` that is not true or false, or
   that has no `case` for the caption to name;
+* the route cases: render.py counts the steps a modified route changes, one for each
+  passage its record argues another way, on the page, in the book's summary and in the
+  certificate's key, and where the record counts none says "with a step changed" on the
+  page and "one or more" in the book's summary;
 * the clearance cases: S26 finds a stroke through a letter, or nearer it than 2 less half
   its width (given as an attribute or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
@@ -2377,6 +2381,80 @@ class LeanPartsNames(unittest.TestCase):
         parts = self.parts(src)
         self.assertEqual((parts.before, parts.before_names), ("", []))
         self.assertTrue(parts.main.startswith("/-! ## The proposition"))
+
+
+class RouteSteps(unittest.TestCase):
+    """A modified route says how many steps it changes, one for each passage its record
+    argues another way (`different`) (#380): the pages, the book's summary and the
+    certificate said "one step changed" of every modified route, where III.8, III.16,
+    III.26, III.28 and III.29 argue two passages another way and III.24 three."""
+
+    @staticmethod
+    def record(different, kind="modified"):
+        """A record held in memory, as heath.load_review fills one in: a whole statement,
+        its route `kind`, and `different` passages argued another way after a helper's."""
+        passage = [{"at": "A", "kind": "helper", "helper": "Prop99.h", "note": "N."}]
+        passage += [{"at": f"P{i}", "kind": "different", "note": "N."} for i in range(different)]
+        return {"statement": {"scope": "full", "hypotheses": [], "companions": []},
+                "route": {"kind": kind, "note": "The route's note."},
+                "passage": passage, "review": {"stage": "full"}}
+
+    def test_each_page_counts_its_steps(self):
+        """The Argument column, the line under the enunciation and the Argument row, with
+        "with a step changed" where the record counts no step."""
+        p = {"status": "proved"}
+        for different, words, column in [
+                (2, "with two steps changed", "two steps changed"),
+                (3, "with three steps changed", "three steps changed"),
+                (1, "with one step changed", "one step changed"),
+                (0, "with a step changed", "with a step changed")]:
+            record = self.record(different)
+            with self.subTest(different=different, site="route_word"):
+                self.assertEqual(render.route_word(record, "III", 2), f"Euclid's, {column}")
+                self.assertEqual(render.route_word(record, "III", 12), f"the text's, {column}")
+            with self.subTest(different=different, site="in_lean_line"):
+                self.assertEqual(render.in_lean_line(p, record, "III", 2),
+                                 f"**In Lean:** ✅ proved, as Euclid states it · Euclid's "
+                                 f"argument, {words}")
+            with self.subTest(different=different, site="field_table"):
+                self.assertIn(f"| Argument | Euclid's, {words}. The route's note. |",
+                              render.field_table("III", 2, p, record, [], {}))
+        record = self.record(0, kind="euclid")
+        self.assertEqual(render.route_word(record, "III", 2), "Euclid's")
+
+    def test_the_book_summary_is_true_for_any_mix(self):
+        """A count every modified proof shares is said; any other mix is "one or more"."""
+        for counts, words in [((2, 2), "2 follow it with two steps changed"),
+                              ((1,), "1 follows it with one step changed"),
+                              ((2, 1, 3), "3 follow it with one or more steps changed"),
+                              ((1, 0), "2 follow it with one or more steps changed"),
+                              ((0,), "1 follows it with one or more steps changed")]:
+            refs = [f"III.{n}" for n in range(1, len(counts) + 2)]
+            records = {refs[0]: self.record(0, kind="euclid")}
+            records.update({r: self.record(k) for r, k in zip(refs[1:], counts)})
+            facts = {r: {"status": "proved"} for r in refs}
+            links = ", ".join(f"[{r}]({r})" for r in refs[1:])
+            with self.subTest(counts=counts):
+                summary = render.book_summary("III", facts, records, lambda r: r,
+                                              postulate5=False)
+                self.assertTrue(summary.endswith(
+                    f" 1 proof follows Euclid's argument and {words} ({links}); each page "
+                    "says how."), summary)
+
+    def test_the_certificate_key_reads_any_count(self):
+        """The key describes the label for any count, and names "with a step changed" only
+        where a record counts no step."""
+        uncounted = "*Euclid's, with a step changed*"
+        facts = render.load_facts()
+        for different in (2, 1, 0):
+            with self.subTest(different=different):
+                records = {"III.2": self.record(different)}
+                key = next(line for line in render.certificate_intro(facts, records)
+                           if line.startswith("**How to read the table.**"))
+                self.assertIn("*Euclid's, one step changed* is his argument with one step "
+                              "argued another way, *Euclid's, two steps changed* with two, "
+                              "and so on, each step named on the page", key)
+                self.assertEqual(uncounted in key, different == 0)
 
 
 class FigureCaption(unittest.TestCase):
