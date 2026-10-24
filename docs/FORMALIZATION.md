@@ -576,15 +576,16 @@ dependencies.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
 - **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
-  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
-  each name must stay in the axiom lock, or name a theorem whose `proved_rules` entry
-  in `facts.json` includes another forbidden circle rule still in the lock as an axiom,
-  or whose `proved_rule_cites` entry includes III.2, with III.2 proved and resting on
-  neither rule. Thus a proved rule remains forbidden through the axiom beneath it, or,
-  proved from III.2, is cited through III.2 by every entry that uses it, so that no entry
-  before III.2 can use it (no later citations, below); a missing name, a proof with
-  neither, or a proof citing an III.2 that is missing, unproved or itself resting on
-  either rule, fails the check.
+  `Tacit.outside_of_between` as an axiom, and no entry before III.2 uses either, whether
+  through its own proof or through a lemma it uses; a rule proved from III.2 may be used
+  after III.2, and the use cites III.2. Each name must stay in the axiom lock, or name a
+  theorem whose `proved_rules` entry in `facts.json` includes another forbidden circle
+  rule still in the lock as an axiom, or whose `proved_rule_cites` entry includes III.2,
+  with III.2 proved and resting on neither rule. Thus a proved rule remains forbidden
+  through the axiom beneath it, or, if it is proved from III.2, every entry that uses it
+  cites III.2 through it, so that no entry before III.2 can use it (no later citations,
+  below); a missing name, a proof with neither, or a proof citing an III.2 that is
+  missing, unproved or itself resting on either rule, fails the check.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.

@@ -825,8 +825,8 @@ run_cmd do
     words := words.push (nameStr w, Json.str s!"{kind} : {type}{value}")
   /- Proved tacit rules keep their names when they leave the axiom lock. Record what
      Lean finds beneath each, so the policy check can still refuse a forbidden rule, and
-     the entries each cites, found by the entries' own walk, `directDeps`: what an entry
-     citing through a proved rule is found to cite, the rule's own list shows. -/
+     the entries each cites, found by the entries' own walk, `directDeps`: an entry whose
+     proof uses a proved rule is found to cite every entry in the rule's list. -/
   let mut provedRules : Array (String × Json) := #[]
   let mut provedRuleCites : Array (String × Json) := #[]
   for (n, ci) in env.constants.toList do

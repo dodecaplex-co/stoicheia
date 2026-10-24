@@ -14,15 +14,17 @@
   rule cites, in a new field, `proved_rule_cites`, found by the walk that finds the
   entries' own citations.
 
-  This is no weaker. Every refusal stands. A rule missing from the lock and from
+  This is no weaker. Every refusal stands but the one this entry lifts, of a rule proved
+  from III.2 with no forbidden axiom beneath it. A rule missing from the lock and from
   `proved_rules` is refused as before, in the same words. A proved rule with neither a
   locked forbidden rule beneath it nor a proof that cites III.2 is refused, in words that
   now name both routes. An entry whose axioms hold a forbidden rule that is still an axiom
-  is refused exactly as before. The new route has three refusals of its own, each naming
-  the rule and III.2: III.2 has no entry in the certificate; III.2 is not proved; or III.2
-  itself rests on either rule, among its axioms, its shared steps or the lemmas it
-  inherits an axiom through, the circular case. A missing or malformed
-  `proved_rule_cites` counts as citing nothing. And an entry using a rule proved from
+  is refused exactly as before. The new route has refusals of its own, each naming the
+  rule and III.2: three, when III.2 has no entry in the certificate, when III.2 is not
+  proved, or when III.2 itself rests on either rule, among its axioms, its shared steps or
+  the lemmas it inherits an axiom through, the circular case; and one more for each of
+  III.2's `axioms`, `shared_steps` and `inherited` that is malformed, refused without a
+  crash. A missing or malformed `proved_rule_cites` counts as citing nothing. And an entry using a rule proved from
   III.2 still cannot come before III.2. The walk that finds an entry's citations passes
   through the Tacit theorems, so the entry cites III.2 through the rule, and the check on
   later citations refuses it in Books I and II and in III.1, porisms and companions
@@ -42,9 +44,18 @@
   This entry approves the change to `Certificate/FIELDS.md`, which gives the new field
   `proved_rule_cites` its row among the fields of the top level.
 
-  This entry approves the new plant `scripts/negative/circle_from_iii2.py`, which refuses
-  both rules proved citing nothing or an III.2 resting on Circle 3, and passes them proved
-  from III.2's real entry.
+  This entry approves the new plant `scripts/negative/circle_from_iii2.py`, which checks
+  that `check_lock` refuses both rules proved citing nothing or citing an III.2 resting on
+  Circle 3, and that it passes them proved from III.2's real entry.
+
+  This entry approves the change to `scripts/negative/circle_proved.py`, whose docstring
+  now says that Circle 2 is planted with no citation in `proved_rule_cites`; the plant's
+  code is unchanged.
 
   This entry approves the change to `tests/test_negative_tests.py`, whose circle tests
   plant each case of the new route and test the new plant's three cases and restoration.
+
+  This entry approves the change to `tests/certificate_expectations.json`, which gains one
+  expectation, that II.1 cites I.13: its proof reaches I.13 only through the proved rule
+  `Tacit.adjacent_eq_of_right`, so the pin holds the walk to passing through proved Tacit
+  rules, which the III.2 route of `check_lock` relies on.

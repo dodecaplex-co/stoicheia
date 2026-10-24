@@ -145,18 +145,19 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # postulate from their first proposition on, as II.10 does by name. A book missing here
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
-# These rules contain III.2; no certificate entry may rest on either, even through a
-# helper. Certificate names omit the leading `Elements.`. Each stays an axiom in the lock,
-# or is a theorem (`proved_rules`) proved in one of two ways. Proved from the other rule
-# while that one is still a locked axiom, it brings that axiom into the axioms of every
-# entry using it, which refuses the entry. Proved by a proof that cites III.2
-# (`proved_rule_cites`), with III.2 proved and resting on neither rule, it needs no axiom
-# beneath it, and that is safe: an entry using such a rule cites III.2 through it, for
-# Facts.lean's `directDeps`, the walk that finds an entry's citations, passes through the
-# Tacit theorems. So the later-citation check refuses it in Books I and II and in III.1,
-# porisms and companions included; III.2 cannot use it, since Lean admits no circular
-# proof, and the route is refused if III.2's entry rests on either rule; after III.2 the
-# use is an honest citation.
+# These rules contain III.2. No certificate entry may rest on either as an axiom, and none
+# before III.2 may use either, even through a helper; a rule proved from III.2 may be used
+# after III.2, and the use cites III.2. Certificate names omit the leading `Elements.`.
+# Each stays an axiom in the lock, or is a theorem (`proved_rules`) proved in one of two
+# ways. Proved from the other rule while that one is still a locked axiom, it brings that
+# axiom into the axioms of every entry using it, which refuses the entry. Proved by a
+# proof that cites III.2 (`proved_rule_cites`), with III.2 proved and resting on neither
+# rule, it needs no axiom beneath it, and that is safe: an entry using such a rule cites
+# III.2 through it, for Facts.lean's `directDeps`, the walk that finds an entry's
+# citations, passes through the Tacit theorems. So the later-citation check refuses it in
+# Books I and II and in III.1, porisms and companions included; III.2 cannot use it,
+# since Lean admits no circular proof, and the route is refused if III.2's entry rests on
+# either rule; after III.2 the use is an honest citation.
 FORBIDDEN_CIRCLE_RULES = {
     "Tacit.inside_of_between": "Circle 2",
     "Tacit.outside_of_between": "Circle 3",

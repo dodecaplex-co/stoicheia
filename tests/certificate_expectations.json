@@ -325,6 +325,12 @@
       "includes": ["Postulate1", "Postulate2", "Postulate3", "Postulate5", "Tacit.circles_meet", "Tacit.circles_meet_same_side", "Tacit.exists_point", "Tacit.exists_point_inside_circle", "Tacit.exists_point_on_line", "Tacit.line_circle_between", "Tacit.line_circle_beyond", "Tacit.lines_meet_of_opposite_sides"],
       "excludes": ["Definition15", "Postulate4", "Tacit.superposition", "Tacit.pasch3", "Tacit.outside_of_between", "Tacit.angle_le_two_right"],
       "why": "A construction rule is an axiom whose conclusion asserts existence once the project's definitions are unfolded (docs/FORMALIZATION.md, section 9): the postulates that draw, the rules that give a point, and those that conclude CirclesMeet or LinesMeet are among them. A rule that concludes an equality, a negation, OutsideCircle, an order read through its instance, or the restricted rule is not. Every rule it requires stays an axiom after the second retirement wave, and so does every rule it excludes but Tacit.pasch3, which that wave proves as a theorem (#150, question 4)."
+    },
+    {
+      "ref": "II.1",
+      "field": "cites",
+      "includes": ["I.13"],
+      "why": "II.1 cites I.13 only through the proved rule Tacit.adjacent_eq_of_right; its own proof never names I.13's theorem. So the walk that finds an entry's cites passes through proved Tacit rules, as the III.2 route of check_lock relies on: an entry using a forbidden circle rule proved from III.2 is found citing III.2 through it, and refused if it comes before III.2 (#294)."
     }
   ]
 }
