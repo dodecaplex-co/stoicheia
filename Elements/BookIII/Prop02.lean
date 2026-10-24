@@ -175,24 +175,6 @@ theorem Prop2.sameSide {B C K : Point} {α : Circle}
   obtain ⟨A, hA_α, hAQ⟩ := Prop2.oppositeSide hB hC hQ.triangle
   exact ⟨A, hA_α, OppositeSidesOf.sameSideOf hAQ.symm hQ⟩
 
-@[deprecated Elements.BookIII.Prop2.triangle (since := "2026-10-24")]
-theorem _root_.Elements.Triangle.of_onCircle {A B C : Point} {α : Circle}
-    (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
-    (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C :=
-  Prop2.triangle hA hB hC hAB hBC hAC
-
-@[deprecated Elements.BookIII.Prop2.oppositeSide (since := "2026-10-24")]
-theorem _root_.Elements.exists_onCircle_oppositeSidesOf {B C K : Point} {α : Circle}
-    (hB : OnCircle B α) (hC : OnCircle C α)
-    (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C :=
-  Prop2.oppositeSide hB hC hK
-
-@[deprecated Elements.BookIII.Prop2.sameSide (since := "2026-10-24")]
-theorem _root_.Elements.exists_onCircle_sameSideOf {B C K : Point} {α : Circle}
-    (hB : OnCircle B α) (hC : OnCircle C α)
-    (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C :=
-  Prop2.sameSide hB hC hK
-
 /-! ## Rules that III.2 gives back
 
 System E's Circle 2 and Circle 3 say what III.2 proves, so they are proved here, after
