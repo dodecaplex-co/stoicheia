@@ -1370,7 +1370,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
       the hook's repository or index: each command finds its repository by its working
       directory too, the hand-over's included (#357). The harness sets one itself, the
-      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree.
+      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
+      `git safe-push` unsets the same variables before its first git command, so a
+      caller's `GIT_DIR` cannot make it fetch another repository's origin and run that
+      repository's harness (#359).
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
