@@ -12054,8 +12054,9 @@ class Shards(unittest.TestCase):
     times do not name among them; each shard lists the tests it ran, and the proof over
     those lists names each test not run once and each list missing; the times are read
     from a CI log; safe-push-tests passes only when every shard succeeded and the proof
-    holds; and a run in which a shard's test fails, a shard's list is missing, or a shard
-    is cancelled or skipped is red, and reported."""
+    holds; a partial rerun combines a failed shard's replacement artifacts with the other
+    shards' retained ones; and a run in which a shard's test fails, a shard's list is
+    missing, or a shard is cancelled or skipped is red, and reported."""
 
     def jobs(self) -> dict:
         return ci_jobs()

@@ -140,6 +140,8 @@ jobs:
           # Each list in a folder of its own, so that none can hide another.
           pattern: safe-push-ran-*
           path: ${{ runner.temp }}/safe-push-ran
+          # The token selects run-scoped lookup, so a failed-jobs rerun sees retained
+          # lists from earlier attempts. Keep the lookup to this repository and run.
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
@@ -286,6 +288,7 @@ jobs:
           # Each log in a folder of its own.
           pattern: test_safe_push-log-*
           path: ${{ runner.temp }}/log
+          # As above, run-scoped lookup recovers retained logs from earlier attempts.
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
