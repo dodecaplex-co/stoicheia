@@ -1022,7 +1022,7 @@ class CircleRuleTests(unittest.TestCase):
         # Circle 3 retired after III.2: neither rule in the lock, and facts.json giving
         # both as proved rules that cite III.2, as the walk finds them. The plant must
         # still make Circle 2 cite nothing, and put Circle 3 back in the lock and in the
-        # tables of axioms for the case that rests on it.
+        # tables of axioms for both cases.
         facts = self.fixture((), {self.inside: [], self.outside: []},
                              {self.inside: ["III.2"], self.outside: ["III.2"]})
         (self.root / "facts.json").write_text(json.dumps(facts))
@@ -1085,11 +1085,16 @@ class CircleRuleTests(unittest.TestCase):
                 self.assertEqual(self.lock.read_bytes(), saved)
 
     def test_circle_plant_restores_on_failure_or_interrupt(self):
-        for retired in (False, True):
+        # Both rules locked; Circle 2 retired; and both proved from III.2, a lock into
+        # which the plant writes Circle 3.
+        both = {self.inside: ["III.2"], self.outside: ["III.2"]}
+        for retired in (False, True, "both"):
             for exception in (RuntimeError, KeyboardInterrupt):
                 with self.subTest(retired=retired, exception=exception):
-                    facts = self.fixture((self.outside,) if retired
-                                         else (self.inside, self.outside))
+                    facts = (self.fixture((), {self.inside: [], self.outside: []}, both)
+                             if retired == "both" else
+                             self.fixture((self.outside,) if retired
+                                          else (self.inside, self.outside)))
                     (self.root / "facts.json").write_text(json.dumps(facts))
                     saved = self.lock.read_bytes()
                     self.errors[:] = ["a previous finding"]
