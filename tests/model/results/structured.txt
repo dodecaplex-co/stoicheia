@@ -1,11 +1,11 @@
 # structured: structured search, 100,000 samples per axiom or derived property
 # command: python3 -I tests/model/structured.py 100000 11
 # seeds: 11
-# commit: 962c8c890a38229789bbcbba14ea8609e85ae2a0 (harness files as committed)
-# harness sha256: 1cad11f9a6ad12a924350ee35423bacaacd0bffe0cf141a5ad3b503488cf4a8c
+# commit: fd91db4a13e258a16744153b5e7244b97b1b92ca (harness files as committed)
+# harness sha256: d86afe1a4d3565cdcd52ab68e4bc0d19e0c18c80095583ad548dd82611f33ac2
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-24
-# time: 87.5 s
+# time: 89.1 s
 
 axiom / derived property                  samples      hyp   cex
 Postulate4                                 100000    14711     0

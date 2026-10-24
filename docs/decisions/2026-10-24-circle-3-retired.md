@@ -112,7 +112,7 @@
   and whose account of its runs gives the counts of this lock.
 
   The numerical model's results were written again on this harness:
-  `python3 -I tests/model/run.py --full --write` ran at commit `962c8c890a38`, and every
+  `python3 -I tests/model/run.py --full --write` ran at commit `fd91db4a13e2`, and every
   check passed: the plane gave no counterexample, the 15 mutations were all caught, and
   only `Postulate5` failed in the hyperbolic plane, as it must. With one law fewer drawing on
   the random numbers, the search's three seeds and the hyperbolic run meet the other laws'
