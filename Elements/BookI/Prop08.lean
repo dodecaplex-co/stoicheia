@@ -13,9 +13,12 @@ side. The symbols c′ and g name where C and A come down; g is Euclid's G. The
 restricted derivation first makes c′ coincide with f, then uses I.7 to make g
 coincide with d. Only the equality of the angles BAC and EDF leaves the placement.
 
-I.7 is cited as a proved law whose conclusion constructs nothing. Its own proof
-uses constructions through I.5 and I.4; those dependencies remain in this proof.
-Applying the law introduces no new symbol into the hypothetical placement.
+I.7 is cited as a proved law whose statement asserts no existence. Its own proof
+draws: it joins its points with straight lines, produces two of them and cites I.5,
+which draws circles through I.3. Those dependencies remain in this proof, and the
+certificate records the construction rules beneath each cited law's proof
+(`cited_laws`). Applying the law introduces no new symbol into the hypothetical
+placement.
 -/
 
 namespace Elements.BookI
