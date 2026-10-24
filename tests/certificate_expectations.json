@@ -1,5 +1,5 @@
 {
-  "about": "Facts the certificate must keep. scripts/check_fidelity.py checks each one against facts.json, so that a change to Certificate/Facts.lean cannot quietly lose them. They answer Astra's outside review (docs/reports/outside-review-01.md), which asked for these regressions by name; brief 0005, stage 1k. Each names an entry by its ref and a field of it (Certificate/FIELDS.md), and asks that the list `includes` some names, `excludes` others, or holds exactly `count.is` names beginning with `count.prefix`; `equals` compares the field with a value. A field that is an object, as `inherited` is, is read by its keys, and a field the entry lacks fails. `why` is shown when one fails.",
+  "about": "Facts the certificate must keep. scripts/check_fidelity.py checks each one against facts.json, so that a change to Certificate/Facts.lean cannot quietly lose them. They answer Astra's outside review (docs/reports/outside-review-01.md), which asked for these regressions by name; brief 0005, stage 1k. Each names an entry by its ref and a field of it (Certificate/FIELDS.md), and asks that the list `includes` some names, `excludes` others, or holds exactly `count.is` names beginning with `count.prefix`; `equals` compares the field with a value. A field that is an object, as `inherited` is, is read by its keys, and a field the entry lacks fails. A field that is a list of objects, as `cited_laws` is, is read by each object's `law`; with `law`, an expectation reads that cited law's `construction_rules` instead. An expectation with no `ref` reads a field of the top level of facts.json, as `construction_rules` is. `why` is shown when one fails.",
   "expectations": [
     {
       "ref": "III.1 Por.",
@@ -270,6 +270,61 @@
         "Tacit.inside_of_angle_add"
       ],
       "why": "None of the eight retired names may appear as an axiom in II.14's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+    },
+    {
+      "ref": "I.4",
+      "field": "cited_laws",
+      "includes": ["lenSymm", "angleSymm", "areaCongruent", "neOfLen", "rayUnique", "rayOfAngle", "rayOfAngleSide"],
+      "count": {"prefix": "", "is": 7},
+      "why": "I.4's derivation cites exactly these seven laws, read from the Cited constants its own Lean names, not through Derives.map (#150, question 4)."
+    },
+    {
+      "ref": "I.8",
+      "field": "cited_laws",
+      "includes": ["lenSymm", "neOfLen", "rayUnique", "prop7"],
+      "count": {"prefix": "", "is": 4},
+      "why": "I.8's derivation cites exactly these four laws, I.7 among them, read from the Cited constants its own Lean names (#150, question 4). So I.8's use of I.7 inside the placement rests on a checked field."
+    },
+    {
+      "ref": "I.8",
+      "field": "cited_laws",
+      "law": "prop7",
+      "includes": ["Postulate1"],
+      "why": "I.7's law is proved by I.7, which draws straight lines (Postulate 1): the law I.8 cites at G is proved with constructions, as the permissive reading allows (#150, question 4)."
+    },
+    {
+      "ref": "I.4",
+      "field": "cited_laws",
+      "law": "lenSymm",
+      "equals": [],
+      "why": "Metric 3's law is proved from Tacit.len_symm alone, with no construction rule, and stays so after the second retirement wave (#150, question 4)."
+    },
+    {
+      "ref": "I.4",
+      "field": "cited_laws",
+      "law": "angleSymm",
+      "equals": [],
+      "why": "Metric 4's law is proved from Tacit.angle_symm alone, with no construction rule, and stays so after the second retirement wave (#150, question 4)."
+    },
+    {
+      "ref": "I.4",
+      "field": "cited_laws",
+      "law": "areaCongruent",
+      "equals": [],
+      "why": "Metric 9's law is proved from Tacit.area_congruent alone, with no construction rule, and stays so after the second retirement wave (#150, question 4)."
+    },
+    {
+      "ref": "I.8",
+      "field": "cited_laws",
+      "law": "lenSymm",
+      "equals": [],
+      "why": "I.8 cites Metric 3's law through the same proof as I.4, with no construction rule (#150, question 4)."
+    },
+    {
+      "field": "construction_rules",
+      "includes": ["Postulate1", "Postulate2", "Postulate3", "Postulate5", "Tacit.circles_meet", "Tacit.circles_meet_same_side", "Tacit.exists_point", "Tacit.exists_point_inside_circle", "Tacit.exists_point_on_line", "Tacit.line_circle_between", "Tacit.line_circle_beyond", "Tacit.lines_meet_of_opposite_sides"],
+      "excludes": ["Definition15", "Postulate4", "Tacit.superposition", "Tacit.pasch3", "Tacit.outside_of_between", "Tacit.angle_le_two_right"],
+      "why": "A construction rule is an axiom whose conclusion asserts existence once the project's definitions are unfolded (docs/FORMALIZATION.md, section 9): the postulates that draw, the rules that give a point, and those that conclude CirclesMeet or LinesMeet are among them. A rule that concludes an equality, a negation, OutsideCircle, an order read through its instance, or the restricted rule is not. Every rule it requires stays an axiom after the second retirement wave, and so does every rule it excludes but Tacit.pasch3, which that wave proves as a theorem (#150, question 4)."
     }
   ]
 }

@@ -157,7 +157,8 @@ theorem Rule.of_placement
 /-! ## Naming the symbols
 
 The rule numbers its symbols. A proof may name them instead, with an inductive type of its
-own, once it numbers them: `Symbols`. -/
+own, once they are numbered: `Symbols`. `Symbols.ofList` numbers them from a list of their
+names, so that a proof writes the names alone. -/
 
 /-- **A finite vocabulary**: its symbols numbered `0`, …, `card - 1`, each number read back
 as its symbol. -/
@@ -170,6 +171,15 @@ class Symbols (P : Type) where
   symbol : Fin card → P
   /-- A symbol's number is read back as the symbol. -/
   symbol_index : ∀ p, symbol (index p) = p
+
+/-- **A vocabulary from a list of its symbols.** The figure's points, or its straight lines,
+listed by name, each at least once: a symbol is numbered by its first place in the list, and
+a number is read back as the symbol in that place. -/
+abbrev Symbols.ofList [DecidableEq P] (l : List P) (hl : ∀ p, p ∈ l) : Symbols P where
+  card := l.length
+  index p := ⟨l.idxOf p, List.idxOf_lt_length_of_mem (hl p)⟩
+  symbol i := l[i]
+  symbol_index p := List.getElem_idxOf (List.idxOf_lt_length_of_mem (hl p))
 
 /-- **The rule, with named symbols.** The rule for a figure whose symbols are named by finite
 vocabularies P and L of the proof's own: number the symbols, and use the rule on the

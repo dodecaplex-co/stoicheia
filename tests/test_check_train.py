@@ -87,6 +87,11 @@ class Repository(unittest.TestCase):
             "docs/STYLE.md": "The guide at the base.\n",
             "facts.json": "{}\n",
             "tests/model/MODEL.md": "The account at the base.\n",
+            # Main's reader of count markers: the model's page moves with content only
+            # while its markers stand, as that reader reads them at the base, and with no
+            # reader nothing is pinned (safe_push.counts_moved, #187).
+            "scripts/generated_counts.py": (SCRIPTS / "generated_counts.py").read_text(
+                encoding="utf-8"),
         })
         self.member = self.commit([self.base], {LEAN: "-- reviewed source\n"})
         self.head = self.merge(self.base, self.member)
