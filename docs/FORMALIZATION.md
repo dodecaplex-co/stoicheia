@@ -245,10 +245,10 @@ The representations Books I–III rest on:
 | a straight line | a whole straight line, `Line`, named by any two points (Postulate 1) | producing it costs nothing | |
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
-| superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
+| superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)). The rule numbers a figure's symbols internally, from the list of the figure's lettered points and straight lines (`Symbols.ofList`): a proof names only those, so section 2's sentence, that no number appears in a statement or a proof, holds of I.4 and I.8 too | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
-| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data or from the rule, which they use wherever a call of III.1 would do no work, Heath's "[III. 1]" staying on the page as his reference ([decision of 22 October 2026](decisions/2026-10-22-iii1-calls-dropped.md)) | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
@@ -815,3 +815,30 @@ interpretation in which the other axioms hold and the result's own statement fai
 hypotheses met; that the postulate fails there is not enough, and a result whose statement
 stays true there needs a different analysis. The kind is numerical until a proof replaces
 it, and even then the pages keep "this proof uses".
+
+### Construction rules
+
+A construction rule is an axiom whose conclusion asserts that something exists. Set aside
+the axiom's leading "for all" binders and the hypotheses of its implications, and unfold
+this project's definitions in what remains: `CirclesMeet`, `LineMeetsCircle`, `LinesMeet`,
+`Collinear`, and an instance that gives an order its meaning. The axiom is a construction
+rule when an `∃` then stands in positive position. `And` and `Or` keep a position's sign;
+`Not` and the left of an implication reverse it; either side of an `Iff` counts at both.
+Only an `∃` written out, or one those definitions give, is counted: an existence stated
+another way, as `¬ ∀ x, ¬ P x` or by an axiom that is not a proposition, would not be, and
+no axiom in the lock states one so. Any other structure or inductive type is read as a word and never unfolded: what its
+fields or constructors say is not read. So Postulates 1, 2, 3 and 5, the rules that give a
+point (`exists_point` and its kin) and the rules that conclude that two circles, a straight
+line and a circle, or two straight lines meet are construction rules. A rule that concludes
+`Triangle`, which denies that three points lie on one straight line, is not; nor is one
+that assumes an existence only in a hypothesis. Nor is `Tacit.superposition`, and only
+because a structure is a word: it concludes the structure `Superposition.Rule`, whose one
+field assumes a triangle, and a triangle assumed, read through `Collinear`, would put an
+`∃` in positive position.
+
+The certificate computes the list from Lean's statements of the axioms
+(`construction_rules`), and, for each law that I.4's and I.8's derivations cite inside the
+placement, the construction rules beneath that law's proof (`cited_laws`;
+[FIELDS](../Certificate/FIELDS.md)). Like the rest of the certificate, these are facts
+about our proofs' dependencies. A law whose proof uses a construction rule still asserts
+no existence, and citing it draws nothing in the placement (brief 0009, question 4).

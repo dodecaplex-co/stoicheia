@@ -85,8 +85,8 @@ with its issue"), while an issue labelled `blocks-release` tracks their move int
 
 | Issue | File | What it holds | Statement |
 |---|---|---|---|
-| #125 | [`Prop08.lean`](../../Staging/Routes/Prop08.lean) | III.8, with Euclid's last step | as in `Elements/` |
-| #127 | [`Prop27.lean`](../../Staging/Routes/Prop27.lean) | III.27 by Euclid's reductio and halving, the obtuse case by the remainders, the right read off the measure | as in `Elements/` |
+| #125 | [`Prop08.lean`](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/Prop08.lean) | III.8, with Euclid's last step | as in `Elements/` |
+| #127 | [`Prop27.lean`](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/Prop27.lean) | III.27 by Euclid's reductio and halving, the obtuse case by the remainders, the right read off the measure | as in `Elements/` |
 | #126 | [`Touching.lean`](../../Staging/Routes/Touching.lean) | Definition III.3 read at the point of contact, and its agreement with our reading of the whole circles | new, a draft |
 | #129 | [`Prop20.lean`](../../Staging/Routes/Prop20.lean), [`Prop21.lean`](../../Staging/Routes/Prop21.lean), [`Prop26.lean`](../../Staging/Routes/Prop26.lean) | the angle at the centre of any size; III.20 for it; III.21 and III.26 by Euclid's one argument | III.20 in general new, a draft; III.20's special case, III.21 and III.26 as in `Elements/` |
 | #130 | [`AngleOfContact.lean`](../../Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
@@ -1307,3 +1307,101 @@ with the five calls dropped.
   bringing train C6c onto this branch through main; the record of the coordinator's
   answers of 22 October 2026 in the entry file, `Staging.lean` and this report; and this
   list's last two entries.
+
+## Addendum: III.8 and III.27 moved into `Elements/`
+
+*22 October 2026.*
+
+Card #332 moved the routes for III.8 and III.27 into
+[Elements/BookIII/Prop08.lean](../../Elements/BookIII/Prop08.lean) and
+[Elements/BookIII/Prop27.lean](../../Elements/BookIII/Prop27.lean). Their statements and
+`--` lines did not change. The declarations changed namespace, and the checks that their
+types matched the theorems in `Elements/` left with the staged copies, since each moved
+proof is now that theorem. `Prop27.sides` moved with III.27, whose file now imports III.22
+and III.24. The historical table above keeps the staged filenames as its labels and links
+them to commit fc3dffa892a32be571c28b208dfb40189226db93, where both files remain.
+
+The route of III.8 now uses Euclid's order for points on the same circumference, while
+I.24 remains for points on different circumferences and for a point of contact. The route
+of III.27 now uses Euclid's reductio and halving for the acute case, III.22 for the obtuse
+case, and the angle in a semicircle for the right case. Both routes therefore remain
+modified. The gap catalogue and the mishnah of each proposition now give those limits,
+and the generated pages, certificate, graph and facts were made afresh after the move.
+
+**On branch lean/promote-routes-332 at 10b9ccee with this train's edits** (22 October 2026,
+card #332, the move of III.8 and III.27 into `Elements/`). Before the staged copies were
+deleted, they were built against the moved files, and their two type equalities closed by
+`rfl` once more. Then `lake build Elements.BookIII.Prop08 Elements.BookIII.Prop27 Staging`
+completed (107 jobs), as did `lake build Elements` (185 jobs) and the three audit modules
+that import `Elements` (187 jobs, every pin holding). The moved files gave no warning, and
+no message at all elaborated alone, and hold no `sorry` and no command that FORMALIZATION,
+section 7, forbids; the only warnings were the four unused variables of
+`Elements/Figure/Circles.lean` and `Elements/BookIII/Prop31.lean`, which import neither.
+`python3 scripts/check_style.py` and `python3 scripts/check_links.py` passed (`✓ style: the
+hard rules hold (S1–S26)`; `✓ links: all 14247 relative links and anchors in 504 Markdown
+files resolve`), and `python3 scripts/check_fidelity.py` found two problems alone: the
+stamps of the records of III.8 and III.27, whose Lean has changed, are stale until those
+records are read again.
+
+These commands, the imports of RoutesCheck.lean above and its pairs for III.8 and III.27,
+and the runs above that name `Staging/Routes/Prop08.lean` or `Prop27.lean`, are those of
+the files as they stood at the revisions given. Both files have since moved into
+`Elements/BookIII/Prop08.lean` and `Prop27.lean`, and the staged copies are gone, so these
+commands reproduce at those revisions only.
+
+## Addendum: the five calls of III.1 dropped (#131)
+
+*22 October 2026.*
+
+#131's own train drops the five calls, by the coordinator's
+[decision entry of that day](../decisions/2026-10-22-iii1-calls-dropped.md), which
+records the decision and corrects brief 0008 (item 1 of "Changes for later", above). In
+`Elements/BookIII/`:
+
+- III.2 (`Prop02.lean`) takes the centre D from `Tacit.exists_centre` where it called
+  III.1;
+- III.4 (`Prop04.lean`) takes F from the rule, and its conditions said of every centre
+  apply to it;
+- III.8 (`Prop08.lean`, Euclid's route since the addendum above) takes M from the rule,
+  and its condition that every centre lies between G and A applies to it;
+- III.14 (`Prop14.lean`) loses its call of III.1 and of `centre_unique`, and takes no
+  centre, for its statement names E;
+- III.17 (`Prop17.lean`) takes E from the rule where it called `Prop1.of_circle`.
+
+Every `--` line and every statement is as it was. None of the five files imports III.1's
+file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls either but
+`Prop1.of_circle`'s own call of III.1.
+`lake build Audit` then failed on eleven pins and on no other, and each was renewed from
+Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
+`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
+`Audit.CirclesCut.of_meet` and `Audit.within_point`; in `Audit/Overlaps.lean`, those of
+`Audit.III_26_any`, `Audit.III_27_any`, `Audit.III_24_measure` and
+`Audit.III_30_measure`. Each lost one name, `Tacit.exists_point_same_side`, and gained
+none. The pin of `Audit/Centre.lean` holds unchanged.
+
+The certificate, run again on this train's revision (item 2), measures what the walk
+computed in the second table above: III.2 from 61 rules to 59, III.4 from 61 to 58, III.8
+and its companion from 63 to 62, III.14 and its companion from 70 to 69, III.15
+unchanged at 70, III.17 and its companion from 63 to 61, and III.37 from 73 to 72; 45
+entries on the rule and 43 after; 38 entries changed, 31 of them only by losing
+`exists_point_same_side`; and no entry now cites III.1, where five did. The records of
+III.2, III.4, III.8, III.14 and III.17, and III.15's note, were read again and stamped by
+independent readers. Under Heath's "[III. 1]" in III.2, III.4, III.8 and III.17 the
+centre now comes from the rule, so each of those passages is one argued another way, and
+the routes of III.2, III.4 and III.17 are modified by that one step, as "The policy
+question" foresaw; III.14's passage stays given, for its statement names E. The pages,
+CERTIFICATE.md and GRAPH.md were made afresh. So
+items 1 to 6 are done, but for the reason given for III.2's expectation in
+`tests/certificate_expectations.json` ("III.1, which it cites"), whose pinned value
+stands and whose owner is asked to change it. The row for #131 in the opening table,
+"analysis only", and the last sentence of the section on III.8, that its proof takes the
+centre by III.1, are of this report's date.
+
+## Correction to the #131 addendum
+
+*23 October 2026.*
+
+The #131 addendum's phrase "Euclid's route" for III.8 is too broad. III.8 remains
+modified: it uses Euclid's orders where they apply and I.24 where neither order reaches,
+including points on different circumferences and points of contact. Its centre M now
+comes from `Tacit.exists_centre` under Heath's "[III. 1]".
