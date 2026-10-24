@@ -863,8 +863,23 @@ def reset_gh() -> None:
                                     "suite_runs": {"*": [GREEN_SUITE]}, "calls": []}))
 
 
+def hermetic_git() -> None:
+    """The test process's git, and every process it starts, reads no variable of git's
+    that the runner set and no global or system configuration (#360). Run under a hook,
+    the runner's GIT_DIR and GIT_INDEX_FILE named the hook's repository, and the module's
+    own git (setUpModule's clone, config and commit among it) acted on that repository;
+    a global core.hooksPath could reach them too, running its hooks on the tests' commits
+    and taking install_hooks.sh's hooks where it points. Each test that needs a variable
+    of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself."""
+    for name in [name for name in os.environ if name.startswith("GIT_")]:
+        del os.environ[name]
+    os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
+    os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
+
+
 def setUpModule():
     global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
+    hermetic_git()
     if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
         # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
         # that dry-run cleanup still requires an empty temporary directory.
@@ -8236,6 +8251,54 @@ class FullChecks(Edge):
         self.assertEqual(self.origin_main(), BASE)
         self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 1,
                          "a temporary worktree was left behind")
+
+
+class HermeticModule(unittest.TestCase):
+    """#360: one test of this module, its setUpModule with it, run from a linked worktree
+    under a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, leaves
+    the repository as it was: its HEAD, index and files, and the shared configuration."""
+
+    CHILD = "STOICHEIA_TEST_HERMETIC_CHILD"
+
+    def test_the_module_under_a_hooks_git_dir(self):
+        if os.environ.get(self.CHILD):
+            self.skipTest("the planted run itself")
+        plain = dict(os.environ)  # hermetic already: setUpModule has run
+        def g(*args) -> str:
+            return subprocess.run(["git", *map(str, args)], env=plain, check=True,
+                                  capture_output=True, text=True).stdout
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            main, linked = tmp / "main", tmp / "linked"
+            g("init", "-q", main)
+            (main / "a.txt").write_text("main\n")
+            g("-C", main, "add", "a.txt")
+            g("-C", main, "-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
+              "commit", "-q", "--no-verify", "-m", "main")
+            g("-C", main, "worktree", "add", "-q", "-b", "train", linked)
+            git_dir = Path(g("-C", linked, "rev-parse", "--absolute-git-dir").strip())
+            watched = {"HEAD": git_dir / "HEAD", "index": git_dir / "index",
+                       "config": main / ".git" / "config", "a.txt": linked / "a.txt",
+                       "main's a.txt": main / "a.txt"}
+            before = {name: path.read_bytes() for name, path in watched.items()}
+            heads = (g("-C", main, "rev-parse", "HEAD"), g("-C", linked, "rev-parse", "HEAD"))
+            # As a runner under a hook has it: the hook's variables, and the machine's own
+            # configuration, which hermetic_git shuts out.
+            env = {name: value for name, value in plain.items()
+                   if name not in ("GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_GLOBAL")}
+            env.update(GIT_DIR=str(git_dir), GIT_INDEX_FILE=str(git_dir / "index"),
+                       **{self.CHILD: "1"})
+            r = subprocess.run([sys.executable, str(HERE / "test_safe_push.py"),
+                                "Units.test_source_statement"], cwd=linked, env=env,
+                               capture_output=True, text=True, timeout=900)
+            for name, path in watched.items():
+                self.assertTrue(path.read_bytes() == before[name], f"{name} changed:\n"
+                                + r.stderr[-2000:])
+            self.assertNotIn("bare = true", (main / ".git" / "config").read_text())
+            self.assertEqual((g("-C", main, "rev-parse", "HEAD"),
+                              g("-C", linked, "rev-parse", "HEAD")), heads)
+            self.assertEqual(sorted(p.name for p in linked.iterdir()), [".git", "a.txt"])
+            self.assertEqual(r.returncode, 0, r.stderr[-2000:])
 
 
 @unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
