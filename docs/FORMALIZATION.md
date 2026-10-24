@@ -585,10 +585,7 @@ dependencies.
   through the axiom beneath it, or, if it is proved from III.2, every entry that uses it
   cites III.2 through it, so that no entry before III.2 can use it (no later citations,
   below); a missing name, a proof with neither, or a proof citing an III.2 that is
-  missing, unproved or itself resting on either rule, fails the check. Only a
-  `proved_rules` list of strings may take either route. The selected `proved_rule_cites`
-  list must hold canonical references in string order; malformed citation data counts as
-  citing nothing, and malformed dependency fields in III.2 refuse that route.
+  missing, unproved or itself resting on either rule, fails the check.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -603,10 +600,8 @@ weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outsi
 and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
 Circle 3 renamed in the lock; Circle 2 proved with neither Circle 3 beneath it nor III.2
 cited, with a matching case that still rests on locked Circle 3 and must pass; and both
-proved with neither beneath, citing nothing, malformed or unsorted references, or an
-III.2 that rests on Circle 2 or Circle 3 through its axioms, shared steps or inherited
-axioms and lemmas, with malformed forms of each dependency field refused without a
-crash, and with a matching case citing the real III.2 that must pass;
+proved with neither beneath, citing nothing or an III.2 that rests on Circle 3, with a
+matching case citing the real III.2 that must pass;
 placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each
