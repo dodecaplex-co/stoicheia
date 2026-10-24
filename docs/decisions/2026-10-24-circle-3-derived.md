@@ -12,7 +12,7 @@
   an axiom, and `run.py` still finds its hypotheses met. This lands first, in a check
   change of its own, so that the retirement changes only the values pinned to the lock.
 
-  `python3 -I tests/model/run.py --full --write` ran at commit `6c231d75a3ee`, the
+  `python3 -I tests/model/run.py --full --write` ran at commit `b154908253c5`, the
   harness as this change leaves it, and every check passed: the plane gave no
   counterexample, all 15 mutations were caught, and in the hyperbolic plane `Postulate5`
   alone failed, as it must. Circle 3's 281,664 exhaustive and 47,802 structured
@@ -21,7 +21,7 @@
   9,525,564 to 9,855,030; its search and hyperbolic counts are as before.
   [MODEL.md](../../tests/model/MODEL.md) carries the counts as the run wrote them, and
   says that 40 predicates are kept as derived properties. No law, axiom, test or expected
-  value changes, and no check is loosened. This is part of #294 and #152.
+  value changes, and no check is loosened. It belongs to #294, within #152.
 
   This entry approves the change to `tests/model/derived.py`, which gains the predicate
   `derived.outside_of_between`, the guard and conclusion of Circle 3's law.
