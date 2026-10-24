@@ -6,18 +6,24 @@ public import Model.Signature
 # Areas and Postulate 5, translated by hand
 
 **This file is written by hand.** Like [Model/Hand.lean](../Hand.lean), it holds laws
-translated by hand from `Certificate/axioms.lock`. The generator described in the
-[README](../../README.md) writes every law from its elaborated declaration, and
-`Check/AreasP5.lean` compares each statement here with its generated field.
+translated by hand from the library's declarations. Six area rules and Postulate 5
+remain in `Certificate/axioms.lock`. `area_swap` and `between_of_area_add` are now
+proved in `Elements/Figure/AreaRules.lean`: rotation and area addition prove reversal,
+and area addition with positivity excludes the contrary orders of a cut. The generator
+described in the [README](../../README.md) writes the retained axioms, and
+`Check/AreasP5.lean` compares their translations with the generated fields and the
+retired rules directly with their theorem types, including binder kinds.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.area` for `Elements.area`, and so on, and keeps the original's binders, their kinds and
-their order. The lock's printed statement is quoted above each law. `Check/AreasP5.lean`
+their order. The lock's printed statement, or a retired rule's unchanged theorem type,
+is quoted above each law. `Check/AreasP5.lean`
 puts the library's own words in for `S` and asks Lean whether each result is the original
 declaration; the build fails if it is not.
 
-The laws here are the eight rules about area, from `Tacit/Metric.lean` and
-`Tacit/Transfer.lean`, and Postulate 5, with its conclusion on the stated side. None of them
+The laws here are the eight rules about area, six in `Tacit/Metric.lean` and
+`Tacit/Transfer.lean` and two now proved in `Figure/AreaRules.lean`, and Postulate 5,
+with its conclusion on the stated side. None of them
 reaches a defined word of the library beyond the magnitude instances of
 `Model/Signature.lean`. Where a law adds two areas or two angles, the sum is written
 `@HAdd.hAdd S.Area S.Area S.Area _ a b`, naming the carrier: a field such as `S.area` has
@@ -45,7 +51,7 @@ def area_degenerate : Prop :=
 def area_rotate : Prop :=
   ∀ (A B C : S.Point), S.area A B C = S.area C A B
 
-/-- `Elements.Tacit.area_swap` (Metric 8), by hand. The lock prints it as
+/-- `Elements.Tacit.area_swap` (Metric 8), by hand. The theorem's unchanged type is
 `∀ (A B C : Elements.Point), Eq (Elements.area A B C) (Elements.area A C B)`. -/
 def area_swap : Prop :=
   ∀ (A B C : S.Point), S.area A B C = S.area A C B
@@ -85,8 +91,8 @@ def area_add_of_between : Prop :=
     A ≠ B → A ≠ C → B ≠ C → ¬ S.OnLine D L → S.Between A C B →
     @HAdd.hAdd S.Area S.Area S.Area _ (S.area A C D) (S.area D C B) = S.area A D B
 
-/-- `Elements.Tacit.between_of_area_add` (Diagram-area 2, converse), by hand. The lock
-prints it as `∀ {A B C D : Elements.Point} {L : Elements.Line}, Elements.OnLine A L →
+/-- `Elements.Tacit.between_of_area_add` (Diagram-area 2, converse), by hand. The theorem's
+unchanged type is `∀ {A B C D : Elements.Point} {L : Elements.Line}, Elements.OnLine A L →
 Elements.OnLine B L → Elements.OnLine C L → Ne A B → Ne A C → Ne B C →
 Not (Elements.OnLine D L) → Eq (HAdd.hAdd (Elements.area A C D) (Elements.area D C B))
 (Elements.area A D B) → Elements.Between A C B`. -/

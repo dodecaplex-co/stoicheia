@@ -1,4 +1,6 @@
 import Elements.Figure.Angles
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 
 /-!
 # Book Zero: parallel straight lines

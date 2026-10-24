@@ -24,9 +24,11 @@ open Tacit
 /-- **One ray for one angle**, with its three straight lines named: D and E on L, D and F on
 M, D and P on N. If P is on F's side of L and the angle EDP is the angle EDF, then P is on M.
 `onRay_of_angle_eq` draws its straight lines; here they are given, so the proof
-draws none of them. Otherwise either P would lie within the angle EDF, or F within the angle
-EDP (Triple incidence 2 says which), and either way an angle would be a part of an angle
-equal to it (Diagram-angle 1 and 2, with C.N. 5). -/
+draws none of them. Since the second axiom retirement the proved rules it uses draw others:
+Same side 2 draws circles, and Triple incidence 2 produces ED and, through Same side 5,
+may join P to the point produced. Otherwise either P would lie within the angle EDF, or F
+within the angle EDP (Triple incidence 2 says which), and either way an angle would be a
+part of an angle equal to it (Diagram-angle 1 and 2, with C.N. 5). -/
 theorem onLine_of_angle_eq_named {D E F P : Point} {L M N : Line} (hDE : D ≠ E)
     (hD : OnLine D L) (hE : OnLine E L) (hDM : OnLine D M) (hFM : OnLine F M)
     (hDN : OnLine D N) (hPN : OnLine P N) (hPF : SameSide P F L) (h : ∠ E D P = ∠ E D F) :
@@ -98,7 +100,8 @@ theorem Cited.holds_rayOfAngle : Cited.rayOfAngle.Holds primitives := by
   exact onLine_of_angle_eq_named hDE hD hE hDM hFM hDN hPN hPF hang
 
 /-- One ray for one angle, its side: D is not between P and F, for they are on one side of L
-(Pasch 3). -/
+(Pasch 3). It uses no third straight line: the side AC laid down serves the other half. Since
+the second axiom retirement Pasch 3 is proved by joining P to a point of L (Postulate 1). -/
 theorem Cited.holds_rayOfAngleSide : Cited.rayOfAngleSide.Holds primitives := by
   intro v h
   simp only [Cited.law, rayOfAnglePremises, List.forall_mem_cons] at h

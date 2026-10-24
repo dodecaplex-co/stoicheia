@@ -25,9 +25,10 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   have hA_C : A ≠ C := hABC.ne₁₃
   -- and let the straight lines BD, CE be produced further in a straight line with AB,
   -- AC. [Post. 2]
-  /- The statement hands us D and E already produced, so our proof does not use
-     Postulate 2. It does name the straight lines AB and AC themselves, with D and E
-     on them, and use the fact that ABC is a triangle: C is off AB, and B is off AC. -/
+  /- The statement hands us D and E already produced, so this step names AB and AC
+     without producing them. The proof still rests on Postulate 2 through proved rules:
+     `OnRay.between_of_len_lt` below reaches it through `between_of_between_right`.
+     Since ABC is a triangle, C is off AB, and B is off AC. -/
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hA_B
   obtain ⟨AC, hA_AC, hC_AC⟩ := Postulate1 A C hA_C
   have hC_AB : ¬ OnLine C AB := fun h => hABC ⟨AB, hA_AB, hB_AB, h⟩

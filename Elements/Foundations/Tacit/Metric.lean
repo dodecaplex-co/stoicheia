@@ -7,14 +7,15 @@ Facts about magnitudes that Euclid treats as clear from the definitions: the
 straight line AB is the straight line BA, the angle ABC is the angle
 CBA, and two triangles that agree in all their sides and angles have the same
 area. System E, §3.5 (Avigad, Dean and Mumma, 2009).
+
+The following former assumptions are proved in Book Zero:
+* `Elements.Figure.RuleBase`: `eq_of_len_eq_zero`.
+* `Elements.Figure.AreaRules`: `area_swap`.
 -/
 
 namespace Elements.Tacit
 
 variable {A B C D E F : Point}
-
-/-- A finite straight line with distinct ends has length. (Metric 1) -/
-axiom eq_of_len_eq_zero (h : ‖A B‖ = 0) : A = B
 
 /-- The "straight line" from a point to itself has no length. (Metric 1) -/
 axiom len_self (A : Point) : ‖A A‖ = 0
@@ -33,9 +34,6 @@ axiom area_degenerate (A B : Point) : △ A A B = 0
 
 /-- The triangle ABC is the triangle CAB. (Metric 8) -/
 axiom area_rotate (A B C : Point) : △ A B C = △ C A B
-
-/-- The triangle ABC is the triangle ACB. (Metric 8) -/
-axiom area_swap (A B C : Point) : △ A B C = △ A C B
 
 /-- Triangles equal in all their sides and angles are equal in area. Euclid
 uses this without comment once he has shown two triangles congruent.

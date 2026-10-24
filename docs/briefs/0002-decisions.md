@@ -3761,6 +3761,144 @@ findings:
   `tests/test_check_queue.py`,
   `tests/test_check_train.py`.
 
+- **The merge queue, and a revert when main fails.** The checks landed first, in the
+  entry above, which quotes the owner's three sentences of 20 October; this change brings
+  the rest, judged by them: CI on merge groups, the post-merge workflow and its automatic
+  revert, and `safe_push.py`'s queue mode. [WORKFLOW](../WORKFLOW.md), sections 8 and 10,
+  gives the whole account; in short:
+
+  - *CI.* `.github/workflows/ci.yml` runs on `pull_request` and `merge_group`, and is
+    called by the post-merge workflow on main (`workflow_call`), no longer on every
+    branch push, which ran the same checks twice for each push. Its token is read-only,
+    and no checkout keeps it in its git config (`persist-credentials: false`).
+    `acceptance` runs on every event it runs on, comparing with the main that its step
+    "Identify main for this event" names: the first parent of a pull request's merge, a
+    group's base, or a main push's `before`. `queue-integrity` runs the offline cases of
+    `tests/test_auto_revert.py` too, and judges each group. The new job `queue-gaps`
+    prints the changed propositions' acceptance items and runs the tests of each
+    changed check. Those tests are the group's own code, and on Linux a process can
+    read its parent's environment, where A's `--gaps` held the token while it ran them;
+    so main's `check_queue.py --gaps --plan` now chooses them in the step that holds
+    the token, running none, and the job's last step, which holds none (nor does any
+    step after the choosing), runs them with `--run-plan`, which refuses to run a test
+    while any variable named with `TOKEN` is set. That keeps the token out of the
+    tests' environment, files, caches and artifacts, but not out of the job: the runner
+    process holds it until the job ends, beneath every step, so the token is read-only
+    by design (contents, pull requests, actions and issues, each read only). Before
+    that step the job installs main's pinned YAML parser, which the queue's tests
+    import, with `python3 -I -m pip` run from the runner's temporary directory, so that
+    nothing in the group's checkout runs in pip's place. `queue-gaps` may take 75
+    minutes and `queue-integrity` 20, and the queue's status check timeout is to be 150
+    (`acceptance`'s 60, then `queue-gaps`' 75, and 15 for runners), all to be measured
+    again on the queue's trial. With "only merge non-failing pull requests", a train
+    merges only when its own group passed; GitHub removes a failing group's last train
+    and rebuilds the groups after it.
+  - *The CI model.* `scripts/test_safe_push.py` holds CI's `check` job, safe_push's
+    `CHECKS` and WORKFLOW's section 8 to one list, and allowed no input on the check
+    job's checkout. It now allows exactly one, `persist-credentials: false`, the boolean
+    itself: it changes no commit and no file the checks read, and only keeps the job's
+    token out of the checkout's git config, a power taken away. Any other value of it,
+    or any other input, is still refused as unmodeled, with a case for each, and a new
+    test requires it on every checkout of both workflows.
+  - *After the merge.* `.github/workflows/post-merge.yml` runs the integration tests on
+    each push to main. If they fail, it opens an issue labelled `blocks-release` and
+    `main-red`; with the revert App's key (in the `auto-revert` environment, main only),
+    the previous main's `scripts/auto_revert.py`, trusted only when its own post-merge
+    run passed, reverts the push's merges on a `revert/` branch, reading merge
+    attributes from the previous main (Git 2.42 or later), and queues the revert. The
+    judge admits it only as the exact revert of a failed push of two-parent merges, and
+    only while an open `main-red` issue names that run on its own `Run:` line, by this
+    repository's address: its one merge base with main must be the push's tip, and the
+    commits from that tip to its head exactly the reverts, one for each merge, newest
+    first, and at most one commit that keeps the decisions record, with no merge. The
+    decisions record is history, only ever added to, so a revert never removes a
+    decision's text: the revert keeps `docs/decisions/` and this page as at the failed
+    push's tip, as the advice for a revert by hand on tooling/decision-entries restores
+    both from origin/main, and the judge, in `scripts/check_queue.py`, accepts exactly
+    that difference and no other: a revert that takes a train's lines off this page, or
+    changes it otherwise, refuses. A revert that would break a relative link of the kept
+    record, one that resolves at the failed push's tip, would fail its own link check:
+    the script pushes none, and its issue names the links and says to revert by hand.
+    While an open `main-red` issue exists, the judge also refuses every queued entry
+    but that revert and a declared fix (below), so trains queued before main went red
+    leave the queue. When main has moved on during a post-merge run whose integration
+    passed, that is, when main's tip, read afresh, is readable and another commit, its
+    clear job and `auto_revert.py --clear --after` change no label and pass, naming that
+    commit and its post-merge run, which decides, or saying that no such run can be read
+    yet. Otherwise a clear removes `main-red` only from an issue whose exact
+    `After: <40 hex>` line names the successful commit or one of its ancestors, and reads
+    main again before each removal; a missing or unreadable line, or one that names
+    another commit, keeps the label. A clear that fails at main's own tip still fails, as
+    new tests of both check, and so does one that cannot read the tip. So the clear test's
+    expected exit changes from 2 to 0 for a moved main only; approved by the coordinator
+    on 21 October as a correction of new behaviour, not a weakened check: the test,
+    `test_clear_old_success_does_not_clear_new_main`, still requires that no label is
+    removed, and now also that its message names the later push's run. The
+    workflow that holds the key is read from main, so code that has landed there could
+    take it; the App is bounded instead: no bypass, no permission to write contents at
+    all (the job's own token pushes the revert branch), and the judge's refusal of any
+    entry a bot wrote, queued, edited or renamed, save that revert. Since the revert
+    job is one of the failed run's own jobs, the judge may find that run still in
+    progress: it reads the run again every 15 seconds, for up to 10 minutes, and
+    judges it once completed. A run that concluded failure
+    admits its revert and any other conclusion refuses it; a run not completed by then
+    refuses it too, and the revert leaves the queue. So the queue's status check
+    timeout must allow that wait, on top of the jobs' own work.
+  - *The merge.* When main's rules require a merge queue, `git safe-push --merge` keeps
+    every gate, checks the head against the newest commit of main's first-parent chain
+    that it contains, which its pre-flight recorded, enqueues it with its head pinned,
+    and follows it to a verified merge or an ejection. In both modes it
+    refuses while main is red, save the fix: a pull request whose body has the line
+    `Fixes main-red: #<n>`, where GitHub shows it, naming every open `main-red` issue
+    and no other, and whose own CI passes. With the queue off only a merge moves main's
+    tip, so without that exit nothing could land the fix. A record no longer stands in
+    for the full checks of a head that changes the checks or a protected path, since
+    only the pre-flight runs origin/main's copies on it.
+
+  The measurements. Of the last 30 merged pull requests (#98 to #148), 24 changed this
+  page, 14 `book/`, 13 `README.md`, 11 `docs/PROGRAM.md`, 8 `facts.json`, 7
+  `CERTIFICATE.md` and 3 `GRAPH.md`. Of 29 consecutive pairs, 16 would have conflicted
+  had they been queued together: 13 on this page alone, and 3 with other files as well
+  (`book/`, `docs/FORMALIZATION.md`, `scripts/audit/jev.py`, once each). The 13 pairs
+  that merged cleanly all rendered clean under `render.py` (`facts.json`, which Lean
+  computes, was not recomputed). A pull request was checked up to five times: the dry
+  run (2.7 to 8.6 minutes, once 14), the push's pre-flight again on the same commit, CI
+  on the branch push, CI on the pull request (its longest job, `negative`, 5.3 minutes)
+  and CI on main after the merge. This change removes the branch-push run, the only one
+  that was pure duplication. The pre-flight with origin/main's copies stays, since a
+  branch cannot weaken the checks that judge it; the push's second pre-flight stays too,
+  since the dry run's record is a file the checks it ran could have written; CI on the
+  pull request stays; the group's run is the only one on the exact tree that merges; and
+  the post-merge run is the owner's auto-revert.
+
+  Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, save
+  three. In queue mode a head need not contain the latest main (the queue builds each
+  group on it), and is judged against the newest commit of main's first-parent chain
+  that it contains, not its merge base with main, which lies off that chain when a
+  member was merged on its own before its train: so `--merge`'s own checks, its train
+  check and the judge compare against one base. `--merge` takes the
+  body's pre-flight summary as current when it names this head, its base and harness
+  held to the judge's own rule, read on current main, in both modes (the base the
+  newest commit of main's first-parent chain that the head contains, the harness that
+  base or a later commit of the chain; with the queue off, both main's tip), and for a
+  train shows its train step passing, even when the full checks ran again at the merge,
+  which leaves that summary true. So a summary the judge would refuse is never current,
+  and one it would accept is, its base the one the merge checks against. And a body
+  edited in GitHub's
+  page, which keeps CRLF line ends, is up to date when it differs from the parts
+  safe_push writes by line ends alone. With the queue off `--merge` merges as before,
+  save the new pause while main is red and its one exit. The queue stays off until the
+  owner turns it on, with the steps the coordinator holds. The protected files this
+  change adds or changes:
+  `.github/workflows/ci.yml`,
+  `.github/workflows/post-merge.yml`,
+  `scripts/auto_revert.py`,
+  `scripts/check_queue.py`,
+  `scripts/safe_push.py`,
+  `scripts/test_safe_push.py`,
+  `tests/test_auto_revert.py`,
+  `tests/test_check_queue.py`.
+
 - **Decision entries, one file each (tooling).** Nearly every pull request appended to
   this page, so two queued together collide at its end. On main's first-parent history at
   `250292bc`, 23 of the 29 merged pull requests numbered #98 to #148 changed this page,
@@ -5642,3 +5780,276 @@ findings:
   definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
   which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
   by an independent reader.
+
+- **The numerical checks, made ready for the second axiom retirement.** This preparation
+  keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
+  change lands in a pull request of its own before the retirement it judges. The 31 laws
+  due to become theorems also have derived properties, so their numerical checks survive
+  removal from the axiom registry. Protected files changed relative to main:
+  [`tests/model/derived.py`](../../tests/model/derived.py) keeps each of those 31 laws'
+  predicates word for word, alongside the eight already retained;
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) call each by its
+  `derived.` name on the existing configurations and newly sample the laws they did not
+  yet reach, five in the exhaustive harness and ten in the structured harness;
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records the 39 derived properties
+  and the two harnesses' counts. No check is weakened: comparing each new derived
+  predicate's body with its law in `tests/model/search.py` found all 31 byte-identical,
+  with the same parameters, guards and conclusions. The eight earlier predicates stay
+  unchanged. The added samples let the unchanged `tests/model/run.py` requirement hold
+  for every derived property: each exhaustive or structured run must report it with its
+  hypotheses met and no counterexample, independently of the axiom registry.
+- **The safe-push harness, made ready for the second axiom retirement.**
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now plants its added law
+  beside `Tacit.line_unique`, uses that surviving law for mutation and expected-failure
+  fixtures in both numerical models, and uses the same surviving dependency for its III.1
+  re-proof and certificate-expectation fixtures. Its fixture for an expectation dropped
+  with its regression injects `Tacit.angle_le_two_right` in place of `Tacit.circle_eq`:
+  after the second retirement III.1 rests on `circle_eq` (through `centre_inside` and
+  `radius_ne_zero`), and the fixture needs a locked rule that III.1 uses neither before nor
+  after it. Every test case, exact replacement, count decrement and rejection expectation
+  remains in place.
+- **The style check's scope test, made ready for the second axiom retirement.**
+  [`tests/test_check_style.py`](../../tests/test_check_style.py)'s case that a rule no
+  proposition page shows is outside the rendered-docstring scope used
+  `Tacit.exists_point_inside_circle`; after the second retirement I.1 and every entry
+  after it rest on that rule, so the page shows it and the case would fail. The case now
+  names Circle 3, `Tacit.outside_of_between`, which has a docstring and on which
+  `scripts/check_fidelity.py` forbids every entry to rest, so no page can show it before
+  the retirement or after. The case still asserts that a rule with a docstring is left out
+  of the scope when no page shows it; nothing else changes.
+- **The overlap screen's tests, made ready for the second axiom retirement.** Two cases of
+  [`tests/test_screen.py`](../../tests/test_screen.py) took III.2 as the row of
+  `Audit/screen.py`'s list `KNOWN` that a run must find. After the second retirement the
+  screen, which tries only axioms, no longer closes III.2 or III.6, since the rules that
+  closed them are theorems, and `KNOWN` keeps III.5 alone. With the retirement,
+  Generalities 4 is a theorem, so the screen no longer closes brief 0008's restated III.5
+  either, which needs that rule to finish: `KNOWN` is then stale until a check change gives
+  the screen a new canary, tracked in issue #160. The two cases now take the
+  first row of `KNOWN`, whichever it is, and assert the same of it as before: closed only
+  by its bare try it is lost, and not closed it is lost. They pass with the list before
+  the retirement and after it; no assertion is removed.
+- **Thirty-one more axioms retired, 79 to 48.** The owner
+  decided on 19 October 2026: "Please do both. 79 is rather large with so many books in
+  front of us." That is, the eight above, and then the largest further set of
+  retirements under two constraints: Euclid's six (Postulates 1 to 5 and Definition 15)
+  stay explicit assumptions even where they are derivable, and no certificate entry may
+  rest on Circle 2 or Circle 3 (`Tacit.inside_of_between`, `Tacit.outside_of_between`).
+  Like the first retirement (its entries of 20 October above), this one lands as three pull
+  requests; this is the second of the second, after the four preparation entries above. An exact search over every
+  checked derivation, the earlier search's and a second search's that avoids Circle 3, found a
+  largest set of 31; it is a maximum over the derivations found, not a proof that no
+  smaller foundation exists. Among the maximum sets, this one keeps the most of System E's
+  plain incidence and order rules (`line_unique`, `between_symm`, `between_cases`,
+  `not_between_of_between`, `not_on_line_of_same_side`, `same_side_trans`, `pasch2`,
+  `exists_point_on_line`). Each keeps its name and exact type and becomes a theorem in four
+  new Book Zero modules, which `Elements/Figure/Basics.lean` imports, so no proposition
+  statement or import changes: `centre_inside`, `on_circle_of_len_eq`, `same_side_symm`,
+  `exists_point_same_side`, `ne_of_between`, `on_line_of_between_ends`, `pasch4`,
+  `same_side_refl`, `triple_incidence1`, `pasch3`, `inside_not_on` and `eq_of_len_eq_zero`
+  in [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean);
+  `inside_of_len_lt`, `len_lt_of_inside`, `ne_of_between_ends`, `on_line_of_between`,
+  `between_of_between_left`, `between_of_between_right`,
+  `circles_meet_of_on_inside_outside`, `exists_point_opposite_side`,
+  `circles_meet_opposite_side`, `exists_point_between`, `line_meets_circle_of_inside`,
+  `not_between_of_between_between`, `same_side_or`, `triple_incidence2`, `pasch1` and
+  `exists_point_on_line_off_line` in
+  [`Elements/Figure/Incidence.lean`](../../Elements/Figure/Incidence.lean); `area_swap` and
+  `between_of_area_add` in [`Elements/Figure/AreaRules.lean`](../../Elements/Figure/AreaRules.lean);
+  and `exists_point_on_circle` in
+  [`Elements/Figure/CirclePoints.lean`](../../Elements/Figure/CirclePoints.lean), all under
+  `Elements.Tacit`. Across both waves, all 39 keep their original signatures, binder names
+  included: `pasch3` keeps `hB` and `same_side_or` keeps `h`. The 31 replacements use earlier
+  retired rules as proved theorems, and their theorem dependencies are acyclic. No
+  replacement's axiom closure contains a retired axiom, Circle 2, Circle 3 or superposition,
+  and none cites a proposition. No
+  certificate entry rests on Circle 2 or Circle 3, and III.1 and its porism rest on 38
+  tacit rules each. The constraints cost retirements: within the derivations found, every
+  derivation of `between_symm`, `between_of_inside_chord` and `line_circle_between` rests
+  on Circle 3 or none was found, and without the Circle constraint the earlier search's
+  maximum, 34 in all, put Circle 3 under II.14, III.1 and III.2. The axioms leave
+  `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean`, `Metric.lean` and
+  `Transfer.lean`. Protected files changed with them, as values pinned to the axioms:
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and `model/lock.sha256`;
+  [`tests/model/laws.toml`](../../tests/model/laws.toml), and the 31 laws' code in
+  [`tests/model/search.py`](../../tests/model/search.py) and
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
+  order and the rest of each file as it was; [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  follows the smaller lock. The results of `run.py --full --write` are recorded in
+  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
+  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
+  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
+  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
+  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
+  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
+  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
+  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
+  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
+  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules and updates
+  its pinned axiom closures and explanatory comments to follow the retirements, retaining
+  every `#guard_msgs` check.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) changes only the comment counts
+  to 39 retired rules and 48 locked laws, with every individual audit, guard and axiom pin
+  unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) records
+  the measured counts of III.1 and its porism (38 tacit rules each) and gains pins that
+  keep the 31 names out of the axiom lists of III.1, III.1 Por., III.2 and II.14. With the
+  31 now theorems those pins cannot fail, as with the eight's above; the pins that hold are
+  the counts and the exclusion of Circle 3, and pins that can fail are #168, which holds
+  every release until it closes. The numerical check changes landed first, in the
+  preparation above, under WORKFLOW, section 10: the 31 are derived properties in
+  [`tests/model/derived.py`](../../tests/model/derived.py), which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) run by name, with runs
+  added for the ones they did not yet sample. In the formal model, which is content the
+  checks judge and so lands with the retirement, `model/Check/Generator.lean` extends
+  `comparePlanted` to check the hand `LineMeetsCircle`'s type and body against the
+  library's definition before translating it, including binder kinds and without
+  unfolding. `model/Check/Intersections.lean` uses it for Intersections 2
+  and 3, retaining their kernel comparisons through `original`; a guarded regression in
+  `model/Check/RoundTrip.lean`, beside the other planted faults, shows that making
+  Intersection 3's point A explicit passes `rfl` but fails the structural comparison. (On
+  22 October the regression moved there from `model/Check/Intersections.lean`, since main's
+  forbidden-command scan, #271, lets a `#guard_msgs` pin an error only in that file and
+  `model/Model/Audit.lean`.)
+  All 39 retired rules have direct structural comparisons, including binder kinds.
+  The formal model's generated laws, checks and assembly
+  follow from its generator; its proofs in the plane stay, as derived facts, and
+  `model_exists` stays unconditional. Proposition and porism statements, definitions and
+  `--` lines are unchanged. The check inputs this retirement leaves stale, the law
+  allow-list in `scripts/safe_push.py` (nine entries no remaining law uses, so the
+  allow-list unit test of `scripts/test_safe_push.py` fails until they go) and the
+  examples of `Certificate/FIELDS.md` and `review/SCHEMA.md`, follow in a check change of
+  their own, landed after this one.
+  On integration with main after the restricted rule of superposition, at the merge of
+  `d2c45450` with `bae3d09f`, the lock was regenerated, not merged: 48 axioms, with
+  `Tacit.superposition` as main restates it, and the vocabulary unchanged at 208 words.
+  It was then merged with #150's answers to questions 4 and 2, above, which land before it.
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean) takes their structure, with
+  the statement pins and no pin of the retired flag, and updates nine exact pins to what
+  Lean now prints, since the proofs beneath them now reach the assumptions of the retired
+  rules' proofs: `Elements.BookI.Prop4`, `Elements.BookI.Prop8`,
+  `Elements.Superposition.onLine_of_angle_eq_named`, `Cited.holds_neOfLen`,
+  `Cited.holds_rayUnique`, `Cited.holds_rayOfAngle`, `Cited.holds_rayOfAngleSide`,
+  `Prop8.holds_prop7` and `Cited.holds_all`; every guard stays exact, every statement pin
+  passes as it stands, and its header names the four laws whose pins now list
+  construction rules. The review of the cited laws' proofs that brief 0009's round 4 ties
+  to this landing is made here (#150, question 4's reconciliation and question 5's credit
+  to the side). With this retirement, four of the seven laws I.4 cites are proved with
+  construction rules, as question 4's entry above foresaw: `neOfLen` and `rayUnique`,
+  which I.8 cites too, through Metric 1 (`eq_of_len_eq_zero`), and `rayOfAngle` and
+  `rayOfAngleSide` through Same side 2, Triple incidence 2 and Pasch 3. `cited_laws` in
+  `facts.json` lists each law's construction rules, and only `lenSymm`, `angleSymm` and
+  `areaCongruent` have none. The proofs of both halves of one ray for one angle now join
+  the law's point P, in I.4 the placed corner C′, to another point by a straight line:
+  Pasch 3 by `Postulate1` in
+  [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean), and `rayOfAngle`
+  through Same side 5 inside Triple incidence 2. Question 4's permissive reading admits
+  this: citing a law still draws nothing in the placement, and no retired axiom is
+  restored. Every expectation of question 4 still holds: the twelve construction rules it
+  requires stay axioms, and of the six rules it excludes only `Tacit.pasch3` is now a
+  theorem, as its reason says. The sentences that said or implied that I.4's laws are
+  proved with no construction rule are made true of this revision, and the side laid down
+  is credited where it works, to `ray_of_angle` and not to `ray_of_angle_side`, whose law
+  is now proved with a construction: in the docstrings of
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean)
+  and [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean), the
+  coordinator's files, with no statement, `Cited` law or `--` line changed; in brief 0009,
+  by a dated note and corrections in place; and in
+  [`docs/briefs/book-I.md`](book-I.md), `mishnah/I/04.md`, `mishnah/I/08.md` and I.4's
+  record, `review/I/04.toml`, whose text changes.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) keeps main's retirement of `I_2`,
+  `I_3` and `I_23` and of their pins, and states that `III_5_crossing` now rests on
+  Diagram-segment 2. [`Audit/screen.py`](../../Audit/screen.py) drops from its list of
+  circle rules the nine of the 31 it named, which are theorems now, and its docstring
+  gives the rules `grind` refuses after the retirement: six both ways (Postulates 1 to 3
+  and the three `exists_point` rules left) and thirteen more given forward, besides the
+  restricted rule. Run again on the statements of 58018a3 (21 October 2026), before the
+  integration with train C6a below, the screen closed III.5 alone, by Diagram-segment 2:
+  III.2 and III.6 no longer closed, since the rules that closed them, Circle 2 and
+  Generalities 3 and 4, are theorems now and the screen tries only axioms. So its list of
+  rows it must find (`KNOWN`) was set to III.5 alone, a value that moves with the axioms;
+  the two cases of `tests/test_screen.py` that read it were made to hold with the list
+  before the retirement and after it in the preparation, which lands first. On this
+  revision, which holds brief 0008's restated III.5, Generalities 4 is a theorem, so the
+  screen, which tries axioms alone, no longer closes the restated III.5, which needs that
+  rule to finish (a scratch run of III.2, III.5 and III.6 closed none of 690 tries).
+  `KNOWN`, which still names III.5, is stale until a check change gives the screen a new
+  canary, tracked in issue #160. And, already on main, the screen cannot run until its
+  `DEFS` takes the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`,
+  `Arc.measure`, `InSegment`, `LocallyLess`, `LocallyWithin`, `MixedAngle.Exceeds`,
+  `MixedAngle.FallsShort`, `MixedAngle.WellFormed`, `MixedAngle.casesOn`,
+  `MixedAngle.region`, `MixedAngle.vertex`, `NearVertexOpen`, `OnArc`, `OnSideOrLine`,
+  `Places`, `Surrounds` and `WithinAngle`), also in issue #160. The catalogue,
+  [`docs/reports/overlaps.md`](../reports/overlaps.md), records the run and says both, and
+  its III.2 and III.6 rows rest on their audit lemmas as before.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  all 37 of main's expectations, question 4's eight among them, with the measured counts
+  of III.1 and its porism now 38 and the porism's pinned list now its own: the 23 retired
+  names it held leave, and six rules their proofs reach enter (`area_add_of_between`,
+  `area_degenerate` and `area_eq_zero_of_on_line` through `area_swap`, `circle_eq` and
+  `exists_point_inside_circle` through `centre_inside` and `eq_of_len_eq_zero`, and
+  `exists_point_on_line` through `same_side_symm` and `pasch3`). It adds the four pins
+  above, 41 in all. [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
+  `model/README.md` call the 39 "retired rules", and the README counts the 47 direct
+  declaration comparisons; MODEL.md's triple-incidence table, left with no rows, gives way
+  to a sentence, its mutations table's header no longer speaks of a guard, and its example
+  limits search.py to `pasch2`, still a law. `docs/reports/gaps-book-I.md`,
+  `docs/STYLE.md`, `mishnah/intro/I.md` and `mishnah/I/05.md` name what this revision's
+  certificate shows: the lemmas through which I.4 reaches Postulates 2 and 3, and I.5's
+  routes to Postulate 2: in its own Lean, the order rule beneath `OnRay.between_of_len_lt`
+  and Metric 8 (`area_swap`), and through I.4, which it cites. `docs/FORMALIZATION.md` counts the model's planted mutations as
+  MODEL.md does.
+  `model/Model/Laws.lean`, `model/Check/Laws.lean` and `model/Model/Assembly.lean` were
+  written again by the generator: the 48 laws reach 152 words of the vocabulary, the 153
+  of main less `LineMeetsCircle`. Both `lock.sha256` files keep main's comments and are
+  renewed against the regenerated lock, and the numerical results were run again with
+  `run.py --full --write`.
+  This retirement lands after the allow-list preparation, whose entry is
+  [`docs/decisions/2026-10-21-retiring-laws-inlined.md`](../decisions/2026-10-21-retiring-laws-inlined.md):
+  it rewrote the retiring laws so that none calls the nine names it took out of the law
+  allow-list, so the laws this retirement deletes from the two harnesses are the rewritten
+  ones.
+  On integration with main after train C6a (#240),
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) was again regenerated by
+  `--write-lock`, not merged: it holds main's `Tacit.exists_centre` as well, 49 axioms in
+  all, with main's 238 words of vocabulary, and it is main's lock less the 31 lines of the
+  retired axioms; every other axiom and every word is main's byte for byte, and the header
+  names decision entries as main's `--write-lock` now writes it.
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean), which C6a added, has
+  its axiom pins of III.5, III.6 and the bridges set to what Lean now prints, and says that
+  III.5 and III.6 rest on Diagram-segment 2 and Postulate 3 through the proved rules beneath
+  their Book Zero lemmas, though their proofs do not cite that rule.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) takes C6a's audit lemmas of the restated
+  III.5 and III.6, `III_5_radius` among them, with pins set to what Lean now prints: each
+  rests on Diagram-segment 2. [`Audit/screen.py`](../../Audit/screen.py) counts seven rules
+  refused both ways, the six above and `exists_centre`, names 58018a3 as the commit its run
+  of 21 October read, says that the run read III.5 and III.6 as stated before brief 0008
+  restated them, and says, as above, that `KNOWN` is stale on this revision and that the
+  screen cannot run until its `DEFS` takes C6a's 18 words.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) counts 49 locked laws, with
+  `exists_centre` among them. [`tests/model/search.py`](../../tests/model/search.py) is the
+  preparation's file less the laws of the 31 axioms, with main's law for `exists_centre`.
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) is the preparation's file
+  less the same 31 laws, with main's law for `exists_centre`.
+  [`tests/model/laws.toml`](../../tests/model/laws.toml) keeps the line of `exists_centre`,
+  49 laws in all. [`model/lock.sha256`](../../model/lock.sha256) gains a paragraph for this
+  integration and the new hash. [`tests/model/lock.sha256`](../../tests/model/lock.sha256)
+  gains a paragraph for this integration and the new hash.
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) follows the 49 laws, and the ten
+  files of numerical results were written again by `run.py --full --write`:
+  `tests/model/results/angle_check.txt`, `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`, `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`, `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`, `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt` and `tests/model/results/summary.txt`.
+  The generator wrote the model's laws again: 49 laws, reaching the same 152 words.
+  On integration with main at 5e5e51dc (22 October 2026),
+  [`Audit/Centre.lean`](../../Audit/Centre.lean), which main's Book III cascade added, has
+  its pin of III.1's construction set to what Lean now prints: the retired rules leave the
+  list, and `exists_centre` stays in it.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  this train's pins, and main's entries for III.1 and its porism are recounted on
+  `facts.json`: 39 tacit rules for III.1, with `exists_centre`, and 38 for the porism.

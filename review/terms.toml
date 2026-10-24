@@ -33,7 +33,7 @@ meaning = "Straight lines through the centre are excluded by hypothesis, so the 
 
 [tag.mixed-angles-omitted]
 kind = "scope"
-meaning = "A clause about an angle contained by a straight line and a circumference is left out, since our angles are made by two straight lines; the rectilineal facts Euclid proves it by are stated (III.16, III.31)."
+meaning = "A clause about an angle contained by a straight line and a circumference is left out, and the rectilineal facts Euclid proves it by are stated. No record carries it now that III.16 and III.31 state their mixed angles; the worked example in review/SCHEMA.md shows it, as III.16 stood at commit d040117."
 
 [tag.mixed-angles-local]
 kind = "representation"
@@ -45,7 +45,7 @@ meaning = "The statement gives the circle its centre, named or as `∃ G, Centre
 
 [tag.touching-whole-circles]
 kind = "representation"
-meaning = "Circles touching one another are read of the whole circles: touching within, no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+meaning = "Circles touching one another are read of the whole circles: touching within, a point of the inner is within the outer, and no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
 
 [tag.segment-with-circle]
 kind = "representation"
@@ -70,4 +70,4 @@ meaning = "A construction of a square returns its side, a straight line EH whose
 
 [tag.figure-with-dissection]
 kind = "representation"
-meaning = "A rectilineal figure is given with its division into triangles, checked: any division, as triangles that lie apart, no point inside two of them, so that the figure may have a hole; or, for a figure with one boundary, triangles glued edge to edge in a suitable order, each across a side of an earlier one and meeting the earlier ones only along it; or, as Euclid and Byrne divide it, the triangles from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles. Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; Hilbert proved the second, for his measure of area (I.45, II.14)."
+meaning = "A rectilineal figure given with a checked division into triangles, as the older companions of I.45 and II.14 take it: any division, as triangles that do not overlap, no point inside two of them, so that the figure may have a hole; or, for a figure with one boundary, triangles glued edge to edge in a suitable order, each across a side of an earlier one and meeting the earlier ones only along it; or, as Euclid and Oliver Byrne divide it, the triangles from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles. Equal to the figure means equal to those triangles together, and that is the figure's area. Book Zero proves separately that every figure given by its boundary, represented by an outline, has such a division. Following David Hilbert's theory of content, it proves that every division of that figure gives the same sum. The records of I.45 and II.14 carry it for those older companions alone; their outline companions take a figure by its boundary alone, represented by an outline."

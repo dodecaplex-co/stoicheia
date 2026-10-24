@@ -1,4 +1,6 @@
 import Elements.Figure.Triangles
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 
 /-!
 # Book Zero: the sides of a straight line

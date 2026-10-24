@@ -13,6 +13,10 @@ import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Tacit.Superposition
+import Elements.Figure.RuleBase
+import Elements.Figure.Incidence
+import Elements.Figure.AreaRules
+import Elements.Figure.CirclePoints
 import Elements.Figure.Lengths
 import Elements.Figure.Lines
 import Elements.Figure.Circles
