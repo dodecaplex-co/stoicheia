@@ -23,8 +23,12 @@
   fails, by its tag and its scope, through III.16 and III.31; and an alternative route
   still fails.
 
-  With them, ACCEPTANCE's item B4 now says that I.45 and II.14 are full, and its table of
-  the limitations allowed loses their two rows and the paragraph that followed it.
+  This entry approves the change to `docs/ACCEPTANCE.md`, in which item B4 now says that
+  I.45 and II.14 are full and the table of the limitations allowed loses their two rows
+  and the paragraph that followed it.
+
+  Since #249, `docs/ACCEPTANCE.md` is a check input and a protected path, so its table
+  changes here with `ALLOWED_LIMITS` and its test, as one change to the check.
 
   This entry approves the change to `review/terms.toml`, where the meaning of the tag
   `figure-with-dissection` now names the older companions of I.45 and II.14, which take a
