@@ -72,13 +72,6 @@ from collections import Counter, defaultdict  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 SCRIPT = Path(__file__).resolve()
-GIT_REPOSITORY_OVERRIDES = frozenset({
-    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CEILING_DIRECTORIES", "GIT_COMMON_DIR",
-    "GIT_CONFIG", "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS",
-    "GIT_DISCOVERY_ACROSS_FILESYSTEM", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
-    "GIT_INTERNAL_SUPER_PREFIX", "GIT_NAMESPACE", "GIT_OBJECT_DIRECTORY", "GIT_PREFIX",
-    "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE",
-})
 
 # P1: the characters of a path.
 PATH_CHARACTERS = re.compile(r"[A-Za-z0-9._/-]+")
@@ -571,12 +564,9 @@ def repository() -> tuple[Path, dict[str, str]]:
                "neither (env -u GIT_DIR -u GIT_WORK_TREE python3 scripts/check_paths.py)")
               if inherited else "")
     discovery_env = os.environ.copy()
-    active_env = os.environ.copy()
-    for name in GIT_REPOSITORY_OVERRIDES:
-        discovery_env.pop(name, None)
-        active_env.pop(name, None)
     discovery_env.pop("GIT_DIR", None)
     discovery_env.pop("GIT_WORK_TREE", None)
+    active_env = os.environ.copy()
     caller = Path.cwd()
     for name in ("GIT_DIR", "GIT_WORK_TREE"):
         value = active_env.get(name)
@@ -621,8 +611,7 @@ def repository() -> tuple[Path, dict[str, str]]:
 
 def git(root: Path, *args: str, env: dict[str, str] | None = None) -> bytes:
     try:
-        done = subprocess.run(["git", "--no-replace-objects", *args], cwd=root, env=env,
-                              capture_output=True)
+        done = subprocess.run(["git", *args], cwd=root, env=env, capture_output=True)
     except OSError as e:
         fail(f"cannot run Git ({e})")
     if done.returncode != 0:
