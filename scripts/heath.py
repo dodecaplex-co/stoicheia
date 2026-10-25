@@ -14,15 +14,20 @@ the small contracts the other scripts share:
 Shared by scaffold_book.py, check_fidelity.py and render.py. Standard library only.
 Reading review records needs Python 3.11 or later, for tomllib; the rest runs on older
 Pythons too. `python3 scripts/heath.py` checks the contracts against themselves: the
-examples in review/SCHEMA.md, review/terms.toml and every review record present.
+examples in review/SCHEMA.md, review/terms.toml and every review record present; and that
+the reader of Lean reads deep and long runs of string holes in under half a second each
+(`READER_PLANTS`, #390), and refuses as quickly strings nested past their budget
+(`READER_REFUSED`).
 """
 
 from __future__ import annotations
 
+import bisect
 import functools
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -692,6 +697,87 @@ def _schema_examples():
             yield m.group(1), int(m.group(2)), block
 
 
+# The reader's time (#390). Before #390 the reader of Lean read a string with holes
+# afresh in each hole that held it, and a string not after INTERPOLATED both ways each
+# time: its time grew exponentially with the depth of nested holes, and as the square of
+# the length of a run of them, and its recursion, three frames for each depth, met
+# Python's default limit at a depth of about 330. Each plant is read in a child process,
+# given READER_TIMEOUT seconds, so that a reader as slow as that one fails the check
+# rather than hangs it, and must take less than READER_SECONDS. Each must also read as
+# that reader reads it, or reads it made smaller where it cannot: the offsets of the
+# strings it cannot read for certain (`unsure`), the offsets of its strings, in order, and
+# the first one's text. That reader does not finish the first plant in READER_TIMEOUT
+# seconds and takes seconds over the next two; the next two, deeper than its recursion
+# limit, it cannot read at all; and the last, where each hole walked the comment it opens
+# to the end of the text, takes it more than a second. READER_REFUSED, strings nested
+# past their budget (STRINGS_PER_CHARACTER), the reader must refuse as quickly.
+READER_TIMEOUT, READER_SECONDS = 20, 0.5
+READER_PLANTS = [
+    ("holes nested 200 deep", '"{' * 200, range(0, 400, 4), range(0, 400, 4), "{"),
+    ("a run of 4000 strings with holes", '"{"' * 4000, range(0, 12000, 3),
+     range(0, 12000, 3), "{"),
+    ("a run of 2400 interpolated strings", 's!"{"' * 2400, range(2, 12000, 5),
+     range(2, 12000, 5), "{"),
+    ("holes nested 2000 deep", '"{' * 2000, range(0, 4000, 4), range(0, 4000, 4), "{"),
+    ("interpolated strings nested 2000 deep, all closed", 's!"{' * 2000 + '}"' * 2000, [],
+     range(7998, 0, -4), "{}"),
+    ("a run of 2400 strings whose holes open a block comment", '"{/-"' * 2400,
+     range(0, 12000, 5), range(0, 12000, 5), "{/-"),
+]
+READER_REFUSED = ("interpolated strings nested 10,000 deep, all closed",
+                  's!"{' * 10000 + '}"' * 10000)
+_READER_CHILD = """\
+import importlib.util, json, sys, time
+spec = importlib.util.spec_from_file_location("heath", sys.argv[1])
+heath = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(heath)
+src, strings = sys.stdin.read(), []
+start = time.perf_counter()
+try:
+    unsure = heath.read_lean(src, strings)[1]
+except ValueError as e:
+    print(json.dumps({"seconds": time.perf_counter() - start, "refused": str(e)}))
+else:
+    print(json.dumps({"seconds": time.perf_counter() - start, "unsure": unsure,
+                      "strings": [i for i, _ in strings], "first": strings[0][1]}))
+"""
+
+
+def _reader_time() -> list[str]:
+    """The faults of the reader's time and reading on READER_PLANTS and READER_REFUSED."""
+    faults = []
+    for name, src, *want in READER_PLANTS + [READER_REFUSED]:
+        try:
+            run = subprocess.run([sys.executable, "-I", "-c", _READER_CHILD,
+                                  str(Path(__file__).resolve())], input=src,
+                                 capture_output=True, text=True, timeout=READER_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            faults.append(f"read_lean on {name}: not done in {READER_TIMEOUT} seconds")
+            continue
+        if run.returncode:
+            last = (run.stderr.strip().splitlines() or ["no message"])[-1]
+            faults.append(f"read_lean on {name}: failed: {last}")
+            continue
+        got = json.loads(run.stdout)
+        if got["seconds"] >= READER_SECONDS:
+            faults.append(f"read_lean on {name}: took {got['seconds']:.2f} seconds; the limit "
+                          f"is {READER_SECONDS}")
+        if not want:
+            if "refused" not in got:
+                faults.append(f"read_lean on {name}: reads it, where it should refuse it, "
+                              "past the budget of its strings (STRINGS_PER_CHARACTER)")
+            continue
+        unsure, strings, first = want
+        if "refused" in got:
+            faults.append(f"read_lean on {name}: refuses it: {got['refused']}")
+        elif (got["unsure"], got["strings"], got["first"]) != (list(unsure), list(strings),
+                                                                first):
+            faults.append(f"read_lean on {name}: reads it otherwise than the plant expects "
+                          "(its unsure strings, where its strings begin, or its first "
+                          "string's text)")
+    return faults
+
+
 def _self_test() -> int:
     """Check the contracts against themselves; return the number of faults."""
     faults = []
@@ -782,11 +868,15 @@ def _self_test() -> int:
                     load_review(book, n)
                 except ReviewError as e:
                     faults.append(str(e))
+    faults += _reader_time()
     for f in faults:
         print("  ✗ " + f)
     if not faults:
         print(f"✓ contracts: references, porisms, review/terms.toml, {examples} examples in "
               f"review/SCHEMA.md and {records} review records hold")
+        print(f"✓ the reader of Lean reads its {len(READER_PLANTS)} plants of deep and long "
+              f"runs of string holes in under {READER_SECONDS} seconds each, and refuses "
+              "strings nested past their budget as quickly")
     return len(faults)
 
 
@@ -794,7 +884,7 @@ def _self_test() -> int:
 # and names, read as Lean 4.35's tokenizer reads them. It moved here from
 # check_fidelity.py, which imports it, so that safe_push.py, which carries this file
 # with it as the harness, reads Lean with it too (#349; the coordinator's ruling of
-# 22 October 23:50). It uses nothing else of this file but `re` and `functools`.
+# 22 October 23:50). It uses nothing else of this file but `re`, `functools` and `bisect`.
 
 # Lean's tokens, as its tokenizer starts them: an identifier begins with a letter or `_`,
 # a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
@@ -869,6 +959,28 @@ INTERPOLATED = {"s!", "m!", "f!", "throwError"}
 # `\t` and `\r`, `\x` and two hexadecimal digits, `\u` and four, and a gap, a `\` before a
 # line feed, which Lean reads, with the blanks after it, as nothing.
 ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|(\n[ \t\r\n]*)|(.))", re.S)
+# A `"` or `{` that no `\` escapes: one after a run of `\`s of even length, or none. A
+# string's text, from just after its opening quote or a hole's `}`, runs to the first such
+# `"` read plain, and to the first such `"` or `{` read with holes; no run of `\`s reaches
+# back past that quote or `}`, so the stops found in the whole of `src` serve every
+# string (`_Ends`).
+STOP = re.compile(r'(?<!\\)(?:\\\\)*["{]')
+# `strings` holds each string's whole text, its holes and the strings in them included, so
+# that its texts grow as the square of the depth of nested holes: `s!"{` nested 20,000
+# deep, 120,000 characters, gives 1.2 billion (#390). So read_lean refuses, before it
+# builds them, a text whose strings, each counted from its opening quote past its closing
+# one, a raw string by its text, come to more than STRINGS_PER_CHARACTER characters for
+# each of its own and STRINGS_SPARE more. Those are at most the text's length times the
+# depth to which its strings nest; so 1024 admits strings nested 1024 deep in any text,
+# three times the depth at which the reader's recursion before #390 stopped, and so
+# refuses no text that reader could read. The repository's Lean comes to at most 0.176
+# for each character (Elements/Companions.lean, 560 of 3182, at c609656e). The budget
+# counts characters, not bytes: a string holding a character outside the Basic
+# Multilingual Plane takes 4 bytes for each of its characters, so the texts may still
+# take some 4 KB of memory for each character of the source. STRINGS_SPARE lets a short
+# text nest deeper still. The fifth of READER_PLANTS, 2000 levels in 12,000 characters,
+# needs 12,002,000, within a budget of 29,065,216.
+STRINGS_PER_CHARACTER, STRINGS_SPARE = 1024, 1 << 24
 
 
 def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
@@ -880,11 +992,22 @@ def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
     certain: one with a `{`, not after INTERPOLATED, whose two readings, plain and with
     holes, end in different places, since its braces may be text or holes of code; and of
     each character literal or raw string closed up to a name or token that Lean may read
-    on through its `'` or its `r` (`closed_up`).
+    on through its `'` or its `r` (`closed_up`). Each string's two readings, and where
+    each hole closes, are found once, however deep the holes nest (`_Ends`, #390).
     `strings`, if given, gains each string literal read as code, raw strings among them,
-    as its offset and its text as Lean reads it (`lean_string`), for `declared_tokens`."""
+    as its offset and its text as Lean reads it (`lean_string`), for `declared_tokens`;
+    and if their spans would pass their budget (STRINGS_PER_CHARACTER), this raises
+    ValueError before it builds them."""
     marks: list[tuple[str, int, int]] = []
     _read_code(src, 0, marks)
+    if strings is not None:
+        held = sum(j - i for kind, i, j in marks if kind in ("string", "raw"))
+        budget = STRINGS_PER_CHARACTER * len(src) + STRINGS_SPARE
+        if held > budget:
+            raise ValueError(f"read_lean: the strings of this Lean come to {held:,} "
+                             f"characters, past their budget of {budget:,} for its "
+                             f"{len(src):,}: strings nested too deep in each other's holes "
+                             "(STRINGS_PER_CHARACTER, #390)")
     out, unsure = list(src), []
     for kind, i, j in marks:
         if kind == "comment":
@@ -974,97 +1097,141 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     comment again ("comment", `comment_end`), each «…» name ("name"), each string,
     character literal or raw string the scan cannot read for certain ("unsure"), and each
     string literal, from its opening quote past its closing one ("string"), and raw
-    string's text ("raw")."""
-    depth, previous, can_project, field_dot = 0, "", False, False
-    closed = closed_up(src)
-    while i < len(src):
-        c, j = src[i], i + 1
-        if src.startswith(("--", "/-"), i):
-            end = comment_end(src, i)
-            j = len(src) if end is None else end
-            marks.append(("text", i, j))
-            marks.append(("comment", i, j))
-            can_project, field_dot = False, False
-        elif c == '"':
-            j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
-            marks.append(("string", i, j))
-            can_project, field_dot = True, False
-        elif m := RAW.match(src, i):
-            close = '"' + m[1]
-            k = _find(src, close, m.end())
-            if closed[i]:
-                marks.append(("unsure", i, k))
-            marks.append(("text", m.end(), k))
-            marks.append(("raw", m.end(), k))
-            j, previous = min(k + len(close), len(src)), c
-            can_project, field_dot = True, False
-        elif c == "«":
-            j = min(_find(src, "»", i) + 1, len(src))
-            marks.append(("name", i, j))
-            previous = src[i:j]
-            can_project, field_dot = True, False
-        elif m := IDENT.match(src, i):
-            # An `s!` or its kin where Lean may read on through it begins no interpolated
-            # string for certain (`closed_up`).
-            j, previous = m.end(), "" if closed[i] else m[0]
-            can_project, field_dot = True, False
-        elif m := NUMBER.match(src, i):
-            if field_dot and (field := FIELD.match(src, i)):
-                tail = src[field.end():m.end()]
-                if "_" not in tail and "e" not in tail and "E" not in tail:
-                    m = field
-            j, previous = m.end(), m[0]
-            if WORD_CHAR.match(src, j):
-                marks.append(("text", i, j))
-            can_project, field_dot = True, False
-        elif WORD_CHAR.match(c):
-            # Outside a name, a character `\w` takes that no name begins with, as the `¹`
-            # that ends `⁻¹`: blanked. After such a token Lean may read `.1` as a field.
-            marks.append(("text", i, j))
-            previous = c
-            can_project, field_dot = True, False
-        elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
-            if closed[i]:
-                marks.append(("unsure", i, m.end()))
-            marks.append(("text", i + 1, m.end() - 1))
-            j, previous = m.end(), c
-            can_project, field_dot = True, False
-        elif c == "}" and hole and not depth:
-            return i
-        elif not c.isspace():
-            depth += (c == "{") - (c == "}")
-            previous = c
-            if c == ".":
-                field_dot, can_project = can_project, False
-            else:
-                can_project, field_dot = c in ")]}·⟩›", False
-        else:
-            can_project, field_dot = False, False
-        i = j
-    return len(src)
+    string's text ("raw"). Each string is read once, the one way `_Ends` finds it is
+    read."""
+    return _run(_code(src, i, marks, _Ends(src), hole))
 
 
 def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
     """Read the string at `i` and return the offset past it: with its holes, as an
     interpolated string, if it follows INTERPOLATED or both readings end in one place."""
-    plain = i + 1
-    while plain < len(src) and src[plain] != '"':
-        plain += 2 if src[plain] == "\\" else 1
-    plain = min(plain + 1, len(src))
-    holes: list[tuple[str, int, int]] = []
-    end = _read_interpolated(src, i, holes)
-    if end == plain or (interpolated and end is not None):
-        marks += holes if interpolated else [mark for mark in holes if mark[0] != "comment"]
-        return end
-    marks.append(("text", i + 1, plain))
-    if "{" in src[i:plain]:
-        marks.append(("unsure", i, plain))
-    return plain
+    return _run(_string(src, i, marks, interpolated, _Ends(src)))
 
 
 def _read_interpolated(src: str, i: int, marks: list) -> int | None:
     """The offset past the string at `i` read as an interpolated string, with its text
     marked and its holes read as code; None if it does not close."""
+    return _run(_interpolated(src, i, marks, _Ends(src)))
+
+
+def _run(reading):
+    """The value of `reading`, a generator that yields each reading it rests on, a
+    generator too, and is sent back that reading's value. They run on a stack of this
+    function's own, not on Python's, so that no depth of nested holes reaches Python's
+    recursion limit, which the reader's recursion before #390 met at a depth of about
+    330, under the default limit of 1000 frames."""
+    stack, value = [reading], None
+    while stack:
+        try:
+            stack.append(stack[-1].send(value))
+            value = None
+        except StopIteration as done:
+            stack.pop()
+            value = done.value
+    return value
+
+
+def _code(src: str, i: int, marks: list, ends: _Ends, hole: bool = False):
+    """`_read_code`'s reading, for `_run`, with `ends` to say how each string is read."""
+    depth, previous, can_project, field_dot = 0, "", False, False
+    closed = closed_up(src)
+    while i < len(src):
+        c = src[i]
+        if c == '"':
+            j = yield _string(src, i, marks, previous in INTERPOLATED, ends)
+            marks.append(("string", i, j))
+            previous, can_project, field_dot = c, True, False
+        elif c == "}" and hole and not depth:
+            return i
+        else:
+            depth += (c == "{") - (c == "}")
+            j, token, can_project, field_dot = _token(src, i, closed, can_project, field_dot,
+                                                      marks)
+            previous = previous if token is None else token
+        i = j
+    return len(src)
+
+
+def _token(src: str, i: int, closed: bytes, can_project: bool, field_dot: bool,
+           marks: list, ends: _Ends | None = None) -> tuple[int, str | None, bool, bool]:
+    """Read the token at `i`, which is no `"`, as `_read_code` reads it: `marks` gains
+    its marks, and this returns the offset past it, the token as the scan's `previous`,
+    which is asked only whether it is one of INTERPOLATED (a raw string or a «…» name by
+    its first character alone, and None for a comment or a blank, which leave `previous`
+    as it was), and the scan's `can_project` and `field_dot` after it. A `{` or `}` is
+    read alone, as most characters that begin no other token are; whether a `}` closes a
+    hole is the caller's to say. A blank, which begins no other token, is tried first.
+    Where a comment, a raw string or a «…» name ends comes from `ends` if given, as the
+    scan of holes (`_Ends.hole`) gives it, since other holes may begin within one; else
+    from `comment_end` and `_find`, as the reading that writes the marks, which passes
+    each place once, gives it."""
+    c, j = src[i], i + 1
+    if c.isspace():
+        return j, None, False, False
+    if src.startswith(("--", "/-"), i):
+        end = comment_end(src, i) if ends is None else ends.comment_end(i)
+        j = len(src) if end is None else end
+        marks.append(("text", i, j))
+        marks.append(("comment", i, j))
+        return j, None, False, False
+    if m := RAW.match(src, i):
+        close = '"' + m[1]
+        k = _find(src, close, m.end()) if ends is None else ends.find(close, m.end())
+        if closed[i]:
+            marks.append(("unsure", i, k))
+        marks.append(("text", m.end(), k))
+        marks.append(("raw", m.end(), k))
+        return min(k + len(close), len(src)), c, True, False
+    if c == "«":
+        j = min((_find(src, "»", i) if ends is None else ends.find("»", i)) + 1, len(src))
+        marks.append(("name", i, j))
+        return j, c, True, False
+    if m := IDENT.match(src, i):
+        # An `s!` or its kin where Lean may read on through it begins no interpolated
+        # string for certain (`closed_up`).
+        return m.end(), "" if closed[i] else m[0], True, False
+    if m := NUMBER.match(src, i):
+        if field_dot and (field := FIELD.match(src, i)):
+            tail = src[field.end():m.end()]
+            if "_" not in tail and "e" not in tail and "E" not in tail:
+                m = field
+        if WORD_CHAR.match(src, m.end()):
+            marks.append(("text", i, m.end()))
+        return m.end(), m[0], True, False
+    if WORD_CHAR.match(c):
+        # Outside a name, a character `\w` takes that no name begins with, as the `¹`
+        # that ends `⁻¹`: blanked. After such a token Lean may read `.1` as a field.
+        marks.append(("text", i, j))
+        return j, c, True, False
+    if c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
+        if closed[i]:
+            marks.append(("unsure", i, m.end()))
+        marks.append(("text", i + 1, m.end() - 1))
+        return m.end(), c, True, False
+    if c == ".":
+        return j, c, False, can_project
+    return j, c, c in ")]}·⟩›", False
+
+
+def _string(src: str, i: int, marks: list, interpolated: bool, ends: _Ends):
+    """`_read_string`'s reading, for `_run`. Its holes are read only if `ends` reads it with
+    them; and unless it follows INTERPOLATED, no comment in them, at any depth, is marked
+    "comment", though its text is blanked."""
+    end, holes = yield ends.string(i, interpolated)
+    if holes:
+        inner = marks if interpolated else []
+        yield _interpolated(src, i, inner, ends)
+        if inner is not marks:
+            marks += [mark for mark in inner if mark[0] != "comment"]
+        return end
+    marks.append(("text", i + 1, end))
+    if "{" in src[i:end]:
+        marks.append(("unsure", i, end))
+    return end
+
+
+def _interpolated(src: str, i: int, marks: list, ends: _Ends):
+    """`_read_interpolated`'s reading, for `_run`."""
     j = start = i + 1
     while j < len(src):
         if src[j] == "\\":
@@ -1074,13 +1241,186 @@ def _read_interpolated(src: str, i: int, marks: list) -> int | None:
             return j + 1
         elif src[j] == "{":
             marks.append(("text", start, j))
-            j = _read_code(src, j + 1, marks, hole=True)
+            j = yield _code(src, j + 1, marks, ends, hole=True)
             if j >= len(src):
                 return None
             j = start = j + 1
         else:
             j += 1
     return None
+
+
+class _Ends:
+    """Where the strings of the Lean `src` end and its holes close, each found once (#390).
+
+    A string's reading with holes rests on its holes' readings, which rest on the strings
+    in them, and so on; and a string not after INTERPOLATED is read both ways, to see
+    whether the two end in one place. Read afresh wherever it was met, as before #390,
+    that took time exponential in the depth of nested holes, and growing as the square of
+    the length of a long run of them. Here the end of a reading with holes is found once
+    for each place where its text goes on, just after the opening quote or a hole's `}`
+    (`text`), and the close of a hole once for each place, and state of the scan, that
+    the code of a hole passes through (`hole`): the scan's tokens from a place rest only
+    on that place, on whether the token before it is one of INTERPOLATED, and on
+    `can_project` and `field_dot`, never on how deep in braces the scan is, so scans that
+    meet go on as one. A hole may also begin within a comment, a raw string or a «…» name
+    that an earlier hole reads whole, as each hole of `"{/-"` written 2400 times begins
+    within the block that the hole before it opens; so where such a token ends comes from
+    `comment_end` and `find`, which walk no place of a block twice and list the offsets
+    of each line feed, `»` or raw string's closer once. The methods that rest on others
+    are generators, for `_run`."""
+
+    def __init__(self, src: str):
+        self.src, self.closed = src, closed_up(src)
+        self.texts: dict[int, int | None] = {}
+        self.closes: dict[tuple[int, bool, bool, bool], int] = {}
+        self.blocks: dict[int, int | None] = {}
+        self.found: dict[str, list[int]] = {}
+
+    @functools.cached_property
+    def stops(self) -> list[int]:
+        """The offset of each `"` and `{` of `src` that no `\\` escapes (STOP), found when
+        the first string is met."""
+        return [m.end() - 1 for m in STOP.finditer(self.src)]
+
+    @functools.cached_property
+    def quotes(self) -> list[int]:
+        """The offset of each `"` of `src` that no `\\` escapes."""
+        return [k for k in self.stops if self.src[k] == '"']
+
+    def plain(self, i: int) -> int:
+        """The offset past the string at `i` read plain: past the first `"` after `i` that
+        no `\\` escapes (STOP), or the end of `src`."""
+        k = bisect.bisect_right(self.quotes, i)
+        return self.quotes[k] + 1 if k < len(self.quotes) else len(self.src)
+
+    def string(self, i: int, interpolated: bool):
+        """The offset past the string at `i`, and whether it is read with its holes: so if
+        it follows INTERPOLATED (`interpolated`) and closes so, or if both readings end in
+        one place; else plain."""
+        end = yield self.text(i + 1)
+        plain = self.plain(i)
+        if end == plain or (interpolated and end is not None):
+            return end, True
+        return plain, False
+
+    def text(self, p: int):
+        """The offset past a string read with holes whose text goes on at `p`, or None if
+        it does not close so: its text runs to the first `"` or `{` that no `\\` escapes
+        (STOP), and each hole to the `}` that closes it (`hole`)."""
+        passed = []
+        while p not in self.texts:
+            passed.append(p)
+            k = bisect.bisect_left(self.stops, p)
+            if k == len(self.stops):
+                end = None
+                break
+            if self.src[self.stops[k]] == '"':
+                end = self.stops[k] + 1
+                break
+            p = yield self.hole(self.stops[k] + 1)
+            if p == len(self.src):
+                end = None
+                break
+            p += 1
+        else:
+            end = self.texts[p]
+        for q in passed:
+            self.texts[q] = end
+        return end
+
+    def hole(self, h: int):
+        """The offset of the `}` that closes the hole whose code begins at `h`, or the end
+        of `src` if none does. Each place the scan passes, with the state of the scan
+        there, waits at its depth in braces for the `}` that closes that depth, where a
+        hole whose code began at that place, in that state, would close; where that is
+        known already, the scan goes straight to it. So no place and state is passed
+        twice, whatever the holes that pass it. That bounds the places passed, not the
+        time: a token is read to its end at each place and state that begins it, and other
+        holes may begin within a long comment, raw string or «…» name, so where one of
+        those ends comes from `comment_end` and `find`, not from a walk to it afresh."""
+        src, closes, ignored = self.src, self.closes, []
+        i, interpolated, can_project, field_dot = h, False, False, False
+        waiting: list[list] = [[]]
+        while True:
+            place = (i, interpolated, can_project, field_dot)
+            if place in closes:
+                m = closes[place]
+            elif i < len(src) and src[i] != "}":
+                waiting[-1].append(place)
+                if src[i] == '"':
+                    i, _ = yield self.string(i, interpolated)
+                    interpolated, can_project, field_dot = False, True, False
+                else:
+                    c = src[i]
+                    i, token, can_project, field_dot = _token(src, i, self.closed,
+                                                              can_project, field_dot, ignored,
+                                                              self)
+                    interpolated = interpolated if token is None else token in INTERPOLATED
+                    if c == "{":
+                        waiting.append([])
+                continue
+            else:
+                waiting[-1].append(place)
+                m = i
+            # The `}` at `m` closes every place waiting at this depth; the end, every one.
+            for level in waiting if m == len(src) else waiting[-1:]:
+                for place in level:
+                    closes[place] = m
+            if m == len(src) or len(waiting) == 1:
+                return m
+            waiting.pop()
+            # Past a `}` read alone, as `_token` reads one.
+            i, interpolated, can_project, field_dot = m + 1, False, True, False
+
+    def comment_end(self, i: int) -> int | None:
+        """`comment_end(src, i)`: for a `--` comment the next line feed (`find`), for a
+        block the end of its walk (`block`)."""
+        return self.find("\n", i) if self.src[i] == "-" else self.block(i + 3)
+
+    def block(self, p: int) -> int | None:
+        """Where `comment_end`'s walk of a block, from `p` with one block open, closes it:
+        just past the `-/` that does, or None if none does. As in `hole`, each place the
+        walk passes waits at its depth for the `-/` that closes that depth, where a walk
+        from that place would close its block; where that is known already, the walk goes
+        straight to it. So no place is walked twice, however many holes begin within
+        one block."""
+        src, ends, waiting = self.src, self.blocks, [[]]
+        while True:
+            if p in ends:
+                m = ends[p]
+            elif p < len(src) and (pair := src[p:p + 2]) != "-/":
+                waiting[-1].append(p)
+                if pair == "/-":
+                    waiting.append([])
+                p += 2 if pair == "/-" else 1
+                continue
+            else:
+                waiting[-1].append(p)
+                m = p + 2 if p < len(src) else None
+            # The `-/` just before `m` closes every place waiting at this depth; the end,
+            # every one.
+            for level in waiting if m is None else waiting[-1:]:
+                for place in level:
+                    ends[place] = m
+            if m is None or len(waiting) == 1:
+                return m
+            waiting.pop()
+            p = m
+
+    def find(self, s: str, i: int) -> int:
+        """`_find(src, s, i)`, from the offsets of `s` in `src`, listed in one pass over
+        `src` for each `s`: a line feed, `»`, or a raw string's closing `"` and its `#`s.
+        A text of n characters asks for at most about √(2n) closers, since each number of
+        `#`s needs an `r`, those `#`s and a `"` of its own; so at most that many passes."""
+        if s not in self.found:
+            self.found[s], k = [], self.src.find(s)
+            while k >= 0:
+                self.found[s].append(k)
+                k = self.src.find(s, k + 1)
+        found = self.found[s]
+        k = bisect.bisect_left(found, i)
+        return found[k] if k < len(found) else len(self.src)
 
 
 def lean_string(body: str) -> str:
