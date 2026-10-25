@@ -2505,7 +2505,7 @@ LAW_GLOBALS = {
             "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "ang",
             "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
             "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
-            "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
+            "inside", "is_centre", "is_right_angle", "lattice_on_line",
             "length", "line_circle_points", "line_through",
             "lines_meet", "mag_vals", "on_circle", "on_line", "opposite", "outside",
             "same_side", "sub", "triangle"}),
@@ -2516,7 +2516,7 @@ LAW_GLOBALS = {
             "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
             "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
             "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
-            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
+            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "inside",
             "is_centre", "is_right", "line_through", "lines_meet",
             "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
             "opposite", "outside", "pt_on_line", "pts_on_line",
@@ -2526,7 +2526,7 @@ LAW_GLOBALS = {
             "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
             "gs_cong", "gs_lc", "gs_lines_meet", "gs_p4", "gs_p5", "gs_pasch",
             "gs_rays", "gs_sup"}),
-        "generator maker": frozenset({"gs_cm", "gs_convex"}),
+        "generator maker": frozenset({"gs_cm"}),
     },
 }
 LAW_BUILTINS = frozenset({"abs", "all", "any", "float", "len", "range", "set", "tuple"})

@@ -61,10 +61,15 @@
   proofs of Circle 3 stay, as derived facts with their audits; 40 retired rules and 48
   locked laws, which reach 152 words, as before. The numerical harness drops Circle 3's
   law and keeps checking its predicate as `derived.outside_of_between`, as the preparation
-  of 24 October arranged; the helpers `in_or_on` in `search.py`, and `gs_convex` and
-  `in_or_on` in `hyperbolic.py`, stay though no law calls them now, so the law allow-list
-  of `scripts/safe_push.py` follows in a check change of its own, with the examples that
-  `Certificate/FIELDS.md` and `review/SCHEMA.md` give of Circle 3 as an axiom. The counts
+  of 24 October arranged. The helpers that only this law called, `in_or_on` in both
+  harnesses and `gs_convex` in `hyperbolic.py`, went before it, in the preparation that
+  narrowed the law allow-list of `scripts/safe_push.py` by them
+  ([its entry](2026-10-24-circle-3-law-inlined.md)); the examples that
+  `Certificate/FIELDS.md` and `review/SCHEMA.md` give of Circle 3 as an axiom follow in a
+  change of their own. The kind `'out'` of `gs_cm`, into which that preparation moved
+  Circle 3's sampler, stays though no law draws from it now: a harness may change here
+  only in the laws that move with their axioms, so it goes later, in a change of its own.
+  The counts
   go from 49 axioms to 48, and from 43 tacit rules to 42; the vocabulary stays at 262
   words. Section 2 of `docs/FORMALIZATION.md` also says now, for #420, that I.4 and I.8
   supply lists of names from which `Symbols.ofList` computes the numbering.

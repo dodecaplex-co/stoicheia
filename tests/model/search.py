@@ -497,10 +497,6 @@ def _(c):
     return between(B, A, Cc)
 
 
-def in_or_on(P_, al):
-    return inside(P_, al) or on_circle(P_, al)
-
-
 
 
 # ---- Intersection (diagrammatic)
