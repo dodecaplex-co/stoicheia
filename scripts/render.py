@@ -1302,29 +1302,32 @@ def lean_declared():
     return declared_names(lean_code())
 
 
-def use_pattern(names, longer=(), shadowed=()):
-    """A use of a declaration by one of its resolvable `names`. A projection is a use
+def use_pattern(names, longer=()):
+    """A use of a declaration by one of `names`: the first, its full name, may stand
+    qualified (`BookI.Prop46.square_eq`). A projection of it is a use
     (`Prop20.collinear_iff.mpr`, `Prop46.square_eq.symm`, `.1`), but not a longer name
     declared in the edition that begins with it (`Fitted.fan.part` for `Fitted.fan`), its
     `longer` names giving each such name's rest (`part`); nor a longer name that runs on
     without a dot (`Prop45.append'` for `Prop45.append`), nor a field of something else
     (`h.area_pos` for `Prop14.area_pos`)."""
-    shadowed = set(shadowed)
-    alts = [re.escape(x) for x in names if x not in shadowed]
-    if not alts:
-        return re.compile(r"(?!)")
+    alts = [r"(?:\w+\.)*" + re.escape(names[0])] + [re.escape(x) for x in names[1:]]
     rests = "|".join(re.escape(x) for x in longer)
     after = r"[\w'!?]" + (rf"|\.(?:{rests})(?![\w'!?])" if rests else "")
     return re.compile(r"(?<![\w.'])(?:" + "|".join(alts) + rf")(?!{after})")
 
 
 def root_names(name):
-    """A root declaration's qualified name, less the edition's `Elements` namespace."""
+    """The names a declaration made at the root goes by wherever the edition's Lean names
+    it (`_root_.Elements.Tacit.adjacent_eq_of_right`): Lean's own name less `Elements.`
+    (`Tacit.adjacent_eq_of_right`), which may stand qualified further
+    (`Elements.Tacit.adjacent_eq_of_right`), and each shorter ending of it, as a file that
+    opens its namespace writes it (`adjacent_eq_of_right`, after `open Tacit`). Any other
+    name goes by itself."""
     if not name.startswith("_root_."):
         return [name]
     parts = name.split(".")[1:]
     parts = parts[1:] if parts[0] == "Elements" else parts
-    return [".".join(parts)]
+    return [".".join(parts[j:]) for j in range(len(parts))]
 
 
 def own_names(name, user):
@@ -1337,43 +1340,6 @@ def own_names(name, user):
         return root_names(name)
     parts, space = name.split("."), user.split(".")[:-1]
     return [".".join(parts[j:]) for j in range(len(parts)) if parts[:j] == space[:j]]
-
-
-def nonroot_reference_names(name, user, target_namespace, namespace, opened):
-    """The qualified, current-namespace and opened names of a non-root declaration."""
-    parts = (*target_namespace, *name.split("."))
-    names = list(own_names(name, user)) if target_namespace == namespace else []
-    names.append(".".join(parts))
-    if parts and parts[0] == "Elements":
-        names.append(".".join(parts[1:]))
-    target = ".".join(target_namespace)
-    relative = target.removeprefix("Elements.")
-    if target in opened or relative in opened:
-        names.append(name)
-    return list(dict.fromkeys(names))
-
-
-def reference_names(name, user, target_namespace, namespace, opened, available,
-                    target_visible=True):
-    """The names by which `user` can resolve `name` in its namespace and environment."""
-    if not target_visible:
-        return []
-    if not name.startswith("_root_."):
-        return nonroot_reference_names(name, user, target_namespace, namespace, opened)
-    parts = name.split(".")[1:]
-    names = [".".join(parts), *root_names(name)]
-    target_namespace = ".".join(parts[:-1])
-    relative_namespace = target_namespace.removeprefix("Elements.")
-    user_namespace = ".".join((*namespace, *user.split(".")[:-1]))
-    applicable = (target_namespace in opened or relative_namespace in opened
-                  or user_namespace == target_namespace
-                  or user.startswith("_root_." + target_namespace + "."))
-    short = parts[-1]
-    shadowed = any(other != name and not other.startswith("_root_.")
-                   and short in nonroot_reference_names(other, user, other_namespace,
-                                                        namespace, opened)
-                   for other, other_namespace in available)
-    return list(dict.fromkeys(names + ([short] if applicable and not shadowed else [])))
 
 
 def commands(code):
@@ -1392,297 +1358,20 @@ def commands(code):
     return out
 
 
-def command_contexts(code):
-    """Declaration commands with namespace, opens and earlier declarations."""
-    namespace = ()
-    opened = set()
-    frames = []
-    visible = set()
-    out = []
-    for name, text in commands(code):
-        stripped = text.strip()
-        match = re.match(r"namespace\s+([\w.]+)", stripped)
-        if match:
-            frames.append((namespace, set(opened)))
-            parts = tuple(match.group(1).split("."))
-            namespace = parts if parts[0] == "Elements" else namespace + parts
-            continue
-        if re.match(r"section(?:\s|$)", stripped):
-            frames.append((namespace, set(opened)))
-            continue
-        if re.match(r"end(?:\s|$)", stripped):
-            if frames:
-                namespace, opened = frames.pop()
-            continue
-        match = re.match(r"open\s+(.+)", stripped)
-        if match:
-            for opened_name in re.findall(r"[\w.]+", match.group(1)):
-                opened.add(opened_name)
-                opened.add(".".join((*namespace, *opened_name.split("."))))
-            continue
-        if name:
-            out.append((name, text, namespace, frozenset(opened), frozenset(visible)))
-            visible.add((name, namespace))
-    return out
-
-
-def imported_contexts(code):
-    """The transitive imported declarations and namespaces for every file in `code`."""
-    declarations = {
-        path: {(name, namespace) for name, _, namespace, _, _ in command_contexts(source)}
-        for path, source in code.items()
-    }
-    direct = {}
-    for path, source in code.items():
-        imports = []
-        for modules in re.findall(r"^import\s+(.+)$", source, re.M):
-            for module in modules.split():
-                suffix = module.replace(".", "/") + ".lean"
-                matches = [candidate for candidate in code
-                           if str(candidate).replace("\\", "/").endswith(suffix)]
-                if not matches:
-                    leaf = module.rsplit(".", 1)[-1] + ".lean"
-                    matches = [candidate for candidate in code
-                               if str(candidate).replace("\\", "/").endswith(leaf)]
-                imports.extend(matches[:1])
-        direct[path] = imports
-
-    def walk(path, seen):
-        found = set()
-        for imported in direct[path]:
-            if imported in seen:
-                continue
-            found |= declarations[imported]
-            found |= walk(imported, seen | {imported})
-        return found
-
-    return {path: frozenset(walk(path, {path})) for path in code}
-
-
-def command_body(text):
-    """The value of a declaration command, without its name, binders or result type."""
-    pairs = {"(": ")", "[": "]", "{": "}"}
-    stack = []
-    for i, char in enumerate(text):
-        if char in pairs:
-            stack.append(pairs[char])
-        elif stack and char == stack[-1]:
-            stack.pop()
-        elif not stack and text.startswith(":=", i):
-            return text[:i], text[i + 2:]
-        elif (not stack and text.startswith("where", i)
-              and (i == 0 or not (text[i - 1].isalnum() or text[i - 1] in "_'"))
-              and (i + 5 == len(text)
-                   or not (text[i + 5].isalnum() or text[i + 5] in "_'"))):
-            return text[:i], text[i + 5:]
-    return text, ""
-
-
-def header_bound_names(header):
-    """The simple names bound by a declaration header."""
-    names = set()
-    for group in re.findall(r"[({\[⦃]([^(){}\[\]⦃⦄]*)[)}\]⦄]", header):
-        left, colon, _ = group.partition(":")
-        if colon:
-            names.update(re.findall(r"(?<![\w'])[_\w][\w']*", left))
-    return names
-
-
-def mask_span(text, start, end):
-    """`text` with one name-sized span blanked."""
-    return text[:start] + " " * (end - start) + text[end:]
-
-
-def matching_bracket(text, start):
-    """The closing offset for the bracket at `start`, or the text's end."""
-    pairs = {"(": ")", "[": "]", "{": "}", "⟨": "⟩"}
-    stack = [pairs[text[start]]]
-    for i in range(start + 1, len(text)):
-        if text[i] in pairs:
-            stack.append(pairs[text[i]])
-        elif text[i] == stack[-1]:
-            stack.pop()
-            if not stack:
-                return i
-    return len(text)
-
-
-def lambda_names(binders):
-    """The simple names introduced before a lambda's arrow."""
-    names = set()
-    remaining = list(binders)
-    for match in re.finditer(r"[({\[⦃]([^(){}\[\]⦃⦄]*)[)}\]⦄]", binders):
-        left, colon, _ = match.group(1).partition(":")
-        if colon:
-            names.update(re.findall(r"[_\w][\w']*", left))
-        remaining[match.start():match.end()] = " " * (match.end() - match.start())
-    names.update(re.findall(r"[_\w][\w']*", "".join(remaining)))
-    return names
-
-
-def top_level_separator(text, start, separators):
-    """The first separator after `start` outside brackets, or the text's end."""
-    pairs = {"(": ")", "[": "]", "{": "}", "⟨": "⟩"}
-    stack = []
-    for i in range(start, len(text)):
-        if text[i] in pairs:
-            stack.append(pairs[text[i]])
-        elif stack and text[i] == stack[-1]:
-            stack.pop()
-        elif not stack and text[i] in separators:
-            return i
-    return len(text)
-
-
-def term_uses(names, longer, text, shadowed):
-    """Whether a term refers to `names`, with bracketed and lambda scopes."""
-    pattern = use_pattern(names, longer, shadowed)
-    pos = 0
-    while pos < len(text):
-        fun = re.search(r"\bfun\b", text[pos:])
-        fun_start = pos + fun.start() if fun else len(text)
-        bracket_start = next((i for i in range(pos, len(text)) if text[i] in "([{⟨"),
-                             len(text))
-        event = min(fun_start, bracket_start)
-        if pattern.search(text, pos, event):
-            return True
-        if event == len(text):
-            return False
-        if event == bracket_start:
-            close = matching_bracket(text, event)
-            if term_uses(names, longer, text[event + 1:close], shadowed):
-                return True
-            pos = close + 1
-            continue
-        arrow = text.find("=>", fun_start + 3)
-        if arrow < 0:
-            return bool(pattern.search(text, fun_start))
-        bound = lambda_names(text[fun_start + 3:arrow])
-        end = top_level_separator(text, arrow + 2, ",")
-        if term_uses(names, longer, text[arrow + 2:end], shadowed | bound):
-            return True
-        pos = end + 1
-    return False
-
-
-def body_uses(names, longer, header, body):
-    """Whether a declaration value refers to `names`, respecting its local scopes."""
-    header_names = header_bound_names(header)
-    scopes = []
-    pending = []
-    branch_pending = []
-    for line in body.splitlines():
-        if not line.strip():
-            continue
-        physical_indent = len(line) - len(line.lstrip())
-        bullet = re.match(r"\s*[·|]\s*", line)
-        if bullet:
-            scopes = [(level, bound) for level, bound in scopes
-                      if level < physical_indent]
-            pending = [(level, bound) for level, bound in pending
-                       if level < physical_indent]
-            indent = bullet.end()
-            branch_bound = set()
-            still_branching = []
-            for level, alternatives in branch_pending:
-                if level == physical_indent and alternatives and not branch_bound:
-                    branch_bound = alternatives[0]
-                    if len(alternatives) > 1:
-                        still_branching.append((level, alternatives[1:]))
-                elif level < physical_indent:
-                    still_branching.append((level, alternatives))
-            branch_pending = still_branching
-            if branch_bound:
-                scopes.append((indent, branch_bound))
-        else:
-            indent = physical_indent
-            scopes = [(level, bound) for level, bound in scopes if level <= indent]
-        still_pending = []
-        for level, bound in pending:
-            if indent == level:
-                scopes.append((level, bound))
-            elif indent > level:
-                still_pending.append((level, bound))
-        pending = still_pending
-        shadowed = header_names | {name for _, bound in scopes for name in bound}
-        chunks = line.split(";")
-        for index, chunk in enumerate(chunks):
-            masked = chunk
-            immediate = set()
-            delayed = set()
-            alternatives = []
-            intro = re.search(r"\b(?:intro|rintro)\s+(.+)", chunk)
-            if intro:
-                for match in re.finditer(r"[_\w][\w']*", intro.group(1)):
-                    start = intro.start(1) + match.start()
-                    end = intro.start(1) + match.end()
-                    immediate.add(match.group())
-                    masked = mask_span(masked, start, end)
-            local = re.search(r"\b(?:have|let|set)\s+([_\w][\w']*)\s*(?::|:=|←)", chunk)
-            if local:
-                delayed.add(local.group(1))
-                masked = mask_span(masked, local.start(1), local.end(1))
-            obtain = re.search(r"\bobtain\s+(.+?)\s*:=", chunk)
-            if obtain:
-                pattern = obtain.group(1).split(":", 1)[0]
-                for match in re.finditer(r"[_\w][\w']*", pattern):
-                    start = obtain.start(1) + match.start()
-                    end = obtain.start(1) + match.end()
-                    delayed.add(match.group())
-                    masked = mask_span(masked, start, end)
-            rcases = re.search(r"\brcases\s+.+?\s+with\s+(.+)", chunk)
-            if rcases:
-                offset = rcases.start(1)
-                for alternative in rcases.group(1).split("|"):
-                    bound = set()
-                    for match in re.finditer(r"[_\w][\w']*", alternative):
-                        start = offset + match.start()
-                        end = offset + match.end()
-                        bound.add(match.group())
-                        masked = mask_span(masked, start, end)
-                    alternatives.append(bound)
-                    offset += len(alternative) + 1
-                if len(alternatives) == 1:
-                    delayed |= alternatives[0]
-            if term_uses(names, longer, masked, shadowed | immediate):
-                return True
-            if immediate:
-                scopes.append((indent, immediate))
-                shadowed |= immediate
-            if delayed:
-                if index < len(chunks) - 1:
-                    scopes.append((indent, delayed))
-                    shadowed |= delayed
-                else:
-                    pending.append((indent, delayed))
-            if len(alternatives) > 1:
-                branch_pending.append((indent, alternatives))
-    return False
-
-
-def command_uses(names, longer, text):
-    """Whether a declaration command's value refers to one of `names`."""
-    header, body = command_body(text)
-    return bool(body and body_uses(names, longer, header, body))
-
-
 @functools.cache
-def users_in(code, declared, imported=frozenset()):
+def users_in(code, declared):
     """Who uses what in one Lean file without comments, `code`, `declared` being the names
     the edition's Lean declares: {each declaration of the file: the names of the other
     commands that use it}, its own declaration line and body aside, as `commands` names
     them."""
-    found = command_contexts(code)
+    found = commands(code)
     users = {}
-    for name, _, target_namespace, _, _ in found:
+    for name, _ in found:
+        if not name:
+            continue
         longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
-        users[name] = {
-            user for user, text, namespace, opened, visible in found if user != name
-            and command_uses(reference_names(name, user, target_namespace, namespace,
-                                             opened, visible | imported,
-                                             (name, target_namespace) in visible),
-                             longer, text)
-        }
+        users[name] = {user for user, text in found if user != name
+                       and use_pattern(own_names(name, user), longer).search(text)}
     return users
 
 
@@ -1697,17 +1386,10 @@ def use_kind(name, own, code, declared, proofs):
     `Segment.exists_tangent` in III.16's file serves only `Segment.compare_alike`, which
     nothing uses. A mention in a comment is no use."""
     longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
-    imports = imported_contexts(code)
-    target_namespace = next(namespace for declared_name, _, namespace, _, _
-                            in command_contexts(code[own]) if declared_name == name)
-    if any(command_uses(reference_names(name, user, target_namespace, namespace,
-                                        opened, visible | imports[path],
-                                        (name, target_namespace) in imports[path]),
-                        longer, text)
-           for path, source in code.items() if path != own
-           for user, text, namespace, opened, visible in command_contexts(source)):
+    if any(use_pattern(root_names(name), longer).search(text)
+           for path, text in code.items() if path != own):
         return "later"
-    users = users_in(code[own], declared, imports[own])
+    users = users_in(code[own], declared)
     seen, todo = {name}, [name]
     while todo:
         for user in users.get(todo.pop(), ()):
@@ -1724,6 +1406,8 @@ def use_kind(name, own, code, declared, proofs):
 
 USE_FILES = {
     "Prop09.lean": """namespace Elements.BookI
+
+open Tacit
 
 theorem Prop9 : True := trivial
 
@@ -1763,106 +1447,6 @@ theorem Prop9.deep : True := trivial
 
 theorem Prop9.mid : True := Prop9.deep
 
-theorem Prop9.bound : True := trivial
-
-theorem Prop9.bound_shadow (bound : True) : True := bound
-
-theorem Prop9.local : True := trivial
-
-theorem Prop9.local_shadow : True := by
-  have local : True := trivial
-  exact local
-
-theorem Prop9.let_bound : True := trivial
-
-theorem Prop9.let_shadow : True := by
-  let let_bound : True := trivial
-  exact let_bound
-
-theorem Prop9.intro_bound : True := trivial
-
-theorem Prop9.intro_shadow : True → True := by
-  intro intro_bound; exact intro_bound
-
-theorem Prop9.lambda_bound : True := trivial
-
-theorem Prop9.lambda_shadow : True → True := fun lambda_bound => lambda_bound
-
-theorem Prop9.lambda_qualified : True := trivial
-
-theorem Prop9.lambda_qualified_user : True → True ∧ True :=
-  fun lambda_qualified => ⟨lambda_qualified, Prop9.lambda_qualified⟩
-
-theorem Prop9.lambda_tuple : True := trivial
-
-theorem Prop9.lambda_tuple_user : (True → True) × True :=
-  ⟨fun lambda_tuple => lambda_tuple, lambda_tuple⟩
-
-theorem Prop9.pattern_bound : True := trivial
-
-theorem Prop9.pattern_shadow : True := by
-  obtain ⟨pattern_bound⟩ : Nonempty True := ⟨trivial⟩
-  exact pattern_bound
-
-theorem Prop9.pattern_qualified : True := trivial
-
-theorem Prop9.pattern_qualified_user : True := by
-  obtain ⟨pattern_qualified⟩ : Nonempty True := ⟨Prop9.pattern_qualified⟩
-  exact pattern_qualified
-
-theorem Prop9.rcases_bound : True := trivial
-
-theorem Prop9.rcases_shadow : True := by
-  rcases (show Nonempty True from ⟨trivial⟩) with ⟨rcases_bound⟩
-  exact rcases_bound
-
-theorem Prop9.branch_bound : True := trivial
-
-theorem Prop9.branch_shadow (h : True ∨ True) : True := by
-  rcases h with branch_bound | branch_bound
-  · exact branch_bound
-  · exact branch_bound
-
-theorem Prop9.before_local : True := trivial
-
-theorem Prop9.before_local_user : True := by
-  have h : True := before_local; have before_local : True := trivial; exact h
-
-theorem Prop9.scope_inner : True := trivial
-
-theorem Prop9.scope_exit : True := trivial
-
-theorem Prop9.scope_user : True := by
-  have h : True := by
-    have scope_inner : True := trivial
-    have scope_exit : True := trivial
-    exact scope_inner
-  have := scope_exit
-  exact h
-
-def Prop9.initializer : Nat := 1
-
-def Prop9.initializer_user : Nat := by
-  let initializer : Nat := 0 +
-    initializer
-  exact initializer
-
-def Prop9.header_type : Prop := True
-
-theorem Prop9.header_mention (_ : Prop9.header_type) : True := trivial
-
-theorem Prop9.qualified : True := trivial
-
-theorem Prop9.qualified_shadow (qualified : True) : True := by
-  have := Prop9.qualified
-  exact qualified
-
-theorem Prop9.unqualified : True := trivial
-
-theorem Prop9.unqualified_mid : True := unqualified
-
-theorem Prop9.unqualified_top : True := unqualified_mid
-
 theorem Prop9.inner : True := trivial
 
 private theorem hidden : True := Prop9.inner
@@ -1875,36 +1459,6 @@ theorem Prop9.support : True := trivial
 
 theorem Prop9.shared : True := Prop9.support
 
-theorem Prop46.opened : True := trivial
-
-theorem Prop9.imported_collision : True := trivial
-
-theorem _root_.Elements.Tacit.imported_collision : True := trivial
-
-theorem Prop9.rule : True := trivial
-
-theorem _root_.Elements.Tacit.rule : True := trivial
-
-theorem Prop9.rule_user : True := rule
-
-open Tacit
-
-theorem _root_.Elements.Tacit.open_rule : True := trivial
-
-theorem Prop9.open_rule_user : True := open_rule
-
-theorem _root_.Elements.Tacit.forward_rule : True := trivial
-
-theorem Prop9.forward_rule_user : True := forward_rule
-
-theorem Prop9.forward_rule : True := trivial
-
-theorem Prop9.cross_rule : True := trivial
-
-theorem Other.Prop9.cross_rule : True := trivial
-
-theorem Prop9.cross_rule_user : True := Other.Prop9.cross_rule
-
 theorem _root_.Elements.Tacit.rule_beside : True := trivial
 
 theorem _root_.Elements.Tacit.rule_later : True := Tacit.rule_beside
@@ -1915,18 +1469,6 @@ theorem Prop9.general : True := by
   have := Prop9.mid
   have := hidden
   have := rule_own
-  have := Prop9.lambda_qualified_user trivial
-  have := Prop9.lambda_tuple_user
-  have := Prop9.pattern_qualified_user
-  have := Prop9.before_local_user
-  have := Prop9.scope_user
-  have := Prop9.initializer_user
-  have := Prop9.rule_user
-  have := Prop9.open_rule_user
-  have := Prop9.forward_rule_user
-  have := Prop9.cross_rule_user
-  have := Prop9.qualified_shadow trivial
-  have := Prop9.unqualified_top
   exact Fitted.fan.within
 
 end Elements.BookI
@@ -1948,19 +1490,7 @@ theorem Prop10 : True := by
   have := rule_later
   exact BookI.Prop9.later
 
-theorem Prop9.imported_collision_user : True := imported_collision
-
 end Elements.BookI
-""",
-    "Opened.lean": """import Elements.BookI.Prop09
-
-namespace Elements.BookIII
-
-open BookI
-
-theorem Prop11 : True := Prop46.opened
-
-end Elements.BookIII
 """,
 }
 
@@ -1984,48 +1514,11 @@ USE_CASES = [   # (a declaration of the first file, how it is used)
                                       # the companion uses
     ("Prop9.mid", "own"),             # by the companion
     ("Prop9.deep", "own"),            # only by `Prop9.mid`: at a remove
-    ("Prop9.bound", "beside"),
-    ("Prop9.local", "beside"),
-    ("Prop9.let_bound", "beside"),
-    ("Prop9.intro_bound", "beside"),
-    ("Prop9.lambda_bound", "beside"),
-    ("Prop9.lambda_qualified", "own"),
-    ("Prop9.lambda_qualified_user", "own"),
-    ("Prop9.lambda_tuple", "own"),
-    ("Prop9.lambda_tuple_user", "own"),
-    ("Prop9.pattern_bound", "beside"),
-    ("Prop9.pattern_qualified", "own"),
-    ("Prop9.pattern_qualified_user", "own"),
-    ("Prop9.rcases_bound", "beside"),
-    ("Prop9.branch_bound", "beside"),
-    ("Prop9.before_local", "own"),
-    ("Prop9.before_local_user", "own"),
-    ("Prop9.scope_inner", "beside"),
-    ("Prop9.scope_exit", "own"),
-    ("Prop9.scope_user", "own"),
-    ("Prop9.initializer", "own"),
-    ("Prop9.initializer_user", "own"),
-    ("Prop9.header_type", "beside"),
-    ("Prop9.qualified", "own"),
-    ("Prop9.qualified_shadow", "own"),
-    ("Prop9.unqualified", "own"),
-    ("Prop9.unqualified_mid", "own"),
-    ("Prop9.unqualified_top", "own"),
     ("Prop9.inner", "own"),           # only by the private `hidden`, which the companion uses
     ("Prop9.part", "beside"),         # only by `Prop9.aside`, which nothing uses
     ("Prop9.support", "beside"),      # only by `Prop9.shared`, which the other file uses and
                                       # no proof of the page does
     ("Prop9.shared", "later"),
-    ("Prop46.opened", "later"),
-    ("Prop9.imported_collision", "later"),
-    ("_root_.Elements.Tacit.imported_collision", "beside"),
-    ("Prop9.rule", "own"),
-    ("_root_.Elements.Tacit.rule", "beside"),
-    ("_root_.Elements.Tacit.open_rule", "own"),
-    ("_root_.Elements.Tacit.forward_rule", "own"),
-    ("Prop9.forward_rule", "beside"),
-    ("Prop9.cross_rule", "beside"),
-    ("Other.Prop9.cross_rule", "own"),
     ("_root_.Elements.Tacit.rule_later", "later"),   # in the other file as `rule_later`
     ("_root_.Elements.Tacit.rule_beside", "beside"),  # only by another proved rule, as
                                                       # `Tacit.rule_beside`
