@@ -1634,11 +1634,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS` and the
       four that name git's global and system configuration files or shut them, or the
       system attributes file, out (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`,
-      `GIT_CONFIG_NOSYSTEM`, `GIT_ATTR_NOSYSTEM`, #430), each as the caller set it (a
-      relative configuration file's path excepted), so that a check finds its repository
-      by its working directory (#355) and reads the configuration files safe_push's own
-      git reads; `GIT_NO_REPLACE_OBJECTS` is present under the launcher or after a
-      hand-over and otherwise only if the caller set it. No command `safe_push.py` runs
+      `GIT_CONFIG_NOSYSTEM`, `GIT_ATTR_NOSYSTEM`, #430), each as the caller set it (but a
+      relative path in either of the first two, which is dropped), so that a check finds
+      its repository by its working directory (#355) and reads the configuration files
+      safe_push's own git reads; `GIT_NO_REPLACE_OBJECTS` is present under the launcher
+      or after a hand-over and otherwise only if the caller set it. No command `safe_push.py` runs
       itself, git's or another's, gets one of the caller's variables that tie git to one
       repository (`GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE` and the rest that
       `git rev-parse --local-env-vars` lists), but `GIT_NO_REPLACE_OBJECTS` as above, so

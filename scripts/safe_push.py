@@ -55,11 +55,11 @@ order, and the first that fails stops it with a message saying why:
    file, out (CONFIG_FILE_VARIABLES), which tie git to no repository: so a check finds
    its repository by its working directory, never by a hook's GIT_DIR (#355), and reads
    the configuration files that safe_push.py's own git reads, save one named by a
-   relative path, which tool_env() drops (#430). Nor
-   does any command safe_push.py runs itself, git's or another's, get a variable that
-   ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
-   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
-   the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
+   relative path, which tool_env() drops (#430). Nor does any command safe_push.py runs
+   itself, git's or another's, get a variable that ties git to one repository
+   (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE and their kin, as `git
+   rev-parse --local-env-vars` lists them) from the caller, but GIT_NO_REPLACE_OBJECTS
+   as above: each finds its repository by its
    working directory too, the hand-over's included (#357). The harness sets one itself,
    on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
@@ -722,7 +722,10 @@ KEPT_GIT_VARIABLES = frozenset({"GIT_NO_REPLACE_OBJECTS"})
 # as before #430. An empty one, which shuts its file out, is kept, as an absolute one is.
 # GIT_CONFIG_NOSYSTEM and GIT_ATTR_NOSYSTEM only take a file away. GIT_CONFIG_COUNT and
 # GIT_CONFIG_PARAMETERS, which carry settings themselves, stay dropped with the
-# repository variables.
+# repository variables. Still open, as on main: a relative HOME or XDG_CONFIG_HOME
+# reaches the checks, and safe_push's own git keeps a relative GIT_CONFIG_GLOBAL or
+# GIT_CONFIG_SYSTEM (its git status in the commit's worktree among them); #442 is to
+# have step 1 refuse all four.
 CONFIG_FILE_VARIABLES = frozenset({"GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",
                                    "GIT_CONFIG_NOSYSTEM", "GIT_ATTR_NOSYSTEM"})
 
@@ -732,8 +735,9 @@ def tool_env() -> dict:
     and no variable of git's but those KEPT_GIT_VARIABLES and CONFIG_FILE_VARIABLES name,
     so that each check finds its repository by its working directory, never by what a hook
     left set (#355), and reads no global or system configuration, and no system
-    attributes file, that the caller shut out (#430), save by a relative GIT_CONFIG_GLOBAL
-    or GIT_CONFIG_SYSTEM, which it drops, as CONFIG_FILE_VARIABLES says."""
+    attributes file, that the caller shut out (#430), but where a relative
+    GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM shut them out: that it drops, as
+    CONFIG_FILE_VARIABLES says."""
     env = {name: value for name, value in os.environ.items()
            if not name.startswith("GIT_") or name in KEPT_GIT_VARIABLES
            or name in CONFIG_FILE_VARIABLES}

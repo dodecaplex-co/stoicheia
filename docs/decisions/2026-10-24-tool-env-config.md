@@ -20,7 +20,7 @@
   that `git rev-parse --local-env-vars` prints, so safe_push's own git, which drops only
   those, keeps all four, and a check now reads the same configuration files as that git,
   save one named by a relative path. Each was weighed on its own:
-  - `GIT_CONFIG_GLOBAL` is kept when it holds an absolute path, or nothing, which shuts
+  - `GIT_CONFIG_GLOBAL` is kept when it holds an absolute path, or is empty, which shuts
     the global files out. The file it names may set `core.hooksPath`, `safe.directory`,
     a url rewrite or an `includeIf`; dropped, git reads in its place the global files
     that `HOME` and `XDG_CONFIG_HOME` locate, `~/.gitconfig` and
@@ -29,7 +29,12 @@
     it is dropped: git would read it from the directory it is in, for most settings the
     top of the check's worktree, which is a temporary worktree of the commit under check,
     so the commit could supply the file. Without it, git reads the global files, as it
-    did before.
+    did before. Two routes of that kind stay open, as they are on main: a relative
+    `HOME` or `XDG_CONFIG_HOME` still reaches the checks, and safe_push's own git still
+    keeps a relative `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM`, its `git status` in the
+    commit's worktree among them, so a commit may still supply a global file there;
+    [#442](https://github.com/jackChallis/stoicheia/issues/442) is to have step 1 refuse
+    all four.
   - `GIT_CONFIG_SYSTEM` is kept on the same terms, and for the same reason: dropped, git
     reads the system file of the git that the caller's `PATH` finds. An empty one shuts
     that file out; a relative one is dropped, as a relative `GIT_CONFIG_GLOBAL` is.

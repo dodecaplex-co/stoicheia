@@ -10422,7 +10422,8 @@ class HookEnvironment(unittest.TestCase):
     which git init with that GIT_DIR once turned bare. And the configuration files a check
     reads (#430): it keeps the caller's variables that name git's global and system
     configuration files or shut them, or the system attributes file, out, and reads those
-    files as they say, while every variable that ties git to a repository but
+    files as they say, save a relative GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM, which it
+    drops, while every variable that ties git to a repository but
     GIT_NO_REPLACE_OBJECTS is still dropped."""
 
     IDENT = ["-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
