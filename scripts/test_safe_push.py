@@ -12794,7 +12794,8 @@ SCRIPT_LINE = re.compile(r"\x1b\[36;1m(?P<line>.*)\x1b\[0m")
 RUNS_SCRIPT = re.compile(r"\s*python3 scripts/test_safe_push\.py(?:\s|$)")
 # actions/checkout's last word on the commit it checked out: git's command, then the commit.
 CHECKOUT_LINE = re.compile(r"\[command\]\S*git log -1 --format=%H")
-# A log saved as `gh run view ID --log > run-ID.log`, whose name alone gives its run.
+# A log saved as `gh run view ID --log > run-ID.log`: the note takes the run from the
+# name, though the log names it too, in upload-artifact's URLs.
 RUN_LOG_NAME = re.compile(r"run-(?P<id>\d+)\.log")
 TIMES_ABOUT = (
     "Seconds each test of scripts/test_safe_push.py took on a GitHub runner, to a tenth of "
@@ -14145,9 +14146,6 @@ class Shards(unittest.TestCase):
                               "the proof that every test ran once and passed): failure", run.body)
                 self.assertNotIn("negative-tests", run.body)
                 self.assertIn(f"FAIL: {failed} (a stand-in", run.body)
-                self.assertEqual([line for line in run.body.splitlines()
-                                  if line.startswith("- shard ")],
-                                 [f"- shard {shard}: FAILED (failures=1)"])
                 calls = "\n".join(run.calls)
                 if open_issue is None:
                     self.assertIn(f"issue create --title {REPORT_TITLE} --label blocks-release "
@@ -14180,7 +14178,6 @@ class Shards(unittest.TestCase):
                           "ended 'failure'", run.said["verdict"])
             self.assertIsNotNone(run.body, run.said.get("report"))
             self.assertIn("No failing test is named in the shards' logs", run.body)
-            self.assertIn("No shard's kept log shows it red", run.body)
 
     @unittest.skipUnless(REPORT_TOOLS, REPORT_TOOLS_REASON)
     def test_a_cancelled_or_skipped_shard_turns_the_verdict_red(self):

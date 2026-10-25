@@ -556,11 +556,12 @@ kept in `scripts/test_safe_push_times.json`, the heaviest first, each to the sha
 least time so far. The times are read from a green cadence run's shard steps by
 `python3 scripts/test_safe_push.py --times-from-log`, whose note in the file names the run
 and its commit ([the decision](decisions/2026-10-24-shard-times.md)); a test the file does
-not name, one added or renamed since, weighs their median, and each shard's log names it. The proof is built from what the shards ran, not
-from the dealing. Each shard writes the tests it ran, each with its outcome, to the file
-`--ran` names, and keeps it as an artifact, a test having failed or not, for 35 days; and
-it keeps its log, from which the report takes the tests that failed. Whether a later
-attempt of the run can fetch a list an earlier attempt kept is GitHub's to say, and
+not name, one added or renamed since, weighs their median, and each shard's log names it.
+The proof is built from what the shards ran, not from the dealing. Each shard writes the
+tests it ran, each with its outcome, to the file `--ran` names, and keeps it as an
+artifact, a test having failed or not, for 35 days; and it keeps its log, from which the
+report takes the tests that failed. Whether a later attempt of the run can fetch a list an
+earlier attempt kept is GitHub's to say, and
 nothing relies on it: a run re-run with "re-run all jobs" is judged afresh, and one re-run
 with "re-run failed jobs", whose proof may not see the other shards' earlier lists, then
 stays red, for the proof never passes on lists it cannot see. Then

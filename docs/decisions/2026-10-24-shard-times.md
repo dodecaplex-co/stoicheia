@@ -33,8 +33,8 @@
   unchanged, and no expected value or test of theirs changed.
 
   The file's note now names its source: the run, by the name of the log, `run-ID.log`, as
-  `gh run view ID --log > run-ID.log` saves it, since a run's number is not in its log;
-  the commit actions/checkout says it checked out; and how many of the tests the loader
+  `gh run view ID --log > run-ID.log` saves it (the log names its run too, in
+  upload-artifact's URLs, but the note takes it from the name); the commit actions/checkout says it checked out; and how many of the tests the loader
   listed when the file was written weigh the median, and how many timed tests were left
   out. Only a log's own name reaches the note, never its folder.
 
@@ -43,7 +43,8 @@
   It times 469 tests, and setUpModule at 0.8 seconds; of this branch's 474 tests, the five
   that this train adds weigh their median, 3.1 seconds, and none is left out. Dealt by it,
   each of the eight shards comes to 19.5 minutes, and the eight together to 155.8 minutes,
-  the 155.8 minutes of that run's eight shard steps, which took 14.1 to 34.0 minutes each.
+  against 155.7 for that run's eight shard steps by the log's stamps, which took 14.1 to
+  34.0 minutes each.
   Whether later runs' shards come out as even is for those runs to show: GitHub's runners
   differ in speed, as the 137 minutes of the slow run cited in the entry of #233 show. The
   note dates the run by GitHub's stamps, in UTC: 25 October.
