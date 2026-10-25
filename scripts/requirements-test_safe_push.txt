@@ -1,8 +1,11 @@
 # PyYAML, pinned by version and hash: one --hash for each file PyPI holds for this release,
 # its sdist and its 72 wheels, so that every machine pip installs it on finds its file
 # listed, CI's Linux runners and a contributor's macOS or Linux alike. A --hash turns on
-# pip's hash-checking mode for every install of this file, with no flag: pip then refuses
-# a file whose SHA-256 digest is not listed here, whatever the index serves.
+# pip's hash-checking mode for every install of this file, with no flag: pip then installs
+# no PyYAML file whose SHA-256 digest is not listed here. A build from the sdist installs
+# PyYAML's build requirements, setuptools and Cython, with no hash check, and an index can
+# force that build by giving a wheel a digest not listed here; --only-binary :all: on the
+# command line rules the sdist out.
 #
 # The digests are urls[].digests.sha256 of https://pypi.org/pypi/PyYAML/6.0.3/json, sorted.
 # To refresh them, for a new version too (change it in the address), run the command below
