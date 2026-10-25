@@ -6,7 +6,7 @@
   [#346](https://github.com/jackChallis/stoicheia/issues/346) that the model of CI's
   `check` job refuses, and says that, with the test that decides each taken out, its case
   was seen to be accepted; but it names those tests only as the line's equality, the
-  directory's, and the guard of order or count. Card #430, from TS's review of #346, asks
+  directory's, and the guard of order or count. Card #430, from the review of #346, asks
   that they be named in a later entry. That entry, being history, is not edited. This one
   names each guard, as the code stands on main at f3cfef05, and says how the plant
   behind one of its claims was made.
@@ -30,8 +30,8 @@
   - the four changed lines in the temporary directory (another requirements file, an
     extra package, the install without `-I`, and the install with `-P` alone, each "in
     the temporary directory"): the line's equality fails, so `is_parser` is false, and
-    the condition `step.has_working_directory and not is_parser` refuses the step, as
-    one that "has a working directory";
+    the working-directory condition, `step.has_working_directory and not is_parser`,
+    refuses the step, as one that "has a working directory";
   - the same four lines from the checkout, with no working directory: both clauses fail,
     and the step, neither setup nor the install, is refused by the unmodelled-step
     condition, `step.uses is not None or RUN_CHECKS not in step.run`, as one that "is
@@ -74,16 +74,18 @@
   first check", since no install had been seen.
 
   The plant behind "both". The earlier entry says that with both clauses taken out, a
-  changed line from the checkout was seen to be accepted. The code these cases touch is
-  the same on main as at 5499d312, the commit that sentence reports on, and the sentence
-  is true of the plant it reports: TS's review of that commit put a looser test in place
-  of the two clauses, `' pip install ' in step.run[0]`, which keeps the run of the checks
+  changed line from the checkout was seen to be accepted. The code these cases run is the
+  same on main as at 5499d312, the commit that sentence reports on, save a comment and the
+  default of `WorkflowStep.working_directory`, which `normalized_check_job` always sets;
+  and the sentence is true of the plant it reports: the review of that commit put a
+  looser test in place of the two clauses,
+  `bool(step.run) and ' pip install ' in step.run[0]`, which keeps the run of the checks
   apart from the install. With that plant, the four changed lines from the checkout were
   accepted, beside the six cases that one clause alone keeps out, and every other subtest
   was refused as the test expects. The two clauses taken out outright accept none of the
   fourteen: `is_parser` is then `step.uses is None`, which the run of the checks, a step
-  of no action too, also meets, so the run is taken for a second install and every job is
-  refused, the unplanted one among them. So "taken out", for those four cases, means
-  replaced by that looser test.
+  of no action too, also meets, so the run counts as an install as well, a second one in
+  the unplanted job, and every job is refused, the unplanted one among them. So "taken
+  out", for those four cases, means replaced by that looser test.
 
   This entry changes no code, no test and no expected value, and approves no file.
