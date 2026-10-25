@@ -193,7 +193,7 @@ files working in parallel, the renderers, and an integrator followed by blind re
 ### File names
 
 Every tracked path keeps one standard, which the owner asked for on
-[21 October 2026](briefs/0002-decisions.md#21-october-2026), so that a path reads the same on
+[21 October 2026](decisions/2026-10-21-file-names.md), so that a path reads the same on
 every disk and every system. Its lists live in one place,
 [`scripts/check_paths.py`](../scripts/check_paths.py), each a named constant. The script
 reads Git's index, which is what is staged for the next commit: in CI and in the
