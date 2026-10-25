@@ -57,7 +57,7 @@ hypotheses keep out the cases the conventions cannot fix.
 The programs take an axiom, build configurations of points, lines and circles, keep those
 that satisfy its hypotheses, and check its conclusion. Where the conclusion says that a
 point exists, the program constructs one and checks it. The exhaustive and structured
-harnesses also run 39 predicates independently as retained derived properties. They
+harnesses also run 40 predicates independently as retained derived properties. They
 preserve the existing numerical checks and configurations for those laws, but do not
 depend on the corresponding declarations remaining in the axiom registry.
 
@@ -69,12 +69,13 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps the 39 numerical predicates of the retired rules,
-  prepared to survive their retirement, under names beginning `derived.`.
+- **[derived.py](derived.py)** keeps 40 numerical predicates under names beginning
+  `derived.`: the 39 of the retired rules, and Circle 3's (`outside_of_between`), which
+  is still an axiom, prepared to survive its retirement after III.2.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
-  predicates in all: 37 axiom laws and the 39 retained derived properties, with degenerate
+  predicates in all: 36 axiom laws and the 40 retained derived properties, with degenerate
   configurations included.
-- **[structured.py](structured.py)** builds the hypotheses of 18 axiom laws and all 39
+- **[structured.py](structured.py)** builds the hypotheses of 17 axiom laws and all 40
   retained derived properties on purpose, where chance rarely meets them (three straight
   lines through one point, a right angle, two circles through a common point), over a
   large lattice and over fractions.
@@ -106,9 +107,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `1df5d14ba85a`, 2026-10-24, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `b154908253c5`, 2026-10-24, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 in the search, 2,528,836 exhaustive, 681,063 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 502,055 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,097,933** configurations met an axiom's hypotheses (1,217,500 in the search, 2,247,172 exhaustive, 633,261 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 502,055 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -141,7 +142,7 @@ In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 
 | `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
 | `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
 | `Tacit.between_of_inside_chord` | 239 | 3,228 | 37,732 | 8,315 |
-| `Tacit.outside_of_between` | 453 | 281,664 | 47,802 | 2,023 |
+| `Tacit.outside_of_between` | 453 | · | · | 2,023 |
 | `Tacit.lines_meet_of_opposite_sides` | 22 | 26,248 | 39,362 | 4,489 |
 | `Tacit.circles_meet` | 1,389 | 10,668 | 1,587 | 2,551 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
@@ -162,7 +163,7 @@ In the plane: **4,427,399** configurations met an axiom's hypotheses (1,217,500 
 | `Tacit.area_add_of_between` | 20 | 6,176 | 55,499 | 8,475 |
 | `Tacit.superposition` | 98 | 363,888 | 71,970 | 8,669 |
 
-Separately, **9,525,564** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **9,855,030** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -170,6 +171,7 @@ Separately, **9,525,564** configurations met a retained derived property's hypot
 | `derived.not_same_side_of_circles_meet` | 1,704 | 939 |
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
+| `derived.outside_of_between` | 281,664 | 47,802 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
@@ -590,7 +592,7 @@ the model follows the axiom in the same pull request as the Lean:
    own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
    or restated so that its law reads other letters, that program must drop or re-key the
    law first, in a pull request of its own, before the axiom moves. That preparation is
-   already complete for the 39 predicates in [derived.py](derived.py): both programs
+   already complete for the 40 predicates in [derived.py](derived.py): both programs
    call their `derived.` names, and `run.py` requires each report independently of the
    axiom registry.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
