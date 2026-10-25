@@ -74,9 +74,10 @@ jobs:
         # on GitHub: one shard of run 40122901299, a green run no job of which had failed,
         # was run again alone, and the verdict's fetch, which names no run-id, found all 16
         # artifacts, every shard's list and log, the first attempt's among them, and
-        # fetched the eight lists by its pattern; the proof passed on all 466 tests. A rerun of the failed jobs makes a later attempt of the
-        # same kind and fetches the same way. The proof never passes on lists it cannot see,
-        # should GitHub ever withhold one.
+        # fetched the eight lists by its pattern; the proof passed on all 466 tests. A
+        # rerun of the failed jobs makes a later attempt of the same kind and fetches the
+        # same way. The proof never passes on lists it cannot see, should GitHub ever
+        # withhold one.
         if: always()
         uses: actions/upload-artifact@v5
         with:
