@@ -21,21 +21,25 @@
   checklist's item table stays as it is, since it is still true, and the section under it
   now says the rest.
 
-  The test file gains `test_a_row_for_a_full_record_fails`. It patches the list with a
-  made-up row that allows III.16 partial with the tag `mixed-angles-omitted`, and asks
-  that III.16, made full, fail P3 with exactly the new message, with that tag, with none,
-  and with `mixed-angles-local`, the tag its record carries; and that III.31, full with the
-  same tags, still pass, since the row does not name it. The case of full statements runs
-  with the real list, which is empty, so it holds as before: a comment now says so and
-  points to the new case, and none of its assertions goes.
+  The test file gains `test_a_row_for_a_full_record_fails`. It patches the list with two
+  made-up rows, one allowing III.16 partial with the tag `mixed-angles-omitted` and one
+  allowing I.45 restricted with `figure-with-dissection`, and asks that each, made full,
+  fail P3 with exactly the new message for its own row's scope and tag, with the tag
+  `mixed-angles-omitted`, with none, and with `mixed-angles-local`, the tag III.16's
+  record carries; and that III.31, full with the same tags, still pass, since no row
+  names it. The case of full statements runs with the real list, which is empty, so it
+  holds as before: a comment now says so and points to the new case, and none of its
+  assertions goes.
 
   Each part was checked by mutation, with `scripts/check_acceptance.py` changed in place
   and restored after each run. With the new branch of P3 taken out, the new case failed on
-  its three subtests for III.16, and the other seven cases passed. With the branch made to
-  refuse every full record whenever the list holds any row, the new case failed on its
-  three subtests for III.31, and the other seven passed. Unmutated, all eight pass. On the
-  real records, `python3 scripts/check_acceptance.py --quick` gave the same P3 verdicts
-  before the change and after it, at `230b92bd4574`: none of the 99 propositions fails P3.
+  its six subtests for III.16 and I.45, and the other seven cases passed. With the message
+  written for III.16's row alone, it failed on its three subtests for I.45. With the
+  branch made to refuse every full record whenever the list holds any row, it failed on
+  its three subtests for III.31. Unmutated, all eight pass. On the records of
+  `230b92bd4574`, which the change does not touch,
+  `python3 scripts/check_acceptance.py --quick` gave the same P3 verdicts with the check
+  as it was and as it is now: none of the 99 propositions fails P3.
 
   This entry approves the change to `scripts/check_acceptance.py`: P3's refusal of an
   allowance for a full statement, with its message, and the comment over `ALLOWED_LIMITS`.
@@ -44,4 +48,4 @@
   names a full record, and the comment on the case of full statements.
 
   This entry approves the sentence added to `docs/ACCEPTANCE.md`, under "The limitations
-  allowed", that P3 refuses a row whose record is already full.
+  allowed", that P3 fails a full record that the table still names.
