@@ -43,19 +43,18 @@ Lean names the axiom. III.5 and III.6 reach it, and Postulate 3, through Book Ze
 though neither names it. Generalities 3 and 4 are proved rules, so they enter no
 certificate as assumptions.
 
-Circle 2 and Circle 3 are no longer assumptions. Since 24 October 2026 both are proved
-after III.2, in `Elements/BookIII/Prop02.lean`, from its corollary `Prop2.within`, and with
-them Points 9 (`exists_point_outside_circle`) and Intersection 2
-(`line_meets_circle_of_opposite_sides`), whose proofs now take from III.2 the step they
-took from Circle 3. The certificate's walk
-passes through proved rules, so an entry that used any of the four would cite III.2, which
-no entry before III.2 may; [facts.json](../../facts.json) records III.2 as what each of
-them cites. I.12
-finds X on AB between the centre C and the point D on the circle;
-`InsideCircle.of_between_centre` puts X inside by comparing CX with the radius CD,
-and Intersection 3 (`line_meets_circle_of_inside`), proved since 19 October 2026 in
-`Elements/Figure/Incidence.lean`, supplies the two crossings E and G. Intersection 2 has
-no user in `Elements/`, `Staging/` or `Audit/`; its declaration in
+Circle 2 and Circle 3 are no longer assumptions. Since 24 October 2026 both
+are proved after III.2, in `Elements/BookIII/Prop02.lean`, from its corollary
+`Prop2.within`, and with them Points 9 (`exists_point_outside_circle`) and
+Intersection 2 (`line_meets_circle_of_opposite_sides`), whose proofs now take from
+III.2 the step they took from Circle 3. The certificate's walk passes through proved
+rules, so an entry that used any of the four would cite III.2, which no entry
+before III.2 may; [facts.json](../../facts.json) records III.2 as what each of
+them cites. I.12 finds X on AB between the centre C and the point D on the circle;
+`InsideCircle.of_between_centre` puts X inside by comparing CX with the radius
+CD, and Intersection 3 (`line_meets_circle_of_inside`), proved since 19 October
+2026 in `Elements/Figure/Incidence.lean`, supplies the two crossings E and G.
+Intersection 2 has no user in `Elements/`, `Staging/` or `Audit/`; its declaration in
 `Elements/BookIII/Prop02.lean` is the only occurrence of its name there.
 
 Our III.2 follows Euclid through I.5, I.16 and I.19, and neither it nor its corollaries
@@ -503,30 +502,29 @@ straight line to meet the circle and finds the point between the two points wher
 it: III.7, III.11, III.15 and III.23. III.13 cites III.2, where Heath's reference is
 III.2.
 
-Three more corollaries after III.2 take the place of Book Zero lemmas that rested on Circle 2:
-`Prop2.triangle`, that three points of a circle are not on one straight line, first used
-in III.8; and `Prop2.oppositeSide` and `Prop2.sameSide`, that a straight line in a circle
-has points of the circle on either side of it, first used in the shared steps of
-`Circumferences.lean`, which III.24's companions are the first to cite. Stage 3's ground
-had two more lemmas that called Circle 2, and both now come after III.2. That a point of
-the straight line through two points of a circle is on the circle exactly when it is one
-of them, and within it exactly when it lies between them, is `Prop24.chord_cases`, before
-III.24, by III.2 and `Prop2.triangle`. That a straight line drawn from within the base of
-a segment meets its circumference is `Prop25.meets`, proved by III.2 beside III.25, whose
-companion `Prop25.of_circle` uses it; III.25's construction is given the fact, and never
-sees a circle. Book Zero
-kept its own three, Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and
-exists_onCircle_sameSideOf, stated for a circle with no centre given, which nothing used,
-until they were taken out on 24 October 2026 (#294; [below](#a-separate-piece-of-work)). `Staging/Routes/` contains five Lean files;
-their theorems rest on neither Circle 2 nor Circle 3
+Three more corollaries after III.2 take the place of Book Zero lemmas that rested on
+Circle 2: `Prop2.triangle`, that three points of a circle are not on one straight line,
+first used in III.8; and `Prop2.oppositeSide` and `Prop2.sameSide`, that a straight line
+in a circle has points of the circle on either side of it, first used in the shared
+steps of `Circumferences.lean`, which III.24's companions are the first to cite. Stage
+3's ground had two more lemmas that called Circle 2, and both now come after III.2.
+That a point of the straight line through two points of a circle is on the circle
+exactly when it is one of them, and within it exactly when it lies between them, is
+`Prop24.chord_cases`, before III.24, by III.2 and `Prop2.triangle`. That a straight
+line drawn from within the base of a segment meets its circumference is `Prop25.meets`,
+proved by III.2 beside III.25, whose companion `Prop25.of_circle` uses it; III.25's
+construction is given the fact, and never sees a circle. Book Zero kept its own three,
+Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf,
+stated for a circle with no centre given, which nothing used, until they were taken
+out on 24 October 2026 (#294; [below](#a-separate-piece-of-work)). `Staging/Routes/`
+contains five Lean files; their theorems rest on neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
-those three Book Zero lemmas. The
-staged III.1's construction called Circle 2 to put D within the circle
-until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean` as
-`Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which
-held it, was retired later that day. Since `Prop2.within` is Circle 2 with no supplied centre, proved
-from the other rules, Circle 2 and Circle 3 tell us nothing about any circle that the
-rest of our foundations do not.
+those three Book Zero lemmas. The staged III.1's construction called Circle 2 to put D
+within the circle until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean`
+as `Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which
+held it, was retired later that day. Since `Prop2.within` is Circle 2 with no supplied
+centre, proved from the other rules, Circle 2 and Circle 3 tell us nothing about any
+circle that the rest of our foundations do not.
 
 ##### III.5
 
@@ -837,10 +835,10 @@ they moved into `Elements/`.
 
 ### Keeping it current
 
-`lake build Audit` compiles the audit lemmas and checks their pinned axioms; the library is
-not in the default build, and nothing imports it. If a statement or a rule changes so that
-an audit lemma stops compiling, its row is out of date: the overlap may have gone, which is
-good news, or moved. The first users come from facts.json, and change only when the proofs,
-or the lemmas they call, do. A proof that calls Circle 2 or Circle 3 cites III.2 through it, which no entry before
-III.2 may; III.2, its corollaries and the two `InsideCircle` helpers take the step without
-either.
+`lake build Audit` compiles the audit lemmas and checks their pinned axioms; the library
+is not in the default build, and nothing imports it. If a statement or a rule changes so
+that an audit lemma stops compiling, its row is out of date: the overlap may have gone,
+which is good news, or moved. The first users come from facts.json, and change only when
+the proofs, or the lemmas they call, do. A proof that calls Circle 2 or Circle 3 cites
+III.2 through it, which no entry before III.2 may; III.2, its corollaries and the two
+`InsideCircle` helpers take the step without either.
