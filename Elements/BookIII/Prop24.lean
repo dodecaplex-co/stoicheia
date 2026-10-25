@@ -192,7 +192,7 @@ theorem Prop24.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX
     (hY : OnCircle Y α) (hZ : OnCircle Z α) (hXYZ : Triangle X Y Z) :
     (SameSideOf M Z X Y ∧ ∠ X Z Y < ∟) ∨ (Between X M Y ∧ ∠ X Z Y = ∟) ∨
       (OppositeSidesOf M Z X Y ∧ ∟ < ∠ X Z Y) := by
-  obtain ⟨W, hW, hWZ⟩ := Prop2.oppositeSide hX hY hXYZ
+  obtain ⟨W, -, hWZ⟩ := Prop2.oppositeSide hX hY hXYZ
   have hm : circumference α X W Y = ∠ X Z Y + ∠ X Z Y := Circumference.eq hZ hX hY hWZ.symm
   obtain ⟨L, hX_L, hY_L⟩ := Postulate1 X Y hXYZ.ne₁₂
   by_cases hM_L : OnLine M L
