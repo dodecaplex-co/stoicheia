@@ -1,7 +1,7 @@
-- **Four corrections to the entry on Circle 3's retirement
-  ([#436](https://github.com/jackChallis/stoicheia/issues/436), item 2).** The last review
-  of #294's retirement, C7-c294b-rev4, found four points of wording in the entry of 24
-  October, [Circle 3 retired after III.2](2026-10-24-circle-3-retired.md). The train had
+- **Three corrections to the entry on Circle 3's retirement, and a note on its wrap
+  (docs, [#436](https://github.com/jackChallis/stoicheia/issues/436), item 2).** The last
+  review of #294's retirement, C7-c294b-rev4, found four points of wording in the entry of
+  24 October, [Circle 3 retired after III.2](2026-10-24-circle-3-retired.md). The train had
   used its two rounds of fixes by then, and an entry on main is history, never edited; so
   this entry corrects it instead.
 
@@ -21,8 +21,12 @@
   It says the kind had to stay because, in that train, a harness could change "only in
   the laws" that moved with their axioms. The rule is narrower: `laws_move_with_axioms` in
   `scripts/safe_push.py` compares each harness's code outside its laws with main's,
-  leaving comments and docstrings out. So the kind's code had to stay in that train, but
-  its comment, which named a law the file no longer had, could have gone with the law.
+  leaving out comments and the file's own docstring. So the kind's code had to stay in
+  that train, but its comment, which named a law the file no longer had, could have gone
+  with the law.
 
   Last, the words "The counts" stand alone on a line of that paragraph, left by a rewrap
   during a merge. That changes no meaning, and the line stays as it is.
+
+  The coordinator filed these points as item 2 of #436, for a later entry, and its orders
+  of 24 October give that entry to this change. This entry claims no approval of the owner.
