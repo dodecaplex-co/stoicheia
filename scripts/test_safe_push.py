@@ -101,6 +101,30 @@ one commit and runs safe_push.py against that origin:
   entry naming them, a protected path is named only whole (a line naming
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
+- the case twins of issue #186, planted straight into an index, since this disk cannot
+  hold them: a twin of a protected file (certificate/FIELDS.md, and Certificate/fields.md
+  beside it), a check input in a twin folder (Scripts/json.py, which then runs in no
+  check), a protected name spelt otherwise with no twin in the tree (LAKEFILE.lean), two
+  spellings of one name under NFC, and a path with a space are each refused by step 3's
+  paths guard, at the pre-flight and at the merge, before any worktree is made, and in
+  an earlier commit of the push too, each tree judged once, while an ordinary commit
+  passes it; a path origin/main's own standard refuses (docs/x.yaml) is refused there too,
+  before any worktree, by origin/main's check_paths.py, read from its blob, and when
+  origin/main has none a note says so, while one that does not load, or exits, refuses,
+  and its imports, at its load and in its findings, find no module planted in the
+  repository through a sys.path entry inside it, however spelt (a case variant among
+  them); a looser check_paths.py is refused with the path it lets in, wherever that path
+  stands, by origin/main's standard in step 3 and again by keep_apart, a second line,
+  even when the commit's render.py hides the path from the worktree's index, since each
+  pass of the checks begins at the commit, its HEAD, index and files on disk unmoved as
+  git sees them (a file flagged skip-worktree is refused, and so is a change hidden by
+  stat settings, core.fileMode=false or a clean filter through attr.tree, written into
+  the shared config, or by the shared info/attributes or an ignored .gitattributes on
+  disk; a hook planted in the shared hooks folder runs under plain git but never in
+  at_commit; and neither core.autocrlf=true nor eol=crlf through attr.tree changes a
+  worktree made), with every ignored file but the build's caches removed (a planted
+  scripts/json.pyc); and `git safe-push`, run from a linked worktree as the lane runs it,
+  drops the GIT_DIR its alias is given before any check runs;
 - the decision entries of docs/decisions/, each a page of its own: a new line in an
   entry the push adds approves as one on the page does, a link there resolving from
   docs/decisions/ for a protected path and a deleted directory alike, its words never
@@ -263,6 +287,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import time
 import unicodedata
 import unittest
 from dataclasses import dataclass
@@ -315,6 +340,7 @@ class WorkflowStep:
     continue_on_error: object
     has_shell_override: bool
     has_working_directory: bool
+    working_directory: object
 
 
 @dataclass(frozen=True)
@@ -399,6 +425,7 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
             continue_on_error=step.get("continue-on-error"),
             has_shell_override="shell" in step,
             has_working_directory="working-directory" in step,
+            working_directory=step.get("working-directory"),
         ))
     defaults = (default_run_settings(workflow, "CI workflow") |
                 default_run_settings(job, "CI check job"))
@@ -441,6 +468,16 @@ ELAN_INSTALL = (
     " | sh -s -- -y --default-toolchain none",
     'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
 )
+# The pinned YAML parser, which the check of #346 (Units' lane-condition test, a file of the
+# registry) needs: the last line of the setup, after elan, isolated (-I, which takes in -P)
+# and from the runner's temporary directory, as queue-integrity installs it, so that
+# nothing at the checkout's root, a pip.py or a pip/ folder, can run in its place (the
+# coordinator's rulings of 24 October 02:35, 02:40 and 03:35, and that of 19:45, which
+# gives it the form tests/test_check_queue.py requires of every module run in CI). It
+# alone of the job's steps has a working directory, and only that one.
+PIP_INSTALL = ('python3 -I -m pip install -r '
+               '"$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"',)
+PIP_DIRECTORY = "${{ runner.temp }}"
 
 
 def is_modeled_setup(step: WorkflowStep) -> bool:
@@ -472,15 +509,18 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
         raise AssertionError("CI check job has an environment override")
     setup_order = (*SETUP_ACTIONS, None)  # The actions, then the elan install.
     setup_index = 0
+    parser_installed = False
     commands = []
     for step in job.steps:
+        is_parser = (step.uses is None and step.run == PIP_INSTALL
+                     and step.working_directory == PIP_DIRECTORY)
         if step.has_condition:
             raise AssertionError(f"CI check step {step.name!r} has an if condition")
         if step.has_continue_on_error and step.continue_on_error is not False:
             raise AssertionError(f"CI check step {step.name!r} can continue on error")
         if step.has_shell_override:
             raise AssertionError(f"CI check step {step.name!r} has a shell override")
-        if step.has_working_directory:
+        if step.has_working_directory and not is_parser:
             raise AssertionError(f"CI check step {step.name!r} has a working directory")
         if step.environment:
             raise AssertionError(f"CI check step {step.name!r} has an environment override")
@@ -491,10 +531,20 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
                 raise AssertionError("CI check setup sequence differs from the required prefix")
             setup_index += 1
             continue
+        if is_parser:
+            # The pinned parser's install comes once, straight after the elan install; one
+            # after the run is refused there, as the run finds no install before it.
+            if setup_index != len(setup_order):
+                raise AssertionError("CI check setup prefix is incomplete before the parser's "
+                                     "install")
+            if parser_installed:
+                raise AssertionError("CI check setup sequence differs from the required prefix")
+            parser_installed = True
+            continue
         if step.uses is not None or RUN_CHECKS not in step.run:
             raise AssertionError(f"CI check step {step.name!r} is neither the run of the "
                                  "registry's checks nor the modelled setup")
-        if setup_index != len(setup_order):
+        if setup_index != len(setup_order) or not parser_installed:
             raise AssertionError("CI check setup prefix is incomplete before the first check")
         if step.run != (RUN_CHECKS,):
             raise AssertionError(f"CI check step {step.name!r} has an unsupported run body")
@@ -1149,6 +1199,56 @@ class Clone(unittest.TestCase):
         git(WORK, "commit", "-q", "-m", message, env=env)
         return git(WORK, "rev-parse", "HEAD").strip()
 
+    def plant(self, message: str, files: dict, remove=()) -> str:
+        """A commit of HEAD's tree with `files` added straight into an index of its own,
+        and the paths `remove` taken out of it, since a case-insensitive disk cannot hold
+        a case twin, nor two spellings of one name (with neither, HEAD's tree again). HEAD
+        moves to it; the working tree and its index are left as they were."""
+        index = TMP / "planted.index"
+        env = dict(os.environ, GIT_INDEX_FILE=str(index))
+        git(WORK, "read-tree", "HEAD", env=env)
+        for path, text in files.items():
+            blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=WORK,
+                                  input=text, capture_output=True, text=True, check=True)
+            # git on macOS writes an NFD path as NFC unless told not to.
+            git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--add",
+                "--cacheinfo", f"100644,{blob.stdout.strip()},{path}", env=env)
+        for path in remove:
+            git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--force-remove",
+                "--", path, env=env)
+        git(WORK, "commit", "-q", "--allow-empty", "-m", message, env=env)
+        index.unlink(missing_ok=True)
+        return git(WORK, "rev-parse", "HEAD").strip()
+
+    def mktree(self, records: list[tuple[str, str, str, str]]) -> str:
+        listing = "".join(f"{mode} {kind} {oid}\t{name}\n"
+                          for mode, kind, oid, name in records)
+        made = subprocess.run(["git", "mktree"], cwd=WORK, input=listing,
+                              capture_output=True, text=True)
+        self.assertEqual(made.returncode, 0, made.stdout + made.stderr)
+        return made.stdout.strip()
+
+    def tree_commit(self, records: list[tuple[str, str, str, str]], message: str) -> str:
+        tree = self.mktree(records)
+        return git(WORK, "commit-tree", tree, "-p", BASE, "-m", message).strip()
+
+    def path_guard(self, sha: str) -> safe_push.Report:
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            safe_push.guard_paths(WORK, BASE, sha, rep)
+        return rep
+
+    def checkout_marker(self) -> Path:
+        """A file that stays absent until a worktree is made: `git worktree add` runs the
+        post-checkout hook, which writes it. The hook goes when the test ends."""
+        marker = TMP / "checked-out"
+        marker.unlink(missing_ok=True)
+        hook = hooks_dir() / "post-checkout"
+        hook.write_text(f'#!/bin/sh\necho "$PWD" >> "{marker}"\n')
+        hook.chmod(0o755)
+        self.addCleanup(hook.unlink, missing_ok=True)
+        return marker
+
     def new_base(self, message: str, write: dict) -> str:
         """A commit on origin's main, as a merged pull request would leave it."""
         sha = self.commit(message, write)
@@ -1296,7 +1396,7 @@ class Accepts(Clone):
         self.assertEqual(self.origin_main(), BASE)
         self.assertIsNone(self.origin_branch())
         for name in ("commit", "fast-forward", "harness", "secrets", "statements", "axiom lock",
-                     "protected paths", "heath/", "directories", "review records"):
+                     "protected paths", "heath/", "directories", "paths", "review records"):
             self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
         self.assertIn("leaf n261", out)
 
@@ -1590,6 +1690,247 @@ class Directories(Clone):
         self.assertEqual(self.guard(r.stdout, "directories"), "ok", r.stdout)
 
 
+class CaseTwins(Clone):
+    """Issue #186: paths equal once casefolded and NFC-normalised are one file on a
+    case-insensitive disk (macOS's default), so a twin of a protected file or of a check
+    input is checked out over it, unseen by the protected-path rule and keep_apart. Each
+    commit is planted straight into an index, since this disk cannot hold both."""
+
+    def refused_by_paths(self, r) -> tuple[str, str]:
+        """The output of a run refused by the paths guard, and that guard's detail."""
+        out = self.assertRefused(r, "invariant guards refused: paths")
+        self.assertEqual(self.guard(out, "paths"), "FAIL", out)
+        detail = re.search(r"^\s+FAIL\s+paths: (.*(?:\n {8}.*)*)", out, re.M).group(1)
+        return out, detail
+
+    def test_case_twin_of_a_protected_file_refused(self):
+        self.plant("A case twin of a protected file",
+                   {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("certificate/ (certificate/FIELDS.md)", detail)
+        self.assertIn("Certificate/ (Certificate/FIELDS.md", detail)
+
+    def test_case_twin_of_a_check_input_refused(self):
+        # Checked out on this disk, Scripts/json.py lands in scripts/, where
+        # check_fidelity.py's `import json` would run it: nothing more runs in step 3.
+        marker = TMP / "planted-module-ran"
+        self.plant("A case twin of a check input, in a twin folder", {
+            "Scripts/json.py": "import os\nopen(os.environ['STOICHEIA_TEST_PLANTED'], 'w')\n"})
+        env = dict(clean_env(), STOICHEIA_TEST_PLANTED=str(marker))
+        out, detail = self.refused_by_paths(self.safe_push(env=env))
+        self.assertIn("Scripts/ (Scripts/json.py)", detail)
+        self.assertIn("scripts/ (scripts/", detail)
+        self.assertIsNone(self.step(out, "review records"), out)
+        self.assertFalse(marker.exists(), "a module in a twin folder ran")
+
+    def test_unicode_twins_and_a_space_refused(self):
+        # No path on main has a second spelling under NFC, so the commit plants both.
+        nfc = "docs/café.md"
+        nfd = unicodedata.normalize("NFD", nfc)
+        space = "docs/a b.md"
+        self.assertNotEqual(nfc, nfd)
+        self.plant("Two spellings of one name, and a space",
+                   {nfc: "Composed.\n", nfd: "Decomposed.\n", space: "A space.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        for path in (nfc, nfd, space):
+            self.assertIn(f"{ascii(path)}: not plain printable ASCII", detail)
+        self.assertIn(f"{ascii(nfd)} and {ascii(nfc)}: equal once casefolded", detail)
+
+    def test_case_twin_in_one_folder_refused(self):
+        # #186's plainest case: two files of one folder, differing only in case.
+        bad = self.plant("A case twin beside a protected file",
+                         {"Certificate/fields.md": "Checked out over Certificate/FIELDS.md.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("Certificate/FIELDS.md and Certificate/fields.md: equal once casefolded",
+                      detail)
+        self.assertIn(f"(in commit {bad[:12]})", detail)
+
+    def test_protected_name_spelt_otherwise_refused(self):
+        # #186: main has no lakefile.lean, so LAKEFILE.lean twins nothing; but
+        # a case-insensitive disk opens it as lakefile.lean, which Lake reads and runs.
+        self.plant("A protected name spelt otherwise", {"LAKEFILE.lean": "-- Run by Lake.\n"})
+        out, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("LAKEFILE.lean: the protected path lakefile.lean, spelt otherwise", detail)
+        self.assertIsNone(self.step(out, "protected paths"), out)
+
+    def test_refused_before_any_worktree(self):
+        # #186: the paths guard reads the trees, and refuses before the commit
+        # is checked out. `git worktree add` runs the post-checkout hook, so a hook that
+        # leaves a marker shows whether a worktree was made.
+        self.plant("A case twin of a protected file",
+                   {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        marker = self.checkout_marker()
+        out, _ = self.refused_by_paths(self.safe_push())
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        self.assertIsNone(self.step(out, "statements"), out)
+        # The hook does mark a worktree made, as safe_push makes one.
+        probe = TMP / "probe-worktree"
+        git(WORK, "worktree", "add", "--detach", "--quiet", str(probe), BASE)
+        git(WORK, "worktree", "remove", "--force", str(probe))
+        self.assertTrue(marker.exists(), "the post-checkout hook did not run")
+
+    def test_twin_in_an_earlier_commit_refused(self):
+        # #186: the merge puts every commit the push brings in main's history, so the tree
+        # of each is judged, not only the last one's, and a finding names, for each tree that
+        # holds it, the first commit with that tree.
+        bad = self.plant("A case twin",
+                         {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        head = self.plant("The twin taken out again", {}, remove=["certificate/FIELDS.md"])
+        self.assertNotIn("certificate/", git(WORK, "ls-tree", "--name-only", head))
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("certificate/ (certificate/FIELDS.md)", detail)
+        self.assertIn(f"the one over the other (in commit {bad[:12]})", detail)
+        self.assertNotIn(head[:12], detail)
+
+    def test_each_tree_judged_once(self):
+        # A tree two commits share is read once, and the finding names each commit whose
+        # tree holds it, the first of each tree.
+        first = self.plant("A case twin", {"Certificate/fields.md": "A twin.\n"})
+        self.plant("The same tree", {})
+        last = self.plant("And a page", {"docs/style-notes.md": "Plain.\n"})
+        rep, out = safe_push.Report(), io.StringIO()
+        with mock.patch.object(safe_push, "path_faults", wraps=safe_push.path_faults) as judged, \
+                contextlib.redirect_stdout(out):
+            self.assertFalse(safe_push.guard_paths(WORK, BASE, last, rep))
+        self.assertEqual(judged.call_count, 2, out.getvalue())
+        (step,) = [s for s in rep.steps if s.name == "paths"]
+        self.assertEqual(step.outcome, "FAIL")
+        self.assertIn(f": equal once casefolded and NFC-normalised, so a case-insensitive disk "
+                      f"(macOS's default) checks them out as one, the one over the other (in "
+                      f"commits {first[:12]}, {last[:12]})", step.detail)
+
+    def test_a_path_origin_mains_standard_refuses_is_refused_before_any_worktree(self):
+        # #186, origin/main's standard in step 3: docs/x.yaml is neither a twin nor a name
+        # spelt otherwise, so safe_push's own paths guard passes it; origin/main's
+        # check_paths.py, run on the trees before the commit is checked out, refuses it,
+        # though no check changed, and no worktree is made.
+        bad = self.commit("A page in yaml", {"docs/x.yaml": "a: 1\n"})
+        marker = self.checkout_marker()
+        out = self.assertRefused(self.safe_push(),
+                                 "the invariant guards refused: paths (origin/main's standard)")
+        self.assertEqual(self.guard(out, "paths"), "ok", out)
+        self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL", out)
+        self.assertIn("P3 docs/x.yaml: ", out)
+        self.assertIn(f"(in commit {bad[:12]})", out)
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        self.assertIsNone(self.step(out, "statements"), out)
+
+    def test_origin_main_without_the_standard_is_a_note(self):
+        # Before the pull request that brings scripts/check_paths.py, origin/main has none:
+        # the guard says so and goes on. With one, it is loaded from origin/main's blob as a
+        # module, and this process's sys.path and modules are left as they were.
+        bare = self.commit("No standard", remove=[safe_push.PATH_STANDARD])
+        sha = self.commit("A page in yaml", {"docs/x.yaml": "a: 1\n"})
+        rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
+        with contextlib.redirect_stdout(out):
+            self.assertTrue(safe_push.guard_paths(WORK, bare, sha, rep), out.getvalue())
+            self.assertFalse(safe_push.guard_paths(WORK, BASE, sha, rep), out.getvalue())
+        standard = "paths (origin/main's standard)"
+        self.assertEqual([(s.name, s.outcome) for s in rep.steps],
+                         [("paths", "ok"), (standard, "note"), ("paths", "ok"), (standard, "FAIL")])
+        self.assertIn("origin/main has no scripts/check_paths.py", rep.steps[1].detail)
+        self.assertIn("P3 docs/x.yaml: ", rep.steps[3].detail)
+        self.assertEqual(sys.path, path)
+        self.assertNotIn("origin_main_check_paths", sys.modules)
+
+    def test_a_standard_that_does_not_load_or_exits_refuses(self):
+        # origin/main's check_paths.py is compiled as an import compiles it, without
+        # safe_push's __future__ import, and its imports, at its load and in its findings,
+        # never read a module planted in the repository judged, here on sys.path as when
+        # safe_push is run from its scripts/, and again by a case variant of the clone's
+        # folder (that folder on a case-insensitive disk, no folder elsewhere); a copy that
+        # does not load, or whose findings exits (its fail()), refuses as a FAIL, naming the
+        # error, never a traceback or a pass.
+        text = self.text(safe_push.PATH_STANDARD)
+        standard = safe_push.base_standard(WORK, BASE)
+        self.assertNotIsInstance(standard.findings.__annotations__["entries"], str)
+        ran = TMP / "planted-module-ran"
+        planted = WORK / "scripts" / "stoicheia_planted.py"
+        planted.write_text(f"open({str(ran)!r}, 'w').close()\n")
+        self.addCleanup(planted.unlink)
+
+        def findings_that(body: str) -> str:
+            return text.replace("def findings(entries", "def findings(entries, *_):\n"
+                                f"    {body}\n\n\ndef unused(entries", 1)
+
+        broken = {
+            "ModuleNotFoundError": "import stoicheia_planted\n" + text,
+            "SyntaxError": text + "\ndef (\n",
+            "SystemExit(1): ✗ paths: a fault of the check": findings_that(
+                "fail('a fault of the check')"),
+            "fails on the tree: ModuleNotFoundError": findings_that(
+                "import stoicheia_planted")}
+        variant = str(TMP.parent / TMP.name.upper() / "work" / "scripts")
+        with mock.patch.object(sys, "path", [variant]), safe_push.off_path(WORK):
+            # Matched by the folder's identity, not by its spelling.
+            self.assertEqual(sys.path, [] if os.path.isdir(variant) else [variant])
+        rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
+        run_from_scripts = [variant, str(WORK / "scripts"), *path]
+        with mock.patch.object(sys, "path", list(run_from_scripts)), \
+                contextlib.redirect_stdout(out):
+            for source in broken.values():
+                base = self.commit("A broken standard", {safe_push.PATH_STANDARD: source})
+                self.assertFalse(safe_push.guard_paths(WORK, base, base, rep), out.getvalue())
+                self.assertEqual(sys.path, run_from_scripts)
+        self.assertEqual(sys.path, path)
+        judged = [s for s in rep.steps if s.name == "paths (origin/main's standard)"]
+        self.assertEqual([s.outcome for s in judged], ["FAIL"] * len(broken), out.getvalue())
+        for step, error in zip(judged, broken):
+            self.assertIn(error, step.detail)
+        self.assertIn("does not load: ModuleNotFoundError", judged[0].detail)
+        self.assertIn("fails on the tree: SystemExit(1)", judged[2].detail)
+        self.assertFalse(ran.exists(), "a module planted in the repository ran")
+
+    def test_ordinary_commit_passes(self):
+        self.commit("A page of its own name", {"docs/style-notes.md": "Plain.\n"})
+        r = self.safe_push("--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "paths"), "ok", r.stdout)
+
+    def test_explicit_tree_directories_are_validated_before_checkout(self):
+        empty = self.mktree([])
+        blob = git(WORK, "hash-object", "-w", os.devnull).strip()
+        child = self.mktree([("100644", "blob", blob, "a.md")])
+        collision = self.mktree([
+            ("100644", "blob", blob, "same"),
+            ("040000", "tree", child, "same"),
+        ])
+        cases = {
+            "invalid empty directory": [
+                ("040000", "tree", empty, "bad directory")],
+            "duplicate directories": [
+                ("040000", "tree", child, "docs"),
+                ("040000", "tree", self.mktree([("100644", "blob", blob, "b.md")]),
+                 "docs")],
+            "directory twins": [
+                ("040000", "tree", child, "Docs"),
+                ("040000", "tree", child, "docs")],
+            "file and directory collision": [
+                ("040000", "tree", collision, "docs")],
+        }
+        for label, records in cases.items():
+            with self.subTest(label=label):
+                sha = self.tree_commit(records, label)
+                rep = self.path_guard(sha)
+                self.assertEqual(rep.steps[0].name, "paths", rep.steps)
+                self.assertEqual(rep.steps[0].outcome, "FAIL", rep.steps)
+
+    def test_valid_nested_and_empty_tree_directories_pass_the_guard(self):
+        empty = self.mktree([])
+        blob = git(WORK, "hash-object", "-w", os.devnull).strip()
+        nested = self.mktree([("100644", "blob", blob, "a.md")])
+        docs = self.mktree([
+            ("040000", "tree", empty, "empty"),
+            ("040000", "tree", nested, "nested"),
+        ])
+        sha = self.tree_commit([("040000", "tree", docs, "docs")],
+                               "Valid explicit directories")
+        rep = self.path_guard(sha)
+        self.assertEqual([(step.name, step.outcome) for step in rep.steps],
+                         [("paths", "ok"), ("paths (origin/main's standard)", "ok")],
+                         rep.steps)
+
+
 class Hook(Clone):
     def push(self, refspec, **env) -> subprocess.CompletedProcess:
         e = clean_env()
@@ -1625,6 +1966,25 @@ class Hook(Clone):
                 self.assertIn(f"pre-push: refusing the push to {ref}", r.stderr)
                 self.assertIsNone(self.origin_branch(ref.removeprefix("refs/heads/")))
         self.assertNotIn(TOKEN, r.stdout + r.stderr, "the hook repeats the secret")
+
+    def test_hook_scans_a_push_with_a_relative_pair_from_a_subfolder(self):
+        # #186: Git runs the hook at the top with GIT_DIR made absolute, but passes a
+        # relative GIT_WORK_TREE on unchanged; the scan still runs, and decides.
+        good = self.commit("A commit", {"docs/reading.md": self.text("docs/reading.md") + "\nX.\n"})
+        bad = self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        for sha, ref, passes in ((good, "refs/heads/good", True), (bad, "refs/heads/bad", False)):
+            with self.subTest(ref=ref):
+                r = subprocess.run(["git", "--git-dir=../.git", "--work-tree=..", "push",
+                                    "origin", f"{sha}:{ref}"], cwd=WORK / "scripts",
+                                   env=clean_env(), capture_output=True, text=True)
+                if passes:
+                    self.assertEqual(r.returncode, 0, r.stderr)
+                    self.assertIn(f"the secret scan of the push to {ref}", r.stdout + r.stderr)
+                else:
+                    self.assertNotEqual(r.returncode, 0, r.stderr)
+                    self.assertIn(f"pre-push: refusing the push to {ref}", r.stderr)
+                    self.assertIn("the secret scan found", r.stdout + r.stderr)
+                    self.assertIsNone(self.origin_branch("bad"))
 
     def test_hook_never_runs_another_remotes_main(self):
         # Security review: a push to another remote (a contributor's fork, fetched) is
@@ -3444,7 +3804,8 @@ class Merge(Edge):
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
         out = self.merge("--dry-run").stdout
         self.assertIn("the full checks are not repeated", out)
-        for name in ("secrets", "statements", "protected paths", "heath/", "review records"):
+        for name in ("secrets", "statements", "protected paths", "heath/", "paths",
+                     "review records"):
             self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
 
     def test_forged_record_does_not_skip_the_scan_or_the_guards(self):
@@ -3510,6 +3871,21 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "heath/"), "FAIL", out)
         self.assertEqual(self.origin_main(), BASE)
+
+    def test_case_twin_head_refused_at_the_merge(self):
+        # Issue #186: the guards the merge runs again include the paths.
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        bad = self.plant("A case twin pushed by hand",
+                         {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{bad}:refs/heads/{BRANCH}")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "paths"), "FAIL", out)
+        self.assertIn("certificate/ (certificate/FIELDS.md)", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.merges(), [])
 
     def test_protected_change_needs_its_label(self):
         path = "scripts/check_style.py"
@@ -5903,6 +6279,9 @@ class ProtectedPaths(Edge):
     RETAINED_AXIOM = "Tacit.line_unique"
 
     def test_protected_change_without_a_decision_refused(self):
+        # origin/main's standard refuses three of these names in step 3, before the
+        # protected-path rule runs (#186); that rule, a second line, refuses each of them too.
+        by_name = (".gitattributes", "lakefile.lean", "model/lakefile.lean")
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
                      ".gitignore", "lakefile.lean", "Audit/Overlaps.lean", "Audit.lean",
@@ -5912,8 +6291,16 @@ class ProtectedPaths(Edge):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 old = self.text(path) if (WORK / path).exists() else ""
-                self.commit(f"Touch {path}", {path: old + "\n# for the test\n"})
-                out = self.assertRefused(self.safe_push(), "protected paths", path)
+                sha = self.commit(f"Touch {path}", {path: old + "\n# for the test\n"})
+                out = self.assertRefused(self.safe_push(), path)
+                if path in by_name:
+                    self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL",
+                                     out)
+                    rep, log = safe_push.Report(), io.StringIO()
+                    with contextlib.redirect_stdout(log):
+                        safe_push.guard_protected(WORK, BASE, sha, rep)
+                    out = log.getvalue()
+                self.assertIn("protected paths", out)
                 self.assertEqual(self.guard(out, "protected paths"), "FAIL", out)
 
     def test_decision_naming_another_file_does_not_count(self):
@@ -6913,6 +7300,350 @@ class ProtectedPaths(Edge):
                 self.assertTrue(refused, out)
                 self.assertIn("docs/reading.md", out)
 
+    def test_a_looser_path_check_is_refused_with_the_path_it_lets_in(self):
+        # #186: .yaml let in by check_paths.py, and a .yaml under a guides'
+        # folder, which keep_apart counts as unjudged. origin/main's path check judges every
+        # path, so its failure refuses the commit, whatever else it changes. This is the
+        # second line: end to end, step 3's paths guards refuse the commit first (below).
+        path = "scripts/check_paths.py"
+        changes = {path: self.replaced(path, '"yml", "sha256", "sh"',
+                                       '"yml", "yaml", "sha256", "sh"'),
+                   "docs/templates/x.yaml": "a: 1\n"}
+        changes.update(self.decision(f"`{path}` takes .yaml, for the test."))
+        sha = self.commit("Let .yaml in, and add one", changes)
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        self.assertFalse(self.kept_apart(sha, "python3 scripts/check_links.py")[0])
+        for check in safe_push.PATH_CHECKS:
+            with self.subTest(check=check):
+                refused, out = self.kept_apart(sha, check)
+                self.assertTrue(refused, out)
+                self.assertIn(f"origin/main's path check fails on the commit ({check})", out)
+        # Step 4's own wiring, which the internal flag skips: origin/main's check_paths.py
+        # refuses x.yaml, and the commit is refused before its own copy runs.
+        name = "python3 scripts/check_paths.py --self-test"
+        check = (name, [sys.executable, "scripts/check_paths.py", "--self-test"])
+        refusal, out = self.full_checks(sha, [check], [])
+        self.assertEqual(refusal, "a check changed together with what it checks", out)
+        self.assertEqual(self.guard(out, name + safe_push.BASE_PASS), "note", out)
+        self.assertIn("docs/templates/x.yaml", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIsNone(self.step(out, name + " (the commit's checks)"), out)
+
+    # Run at the top of the commit's render.py: it takes the yaml file out of the
+    # worktree's index and commits there, so that origin/main's path check, run in that
+    # worktree in step 4, would not see it.
+    HIDE = '''
+import os as _os, subprocess as _sp
+if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
+           capture_output=True).returncode == 0:
+    _sp.run(["git", "rm", "-q", "--cached", "docs/templates/x.yaml"], capture_output=True)
+    _os.remove("docs/templates/x.yaml")
+    _sp.run(["git", "commit", "-q", "-m", "Out of sight"], capture_output=True)
+'''
+
+    def test_a_render_that_hides_the_path_is_refused(self):
+        # #186, the commit's own code keeping a path from origin/main's path check: a
+        # looser check_paths.py, the yaml file it lets in, and a render.py that hides that
+        # file. origin/main's standard refuses it in step 3, before the commit is checked
+        # out, so the render.py never runs.
+        checks, render = "scripts/check_paths.py", "scripts/render.py"
+        loose = self.replaced(checks, '"yml", "sha256", "sh"', '"yml", "yaml", "sha256", "sh"')
+        loose = loose.replace('"docs": frozenset({"md", "toml",',
+                              '"docs": frozenset({"md", "yaml", "toml",', 1)
+        text = self.text(render)
+        end = text.index('"""', 3) + 3          # after the module's docstring
+        changes = {checks: loose, render: text[:end] + self.HIDE + text[end:],
+                   "docs/templates/x.yaml": "a: 1\n"}
+        changes.update(self.decision(f"`{checks}` and `{render}` take .yaml, for the test."))
+        sha = self.commit("Let .yaml in, add one, and hide it", changes)
+        marker = self.checkout_marker()
+        out = self.assertRefused(self.safe_push(), "P3 docs/templates/x.yaml: ")
+        self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL", out)
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        # The second line, as the exploit ran: past the paths guards, the commit's own pass
+        # in step 3 runs its render.py, which moves the worktree's HEAD and index; step 4's
+        # first pass then refuses the worktree before any check reads it.
+        rep, log = safe_push.Report(), io.StringIO()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        refusal = None
+        paths_only = [(n, [safe_push.PY, *n.split()[1:]]) for n in safe_push.PATH_CHECKS]
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                mock.patch.object(safe_push, "NEGATIVE", []), contextlib.redirect_stdout(log):
+            parent = Path(tmp)
+            (parent / "logs").mkdir()
+            with safe_push.worktree(WORK, sha, parent, "check") as wt:
+                guarded = safe_push.guards(ctx, wt, rep, parent / "logs")
+                moved = git(wt, "rev-parse", "HEAD").strip()
+                try:
+                    safe_push.full_checks(ctx, wt, parent, guarded.check_inputs, rep,
+                                          parent / "logs", paths_only)
+                except safe_push.Refusal as e:
+                    refusal = str(e)
+        self.assertNotEqual(moved, sha, f"the render.py did not move HEAD:\n{log.getvalue()}")
+        self.assertIn(f"is no longer the commit {sha[:12]}", refusal or "", log.getvalue())
+        self.assertEqual([s.name for s in rep.steps if s.stage == "4"], [], log.getvalue())
+
+    def test_each_pass_begins_at_the_commit(self):
+        # origin/main's copies are taken out by a reset to the commit, never to HEAD, so a
+        # HEAD moved in origin/main's pass is put back; and a pass begun with HEAD moved, or
+        # the index changed, is refused.
+        path = "scripts/check_links.py"
+        sha = self.commit("A check", {path: self.text(path) + "\n# for the test\n"})
+        changes = [("M", path)]
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, sha, Path(tmp), "check") as wt:
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)
+                git(wt, "commit", "-q", "--allow-empty", "-m", "Moved in origin/main's pass")
+                self.assertEqual(next(each)[0], " (the commit's checks)")
+                self.assertEqual(git(wt, "rev-parse", "HEAD").strip(), sha)
+                git(wt, "commit", "-q", "--allow-empty", "-m", "Moved in the commit's pass")
+            with self.assertRaisesRegex(safe_push.Refusal, f"no longer the commit {sha[:12]}"):
+                next(safe_push.passes(WORK, BASE, sha, wt, changes))
+            git(wt, "reset", "-q", "--hard", sha)
+            git(wt, "rm", "-q", "--cached", "README.md")
+            with self.assertRaisesRegex(safe_push.Refusal, "or its index differs"):
+                next(safe_push.passes(WORK, BASE, sha, wt, []))
+
+    def test_a_pass_begun_with_a_file_hidden_on_disk_is_refused(self):
+        # HEAD and the index at the commit do not show the files on disk: a file changed
+        # there and flagged skip-worktree, or assume-unchanged, is hidden from git status,
+        # so the flag is refused; and so is a change git status shows, or an untracked file.
+        disk = "the files on disk in the worktree"
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "check") as wt:
+            self.assertEqual(next(safe_push.passes(WORK, BASE, BASE, wt, []))[0], "")
+            (wt / "README.md").write_text("Changed on disk.\n")
+            for flag in ("--skip-worktree", "--assume-unchanged"):
+                with self.subTest(flag=flag):
+                    git(wt, "update-index", flag, "README.md")
+                    self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all"),
+                                     "")
+                    self.assertEqual(git(wt, "rev-parse", "HEAD").strip(), BASE)
+                    self.assertTrue(safe_push.git_ok(wt, "diff-index", "--cached", "--quiet",
+                                                     BASE, "--"))
+                    with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*flagged "
+                                                "skip-worktree or assume-unchanged: README.md"):
+                        next(safe_push.passes(WORK, BASE, BASE, wt, []))
+                    git(wt, "update-index", flag.replace("--", "--no-", 1), "README.md")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                        "README.md"):
+                next(safe_push.passes(WORK, BASE, BASE, wt, []))
+            git(wt, "reset", "-q", "--hard", BASE)
+            (wt / "docs" / "left-behind.md").write_text("Untracked.\n")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists \\?\\? "
+                                        "docs/left-behind.md"):
+                next(safe_push.passes(WORK, BASE, BASE, wt, []))
+            (wt / "docs" / "left-behind.md").unlink()
+            # Stat settings the commit's code could write into the shared .git/config, under
+            # which git status passes a change of the same size with its time put back, are
+            # overridden. That config is the test clone's, never this repository's.
+            common = Path(git(wt, "rev-parse", "--path-format=absolute",
+                              "--git-common-dir").strip()).resolve()
+            self.assertEqual(common, (WORK / ".git").resolve())
+            self.assertTrue(common.is_relative_to(TMP.resolve()), common)
+            with self.subTest(settings="core.checkStat=minimal, core.trustctime=false"):
+                readme, then = wt / "README.md", 1_600_000_000_000_000_000
+                os.utime(readme, ns=(then, then))
+                git(wt, "update-index", "--refresh")    # an old time, so not racily clean
+                for key, value in (("core.checkStat", "minimal"), ("core.trustctime", "false")):
+                    git(wt, "config", key, value)
+                    self.addCleanup(git, WORK, "config", "--unset", key)
+                    self.assertEqual(git(WORK, "config", "--get", key).strip(), value)
+                # git reads a file's times to the second, so the change comes in a later
+                # second than the ctime the index holds, as a later pass's would.
+                held = int(os.stat(readme).st_ctime)
+                while int(time.time()) <= held:
+                    time.sleep(0.05)
+                data = readme.read_bytes()
+                readme.write_bytes(data.swapcase())
+                os.utime(readme, ns=(then, then))
+                self.assertEqual(len(readme.read_bytes()), len(data))
+                self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all"), "")
+                with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                            "README.md"):
+                    next(safe_push.passes(WORK, BASE, BASE, wt, []))
+
+    def test_the_shared_git_folder_cannot_hide_a_change(self):
+        # Code of this commit or one checked before can write the clone's shared .git,
+        # which every worktree reads: under core.fileMode=false git status passes a
+        # changed executable bit; a hook git status runs can write a file once git has
+        # looked; info/attributes, or core.autocrlf=true or attr.tree set before a
+        # worktree is made, makes git's own checkout write bytes the commit does not hold;
+        # and a clean filter, named through attr.tree or by a .gitattributes an ignore
+        # file hides, has git status pass a change of the same size. Each is planted in
+        # the test clone, never this repository, and taken out again, on a failure too and
+        # when the test ends.
+        common = Path(git(WORK, "rev-parse", "--path-format=absolute",
+                          "--git-common-dir").strip()).resolve()
+        self.assertEqual(common, (WORK / ".git").resolve())
+        self.assertTrue(common.is_relative_to(TMP.resolve()), common)
+
+        @contextlib.contextmanager
+        def setting(key: str, value: str):
+            was = git(WORK, "config", "--local", "--get", key, check=False).strip()
+            put_back = ("config", "--local", *((key, was) if was else ("--unset", key)))
+            self.addCleanup(git, WORK, *put_back, check=False)
+            git(WORK, "config", "--local", key, value)
+            try:
+                yield
+            finally:
+                git(WORK, *put_back, check=False)
+
+        @contextlib.contextmanager
+        def planted(path: Path, text: str):
+            self.assertTrue(path.resolve().is_relative_to(common), path)
+            self.addCleanup(path.unlink, missing_ok=True)
+            path.write_text(text)
+            try:
+                yield path
+            finally:
+                path.unlink(missing_ok=True)
+
+        disk = "the files on disk in the worktree"
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "check") as wt:
+            readme = wt / "README.md"
+            with self.subTest(setting="core.fileMode=false"), \
+                    setting("core.fileMode", "false"):
+                readme.chmod(0o755)
+                try:
+                    self.assertEqual(git(wt, "status", "--porcelain"), "")
+                    with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
+                                                "lists  M README.md"):
+                        safe_push.at_commit(wt, BASE)
+                finally:
+                    readme.chmod(0o644)
+            with self.subTest(hook="post-index-change"):
+                marker = TMP / "index-changed"
+                self.addCleanup(marker.unlink, missing_ok=True)
+                hook = f'#!/bin/sh\necho "$PWD" >> "{marker}"\n'
+                with planted(hooks_dir() / "post-index-change", hook) as path:
+                    path.chmod(0o755)
+                    # A new time on a file has git status write the refreshed index, and
+                    # run the hook: it runs under git's own settings, and not in at_commit.
+                    os.utime(readme, (1_600_000_000, 1_600_000_000))
+                    git(wt, "status", "--porcelain")
+                    self.assertTrue(marker.exists(), "the hook did not run")
+                    marker.unlink()
+                    os.utime(readme, (1_600_000_100, 1_600_000_100))
+                    safe_push.at_commit(wt, BASE)
+                    self.assertFalse(marker.exists(), "a hook ran in at_commit")
+            with self.subTest(attributes="info/attributes"):
+                path = Path(git(wt, "rev-parse", "--path-format=absolute", "--git-path",
+                                "info/attributes").strip())
+                named = re.escape(str(path))
+                with planted(path, "*.md eol=crlf\n"):
+                    with self.assertRaisesRegex(safe_push.Refusal,
+                                                f"{named} exists: attributes there apply"):
+                        safe_push.at_commit(wt, BASE)
+                safe_push.at_commit(wt, BASE)
+        # core.autocrlf=true, set before the worktree is made, would check README.md's LF
+        # endings out as CRLF, and git status, which trusts the times, would pass them.
+        held = safe_push.show_bytes(WORK, BASE, "README.md")
+        self.assertIn(b"\n", held)
+        self.assertNotIn(b"\r\n", held)
+        with self.subTest(setting="core.autocrlf=true"), \
+                setting("core.autocrlf", "true"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "crlf") as wt:
+            self.assertEqual((wt / "README.md").read_bytes(), held)
+            safe_push.at_commit(wt, BASE)
+        # attr.tree names a tree whose .gitattributes git reads in place of every other:
+        # eol=crlf there would check README.md out as CRLF, and a clean filter there has
+        # git status pass a change of the same size. AS_COMMITTED pins it to the empty
+        # tree, git's own for the clone's object format. Each tree is written into the
+        # test clone's objects only.
+        with self.subTest(pin="attr.tree"):
+            self.assertIn(f"attr.tree={safe_push.empty_tree(WORK)}", safe_push.AS_COMMITTED)
+
+        def attributes(text: str) -> str:
+            def put(*args: str, data: str) -> str:
+                return subprocess.run(["git", *args], cwd=WORK, input=data, text=True,
+                                      capture_output=True, check=True).stdout.strip()
+            blob = put("hash-object", "-w", "--stdin", data=text)
+            return put("mktree", data=f"100644 blob {blob}\t.gitattributes\n")
+
+        with self.subTest(setting="attr.tree naming eol=crlf"), \
+                setting("attr.tree", attributes("*.md text eol=crlf\n")), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "attr-tree") as wt:
+            self.assertIn("eol: crlf", git(WORK, "check-attr", "eol", "--", "README.md"))
+            self.assertEqual((wt / "README.md").read_bytes(), held)
+            safe_push.at_commit(wt, BASE)
+        # The filter swaps the case of letters back. It is named for README.md alone: any
+        # other file git reads again, as it can one written in the second its index was,
+        # would be compared through it too.
+        swapped = held.swapcase()
+        self.assertNotEqual(swapped, held)
+        with self.subTest(setting="attr.tree naming a clean filter"), \
+                setting("attr.tree", attributes("/README.md filter=swapcase\n")), \
+                setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "filter") as wt:
+            (wt / "README.md").write_bytes(swapped)
+            # Plain git passes the change; --no-optional-locks keeps it from writing the
+            # index, which would take the file's new times and hide it from any status.
+            self.assertEqual(git(wt, "--no-optional-locks", "status", "--porcelain"), "")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                        "README.md"):
+                safe_push.at_commit(wt, BASE)
+        # A .gitattributes on disk, hidden from git status by an ignore file the config
+        # names, would name the filter too: the empty tree is read in its place, where an
+        # attr.tree git cannot resolve (an empty value, say) would leave it read.
+        with self.subTest(attributes="an ignored .gitattributes"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "ignored") as wt:
+            ignore = Path(tmp) / "ignore"
+            ignore.write_text("/.gitattributes\n")
+            with setting("core.excludesFile", str(ignore)), \
+                    setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"):
+                (wt / ".gitattributes").write_text("/README.md filter=swapcase\n")
+                (wt / "README.md").write_bytes(swapped)
+                # The module's own git names core.excludesFile through GIT_CONFIG_COUNT,
+                # which a repository's setting loses to: -c names the file here, as
+                # setUpModule says. The harness's git drops GIT_CONFIG_COUNT and reads the
+                # setting from the shared configuration, as the attack has it.
+                self.assertEqual(git(wt, "-c", f"core.excludesFile={ignore}",
+                                     "--no-optional-locks", "status", "--porcelain"), "")
+                with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
+                                            "lists  M README.md"):
+                    safe_push.at_commit(wt, BASE)
+
+    def test_an_ignored_file_left_between_passes_is_removed(self):
+        # git status leaves ignored files out, and origin/main's checks would import a
+        # scripts/json.pyc the commit's code left, or a stale pyc of heath: each pass
+        # begins with every ignored file removed but the build's caches, which are kept,
+        # from origin/main's pass to the commit's, and from step 3's to step 4's.
+        path = "scripts/check_links.py"
+        sha = self.commit("A check", {path: self.text(path) + "\n# for the test\n"})
+        changes = [("M", path)]
+        planted = ("scripts/json.pyc", "scripts/__pycache__/heath.cpython-312.pyc")
+        caches = (".lake/build/kept", "model/.lake/kept")
+
+        def plant() -> None:
+            for rel in planted + caches:
+                (wt / rel).parent.mkdir(parents=True, exist_ok=True)
+                (wt / rel).write_text("Left by the commit's code.\n")
+            self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all", "--",
+                                 *planted, *caches), "")       # ignored: git status is silent
+
+        def removed() -> None:
+            self.assertEqual([rel for rel in planted if (wt / rel).exists()], [])
+            self.assertEqual([rel for rel in caches if not (wt / rel).exists()], [])
+
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, sha, Path(tmp), "check") as wt:
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)
+                plant()
+                self.assertEqual(next(each)[0], " (the commit's checks)")
+                removed()
+                plant()
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)     # step 4's first
+                removed()
+
     def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
         # The stage 2 pattern: the certificate changes, the pages and a record's stamp
         # follow, and the guides say why; none of that is judged. A record's other lines,
@@ -7440,6 +8171,112 @@ class HandOver(Edge):
         out = self.safe_push("--dry-run").stdout
         self.assertEqual(self.guard(out, "pre-push hook"), "note", out)
         self.assertIn("differs from origin/main's scripts/hooks/pre-push", out)
+
+
+class LinkedWorktree(Edge):
+    """#186: `git safe-push` is a shell alias, and git gives a shell
+    alias run from a linked worktree, as the lane runs it, GIT_DIR (and GIT_PREFIX). Left
+    set, GIT_DIR would point every git command in the fresh worktrees at the caller's index
+    and HEAD, and check_paths.py would refuse to run at all; so safe_push drops the
+    variables that place a repository once they have found it."""
+
+    def linked(self) -> Path:
+        """A linked worktree of the clone at BASE, with work of the caller's staged in it,
+        removed when the test ends."""
+        path = TMP / "linked"
+        git(WORK, "worktree", "add", "--quiet", "--detach", str(path), BASE)
+        self.addCleanup(git, WORK, "worktree", "remove", "--force", str(path), check=False)
+        (path / "README.md").write_text((path / "README.md").read_text() + "\nStaged.\n")
+        git(path, "add", "README.md")
+        return path
+
+    def test_git_safe_push_from_a_linked_worktree(self):
+        # The commit checked is not the caller's HEAD, and the caller has work staged: with
+        # GIT_DIR left set, `git status` in the fresh worktree would read the caller's
+        # index, and the generated pages would look stale.
+        sha = self.good_commit()
+        linked = self.linked()
+        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", "--dry-run",
+                            "--commit", sha], cwd=linked, env=clean_env(),
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        for name in ("paths", "statements", "review records", "generated pages"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        self.assertIn("4. The full local checks", out)
+        self.assertEqual(git(linked, "rev-parse", "HEAD").strip(), BASE)
+        self.assertEqual(git(linked, "diff", "--cached", "--name-only").split(), ["README.md"])
+        self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 2, out)
+
+    def test_location_variables_gone_before_the_checks(self):
+        # As the alias sets them, and more: none is left when the pre-flight or the merge
+        # begins, and the repository is the linked worktree.
+        linked = self.linked()
+        gitdir = git(linked, "rev-parse", "--absolute-git-dir").strip()
+        common = git(linked, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
+        planted = {"GIT_DIR": gitdir, "GIT_PREFIX": "", "GIT_COMMON_DIR": common,
+                   "GIT_WORK_TREE": str(linked),
+                   "GIT_OBJECT_DIRECTORY": str(Path(common) / "objects"),
+                   "GIT_INDEX_FILE": str(Path(gitdir) / "index"), "GIT_NAMESPACE": "caller",
+                   "GIT_CEILING_DIRECTORIES": str(TMP)}
+        seen = []
+
+        def record(repo, *args):
+            seen.append((Path(repo).resolve(),
+                         sorted(name for name in safe_push.GIT_LOCATION if name in os.environ)))
+            return 0
+
+        for argv in (["--dry-run"], ["--merge", "1", "--dry-run"]):
+            with self.subTest(argv=argv), mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push, "preflight_main", record), \
+                    mock.patch.object(safe_push, "merge_main", record), \
+                    mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(linked):
+                self.assertEqual(safe_push.main(argv), 0)
+        self.assertEqual(seen, [(linked.resolve(), [])] * 2)
+
+    def test_a_foreign_git_dir_and_work_tree_pair_is_refused_before_dispatch(self):
+        other = TMP / "foreign-pair"
+        git(TMP, "init", "--quiet", str(other))
+        self.addCleanup(shutil.rmtree, other, ignore_errors=True)
+        planted = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other)}
+        for argv in (["--dry-run"], ["--merge", "1", "--dry-run"]):
+            with self.subTest(argv=argv), mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push, "preflight_main",
+                                      side_effect=AssertionError("the pre-flight ran")), \
+                    mock.patch.object(safe_push, "merge_main",
+                                      side_effect=AssertionError("the merge ran")), \
+                    mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(WORK), \
+                    contextlib.redirect_stderr(io.StringIO()) as err:
+                self.assertEqual(safe_push.main(argv), 2)
+                self.assertIn("names a repository other than the one git finds",
+                              err.getvalue())
+
+    def test_a_variable_naming_another_repository_refused(self):
+        # Dropped, GIT_DIR must leave the repository git finds as it was: here it names
+        # another, so the run stops rather than judge a different one.
+        other = TMP / "another-repository"
+        git(TMP, "init", "--quiet", str(other))
+        self.addCleanup(shutil.rmtree, other, ignore_errors=True)
+        err = io.StringIO()
+        with mock.patch.dict(os.environ, {"GIT_DIR": str(other / ".git")}), \
+                mock.patch.object(safe_push, "preflight_main",
+                                  side_effect=AssertionError("the pre-flight ran")), \
+                mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(WORK), \
+                contextlib.redirect_stderr(err):
+            self.assertEqual(safe_push.main(["--dry-run"]), 2)
+        self.assertIn("names a repository other than the one git finds", err.getvalue())
+
+    def test_git_location_holds_gits_own_list(self):
+        # git's own list of the variables that tie a command to one repository, less the
+        # `-c` settings, which git passes on to a submodule too, and the two that choose
+        # whether replacement refs apply.
+        kept = {"GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT", "GIT_NO_REPLACE_OBJECTS",
+                "GIT_REPLACE_REF_BASE"}
+        theirs = set(git(WORK, "rev-parse", "--local-env-vars").split())
+        self.assertIn("GIT_DIR", theirs)
+        self.assertLessEqual(theirs - kept, set(safe_push.GIT_LOCATION))
+        self.assertLessEqual({"GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES"},
+                             set(safe_push.GIT_LOCATION))
 
 
 class PrivatePaths(Edge):
@@ -8027,7 +8864,7 @@ class MainChecksCache(Edge):
             parent = Path(tmp)
             env = dict(os.environ, GIT_INDEX_FILE=str(parent / "index"))
             with safe_push.worktree(WORK, sha, parent, "check") as wt:
-                with safe_push.base_copies(WORK, BASE, wt, inputs):
+                with safe_push.base_copies(WORK, BASE, sha, wt, inputs):
                     git(wt, "read-tree", "HEAD", env=env)
                     git(wt, "add", "-A", env=env)
                     laid = git(wt, "write-tree", env=env).strip()
@@ -8152,9 +8989,11 @@ class MainChecksCache(Edge):
         self.assertIn(f"full output in {log}\n", noted.detail)
         self.assertNotIn(str(miss.logs), noted.detail)
         # Every command went through the stand-in for sandbox-exec (run), git with
-        # replacement objects off (#256).
+        # replacement objects off (#256), and the worktree made as the commit holds it
+        # (AS_COMMITTED, #186).
         self.assertIn(f"git {' '.join(safe_push.NO_REPLACE_REFS)} -c core.quotePath=false "
-                      "worktree add", self.wrapped.read_text())
+                      f"{' '.join(safe_push.AS_COMMITTED)} worktree add",
+                      self.wrapped.read_text())
 
     def test_the_key_and_the_entry_follow_the_sequence_step_4_runs(self):
         # Step 4 runs origin/main's registry, whose sequence ends in the model's job and so
@@ -10846,6 +11685,57 @@ class Units(unittest.TestCase):
         self.assertIn("`review/I/05.toml`: touched, not re-stamped", records)
         self.assertIn("`review/I/06.toml`: touched, not re-stamped", records)
 
+    def test_path_faults(self):
+        # Issue #186: paths equal once casefolded and NFC-normalised, each pair named once,
+        # where they first meet; and paths that are not plain printable ASCII.
+        faults = safe_push.path_faults
+        self.assertEqual(faults(["Certificate/FIELDS.md", "scripts/json.py", "docs/STYLE.md",
+                                 "docs/style-notes.md", "LICENSE", "LICENSE-PROSE.md"]), [])
+        nfc, sharp = "docs/café.md", "docs/straße.md"
+        nfd = unicodedata.normalize("NFD", nfc)
+        cases = (
+            (["Certificate/FIELDS.md", "Certificate/fields.md"],
+             "Certificate/FIELDS.md and Certificate/fields.md"),
+            (["Certificate/FIELDS.md", "certificate/FIELDS.md"],
+             "Certificate/ (Certificate/FIELDS.md) and certificate/ (certificate/FIELDS.md)"),
+            (["scripts/heath.py", "Scripts/json.py"],
+             "Scripts/ (Scripts/json.py) and scripts/ (scripts/heath.py)"),
+            (["A/b/x", "a/b/X", "a/c"], "A/ (A/b/x) and a/ (a/b/X, a/c)"),
+            (["docs/x", "docs/x/y"], "docs/x and docs/x/ (docs/x/y)"),
+            (["docs/x", "docs/x"], "docs/x and docs/x"),
+            (["docs/STRASSE.md", sharp], f"docs/STRASSE.md and {ascii(sharp)}"),
+            ([nfc, nfd], f"{ascii(nfd)} and {ascii(nfc)}"),
+        )
+        for paths, twins in cases:
+            with self.subTest(paths=paths):
+                found = [f for f in faults(paths) if "equal once casefolded" in f]
+                self.assertEqual(len(found), 1, found)
+                self.assertTrue(found[0].startswith(twins + ": "), found)
+        for path, code in (("docs/a b.md", "U+0020"), (nfd, "U+0301"), (nfc, "U+00E9"),
+                           ("docs/a\tb.md", "U+0009"), ("docs/a\x7fb.md", "U+007F")):
+            with self.subTest(path=path):
+                self.assertEqual(faults([path]),
+                                 [f"{ascii(path)}: not plain printable ASCII ({code})"])
+        # #186: a protected path or a check input spelt otherwise, though the
+        # tree holds no twin of it, since such a disk opens it as the name the rules know.
+        self.assertEqual(faults(["lakefile.lean", "model/lakefile.lean", ".gitattributes",
+                                 "scripts/x.py", "review/SCHEMA.md"]), [])
+        for path, own, shown in (
+                ("LAKEFILE.lean", "lakefile.lean", "LAKEFILE.lean"),
+                ("model/Lakefile.lean", "model/lakefile.lean", "model/Lakefile.lean"),
+                (".GITATTRIBUTES", ".gitattributes", ".GITATTRIBUTES"),
+                ("Scripts/x.py", "scripts/", "Scripts/ (Scripts/x.py)"),
+                ("Review/SCHEMA.md", "review/SCHEMA.md", "Review/SCHEMA.md"),
+                ("TESTS/model/run.py", "tests/", "TESTS/ (TESTS/model/run.py)")):
+            with self.subTest(path=path):
+                self.assertEqual(faults([path, "docs/STYLE.md"]),
+                                 [f"{shown}: the protected path {own}, spelt otherwise, which a "
+                                  f"case-insensitive disk (macOS's default) opens as {own}, "
+                                  "unseen by the protected-path rule and keep_apart"])
+        # A folder spelt otherwise is named once, with the paths under it.
+        (fault,) = faults(["Scripts/a.py", "Scripts/b.py"])
+        self.assertTrue(fault.startswith("Scripts/ (Scripts/a.py, Scripts/b.py): "), fault)
+
     def test_a_crash_once_the_sandbox_is_set_imports_nothing(self):
         # A command's output that is not UTF-8 makes run() raise, and an exception that
         # reaches Python's own handler imports traceback and a dozen more, found first in
@@ -11095,6 +11985,14 @@ class Units(unittest.TestCase):
         self.assertNotEqual(changed, workflow)
         self.assertEqual(pattern.sub("", changed), pattern.sub("", workflow))
 
+    def test_path_checks_are_read_from_checks(self):
+        # #186, a looser path check: keep_apart's rule names the two path commands as the
+        # registry names them, so that an entry reworded there cannot drop the rule unseen.
+        self.assertEqual(safe_push.PATH_CHECKS, ("python3 -I tests/test_check_paths.py",
+                                                 "python3 scripts/check_paths.py --self-test"))
+        self.assertLessEqual(set(safe_push.PATH_CHECKS),
+                             {e.name for e in registry.load(SOURCE)})
+
     def test_suite_jobs_are_the_workflows_own(self):
         # The release's gate (suite_gate, #301) names the jobs a run of the safe-push-tests
         # workflow must show passed: every job of the workflow but `report`, which needs
@@ -11150,11 +12048,10 @@ class Units(unittest.TestCase):
 
     def test_every_step_after_the_lane_step_carries_its_condition(self):
         # #339 added steps to CI's negative job without the condition, and every R0 to R2
-        # pull request then failed once it had landed. Now this test finds such a step: on
-        # any branch in seconds (Units), and on main within six hours, on the cadence that
-        # runs this suite. (It fails the pull request that adds the step only once it runs
-        # on the pull request's path, #346.) Every workflow is read; CI's negative and
-        # formal-model jobs must have the lane step, first.
+        # pull request then failed once it had landed. Now this test finds such a step on
+        # every pull request in CI's check job (#346), in seconds when Units is run directly,
+        # and on main within six hours on the cadence that runs this suite. Every workflow
+        # is read; CI's negative and formal-model jobs must have the lane step, first.
         workflows = {path.name: yaml.safe_load(path.read_text())
                      for path in sorted((SOURCE / ".github/workflows").glob("*.y*ml"))}
         for name, workflow in workflows.items():
@@ -11272,6 +12169,28 @@ class Units(unittest.TestCase):
         def reverse_setup_actions(workflow, job):
             job["steps"][:2] = reversed(job["steps"][:2])
 
+        parser = PIP_INSTALL[0]
+
+        def parser_run(run, keep_directory):
+            def change(workflow, job):
+                step = step_running(job, parser)
+                step["run"] = run
+                if not keep_directory:
+                    step.pop("working-directory")
+            return change
+
+        def move_parser(after):
+            def move(workflow, job):
+                step = step_running(job, parser)
+                job["steps"].remove(step)
+                if after:
+                    job["steps"].insert(job["steps"].index(step_running(job, certificate)) + 1,
+                                        step)
+                else:
+                    elan = next(s for s in job["steps"] if "elan-init.sh" in s.get("run", ""))
+                    job["steps"].insert(job["steps"].index(elan), step)
+            return move
+
         cases = (
             ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
             ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
@@ -11329,6 +12248,37 @@ class Units(unittest.TestCase):
                  env=override), "has an environment override"),
             ("job container", lambda workflow, job: job.update(container="example/stub"),
              "unmodeled settings"),
+            # The pinned parser's install (#346): that one line, once, straight after elan,
+            # from the runner's temporary directory. A changed line is refused in that
+            # directory, as a step with a working directory, and in the checkout too.
+            *((f"{label}{where}", parser_run(run, keep), message)
+              for label, run in (
+                  ("another requirements file",
+                   "python3 -I -m pip install -r requirements.txt"),
+                  ("an extra package", parser + " six"),
+                  ("the install without -I", parser.replace(" -I", "")),
+                  ("the install with -P alone", parser.replace(" -I", " -P")))
+              for where, keep, message in (
+                  (", in the temporary directory", True, "has a working directory"),
+                  (", in the checkout", False, unmodeled))),
+            ("the parser's install in the checkout",
+             lambda workflow, job: step_running(job, parser).pop("working-directory"),
+             unmodeled),
+            ("the parser's install in another directory",
+             lambda workflow, job: step_running(job, parser).update(
+                 {"working-directory": "${{ github.workspace }}"}),
+             "has a working directory"),
+            ("the parser's install after the run", move_parser(after=True),
+             "setup prefix is incomplete"),
+            ("the parser's install twice",
+             lambda workflow, job: job["steps"].insert(
+                 job["steps"].index(step_running(job, parser)),
+                 step_running(job, parser).copy()), "setup sequence differs"),
+            ("the parser's install before elan", move_parser(after=False),
+             "setup prefix is incomplete"),
+            ("no parser's install",
+             lambda workflow, job: job["steps"].remove(step_running(job, parser)),
+             "setup prefix is incomplete"),
         )
         for label, mutate, message in cases:
             with self.subTest(label=label):
@@ -12366,7 +13316,7 @@ class Units(unittest.TestCase):
                 self.assertTrue(self.law(body), body)
         for decorator in ("@axiom('x', dict())", "@axiom('x', dict(A=P, L=L_, al=C_), gs_p4)",
                           "@axiom('x', dict(A=P), gs_cm('side'))",
-                          "@axiom('x', dict(A=P), gs_convex())"):
+                          "@axiom('x', dict(A=P), gs_cm())"):
             with self.subTest(decorator=decorator):
                 self.assertTrue(self.law("pass", head=f"{decorator}\ndef _(c):\n"))
 

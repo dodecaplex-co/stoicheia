@@ -112,6 +112,14 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
+      - name: Install the pinned YAML parser the lane-condition check reads the workflows with
+        # checks/24-lane-condition.toml runs a test of scripts/test_safe_push.py, which reads
+        # the workflows with this parser (#346). Isolated, from the runner's temporary
+        # directory, as queue-integrity installs it: nothing in the checkout (a pip.py or a
+        # pip/ folder at its root, say) can run in place of pip, before the checks.
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
+
       - name: Run the check job's sequence, one check for each file in checks/, in its order, each a group of the log, stopping at the first that fails
         # The registry of checks (docs/WORKFLOW.md, section 8): each file of checks/ is one
         # check, with its command, its job and its line of section 8, and a comment saying

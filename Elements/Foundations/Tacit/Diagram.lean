@@ -10,8 +10,9 @@ He never states these facts or proves them. These are the diagrammatic inference
 of System E, §3.4 (Avigad, Dean and Mumma, 2009). Each retained assumption is an
 axiom: most rules say one thing. Between 1 says four, and was four axioms; two of
 them, `between_symm` and `not_between_of_between`, remain, and the other two are proved.
-Generalities 2, Circle 2, Triple incidence 3 and Intersection 2 are proved in
-`Elements.Figure.Circles`; Circle 4 is proved after I.7 in `Elements.BookI.Prop07`.
+Generalities 2 and Triple incidence 3 are proved in `Elements.Figure.Circles`; Circle 4 is
+proved after I.7 in `Elements.BookI.Prop07`; and Circle 2, Circle 3, Points 9 and
+Intersection 2 are proved after III.2 in `Elements.BookIII.Prop02`.
 
 In one place we follow LeanEuclid's correction of the published rules:
 `circles_meet_of_on_inside_outside` (Intersection rule 4) asks that A be *on*
@@ -80,11 +81,6 @@ points where it meets the circle. (Circle 1) -/
 axiom between_of_inside_chord (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAin : InsideCircle A α) (hBon : OnCircle B α) (hCon : OnCircle C α) (hBC : B ≠ C) :
     Between B A C
-
-/-- Once a straight line has left a circle, it doesn't come back.
-(Circle 3) -/
-axiom outside_of_between (hA : InsideCircle A α ∨ OnCircle A α) (hC : ¬ InsideCircle C α)
-    (h : Between A C B) : OutsideCircle B α
 
 /-! ## Intersection rules -/
 

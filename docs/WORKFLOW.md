@@ -190,6 +190,68 @@ files working in parallel, the renderers, and an integrator followed by blind re
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
 
+### File names
+
+Every tracked path keeps one standard, which the owner asked for on
+[21 October 2026](decisions/2026-10-21-file-names.md), so that a path reads the same on
+every disk and every system. Its lists live in one place,
+[`scripts/check_paths.py`](../scripts/check_paths.py), each a named constant. The script
+reads Git's index, which is what is staged for the next commit: in CI and in the
+pre-flight's fresh worktree, the commit itself, and on your own machine, what you have
+staged. It never reads the working tree or opens a file, and
+`python3 scripts/check_paths.py --rev <commit>` judges a commit's tree instead.
+
+1. **Characters.** ASCII letters, digits, `.`, `_`, `-` and `/`, and nothing else: no
+   empty segment, no `.` or `..` segment, and no segment that begins or ends with `.` or
+   `-`, save `.github` as the first segment and `.gitignore` and `.gitkeep` as a file's
+   name. A path is at most 160 characters and a segment at most 100, and no segment's stem
+   is a Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM0` to `COM9`, `LPT0` to
+   `LPT9`), in any case.
+2. **No case twins.** No two paths, and no two of their folders, are alike once case and
+   Unicode's normal forms are set aside: a disk that ignores case, as macOS's does by
+   default, checks the two out as one, so `Scripts/json.py` beside `scripts/heath.py` is
+   refused. Nor is a path or a folder listed twice, as a tree made by hand can list it.
+3. **Extensions** are in lower case, from the fifteen the tree uses (`.md`, `.lean`,
+   `.toml`, `.py`, `.svg` and the rest; never `.MD`, `.markdown` or `.yaml`). A file without
+   one stands only at its own path: `LICENSE`, `NOTICE`, the two `lean-toolchain` files and
+   the two hooks.
+4. **Types by folder.** The top-level folders and the root's files are listed, with further
+   Markdown at the root named in capitals and digits, words joined by single hyphens, as
+   `README.md` and `LICENSE-PROSE.md` are (never `NOTES-.md` or `A--B.md`). Each folder
+   holds its own types (`figures/` only `.svg`, `review/` only `.toml` and its schema,
+   `book/` only Markdown), and the few files named by exact path, `.gitignore` and
+   `.gitkeep` among them, stand only where they stand now.
+5. **Names, where they are mechanical.** A book's pages, Heath's text, the mishnah, the
+   reading lines, the review records and the figures are named by the book's Roman numeral
+   and the proposition's number, two digits and three from 100 on (`review/III/16.toml`,
+   `figures/X/115-idea.svg`); a brief by four digits and a slug, or as a book's brief. A
+   Lean file of `Elements/`, `Staging/`, `Audit/`, `model/` or the root is named by Lean
+   module names, with `BookR` and `PropNN` under `Elements/` (`Prop01.lean`, never
+   `Prop1.lean`), save that the model's laws, directly in `model/Model/Laws/`, keep the
+   model's lower-case names (`areas-p5.lean`); `lakefile.lean` is refused anywhere. A
+   Python file's name is a lower-case importable identifier: it begins with a letter,
+   continues with lower-case letters, digits or underscores, and is not a Python keyword;
+   soft keywords are allowed.
+6. **Modes.** No symbolic links and no submodules. Six scripts are executable, and they
+   alone: the two hooks, `safe_push.py`, `check_release_gate.py`, `install_hooks.sh` and
+   `copy_acceptance_checks.sh`.
+
+A new book's paths already fit: Book IV's, and Book X's 115 propositions. A new extension,
+top-level folder, executable or named file is a change to the check, a protected path, and
+lands first, in a pull request of its own, before the file that needs it. Step 3 of the
+pre-flight ([section 10, "Landing work"](#landing-work-pull-requests)) judges every commit
+a pull request brings by origin/main's standard, so an entry is taken out of a list (an
+executable, an extension, a named file) only when no open branch's history still holds a
+path it allows; otherwise that branch is first rebuilt without the path. The script
+judges only its own repository: it independently discovers both the script's worktree and
+that worktree's Git directory, including a linked worktree's own directory. An explicit
+`GIT_DIR` and `GIT_WORK_TREE` pair for that worktree is accepted; a foreign Git directory
+or worktree is refused, and so is `GIT_DIR` set alone, as a Git alias run from a linked
+worktree sets it, each with instructions for running the check without the override
+(`env -u GIT_DIR -u GIT_WORK_TREE python3 scripts/check_paths.py`). A
+module planted beside it, such as `scripts/unicodedata.py`, is never read in place of the
+standard library's.
+
 ## 5. Proving in parallel: a voyage
 
 A voyage is one stretch of a book, run as a workflow:
@@ -334,6 +396,8 @@ ahead. On the integrated revision, run exactly what CI's `check` job runs, in it
 <!-- checks -->
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
+python3 -I tests/test_check_paths.py
+python3 scripts/check_paths.py --self-test
 lake build
 lake build Audit
 lake build Staging
@@ -349,6 +413,7 @@ python3 -I tests/test_release_gate.py
 python3 -I tests/test_jev_models.py
 python3 scripts/audit/jev.py self-test
 python3 -I tests/test_screen.py
+python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition
 python3 -I tests/test_acceptance_limits.py
 python3 -I tests/test_check_superposition_pins.py
 python3 -I scripts/check_superposition_pins.py
@@ -385,6 +450,18 @@ CI's `check` job. The reader stays one self-contained file of the standard libra
 the pre-flight runs it alone, out of Git; step 3 of the pre-flight runs the commit's own
 reader so, and refuses the commit when it cannot read the commit's registry, before a
 broken reader can merge.
+
+**One check needs the YAML parser.** The test that every step after a job's lane step
+carries the lane's condition
+([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
+`scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned in
+`scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after elan and
+before the run of the checks; to run the sequence yourself, or the pre-flight, which runs
+it for a train of class R3 and above, install it once:
+
+```sh
+python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
+```
 
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
@@ -737,6 +814,13 @@ train and group as unreadable.
   foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
   job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
   delivered.
+- **The path check's cases run before it.** `python3 -I tests/test_check_paths.py` puts
+  each rule of `scripts/check_paths.py` ([section 4, "File names"](#file-names)) to paths
+  it must accept and refuse, and runs the script on throwaway repositories whose faults are
+  planted straight into the index. Neither needs Lean: both read Git's index, not the
+  files, and they run first, before `lake build`, so a misnamed path stops the checks
+  before anything is built. `negative_tests.py` plants eight of the faults in a copy of
+  the edition's index (`scripts/negative/path_faults.py`).
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
   of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
   and small figures, including S20's ink and S26's clearance and repeated letters, each
@@ -1603,8 +1687,13 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    through git and a fresh temporary worktree, so a dirty working tree makes no
    difference; and it is origin/main's copy of the harness (by the launcher, or by a
    checkout's copy handing over, which replaces its own process with origin/main's), so
-   that a branch cannot weaken the harness that judges it. It stops, saying why, at the
-   first step that fails:
+   that a branch cannot weaken the harness that judges it. Run as a Git alias from a
+   linked worktree, which sets `GIT_DIR`, it drops Git's location variables (`GIT_DIR`,
+   `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest) once it has found the repository, so
+   that every check reads the fresh worktree, never the caller's index or HEAD; it
+   refuses when `GIT_DIR` or `GIT_WORK_TREE` names another repository. It stops, saying
+   why, at the first step
+   that fails:
    1. *Preconditions.* The commit exists; `git fetch origin`; origin/main is an ancestor
       of the commit, so a direct merge at that base holds exactly the tree checked; the
       branch, if origin has it, is an ancestor of the commit too; the branch is not main;
@@ -1640,14 +1729,34 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       `GIT_WORK_TREE` and the rest that `git rev-parse --local-env-vars` lists), but
       `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
       the hook's repository or index: each command finds its repository by its working
-      directory too, the hand-over's included (#357). The harness sets one itself, the
+      directory too, the hand-over's included (#357). One `git rev-parse` before any step
+      is the exception: it is given the caller's `GIT_DIR` and `GIT_WORK_TREE` on its
+      command line, as `--git-dir=` and `--work-tree=`, and only reads where they point,
+      so that a run they would send to another repository is refused (#186). The harness
+      sets one itself, the
       temporary `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
       `git safe-push` unsets the same variables before its first git command, so a
       caller's `GIT_DIR` cannot make it fetch another repository's origin and run that
       repository's harness (#359).
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
-   3. *Invariant guards,* against origin/main, in the temporary worktree:
+   3. *Invariant guards,* against origin/main. First, before the commit is checked out,
+      two paths guards read the tree of each commit the push brings (from origin/main to
+      the commit, each tree once; a finding names, for each tree that holds it, the first
+      commit with that tree, at most three and then "and N more"), and refuse outright: no
+      mention excuses them, and when they refuse no worktree is made. The first refuses a
+      path, or a folder of one, that collides with another under case folding and NFC
+      normalisation, that is a protected path or a check input spelt otherwise
+      (`LAKEFILE.lean`, `Scripts/x.py`), or that is not plain printable ASCII (#186): a
+      disk that ignores case checks out `Scripts/safe_push.py` as `scripts/safe_push.py`,
+      so such a twin could otherwise change a protected path or a check input by the back
+      door. The second applies origin/main's own standard
+      ([section 4, "File names"](#file-names)): origin/main's `scripts/check_paths.py`,
+      read from its blob and run by the harness itself, judges each tree before any of the
+      commit's code has run, so nothing the commit runs can keep a path from it; a copy
+      that does not load, or fails on a tree, refuses, and when origin/main has none, as
+      before the pull request that brings it, a note says so.
+      Then, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
         the push adds a new line to `docs/briefs/`, a brief's revision or a decisions
@@ -1692,8 +1801,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
         comparison below finds copied count for nothing. The README may be edited, never
         deleted once added, and approves nothing.
 
-      For each of these, the push must add a mention: an old line that already named the
-      thing, edited in place, does not count. A line added to the decisions page is
+      Where one of these allows a mention, the push must add it: an old line that already
+      named the thing, edited in place, does not count. A line added to the decisions page is
       compared with nothing, and any new line there counts, as it did before the entries
       began; its mentions, though, are read by the same rules as an entry's, which are new
       for the page too: where a mention may start (as "Protected paths", below, says), a
@@ -1765,13 +1874,33 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       changes what the checks judge (anything but the guides and briefs, the generated
       pages, a review record's stamp, and the protected paths other than `Audit/`,
       `Audit.lean`, `model/Model/Audit.lean`, `model/Model.lean` and the model's build
-      files): the check change goes first, in a pull request of its own. Two kinds of
-      failure are only noted. Pages gone stale under origin/main's `render.py`, or
-      `facts.json` rewritten by origin/main's
-      certificate, show the generator's change in the pages' diff; a failure of
-      `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
-      the values pinned to the edition move with the content they pin (a re-proof that
-      changes an expected count, a new word in the lock, an axiom added):
+      files): the check change goes first, in a pull request of its own. Step 3 has
+      already judged every commit's tree by origin/main's standard, before any of the
+      commit's code ran; as a second line, a failure here of origin/main's path check
+      (`python3 -I tests/test_check_paths.py` or
+      `python3 scripts/check_paths.py --self-test`) refuses the pull request whatever else
+      it changes, guides and protected paths alone included: every path is what it judges,
+      so a looser `scripts/check_paths.py` cannot land with the path it would let in. Each
+      pass begins with the worktree at the commit, or is refused, since the commit's code
+      may have run in an earlier one: its HEAD the commit, its index the commit's tree, no
+      file flagged skip-worktree or assume-unchanged (either keeps Git from reading the
+      file on disk), and `git status --porcelain --untracked-files=all` empty, each asked
+      of Git with stat settings at their defaults, no fsmonitor, untracked cache or hook,
+      and, as the worktrees are made, file modes compared and no conversion or attributes
+      but the system's (`attr.tree` the empty tree), whatever the shared `.git/config`
+      says, and refused while the shared `.git/info/attributes` exists; then every ignored
+      file is removed but the build's caches, `.lake/` and `model/.lake/`, a channel the
+      commit's build already has (#197). This asks Git and compares no bytes, so routes
+      past it remain (a hand-edited index, a process left running, a `.git` below the root
+      among them; #218), each needing code of this commit or one checked before to have
+      run first, through a change to a protected script or its Lean at elaboration (#197).
+      origin/main's copies are taken out again by a reset to the commit. Two kinds of
+      failure are only noted. Pages gone stale under
+      origin/main's `render.py`, or `facts.json` rewritten by origin/main's certificate,
+      show the generator's change in the pages' diff; a
+      failure of `render.py` itself, its check of `docs/program.toml` among them, is a
+      verdict. And the values pinned to the edition move with the content they pin (a
+      re-proof that changes an expected count, a new word in the lock, an axiom added):
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
       account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which
