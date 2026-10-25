@@ -149,4 +149,10 @@
 # 262 words of vocabulary; every other axiom and every word is main's byte for byte. The
 # 31 laws stay out of laws.toml, search.py and hyperbolic.py, exists_centre's law stays in
 # them, and MODEL.md's counts are written again by run.py --full --write in the same change.
-589b8c3791414d63a8c5b735ba9c4d4adddf1c4f7a271eaef918820c9d844965  Certificate/axioms.lock
+#
+# Renewed on 24 October 2026, when Circle 3, Tacit.outside_of_between, became a theorem,
+# proved after III.2 (#294, the coordinator's orders of 24 October): 48 axioms, the lock
+# less that one line, with 262 words of vocabulary; every other axiom and every word is
+# unchanged, byte for byte. Its law leaves laws.toml, search.py and hyperbolic.py, and
+# derived.py keeps checking it as derived.outside_of_between.
+4a48491e378586c3439dfc41c10890517643bc3c0985a20178e397e6328c11c1  Certificate/axioms.lock

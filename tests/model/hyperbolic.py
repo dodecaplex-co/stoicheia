@@ -1062,16 +1062,6 @@ def _(c):
 
 
 
-@axiom('outside_of_between', dict(A=P, B=P, C=P, al=C_), gs_cm('out'))
-def _(c):
-    A, B, C, al = c['A'], c['B'], c['C'], c['al']
-    if not (ch2(A, centre(al)) <= al[2] and not inside(C, al) and between(A, C, B)):
-        return None
-    return outside(B, al)
-
-
-
-
 # ---- Intersection (diagrammatic)
 @axiom('lines_meet_of_opposite_sides', dict(A=P, B=P, L=L_, M=L_), gs_lines_meet)
 def _(c):

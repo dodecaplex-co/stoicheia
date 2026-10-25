@@ -13,8 +13,8 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`589b8c3791414d63a8c5b735ba9c4d4adddf1c4f7a271eaef918820c9d844965`,
-the hash that `model/lock.sha256` holds. The lock has 49 laws, and they reach 152 words of its
+`4a48491e378586c3439dfc41c10890517643bc3c0985a20178e397e6328c11c1`,
+the hash that `model/lock.sha256` holds. The lock has 48 laws, and they reach 152 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
 
@@ -435,11 +435,6 @@ def on_line_of_area_eq_zero : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.OnLine A L → S.OnLine B L → A ≠ B → S.area A B C = 0 →
     S.OnLine C L
 
-/-- `Elements.Tacit.outside_of_between`, translated. -/
-def outside_of_between : Prop :=
-  ∀ {A B C : S.Point} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α → ¬S.InsideCircle C α →
-    S.Between A C B → S.OutsideCircle B α
-
 /-- `Elements.Tacit.pasch2`, translated. -/
 def pasch2 : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → ¬S.OnLine B L →
@@ -509,7 +504,6 @@ structure Neutral (S : Signature) : Prop where
   not_lt_zero : Law.Tacit.not_lt_zero S
   not_on_line_of_same_side : Law.Tacit.not_on_line_of_same_side S
   on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero S
-  outside_of_between : Law.Tacit.outside_of_between S
   pasch2 : Law.Tacit.pasch2 S
   same_ray_of_angle_eq_zero : Law.Tacit.same_ray_of_angle_eq_zero S
   same_side_trans : Law.Tacit.same_side_trans S

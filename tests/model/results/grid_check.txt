@@ -1,8 +1,8 @@
 # grid_check: a second, independent exact grid check
 # command: python3 -I tests/model/grid_check.py
 # seeds: none (deterministic)
-# commit: 096804d0a4643c1986854862a2e411878b9ad36a (harness files as committed)
-# harness sha256: 85626e64af49d65ce63a55ec57d3cefc481e87a5cb704c114dff58de2b755d25
+# commit: 2ce08a8eaf9bba34a3d2c4b0f7f02a71e271b13c (harness files as committed)
+# harness sha256: 379b610970bc9d49a12fc6a34c04d28b606423c67c70997c598a3ec0b2e03d8e
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-24
 # time: 5.2 s
