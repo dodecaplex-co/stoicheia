@@ -270,9 +270,8 @@ October). The III.24 called staged above is now `Prop24` in
 segments as above; `circumference AEB A E B` is written by its companion
 `Prop24.equalCircles`, in the same file. `Staging/` holds no part of stage 3. [#67] gave
 III.30 a companion in arcs, `Prop30.halves`, and III.30's statement keeps `standing`. The
-move landed before the arc's field order was decided, so of question 3's two limits the
-later one, the consolidation release, is the one that stands. The paragraph above is left
-as drafted.*
+move landed before the arc's field order was decided, so question 3's later limit, the
+consolidation release, is the one that stands. The paragraph above is left as drafted.*
 
 **Options.**
 
