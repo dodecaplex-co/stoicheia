@@ -22,11 +22,11 @@
   unchanged, as wave two's preparation, #413, moved two samplers into `gs_convex`.
   Since wave two, Circle 3's law was the one user of `gs_convex`, so the whole function
   goes, with its kinds that nothing drew from any more; each harness's `in_or_on`, which
-  nothing else there called, goes too. The copy of Circle 3's predicate in `tests/model/derived.py` is
-  unchanged. No other law changes, and the law decides as before on every configuration,
-  drawing the same random numbers in the same order.
+  nothing else there called, goes too. The copy of Circle 3's predicate in
+  `tests/model/derived.py` is unchanged. No other law changes, and the law decides as
+  before on every configuration, drawing the same random numbers in the same order.
 
-  At commit `c29cf9bd9fed`, this change's code, `python3 -I tests/model/run.py --full
+  At commit `096804d0a464`, this change's code, `python3 -I tests/model/run.py --full
   --write` passed every check. Below each file's header, which names the commit, the
   harness's hash and the time taken, every line it wrote is the line the harness before
   this change wrote, save for the exhaustive harness's timings; so the rewritten law and
