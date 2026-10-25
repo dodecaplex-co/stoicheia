@@ -26,10 +26,9 @@
   without the field, a step without a name, and a `facts.json` with no entries each fail,
   since each would otherwise let the pin pass. One expectation of this form keeps the
   three rules out of the `shared_steps` of all 140 entries. An expectation naming one
-  entry could not do so even for that entry, for it still refuses to read `shared_steps`
-  by name, as a test from #150's review asks. The pre-flight compares a key it has no
-  rule for, such as `every`, exactly, so dropping or altering it later is a check change,
-  as dropping a `ref` is.
+  entry still refuses to read `shared_steps` by name, as a test from #150's review asks.
+  The pre-flight compares a key it has no rule for, such as `every`, exactly, so
+  dropping or altering it later is a check change, as dropping a `ref` is.
 
   What the pin cannot see is a rule called only through another lemma outside the entry's
   namespace, one of `Elements/BookIII/MixedAngles.lean`, say, or another proposition's
