@@ -229,11 +229,12 @@ is not a draft; a pull request labelled release waits until no blocks-release is
 pull request is open, read from GitHub at the gate, with any unreadable response refusing
 the merge, merges only on a record of the full pre-flight of its head (never one that left
 step 4 to CI), and only with a green run of .github/workflows/safe-push-tests.yml at its
-exact head, whose copy of that workflow is origin/main's, with each of the workflow's
-three jobs there and passed, and every job passed but the one that reports a red run on
-main (suite_gate, #301). Malformed labels refuse; the merge and pre-flight watcher ignore
-a stale release-gate job from Release gate only on an ordinary pull request with readable
-labels.
+exact head, whose copy of that workflow is origin/main's, with each of the three jobs the
+gate names there and passed (the verdict on the safe_push tests' shards, the negative
+tests, the formal model's check), and every other job passed, the eight shards among them,
+but the one that reports a red run on main (suite_gate, #301). Malformed labels refuse;
+the merge and pre-flight watcher ignore a stale release-gate job from Release gate only on
+an ordinary pull request with readable labels.
 The pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
@@ -511,7 +512,11 @@ RISK_TIMEOUT = 300        # seconds origin/main's risk.py may take to class a ch
 # (#301), the head's copy of it being origin/main's, since a run at the head runs the
 # head's copy: each of its jobs in SUITE_JOBS there and passed, and every other job too,
 # save the one that reports a red run on main, which a green run skips. SUITE_JOBS are
-# the workflow's jobs but that one (Units holds them to the workflow).
+# the workflow's jobs but that one and the matrix of its eight shards, safe-push-shards,
+# whose jobs GitHub names `safe-push-shards (K)`: the verdict on the shards,
+# safe-push-tests, which needs them, the negative tests and the formal model's check. The
+# gate holds each shard's job to have passed as it holds any job it does not name (Units
+# holds both to the workflow).
 SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
@@ -5905,9 +5910,11 @@ def suite_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
     at its exact head (#301): a completed, successful run of
     .github/workflows/safe-push-tests.yml whose head is the pull request's, in which each
     job of SUITE_JOBS is there and passed, and every other job passed too, save `report`,
-    which runs only for a red run on main and so is skipped in a green one. Those jobs are
-    the suite of scripts/test_safe_push.py, the negative tests in full and the formal
-    model's build and kernel re-check, which CI runs on a pull request only by its class.
+    which runs only for a red run on main and so is skipped in a green one. The jobs of
+    SUITE_JOBS are the verdict on the shards of scripts/test_safe_push.py, the negative
+    tests in full and the formal model's build and kernel re-check, which CI runs on a pull
+    request only by its class; the shards, the eight jobs of the matrix the verdict needs,
+    are among the others, each held to have passed.
     A run at the head runs the head's copy of the workflow, which could drop or empty a
     job, so the head's copy must be origin/main's: a change to it lands first, in a pull
     request of its own. An ordinary pull request asks GitHub nothing here; unreadable
