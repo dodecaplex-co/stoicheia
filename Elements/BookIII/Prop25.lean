@@ -356,8 +356,8 @@ theorem Prop25.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X 
 the circle ABC, the core run on the points of its arc on P's side (which meet every
 straight line from within the base, by `Prop25.meets`) finds a circle that is ABC itself
 (`Prop25.complete`), so its centre E is the centre of ABC. This is III.25's statement
-before brief 0006 restated it, with the centre-existence hypothesis removed; it retains
-its certificate. Proved from the core,
+before brief 0006 restated it, with the centre-existence hypothesis removed (the `example`
+below checks it against that statement); it retains its certificate. Proved from the core,
 `Prop25.meets` and `Prop25.complete`, it checks that the pieces fit. -/
 theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hC : OnCircle C ABC) :
@@ -372,5 +372,15 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hA : OnCircle A ABC)
   obtain ⟨hγ, -⟩ := Prop25.complete hA hC hSB hBP hAγ hBγ hCγ
   rw [hγ] at hE
   exact ⟨B, D, E, hSB.1, hBP, hADC, hAD, hADB, hE, hDBE, k₁, k₂, k₃⟩
+
+/-- The check: III.25's statement before brief 0006 restated it, with its centre-existence
+hypothesis, follows from `Prop25.of_circle` (checked by Lean). -/
+example : ∀ {A C : Point} {ABC : Circle}, (∃ E : Point, Centre E ABC) →
+    OnCircle A ABC → OnCircle C ABC →
+    ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
+      Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧
+      (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧
+      (∠ A B D < ∠ B A D → SameSideOf E B A C) :=
+  fun _ hA hC => Prop25.of_circle hA hC
 
 end Elements.BookIII
