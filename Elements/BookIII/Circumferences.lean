@@ -119,7 +119,6 @@ theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : O
   have hBCA : Triangle B C A := hAK.triangle
   have hGA : ‖G A‖ = ‖G B‖ := Definition15 hG hA hB
   have hGC : ‖G C‖ = ‖G B‖ := Definition15 hG hC hB
-  have hAG : A ≠ G := ne_of_centre_of_on hG hA
   /- G is off the straight lines AB and AC, for it lies on BC between B and C. -/
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hBCA.ne₁₂
   have hG_L : OnLine G L := on_line_of_between_ends hBGC hB_L hC_L

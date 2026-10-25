@@ -347,7 +347,7 @@ def gen_outside():
             yield dict(A=A, B=B, C=C, al=c)
 
 
-run('outside_of_between', gen_outside())
+run('derived.outside_of_between', gen_outside())
 
 
 def gen_two_circ_common():
