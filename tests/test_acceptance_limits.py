@@ -61,7 +61,7 @@ class AllowedLimits(unittest.TestCase):
     def test_an_allowed_row_asks_its_scope_and_tag(self):
         # The table is empty, so a made-up row keeps P3's two refusals for a listed
         # proposition tested: the scope not allowed, and the allowed scope without its tag;
-        # and the row does not allow III.31, which has the same tag (#421).
+        # and the row does not allow III.31, given the same tag (#421).
         with patch.object(acceptance, "ALLOWED_LIMITS",
                           {"III.16": ("partial", "mixed-angles-omitted")}):
             self.assertEqual(
