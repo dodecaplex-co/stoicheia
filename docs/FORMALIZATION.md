@@ -680,22 +680,17 @@ attribute's brackets, and a word closed up to a number remains visible. An adjac
 numeric projection stays a projection; where a declared `.` notation makes a longer
 number the competing reading, the longer boundary stays visible too. Whitespace and
 comments end projection adjacency, as they do in Lean. A name ends where Lean 4.35 ends
-it: its plain parts use only the characters its `isIdFirst` and `isIdRest` take, and plain
-or «…» parts are joined by a `.` before a character that may begin a part. Thus the reader
-takes `«a».r` whole before the plain string in `«a».r"…"`. A letter or digit that no name
-holds, as the `¹` of the postfix `⁻¹`, does not join the word after it (`1⁻¹set_option` is
-`1`, `⁻¹` and `set_option`); and the reader ends a plain part sooner, before any of the 96
+it, made only of the characters its `isIdFirst` and `isIdRest` take, so a letter or digit
+that no name holds, as the `¹` of the postfix `⁻¹`, does not join the word after it
+(`1⁻¹set_option` is `1`, `⁻¹` and `set_option`); and it ends sooner, before any of the 96
 characters a Lean name may hold that Python's `\w` does not take, as `℃`, which no file
 uses, so that a word after a token ending in one, as a library's, is seen to begin
 (`2 +℃1set_option`). Ending a name early, or blanking a character, shows the scan more
 words, and changes nothing else, but where a character literal, a raw string, or an
 `s!`, `m!`, `f!` or `throwError` follows closed up: Lean may read on through it as part
 of the name or a token, so the scan refuses the literal or the raw string, and takes no
-such word to begin an interpolated string (the list above). The closed-up run continues
-through each `.` before a character that may begin a name, so a raw string after `℃.` is
-refused too: depending on the tokens declared and the parser, Lean may instead read the
-`r` as part of the name. The scan also refuses a token the file declares that ends in a
-character a name may hold (the list above). It does not read the
+such word to begin an interpolated string (the list above). It refuses a token the file
+declares that ends in a character a name may hold (the list above). It does not read the
 rest, and these stay open, each example built in Lean 4.35 as written:
 - Lean's own tokens that begin with `#`
   ([#320](https://github.com/jackChallis/stoicheia/issues/320)), which the scan reads as
