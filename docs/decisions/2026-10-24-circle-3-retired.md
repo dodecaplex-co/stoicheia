@@ -117,7 +117,7 @@
   and whose account of its runs gives the counts of this lock.
 
   The numerical model's results were written again on this harness:
-  `python3 -I tests/model/run.py --full --write` ran at commit `fd91db4a13e2`, and every
+  `python3 -I tests/model/run.py --full --write` ran at commit `2ce08a8eaf9b`, and every
   check passed: no configuration of the plane broke an axiom, each of the 15 weakened
   statements was caught, and in the hyperbolic plane only `Postulate5` failed, as it must.
   With one law fewer drawing on the random numbers, the search's three seeds and the
