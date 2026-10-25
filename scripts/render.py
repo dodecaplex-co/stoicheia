@@ -1382,21 +1382,78 @@ def command_body(text):
     return text, ""
 
 
-def bound_names(header, body):
-    """The simple names bound by a declaration header or locally in its value."""
+def header_bound_names(header):
+    """The simple names bound by a declaration header."""
     names = set()
     for group in re.findall(r"[({\[⦃]([^(){}\[\]⦃⦄]*)[)}\]⦄]", header):
         left, colon, _ = group.partition(":")
         if colon:
             names.update(re.findall(r"(?<![\w'])[_\w][\w']*", left))
-    names.update(re.findall(r"\b(?:have|let|set)\s+([_\w][\w']*)\s*(?::|:=|←)", body))
     return names
+
+
+def mask_span(text, start, end):
+    """`text` with one name-sized span blanked."""
+    return text[:start] + " " * (end - start) + text[end:]
+
+
+def body_uses(names, longer, header, body):
+    """Whether a declaration value refers to `names`, respecting its local scopes."""
+    header_names = header_bound_names(header)
+    scopes = []
+    pending = []
+    for line in body.splitlines():
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip())
+        if re.match(r"\s*[·|]", line):
+            scopes = [(level, bound) for level, bound in scopes if level < indent]
+        else:
+            scopes = [(level, bound) for level, bound in scopes if level <= indent]
+        still_pending = []
+        for level, bound in pending:
+            if indent == level:
+                scopes.append((level, bound))
+            elif indent > level:
+                still_pending.append((level, bound))
+        pending = still_pending
+        shadowed = header_names | {name for _, bound in scopes for name in bound}
+        chunks = re.split(r"(;)", line)
+        for chunk in chunks:
+            if chunk == ";":
+                continue
+            masked = chunk
+            immediate = set()
+            delayed = set()
+            intro = re.search(r"\b(?:intro|rintro)\s+(.+)", chunk)
+            if intro:
+                for match in re.finditer(r"[_\w][\w']*", intro.group(1)):
+                    start = intro.start(1) + match.start()
+                    end = intro.start(1) + match.end()
+                    immediate.add(match.group())
+                    masked = mask_span(masked, start, end)
+            local = re.search(r"\b(?:have|let|set)\s+([_\w][\w']*)\s*(?::|:=|←)", chunk)
+            if local:
+                delayed.add(local.group(1))
+                masked = mask_span(masked, local.start(1), local.end(1))
+            if use_pattern(names, longer, shadowed | immediate).search(masked):
+                return True
+            if immediate:
+                scopes.append((indent, immediate))
+                shadowed |= immediate
+            if delayed:
+                if re.search(r"(?::=|←)\s*(?:by)?\s*$", chunk):
+                    pending.append((indent, delayed))
+                else:
+                    scopes.append((indent, delayed))
+                shadowed |= delayed
+    return False
 
 
 def command_uses(names, longer, text):
     """Whether a declaration command's value refers to one of `names`."""
     header, body = command_body(text)
-    return bool(body and use_pattern(names, longer, bound_names(header, body)).search(body))
+    return bool(body and body_uses(names, longer, header, body))
 
 
 @functools.cache
@@ -1505,6 +1562,28 @@ theorem Prop9.let_shadow : True := by
   let let_bound : True := trivial
   exact let_bound
 
+theorem Prop9.intro_bound : True := trivial
+
+theorem Prop9.intro_shadow : True → True := by
+  intro intro_bound; exact intro_bound
+
+theorem Prop9.before_local : True := trivial
+
+theorem Prop9.before_local_user : True := by
+  have h : True := before_local; have before_local : True := trivial; exact h
+
+theorem Prop9.scope_inner : True := trivial
+
+theorem Prop9.scope_exit : True := trivial
+
+theorem Prop9.scope_user : True := by
+  have h : True := by
+    have scope_inner : True := trivial
+    have scope_exit : True := trivial
+    exact scope_inner
+  have := scope_exit
+  exact h
+
 def Prop9.header_type : Prop := True
 
 theorem Prop9.header_mention (_ : Prop9.header_type) : True := trivial
@@ -1543,6 +1622,8 @@ theorem Prop9.general : True := by
   have := Prop9.mid
   have := hidden
   have := rule_own
+  have := Prop9.before_local_user
+  have := Prop9.scope_user
   have := Prop9.qualified_shadow trivial
   have := Prop9.unqualified_top
   exact Fitted.fan.within
@@ -1593,6 +1674,12 @@ USE_CASES = [   # (a declaration of the first file, how it is used)
     ("Prop9.bound", "beside"),
     ("Prop9.local", "beside"),
     ("Prop9.let_bound", "beside"),
+    ("Prop9.intro_bound", "beside"),
+    ("Prop9.before_local", "own"),
+    ("Prop9.before_local_user", "own"),
+    ("Prop9.scope_inner", "beside"),
+    ("Prop9.scope_exit", "own"),
+    ("Prop9.scope_user", "own"),
     ("Prop9.header_type", "beside"),
     ("Prop9.qualified", "own"),
     ("Prop9.qualified_shadow", "own"),
