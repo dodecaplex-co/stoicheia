@@ -79,9 +79,9 @@ class AllowedLimits(unittest.TestCase):
 
     def test_a_row_for_a_full_record_fails(self):
         # An allowance that outlives its need is stale (#162, item 3): with made-up rows for
-        # III.16 and I.45, each full record fails P3 with its own row's scope and tag, with
-        # that tag, without it and with another; and III.31, a full record no row names,
-        # still passes.
+        # III.16 and I.45, each full record fails P3 with its own row's scope and tag,
+        # whether it carries III.16's row tag, none, or the tag III.16's record carries; and
+        # III.31, a full record no row names, still passes.
         def stale(scope, tag):
             return [f"the statement is full, so its allowance as a {scope} statement with "
                     f"`{tag}` is stale: its row in ALLOWED_LIMITS and in "
