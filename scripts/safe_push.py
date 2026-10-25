@@ -2,9 +2,9 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--commit <sha>] [--dry-run]
+                  [--commit <sha>] [--dry-run] [--main-checks-cache]
     git safe-push --merge <pr-number> [--dry-run]
-    git safe-push --dry-run [--commit <sha>]                      # the checks alone
+    git safe-push --dry-run [--commit <sha>] [--main-checks-cache]  # the checks alone
 
 `git safe-push` is the launcher scripts/install_hooks.sh installs outside the tracked
 tree (scripts/hooks/safe-push): it runs origin/main's copy of this file, whatever the
@@ -51,7 +51,13 @@ order, and the first that fails stops it with a message saying why:
    The programs it runs as checks are not: they keep the environment tool_env() copies,
    which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
    otherwise only if the caller set it, and no other variable of git's, so that a check
-   finds its repository by its working directory, never by a hook's GIT_DIR (#355).
+   finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
+   does any command safe_push.py runs itself, git's or another's, get a variable that
+   ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
+   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
+   the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
+   working directory too, the hand-over's included (#357). The harness sets one itself,
+   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main. First, before the commit is checked out, the
    paths guards. They read the tree of each commit the push brings (origin/main..the
    commit), each tree once, and a finding names, for each tree that holds it, the first
@@ -90,6 +96,10 @@ order, and the first that fails stops it with a message saying why:
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
+   - the commit's registry of checks reads, by the commit's own scripts/registry.py, as
+     the pre-flight of every later train will read it once the commit is origin/main's
+     (guard_registry): render.py and CI load the reader from scripts/ and read the
+     worktree, so a reader that works only so would pass them both;
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
      deleted unless the decisions record gains a new line naming it, as a protected path
      is named;
@@ -126,7 +136,14 @@ order, and the first that fails stops it with a message saying why:
    judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
    ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
    sequence of docs/WORKFLOW.md, section 8, in that worktree, and
-   `negative_tests.py` in a second one, each step timed. The checks run with
+   `negative_tests.py` in a second one, each step timed. The sequence is CI's `check`
+   job's as origin/main's registry of checks lists it (checks/, one file per check, read
+   out of git by origin/main's scripts/registry.py, run from a temporary directory: never
+   the commit's registry or reader, so that a change cannot alter the checks its own
+   pre-flight runs), then the `model` job's (check_sequence;
+   docs/decisions/2026-10-22-check-registry.md).
+   While origin/main holds no registry, the lists built in here stand in for it; when it
+   holds one that cannot be read, the pre-flight refuses. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
    below); when the commit changes any of those, they run again with the commit's own
    copies, which must pass. A check that fails with origin/main's copies is noted for the
@@ -158,9 +175,20 @@ order, and the first that fails stops it with a message saying why:
    the model's law names, and a law's code in the two harnesses that check every law
    (MODEL_LAW_CODE), only while each law changed moves with its axiom; the Markdown of
    the check inputs that are not code (COUNTED_PROSE) only while nothing but the values
-   between its count markers changes), which move with the content they pin. A crash of
+   between its count markers changes, and the model's page, whose prose may change too,
+   only while its count markers stand), which move with the content they pin. A crash of
    origin/main's render.py, its check of docs/program.toml among them, is a verdict.
-   Step 3's two checks run the same way.
+   Step 3's two checks run the same way. With --main-checks-cache, for R3 to R5 (the
+   classes that run this step in full), but not on a train/* branch, whose train check
+   runs in this process after the commit's code (open_cache), origin/main's pass here
+   (both its loops) is
+   reused from ~/.cache/stoicheia/main-checks/ when an earlier run checked the same trees
+   with the same harness, toolchain and environment (main_checks_fields). After the
+   class is read and origin/main's count-marker reader is loaded, every command the run
+   starts runs under sandbox-exec, which stops it writing that directory (open_cache);
+   without the sandbox, there is no cache. It does not stop a run without the flag, nor
+   code run as the user outside a flagged run, nor what a flagged run's code leaves for
+   a later command or a later run to load before its sandbox starts (run).
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
@@ -221,6 +249,15 @@ or GitHub not to be asked, or answering with no state of its own, is "merge stat
 unknown", with no revert advised. Afterwards that merge commit is checked to join the
 base and the head checked, with the head's tree.
 
+When main's rules require a merge queue, --merge keeps these gates, checks the head
+against the newest commit of origin/main's first-parent chain that it contains, as the
+queue's judge does, and enqueues it with expectedHeadOid pinned.
+It follows the queue to a verified merge or an ejection; an unreadable or timed out
+verdict is exit 3. In both modes, open main-red issues or a failed completed post-merge
+run at main's tip refuse every merge but the fix's: a pull request whose body has the
+line "Fixes main-red: #<n>", naming every open main-red issue and no other, and whose
+own CI passes, as every merge's must. Unreadable rules or main-health answers refuse too.
+
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
 `scripts/hooks/pre-push` (installed by `scripts/install_hooks.sh`), runs origin/main's
@@ -252,14 +289,24 @@ import io
 import json
 import math
 import os
+import platform
+# platform.mac_ver() imports plistlib, and with it xml.parsers.expat, when it is first
+# called; Python's own handling of an uncaught exception imports traceback, and with it
+# a dozen more: both imported here, with tomllib, so that nothing is imported once the
+# sandbox is set (run), not even when the run crashes there.
+import plistlib  # noqa: F401
 import posixpath
 import re
+import secrets
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
 import time
+import tomllib
+import traceback  # noqa: F401
 import types
 import unicodedata
 from collections import Counter
@@ -364,12 +411,17 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
-# checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
-# added, removed, or with its command, job or order changed, is named in a decisions entry.
-# PROTECTED_JUDGED, below, joins them.
+# checks/ is the registry of CI's `check` job, one file per check (#229): a check added,
+# removed, or with its command, job or order changed, is named in a decisions entry.
+# docs/ACCEPTANCE.md's table of the limitations allowed is what tests/test_acceptance_limits.py
+# ties to check_acceptance.py's ALLOWED_LIMITS, so it is a check input, protected as one
+# (#249). PROTECTED_JUDGED, below, joins them. scripts/auto_revert.py keeps its own copy of the
+# two, in this order, since it must not import the revision it reverts; a change here is
+# made there too (tests/test_auto_revert.py compares them).
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/",
+             "docs/ACCEPTANCE.md")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
 # that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
@@ -385,15 +437,18 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
 # The checks and what they expect: origin/main's copies judge the commit (step 4). The
-# registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
-# check change, kept apart from what the checks judge.
+# registry, checks/, is one of them: a commit that changes it is a check change, kept apart
+# from what the checks judge, and the sequence step 4 runs is origin/main's registry in any
+# case (check_sequence). So is docs/ACCEPTANCE.md, whose table of allowed limitations and
+# check_acceptance.py's ALLOWED_LIMITS change together (#249).
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
-                "checks/")
+                "checks/", "docs/ACCEPTANCE.md")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
 # laws; `results_check.py` holds them to one commit and the present harness, and
-# `check_fidelity.py` the page's count markers to what they count. The certificate's
+# `check_fidelity.py` the page's count markers to what they count. A change to the page is
+# a pinned value only while the same markers stand in it (counts_moved). The certificate's
 # expectations are checked one way only, each for what it says, so a change to them is a
 # pinned value only while it keeps every expectation origin/main has (kept_expectations).
 # The model's law names are compared with the lock both ways, but a line of them changed
@@ -401,10 +456,10 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # is a pinned value only while each line changed moves with its axiom's entry in the lock
 # (laws_move_with_axioms). The values between count markers in the Markdown of
 # COUNTED_PROSE, below, are compared exactly with the files they count (check_fidelity.py),
-# so a change to that Markdown is a pinned value only while nothing but those values
-# changes (counts_moved). A change to the content they pin moves them with it, in the same
-# pull request; they stay protected (a decisions line, security-review, the lock's guard),
-# and the commit's own checks must pass.
+# so a change to that Markdown, the model's page aside, is a pinned value only while
+# nothing but those values changes (counts_moved). A change to the content they pin moves
+# them with it, in the same pull request; they stay protected (a decisions line,
+# security-review, the lock's guard), and the commit's own checks must pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
 MODEL_HASH = "tests/model/lock.sha256"
 MODEL_LAWS = "tests/model/laws.toml"
@@ -418,13 +473,14 @@ PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
 MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 # The check inputs that are not code: Certificate/FIELDS.md and review/SCHEMA.md say what
 # the certificate and the records hold, and Markdown under tests/ is prose too
-# (tests/model/MODEL.md, the only one today, is pinned whole). render.py fills the count
-# markers in their Markdown, as COUNT_READER defines them, and check_fidelity.py holds
-# each value to the files it counts: a new word in the lock moves FIELDS.md's count of
-# the words with it, in no other order. scripts/ is check code: a count there is never
-# pinned.
+# (tests/model/MODEL.md, the only one today, is pinned whole but for its count markers,
+# which must stand). render.py fills the count markers in their Markdown, as COUNT_READER
+# defines them, and check_fidelity.py holds each value to the files it counts: a new word
+# in the lock moves FIELDS.md's count of the words with it, in no other order. scripts/ is
+# check code: a count there is never pinned.
 COUNTED_PROSE = ("Certificate/", "review/SCHEMA.md", "tests/")
 COUNT_READER = "scripts/generated_counts.py"
+COUNT_READERS: dict[tuple[str, str], object] = {}
 SECURITY_LABEL = "security-review"
 RELEASE_LABEL = "release"
 BLOCKS_RELEASE = "blocks-release"
@@ -457,12 +513,15 @@ SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
-GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
-# Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
-# STATUS_MARKERS); the rest of each is written by hand.
+GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md",
+             "docs/WORKFLOW.md")
+# Of these, three are generated only between their markers (render.py's SCOPE_MARKERS and
+# STATUS_MARKERS, and registry.py's MARKERS, between which render.py writes section 8's
+# first command block from the registry of checks); the rest of each is written by hand.
 GENERATED_REGIONS = {
     "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
     "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
+    "docs/WORKFLOW.md": re.compile(r"<!-- checks -->\n.*?<!-- /checks -->", re.S),
 }
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them (both shortened by the tests)
@@ -470,13 +529,20 @@ CI_WATCH_INTERVAL = "30"  # seconds between `gh pr checks --watch` refreshes
 HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new head
 TAIL = 40                 # lines of a failed step's output to print
 
-# The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job, but for the model job's `results_check.py`, which only
-# CI runs until it joins this list (WORKFLOW, section 8). Change it with them.
+# The registry of CI's `check` job, one file per check, and its one reader, both read at
+# origin/main for step 4 (check_sequence; docs/decisions/2026-10-22-check-registry.md).
+REGISTRY = "checks"
+REGISTRY_READER = "scripts/registry.py"
+REGISTRY_TIMEOUT = 120    # seconds a registry.py, origin/main's or the commit's, may take
+# The name of the registry's one `empty` entry, the check that `git status --porcelain`
+# prints nothing; no command may bear it (check_sequence, FRESHNESS).
+EMPTY_CHECK = "git status --porcelain is empty"
+# The `check` job's sequence, built in: it stands in for the registry only while
+# origin/main holds none, so that the train that adds the registry is judged by the
+# sequence every train was judged by before it. Units pins it to a list of its own, as it
+# pins MODEL_JOB and NEGATIVE, so that the registry grows without it. A follow-up card
+# removes these lines once the registry is on main.
 CHECKS = [
-    ("python3 -I tests/test_check_paths.py", [PY, "-I", "tests/test_check_paths.py"]),
-    ("python3 scripts/check_paths.py --self-test",
-     [PY, "scripts/check_paths.py", "--self-test"]),
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
     ("lake build Staging", ["lake", "build", "Staging"]),
@@ -496,11 +562,21 @@ CHECKS = [
     ("python3 -I tests/test_screen.py", [PY, "-I", "tests/test_screen.py"]),
     ("python3 -I tests/test_acceptance_limits.py",
      [PY, "-I", "tests/test_acceptance_limits.py"]),
+    ("python3 -I tests/test_check_superposition_pins.py",
+     [PY, "-I", "tests/test_check_superposition_pins.py"]),
+    ("python3 -I scripts/check_superposition_pins.py",
+     [PY, "-I", "scripts/check_superposition_pins.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
-    ("git status --porcelain is empty", None),
+    (EMPTY_CHECK, None),
     ("python3 scripts/check_queue.py --tree .", [PY, "scripts/check_queue.py", "--tree", "."]),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
+]
+# CI's `model` job, run after the `check` job's sequence, in the same worktree. The
+# registry holds the `check` job's checks alone, so this stays here, as NEGATIVE does. It
+# leaves out the model job's `results_check.py`, which only CI runs until it joins this
+# list (WORKFLOW, section 8).
+MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
 # CI's `negative` job, in a second disposable worktree: negative_tests.py plants breaks
@@ -516,6 +592,17 @@ ARGV: list[str] = []      # this run's arguments, for origin/main's harness to r
 HARNESS = "this copy of `scripts/safe_push.py`"   # which harness ran, for the record
 HARNESS_BLOB: str | None = None     # its blob, when it is origin/main's
 
+# The cache of origin/main's pass of step 4 (--main-checks-cache; open_cache, MainChecks).
+# CACHE is its directory while this run uses it, and SANDBOX the sandbox-exec profile that
+# every command then runs under (run), which may not write it. Both stay None without the
+# flag, or when the directory or the sandbox cannot be had.
+MAIN_CHECKS_FORMAT = 1
+SANDBOX_EXEC = "/usr/bin/sandbox-exec"
+DENIED = "Operation not permitted"      # what a write the sandbox refuses says (EPERM)
+ENTRY_BYTES = 16 * 2 ** 20      # the largest entry read: 16 MiB (one measured 156,119 bytes)
+CACHE: Path | None = None
+SANDBOX: str | None = None
+
 
 class Refusal(Exception):
     """A step failed: nothing is pushed or merged (or, after it, nothing more is done)."""
@@ -529,12 +616,39 @@ class NothingToPush(Exception):
 # Running commands
 
 
-def without_replacements(env=None) -> dict:
-    """A copy of `env` (os.environ when None) with GIT_NO_REPLACE_OBJECTS=1 and no
-    GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets core.useReplaceRefs=true in
-    config override it, which run() pins off (NO_REPLACE_REFS)."""
-    env = dict(os.environ if env is None else env)
-    env.pop("GIT_REPLACE_REF_BASE", None)
+# The variables that tie git to one repository, as `git rev-parse --local-env-vars` lists
+# them. A hook sets some of them (GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE) for the
+# repository it runs in; left set, they would send safe_push's own commands to that
+# repository and its index: `git worktree add` would check the commit out into a linked
+# worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
+# one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
+# repository by the working directory each command names; the one the harness sets itself,
+# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
+# 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
+REPOSITORY_VARIABLES = frozenset({
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
+    "GIT_INDEX_FILE", "GIT_INTERNAL_SUPER_PREFIX", "GIT_NO_REPLACE_OBJECTS",
+    "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE",
+    "GIT_WORK_TREE"})
+
+
+def own_env(env=None, keep=()) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but those
+    KEPT_GIT_VARIABLES names, so that a check started with tool_env() keeps
+    GIT_NO_REPLACE_OBJECTS (#355, #357), and those `keep` names, which the harness sets
+    itself, on purpose (base_tree's temporary GIT_INDEX_FILE)."""
+    return {name: value for name, value in (os.environ if env is None else env).items()
+            if name not in REPOSITORY_VARIABLES or name in KEPT_GIT_VARIABLES
+            or name in frozenset(keep)}
+
+
+def without_replacements(env=None, keep=()) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but
+    GIT_NO_REPLACE_OBJECTS, set to 1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41
+    still lets core.useReplaceRefs=true in config override it, which run() pins off
+    (NO_REPLACE_REFS)."""
+    env = own_env(env, keep)
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
     return env
 
@@ -544,16 +658,49 @@ def without_replacements(env=None) -> dict:
 NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 
 
-def run(cmd, cwd, *, env=None, input=None, binary=False) -> subprocess.CompletedProcess:
+def run(cmd, cwd, *, env=None, input=None, binary=False,
+        capture=True, keep=(), timeout=None) -> subprocess.CompletedProcess:
+    """Every command the harness starts starts here, but origin/main's risk.py, which
+    risk_class runs with a time limit, and the Git read that loads origin/main's
+    count-marker reader, both before the main-checks cache is opened. While the cache is
+    in use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may
+    not write the cache: git, the guards' check_fidelity.py and render.py, the readers of
+    the registry of steps 3 and 4 (the commit's own being the commit's code), every step
+    of the full checks, gh. So the commands a flagged run starts cannot write the cache
+    directly. The sandbox does not stop a run without the flag (a ship's own dry run
+    among them), which starts its commands with no sandbox; nor anything code run as the
+    same user does outside a flagged run; nor anything a flagged run's code leaves for a
+    later command to run before its sandbox starts: the launcher in
+    .git/stoicheia/, alias.safe-push in .git/config, a program earlier on the PATH, the
+    harness copy in ~/.cache/stoicheia/harness/, a module in the harness's own directory,
+    which Python searches first, or in Python's standard library (the user's own under
+    Homebrew), Python's start-up files. That is the exposure the --merge step-4 record
+    already has, a local file any code run as the user can write. A profile that allows
+    writes only where the checks need them, or a cache owned by another Unix user, could
+    narrow it; that is for the owner to decide. Nothing else in the harness may start a
+    process while the cache is in use (platform.platform() did, running `uname -p` and
+    `file -b` from the PATH: environment), nor import a module but a builtin, which
+    Python would look for first in the harness's own directory (so plistlib, and tomllib
+    on a supported interpreter, which mac_ver and the allow-list imported late, are
+    imported with the rest at the top)."""
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
-    # a clean stand-in (#256).
+    # a clean stand-in (#256). No command, git's or another's, gets one of the caller's
+    # variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS; only a name in
+    # `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE), passes (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
         cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
-        env = without_replacements(env)
-    return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=True,
-                          text=not binary)
+        env = without_replacements(env, keep)
+    else:
+        env = own_env(env, keep)
+    if SANDBOX is not None:
+        cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    # A time limit only when one is given: the CI watch, among others, has none, and its
+    # call carries none (tests/test_release_gate.py).
+    limit = {} if timeout is None else {"timeout": timeout}
+    return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
+                          text=not binary, **limit)
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
@@ -1199,7 +1346,6 @@ def load_allowlist(repo, rev) -> list[Allow]:
     text = show(repo, rev, ALLOWLIST) if rev else None
     if text is None:
         return []
-    import tomllib
     try:
         data = tomllib.loads(text)
     except tomllib.TOMLDecodeError as e:
@@ -1381,40 +1527,35 @@ def secret_scan(repo, base: str | None, sha: str, rep: Report, allow_rev: str | 
 
 
 OPEN, CLOSE = "([{⟨⦃⦗", ")]}⟩⦄⦘"
+# A «…» name, to the `»` that ends it or the end of the text, as read_lean reads one.
+LEAN_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
 def statement_end(text: str) -> int:
     """Where a declaration's statement ends: at its own `:=`, the first one outside
     brackets, comments and strings, so that a binder's default value (`(h : p := by
-    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none."""
-    depth, i, n = 0, 0, len(text)
-    while i < n:
-        if text.startswith("--", i):
-            nl = text.find("\n", i)
-            i = n if nl < 0 else nl
-            continue
-        if text.startswith("/-", i):
-            level, i = 1, i + 2
-            while i < n and level:
-                if text.startswith("/-", i):
-                    level, i = level + 1, i + 2
-                elif text.startswith("-/", i):
-                    level, i = level - 1, i + 2
-                else:
-                    i += 1
-            continue
-        c = text[i]
-        if c == '"':
-            i += 1
-            while i < n and text[i] != '"':
-                i += 2 if text[i] == "\\" else 1
-        elif c in OPEN:
+    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none.
+    Comments and string and character literals are read as Lean reads them, by the
+    scripts' one reader (heath.read_lean, #206, #349), which blanks them in place: so
+    `/-/- -/` is a whole comment, a `'"'` is a character, not a string, and a `'('` is a
+    character, not a bracket. Each «…» name is blanked here too, whole (LEAN_NAME), as
+    check_fidelity blanks them, since the reader blanks only a name's `[` and `]`: so a
+    `:=` or a bracket within a name is no `:=` and no bracket. Where the reader cannot
+    read a literal for certain before the `:=` it finds, or a string holds a `{`, whose
+    braces the reader may keep as a hole of code, the statement runs to the end of the
+    text, so that the guard compares more of it, never less."""
+    strings: list = []
+    code, unsure = heath.read_lean(text, strings)
+    unsure = unsure + [k for k, s in strings if "{" in s]
+    code = LEAN_NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
+    n, depth = len(text), 0
+    for i, c in enumerate(code):
+        if c in OPEN:
             depth += 1
         elif c in CLOSE:
             depth = max(0, depth - 1)
-        elif depth == 0 and text.startswith(":=", i):
-            return i
-        i += 1
+        elif depth == 0 and code.startswith(":=", i):
+            return n if any(k < i for k in unsure) else i
     return n
 
 
@@ -2444,7 +2585,7 @@ BASE_PASS = " (origin/main's checks)"
 # changed (render.py's output, or the certificate that writes facts.json), not a check's
 # verdict. render.py failing outright (step 3's "render.py", step 4's "python3
 # scripts/render.py") is a verdict: it checks docs/program.toml, for one.
-FRESHNESS = ("generated pages", "git status --porcelain is empty")
+FRESHNESS = ("generated pages", EMPTY_CHECK)
 
 
 # For `git worktree add`, and with DISK_AS_IS: files written and compared as the commit
@@ -2586,7 +2727,6 @@ def stamp_only(repo, base, sha, path: str) -> bool:
     old, new = show(repo, base, path), show(repo, sha, path)
     if old is None or new is None or STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new):
         return False
-    import tomllib
     try:
         before, after = tomllib.loads(old), tomllib.loads(new)
     except tomllib.TOMLDecodeError:
@@ -2613,11 +2753,12 @@ def judged_files(repo, base, sha) -> list[str]:
 
 def kept_expectations(old: str | None, new: str | None) -> bool:
     """Does the expectations file `new` keep every expectation of `old`, origin/main's
-    (None when it has none)? Each of old's is still there, matched by its ref and field:
-    its includes and excludes the same or grown, its count's prefix the same, its equals
-    still there; only the values of count.is and equals may differ, and its why, the words
-    shown when it fails. New expectations are fine. A removed expectation or field, a list
-    shrunk, or a file that does not read, is not kept."""
+    (None when it has none)? Each of old's is still there, matched by its ref, field and
+    law, which say what it reads: a ref or a law added or dropped makes it read something
+    else. Its includes and excludes the same or grown, its count's prefix the same, its
+    equals still there; only the values of count.is and equals may differ, and its why, the
+    words shown when it fails. New expectations are fine. A removed expectation or field, a
+    list shrunk, or a file that does not read, is not kept."""
     def entries(text: str | None) -> list[dict] | None:
         try:
             found = json.loads(text)["expectations"]
@@ -2627,6 +2768,8 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
         return found if ok else None
 
     def asks_as_much(y: dict, x: dict) -> bool:
+        if any((key in y) != (key in x) for key in ("ref", "law")):
+            return False
         for key, want in x.items():
             have = y.get(key)
             if key == "why":
@@ -2655,7 +2798,6 @@ def locked_axioms(text: str | None) -> dict | None:
     """The lock's [axioms] table, {name: statement}; None when it does not read, or the
     file is absent (`text` None: tomllib.loads(None) raises AttributeError before Python
     3.14, and TypeError from it)."""
-    import tomllib
     if text is None:
         return None
     try:
@@ -2670,7 +2812,6 @@ def model_laws(text: str | None) -> dict | None:
     plane)}; None unless it is a [laws] table of names and a [hyperbolic] table holding
     `fails`, a list of some of those axioms, and nothing else; None, too, when the file is
     absent (`text` None, as in locked_axioms)."""
-    import tomllib
     if text is None:
         return None
     try:
@@ -2743,31 +2884,31 @@ def law_code(text: str | bytes | None) -> tuple[list[str], dict] | None:
 LAW_GLOBALS = {
     "tests/model/search.py": {
         "call": frozenset({
-            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "_ti_hyp", "ang",
+            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "ang",
             "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
             "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
             "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
-            "length", "line_circle_points", "line_meets_circle", "line_through",
-            "lines_meet", "lval", "mag_vals", "on_circle", "on_line", "opposite", "outside",
-            "same_side", "sgn", "sub", "triangle"}),
+            "length", "line_circle_points", "line_through",
+            "lines_meet", "mag_vals", "on_circle", "on_line", "opposite", "outside",
+            "same_side", "sub", "triangle"}),
         "value": frozenset({"RA"}),
     },
     "tests/model/hyperbolic.py": {
         "call": frozenset({
             "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
-            "_ti_hyp", "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
+            "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
             "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
             "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
-            "is_centre", "is_right", "line_meets_circle", "line_through", "lines_meet",
+            "is_centre", "is_right", "line_through", "lines_meet",
             "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
-            "opposite", "outside", "pt_on_circle", "pt_on_line", "pts_on_line",
+            "opposite", "outside", "pt_on_line", "pts_on_line",
             "roots_along", "same_side", "triangle", "unit_toward"}),
         "table": frozenset({"SEEDS"}),
         "generator": frozenset({
             "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
             "gs_cong", "gs_lc", "gs_lines_meet", "gs_p4", "gs_p5", "gs_pasch",
-            "gs_pasch4", "gs_rays", "gs_sup"}),
-        "generator maker": frozenset({"gs_cm", "gs_convex", "gs_ti"}),
+            "gs_rays", "gs_sup"}),
+        "generator maker": frozenset({"gs_cm", "gs_convex"}),
     },
 }
 LAW_BUILTINS = frozenset({"abs", "all", "any", "float", "len", "range", "set", "tuple"})
@@ -3046,26 +3187,34 @@ def count_markers(repo, base):
     is the reader render.py and check_fidelity.py use, and the commit's own pass reads
     with the same one, since a commit that changes it changes scripts/, which is never
     pinned."""
+    key = os.path.realpath(repo), base
+    if key in COUNT_READERS:
+        return COUNT_READERS[key]
     source = show_bytes(repo, base, COUNT_READER)
     if source is None:
+        COUNT_READERS[key] = None
         return None
     module = types.ModuleType("generated_counts")
     try:        # compiled as an import compiles it, without this file's __future__ import
         exec(compile(source, f"origin/main:{COUNT_READER}", "exec", dont_inherit=True),
              vars(module))
     except Exception:       # a copy that does not load reads no marker: nothing is pinned
+        COUNT_READERS[key] = None
         return None
-    return getattr(module, "markers", None)
+    COUNT_READERS[key] = getattr(module, "markers", None)
+    return COUNT_READERS[key]
 
 
 def counts_moved(repo, base, sha, path: str) -> bool:
     """Is the commit's change to `path`, Markdown of COUNTED_PROSE, confined to the values
     between its count markers, as origin/main's generated_counts reads them
-    (count_markers)? The file stays a regular file of the same mode, the same markers stand
-    by name and in order, every byte outside their values is as it was, and a value moves.
-    A marker added, removed or renamed, any other byte changed, a file added or deleted, or
-    one either side cannot read, is not. The commit's own check_fidelity.py holds each
-    value to the files it counts."""
+    (count_markers)? (For the model's page, do those markers stand?) The file stays a
+    regular file of the same mode, the same markers stand by name and in order, every byte
+    outside their values is as it was, and a value moves. The model's page (MODEL_PAGE) is
+    its account of the laws, pinned whole for its prose, so there only the markers must
+    stand (#187). A marker added, removed, renamed or reordered, any other byte changed but
+    in the model's page, a file added or deleted, or one either side cannot read, is not.
+    The commit's own check_fidelity.py holds each value to the files it counts."""
     if not (path.endswith(".md") and under(path, COUNTED_PROSE)):
         return False
     raw = git(repo, "diff", "--raw", "-z", "--no-renames", base, sha, "--", f":(literal){path}")
@@ -3081,6 +3230,8 @@ def counts_moved(repo, base, sha, path: str) -> bool:
         found = [read(text, path) for text in texts]
     except (UnicodeDecodeError, ValueError):
         return False
+    if path == MODEL_PAGE:
+        return [m.name for m in found[0]] == [m.name for m in found[1]]
 
     def outside(text: str, markers) -> list[str]:
         cuts = [0, *(i for m in markers for i in (m.value_start, m.value_end)), len(text)]
@@ -3090,24 +3241,29 @@ def counts_moved(repo, base, sha, path: str) -> bool:
 
 def pinned(repo, base, sha, path: str) -> bool:
     """Is the commit's change to the check input `path` a value pinned to the edition? The
-    lock, the model's hash of it, and its page and results, always; the certificate's
-    expectations, while the change keeps every one origin/main has (kept_expectations);
-    the model's law names, and a law's code in the two harnesses that check every law,
-    while each law changed moves with its axiom (laws_move_with_axioms); and the Markdown
-    of the check inputs that are not code, while nothing but the values between its count
-    markers changes (counts_moved). A file under scripts/ never is."""
+    lock, the model's hash of it, and its results, always; its page, while the same count
+    markers stand in it (counts_moved); the certificate's expectations, while the change
+    keeps every one origin/main has (kept_expectations); the model's law names, and a
+    law's code in the two harnesses that check every law, while each law changed moves
+    with its axiom (laws_move_with_axioms); and the Markdown of the check inputs that are
+    not code, while nothing but the values between its count markers changes
+    (counts_moved). A file under scripts/ never is."""
     if path == EXPECTATIONS:
         return kept_expectations(show(repo, base, path), show(repo, sha, path))
     if path == MODEL_LAWS or path in MODEL_LAW_CODE:
         return laws_move_with_axioms(repo, base, sha, path)
+    if path == MODEL_PAGE:
+        return counts_moved(repo, base, sha, path)
     return under(path, PINNED) or counts_moved(repo, base, sha, path)
 
 
-# origin/main's path check and its cases (CHECKS): every path of the tree is what they
-# judge, so a failure of either is a verdict whatever else the commit changes (keep_apart).
-# Read from CHECKS, so that a command reworded there keeps the rule, and there must be two.
-PATH_CHECKS = tuple(name for name, _ in CHECKS if "check_paths" in name)
-assert len(PATH_CHECKS) == 2, PATH_CHECKS
+# origin/main's path check and its cases, by the names of their entries in the registry
+# (checks/, as check_sequence reads it; each name is its command's words): every path of
+# the tree is what they judge, so a failure of either is a verdict whatever else the
+# commit changes (keep_apart). Units holds them to the registry's names, so that an entry
+# reworded there cannot drop the rule unseen.
+PATH_CHECKS = ("python3 -I tests/test_check_paths.py",
+               "python3 scripts/check_paths.py --self-test")
 
 
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
@@ -3129,11 +3285,12 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
     what each expectation says, so the commit's own pass could never catch it. Nor is a
-    count marker added, removed or renamed, or any other byte of that Markdown changed:
-    the commit's own pass checks the values alone. Check code changed with judged content
-    is kept apart, pinned values or not; and so is a law of the model changed while its
-    axiom stands, for the commit's own pass could not catch that either. True when it
-    refuses."""
+    count marker added, removed, renamed or reordered, in that Markdown or in the model's
+    page, nor any other byte of that Markdown changed (the page's prose moves with its
+    laws): the commit's own pass checks the values alone, each against the marker that
+    holds it. Check code changed with judged content is kept apart, pinned values or
+    not; and so is a law of the model changed while its axiom stands, for the commit's own
+    pass could not catch that either. True when it refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -3164,7 +3321,8 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     laws = [p for p in inputs if (p == MODEL_LAWS or p in MODEL_LAW_CODE)
             and not pinned(repo, base, sha, p)]
     counted = [p for p in inputs if p.endswith(".md") and under(p, COUNTED_PROSE)
-               and not pinned(repo, base, sha, p)]
+               and p != MODEL_PAGE and not pinned(repo, base, sha, p)]
+    marked = MODEL_PAGE in inputs and not pinned(repo, base, sha, MODEL_PAGE)
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}"
@@ -3175,16 +3333,19 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
                "name), which is a check change" if laws else "")
             + (f"; and it changes {', '.join(counted)} beyond the values between count "
                "markers, which is a check change" if counted else "")
+            + (f"; and it adds, removes, renames or reorders a count marker of {MODEL_PAGE} "
+               "(or adds or deletes the file, changes its mode, or leaves it unreadable), "
+               "which is a check change" if marked else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
             f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "
             f"of {EXPECTATIONS}, none of its expectations dropped or loosened, the values "
             f"between count markers in the Markdown of {', '.join(COUNTED_PROSE[:-1])} and "
-            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the "
-            f"model's account, {MODEL_PAGE} and {MODEL_RESULTS}) move with the content they "
-            f"pin, and so does a law of the model, its line of {MODEL_LAWS} and its code in "
-            f"{' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, \"Landing "
-            "work: pull requests\")")
+            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the model's account, "
+            f"{MODEL_PAGE}, its count markers standing, and {MODEL_RESULTS}) move with the "
+            f"content they pin, and so does a law of the model, its line of {MODEL_LAWS} and "
+            f"its code in {' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, "
+            "\"Landing work: pull requests\")")
     return True
 
 
@@ -3208,15 +3369,18 @@ CLASS_LINE = re.compile(r"(R[0-5]) (\S.*)")
 PATH_LINE = re.compile(r"  (R[0-5]) (.+)")
 
 
-def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
+def risk_class(repo, base: str, sha: str, labels: set[str] | None, *,
+               diff_base: str | None = None) -> Risk:
     """The class of the change `git diff base...sha`, as origin/main's scripts/risk.py
     gives it (`risk.py --diff`, as CI's risk job runs it): its copy at `base`, read out of
     git and run from a temporary directory, never the commit's, so that a change cannot
-    lower its own class by editing the classifier. A label can only raise the class: a
-    pull request labelled release is R5, and so is one whose labels cannot be read. A base
-    with no scripts/risk.py is R5, and so is any failure to compute the class (fail
-    closed): Git failing, the script failing or printing no class, a class below that of a
-    file it lists, a timeout."""
+    lower its own class by editing the classifier. With `diff_base`, the change classed is
+    `git diff diff_base...sha` instead, the classifier still read at `base`: so the queue's
+    judge classes an entry's block and its merge into the group by main's copy. A label
+    can only raise the class: a pull request labelled release is R5, and so is one whose
+    labels cannot be read. A base with no scripts/risk.py is R5, and so is any failure to
+    compute the class (fail closed): Git failing, the script failing or printing no class,
+    a class below that of a file it lists, a timeout; with `diff_base` or without."""
     t = time.time()
 
     def r5(why: str) -> Risk:
@@ -3237,13 +3401,14 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
     source = run(["git", "cat-file", "blob", meta[2].decode()], repo, binary=True)
     if source.returncode != 0:
         return r5(f"git could not read origin/main's {RISK}")
+    start = base if diff_base is None else diff_base
     with tempfile.TemporaryDirectory(prefix="stoicheia-risk-") as tmp:
         script = Path(tmp) / "risk.py"
         script.write_bytes(source.stdout)
         try:
-            r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
-                               capture_output=True, text=True, errors="replace",
-                               timeout=RISK_TIMEOUT)
+            r = subprocess.run([PY, "-I", str(script), "--diff", start, sha], cwd=repo,
+                               env=without_replacements(), capture_output=True, text=True,
+                               errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
             return r5(f"origin/main's {RISK} could not be run: {type(e).__name__}")
     if r.returncode != 0:
@@ -3290,6 +3455,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     guard_entries(repo, base, sha, rep)
+    guard_registry(repo, sha, rep, base)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, sha, wt, inputs)) as each:
         for label, fail, excludes in each:
@@ -3323,7 +3489,9 @@ def worktree(repo, sha, parent: Path, name: str):
 
 
 def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
-             fail="FAIL", excludes=()) -> None:
+             fail="FAIL", excludes=()) -> str:
+    """One step of the full checks, timed and logged; its output, which the main-checks
+    cache keeps for origin/main's pass."""
     t = time.time()
     log = logs / f"{index:02d}{slug_of(name)}.log"
     if cmd is None:     # the generated pages are current
@@ -3336,10 +3504,11 @@ def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
     seconds = time.time() - t
     if ok:
         rep.add(stage, name, "ok", "", seconds)
-        return
+        return out
     rep.add(stage, name, fail, f"full output in {log}\n{tail(out)}", seconds)
     if fail == "FAIL":
         raise Refusal(f"`{name}` failed on the commit")
+    return out
 
 
 def copy_build(src: Path, dst: Path) -> None:
@@ -3352,25 +3521,743 @@ def copy_build(src: Path, dst: Path) -> None:
         shutil.rmtree(dst / ".lake", ignore_errors=True)
 
 
-def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) -> None:
+class CheckList(NamedTuple):
+    steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
+    why: str                                     # where they came from, for the step line
+    built_in: bool = False                       # CHECKS: the revision holds no registry
+
+
+def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
+    """The checks step 4 runs on a commit against `base`, origin/main: the `check` job's,
+    as base's registry lists them, then the `model` job's (MODEL_JOB). The registry,
+    checks/, and its reader, scripts/registry.py, are base's: the reader is read out of git
+    and run from a temporary directory, and reads the registry out of git at base, both
+    with git's replacement objects off; never the commit's registry or reader, nor the
+    worktree's, so that a change cannot alter the checks its own pre-flight runs. With
+    neither at base (the train that adds them), the built-in CHECKS (built_in). A Refusal
+    when base holds either and the registry cannot be read: the other missing or not a
+    regular file or folder, the reader failing, outlasting its time or printing anything
+    but a list of checks of the `check` job, or no check at all. Never an empty list.
+
+    The names are held here as well as by the reader, which a train may change: the
+    `empty` entry, and only it, is named EMPTY_CHECK, and every other entry's name is its
+    command's words joined by spaces, so that no command is ever named as a step whose
+    failure FRESHNESS passes over. Step 3 reads the commit's own registry so too, `whose`
+    naming it (guard_registry)."""
+    def refuse(why: str):
+        raise Refusal(f"{whose}'s registry of checks could not be read: {why}")
+
+    listed = run(["git", "ls-tree", "-z", "--full-tree", base, "--", REGISTRY,
+                  REGISTRY_READER], repo, binary=True)
+    if listed.returncode != 0:
+        refuse(f"git could not list {whose} {base[:12]}: "
+               f"{printable_text(listed.stderr.decode(errors='replace').strip())}")
+    found = {}
+    for record in listed.stdout.split(b"\0"):
+        if record:
+            meta, _, path = record.partition(b"\t")
+            found[os.fsdecode(path)] = meta.split()
+    if not found:
+        return CheckList(CHECKS + MODEL_JOB, f"the {len(CHECKS)} built into this harness, "
+                         f"since {whose} {base[:12]} holds no registry yet ({REGISTRY}/ "
+                         f"and {REGISTRY_READER}), then the model job's", True)
+    reader, folder = found.get(REGISTRY_READER), found.get(REGISTRY)
+    if (reader is None or len(reader) != 3 or reader[0] not in (b"100644", b"100755")
+            or reader[1] != b"blob"):
+        refuse(f"{whose} {base[:12]} holds {REGISTRY}/ but no regular file "
+               f"{REGISTRY_READER} to read it")
+    if folder is None or len(folder) != 3 or folder[1] != b"tree":
+        refuse(f"{whose} {base[:12]} holds {REGISTRY_READER} but no folder {REGISTRY}/")
+    source = run(["git", "cat-file", "blob", reader[2].decode()], repo, binary=True)
+    if source.returncode != 0:
+        refuse(f"git could not read {whose}'s {REGISTRY_READER}")
+    with tempfile.TemporaryDirectory(prefix="stoicheia-registry-") as tmp:
+        script = Path(tmp) / "registry.py"
+        script.write_bytes(source.stdout)
+        # Through run(), so that under the main-checks cache's sandbox it runs sandboxed,
+        # as every command does (#392): read as bytes, decoded leniently, as before.
+        try:
+            r = run([PY, "-I", str(script), "--rev", base, "--json", str(repo)], repo,
+                    env=without_replacements(), binary=True, timeout=REGISTRY_TIMEOUT)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            refuse(f"its {REGISTRY_READER} could not be run: {type(e).__name__}")
+    out = r.stdout.decode(errors="replace")
+    err = r.stderr.decode(errors="replace")
+    if r.returncode != 0:
+        said = (err.strip().splitlines() or [""])[-1]
+        refuse(f"its {REGISTRY_READER} exited {r.returncode}"
+               + (f": {printable_text(said)[:300]}" if said else ""))
+    try:
+        entries = json.loads(out)
+    except json.JSONDecodeError:
+        entries = None
+    if not isinstance(entries, list):
+        refuse(f"its {REGISTRY_READER} printed no list of checks")
+    steps: list[tuple[str, list[str] | None]] = []
+    for item in entries:
+        name = item.get("name") if isinstance(item, dict) else None
+        command, empty = (item.get("command"), item.get("empty")) if name else (None, None)
+        words = isinstance(command, list) and bool(command) and all(
+            isinstance(w, str) and w for w in command)
+        if (not isinstance(name, str) or not name or not name.isprintable()
+                or not ((empty is True and command is None) or (empty is False and words))):
+            refuse(f"its {REGISTRY_READER} printed an entry that is not a check: "
+                   f"{printable_text(str(item))[:200]}")
+        if item.get("job") != "check":
+            refuse(f"its {REGISTRY_READER} gives {printable_text(name)} to the job "
+                   f"{printable_text(str(item.get('job')))}, which the pre-flight does not run")
+        if empty and name != EMPTY_CHECK:
+            refuse(f"its {REGISTRY_READER} gives the `empty` check the name "
+                   f"{printable_text(name)[:200]!r}, not {EMPTY_CHECK!r}")
+        if not empty and name != " ".join(command):
+            refuse(f"its {REGISTRY_READER} names a check {printable_text(name)[:200]!r}, "
+                   "not its command's words joined by spaces")
+        if not empty and name in FRESHNESS:
+            refuse(f"its {REGISTRY_READER} gives a command the name {name!r}, which only "
+                   "the `empty` check may bear: a failure of a step of that name is "
+                   "passed over when a check change is kept apart (FRESHNESS)")
+        steps.append((name, None if empty else
+                       [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
+    if not steps:
+        refuse(f"its {REGISTRY_READER} gives no check")
+    if len({name for name, _ in steps}) != len(steps):
+        refuse(f"its {REGISTRY_READER} gives two checks of one name")
+    return CheckList(steps + MODEL_JOB, f"the {len(steps)} of {whose}'s registry, "
+                     f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
+                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+
+
+def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
+    """The commit's registry of checks reads as the pre-flight of every later train will
+    read it once the commit is origin/main's: by check_sequence at the commit, the
+    commit's own scripts/registry.py taken out of git and run alone from a temporary
+    directory, reading the commit's checks/ out of git. render.py and CI's run_checks.py
+    load the reader from scripts/ and read the worktree, so a reader that imports a module
+    beside it, or that fails only on a revision, passes them both, and once merged would
+    refuse every train, its own repair among them. Every class runs this.
+    Skipped only while the commit holds neither the registry nor its reader, when the lists
+    built in stand in for it, as they did before the registry came."""
+    t = time.time()
+    try:
+        own = check_sequence(repo, sha, "the commit")
+    except Refusal as e:
+        # Against origin/main (or, without it, the commit's parent): a commit that changes
+        # neither the folder nor the reader holds origin/main's registry, and the fault is
+        # main's; else the commit's own. Any doubt reads as the commit's.
+        old = base or (f"{sha}^" if git_ok(repo, "rev-parse", "--verify", "-q", f"{sha}^")
+                       else None)
+        try:
+            changed = changed_files(repo, old, sha, REGISTRY, REGISTRY_READER) if old \
+                else [("?", REGISTRY)]
+        except Exception:
+            changed = [("?", REGISTRY)]
+        whose = (f"{e}; so it would refuse the pre-flight of every train once it is "
+                 f"origin/main's, as {REGISTRY_READER} reads it there, alone and out of git "
+                 "(check_sequence)") if changed else (
+                 f"{e}; the commit changes neither {REGISTRY}/ nor {REGISTRY_READER}, so the "
+                 "registry it holds is origin/main's, which fails to read: a repair of the "
+                 "registry on main comes first")
+        rep.add("3", "registry of checks", "FAIL", whose, time.time() - t)
+        return
+    if own.built_in:
+        rep.add("3", "registry of checks", "skip", f"the commit holds neither {REGISTRY}/ "
+                f"nor {REGISTRY_READER}", time.time() - t)
+    else:
+        rep.add("3", "registry of checks", "ok", f"{len(own.steps) - len(MODEL_JOB)} checks, "
+                f"as the commit's own {REGISTRY_READER} reads them alone and out of git, as "
+                "a later pre-flight will", time.time() - t)
+
+
+def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
+    """check_sequence for the commit, as a step line: ok with how many and from where, or
+    FAIL and a Refusal."""
+    t = time.time()
+    try:
+        checks = check_sequence(ctx.repo, ctx.base)
+    except Refusal as e:
+        rep.add("4", "check list", "FAIL", str(e), time.time() - t)
+        raise
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}",
+            time.time() - t)
+    return checks.steps
+
+
+def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
+                sequence: list[tuple[str, list[str] | None]]) -> None:
     def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
+
+    # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
+    # kept for it on a miss; keep_apart then reads its steps as it reads them run.
+    cache = main_checks(ctx, wt, inputs, rep, sequence) if CACHE is not None else None
+
+    def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
+        if label == BASE_PASS and cache is not None and cache.hit:
+            cache.replay(steps, first, rep, logs)
+            return
+        for i, (name, cmd) in enumerate(steps, 1):
+            out = run_step("4", name + label, cmd, where, rep, logs, first + i, fail, excludes)
+            if label == BASE_PASS and cache is not None:
+                cache.collect(rep, out)
+        if label == BASE_PASS and cache is not None:
+            cache.save(rep)
 
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
     # the worktree back before the worktree is removed.
     with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
         for label, fail, excludes in each:
-            for i, (name, cmd) in enumerate(CHECKS, 1):
-                run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
+            checks(sequence, wt, label, fail, excludes, 10)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
         with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, neg, inputs)) as each:
             for label, fail, excludes in each:
-                for i, (name, cmd) in enumerate(NEGATIVE, 1):
-                    run_step("4", name + label, cmd, neg, rep, logs, 30 + i, fail, excludes)
+                checks(NEGATIVE, neg, label, fail, excludes, 30)
                 kept_apart(label)
+
+
+# --------------------------------------------------------------------------------------
+# Step 4's main-checks cache (--main-checks-cache): origin/main's pass, reused for the same
+# trees. Its directory is beside the log (~/.cache/stoicheia/main-checks/), outside every
+# worktree; each entry is <key>.json, written by the harness alone, while every command the
+# run starts runs under a sandbox that may not write the directory (open_cache, run).
+
+
+def canonical(value) -> bytes:
+    """The JSON a key and a digest are taken of: its keys sorted, no spaces, ASCII."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+                      allow_nan=False).encode()
+
+
+def sha256_of(value) -> str:
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def dir_problem(path: Path) -> str | None:
+    """Why the cache's directory may not be used, or None: it is a directory, no symbolic
+    link and reached through none (its real path is its path), owned by this user, of
+    mode 0700 exactly, and on the device of the directory above it, so that nothing
+    mounted over it stands in for it."""
+    try:
+        st = os.lstat(path)
+        above = os.lstat(path.parent)
+    except OSError as e:
+        return f"{path} cannot be read ({e.strerror or e})"
+    if stat.S_ISLNK(st.st_mode):
+        return f"{path} is a symbolic link"
+    if not stat.S_ISDIR(st.st_mode):
+        return f"{path} is not a directory"
+    if os.path.realpath(path) != str(path):
+        return (f"{path} is reached through a symbolic link (its real path is "
+                f"{os.path.realpath(path)})")
+    if st.st_uid != os.getuid():
+        return f"{path} is owned by another user"
+    if stat.S_IMODE(st.st_mode) != 0o700:
+        return f"{path} has mode {stat.S_IMODE(st.st_mode):04o}, not 0700 (chmod 700 it)"
+    if st.st_dev != above.st_dev:
+        return f"{path} is on another device than {path.parent}, as when one is mounted there"
+    return None
+
+
+def sandbox_profile(cache: Path) -> str | None:
+    """The profile every command runs under while the cache is in use: anything but a
+    write to the cache's directory or within it, or to a directory above it, since a
+    rename of one would carry the cache out from under the rule, to be written and put
+    back. None when the path holds what the profile's quoted strings could not."""
+    path = str(cache)
+    if '"' in path or "\\" in path or not path.isprintable():
+        return None
+    rules = [f'(subpath "{path}")'] + [f'(literal "{p}")' for p in map(str, cache.parents)
+                                      if p != "/"]
+    return f"(version 1) (allow default) (deny file-write* {' '.join(rules)})"
+
+
+def sandbox_problem(profile: str, cache: Path) -> str | None:
+    """Why the sandbox cannot be had, or None: sandbox-exec runs a command under the
+    profile, stops a write to the cache, leaving no file, and stops a harmless write to
+    the directory above it (`touch -c`, which makes nothing) with its own refusal,
+    "Operation not permitted", so that a profile that has lost the rules above the cache
+    is caught here, and a write that fails for another reason passes nothing. It runs
+    before SANDBOX is set, so run() adds no sandbox of its own."""
+    if sys.platform != "darwin":
+        return "the sandbox is macOS's sandbox-exec, and this is not macOS"
+    if not (os.path.isfile(SANDBOX_EXEC) and os.access(SANDBOX_EXEC, os.X_OK)):
+        return f"{SANDBOX_EXEC} is not there"
+    probe = cache / f".probe-{secrets.token_hex(8)}"
+    try:
+        r = run([SANDBOX_EXEC, "-p", profile, "/usr/bin/true"], cache)
+        if r.returncode != 0:
+            said = (r.stderr.strip().splitlines() or ["no message"])[-1]
+            return ("sandbox-exec cannot run a command under the profile, as when it runs "
+                    f"inside another sandbox ({said})")
+        r = run([SANDBOX_EXEC, "-p", profile, "/bin/sh", "-c", 'echo x > "$1"', "sh",
+                 str(probe)], cache)
+        above = run([SANDBOX_EXEC, "-p", profile, "/usr/bin/touch", "-c", str(cache.parent)],
+                    cache)
+    except OSError as e:
+        return f"sandbox-exec could not be run ({e.strerror or e})"
+    left = os.path.lexists(probe)
+    if left:
+        with contextlib.suppress(OSError):
+            os.unlink(probe)
+    if r.returncode == 0 or left:
+        return "sandbox-exec did not stop a write to the cache"
+    if above.returncode == 0:
+        return (f"sandbox-exec did not stop a write to {cache.parent}, the directory above "
+                "the cache")
+    # The sandbox's refusal, EPERM, and no other failure: one that fails for a reason of
+    # its own proves nothing of the rule.
+    if DENIED not in above.stderr:
+        said = (above.stderr.strip().splitlines() or ["no message"])[-1]
+        return (f"the trial's write to {cache.parent}, the directory above the cache, failed "
+                f"otherwise than by the sandbox's refusal ({printable_text(said)[:200]})")
+    return None
+
+
+def open_cache(rep: Report, risk: Risk, train: bool = False) -> None:
+    """--main-checks-cache, once the change's class is known and before any check runs:
+    for R3 to R5, whose pre-flight runs step 4 in full, the cache's directory, beside the
+    log (made here, mode 0700, when it is missing), and the sandbox that keeps every
+    command this run starts from writing it (run). Without either, the run goes on as it
+    would without the flag, and says why. For R0 to R2, which leave step 4 to CI, there is
+    no pass to reuse: nothing is read, written or made, and no sandbox is set (should the
+    check inputs overrule the class, short_path, origin/main's pass runs uncached). Nor
+    for a train/* branch: its train check runs origin/main's check_train.py in this
+    process after the guards have run the commit's code (train_check), and so after a
+    sandboxed command could have written the harness's directory, from which it and what
+    it imports are read; so a train runs uncached, with no sandbox, as without the flag."""
+    global CACHE, SANDBOX
+    if train:
+        rep.add("1", "main-checks cache", "note", "not used this run: a train/* branch's train "
+                "check runs origin/main's check_train.py in this process after the commit's "
+                "code has run, so the run goes on as without --main-checks-cache")
+        return
+    if risk.cls in LOW_CLASSES:
+        rep.add("1", "main-checks cache", "skip", f"not used this run: the class {risk.cls} "
+                "leaves step 4 to CI, and the cache serves only step 4 run in full (R3 to R5)")
+        return
+    path = Path(os.path.abspath(log_path().parent / "main-checks"))
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not os.path.lexists(path):
+            os.mkdir(path, 0o700)
+            os.chmod(path, 0o700)       # whatever the umask took away
+        why = dir_problem(path)
+    except OSError as e:
+        why = f"{path} could not be made ({e.strerror or e})"
+    profile = None
+    if why is None:
+        profile = sandbox_profile(path)
+        why = sandbox_problem(profile, path) if profile else (
+            f"{path} holds a quotation mark, a backslash or an unprintable character, which "
+            "the sandbox's profile cannot hold")
+    if why:
+        rep.add("1", "main-checks cache", "note", f"not used this run: {why}; origin/main's "
+                "checks run in full, as without --main-checks-cache")
+        return
+    CACHE, SANDBOX = path, profile
+    rep.add("1", "main-checks cache", "ok", f"{path}: from here on, every command this run "
+            "starts runs under sandbox-exec, which may not write it")
+
+
+def base_tree(repo, base, sha, changes: list[tuple[str, str]]) -> str:
+    """The tree base_copies lays down in the worktree, made in a temporary index: the
+    commit's, with origin/main's entry for each check input the commit changes, and those
+    it adds taken out. Neither the worktree nor the repository's own index is touched."""
+    with tempfile.TemporaryDirectory(prefix="stoicheia-index-") as tmp:
+        # Besides GIT_NO_REPLACE_OBJECTS, the one repository variable the harness sets on
+        # purpose, kept by run() (#357): every other but GIT_NO_REPLACE_OBJECTS is
+        # dropped, a hook's GIT_INDEX_FILE among them.
+        env = dict(own_env(), GIT_INDEX_FILE=str(Path(tmp) / "index"))
+
+        def index(*args, input=None) -> str:
+            r = run(["git", *args], repo, env=env, input=input, keep=("GIT_INDEX_FILE",))
+            if r.returncode != 0:
+                raise Refusal(f"`git {' '.join(args)}` failed: {r.stderr.strip()}")
+            return r.stdout
+
+        index("read-tree", sha)
+        removed, restored = [], []
+        for status, path in changes:
+            entry = "" if status == "A" else \
+                git(repo, "ls-tree", "-z", base, "--", path).split("\0")[0]
+            if entry:
+                restored.append(entry)      # "<mode> <type> <oid>\t<path>", as ls-tree gives it
+            else:
+                removed.append(path)
+        if removed:
+            index("update-index", "-z", "--force-remove", "--stdin",
+                  input="".join(p + "\0" for p in removed))
+        if restored:
+            index("update-index", "-z", "--index-info",
+                  input="".join(e + "\0" for e in restored))
+        return index("write-tree").strip()
+
+
+def toolchain(repo, sha, wt: Path) -> dict | None:
+    """The Lean the checks run with: the tree's lean-toolchain, `lean --version` and
+    `lake --version` as run in the worktree, and the real path of the lean that elan
+    resolves, when elan is there; None when any of them cannot be read."""
+    env = tool_env()
+    found: dict = {"lean-toolchain": show(repo, sha, "lean-toolchain")}
+    try:
+        for tool in ("lean", "lake"):
+            r = run([tool, "--version"], wt, env=env)
+            if r.returncode != 0 or not r.stdout.strip():
+                return None
+            found[f"{tool} --version"] = r.stdout.strip()
+        found["elan which lean"] = None
+        elan = shutil.which("elan", path=env["PATH"])
+        if elan:
+            r = run([elan, "which", "lean"], wt, env=env)
+            if r.returncode != 0 or not r.stdout.strip():
+                return None
+            found["elan which lean"] = os.path.realpath(r.stdout.strip())
+    except OSError:
+        return None
+    return found
+
+
+# The variables the key holds, with their values: each whose name begins so (the Python
+# variables reach the steps run without -I, and the locale's reach the checks' reading
+# and writing of text), ONLY by name, and LANG and LANGUAGE by name, so that no other
+# variable that merely begins LANG is written into an entry.
+KEYED_VARIABLES = ("STOICHEIA_", "LEAN", "LAKE", "PYTHON", "LC_")
+KEYED_NAMES = frozenset({"LANG", "LANGUAGE", "ONLY"})
+# The harness's own plumbing, which no check reads: which copy runs (STOICHEIA_HARNESS,
+# set on a hand-over and not by the launcher), where the log is (STOICHEIA_PUSH_LOG, which
+# places the cache itself), and the interpreter the launcher picks (STOICHEIA_PYTHON,
+# whose real path is keyed as "executable"). Keyed, a run handed over from a worktree and
+# a run of the launcher would never share an entry.
+UNKEYED_VARIABLES = frozenset({"STOICHEIA_HARNESS", "STOICHEIA_PUSH_LOG",
+                               "STOICHEIA_PYTHON"})
+# The terminal's, which begin LC_ and are no locale: iTerm2 names itself and its version in
+# them. Keyed, a dry run and a push from two terminals would never share an entry.
+TERMINAL_VARIABLES = frozenset({"LC_TERMINAL", "LC_TERMINAL_VERSION"})
+
+
+def environment(repo) -> dict:
+    """What else the checks' outcomes could turn on: the Python, the platform, Git, the
+    PATH the checks run with, and the variables KEYED_VARIABLES and KEYED_NAMES name,
+    with their values, but the harness's own (UNKEYED_VARIABLES) and the terminal's
+    (TERMINAL_VARIABLES). The platform is read from os.uname() and macOS's version file,
+    never with platform.platform(), which starts `uname -p` and `file -b` from the PATH,
+    outside run() and so outside the sandbox; mac_ver's plistlib is imported at the top
+    (run)."""
+    env = tool_env()
+    try:
+        git_version = run(["git", "--version"], repo, env=env)
+    except OSError as e:
+        raise Refusal(f"`git --version` failed: {e.strerror or e}") from e
+    if git_version.returncode != 0:
+        raise Refusal(f"`git --version` failed: {git_version.stderr.strip() or 'no message'}")
+    return {
+        "python": sys.version,
+        "executable": os.path.realpath(sys.executable),
+        "platform": [platform.system(), platform.release(), platform.machine(),
+                     platform.mac_ver()[0]],
+        "git --version": git_version.stdout.strip(),
+        "PATH": env["PATH"],
+        "variables": sorted([name, value] for name, value in os.environ.items()
+                            if (name.startswith(KEYED_VARIABLES) or name in KEYED_NAMES)
+                            and name not in UNKEYED_VARIABLES | TERMINAL_VARIABLES),
+    }
+
+
+def main_checks_fields(ctx, wt: Path, inputs, sequence: list[tuple[str, list[str] | None]]
+                       ) -> tuple[dict | None, str]:
+    """The fields of the key of origin/main's pass on this commit, computed by the harness
+    and never read from the tree as code; or None, and why there is no key. Its checks are
+    `sequence`, the checks step 4 runs (check_list), and its negative tests NEGATIVE."""
+    if HARNESS_BLOB is None:
+        return None, "the harness running is not origin/main's"
+    lean = toolchain(ctx.repo, ctx.sha, wt)
+    if lean is None:
+        return None, ("the toolchain could not be read (`lean --version`, `lake --version` "
+                      "or `elan which lean` failed)")
+    try:
+        fields = {
+            "format": MAIN_CHECKS_FORMAT,
+            "main": ctx.base,
+            "base_tree": base_tree(ctx.repo, ctx.base, ctx.sha, inputs),
+            # The checks compare the tree they run on with the commit's own (git status,
+            # git ls-files), so two commits with one base tree may still differ there.
+            "commit_tree": git(ctx.repo, "rev-parse", f"{ctx.sha}^{{tree}}").strip(),
+            "harness_blob": HARNESS_BLOB,
+            "toolchain": lean,
+            "environment": environment(ctx.repo),
+            "checks": [[name, cmd] for name, cmd in sequence],
+            "negative": [[name, cmd] for name, cmd in NEGATIVE],
+        }
+    except Refusal as e:
+        return None, f"the trees could not be read ({e})"
+    return json.loads(canonical(fields)), ""
+
+
+ENTRY_FIELDS = frozenset({"key", "written", "steps", "digest"})
+STEP_FIELDS = frozenset({"name", "outcome", "detail", "seconds", "log"})
+
+
+def base_pass_names(fields: dict) -> list[str]:
+    """origin/main's pass of step 4, step by step, as the key `fields` names it: its checks,
+    then its negative tests."""
+    return [name + BASE_PASS for name, _ in [*fields["checks"], *fields["negative"]]]
+
+
+STEP_SECONDS = 7 * 24 * 3600    # the longest a recorded step may have taken: a week
+WRITTEN_TIME = re.compile(
+    r"([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}) UTC")
+
+
+def step_time(seconds) -> bool:
+    """Is `seconds` a time a step could have taken: none recorded, or an int or a float
+    from 0 to STEP_SECONDS? Compared, not passed to math.isfinite, which overflows on an
+    integer of 400 digits; NaN and the infinities fail the comparison."""
+    return seconds is None or (isinstance(seconds, (int, float))
+                               and not isinstance(seconds, bool)
+                               and 0 <= seconds <= STEP_SECONDS)
+
+
+def written_time(value) -> bool:
+    """Is `value` the cache's UTC minute format, with a valid date and time?"""
+    match = WRITTEN_TIME.fullmatch(value) if isinstance(value, str) else None
+    if match is None:
+        return False
+    try:
+        datetime.datetime(*(int(part) for part in match.groups()),
+                          tzinfo=datetime.timezone.utc)
+    except (OverflowError, ValueError):
+        return False
+    return True
+
+
+def writable_text(value) -> bool:
+    """Is `value` a string this run can write to a log as UTF-8 and print? A lone
+    surrogate, which JSON may carry, is neither."""
+    if not isinstance(value, str):
+        return False
+    out = sys.stdout
+    try:
+        value.encode("utf-8")
+        value.encode(getattr(out, "encoding", None) or "utf-8",
+                     getattr(out, "errors", None) or "strict")
+    except (UnicodeError, LookupError):
+        return False
+    return True
+
+
+def entry_problem(entry, key: str, fields: dict) -> str | None:
+    """Why an entry read for `key` may not stand in for origin/main's pass, or None. Its
+    key fields must be this run's, exactly, and hash to its name; its digest must match the
+    rest of it; its harness must be this one; and its steps must be origin/main's pass,
+    each once, in order, each "ok" or "note", with a time a step could take and text this
+    run can write and print. So no entry turns a note into an ok, and replay cannot
+    fail on what it reads."""
+    if not isinstance(entry, dict) or set(entry) != ENTRY_FIELDS:
+        return "it is not an entry of this format"
+    if entry["key"] != fields:
+        return "its key fields are not this run's"
+    if sha256_of(entry["key"]) != key:
+        return "its key fields do not hash to its name"
+    if entry["digest"] != sha256_of({k: v for k, v in entry.items() if k != "digest"}):
+        return "its digest does not match its contents"
+    if HARNESS_BLOB is None or entry["key"].get("harness_blob") != HARNESS_BLOB:
+        return "it was written by another harness"
+    if not written_time(entry["written"]):
+        return "its written time is not of this format"
+    steps = entry["steps"]
+    if not isinstance(steps, list) or not all(
+            isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
+        return "its steps are not of this format"
+    if [s["name"] for s in steps] != base_pass_names(fields):
+        return "its steps are not origin/main's pass, each step once and in order"
+    for s in steps:
+        if s["outcome"] not in ("ok", "note"):
+            return (f"its step {s['name']} is not of this format (outcome "
+                    f"{ascii(s['outcome'])[:40]})")
+        if not step_time(s["seconds"]):
+            return (f"its step {s['name']} is not of this format (its seconds are no time a "
+                    "step could take)")
+        if not (writable_text(s["detail"]) and writable_text(s["log"])):
+            return (f"its step {s['name']} is not of this format (its detail or its log is "
+                    "not text this run can write as UTF-8 and print)")
+    return None
+
+
+def read_entry(cache: Path, key: str, fields: dict) -> tuple[dict | None, str]:
+    """The entry for `key`, when it may stand in for origin/main's pass; else None, and
+    why: it is a regular file, no symbolic link, owned by this user, of mode 0600, no
+    larger than ENTRY_BYTES (16 MiB), in a directory that may be used (dir_problem), and
+    its contents pass entry_problem. A larger entry is refused unread, and no more than
+    ENTRY_BYTES and a byte is ever read; any error in reading its contents, whatever they
+    hold, refuses it, and the pass runs again: never a crash or a hang."""
+    why = dir_problem(cache)
+    if why:
+        return None, why
+    path = cache / f"{key}.json"
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except FileNotFoundError:
+        return None, "no entry for this key"
+    except OSError as e:
+        if os.path.islink(path):
+            return None, "the entry is a symbolic link"
+        return None, f"the entry cannot be opened ({e.strerror or e})"
+    large = f"it is larger than {ENTRY_BYTES} bytes (16 MiB)"
+    entry = None
+    try:
+        with os.fdopen(fd, "rb") as f:
+            st = os.fstat(f.fileno())
+            if not stat.S_ISREG(st.st_mode):
+                return None, "the entry is not a regular file"
+            if st.st_uid != os.getuid():
+                return None, "the entry is owned by another user"
+            if stat.S_IMODE(st.st_mode) != 0o600:
+                return None, f"the entry has mode {stat.S_IMODE(st.st_mode):04o}, not 0600"
+            # Its size by fstat, and the read itself bounded, should it grow meanwhile.
+            data = f.read(ENTRY_BYTES + 1) if st.st_size <= ENTRY_BYTES else None
+        if data is None or len(data) > ENTRY_BYTES:
+            why = large
+        else:
+            entry = json.loads(data)
+            why = entry_problem(entry, key, fields)
+    except Exception as e:      # whatever the file holds: a doubt, never a crash
+        why = f"it is not an entry of this format ({type(e).__name__})"
+    return (None, f"the entry was refused: {why}") if why else (entry, "")
+
+
+def write_entry(cache: Path, key: str, entry: dict) -> str | None:
+    """`entry`, written as <key>.json through a temporary file in the directory, synced
+    and renamed into place, mode 0600; or why it could not be."""
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(prefix=f".{key[:12]}-", suffix=".tmp", dir=cache)
+        with os.fdopen(fd, "wb") as f:
+            f.write(canonical(entry))
+            f.flush()
+            os.fsync(f.fileno())
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, cache / f"{key}.json")
+        tmp = None
+    except (OSError, ValueError) as e:
+        return f"{getattr(e, 'strerror', None) or e}"
+    finally:
+        if tmp is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp)
+    with contextlib.suppress(OSError):
+        fd = os.open(cache, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    return None
+
+
+class MainChecks:
+    """origin/main's pass of step 4 for one key. On a hit it holds the entry, whose steps
+    stand in for the pass (replay); on a miss it records the pass as it runs (collect),
+    and writes it as an entry once both its loops are done in this run (save)."""
+
+    def __init__(self, key: str, fields: dict, entry: dict | None):
+        self.key, self.fields, self.entry = key, fields, entry
+        self.hit = entry is not None
+        self.steps: list[dict] = []     # on a miss, the steps recorded as they ran
+        self.spoiled = ""               # why they may not be written
+        self.done = False               # written, or given up
+        self.next = 0                   # on a hit, the recorded steps replayed so far
+
+    def replay(self, steps, first: int, rep: Report, logs: Path) -> None:
+        """The recorded steps standing for `steps`, reported with their outcomes as
+        recorded, notes as notes, and their logs written among this run's, each note
+        pointing to the copy this run writes rather than to the log of the run that
+        wrote the entry; none is run."""
+        recorded = self.entry["steps"][self.next:self.next + len(steps)]
+        self.next += len(steps)
+        for i, step in enumerate(recorded, 1):
+            log = logs / f"{first + i:02d}{slug_of(step['name'])}.log"
+            log.write_text(step["log"], encoding="utf-8")
+            then = f"{step['seconds']:.1f} s" if step["seconds"] is not None else "untimed"
+            said, newline, rest = step["detail"].partition("\n")
+            if said.startswith("full output in "):     # as run_step words it
+                said = f"full output in {log}"
+            detail = said + newline + rest
+            rep.add("4", step["name"], step["outcome"],
+                    f"reused from the cache, entry {self.key[:12]}, written "
+                    f"{self.entry['written']}: " + (detail or f"it passed then ({then})"))
+
+    def collect(self, rep: Report, out) -> None:
+        """The step origin/main's pass has just run, recorded for the entry."""
+        names = base_pass_names(self.fields)
+        s = rep.steps[-1] if rep.steps else None
+        if self.spoiled or s is None or len(self.steps) >= len(names) \
+                or s.name != names[len(self.steps)] or s.outcome not in ("ok", "note") \
+                or not isinstance(out, str):
+            self.spoiled = self.spoiled or "a step of origin/main's pass was not recorded as it ran"
+            return
+        self.steps.append({"name": s.name, "outcome": s.outcome, "detail": s.detail,
+                           "seconds": s.seconds, "log": out})
+
+    def save(self, rep: Report) -> None:
+        """The entry, written once both loops of origin/main's pass have run in this run,
+        under the sandbox, by the harness its key names; a note if it cannot be."""
+        if self.hit or self.done:
+            return
+        if not self.spoiled and len(self.steps) < len(base_pass_names(self.fields)):
+            return      # the negative tests' loop is still to run
+        self.done = True
+        why = self.spoiled or self.unwritable()
+        if not why:
+            entry = {"key": self.fields, "steps": self.steps,
+                     "written": datetime.datetime.now(datetime.timezone.utc)
+                     .strftime("%Y-%m-%d %H:%M UTC")}
+            entry["digest"] = sha256_of(entry)
+            why = write_entry(CACHE, self.key, entry)
+        if why:
+            rep.add("4", "main-checks cache", "note", f"entry {self.key[:12]} not written: {why}")
+
+    def unwritable(self) -> str:
+        """Why this run may not write the entry, or "": the sandbox was on throughout, the
+        harness is the one the key names and its file is unchanged, and the directory may
+        still be used."""
+        if SANDBOX is None or CACHE is None:
+            return "the sandbox was not on"
+        if HARNESS_BLOB is None or HARNESS_BLOB != self.fields["harness_blob"]:
+            return "the harness is not the one its key names"
+        try:
+            here = blob_id(Path(__file__).read_bytes())
+        except OSError:
+            here = None
+        if here != HARNESS_BLOB:
+            return "the harness's file changed while it ran"
+        return dir_problem(CACHE) or ""
+
+
+def main_checks(ctx, wt: Path, inputs, rep: Report,
+                sequence: list[tuple[str, list[str] | None]]) -> MainChecks | None:
+    """The cache's answer for origin/main's pass on this commit, reported in one line, for
+    the pull request's record: a hit; a miss, and why; or why the cache does not serve."""
+    if not inputs:
+        rep.add("4", "main-checks cache", "skip", "the commit changes no check input: there "
+                "is no pass with origin/main's copies to reuse")
+        return None
+    fields, why = main_checks_fields(ctx, wt, inputs, sequence)
+    if fields is None:
+        rep.add("4", "main-checks cache", "note", f"not used for this commit: {why}; "
+                "origin/main's checks run in full")
+        return None
+    key = sha256_of(fields)
+    entry, why = read_entry(CACHE, key, fields)
+    if entry is not None:
+        rep.add("4", "main-checks cache", "note", f"hit: origin/main's checks of these trees "
+                f"reused from entry {key[:12]}, written {entry['written']} by this harness; "
+                "the commit's own checks run in full")
+        return MainChecks(key, fields, entry)
+    rep.add("4", "main-checks cache", "note", f"miss ({why}): origin/main's checks run, and "
+            f"once both their loops have run they are kept as entry {key[:12]}, for the next "
+            "run on the same trees")
+    return MainChecks(key, fields, None)
 
 
 class Preflight(NamedTuple):
@@ -3436,10 +4323,14 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                         "self-test and the rest of section 8 on the pull request before "
                         "the merge, and --merge waits for them green; the negative tests "
                         "run on main after the merge and on the cadence")
-            elif test_mode:
-                rep.add("4", "full local checks", "skip", "internal test flag, local origin")
             else:
-                full_checks(ctx, wt, parent, g.check_inputs, rep, logs)
+                # origin/main's registry, read under the internal test flag too, so that
+                # the tests see which checks the full path would run.
+                checks = check_list(ctx, rep)
+                if test_mode:
+                    rep.add("4", "full local checks", "skip", "internal test flag, local origin")
+                else:
+                    full_checks(ctx, wt, parent, g.check_inputs, rep, logs, checks)
     return Preflight(g.statements, g.protected, short)
 
 
@@ -3458,6 +4349,8 @@ class Context(NamedTuple):
     branch: str | None = None
     gh: tuple = ("gh",)
     remote_branch: str | None = None    # the branch on origin before the push
+    queue: bool = False
+    harness_sha: str | None = None     # origin/main's tip, before queue_base changes base
 
 
 def is_local(url: str) -> bool:
@@ -3596,7 +4489,8 @@ def harness(repo, base: str, rep: Report) -> None:
           "origin/main's: running origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
-    # checks: so an older harness, whose run() sets neither, has them too (#256).
+    # checks: so an older harness, whose run() sets neither, has them too (#256). No other
+    # variable that ties git to one repository goes with them (#357).
     env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()
@@ -3625,11 +4519,19 @@ def train_input(ctx: Context, body: str | None) -> str | None:
 
 def train_check(ctx: Context, body: str, rep: Report) -> None:
     """Run origin/main's train checker on the commit and the body. While origin/main has
-    none, every train is refused: no commit's own copy ever runs in its place."""
+    none, every train is refused: no commit's own copy ever runs in its place. In queue
+    mode the base compared against is the newest commit of main's chain that the head
+    contains (queue_base), the judge's base too, perhaps older than main's tip, whose
+    checker (ctx.harness_sha's) is the one that runs."""
     rep.heading("3. train")
     started = time.time()
     try:
-        source = harness_train(ctx.repo, ctx.base)
+        if SANDBOX is not None:
+            # open_cache sets none for a train: never run check_train in this process once
+            # the commit's code may have written the harness's directory under the sandbox.
+            raise Refusal("the train check cannot run once the main-checks cache's sandbox "
+                          "is set")
+        source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
         if source is None:
             raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
                           "checked: land the train checker first, then the train")
@@ -3650,6 +4552,36 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
         rep.add("3", "train", "FAIL", str(e), time.time() - started)
         raise Refusal(f"the train check refused: {e}") from e
     rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
+
+
+def block_current(ctx: Context, m, record: dict) -> bool:
+    """Is the body's pre-flight summary a true account of this head? It must name this
+    head and, for a train, show the train step passing. Its base and harness are held to
+    the queue's judge's rule (check_queue.preflight), read on this run's main: the base
+    is the newest commit of main's first-parent chain that the head contains, which is
+    what the pre-flight records (origin/main's tip, which the head held), and the
+    harness that base or a later commit of the same chain. So a summary the judge would
+    refuse is never current here, and one it would accept is current; in queue mode its
+    base is the one this merge checks against (queue_base), even when the head's merge
+    base with main lies off main's chain (a member merged before its train). Without the
+    queue the base and the harness are both main's tip, as the head holds it. That the
+    full checks ran again here, and passed, leaves a summary of the same head and base
+    true."""
+    if not m:
+        return False
+    sha, base, harness = m.group(1), m.group(2), m.group(3) or m.group(2)
+    if sha != ctx.sha:
+        return False
+    # A branch renamed train/ after its pre-flight has a summary with no train step.
+    if (ctx.branch or "").startswith("train/") and not TRAIN_ROW.search(m.group(0)):
+        return False
+    main = record.get("harness_sha") or ctx.harness_sha or ctx.base
+    chain = git(ctx.repo, "rev-list", "--first-parent", main).split()
+    held = set(git(ctx.repo, "rev-list", ctx.sha).split())
+    newest = next((tip for tip in chain if tip in held), None)
+    if base != newest or harness not in chain or chain.index(harness) > chain.index(base):
+        return False
+    return ctx.queue or (base, harness) == (ctx.base, main)
 
 
 def merge_train_input(ctx: Context, view: dict) -> str | None:
@@ -3771,7 +4703,8 @@ def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
         gh_ready(gh, repo, test_mode)
         tags = remote_refs(repo, "--tags")
     check_installed(repo, base, rep)
-    return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch)
+    return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch,
+                   harness_sha=base)
 
 
 # --------------------------------------------------------------------------------------
@@ -3859,6 +4792,8 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
                    r"(?: sha=(\w+) base=(\w+)(?: harness=(\w+))?)? -->"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
+# The train step's row in that summary, as preflight_block writes it when it passed.
+TRAIN_ROW = re.compile(r"(?m)^\| 3\. train \| ok \| [0-9.]* \|[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
 STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
@@ -3912,8 +4847,9 @@ def put_block(body: str, block: str) -> str:
 
 def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
     """Does the change touch what render.py writes in `path`, and does it touch the rest,
-    written by hand? Only README.md and PROGRAM.md have a rest: render.py writes them only
-    between their markers, and every other generated file whole."""
+    written by hand? Only the files of GENERATED_REGIONS have a rest (README.md,
+    docs/PROGRAM.md and docs/WORKFLOW.md): render.py writes them only between their
+    markers, and every other generated file whole."""
     pattern = GENERATED_REGIONS.get(path)
     if pattern is None:
         return True, False
@@ -4252,8 +5188,8 @@ def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
                 f"{CI_APPEAR_TIMEOUT} s: `gh pr checks {pr.number}`")
         return "unknown"
     print(f"  following the checks of #{pr.number}: {pr.url}", flush=True)
-    subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
-                    CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo)
+    run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
+         CI_WATCH_INTERVAL, "-R", ctx.github], ctx.repo, capture=False)
     checks = pr_checks(ctx, pr.number)
     label_problem = None
     try:
@@ -4295,13 +5231,17 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
     if checked is not None:
         steps = [s for s in steps if s[0] != "4"] + \
             [list(s) for s in checked.get("steps", []) if s and s[0] == "4"]
-        notes += [list(n) for n in checked.get("notes", []) if list(n) not in notes]
+        notes += [[s.name, f"{s.outcome}, {s.detail}"] for s in rep.steps
+                  if s.stage == "4" and s.outcome == "skip"]
+        notes += [list(n) for n in checked.get("notes", [])
+                  if n[0] != "full local checks" and list(n) not in notes]
     return {
         "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
         "full": (full and not pre.short) or bool(checked and checked.get("full")),
         "class": risk.cls, "class_why": risk.why, "short": pre.short,
         "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "harness": HARNESS, "harness_blob": HARNESS_BLOB,
+        "harness_sha": ctx.harness_sha or ctx.base,
         "steps": steps, "notes": notes,
         "protected": pre.protected, "statements": pre.statements,
     }
@@ -4314,13 +5254,35 @@ def checks_record(record: dict | None, test_mode: bool, risk: Risk) -> dict | No
     while the class, `risk`, recomputed now by origin/main's risk.py for that commit
     against that base, is still R0 to R2. The record is a local file anything run as the
     user could write, so it never stands in for the secret scan or the guards, and CI runs
-    the same checks."""
-    if record is None or HARNESS_BLOB is None or record.get("harness_blob") != HARNESS_BLOB:
+    the same checks. A record of any other shape stands in for nothing."""
+    if not isinstance(record, dict) or HARNESS_BLOB is None \
+            or record.get("harness_blob") != HARNESS_BLOB:
+        return None
+    steps = record.get("steps")
+    if not isinstance(steps, list) or any(
+            not isinstance(s, list) or len(s) != 4 or s[0] not in ("2", "3", "4")
+            or not isinstance(s[1], str) or not s[1] or s[2] not in ("ok", "skip")
+            or (s[3] is not None and (type(s[3]) not in (int, float)
+                                     or not math.isfinite(s[3]) or s[3] < 0))
+            for s in steps):
+        return None
+    notes = record.get("notes")
+    if not isinstance(notes, list) or any(
+            not isinstance(n, list) or len(n) != 2
+            or any(not isinstance(x, str) for x in n) for n in notes):
+        return None
+    if any(not isinstance(record.get(k), str) or not record[k].strip()
+           for k in ("harness", "time")):
         return None
     if record.get("short"):
         low = record.get("class") in LOW_CLASSES and risk.cls in LOW_CLASSES
         return record if low else None
-    return record if record.get("full") or test_mode else None
+    if not (record.get("full") is True or test_mode):
+        return None
+    full_steps = [s for s in steps if s[0] == "4"]
+    if not full_steps or any(s[2] != "ok" and not test_mode for s in full_steps):
+        return None
+    return record
 
 
 def full_record(record: dict | None, test_mode: bool) -> bool:
@@ -4338,9 +5300,10 @@ def save_record(record: dict) -> None:
 def load_record(sha: str, base: str) -> dict | None:
     try:
         record = json.loads(record_path(sha, base).read_text())
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return None
-    return record if record.get("sha") == sha and record.get("base") == base else None
+    return record if isinstance(record, dict) and record.get("sha") == sha \
+        and record.get("base") == base else None
 
 
 # --------------------------------------------------------------------------------------
@@ -5025,10 +5988,12 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
         raise Refusal(f"origin ({origin}) is not on GitHub: there is no pull request to merge")
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
-    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh)
+    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base)
+    queued = queue_enabled(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
                    "isCrossRepository,title")
+    main_health(ctx, rep, (view or {}).get("body"))
     if not view or view.get("state") != "OPEN":
         raise Refusal(f"pull request #{number} is not open ({(view or {}).get('state')})")
     if view.get("baseRefName") != "main" or view.get("isCrossRepository"):
@@ -5040,6 +6005,9 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
         run(["git", "fetch", "origin", f"refs/heads/{branch}"], repo)
     if rev_parse(repo, f"{head}^{{commit}}") is None:
         raise Refusal(f"the head {head[:12]} of #{number} is not here after `git fetch origin`")
+    if queued:
+        base = queue_base(ctx, head)
+        ctx = ctx._replace(base=base, queue=True)
     if not git_ok(repo, "merge-base", "--is-ancestor", base, head):
         raise Refusal(f"origin/main ({base[:12]}) is not an ancestor of #{number}'s head "
                       f"({head[:12]}): merge origin/main into {branch} (a merge commit), run "
@@ -5047,7 +6015,9 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     commits = int(git(repo, "rev-list", "--count", f"{base}..{head}").strip())
     rep.add("1", "pull request", "ok", f"#{number} \"{view.get('title')}\": {branch} at "
             f"{head[:12]}, {plural(commits, 'commit')} onto origin/main {base[:12]}")
-    check_installed(repo, base, rep)
+    # The installed copies are compared with current main's, not with the older base a
+    # queued head is checked against.
+    check_installed(repo, ctx.harness_sha, rep)
     return ctx._replace(sha=head, commits=commits, branch=branch), view
 
 
@@ -5099,7 +6069,10 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 "an account could have, and the merge commit's subject names it: look with "
                 f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
-    template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+    # The template in force is current main's (the harness's), also in queue mode, where
+    # ctx.base may be an older main (queue_base): a box main added since binds this merge.
+    policy = ctx.harness_sha or ctx.base
+    template = show(ctx.repo, policy, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
     problems = checklist_problems(body, template, bool(protected))
     if problems:
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
@@ -5319,6 +6292,345 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
     return commit
 
 
+def api_json(ctx: Context, endpoint: str, *args, missing: bool = False):
+    """Read the API strictly. `gh api` takes a full endpoint, not the pr command's -R."""
+    try:
+        r = run([*ctx.gh, "api", endpoint, *args], ctx.repo)
+    except (OSError, UnicodeError) as e:
+        raise Refusal(f"could not read GitHub's {endpoint}: {e}") from e
+    try:
+        answer = json.loads(r.stdout)
+    except (ValueError, TypeError):
+        answer = None
+    if r.returncode:
+        absent = (isinstance(answer, dict) and answer.get("status") in (404, "404")) or \
+            re.search(r"\bHTTP 404\b", r.stderr)
+        if missing and absent:
+            return None
+        raise Refusal(f"could not read GitHub's {endpoint}: {r.stderr.strip() or r.stdout[:200]}")
+    if answer is None:
+        raise Refusal(f"GitHub's {endpoint} did not give a readable JSON answer")
+    if isinstance(answer, dict) and answer.get("errors"):
+        raise Refusal(f"GitHub's {endpoint} reported errors")
+    return answer
+
+
+def api_pages(answer, name: str) -> list:
+    """Flatten a paginated, slurped array only after validating every page."""
+    if not isinstance(answer, list) or not answer or any(not isinstance(p, list) for p in answer):
+        raise Refusal(f"unreadable {name}: expected pages of entries")
+    return [entry for page in answer for entry in page]
+
+
+def queue_enabled(ctx: Context, rep: Report) -> bool:
+    """Read main's effective rules, refusing an unreadable rule even after a queue rule."""
+    rules = api_pages(api_json(ctx, f"repos/{ctx.github}/rules/branches/main",
+                               "--paginate", "--slurp"), "main rules")
+    for rule in rules:
+        if not isinstance(rule, dict) or not isinstance(rule.get("type"), str) \
+                or not rule["type"].strip() or \
+                ("parameters" in rule and not isinstance(rule["parameters"], dict)):
+            raise Refusal("unreadable main rules: each rule must name its type")
+    queued = any(rule["type"] == "merge_queue" for rule in rules)
+    rep.add("1", "merge queue", "ok", "required by main's rules" if queued else
+            "not required by main's rules")
+    return queued
+
+
+# A pull request that fixes a red main says so in its body, on a line of its own that
+# GitHub shows: "Fixes main-red: #12", or "Fixes main-red: #12, #15".
+MAIN_RED_FIX = re.compile(r"Fixes main-red: (#[1-9][0-9]*(?:, #[1-9][0-9]*)*)\.?")
+
+
+def main_red_fix(body: str) -> set[int] | None:
+    """The main-red issues a pull request's body declares it fixes, read as GitHub shows
+    the body (visible), so that a line in a comment or in code is not one; None when it
+    declares none. More than one such line, or one not in the form, refuses."""
+    lines = [line.strip() for line in visible(body or "").splitlines()
+             if line.strip().startswith("Fixes main-red")]
+    if not lines:
+        return None
+    m = MAIN_RED_FIX.fullmatch(lines[0]) if len(lines) == 1 else None
+    numbers = [int(n) for n in re.findall(r"#([0-9]+)", m.group(1))] if m else []
+    if not m or len(set(numbers)) != len(numbers):
+        raise Refusal("unreadable main-red fix: write one line `Fixes main-red: #<n>`, "
+                      "naming each open main-red issue once")
+    return set(numbers)
+
+
+def main_health(ctx: Context, rep: Report, body: str | None = None) -> None:
+    """Refuse red or unreadable main: open issues and completed post-merge runs at its tip.
+    While main is red, only its fix lands: a pull request whose body (`body`) declares it
+    fixes every open main-red issue, and no other (main_red_fix). Its own CI, which the
+    gates require to pass, and in queue mode its group's, then check it on main."""
+    issues = api_pages(api_json(
+        ctx, f"repos/{ctx.github}/issues?state=open&labels=main-red&per_page=100",
+        "--paginate", "--slurp"), "main-red issues")
+    red = []
+    for issue in issues:
+        if not isinstance(issue, dict) or type(issue.get("number")) is not int \
+                or issue["number"] < 1 or issue.get("state") != "open" \
+                or not isinstance(issue.get("labels"), list) \
+                or any(not isinstance(label, dict) or not isinstance(label.get("name"), str)
+                       or not label["name"].strip() for label in issue["labels"]) \
+                or "main-red" not in {label["name"] for label in issue["labels"]} \
+                or ("pull_request" in issue and not isinstance(issue["pull_request"], dict)):
+            raise Refusal("unreadable main-red issue entry")
+        if "pull_request" not in issue:
+            red.append(issue["number"])
+    workflow = ".github/workflows/post-merge.yml"
+    absent = not git(ctx.repo, "ls-tree", ctx.base, "--", workflow).strip()
+    pages = api_json(ctx, f"repos/{ctx.github}/actions/workflows/post-merge.yml/runs"
+                     f"?branch=main&head_sha={ctx.base}&per_page=100",
+                     "--paginate", "--slurp", missing=absent)
+    if pages is None:
+        red_or_fix(rep, red, None, "no post-merge workflow", body)
+        return
+    if not isinstance(pages, list) or not pages:
+        raise Refusal("unreadable post-merge runs: expected pages")
+    completed, seen = [], set()
+    total = None
+    for page in pages:
+        if not isinstance(page, dict) or type(page.get("total_count")) is not int \
+                or page["total_count"] < 0 or not isinstance(page.get("workflow_runs"), list):
+            raise Refusal("unreadable post-merge runs page")
+        if total is not None and page["total_count"] != total:
+            raise Refusal("unreadable post-merge runs: the count changed between pages")
+        total = page["total_count"]
+        for entry in page["workflow_runs"]:
+            if not isinstance(entry, dict) or any(type(entry.get(key)) is not int
+                    or entry[key] < 1 for key in ("id", "run_number", "run_attempt")) \
+                    or entry.get("head_sha") != ctx.base or entry.get("head_branch") != "main" \
+                    or entry.get("status") not in ("completed", "queued", "in_progress",
+                                                   "waiting", "requested", "pending"):
+                raise Refusal("unreadable post-merge run entry")
+            if entry["id"] in seen:
+                raise Refusal("unreadable post-merge runs: a run appears twice")
+            seen.add(entry["id"])
+            if entry["status"] == "completed":
+                if entry.get("conclusion") not in ("success", "failure", "neutral", "cancelled",
+                        "skipped", "timed_out", "action_required", "stale", "startup_failure"):
+                    raise Refusal("unreadable post-merge run conclusion")
+                completed.append(entry)
+            elif entry.get("conclusion") is not None:
+                raise Refusal("unreadable unfinished post-merge run conclusion")
+    if len(seen) != total:
+        raise Refusal("unreadable post-merge runs: the pages do not cover the reported count")
+    failed = None
+    if completed:
+        latest = max(completed, key=lambda entry: (entry["run_number"], entry["run_attempt"]))
+        if latest["conclusion"] not in ("success", "neutral", "skipped"):
+            failed = (f"post-merge run {latest['id']} at {ctx.base[:12]} "
+                      f"concluded {latest['conclusion']}")
+        detail = f"latest completed post-merge run {latest['id']} concluded {latest['conclusion']}"
+    else:
+        detail = "no completed post-merge run at main's tip"
+    red_or_fix(rep, red, failed, detail, body)
+
+
+def red_or_fix(rep: Report, red: list[int], failed: str | None, detail: str,
+               body: str | None) -> None:
+    """main_health's verdict: green; or red, refused, unless the pull request's body
+    declares it fixes exactly the open main-red issues. A failed run with no open issue
+    has none to declare: its issue is labelled main-red again first."""
+    if not red and failed is None:
+        rep.add("1", "main health", "ok", "no main-red issues; " + detail)
+        return
+    why = "main is red: " + "; ".join(
+        (["open main-red issues " + ", ".join(f"#{n}" for n in red)] if red else [])
+        + ([failed] if failed else []))
+    fixes = main_red_fix(body or "")
+    if fixes is None:
+        raise Refusal(f"{why}. Only its fix lands: a pull request whose body has the line "
+                      "`Fixes main-red: #<n>`, naming every open main-red issue")
+    if not red:
+        raise Refusal(f"{why}, and no open main-red issue names it for this fix to declare: "
+                      "label the failed run's issue main-red again")
+    if fixes != set(red):
+        raise Refusal(f"{why}; this pull request declares it fixes "
+                      + ", ".join(f"#{n}" for n in sorted(fixes))
+                      + ", which is not every open main-red issue and no other")
+    rep.add("1", "main health", "note", f"{why}; this pull request declares it fixes them, "
+            "and lands as their fix, its own CI passing")
+
+
+def queue_base(ctx: Context, head: str) -> str:
+    """A queued head is checked against the newest commit of current main's first-parent
+    chain that it contains: the base its pre-flight recorded, origin/main's tip then, and
+    the base the queue's judge holds that summary to and runs its train check against
+    (check_queue.preflight). So --merge's own checks, its train check and the judge
+    compare against one base, even when the head's merge base with main lies off the
+    chain (a member merged on its own before its train)."""
+    held = set(git(ctx.repo, "rev-list", head).split())
+    chain = git(ctx.repo, "rev-list", "--first-parent", ctx.base).split()
+    base = next((tip for tip in chain if tip in held), None)
+    if base is None or not FULL_OID.fullmatch(base):
+        raise Refusal("the queued head contains no commit of origin/main's first-parent chain")
+    return base
+
+
+QUEUE_POLL = 10
+# A group's CI can take as long as the queue's status check timeout, 150 minutes
+# (WORKFLOW, section 10, "Turning it on"), and a train behind a group that fails waits
+# for its own group to be built and run again: twice that, in seconds.
+QUEUE_TIMEOUT = 18000
+
+
+def queue_view(ctx: Context, number: int) -> dict:
+    """Read the pull request and its queue entry in one GraphQL snapshot."""
+    owner, name = ctx.github.split("/")
+    query = """query($owner:String!, $name:String!, $number:Int!) {
+      repository(owner:$owner, name:$name) { pullRequest(number:$number) {
+        id state headRefOid headRefName baseRefName mergeCommit { oid }
+        mergeQueueEntry { id headCommit { oid } }
+      } }
+    }"""
+    answer = api_json(ctx, "graphql", "-f", f"query={query}", "-f", f"owner={owner}",
+                      "-f", f"name={name}", "-F", f"number={number}")
+    try:
+        view = answer["data"]["repository"]["pullRequest"]
+        if not isinstance(view, dict) or not isinstance(view.get("id"), str) or not view["id"] \
+                or view.get("state") not in PR_STATES or view.get("headRefOid") != ctx.sha \
+                or view.get("headRefName") != ctx.branch or view.get("baseRefName") != "main" \
+                or "mergeQueueEntry" not in view:
+            raise ValueError("missing or changed pull request fields")
+        entry = view["mergeQueueEntry"]
+        if entry is not None and (not isinstance(entry, dict)
+                or not isinstance(entry.get("id"), str) or not entry["id"]):
+            raise ValueError("malformed queue entry")
+        if entry is not None:
+            queue_group(entry)
+    except (KeyError, TypeError, ValueError) as e:
+        raise Refusal(f"unreadable queue state for #{number}: {e}") from e
+    return view
+
+
+def enqueue(ctx: Context, view: dict) -> dict:
+    """Pin the checked head in the enqueue mutation and validate its acknowledgement."""
+    query = """mutation($id:ID!, $head:GitObjectID!) {
+      enqueuePullRequest(input:{pullRequestId:$id, expectedHeadOid:$head}) {
+        mergeQueueEntry { id headCommit { oid } pullRequest { id headRefOid } }
+      }
+    }"""
+    answer = api_json(ctx, "graphql", "-f", f"query={query}", "-f", f"id={view['id']}",
+                      "-f", f"head={ctx.sha}")
+    try:
+        entry = answer["data"]["enqueuePullRequest"]["mergeQueueEntry"]
+        if not isinstance(entry["id"], str) or not entry["id"] \
+                or entry["pullRequest"]["id"] != view["id"] \
+                or entry["pullRequest"]["headRefOid"] != ctx.sha:
+            raise ValueError("the acknowledgement does not name the checked head")
+        queue_group(entry)
+    except (KeyError, TypeError, ValueError) as e:
+        raise Refusal(f"unreadable enqueue acknowledgement: {e}") from e
+    return entry
+
+
+def queue_group(entry: dict) -> str | None:
+    """Read a queue entry's current group head, which may not have been made yet."""
+    commit = entry.get("headCommit")
+    if commit is None:
+        return None
+    if not isinstance(commit, dict) or not isinstance(commit.get("oid"), str) \
+            or not FULL_OID.fullmatch(commit["oid"]):
+        raise Refusal("unreadable queue group head")
+    return commit["oid"]
+
+
+def queue_checks(ctx: Context, group: str | None) -> str:
+    """Include checks of the last observed group, if readable, after its entry is gone."""
+    if group is None:
+        return "the failing group's checks are not readable"
+    try:
+        pages = api_json(ctx, f"repos/{ctx.github}/commits/{group}/check-runs?per_page=100",
+                         "--paginate", "--slurp")
+        if not isinstance(pages, list) or not pages:
+            raise ValueError("missing check pages")
+        checks = []
+        for page in pages:
+            if not isinstance(page, dict) or not isinstance(page.get("check_runs"), list):
+                raise ValueError("unreadable check page")
+            for check in page["check_runs"]:
+                if not isinstance(check, dict) or not isinstance(check.get("name"), str) \
+                        or check.get("status") not in ("queued", "in_progress", "completed") \
+                        or not isinstance(check.get("conclusion"), (str, type(None))):
+                    raise ValueError("unreadable check entry")
+                checks.append(f"{check['name']}: {check.get('conclusion') or check['status']}")
+        return f"group {group[:12]} checks: " + "; ".join(checks) if checks else \
+            "the failing group's checks are not readable"
+    except Exception:
+        return "the failing group's checks are not readable"
+
+
+def verify_queue_merge(ctx: Context, number: int, view: dict, rep: Report) -> str:
+    """The named merge must be on main, with exactly two parents and the checked head second."""
+    merged = view.get("mergeCommit")
+    oid = merged.get("oid") if isinstance(merged, dict) else None
+    if not isinstance(oid, str) or not FULL_OID.fullmatch(oid):
+        raise Refusal(f"GitHub names no full merge commit for queued #{number}")
+    git(ctx.repo, "fetch", "origin")
+    main = rev_parse(ctx.repo, "refs/remotes/origin/main^{commit}")
+    if not main or rev_parse(ctx.repo, f"{oid}^{{commit}}") is None \
+            or not git_ok(ctx.repo, "merge-base", "--is-ancestor", oid, main):
+        raise Refusal(f"origin/main does not hold the merge commit GitHub names for #{number}")
+    parents = git(ctx.repo, "rev-list", "--parents", "-n", "1", oid).split()[1:]
+    if len(parents) != 2 or parents[1] != ctx.sha:
+        raise Refusal(f"queued merge {oid[:12]} does not have the checked head as second parent")
+    rep.add("5", "main", "ok", f"{oid[:12]} on origin/main, with {ctx.sha[:12]} as second parent")
+    return oid
+
+
+def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode: bool,
+               body: str | None) -> int:
+    """Enqueue once, then follow a known entry to merge or ejection, with bounded polling.
+    `body`, the gates' last read, may declare the pull request a red main's fix."""
+    asked = False
+    result, code = "refused", 1
+    try:
+        if dry_run:
+            rep.add("4", "enqueue", "skip", f"dry run: would enqueue #{number}, head {ctx.sha}")
+            result, code = "passed every gate (dry run, not queued)", 0
+        else:
+            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep)
+            main_health(ctx._replace(base=tip), rep, body)
+            view = queue_view(ctx, number)
+            if view["state"] != "OPEN":
+                raise Refusal(f"#{number} is no longer open")
+            entry = view["mergeQueueEntry"]
+            asked = True
+            if entry is None:
+                entry = enqueue(ctx, view)
+            group = queue_group(entry)
+            rep.add("4", "enqueue", "ok", f"#{number} queued with head {ctx.sha}")
+            deadline = time.time() + QUEUE_TIMEOUT
+            while True:
+                view = queue_view(ctx, number)
+                if view["state"] == "MERGED":
+                    oid = verify_queue_merge(ctx, number, view, rep)
+                    result, code = f"merged #{number} as {oid[:12]}", 0
+                    break
+                if view["state"] == "OPEN" and view["mergeQueueEntry"] is None:
+                    detail = queue_checks(ctx, group)
+                    rep.add("4", "merge queue", "FAIL", f"#{number} ejected; {detail}")
+                    result, code = f"ejected #{number}; {detail}", 1
+                    break
+                if view["state"] != "OPEN":
+                    raise Refusal(f"#{number} is {view['state']}; no queue verdict is known")
+                group = queue_group(view["mergeQueueEntry"]) or group
+                if time.time() >= deadline:
+                    raise Refusal(f"timed out following #{number}")
+                time.sleep(QUEUE_POLL)
+    except (Exception, KeyboardInterrupt) as e:
+        if asked:
+            result, code = f"queued; verdict not followed ({e})", 3
+            print(f"\nQueued; verdict not followed: {e}")
+        else:
+            result, code = f"refused ({e})", 1
+            print(f"\nREFUSED: {e}")
+    summary(rep, "queue dry run" if dry_run else "queue", ctx.sha, ctx.base, result, "")
+    return code
+
+
 # --------------------------------------------------------------------------------------
 # Step 6: the summary and the log outside the repository
 
@@ -5376,6 +6688,12 @@ def preflight_main(repo: Path, args) -> int:
         sha, base = ctx.sha, ctx.base
         labels = check_kind_label(ctx, args, rep) if ctx.branch else set()
         risk = risk_class(ctx.repo, ctx.base, ctx.sha, labels)
+        # After the class, which serves the cache (R3 to R5 alone), and after risk_class
+        # runs origin/main's risk.py, outside run(); before any of the commit's code runs.
+        if args.main_checks_cache:
+            if risk.cls not in LOW_CLASSES:
+                count_markers(ctx.repo, ctx.base)
+            open_cache(rep, risk, train=(ctx.branch or "").startswith("train/"))
         logs = logs_dir(sha)
         body_text = body_input(args)
         pre = check_commit(ctx, rep, logs, args.test_mode, risk,
@@ -5467,8 +6785,20 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         earlier = load_record(ctx.sha, ctx.base)
         checked = checks_record(earlier, test_mode, risk)
         release_needs_full_record(ctx, number, labels, checked, earlier, test_mode, rep)
+        # The record is a file the checks it ran could have written. When the head
+        # changes the checks themselves, CI runs the head's copies, never origin/main's,
+        # so only the pre-flight can find that origin/main's checks fail on it: the full
+        # checks run again here rather than trust the record.
+        # So too for a head that changes any protected path: CI runs the head's own
+        # workflow (.github/) as well as its own checks.
+        if checked is not None and any(under(p, CHECK_INPUTS) or is_protected(p)
+                                       for _, p in changed_files(repo, ctx.base, ctx.sha)):
+            rep.add("3", "full checks record", "note", "the head changes the checks or a "
+                    "protected path, so the full checks run again, not the record of the "
+                    "pre-flight")
+            checked = None
         if checked is None:
-            gates(ctx, number, rep)     # before the long checks, so a draft fails at once
+            view = gates(ctx, number, rep)   # before long checks, so a draft fails at once
         rep.heading("3. The pre-flight of the head")
         # The secret scan and the guards run on the head every time: the record is a
         # local file, and the pre-flight ran the commit's own code (its checks, and Lean
@@ -5511,19 +6841,22 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         if merge_train_input(ctx, body_view) != train_body:
             raise Refusal("the train's body changed during the checks: run --merge again")
         body = body_view.get("body") or ""
-        template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+        template = show(ctx.repo, ctx.harness_sha or ctx.base, TEMPLATE) \
+            or show(ctx.repo, ctx.sha, TEMPLATE)
         if unfinished_section(body, template) != unfinished_section(view.get("body") or "",
                                                                     template):
             raise Refusal(f"#{number}'s Unfinished work changed after the gates read it: "
                           "run --merge again")
         m = BLOCK.search(body)
         new = refreshed(body, describe(ctx, pre))
-        if checked is None or not m or (m.group(1), m.group(2)) != (ctx.sha, ctx.base):
+        if not block_current(ctx, m, record):
             new = put_block(new, preflight_block(ctx.sha, ctx.base, record))
         if unfinished_section(new, template) != unfinished_section(body, template):
             raise Refusal(f"refreshing #{number}'s parts would change its Unfinished work: "
                           "put safe_push's markers back where the template has them")
-        if new != body:
+        # A body edited in GitHub's page has CRLF line ends, and the parts are written
+        # afresh with LF: the parts are up to date when they differ by line ends alone.
+        if new.replace("\r\n", "\n") != body.replace("\r\n", "\n"):
             rep.add("3", "body", "FAIL", "its pre-flight summary or the parts safe_push "
                     f"wrote are out of date: run `git safe-push --branch {ctx.branch}` to "
                     "refresh them, then run --merge again")
@@ -5549,12 +6882,15 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         labels = current_labels
         kind = next((k for k in KIND_LABELS if k in labels), None)
         rep.heading("4. Merge")
+        if ctx.queue:
+            return queue_main(ctx, number, rep, dry_run, test_mode, view.get("body"))
         if dry_run:
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "
                     f"({ctx.sha[:12]}) with a merge commit, and delete {ctx.branch}")
             result, code = "passed every gate (dry run, not merged)", 0
         else:
             main_unmoved(ctx)
+            main_health(ctx, rep, view.get("body"))
             merging, started = "asked", time.time()
             r = merge(ctx, number, view)
             oid = merge_outcome(ctx, number, rep, r, started)
@@ -5682,6 +7018,19 @@ def main(argv=None) -> int:
     parser.add_argument("--commit", default="HEAD", help="the commit to check (default HEAD)")
     parser.add_argument("--dry-run", action="store_true",
                         help="everything but the push, the pull request and the merge")
+    parser.add_argument("--main-checks-cache", action="store_true",
+                        help="the pre-flight only, for a change of R3 to R5, whose step 4 "
+                        "runs in full, not on a train/* branch, whose train check runs in "
+                        "the harness's own process: reuse origin/main's pass of the full "
+                        "checks from ~/.cache/stoicheia/main-checks/ when an earlier run "
+                        "checked the same trees with the same harness, toolchain and "
+                        "environment, every command the run starts then running under "
+                        "macOS's sandbox-exec, which stops it writing there (no sandbox, "
+                        "no cache). The sandbox does not stop a run without the flag, nor "
+                        "what a flagged run's code leaves for a later command or run to "
+                        "load before its sandbox starts. Only the runs that land a train pass "
+                        "it (the coordinator ruled): the coordinator's dry run of the "
+                        "train and its push")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
@@ -5691,7 +7040,8 @@ def main(argv=None) -> int:
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
     if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
-                                   or args.label or args.commit != "HEAD"):
+                                   or args.label or args.commit != "HEAD"
+                                   or args.main_checks_cache):
         parser.error("--merge takes only --dry-run")
     if not args.branch and (args.title or args.body_file or args.ready or args.label):
         parser.error("--title, --body-file, --ready and --label go with --branch")

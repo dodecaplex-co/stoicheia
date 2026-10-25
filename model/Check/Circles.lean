@@ -1,3 +1,4 @@
+import Elements.Figure.Basics
 import Elements.BookI.Prop07
 import Elements.Figure.Circles
 import Elements.Foundations.Postulates
@@ -76,18 +77,18 @@ example (S : Model.Signature) : Model.Hand.Definition15 S =
     Model.Law.Definition15 S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.centre_unique_circles
   ``Elements.Tacit.centre_unique)
-example (S : Model.Signature) : Model.Hand.centre_inside_circles S =
-    Model.Law.Tacit.centre_inside S := rfl
-example (S : Model.Signature) : Model.Hand.inside_not_on_circles S =
-    Model.Law.Tacit.inside_not_on S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.centre_inside_circles
+  ``Elements.Tacit.centre_inside)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_not_on_circles
+  ``Elements.Tacit.inside_not_on)
 example (S : Model.Signature) : Model.Hand.circle_eq_circles S =
     Model.Law.Tacit.circle_eq S := rfl
-example (S : Model.Signature) : Model.Hand.inside_of_len_lt_circles S =
-    Model.Law.Tacit.inside_of_len_lt S := rfl
-example (S : Model.Signature) : Model.Hand.len_lt_of_inside_circles S =
-    Model.Law.Tacit.len_lt_of_inside S := rfl
-example (S : Model.Signature) : Model.Hand.on_circle_of_len_eq_circles S =
-    Model.Law.Tacit.on_circle_of_len_eq S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_len_lt_circles
+  ``Elements.Tacit.inside_of_len_lt)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.len_lt_of_inside_circles
+  ``Elements.Tacit.len_lt_of_inside)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.on_circle_of_len_eq_circles
+  ``Elements.Tacit.on_circle_of_len_eq)
 example (S : Model.Signature) : Model.Hand.between_of_inside_chord S =
     Model.Law.Tacit.between_of_inside_chord S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_between
@@ -98,15 +99,15 @@ run_cmd (Check.Generator.comparePlanted ``Model.Hand.not_same_side_of_circles_me
   ``Elements.Tacit.not_same_side_of_circles_meet)
 example (S : Model.Signature) : Model.Hand.exists_point_circles S =
     Model.Law.Tacit.exists_point S := rfl
-example (S : Model.Signature) : Model.Hand.exists_point_same_side S =
-    Model.Law.Tacit.exists_point_same_side S := rfl
-example (S : Model.Signature) : Model.Hand.exists_point_opposite_side S =
-    Model.Law.Tacit.exists_point_opposite_side S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_same_side
+  ``Elements.Tacit.exists_point_same_side)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_opposite_side
+  ``Elements.Tacit.exists_point_opposite_side)
 example (S : Model.Signature) : Model.Hand.exists_point_inside_circle S =
     Model.Law.Tacit.exists_point_inside_circle S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_outside_circle
   ``Elements.Tacit.exists_point_outside_circle)
-example (S : Model.Signature) : Model.Hand.exists_point_on_circle S =
-    Model.Law.Tacit.exists_point_on_circle S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_on_circle
+  ``Elements.Tacit.exists_point_on_circle)
 
 end Check

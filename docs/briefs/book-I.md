@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | <!-- count:tacit-rules -->74<!-- /count --> tacit rules taken as axioms, from System E save one of our own, that every circle has a centre (`exists_centre`, from Definitions I.15 and I.16, by the owner's decision of 18 October 2026): `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | <!-- count:tacit-rules -->43<!-- /count --> tacit rules taken as axioms, from System E save one of our own, that every circle has a centre (`exists_centre`, from Definitions I.15 and I.16, by the owner's decision of 18 October 2026): `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 
@@ -44,8 +44,11 @@ Hypotheses come from the setting-out, conclusions from "I say that".
 ## Representations
 
 - **A straight line is whole.** A `Line` is the whole straight line, named by any two of its
-  points, so producing one usually costs nothing: the proofs of I.2 and I.5 use no
-  Postulate 2. Where a proof must cut off from a straight line produced, `produce_longer`
+  points. I.2 finds its points on those lines without Postulate 2. I.5 takes its produced
+  sides as given, but still rests on Postulate 2 through proved rules, in its own Lean the
+  order rule `Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and
+  Metric 8, `Tacit.area_swap`, and through I.4, which it cites.
+  Where a proof must cut off from a straight line produced, `produce_longer`
   first makes it long enough.
 - **Magnitudes, not numbers.** Lengths, angles and areas are separate kinds that add and
   compare. No proof uses coordinates or real numbers; I.47 is about areas, with no
@@ -66,13 +69,16 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   distance on a ray; one ray for one angle, in its incidence and direction; and I.7. Each
   cited law is supplied with its proof. Our reading
   admits I.7 inside I.8's placement because its statement asserts no existence, though its
-  earlier proof uses constructions. These are restrictions on represented derivations:
-  equivalence with System E's two printed rules is not claimed, nor is non-derivability
-  of placement from the whole foundation. I.22 and I.23 construct congruent figures by
+  earlier proof uses constructions. Since the second axiom retirement the same holds of
+  four of the laws I.4 cites (distinct ends, one point at one distance on a ray, and both
+  halves of one ray for one angle), whose proofs now use construction rules, and of the
+  first two of them in I.8; only Metric 3, 4 and 9 are proved with none. These are
+  restrictions on represented derivations: equivalence with System E's two printed rules
+  is not claimed, nor is non-derivability of placement from the whole foundation. I.22 and I.23 construct congruent figures by
   Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
-  Intersections rule lets a proof take a point where they do. Eight rules are now theorems
+  Intersections rule lets a proof take a point where they do. Thirty-nine rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given by its outline (`Outline`, in
@@ -112,8 +118,9 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Convex/`, `Cells.lean`, `Content.lean`, `Outlines.lean`, `Arrangements.lean`,
   `Divisions.lean` and `FanBoundary.lean`, with their helpers in the folders of the same
   names, on the words of `Elements/Foundations/Figures.lean`. `Superposition.lean`,
-  imported separately by I.4 and I.8, proves the geometric laws their hypothetical
-  placements cite, without construction rules.
+  imported separately by I.4 and I.8, proves the seven geometric laws their hypothetical
+  placements cite, one theorem each (I.8 also cites I.7's, proved in I.8's own file); the
+  certificate lists the construction rules beneath each (`cited_laws`).
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
@@ -191,7 +198,11 @@ corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition
 and `circle_eq`; using it to prove I.7 would be circular. The right-angle rule
 `adjacent_eq_of_right` and the converse angle-addition rule `inside_of_angle_add` are
 corollaries after I.13. The other five retired rules are proved in Book Zero's
-`Circles.lean`. The lock now holds <!-- count:axioms -->80<!-- /count --> axioms, including <!-- count:tacit-rules -->74<!-- /count --> tacit rules.
+`Circles.lean`. By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
+many books in front of us."), 31 more rules became
+theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
+`CirclePoints.lean`, proved that day. With our own rule that every
+circle has a centre, the lock now holds <!-- count:axioms -->49<!-- /count --> axioms, including <!-- count:tacit-rules -->43<!-- /count --> tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

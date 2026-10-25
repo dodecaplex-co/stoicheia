@@ -26,9 +26,10 @@ note = "Euclid bisects BH and BG without a reference from Heath here. The Lean j
 
 [[passage]]
 at = "and from K, L let KC, LM be drawn at right angles"
+unused = ["hA", "hC"]
 kind = "helper"
 helper = "BookI.Prop11"
-note = "Euclid draws the perpendiculars and carries them through the circle; the Lean uses I.11, puts K and L within ABC by III.2 and obtains A, C, N and O from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, with no reference from Heath for these constructions. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and M and E need no further construction."
+note = "Euclid draws the perpendiculars and carries them through the circle; the Lean uses I.11, puts K and L within ABC by III.2 and obtains A, C and O from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, with no reference from Heath for these constructions. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and N, M and E need no further construction."
 
 [[passage]]
 at = "Then, since in the circle ABC a straight line AC"
@@ -63,10 +64,11 @@ note = "Like Heath's, this figure draws the impossible supposition: DEF meeting 
 
 [review]
 stage = "full"
-commit = "5baf18d2"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:1eecfe36ac5f86e8"
-run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex)"
+commit = "a3fbf343e"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:612b3b8ec5e0a3d9"
+run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card #423, ship C7: re-read in full after N was added to the note at 'and from K, L', by GPT-6 Astra (Codex), reader C7-bind423-read2, at a3fbf343e"
+text = "sha256:aec7d38497dfaf5a"
 
 [review.items]
 statement = "pass"

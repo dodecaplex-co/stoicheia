@@ -27,22 +27,28 @@
   the rule codifies it: a file directly in that folder is named in lower-case words
   joined by hyphens, every other Lean file keeps the module-name rule, and nothing was
   renamed. Every one of the 1,138 paths at origin/main `17369f92` passes; there were 1,137
-  when the standard was written. The check reads Git's index, which is what is staged for
+  when the standard was written. Main has since gained the registry of checks, `checks/`,
+  a top-level folder of TOML files and its `checks/README.md`, and the suite's times,
+  `scripts/test_safe_push_times.json`; the lists admit exactly these, the folder by its
+  type and the two files by their paths, and every path of the merge with origin/main
+  `7bc3d710` passes. The check reads Git's index, which is what is staged for
   the next commit: in CI and in the pre-flight's fresh worktree, the commit itself, and on
   a contributor's machine, what they have staged; never the working
   tree. `--rev` reads a commit's tree instead, entry by entry, so that a tree made by hand
-  that lists a path twice is refused. The check runs first, before `lake build`, in CI's
-  `check` job, in `scripts/safe_push.py`'s checks and in WORKFLOW, section 8:
+  that lists a path twice is refused. The check runs first, before `lake build`, as two
+  entries of the registry of checks
+  ([the decision](2026-10-22-check-registry.md)), which CI's `check` job and the
+  pre-flight run and from which WORKFLOW, section 8, is rendered:
   `python3 -I tests/test_check_paths.py`, then
   `python3 scripts/check_paths.py --self-test`. The self-test plants a fault of each rule
   in memory beside good paths, Book IV's and Book X's among them; the test file plants
   faults straight into the indexes of throwaway repositories, where a case-insensitive
-  disk could not hold a twin as two files; and `scripts/negative_tests.py`
-  plants eight (a case twin of `README.md` and one of a protected file,
+  disk could not hold a twin as two files; and the negative tests' plant
+  `scripts/negative/path_faults.py` plants eight (a case twin of `README.md` and one of a protected file,
   `Certificate/fields.md`, a space, an upper-case extension, a symbolic link, an
   executable bit, an svg under `book/` and a misnamed review record) in a copy of the
-  edition's index that passes unplanted, under `--counts-only` too, leaving the real index
-  and `git status` as they were. Every finding is one line of printable ASCII, naming its
+  edition's index that passes unplanted, leaving the real index and `git status` as they
+  were. Every finding is one line of printable ASCII, naming its
   rule and its path, with any name inside the reason escaped as Git quotes a path. A
   module planted beside the script, such as `scripts/unicodedata.py`, is never read in
   place of the standard library's: the script takes its own folder off `sys.path` before
@@ -104,10 +110,12 @@
   it.
 
   This entry approves each protected file the change touches, each in a sentence here.
-  It approves the change to `.github/workflows/ci.yml`, whose check job runs the path
-  check's cases and then the check itself, first of all.
+  It approves the new registry entry `checks/25-test-check-paths.toml`, which runs the path
+  check's cases first of all the checks.
+  It approves the new registry entry `checks/26-check-paths.toml`, which runs the path
+  check itself next, before the build.
   It approves the new script `scripts/check_paths.py`, which states the standard as code.
-  It approves the change to `scripts/negative_tests.py`, which plants the eight path
+  It approves the new plant `scripts/negative/path_faults.py`, which plants the eight path
   faults above in a copy of the index.
   It approves the change to `scripts/safe_push.py`, whose step 3 holds both paths guards
   and whose every pass of the checks begins at the commit.

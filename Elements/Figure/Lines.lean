@@ -1,4 +1,6 @@
 import Elements.Figure.Lengths
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 
 /-!
 # Book Zero: points on a straight line

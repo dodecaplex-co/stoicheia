@@ -1,0 +1,6 @@
+# Check every proof.
+order = 10
+name = "lake build"
+job = "check"
+command = ["lake", "build"]
+section8 = "lake build"

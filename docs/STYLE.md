@@ -237,7 +237,10 @@ proofs", names what each shared step brings in. So the mishnah does not restate 
 "records", explain what a cited proposition or shared step brings in, or trace the paths
 of Postulate 5, Postulates 1 to 4, Definition I.15, the Common Notions or the tacit rules.
 It speaks of them only when the reason is this proposition's story, and then says "the
-Lean cites": a departure from Euclid's route (the proofs of I.2 and I.5 use no Postulate 2;
+Lean cites": a departure from Euclid's route (I.2 uses no Postulate 2; I.5 takes the produced
+sides as given, but still rests on it through proved rules, in its own Lean the order rule
+`Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and Metric 8,
+`Tacit.area_swap`, and through I.4, which it cites;
 the Lean cites I.10 in I.42 and I.17 in II.12, where Heath gives no reference: one clause
 naming the step), a gap the text leaves (I.1's circles, I.35's G), or a landmark
 (Postulate 5, called on in the text at I.29, I.44 and II.10; I.31's proof, which does not
@@ -251,9 +254,9 @@ tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`, and how
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
 the pieces make up the whole. Book III's tells how proofs take a circle's centre: by
-III.1 where Heath cites it, by `exists_centre` where none is supplied, or from geometric
-data such as equal circles. It tells the constructions whose references the text leaves
-unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
+`exists_centre` where none is supplied, under Heath's "[III. 1]" as elsewhere, or from
+geometric data such as equal circles. It tells the constructions whose references the text
+leaves unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
 twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
 from Euclid's. A shared step may be told on its home page (II.1's rectangle contained,

@@ -319,14 +319,20 @@ class KnownRows(unittest.TestCase):
     def test_the_known_rows_closed_by_rules(self):
         self.assertEqual(screen.lost(self.RULED), [])
 
+    # The two cases below take the first row of KNOWN, whichever it is, so that they hold
+    # while KNOWN moves with the axioms the screen can try.
     def test_a_row_closed_only_by_its_bare_try_is_lost(self):
-        closed = self.RULED + ["bare__BookIII_Prop2"]
-        self.assertEqual(screen.by_rule(closed),
-                         ({"BookIII_Prop2"}, {"BookIII_Prop5", "BookIII_Prop6"}))
-        self.assertEqual(screen.lost(closed), ["BookIII.Prop2"])
+        row = screen.KNOWN[0]
+        closed = self.RULED + [f"bare__{screen.ident(row)}"]
+        others = {screen.statement_of(n) for n in self.RULED} - {screen.ident(row)}
+        self.assertEqual(screen.by_rule(closed), ({screen.ident(row)}, others))
+        self.assertEqual(screen.lost(closed), [row])
 
     def test_a_row_not_closed_is_lost(self):
-        self.assertEqual(screen.lost(self.RULED[1:]), ["BookIII.Prop2"])
+        row = screen.KNOWN[0]
+        closed = [n for n in self.RULED if screen.statement_of(n) != screen.ident(row)]
+        self.assertEqual(len(closed), len(self.RULED) - 1)
+        self.assertEqual(screen.lost(closed), [row])
 
     def test_tries_name_their_statements(self):
         facts = {"propositions": [{"name": "BookI.Prop40.general", "ref": "I.40 general"},

@@ -1,3 +1,4 @@
+import Elements.Figure.Basics
 import Elements.Foundations.CommonNotions
 import Elements.Foundations.Definitions
 import Elements.Foundations.DefinitionsII
@@ -48,7 +49,8 @@ unfolded, neither of which changes the proposition. It also checks:
   the signature against the library's opaque word;
 * that `Neutral` and `Laws` have exactly a field for each law of the lock, each of type
   `Law.… S`, and nothing else;
-* each law of `Model/Hand.lean` against the law the generator wrote for it; and
+* each retained axiom of `Model/Hand.lean` against the law the generator wrote for it;
+  `Check/Hand.lean` compares the two retired rules directly with their theorem types; and
 * that `original`, which the kernel's round trips put back for the signature, gives each field
   the library's word.
 
@@ -148,6 +150,28 @@ error: `Check.Planted.foreign`: `Model.Kind` is neither Lean's own (from `Init`)
 -/
 #guard_msgs in
 run_cmd Check.Generator.translatePlanted ``Check.Planted.foreign
+
+/-! ## A binder fault that the kernel does not see
+
+`Check/Intersections.lean` compares Intersections 2 and 3 with the library by `comparePlanted`
+as well as by `rfl`. A copy of Intersection 3 with the point A explicit instead of implicit
+passes `rfl`, and the comparison by syntax must refuse it. -/
+
+namespace Check.IntersectionsPlanted
+
+/-- Intersection 3 with the point A explicit instead of implicit. -/
+def explicit (S : Model.Signature) : Prop :=
+  ∀ (A : S.Point) {L : S.Line} {α : S.Circle}, S.InsideCircle A α → S.OnLine A L →
+    Model.Hand.Intersections.LineMeetsCircle S L α
+
+example : explicit original = type_of% @Elements.Tacit.line_meets_circle_of_inside := rfl
+
+end Check.IntersectionsPlanted
+
+/-- error: `Check.IntersectionsPlanted.explicit`: the binder `A` is explicit where the library's `A` is implicit -/
+#guard_msgs in
+run_cmd (Check.Generator.comparePlanted ``Check.IntersectionsPlanted.explicit
+  ``Elements.Tacit.line_meets_circle_of_inside)
 
 /-! ## The shared restricted calculus
 

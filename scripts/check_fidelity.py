@@ -85,10 +85,10 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); none rests on Circle 2 or Circle 3, each of which must be
-     an axiom in the lock or a proved rule resting on another forbidden circle rule
-     that remains an axiom in the lock; only III.24 has placement, or a lemma of the `Placement`
-     namespace or of placement's files, among its shared steps;
+     after I.29, and may); none rests on Circle 2 or Circle 3, and each of those rules
+     follows one of the allowed routes in docs/FORMALIZATION.md, section 7, "Circle 2 and
+     Circle 3"; only III.24 has placement, or a lemma of the `Placement` namespace or of
+     placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold;
@@ -125,6 +125,13 @@ from pathlib import Path
 from typing import NamedTuple
 
 import heath
+# #206's reader, heath's since #349: see the note where it stood.
+from heath import (CHAR, ESCAPE, FIELD, FIRST, IDENT, ID_FIRST, ID_REST, INTERPOLATED,
+                   LETTER_LIKE, NAME_CHAR, NAME_RUN, NON_ASCII, NUMBER, RAW, REST,
+                   SUBSCRIPT_ALNUM, read_lean, without_comments, lean_comments,
+                   comment_end, _find, closed_up, _read_code, _read_string,
+                   _read_interpolated, lean_string)
+from heath import WORD_CHAR as WORD
 import generated_counts
 
 ROOT = heath.ROOT
@@ -145,12 +152,25 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # postulate from their first proposition on, as II.10 does by name. A book missing here
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
-# These rules contain III.2; no certificate entry may rest on either, even through a
-# helper. Certificate names omit the leading `Elements.`.
+# These rules contain III.2. No certificate entry may rest on either as an axiom, and none
+# before III.2 may use either, even through a helper; a rule proved from III.2 may be used
+# after III.2, and the use cites III.2. Certificate names omit the leading `Elements.`.
+# Each stays an axiom in the lock, or is a theorem (`proved_rules`) proved in one of two
+# ways. Proved from the other rule while that one is still a locked axiom, it brings that
+# axiom into the axioms of every entry using it, which refuses the entry. Proved by a
+# proof that cites III.2 (`proved_rule_cites`), with III.2 proved and resting on neither
+# rule, it needs no axiom beneath it, and that is safe: an entry using such a rule cites
+# III.2 through it, for Facts.lean's `directDeps`, the walk that finds an entry's
+# citations, passes through the Tacit theorems. So the later-citation check refuses it in
+# Books I and II and in III.1, porisms and companions included; III.2 cannot use it,
+# since Lean admits no circular proof, and the route is refused if III.2's entry rests on
+# either rule; after III.2 the use is an honest citation.
 FORBIDDEN_CIRCLE_RULES = {
     "Tacit.inside_of_between": "Circle 2",
     "Tacit.outside_of_between": "Circle 3",
 }
+# The proposition that proves both, as a proved rule's `proved_rule_cites` gives it.
+CIRCLE_SOURCE = "III.2"
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -370,79 +390,12 @@ def check_fidelity() -> None:
                      + first_difference(got, expected))
 
 
-# Lean's tokens, as its tokenizer starts them: an identifier begins with a letter or `_`,
-# a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
-# digit, so that the `'` after one begins a character literal. A string just after one of
-# INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-# An identifier's parts are joined by a `.` before a word character other than a digit.
-# After a term, an adjacent `.` can begin a projection field: Lean reads `p.1` as `p` and
-# the field `.1`, its digits alone (FIELD). It can also be a declared notation token. When
-# the number after it runs past FIELD through `_` or an exponent, keep NUMBER's longer
-# boundary, which is the reading Lean's longest parser can select for that notation; an
-# ordinary projection such as `p.1.succ` keeps FIELD. Lean's field index never begins with
-# 0, so `.0x1`, `.0b1` or `.01` after a `.` is always a number. Whitespace or a comment
-# ends the adjacency on which a projection depends.
-# A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
-# hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
-# never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
-# `p.1set_option` as `p`, `.1` and `set_option`, so a number or field with a letter, a
-# digit or `_` just after it is blanked: the scan's `\b` then sees the word after it
-# begin (#197).
-# A name is made of the characters Lean 4.35 takes for one, `isIdFirst` to begin it and
-# `isIdRest` to go on (Init/Meta/Defs.lean): ID_FIRST and ID_REST, range by range. Outside
-# a name, any other character that Python's `\w` takes for a letter or a digit, as the `¹`
-# of the postfix `⁻¹`, which no name holds, the `ₐ` of `:=ₐ`, which no name begins with,
-# Mathlib's `ᗮ` or a `λ`, Lean reads as part of a token or not at all, so it is blanked:
-# Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, and the scan's `\b` then sees
-# `set_option` begin (#234).
-# check_rules conservatively refuses a string literal in the approximate span of a command
-# that may declare tokens when its text ends in a character a name may hold
-# (DECLARES_TOKENS). Lean's own tokens, and those of a library the file imports, are not
-# read as tokens: docs/FORMALIZATION.md, section 7, says which of them the scan may misread.
-LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters, but λ
-               "\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"    # Greek capitals, but Π and Σ
-               "\u03ca-\u03fb"                             # Coptic
-               "\u1f00-\u1ffe"                             # polytonic Greek
-               "\u2100-\u214f"                             # the letterlike symbols
-               "\U0001d49c-\U0001d59f"                     # script, double-struck, Fraktur
-               "\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u00ff"   # Latin-1 letters, but × and ÷
-               "\u0100-\u017f")                            # Latin Extended-A
-# isSubScriptAlnum: the subscript digits ₀ to ₉, the subscript letters ₐ to ₜ, ᵢ to ᵪ and ⱼ.
-SUBSCRIPT_ALNUM = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a\u2c7c"
-ID_FIRST = "A-Za-z_" + LETTER_LIKE                          # isIdFirst
-ID_REST = ID_FIRST + "0-9'!?" + SUBSCRIPT_ALNUM             # isIdRest
-# The scan's name, though, stops before a character of those ranges that `\w` does not take,
-# as `℃`, `№` or `⅋`, 96 in all, which no file uses: Lean reads the longest token it knows,
-# so after a token ending in one, as `+℃`, which check_rules refuses when the file declares
-# it, or one a library declares, it reads `2 +℃1set_option` as `2`, `+℃`, `1` and
-# `set_option`, and a scan that took `℃1set_option` for one name would miss the command, as
-# the scan before #234 did not.
-# Ending a name early, or blanking a character, can only show the scan more words, but
-# where what follows, closed up, is a character literal, a raw string, or an `s!`, `m!`,
-# `f!` or `throwError` before a string: Lean may read on through the `'`, the `r` or the
-# word as part of a name or a token, so that a `"` or `}` the scan takes for a literal's
-# text opens a string or closes a hole (`a℃'}'`, `⁻¹'"'`), or a string the scan reads
-# with holes is a plain one (`a℃s!"{"`). Such a place is known by the run of name
-# characters just before it, which holds a character outside ASCII (`closed_up`): there
-# the scan refuses the literal or the raw string, and reads the string after such a word
-# as a plain one, refused if Lean could read its braces as holes (#234).
-FIRST, REST = f"(?=\\w)[{ID_FIRST}]", f"(?:(?=[\\w'!?])[{ID_REST}])"
-IDENT = re.compile(f"{FIRST}{REST}*(?:\\.{FIRST}{REST}*)*")
-NAME_CHAR = re.compile(f"[\\w{ID_REST}]")
-NAME_RUN = re.compile(f"[\\w{ID_REST}]+")
-NON_ASCII = re.compile(r"[^\x00-\x7f]")
-NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
-                    r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
-                    r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
-FIELD = re.compile(r"[1-9][0-9]*")
-WORD = re.compile(r"\w")
-RAW = re.compile(r'r(#*)"')
-CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
-INTERPOLATED = {"s!", "m!", "f!", "throwError"}
-# The escapes of a Lean 4.35 string literal (`quotedCharCoreFn`): `\\`, `\"`, `\'`, `\n`,
-# `\t` and `\r`, `\x` and two hexadecimal digits, `\u` and four, and a gap, a `\` before a
-# line feed, which Lean reads, with the blanks after it, as nothing.
-ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|(\n[ \t\r\n]*)|(.))", re.S)
+# Lean's tokens, and #206's one reader of Lean's comments, strings, literals and
+# names, are heath.py's: it travels with the landing tool's harness, so that the harness
+# can read Lean with it too (#349; the coordinator's ruling of 22 October 23:50). They
+# are imported at the top of this file under the names they had here, including the
+# reader's WORD, imported from heath.py's WORD_CHAR so as not to shadow heath.WORD.
+
 # An approximate token-declaration span (#234). Lean reads the longest token it knows, so after
 # `infixl:65 " +x " => Nat.add` it reads `2 +x1set_option` as `2`, `+x`, `1` and
 # `set_option`, where the scan, which does not read a file's tokens, reads `+` and the name
@@ -479,226 +432,6 @@ DECLARATION_END = re.compile(
     f"=>|@\\[|#[A-Za-z]|(?<![{ID_REST}.])(?:{'|'.join(COMMAND_WORDS)})"
     f"(?![{ID_REST}])(?!\\.[{ID_FIRST}«])")
 NAME = re.compile(r"«[^»]*(?:»|\Z)")
-
-
-def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
-    """The Lean as Lean's tokenizer reads it, with its comments (`--` to the end of the
-    line, and `/- … -/` blocks, docstrings and nested ones among them), the text of its
-    string and character literals, raw strings among them, and each `[` or `]` in a «…»
-    name blanked; the code in an interpolated string's `{…}` holes is kept. Newlines stay,
-    so lines keep their numbers. Also the offset of each string the scan cannot read for
-    certain: one with a `{`, not after INTERPOLATED, whose two readings, plain and with
-    holes, end in different places, since its braces may be text or holes of code; and of
-    each character literal or raw string closed up to a name or token that Lean may read
-    on through its `'` or its `r` (`closed_up`).
-    `strings`, if given, gains each string literal read as code, raw strings among them,
-    as its offset and its text as Lean reads it (`lean_string`), for `declared_tokens`."""
-    marks: list[tuple[str, int, int]] = []
-    _read_code(src, 0, marks)
-    out, unsure = list(src), []
-    for kind, i, j in marks:
-        if kind == "comment":
-            continue
-        if kind == "unsure":
-            unsure.append(i)
-            continue
-        if kind in ("string", "raw"):
-            if strings is not None and kind == "raw":
-                strings.append((i, src[i:j]))
-            elif strings is not None:
-                closed = j - 1 > i and src[j - 1] == '"'
-                strings.append((i, lean_string(src[i + 1:j - 1 if closed else j])))
-            continue
-        for k in range(i, j):
-            if out[k] != "\n" and (kind == "text" or out[k] in "[]"):
-                out[k] = " "
-    return "".join(out), unsure
-
-
-def without_comments(src: str) -> str:
-    """The Lean with its comments and the text of its string literals blanked, as
-    `read_lean` reads it: what `scripts/render.py` searches for a declaration's uses, so a
-    name in a comment, a docstring or a string is no use."""
-    return read_lean(src)[0]
-
-
-def lean_comments(src: str) -> list[tuple[int, int]]:
-    """Each comment of the Lean `src`, in order, as `read_lean` reads them: its offset
-    and the offset where it ends (`comment_end`), the end of `src` for a block that no
-    `-/` closes. A comment in an interpolated string's hole is one; a `--` or `/-` within
-    a comment, a string or a character literal begins none."""
-    marks: list[tuple[str, int, int]] = []
-    _read_code(src, 0, marks)
-    return [(i, j) for kind, i, j in marks if kind == "comment"]
-
-
-def comment_end(src: str, i: int) -> int | None:
-    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
-    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
-    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
-    docstrings and nested blocks among them, just past the `-/` that closes it, or None
-    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
-    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
-    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
-    `read_lean` and `lean_comments`, check_style's notes and the Jev generator call this
-    (#206); it uses nothing else of this file, for scripts/audit/jev_questions.py takes
-    it alone."""
-    if src.startswith("--", i):
-        end = src.find("\n", i)
-        return len(src) if end < 0 else end
-    j, nested = i + 3, 1
-    while j < len(src):
-        pair = src[j:j + 2]
-        nested += (pair == "/-") - (pair == "-/")
-        j += 2 if pair in ("/-", "-/") else 1
-        if not nested:
-            return j
-    return None
-
-
-def _find(src: str, s: str, i: int) -> int:
-    """The offset of `s` in `src` from `i` on, or the end of `src`."""
-    k = src.find(s, i)
-    return len(src) if k < 0 else k
-
-
-@functools.lru_cache(maxsize=8)
-def closed_up(src: str) -> bytes:
-    """For each offset of `src`, and its end, 1 where the run of name characters just
-    before it (NAME_CHAR) holds a character outside ASCII: one the reader blanks, as `¹`,
-    one of the 96 before which it ends a name, as `℃`, or a letter of a name it may have
-    ended there. Lean may read on through what begins at such an offset, as part of the
-    name or of a token, where the scan begins something new; ASCII alone, a name is read
-    whole and a number ends where Lean ends it. In one pass, however long the runs."""
-    out = bytearray(len(src) + 1)
-    for run in NAME_RUN.finditer(src):
-        if odd := NON_ASCII.search(src, run.start(), run.end()):
-            out[odd.end():run.end() + 1] = b"\x01" * (run.end() - odd.start())
-    return bytes(out)
-
-
-def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
-    """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
-    that offset. `marks` gains the text of each comment and literal ("text"), each
-    comment again ("comment", `comment_end`), each «…» name ("name"), each string,
-    character literal or raw string the scan cannot read for certain ("unsure"), and each
-    string literal, from its opening quote past its closing one ("string"), and raw
-    string's text ("raw")."""
-    depth, previous, can_project, field_dot = 0, "", False, False
-    closed = closed_up(src)
-    while i < len(src):
-        c, j = src[i], i + 1
-        if src.startswith(("--", "/-"), i):
-            end = comment_end(src, i)
-            j = len(src) if end is None else end
-            marks.append(("text", i, j))
-            marks.append(("comment", i, j))
-            can_project, field_dot = False, False
-        elif c == '"':
-            j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
-            marks.append(("string", i, j))
-            can_project, field_dot = True, False
-        elif m := RAW.match(src, i):
-            close = '"' + m[1]
-            k = _find(src, close, m.end())
-            if closed[i]:
-                marks.append(("unsure", i, k))
-            marks.append(("text", m.end(), k))
-            marks.append(("raw", m.end(), k))
-            j, previous = min(k + len(close), len(src)), c
-            can_project, field_dot = True, False
-        elif c == "«":
-            j = min(_find(src, "»", i) + 1, len(src))
-            marks.append(("name", i, j))
-            previous = src[i:j]
-            can_project, field_dot = True, False
-        elif m := IDENT.match(src, i):
-            # An `s!` or its kin where Lean may read on through it begins no interpolated
-            # string for certain (`closed_up`).
-            j, previous = m.end(), "" if closed[i] else m[0]
-            can_project, field_dot = True, False
-        elif m := NUMBER.match(src, i):
-            if field_dot and (field := FIELD.match(src, i)):
-                tail = src[field.end():m.end()]
-                if "_" not in tail and "e" not in tail and "E" not in tail:
-                    m = field
-            j, previous = m.end(), m[0]
-            if WORD.match(src, j):
-                marks.append(("text", i, j))
-            can_project, field_dot = True, False
-        elif WORD.match(c):
-            # Outside a name, a character `\w` takes that no name begins with, as the `¹`
-            # that ends `⁻¹`: blanked. After such a token Lean may read `.1` as a field.
-            marks.append(("text", i, j))
-            previous = c
-            can_project, field_dot = True, False
-        elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
-            if closed[i]:
-                marks.append(("unsure", i, m.end()))
-            marks.append(("text", i + 1, m.end() - 1))
-            j, previous = m.end(), c
-            can_project, field_dot = True, False
-        elif c == "}" and hole and not depth:
-            return i
-        elif not c.isspace():
-            depth += (c == "{") - (c == "}")
-            previous = c
-            if c == ".":
-                field_dot, can_project = can_project, False
-            else:
-                can_project, field_dot = c in ")]}·⟩›", False
-        else:
-            can_project, field_dot = False, False
-        i = j
-    return len(src)
-
-
-def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
-    """Read the string at `i` and return the offset past it: with its holes, as an
-    interpolated string, if it follows INTERPOLATED or both readings end in one place."""
-    plain = i + 1
-    while plain < len(src) and src[plain] != '"':
-        plain += 2 if src[plain] == "\\" else 1
-    plain = min(plain + 1, len(src))
-    holes: list[tuple[str, int, int]] = []
-    end = _read_interpolated(src, i, holes)
-    if end == plain or (interpolated and end is not None):
-        marks += holes if interpolated else [mark for mark in holes if mark[0] != "comment"]
-        return end
-    marks.append(("text", i + 1, plain))
-    if "{" in src[i:plain]:
-        marks.append(("unsure", i, plain))
-    return plain
-
-
-def _read_interpolated(src: str, i: int, marks: list) -> int | None:
-    """The offset past the string at `i` read as an interpolated string, with its text
-    marked and its holes read as code; None if it does not close."""
-    j = start = i + 1
-    while j < len(src):
-        if src[j] == "\\":
-            j += 2
-        elif src[j] == '"':
-            marks.append(("text", start, j))
-            return j + 1
-        elif src[j] == "{":
-            marks.append(("text", start, j))
-            j = _read_code(src, j + 1, marks, hole=True)
-            if j >= len(src):
-                return None
-            j = start = j + 1
-        else:
-            j += 1
-    return None
-
-
-def lean_string(body: str) -> str:
-    """A string literal's text between its quotes, as Lean reads it (ESCAPE)."""
-    def escape(m: re.Match) -> str:
-        if m[1] or m[2]:
-            return chr(int(m[1] or m[2], 16))
-        return "" if m[3] else {"n": "\n", "t": "\t", "r": "\r"}.get(m[4], m[4])
-    return ESCAPE.sub(escape, body)
 
 
 def declared_tokens(code: str, strings: list) -> list[tuple[int, str, str]]:
@@ -1054,6 +787,47 @@ def foundations(module: str) -> bool:
     return module.startswith("Elements.Foundations.")
 
 
+def circle_source_faults(facts) -> list[str]:
+    """Why III.2's entry in facts.json cannot be the proof a forbidden circle rule is
+    proved from: it is missing, it is not proved, or it rests on a forbidden circle rule
+    itself, through its axioms, a shared step or a lemma it inherits an axiom through (the
+    circular case). Empty when it can. For traversal, axioms must be a list, shared_steps
+    a list of objects, and inherited an object of lists of objects; another outer shape is
+    a fault, never a crash."""
+    entries = facts.get("propositions")
+    found = [p for p in entries if isinstance(p, dict) and p.get("ref") == CIRCLE_SOURCE] \
+        if isinstance(entries, list) else []
+    if not found:
+        return [f"{CIRCLE_SOURCE} has no entry in facts.json"]
+    faults = []
+    for p in found:
+        if p.get("status") != "proved":
+            faults.append(f"{CIRCLE_SOURCE} is {p.get('status')!r}, not \"proved\"")
+        axioms, steps, inherited = p.get("axioms"), p.get("shared_steps"), p.get("inherited")
+        if not isinstance(axioms, list):
+            faults.append(f"{CIRCLE_SOURCE}'s `axioms` is not a list")
+            axioms = []
+        if not isinstance(steps, list) or not all(isinstance(s, dict) for s in steps):
+            faults.append(f"{CIRCLE_SOURCE}'s `shared_steps` is not a list of objects")
+            steps = []
+        if not isinstance(inherited, dict) or not all(
+                isinstance(lems, list) and all(isinstance(lem, dict) for lem in lems)
+                for lems in inherited.values()):
+            faults.append(f"{CIRCLE_SOURCE}'s `inherited` is not an object of lists of objects")
+            inherited = {}
+        lemmas = [lem.get("name") for lems in inherited.values() for lem in lems]
+        for name, rule in FORBIDDEN_CIRCLE_RULES.items():
+            if name in axioms:
+                faults.append(f"{CIRCLE_SOURCE} itself rests on {name} ({rule}) among its axioms")
+            if any(s.get("name") == name for s in steps):
+                faults.append(f"{CIRCLE_SOURCE} itself names {name} ({rule}) among its "
+                              "shared steps")
+            if name in lemmas:
+                faults.append(f"{CIRCLE_SOURCE} itself names {name} ({rule}) among the "
+                              "lemmas it inherits through")
+    return list(dict.fromkeys(faults))
+
+
 def check_lock(facts, path: Path = LOCK):
     """Compare the lock with facts.json's `axiom_types` and `vocabulary`, both ways.
     Returns the number of assumptions the lock holds, or None if it cannot be read."""
@@ -1067,17 +841,28 @@ def check_lock(facts, path: Path = LOCK):
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
     proved = facts.get("proved_rules", {})
+    # What each proved rule cites. A missing or non-object field, or a missing or non-list
+    # value for the rule, supplies no citation; list contents receive no further validation.
+    cites = facts.get("proved_rule_cites")
+    cites = cites if isinstance(cites, dict) else {}
     for name, rule in FORBIDDEN_CIRCLE_RULES.items():
         if name in lock[0]:
             continue
         if name not in proved:
             fail(f"{name} ({rule}): not an axiom in {rel(path)} or a proved rule in "
                  "facts.json (if the rule was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
-        elif not any(other != name and other in lock[0] and other in proved[name]
-                     for other in FORBIDDEN_CIRCLE_RULES):
+        elif any(other != name and other in lock[0] and other in proved[name]
+                 for other in FORBIDDEN_CIRCLE_RULES):
+            continue
+        elif not (isinstance(cites.get(name), list) and CIRCLE_SOURCE in cites[name]):
             fail(f"{name} ({rule}): proved without another forbidden circle rule "
-                 f"beneath it that is an axiom in {rel(path)}, so entries using it "
-                 "cannot be refused by their axioms")
+                 f"beneath it that is an axiom in {rel(path)}, or a proof that cites "
+                 f"{CIRCLE_SOURCE}, so entries using it cannot be refused by their axioms "
+                 "or by their citations")
+        else:
+            for fault in circle_source_faults(facts):
+                fail(f"{name} ({rule}): proved by a proof that cites {CIRCLE_SOURCE}, "
+                     f"but {fault}, so the rule is not proved from a sound {CIRCLE_SOURCE}")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
@@ -1287,11 +1072,20 @@ def check_entries(facts, by_ref) -> None:
 
 # Facts pinned by tests/certificate_expectations.json.
 
-def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
-    """Each expectation names an entry (`ref`) and a list `field`, and asks that the
-    list `includes` some names, `excludes` others, or holds exactly `count` names
-    beginning with `prefix`; `equals` compares any field with a value. A field that is
-    an object, as `inherited` is, is read by its keys: the axioms it names."""
+def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = None) -> None:
+    """Each expectation names a `field`, and usually an entry (`ref`), and asks that a
+    supported field of names `includes` some names, `excludes` others, or holds exactly
+    `count` names beginning with `prefix`; `equals` compares any field with a value. A
+    field that is an object, as `inherited` is, is read by its keys: the axioms it names.
+    `cited_laws` is a list of objects, read by each object's `law`, and fails unless every
+    object has one; an expectation that also names a `law` reads that law's
+    `construction_rules` instead, and fails when the entry cites no such law. `includes`,
+    `excludes` and `count` read nothing else: on any other field, as `shared_steps` or a
+    scalar is, they fail rather than read it as empty. An expectation with no `ref` reads
+    a field of facts.json's top level, as `construction_rules` is, from `facts`. An
+    expectation that asks nothing fails: `includes` and `excludes` are effective only
+    when nonempty lists of names, while `equals` and `count`, an object with an integer
+    `is`, are effective whenever present."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -1301,37 +1095,89 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         fail(f"{rel(path)}: expected a JSON object with a list `expectations` ({e})")
         return
-    known = {"ref", "field", "includes", "excludes", "equals", "count", "why"}
+    known = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why"}
     for i, x in enumerate(expectations, 1):
         label = f"{rel(path)}, expectation {i}"
-        if not isinstance(x, dict) or not {"ref", "field", "why"} <= set(x) or set(x) - known:
-            fail(f"{label}: needs `ref`, `field` and `why`, and one or more of `includes`, "
-                 "`excludes`, `equals`, `count`")
+        reads_names = isinstance(x, dict) and (
+            bool(x.get("includes")) or bool(x.get("excludes")) or "count" in x)
+        effective = reads_names or (isinstance(x, dict) and "equals" in x)
+        if (not isinstance(x, dict) or not {"field", "why"} <= set(x) or set(x) - known
+                or not effective or ("law" in x and "ref" not in x)):
+            fail(f"{label}: needs `field` and `why`, a `ref` unless it reads the top level "
+                 "of facts.json (and always with a `law`), and an effective predicate: "
+                 "nonempty `includes` or `excludes`, or present `equals` or `count`")
             continue
-        ref, field, why = x["ref"], x["field"], x["why"]
-        if ref not in by_ref:
-            fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
+        count = x.get("count", {"is": 0})
+        if not (all(isinstance(x.get(k, []), list)
+                    and all(isinstance(n, str) for n in x.get(k, []))
+                    for k in ("includes", "excludes"))
+                and isinstance(count, dict) and set(count) <= {"prefix", "is"}
+                and isinstance(count.get("is"), int)
+                and isinstance(count.get("prefix", ""), str)):
+            fail(f"{label}: `includes` and `excludes` must be lists of names, and `count` "
+                 "an object with an integer `is` and, if it has one, a string `prefix`")
             continue
-        if field not in by_ref[ref][1]:
+        field, why = x["field"], x["why"]
+        if "ref" in x:
+            ref = x["ref"]
+            if ref not in by_ref:
+                fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
+                continue
+            holder = by_ref[ref][1]
+        else:
+            ref = "facts.json"
+            if facts is None:
+                fail(f"{label}: reads the top level of facts.json, which was not given")
+                continue
+            holder = facts
+        if field not in holder:
             # Read as empty, a missing field would let every `excludes` pass.
-            fail(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
+            where = "its entry" if "ref" in x else "its top level"
+            fail(f"{ref}: pinned by {label}, but {where} has no field `{field}`")
             continue
-        value = by_ref[ref][1].get(field)
+        value, what = holder.get(field), field
+        if field == "cited_laws" and ("law" in x or reads_names):
+            laws = [v.get("law") if isinstance(v, dict) else None for v in value] \
+                if isinstance(value, list) else [None]
+            if not all(isinstance(n, str) and n for n in laws):
+                fail(f"{ref}: pinned by {label}, but its cited_laws is not a list of objects "
+                     "each with a `law` name")
+                continue
+        if "law" in x:
+            law = x["law"]
+            found = [v for v in value if isinstance(v, dict) and v.get("law") == law] \
+                if isinstance(value, list) else []
+            if len(found) != 1 or "construction_rules" not in found[0]:
+                fail(f"{ref}: pinned by {label}, but its {field} has no law {law} with "
+                     "construction_rules")
+                continue
+            value, what = found[0]["construction_rules"], \
+                f"construction_rules for the cited law {law}"
         if "equals" in x and value != x["equals"]:
-            fail(f"{ref}: its {field} is {value!r}, not {x['equals']!r} ({label}: {why})")
-        listed = value if isinstance(value, list) else list(value) if isinstance(value, dict) \
-            else []
+            fail(f"{ref}: its {what} is {value!r}, not {x['equals']!r} ({label}: {why})")
+        if not reads_names:
+            continue
+        if isinstance(value, dict):
+            listed = list(value)
+        elif field == "cited_laws" and "law" not in x:
+            listed = [v["law"] for v in value]
+        elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+            listed = value
+        else:
+            fail(f"{ref}: its {what} is not a list of names, an object or cited_laws, so "
+                 f"`includes`, `excludes` and `count` cannot read it ({label}: {why})")
+            continue
         for name in x.get("includes", []):
             if name not in listed:
-                fail(f"{ref}: its {field} should include {name} ({label}: {why})")
+                fail(f"{ref}: its {what} should include {name} ({label}: {why})")
         for name in x.get("excludes", []):
             if name in listed:
-                fail(f"{ref}: its {field} should not include {name} ({label}: {why})")
+                fail(f"{ref}: its {what} should not include {name} ({label}: {why})")
         if "count" in x:
             prefix, want = x["count"].get("prefix", ""), x["count"].get("is")
             got = sum(1 for v in listed if isinstance(v, str) and v.startswith(prefix))
             if got != want:
-                fail(f"{ref}: its {field} has {got} names beginning {prefix!r}, not {want} "
+                fail(f"{ref}: its {what} has {got} names beginning {prefix!r}, not {want} "
                      f"({label}: {why})")
 
 
@@ -1784,7 +1630,7 @@ def check_facts(path: Path) -> None:
     check_axioms(facts, count)
     by_ref = entries_by_ref(facts)
     check_entries(facts, by_ref)
-    check_expectations(by_ref)
+    check_expectations(by_ref, EXPECTATIONS, facts)
     check_reviews(facts, by_ref)
 
 

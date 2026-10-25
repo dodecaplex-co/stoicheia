@@ -4,9 +4,9 @@
 # $(git rev-parse --git-common-dir)/stoicheia/safe-push, and run as `git safe-push`:
 #
 #     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-#                   [--commit <sha>] [--dry-run]
+#                   [--commit <sha>] [--dry-run] [--main-checks-cache]
 #     git safe-push --merge <pr-number> [--dry-run]
-#     git safe-push --dry-run [--commit <sha>]
+#     git safe-push --dry-run [--commit <sha>] [--main-checks-cache]
 #
 # It runs origin/main's scripts/safe_push.py whatever the checkout holds, so that a branch
 # cannot judge itself, even one whose own copy no longer hands over to origin/main's: it
@@ -30,6 +30,17 @@ set -eu
 export GIT_NO_REPLACE_OBJECTS=1
 # Nor a folder of replacements named in place of refs/replace/.
 unset GIT_REPLACE_REF_BASE
+# Nor any other variable that ties git to one repository, as `git rev-parse
+# --local-env-vars` lists them (safe_push.py's REPOSITORY_VARIABLES): a caller's GIT_DIR,
+# GIT_INDEX_FILE and the rest would send this launcher's git to that repository, to fetch
+# its origin into it and copy out its origin/main harness. Each git here finds the
+# repository by the working directory instead, and so does the safe_push it runs (#359).
+# A setting given as `git -c key=value safe-push` no longer reaches the fetch either: set
+# it in the repository's configuration.
+unset GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_CONFIG GIT_CONFIG_COUNT \
+    GIT_CONFIG_PARAMETERS GIT_DIR GIT_GRAFT_FILE GIT_IMPLICIT_WORK_TREE GIT_INDEX_FILE \
+    GIT_INTERNAL_SUPER_PREFIX GIT_OBJECT_DIRECTORY GIT_PREFIX GIT_SHALLOW_FILE \
+    GIT_WORK_TREE
 # Git from 2.19 to 2.41 lets core.useReplaceRefs=true in config override the variable, and
 # reads configuration given on its command line last: so each git call here sets it false
 # there (safe_push.py does the same for its own git commands).

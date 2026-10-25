@@ -110,7 +110,7 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     -- Let it be drawn, and let it be ABE;
     obtain ⟨ABE, hG, hA⟩ := Postulate3 G A hGA
     have hB : OnCircle B ABE := on_circle_of_len_eq hG hA hGB_GA
-    obtain ⟨E, hE, hE_LX, hEGA⟩ := line_circle_beyond (centre_inside hG) hG_LX hA_LX hGA.symm
+    obtain ⟨E, hE, -, hEGA⟩ := line_circle_beyond (centre_inside hG) hG_LX hA_LX hGA.symm
     -- let EB be joined.
     -- Now, since AD is drawn from A, the extremity of the diameter AE, at right angles to AE,
     have hGAD : ∠ G A D = ∟ := by
@@ -178,7 +178,6 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     obtain ⟨D, B', hB', hDP, hDAB'⟩ := BookI.Prop23 hAB hC hP
     have hD : Triangle A B D := hDP.triangle
     have hDA : D ≠ A := hD.ne₁₃.symm
-    have hD_M : ¬ OnLine D M := hD.off_line hA_M hB_M
     have hBAD : ∠ B A D = ∠ C₁ C C₂ :=
       (angle_onRay_left hB' hDA).symm.trans ((angle_symm hB'.2.1 hDA).trans hDAB')
     have hobtuse : ∟ < ∠ B A D := hBAD ▸ h

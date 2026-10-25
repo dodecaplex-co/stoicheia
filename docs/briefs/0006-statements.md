@@ -2,9 +2,11 @@
 
 19 October 2026: the frozen instructions below use the former baseline of 87 axioms.
 [Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
-names and exact types, so the baseline for the instruction to add no axioms is now
+names and exact types, so the baseline for the instruction to add no axioms became
 79, including 73 tacit rules. Circle 2 in the proposed `Arc.meets` route is a theorem
-of Circle 3 in `Elements/Figure/Circles.lean`. No frozen statement changes here.
+of Circle 3 in `Elements/Figure/Circles.lean`. Thirty-one more
+rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
+rules. No frozen statement changes here.
 
 *17 October 2026. This brief settles every new or changed statement of
 [brief 0005](0005-astra-review.md)'s stages 2–4 before any proof work, as

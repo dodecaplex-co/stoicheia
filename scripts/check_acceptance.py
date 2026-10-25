@@ -109,13 +109,7 @@ BOOK_REVIEW_ITEMS = {key: item for item, key, kind, _ in BOOK_ITEMS if kind == "
 # P3. The deliberate limitations of Books I-III (docs/ACCEPTANCE.md, "The limitations
 # allowed"): each proposition, the scope it may keep and the tag that must say why. Every
 # other statement is full (stage 4b's goal, brief 0007), and no route is "alternative".
-ALLOWED_LIMITS = {
-    # #116: the owner's interim disclosure decision of 20 October 2026.
-    "I.45": ("restricted", "figure-with-dissection"),
-    "II.14": ("restricted", "figure-with-dissection"),
-    "III.16": ("partial", "mixed-angles-omitted"),
-    "III.31": ("partial", "mixed-angles-omitted"),
-}
+ALLOWED_LIMITS = {}
 
 # P4. A sentence of a mishnah that says our statement or the Lean leaves something of
 # Euclid's out, when the record declares no departure at all. A coarse guard: P14, the
@@ -334,7 +328,7 @@ def check_certificate(facts: dict) -> None:
             fail(who, "P8" if "figures/" in msg else "P9", msg)
         else:
             fail(who, "P5", msg)
-    _, found = captured(cf.check_expectations, by_ref)
+    _, found = captured(cf.check_expectations, by_ref, cf.EXPECTATIONS, facts)
     for msg in found:
         fail("edition", "E2", msg)
     _, found = captured(cf.check_reviews, facts, by_ref)

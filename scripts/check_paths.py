@@ -93,7 +93,7 @@ EXTENSIONLESS = frozenset({"LICENSE", "NOTICE", "lean-toolchain", "model/lean-to
                            "scripts/hooks/pre-push", "scripts/hooks/safe-push"})
 # P4: the top-level folders.
 TOP_FOLDERS = frozenset({".github", "Audit", "Certificate", "Elements", "Staging", "assets",
-                         "book", "docs", "figures", "heath", "mishnah", "model", "reading",
+                         "book", "checks", "docs", "figures", "heath", "mishnah", "model", "reading",
                          "review", "scripts", "tests"})
 # P4: the files at the root, beside Markdown named in capitals (ROOT_MARKDOWN).
 ROOT_FILES = frozenset({".gitignore", "AGENTS.md", "Audit.lean", "CERTIFICATE.md",
@@ -113,6 +113,7 @@ FOLDER_TYPES = {
     "Staging": frozenset({"lean"}),
     "assets": frozenset({"md", "svg", "png"}),
     "book": frozenset({"md"}),
+    "checks": frozenset({"toml"}),
     "docs": frozenset({"md", "toml", "bib", "json", "jsonl", "lean"}),
     "figures": frozenset({"svg"}),
     "heath": frozenset({"md"}),
@@ -124,9 +125,9 @@ FOLDER_TYPES = {
     "tests": frozenset({"py", "json", "lean", "md", "toml", "sha256", "txt"}),
 }
 # P4: the files a folder holds by exact path, beside its types.
-FOLDER_FILES = frozenset({"Audit/screen.py", "Certificate/axioms.lock", "model/lean-toolchain",
-                          "review/SCHEMA.md", "scripts/hooks/pre-push",
-                          "scripts/hooks/safe-push"})
+FOLDER_FILES = frozenset({"Audit/screen.py", "Certificate/axioms.lock", "checks/README.md",
+                          "model/lean-toolchain", "review/SCHEMA.md", "scripts/hooks/pre-push",
+                          "scripts/hooks/safe-push", "scripts/test_safe_push_times.json"})
 # P4: the dot files, by exact path: .gitignore at the root and in model/, .gitkeep in Staging/.
 DOT_FILES = frozenset({".gitignore", "model/.gitignore", "Staging/.gitkeep"})
 # P5: the thirteen books, by Roman numeral (R).

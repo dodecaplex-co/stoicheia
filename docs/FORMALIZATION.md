@@ -245,10 +245,10 @@ The representations Books I–III rest on:
 | a straight line | a whole straight line, `Line`, named by any two points (Postulate 1) | producing it costs nothing | |
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
-| superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
+| superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)). The rule numbers a figure's symbols internally, from the list of the figure's lettered points and straight lines (`Symbols.ofList`): a proof names only those, so section 2's sentence, that no number appears in a statement or a proof, holds of I.4 and I.8 too | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
-| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data or from the rule, which they use wherever a call of III.1 would do no work, Heath's "[III. 1]" staying on the page as his reference ([decision of 22 October 2026](decisions/2026-10-22-iii1-calls-dropped.md)) | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
@@ -424,7 +424,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->74<!-- /count --> tacit rules, <!-- count:axioms -->80<!-- /count --> in all, each tacit rule from System E (or
+  Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation, save one of our own, added by the
   owner's decision of 18 October 2026: every circle has a centre (`exists_centre`), whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
@@ -576,11 +576,16 @@ dependencies.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
 - **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
-  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
-  each name must stay in the axiom lock, or name a theorem whose `proved_rules` entry
-  in `facts.json` includes another forbidden circle rule still in the lock as an axiom.
-  Thus a proved rule remains forbidden through the axiom beneath it; a missing name,
-  or a proof without such an axiom, fails the check.
+  `Tacit.outside_of_between` as an axiom, and no entry before III.2 uses either, whether
+  through its own proof or through a lemma it uses; a rule proved from III.2 may be used
+  after III.2, and the use cites III.2. Each name must stay in the axiom lock, or name a
+  theorem whose `proved_rules` entry in `facts.json` includes another forbidden circle
+  rule still in the lock as an axiom, or whose `proved_rule_cites` entry includes III.2,
+  with III.2 proved and resting on neither rule. Thus a proved rule remains forbidden
+  through the axiom beneath it, or, if it is proved from III.2, every entry that uses it
+  cites III.2 through it, so that no entry before III.2 can use it (no later citations,
+  below); a missing name, a proof with neither, or a proof citing an III.2 that is
+  missing, unproved or itself resting on either rule, fails the check.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -593,8 +598,10 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Aud
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
-Circle 3 renamed in the lock; and Circle 2 proved without Circle 3 beneath it, with a
-matching case that still rests on locked Circle 3 and must pass;
+Circle 3 renamed in the lock; Circle 2 proved with neither Circle 3 beneath it nor III.2
+cited, with a matching case that still rests on locked Circle 3 and must pass; and both
+proved with neither beneath, citing nothing or an III.2 that rests on Circle 3, with a
+matching case citing the real III.2 that must pass;
 placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each
@@ -764,6 +771,50 @@ The current proofs of Points 9 (`exists_point_outside_circle`) and Intersection 
 the Circle 2 and Circle 3 ban transitively, so no proposition, porism or companion may
 depend on either proved rule.
 
+By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
+many books in front of us"), 31 more rules became theorems, proved that day. They were proved against a lock of 79 axioms, which they took to 48; in the
+meantime our own rule that every circle has a centre (`exists_centre`, section 7) had
+joined the lock, so the lock that holds them both went from 80 axioms to 49. Euclid's six
+stay assumptions, and no certificate entry rests on Circle 2 or Circle 3.
+The 31 are proved in four Book Zero modules that `Elements/Figure/Basics.lean` imports, so
+every proposition reaches them as before. They use earlier retired rules as proved
+theorems, and their theorem dependencies are acyclic. No replacement's axiom closure
+contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `centre_inside` | Generalities 3 | A centre that were not inside would lie on a straight line through an inside point beyond it, and its radii to the two crossings would be unequal. Proved in [`RuleBase.lean`](../Elements/Figure/RuleBase.lean). |
+| `on_circle_of_len_eq` | Diagram-segment 3, the half that Definition 15 doesn't give | The circle about the centre through the point is the given circle; the centre itself is excluded, since a radius is never nothing. Proved in `RuleBase.lean`. |
+| `same_side_symm` | Same side 2 | Two circles about points of the line cut on A's side, by Intersection 5, Generalities 3 and Intersections 8; Same side 4 then makes B's relation to A follow from A's to B. Proved in `RuleBase.lean`. |
+| `exists_point_same_side` | Points 5 | Postulate 2 extends a line from a point of L beyond B; Pasch 2 puts its endpoint on B's side. Proved in `RuleBase.lean`. |
+| `ne_of_between` | Between 1 | Coincidence would make the forbidden reversed order identical to the given order. Proved in `RuleBase.lean`. |
+| `on_line_of_between_ends` | Between 3 | If the middle point were off the line, Pasch 2 would put the last endpoint off it too. Proved in `RuleBase.lean`. |
+| `pasch4` | Pasch 4 | The other two collinear orders put the endpoints on the same side by Pasch 2. Proved in `RuleBase.lean`. |
+| `same_side_refl` | Same side 1 | Choose a point on its side and apply transitivity to that relation twice. Proved in `RuleBase.lean`. |
+| `triple_incidence1` | Triple incidence 1 | Two angle decompositions would make each of two angles greater than the other. Proved in `RuleBase.lean`. |
+| `pasch3` | Pasch 3 | Join A and C to another point of the line: Pasch 2 puts B within the angle they make there, and Triple incidence 1 then forbids A and C one side. Proved in `RuleBase.lean`. |
+| `inside_not_on` | Generalities 4 | A line produced from the point meets the circle; Circle 1 would put that point between itself and the crossing. Proved in `RuleBase.lean`. |
+| `eq_of_len_eq_zero` | Metric 1 | A circle drawn with distinct endpoints would put its own centre on its circumference. Proved in `RuleBase.lean`. |
+| `inside_of_len_lt` | Diagram-segment 4 | A point outside would lie beyond a circumference crossing, whose radius is shorter than its distance. Proved in [`Incidence.lean`](../Elements/Figure/Incidence.lean). |
+| `len_lt_of_inside` | Diagram-segment 4 | Produce the line from the centre through the interior point to the circumference; its distance is a part of the radius. Proved in `Incidence.lean`. |
+| `ne_of_between_ends` | Between 1 | Coincident endpoints would make a sum containing a positive length equal to zero. Proved in `Incidence.lean`. |
+| `on_line_of_between` | Between 2 | Join the endpoints and use incidence of the middle point and uniqueness of their line. Proved in `Incidence.lean`. |
+| `between_of_between_left` | Between 4 | Length addition and strict comparison exclude the other two orders of A, D and C. Proved in `Incidence.lean`. |
+| `between_of_between_right` | Between 5 | Collinear orders, length comparison and one extension exclude both contrary arrangements. Proved in `Incidence.lean`. |
+| `circles_meet_of_on_inside_outside` | Intersection 4, in LeanEuclid's corrected form | A crossing of the second circle lies inside the first, giving the two witnesses for Intersection 5. Proved in `Incidence.lean`. |
+| `exists_point_opposite_side` | Points 6 | Produce the line from B through a point of L; Pasch 3 separates its endpoints. Proved in `Incidence.lean`. |
+| `circles_meet_opposite_side` | Intersections 9 | Choose a point opposite B and take the common circle point on that point's side. Proved in `Incidence.lean`. |
+| `exists_point_between` | Points 3 | A smaller concentric circle supplies one interior division; repeat within a smaller segment to avoid each forbidden point. Proved in `Incidence.lean`. |
+| `line_meets_circle_of_inside` | Intersection 3 | Produce the line in both directions from the interior point to obtain distinct circumference points. Proved in `Incidence.lean`. |
+| `not_between_of_between_between` | Between 7 | The three orders obtained from circle crossings each contradict length addition. Proved in `Incidence.lean`. |
+| `same_side_or` | Same side 5 | Were A, B and C on three sides, the line would cross all three sides of the triangle ABC, or, when the three are in a straight line, cross it at one point between each pair; neither can be. Proved in `Incidence.lean`. |
+| `triple_incidence2` | Triple incidence 2 | Extend BA through A. The two-side rule locates the extension, and Triple incidence 1 excludes the contrary arrangement. Proved in `Incidence.lean`. |
+| `pasch1` | Pasch 1 | Opposite sides would give a crossing before B, contradicting Pasch 3 on the full segment. Proved in `Incidence.lean`. |
+| `exists_point_on_line_off_line` | Points 2, with "distinct from M" | Choose a point of L; if it is on M, a second point of L differs from it and cannot also be on M. Proved in `Incidence.lean`. |
+| `area_swap` | Metric 8 | Successive cuts prove reversal for a triangle; collinear and repeated corners have zero area. Proved in [`AreaRules.lean`](../Elements/Figure/AreaRules.lean). |
+| `between_of_area_add` | Diagram-area 2, converse | In either contrary collinear order, area addition would make each of two areas greater than the other. Proved in `AreaRules.lean`. |
+| `exists_point_on_circle` | Points 7 | Intersect a line through an interior point that avoids every other forbidden point. Proved in [`CirclePoints.lean`](../Elements/Figure/CirclePoints.lean). |
+
 A client that previously imported only the foundations must now import the theorem's
 home. Book Zero still imports no proposition. I.7 cannot be established independently
 through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
@@ -771,8 +822,9 @@ retained Circle 3 axiom, as the [catalogue](reports/overlaps.md) explains.
 
 No certificate entry currently rests on Circle 3. I.12 finds the crossing X of
 CD with AB between the centre C and the point D on the circle, proves X inside
-by `InsideCircle.of_between_centre`, and uses the assumed Intersection 3
-(`line_meets_circle_of_inside`) to find two points of the circle on AB. The proved
+by `InsideCircle.of_between_centre`, and uses Intersection 3
+(`line_meets_circle_of_inside`, proved since the second retirement) to find two points of
+the circle on AB. The proved
 Intersection 2 has no user in the published proofs.
 
 ## 8. Completion claims
@@ -801,10 +853,10 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The edition review | Commentary, quotations, figures and scope descriptions agree with the reviewed mathematics. | |
 | Regeneration is clean | The pages, certificate and graph match the sources and the generator. | Whether their descriptions of scope and meaning are accurate. |
 | The figure checks pass | The files display, and their letters, palette and strokes meet the structural rules. | Whether the drawn geometry and the case shown agree with the proof. |
-| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
+| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->80<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->49<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
@@ -815,3 +867,30 @@ interpretation in which the other axioms hold and the result's own statement fai
 hypotheses met; that the postulate fails there is not enough, and a result whose statement
 stays true there needs a different analysis. The kind is numerical until a proof replaces
 it, and even then the pages keep "this proof uses".
+
+### Construction rules
+
+A construction rule is an axiom whose conclusion asserts that something exists. Set aside
+the axiom's leading "for all" binders and the hypotheses of its implications, and unfold
+this project's definitions in what remains: `CirclesMeet`, `LineMeetsCircle`, `LinesMeet`,
+`Collinear`, and an instance that gives an order its meaning. The axiom is a construction
+rule when an `∃` then stands in positive position. `And` and `Or` keep a position's sign;
+`Not` and the left of an implication reverse it; either side of an `Iff` counts at both.
+Only an `∃` written out, or one those definitions give, is counted: an existence stated
+another way, as `¬ ∀ x, ¬ P x` or by an axiom that is not a proposition, would not be, and
+no axiom in the lock states one so. Any other structure or inductive type is read as a word and never unfolded: what its
+fields or constructors say is not read. So Postulates 1, 2, 3 and 5, the rules that give a
+point (`exists_point` and its kin) and the rules that conclude that two circles, a straight
+line and a circle, or two straight lines meet are construction rules. A rule that concludes
+`Triangle`, which denies that three points lie on one straight line, is not; nor is one
+that assumes an existence only in a hypothesis. Nor is `Tacit.superposition`, and only
+because a structure is a word: it concludes the structure `Superposition.Rule`, whose one
+field assumes a triangle, and a triangle assumed, read through `Collinear`, would put an
+`∃` in positive position.
+
+The certificate computes the list from Lean's statements of the axioms
+(`construction_rules`), and, for each law that I.4's and I.8's derivations cite inside the
+placement, the construction rules beneath that law's proof (`cited_laws`;
+[FIELDS](../Certificate/FIELDS.md)). Like the rest of the certificate, these are facts
+about our proofs' dependencies. A law whose proof uses a construction rule still asserts
+no existence, and citing it draws nothing in the placement (brief 0009, question 4).

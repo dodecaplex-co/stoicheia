@@ -1,4 +1,7 @@
 import Elements
+import Elements.Figure.CirclePoints
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.Figure.Circles
 import Elements.BookI.Prop07
 import Elements.BookI.Prop13
@@ -13,7 +16,9 @@ The catalogue in `docs/reports/overlaps.md` lists every case we found, and this 
 proves each "states it" or "gives it at once" row again, from the rules alone. The former
 I.7 audit is kept as a circular derivation through Circle 4, now a corollary of I.7. After
 III.6, `III_5_crossing` and `III_5_radius` give III.5 from Definition I.15 with
-Diagram-segment 4 or Diagram-segment 3. A second section proves the measure clauses of
+Diagram-segment 4 or Diagram-segment 3. Both rules have been theorems since the second
+axiom retirement, and through them each proof now rests on Diagram-segment 2 as well. A second
+section proves the measure clauses of
 III.24's companion `Prop24.equalCircles` and of III.26, and III.27 whole, without the
 hypotheses our measure of circumferences leaves idle, the catalogue's near misses of
 representation.
@@ -71,9 +76,7 @@ theorem I_7 : type_of% @Elements.BookI.Prop7 := by
 within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
 This is Astra's proof from the outside review, now using Circle 2 as a theorem of
 Circle 3. The overlap with Circle 3 remains. Our III.2 follows Euclid, by I.5, I.16
-and I.19, and rests on neither Circle 2 nor Circle 3: III.1, which finds its centre, puts
-the middle point of a straight line in the circle within it by III.2's own argument
-(`Prop1.within`). -/
+and I.19, takes its centre from the rule, and rests on neither Circle 2 nor Circle 3. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
@@ -89,8 +92,11 @@ theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
 one circle. A point of one within the other would then be both within that circle and on
-it, which Generalities 4 forbids. Our III.5 takes Euclid's steps and uses neither
-Diagram-segment 2 nor Circle 4, now a theorem proved from I.7 using Diagram-segment 2. -/
+it, which Generalities 4, proved since the second axiom retirement, forbids. Our III.5
+takes Euclid's steps and cites neither Diagram-segment 2 nor Circle 4, now a theorem proved
+from I.7 using Diagram-segment 2. It rests on Diagram-segment 2 and Postulate 3 all the
+same, through proved rules such as `centre_inside`, whose proof uses circles to compare
+lengths. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
   fun ⟨⟨_, _, _, _, _, hC₁, hC₂⟩, ⟨_, hP₁, hP₂⟩, _⟩ ⟨hE₁, hE₂⟩ =>
     inside_not_on (circle_eq hE₁ hE₂ hC₁ hC₂ rfl ▸ hP₂) hP₁
@@ -101,8 +107,11 @@ outer would be both within that circle and on it, which Generalities 4 forbids. 
 touching without have no point within both, and a common centre would be one, since a
 centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
 without with Generalities 3, Definition I.15's placement of the centre within the figure.
-For contact within it takes Euclid's steps. Neither case uses Diagram-segment 2, nor
-Circle 4, whose proof uses it. -/
+For contact within it takes Euclid's steps. Neither case cites Diagram-segment 2, nor
+Circle 4, whose proof uses it. Generalities 3 and 4 have been theorems since 19 October 2026
+(`Elements/Figure/RuleBase.lean`), and Generalities 3 rests on Diagram-segment 2 and
+Postulate 3 through its comparison of lengths, so our III.6 rests on them too. The closure
+pinned below is that of their proofs with Diagram-segment 2. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   rintro C F ABC CDE (⟨hC₁, hC₂, ⟨P, hP, hP_in⟩, -⟩ | ⟨hC₂, hC₁, ⟨P, hP, hP_in⟩, -⟩ |
     ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
@@ -114,9 +123,11 @@ theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
 two circles have a point C in common, they have no common centre: P is nearer the centre
 than C is (`len_lt_of_inside`, Diagram-segment 4), and yet, both being on the one circle,
 as far from it (Definition I.15). Our III.5 instead draws a straight line through the
-point within and compares its parts, without Diagram-segment 4. The same short proof
-gives III.6 for circles touching within, with the point of the inner circle within the
-outer. -/
+point within and compares its parts, without citing Diagram-segment 4. The same short
+proof gives III.6 for circles touching within, with the point of the inner circle within
+the outer. Diagram-segment 4 has been a theorem since 19 October 2026
+(`Elements/Figure/Incidence.lean`), and through it this proof rests on Diagram-segment 2,
+so it no longer gives a derivation without that axiom. -/
 theorem III_5_crossing : type_of% @Elements.BookIII.Prop5 := by
   rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, -, ⟨P, hP₂, hP₁⟩⟩ ⟨hE₁, hE₂⟩
   have h : ‖E P‖ < ‖E C‖ := len_lt_of_inside hE₁ hC₁ hP₁
@@ -126,7 +137,9 @@ theorem III_5_crossing : type_of% @Elements.BookIII.Prop5 := by
 /-- **III.5 from Diagram-segment 3.** F, a point of ABC,
 is as far from E as C is (Definition I.15); so it is on CDG (`on_circle_of_len_eq`, the
 half of Diagram-segment 3 that Definition I.15 does not give), yet it is within CDG,
-which Generalities 4 forbids. -/
+which Generalities 4 forbids. Both rules have been theorems since 19 October 2026; the
+proof of Diagram-segment 3's half takes the circle about the centre through the point to be
+the given one by Diagram-segment 2, so this proof rests on Diagram-segment 2 too. -/
 theorem III_5_radius : type_of% @Elements.BookIII.Prop5 := by
   rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, ⟨F, hF₁, hF₂⟩, -⟩ ⟨hE₁, hE₂⟩
   exact inside_not_on hF₂ (on_circle_of_len_eq hE₂ hC₂ (Definition15 hE₁ hF₁ hC₁))
@@ -328,30 +341,28 @@ info: 'Audit.I_7' depends on axioms: [propext,
  Elements.Postulate2,
  Elements.Postulate3,
  Quot.sound,
+ Elements.Tacit.add_assoc,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
  Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
- Elements.Tacit.area_swap,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_between_left,
- Elements.Tacit.between_of_between_right,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_between,
- Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_lt_of_inside,
  Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
  Elements.Tacit.line_circle_between,
@@ -361,25 +372,13 @@ info: 'Audit.I_7' depends on axioms: [propext,
  Elements.Tacit.lt_irrefl,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.ne_of_between,
- Elements.Tacit.ne_of_between_ends,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_between_of_between_between,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.on_circle_of_len_eq,
- Elements.Tacit.on_line_of_between,
- Elements.Tacit.on_line_of_between_ends,
  Elements.Tacit.pasch2,
- Elements.Tacit.pasch3,
- Elements.Tacit.pasch4,
  Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_or,
- Elements.Tacit.same_side_symm,
  Elements.Tacit.same_side_trans,
- Elements.Tacit.superposition,
- Elements.Tacit.triple_incidence1,
- Elements.Tacit.triple_incidence2]
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.I_7
@@ -397,34 +396,95 @@ info: 'Audit.III_2_outside' depends on axioms: [propext, Classical.choice, Quot.
 #print axioms Audit.III_2_outside
 
 /--
-info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq, Elements.Tacit.inside_not_on]
+info: 'Audit.III_5' depends on axioms: [Classical.choice,
+ Elements.Postulate1,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.not_between_of_between]
 -/
 #guard_msgs in
 #print axioms Audit.III_5
 
 /--
-info: 'Audit.III_6' depends on axioms: [Classical.choice,
- Elements.Tacit.centre_inside,
+info: 'Audit.III_6' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate3,
+ Quot.sound,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.circle_eq,
- Elements.Tacit.inside_not_on]
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero]
 -/
 #guard_msgs in
 #print axioms Audit.III_6
 
 /--
-info: 'Audit.III_5_radius' depends on axioms: [Classical.choice,
+info: 'Audit.III_5_radius' depends on axioms: [propext,
+ Classical.choice,
  Elements.Definition15,
- Elements.Tacit.inside_not_on,
- Elements.Tacit.on_circle_of_len_eq]
+ Elements.Postulate1,
+ Elements.Postulate3,
+ Quot.sound,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero]
 -/
 #guard_msgs in
 #print axioms Audit.III_5_radius
 
 /--
-info: 'Audit.III_5_crossing' depends on axioms: [Classical.choice,
+info: 'Audit.III_5_crossing' depends on axioms: [propext,
+ Classical.choice,
  Elements.Definition15,
- Elements.Tacit.len_lt_of_inside,
- Elements.Tacit.lt_irrefl]
+ Elements.Postulate1,
+ Elements.Postulate3,
+ Quot.sound,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero]
 -/
 #guard_msgs in
 #print axioms Audit.III_5_crossing
@@ -446,28 +506,22 @@ info: 'Audit.III_26_any' depends on axioms: [propext,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
  Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
- Elements.Tacit.area_swap,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_between_left,
- Elements.Tacit.between_of_between_right,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
- Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_between,
- Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
- Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_lt_of_inside,
  Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
  Elements.Tacit.line_circle_between,
@@ -477,25 +531,13 @@ info: 'Audit.III_26_any' depends on axioms: [propext,
  Elements.Tacit.lt_irrefl,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.ne_of_between,
- Elements.Tacit.ne_of_between_ends,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_between_of_between_between,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.on_line_of_between,
- Elements.Tacit.on_line_of_between_ends,
  Elements.Tacit.pasch2,
- Elements.Tacit.pasch3,
- Elements.Tacit.pasch4,
  Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_or,
- Elements.Tacit.same_side_refl,
- Elements.Tacit.same_side_symm,
  Elements.Tacit.same_side_trans,
- Elements.Tacit.superposition,
- Elements.Tacit.triple_incidence1,
- Elements.Tacit.triple_incidence2]
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.III_26_any
@@ -517,28 +559,22 @@ info: 'Audit.III_27_any' depends on axioms: [propext,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
  Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
- Elements.Tacit.area_swap,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_between_left,
- Elements.Tacit.between_of_between_right,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
- Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_between,
- Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
- Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_lt_of_inside,
  Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
  Elements.Tacit.line_circle_between,
@@ -548,25 +584,13 @@ info: 'Audit.III_27_any' depends on axioms: [propext,
  Elements.Tacit.lt_irrefl,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.ne_of_between,
- Elements.Tacit.ne_of_between_ends,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_between_of_between_between,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.on_line_of_between,
- Elements.Tacit.on_line_of_between_ends,
  Elements.Tacit.pasch2,
- Elements.Tacit.pasch3,
- Elements.Tacit.pasch4,
  Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_or,
- Elements.Tacit.same_side_refl,
- Elements.Tacit.same_side_symm,
  Elements.Tacit.same_side_trans,
- Elements.Tacit.superposition,
- Elements.Tacit.triple_incidence1,
- Elements.Tacit.triple_incidence2]
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.III_27_any
@@ -588,28 +612,22 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
  Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
- Elements.Tacit.area_swap,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_between_left,
- Elements.Tacit.between_of_between_right,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
- Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_between,
- Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
- Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_lt_of_inside,
  Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
  Elements.Tacit.line_circle_between,
@@ -619,25 +637,13 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
  Elements.Tacit.lt_irrefl,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.ne_of_between,
- Elements.Tacit.ne_of_between_ends,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_between_of_between_between,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.on_line_of_between,
- Elements.Tacit.on_line_of_between_ends,
  Elements.Tacit.pasch2,
- Elements.Tacit.pasch3,
- Elements.Tacit.pasch4,
  Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_or,
- Elements.Tacit.same_side_refl,
- Elements.Tacit.same_side_symm,
  Elements.Tacit.same_side_trans,
- Elements.Tacit.superposition,
- Elements.Tacit.triple_incidence1,
- Elements.Tacit.triple_incidence2]
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.III_24_measure
@@ -659,28 +665,22 @@ info: 'Audit.III_30_measure' depends on axioms: [propext,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
  Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
- Elements.Tacit.area_swap,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_between_left,
- Elements.Tacit.between_of_between_right,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
- Elements.Tacit.circles_meet_of_on_inside_outside,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_centre,
  Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_between,
- Elements.Tacit.exists_point_opposite_side,
- Elements.Tacit.exists_point_same_side,
- Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_lt_of_inside,
  Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
  Elements.Tacit.line_circle_between,
@@ -690,25 +690,13 @@ info: 'Audit.III_30_measure' depends on axioms: [propext,
  Elements.Tacit.lt_irrefl,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.ne_of_between,
- Elements.Tacit.ne_of_between_ends,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_between_of_between_between,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.on_line_of_between,
- Elements.Tacit.on_line_of_between_ends,
  Elements.Tacit.pasch2,
- Elements.Tacit.pasch3,
- Elements.Tacit.pasch4,
  Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_or,
- Elements.Tacit.same_side_refl,
- Elements.Tacit.same_side_symm,
  Elements.Tacit.same_side_trans,
- Elements.Tacit.superposition,
- Elements.Tacit.triple_incidence1,
- Elements.Tacit.triple_incidence2]
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.III_30_measure
@@ -729,22 +717,21 @@ info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
  Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
- Elements.Tacit.area_swap,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_between_left,
- Elements.Tacit.between_of_between_right,
+ Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_between,
- Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_lt_of_inside,
  Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
  Elements.Tacit.line_circle_between,
@@ -754,24 +741,13 @@ info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
  Elements.Tacit.lt_irrefl,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.ne_of_between,
- Elements.Tacit.ne_of_between_ends,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_between_of_between_between,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.on_line_of_between,
- Elements.Tacit.on_line_of_between_ends,
  Elements.Tacit.pasch2,
- Elements.Tacit.pasch3,
- Elements.Tacit.pasch4,
  Elements.Tacit.same_ray_of_angle_eq_zero,
- Elements.Tacit.same_side_or,
- Elements.Tacit.same_side_symm,
  Elements.Tacit.same_side_trans,
- Elements.Tacit.superposition,
- Elements.Tacit.triple_incidence1,
- Elements.Tacit.triple_incidence2]
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.adjacent_eq_of_right

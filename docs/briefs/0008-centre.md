@@ -3,15 +3,23 @@
 19 October 2026: the frozen plan below uses the former baseline of 87 axioms.
 [Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
 names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
-proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
-This note adds no axiom and grants no approval to add one.
+proposed centre-existence axiom would then have taken 79 to 80, and 73 tacit rules to 74.
+Thirty-one more
+rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
+rules. With them, the
+centre-existence axiom would take 48 to 49. This note adds no axiom and grants no approval
+to add one.
 
 `centre_unique` is now proved in `Elements/Figure/Circles.lean`; Circle 4 is proved
 after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,
 which stays an axiom. The old dependency counts must be measured again. A pin excluding
 a retired name from an axiom list no longer detects calls to that theorem; any intended
-restriction on its use needs a separate check proposal. The historical readings and
-frozen statements below are preserved.
+restriction on its use needs a separate check proposal. Section 7's restated III.5 and
+III.6 still cite neither `circle_eq` nor Circle 4, but the axioms pinned for them in
+`Audit/Crossing.lean` now include `circle_eq` and Postulate 3, through proved
+rules such as `centre_inside`; where the frozen text below says they rest on neither, it
+records the state at the freeze. The historical readings and frozen statements below are
+preserved.
 
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*
@@ -66,6 +74,15 @@ them. No statement, declaration, record or lock changes, so no consumer is affec
 - **Staged work.** No file under `Staging/` calls Circle 2 or Circle 3, or any of Book
   Zero's three lemmas that rest on Circle 2, and no declaration of the Staging library
   rests on Circle 3, by Lean's axiom lists on 21 October.
+
+*Correction, 22 October 2026, for issue #131:* the rule of section 4, "a bracket means
+III.1, none means the rule", with its table's rows for III.2, III.4, III.8 and III.17,
+its row in Appendix B and question 8, is corrected by the coordinator's
+[decision entry of 22 October 2026](../decisions/2026-10-22-iii1-calls-dropped.md): a
+proof takes a centre from the rule wherever a call of III.1 would do no work, and Heath's
+"[III. 1]" stays on the page as his reference. So III.2, III.4, III.8 and III.17 take
+their centres from `exists_centre`, and III.14, whose statement names E, takes none and no
+longer rests on the rule. No statement changes. The frozen text below is kept as history.
 
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
