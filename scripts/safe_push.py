@@ -1489,40 +1489,35 @@ def secret_scan(repo, base: str | None, sha: str, rep: Report, allow_rev: str | 
 
 
 OPEN, CLOSE = "([{⟨⦃⦗", ")]}⟩⦄⦘"
+# A «…» name, to the `»` that ends it or the end of the text, as read_lean reads one.
+LEAN_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
 def statement_end(text: str) -> int:
     """Where a declaration's statement ends: at its own `:=`, the first one outside
     brackets, comments and strings, so that a binder's default value (`(h : p := by
-    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none."""
-    depth, i, n = 0, 0, len(text)
-    while i < n:
-        if text.startswith("--", i):
-            nl = text.find("\n", i)
-            i = n if nl < 0 else nl
-            continue
-        if text.startswith("/-", i):
-            level, i = 1, i + 2
-            while i < n and level:
-                if text.startswith("/-", i):
-                    level, i = level + 1, i + 2
-                elif text.startswith("-/", i):
-                    level, i = level - 1, i + 2
-                else:
-                    i += 1
-            continue
-        c = text[i]
-        if c == '"':
-            i += 1
-            while i < n and text[i] != '"':
-                i += 2 if text[i] == "\\" else 1
-        elif c in OPEN:
+    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none.
+    Comments and string and character literals are read as Lean reads them, by the
+    scripts' one reader (heath.read_lean, #206, #349), which blanks them in place: so
+    `/-/- -/` is a whole comment, a `'"'` is a character, not a string, and a `'('` is a
+    character, not a bracket. Each «…» name is blanked here too, whole (LEAN_NAME), as
+    check_fidelity blanks them, since the reader blanks only a name's `[` and `]`: so a
+    `:=` or a bracket within a name is no `:=` and no bracket. Where the reader cannot
+    read a literal for certain before the `:=` it finds, or a string holds a `{`, whose
+    braces the reader may keep as a hole of code, the statement runs to the end of the
+    text, so that the guard compares more of it, never less."""
+    strings: list = []
+    code, unsure = heath.read_lean(text, strings)
+    unsure = unsure + [k for k, s in strings if "{" in s]
+    code = LEAN_NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
+    n, depth = len(text), 0
+    for i, c in enumerate(code):
+        if c in OPEN:
             depth += 1
         elif c in CLOSE:
             depth = max(0, depth - 1)
-        elif depth == 0 and text.startswith(":=", i):
-            return i
-        i += 1
+        elif depth == 0 and code.startswith(":=", i):
+            return n if any(k < i for k in unsure) else i
     return n
 
 
@@ -2964,15 +2959,18 @@ CLASS_LINE = re.compile(r"(R[0-5]) (\S.*)")
 PATH_LINE = re.compile(r"  (R[0-5]) (.+)")
 
 
-def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
+def risk_class(repo, base: str, sha: str, labels: set[str] | None, *,
+               diff_base: str | None = None) -> Risk:
     """The class of the change `git diff base...sha`, as origin/main's scripts/risk.py
     gives it (`risk.py --diff`, as CI's risk job runs it): its copy at `base`, read out of
     git and run from a temporary directory, never the commit's, so that a change cannot
-    lower its own class by editing the classifier. A label can only raise the class: a
-    pull request labelled release is R5, and so is one whose labels cannot be read. A base
-    with no scripts/risk.py is R5, and so is any failure to compute the class (fail
-    closed): Git failing, the script failing or printing no class, a class below that of a
-    file it lists, a timeout."""
+    lower its own class by editing the classifier. With `diff_base`, the change classed is
+    `git diff diff_base...sha` instead, the classifier still read at `base`: so the queue's
+    judge classes an entry's block and its merge into the group by main's copy. A label
+    can only raise the class: a pull request labelled release is R5, and so is one whose
+    labels cannot be read. A base with no scripts/risk.py is R5, and so is any failure to
+    compute the class (fail closed): Git failing, the script failing or printing no class,
+    a class below that of a file it lists, a timeout; with `diff_base` or without."""
     t = time.time()
 
     def r5(why: str) -> Risk:
@@ -2993,11 +2991,12 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
     source = run(["git", "cat-file", "blob", meta[2].decode()], repo, binary=True)
     if source.returncode != 0:
         return r5(f"git could not read origin/main's {RISK}")
+    start = base if diff_base is None else diff_base
     with tempfile.TemporaryDirectory(prefix="stoicheia-risk-") as tmp:
         script = Path(tmp) / "risk.py"
         script.write_bytes(source.stdout)
         try:
-            r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
+            r = subprocess.run([PY, "-I", str(script), "--diff", start, sha], cwd=repo,
                                env=without_replacements(), capture_output=True, text=True,
                                errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:

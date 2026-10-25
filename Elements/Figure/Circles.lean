@@ -1,4 +1,7 @@
 import Elements.Figure.Lines
+import Elements.Figure.CirclePoints
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.Figure.Areas
 
 /-!

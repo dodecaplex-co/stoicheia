@@ -71,13 +71,13 @@ Eq A B`. -/
 def centre_unique_circles : Prop :=
   ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.Centre B α → A = B
 
-/-- `Elements.Tacit.centre_inside` (Generalities 3), hand-translated. The lock prints it as
+/-- `Elements.Tacit.centre_inside` (Generalities 3), hand-translated. The theorem's unchanged type is
 `∀ {A : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.InsideCircle A
 α`. -/
 def centre_inside_circles : Prop :=
   ∀ {A : S.Point} {α : S.Circle}, S.Centre A α → S.InsideCircle A α
 
-/-- `Elements.Tacit.inside_not_on` (Generalities 4), hand-translated. The lock prints it as
+/-- `Elements.Tacit.inside_not_on` (Generalities 4), hand-translated. The theorem's unchanged type is
 `∀ {A : Elements.Point} {α : Elements.Circle}, Elements.InsideCircle A α → Not
 (Elements.OnCircle A α)`. -/
 def inside_not_on_circles : Prop :=
@@ -91,21 +91,21 @@ def circle_eq_circles : Prop :=
   ∀ {A B C : S.Point} {α β : S.Circle}, S.Centre A α → S.Centre A β → S.OnCircle B α →
     S.OnCircle C β → S.len A B = S.len A C → α = β
 
-/-- `Elements.Tacit.inside_of_len_lt`, hand-translated. The lock prints it as `∀ {A B C :
+/-- `Elements.Tacit.inside_of_len_lt`, hand-translated. The theorem's unchanged type is `∀ {A B C :
 Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → LT.lt
 (Elements.len A C) (Elements.len A B) → Elements.InsideCircle C α`. -/
 def inside_of_len_lt_circles : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
     @LT.lt S.Length _ (S.len A C) (S.len A B) → S.InsideCircle C α
 
-/-- `Elements.Tacit.len_lt_of_inside`, hand-translated. The lock prints it as `∀ {A B C :
+/-- `Elements.Tacit.len_lt_of_inside`, hand-translated. The theorem's unchanged type is `∀ {A B C :
 Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α →
 Elements.InsideCircle C α → LT.lt (Elements.len A C) (Elements.len A B)`. -/
 def len_lt_of_inside_circles : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α → S.InsideCircle C α →
     @LT.lt S.Length _ (S.len A C) (S.len A B)
 
-/-- `Elements.Tacit.on_circle_of_len_eq`, hand-translated. The lock prints it as `∀ {A B C :
+/-- `Elements.Tacit.on_circle_of_len_eq`, hand-translated. The theorem's unchanged type is `∀ {A B C :
 Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Eq
 (Elements.len A C) (Elements.len A B) → Elements.OnCircle C α`. -/
 def on_circle_of_len_eq_circles : Prop :=
@@ -158,7 +158,7 @@ Elements.Point), Exists fun (A : Elements.Point) => Not (Membership.mem avoid A)
 def exists_point_circles : Prop :=
   ∀ (avoid : List S.Point), ∃ A : S.Point, ¬A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_same_side`, hand-translated. The lock prints it as `∀ {B :
+/-- `Elements.Tacit.exists_point_same_side`, hand-translated. The theorem's unchanged type is `∀ {B :
 Elements.Point} {L : Elements.Line}, Not (Elements.OnLine B L) → ∀ (avoid : List
 Elements.Point), Exists fun (A : Elements.Point) => And (Elements.SameSide A B L) (Not
 (Membership.mem avoid A))`. -/
@@ -166,7 +166,7 @@ def exists_point_same_side : Prop :=
   ∀ {B : S.Point} {L : S.Line}, ¬S.OnLine B L → ∀ (avoid : List S.Point),
     ∃ A : S.Point, S.SameSide A B L ∧ ¬A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_opposite_side`, hand-translated. The lock prints it as
+/-- `Elements.Tacit.exists_point_opposite_side`, hand-translated. The theorem's unchanged type is
 `∀ {B : Elements.Point} {L : Elements.Line}, Not (Elements.OnLine B L) → ∀ (avoid : List
 Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OppositeSides A B L) (Not
 (Membership.mem avoid A))`. -/
@@ -187,7 +187,7 @@ And (Elements.OutsideCircle A α) (Not (Membership.mem avoid A))`. -/
 def exists_point_outside_circle : Prop :=
   ∀ (α : S.Circle) (avoid : List S.Point), ∃ A : S.Point, S.OutsideCircle A α ∧ ¬A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_on_circle`, hand-translated. The lock prints it as
+/-- `Elements.Tacit.exists_point_on_circle`, hand-translated. The theorem's unchanged type is
 `∀ (α : Elements.Circle) (avoid : List Elements.Point), Exists fun (A : Elements.Point) =>
 And (Elements.OnCircle A α) (Not (Membership.mem avoid A))`. -/
 def exists_point_on_circle : Prop :=

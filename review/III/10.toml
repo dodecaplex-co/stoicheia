@@ -26,6 +26,7 @@ note = "Euclid bisects BH and BG without a reference from Heath here. The Lean j
 
 [[passage]]
 at = "and from K, L let KC, LM be drawn at right angles"
+unused = ["hA", "hC"]
 kind = "helper"
 helper = "BookI.Prop11"
 note = "Euclid draws the perpendiculars and carries them through the circle; the Lean uses I.11, puts K and L within ABC by III.2 and obtains A, C, N and O from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, with no reference from Heath for these constructions. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and M and E need no further construction."
@@ -63,10 +64,11 @@ note = "Like Heath's, this figure draws the impossible supposition: DEF meeting 
 
 [review]
 stage = "full"
-commit = "5baf18d2"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1eecfe36ac5f86e8"
-run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex)"
+run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4"
+text = "sha256:b9bc95af6523f885"
 
 [review.items]
 statement = "pass"
