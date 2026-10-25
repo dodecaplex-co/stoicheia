@@ -100,31 +100,31 @@
       "ref": "III.2",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "This pin once checked that III.2 did not rest on Circle 3, then an axiom, and kept Circle 2's retired name out of its axiom list (#60). Since 24 October 2026 both are theorems, proved after III.2 from its corollary Prop2.within (#294), so excluding their names from axioms can no longer fail: a theorem is in no entry's axioms. What keeps III.2 off them now is Lean: a proof of III.2 cannot use a theorem proved from III.2, since Lean admits no circular proof."
+      "why": "This pin once checked that III.2 did not rest on Circle 3, then an axiom, and kept Circle 2's retired name out of its axiom list (#60). Circle 2 has been a theorem since 19 October 2026 and Circle 3 since 24 October (#294); both are now proved after III.2, from its corollary Prop2.within, so excluding their names from axioms can no longer fail: a theorem is in no entry's axioms. What keeps III.2 off them now is Lean: a proof of III.2 cannot use a theorem proved from III.2, since Lean admits no circular proof."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and does not rest on Circle 3 (#60). Since 24 October 2026 Circle 2 and Circle 3 are both theorems, proved after III.2 (#294), so excluding their names from axioms can no longer fail. A proof that used either would cite III.2, since the walk that finds an entry's cites passes through proved rules (the II.1 pin), and check_fidelity refuses III.1's citing III.2, which does not come before it; the pin on III.1's cites, next, can fail."
+      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and does not rest on Circle 3 (#60). Circle 2 has been a theorem since 19 October 2026 and Circle 3 since 24 October; both are now proved after III.2 (#294), so excluding their names from axioms can no longer fail. A proof that used either would cite III.2, since the walk that finds an entry's cites passes through proved rules (the II.1 pin), and check_fidelity refuses III.1's citing III.2, which does not come before it; the pin on III.1's cites, next, can fail."
     },
     {
       "ref": "III.1",
       "field": "cites",
       "excludes": ["III.2"],
-      "why": "III.1 does not rest on Circle 3, in the claim's present form (#60, #294): it does not cite III.2, as a proof using Circle 2, Circle 3, Points 9 or Intersection 2 would. All four are proved after III.2 since 24 October 2026, and a proof that uses any of them cites III.2, for the walk that finds an entry's cites passes through proved rules, as the II.1 pin shows."
+      "why": "#60's claim that III.1 does not rest on Circle 3 now takes this form (#294): III.1 does not cite III.2, as a proof using Circle 2, Circle 3, Points 9 or Intersection 2 would. All four are proved after III.2 since 24 October 2026, and a proof that uses any of them cites III.2, for the walk that finds an entry's cites passes through proved rules, as the II.1 pin shows."
     },
     {
       "ref": "II.14",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and does not rest on Circle 3 (#60). Since 24 October 2026 Circle 2 and Circle 3 are both theorems, proved after III.2 (#294), so excluding their names from axioms can no longer fail. A proof that used either would cite III.2, since the walk that finds an entry's cites passes through proved rules (the II.1 pin), and check_fidelity refuses II.14's citing III.2, which does not come before it; the pin on II.14's cites, next, can fail."
+      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and does not rest on Circle 3 (#60). Circle 2 has been a theorem since 19 October 2026 and Circle 3 since 24 October; both are now proved after III.2 (#294), so excluding their names from axioms can no longer fail. A proof that used either would cite III.2, since the walk that finds an entry's cites passes through proved rules (the II.1 pin), and check_fidelity refuses II.14's citing III.2, which does not come before it; the pin on II.14's cites, next, can fail."
     },
     {
       "ref": "II.14",
       "field": "cites",
       "excludes": ["III.2"],
-      "why": "II.14 does not rest on Circle 3, in the claim's present form (#60, #294): it does not cite III.2, as a proof using Circle 2, Circle 3, Points 9 or Intersection 2 would. All four are proved after III.2 since 24 October 2026, and a proof that uses any of them cites III.2, for the walk that finds an entry's cites passes through proved rules, as the II.1 pin shows."
+      "why": "#60's claim that II.14 does not rest on Circle 3 now takes this form (#294): II.14 does not cite III.2, as a proof using Circle 2, Circle 3, Points 9 or Intersection 2 would. All four are proved after III.2 since 24 October 2026, and a proof that uses any of them cites III.2, for the walk that finds an entry's cites passes through proved rules, as the II.1 pin shows."
     },
     {
       "ref": "I.4",

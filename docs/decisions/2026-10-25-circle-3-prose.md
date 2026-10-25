@@ -16,10 +16,11 @@
   that commit, as its row for `axiom_types` gives 87 at another. It is plain text, not a
   count marker: `scripts/generated_counts.py` offers no count of one entry's field, and
   adding one would be a change to the checks beyond this card. The row now says too that
-  Circle 2 and Circle 3 are both theorems, proved since 24 October after III.2 in
-  `Elements/BookIII/Prop02.lean` from `Prop2.within`, so that neither is in any entry's
-  `axioms` and a proof using either cites III.2. The guide's other sentences on the
-  circle rules stay true, and its one count marker, the vocabulary's, stands unchanged.
+  Circle 2 has been a theorem since 19 October and Circle 3 since 24 October, both now
+  proved after III.2 in `Elements/BookIII/Prop02.lean` from `Prop2.within`, so that
+  neither is in any entry's `axioms` and a proof using either cites III.2. The guide's
+  other sentences on the circle rules stay true, and its one count marker, the
+  vocabulary's, stands unchanged.
 
   The review schema's example of an `[overlap]` table's `rule` named Circle 3, which an
   overlap may not name now, since `check_fidelity.py` asks that its rule be an axiom of
@@ -28,8 +29,8 @@
   listed III.2 from Circle 3 among its present examples; III.2's record has had no
   overlap since the retirement, so that example is now history, as the bullet for
   `states` already makes Circle 2's, while III.5's and III.6's stay as their records give
-  them. The vocabulary of terms names neither rule, and the retirement made nothing in it
-  false.
+  them. `review/terms.toml`, from which a record's tags come, names neither rule, and the
+  retirement made nothing in it false.
 
   The reader of review records gives, when an overlap's `rule` or `also` holds
   whitespace, an example of a name as facts.json writes it; that example was Circle 3,
