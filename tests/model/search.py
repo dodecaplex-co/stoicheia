@@ -497,14 +497,6 @@ def _(c):
     return between(B, A, Cc)
 
 
-@axiom('outside_of_between', dict(A=P, B=P, C=P, al=C_))
-def _(c):
-    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
-    if not ((inside(A, al) or on_circle(A, al)) and not inside(Cc, al) and between(A, Cc, B)):
-        return None
-    return (not inside(B, al)) and (not on_circle(B, al))
-
-
 
 
 # ---- Intersection (diagrammatic)

@@ -168,8 +168,9 @@ from the lists for III.5 and III.6 below, whose proofs cite neither Diagram-segm
 Circle 4, which is now a theorem proved from I.7 using Diagram-segment 2 (19 October 2026),
 though the proved rules they use rest on Diagram-segment 2 (below). The bridge through III.7
 and III.8 uses III.2 (`Prop2.within`) to order the points on the straight line through the
-centres, which `cut_point` takes from the rule. None of these lists includes Circle 3, so no
-bridge uses Circle 2 either, which is now proved from Circle 3. All seven bridge lists
+centres, which `cut_point` takes from the rule. Circle 2 and Circle 3 are theorems since
+24 October 2026, proved after III.2, so no list can show them; no bridge uses either. All
+seven bridge lists
 include `exists_centre`, and none reaches III.1: III.2 and III.8 take their centres from the
 rule (22 October 2026, #131). `centre_unique` is a theorem since axiom wave one, so no list
 here shows a call to it. Nothing in this file enters the certificate.
@@ -549,7 +550,9 @@ axiom retirement (proved on 19 October 2026) the proved rules they use, such as
 show that a radius is never nothing (`RuleProofs.Circle.radius_ne_zero`). So the pins no
 longer show that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
 check the names of these two declarations' axioms, and the build fails if an admitted proof
-(`sorry`) enters. Circle 3 does not appear, so neither does Circle 2, now proved from it.
+(`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, proved after III.2,
+cannot appear here; the certificate shows that neither proof uses them, for neither cites
+III.2, as a use of either would make it.
 -/
 
 /--

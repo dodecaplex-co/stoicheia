@@ -14,7 +14,9 @@ or give it in a few lines. Astra found the clearest case, III.2, in the outside 
 (`docs/reports/outside-review-01.md`), and compiled its one-line proof; we are grateful.
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
 proves each "states it" or "gives it at once" row again, from the rules alone. The former
-I.7 audit is kept as a circular derivation through Circle 4, now a corollary of I.7. After
+I.7 audit is kept as a circular derivation through Circle 4, now a corollary of I.7, and
+the former III.2 audits likewise, through Circle 2 and Circle 3, corollaries of III.2 since
+24 October 2026. After
 III.6, `III_5_crossing` and `III_5_radius` give III.5 from Definition I.15 with
 Diagram-segment 4 or Diagram-segment 3. Both rules have been theorems since the second
 axiom retirement, and through them each proof now rests on Diagram-segment 2 as well. A second
@@ -28,9 +30,10 @@ another near miss of representation.
 
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
-reports for each theorem. The last theorems repeat the derivations of Diagram-angle 3
-from I.13 and Circle 2 from Circle 3. The reverse derivation of Circle 3 through the
-derived Circle 2 is circular and retains Circle 3 in its axiom closure.
+reports for each theorem. The last theorems repeat the derivation of Diagram-angle 3
+from I.13, and derive Circle 2 from Circle 3 and Circle 3 from Circle 2. Both rules are
+now proved from III.2, so each of these two reaches III.2 through the other rule, and
+neither is independent of it.
 
 Nothing imports this file, and it is not part of the default build. `lake build Audit`
 checks it. If a statement or a rule changes so that one of these proofs fails, that is
@@ -72,19 +75,23 @@ theorem I_7 : type_of% @Elements.BookI.Prop7 := by
     exact hAB (centre_unique hAα hBβ)
   exact not_same_side_of_circles_meet hαβ hCα hCβ hDα hDβ hCD hAα hBβ hAL hBL hCD_L
 
-/-- **III.2 through Circle 2, from Circle 3.** Between two points on or within a circle, every point is
-within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
-This is Astra's proof from the outside review, now using Circle 2 as a theorem of
-Circle 3. The overlap with Circle 3 remains. Our III.2 follows Euclid, by I.5, I.16
-and I.19, takes its centre from the rule, and rests on neither Circle 2 nor Circle 3. -/
+/-- **III.2 through its own corollary, Circle 2.** Between two points on or within a circle,
+every point is within it (`inside_of_between`, Circle 2). With both points on the circle,
+that is III.2. This is Astra's proof from the outside review. Until 24 October 2026 it was
+an overlap proof, from Circle 2 proved from Circle 3, an assumption. Both rules are now
+proved from III.2, after it, so this derivation uses III.2 and establishes no independent
+overlap. Our III.2 follows Euclid, by I.5, I.16 and I.19, takes its centre from the rule,
+and uses neither Circle 2 nor Circle 3. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
-/-- **III.2 from Circle 3.** A straight line that has left a circle does not come back
-(`outside_of_between`, Circle 3): with one point on or within the circle and a second
-point not within it, any point beyond the second is outside. It is Circle 2 turned round.
-Were a point between two points of the circle not within it, the second point of the
-circle would be outside the circle, and so not on it. -/
+/-- **III.2 through its own corollary, Circle 3.** A straight line that has left a circle
+does not come back (`outside_of_between`, Circle 3): with one point on or within the circle
+and a second point not within it, any point beyond the second is outside. It is Circle 2
+turned round. Were a point between two points of the circle not within it, the second
+point of the circle would be outside the circle, and so not on it. Circle 3 was an
+assumption until 24 October 2026 and is now proved from III.2, so this derivation, too,
+uses III.2. -/
 theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
   fun hA hB _ hAEB => Classical.byContradiction fun hE =>
     (outside_of_between (Or.inr hA) hE hAEB).2 hB
@@ -312,15 +319,18 @@ theorem adjacent_eq_of_right : type_of% @Elements.Tacit.adjacent_eq_of_right := 
 
 /-- **Circle 2 from Circle 3.** Were a point between two points on or within a circle not
 within it, the straight line would have left the circle there, and the second point would
-be outside it (`outside_of_between`, Circle 3), neither within the circle nor on it. -/
+be outside it (`outside_of_between`, Circle 3), neither within the circle nor on it. The
+library proved Circle 2 so from 19 to 24 October 2026. It now proves both rules from III.2,
+so this derivation reaches III.2 through Circle 3. -/
 theorem inside_of_between : type_of% @Elements.Tacit.inside_of_between :=
   fun hA hB h => Classical.byContradiction fun hC =>
     hB.elim (outside_of_between hA hC h).1 (outside_of_between hA hC h).2
 
-/-- **Circle 3 through its own consequence.** Were the point beyond within the circle or
-on it, the point between would be within the circle (`inside_of_between`, Circle 2),
-which it is not. Circle 2 is now proved from Circle 3, so this reverse derivation is
-circular evidence and does not remove Circle 3 from the assumptions. -/
+/-- **Circle 3 from Circle 2.** Were the point beyond within the circle or on it, the point
+between would be within the circle (`inside_of_between`, Circle 2), which it is not. The
+library proves Circle 3 so since 24 October 2026, with Circle 2 as `Prop2.within`, III.2
+for points on or within the circle; so this derivation reaches III.2 through Circle 2, as
+the one above does through Circle 3. -/
 theorem outside_of_between : type_of% @Elements.Tacit.outside_of_between :=
   fun hA hC h => ⟨fun hB => hC (Elements.Tacit.inside_of_between hA (Or.inl hB) h),
     fun hB => hC (Elements.Tacit.inside_of_between hA (Or.inr hB) h)⟩
@@ -384,13 +394,105 @@ info: 'Audit.I_7' depends on axioms: [propext,
 #print axioms Audit.I_7
 
 /--
-info: 'Audit.III_2' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+info: 'Audit.III_2' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate2,
+ Elements.Postulate3,
+ Elements.Postulate4,
+ Quot.sound,
+ Elements.Tacit.add_assoc,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.exists_centre,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.not_on_line_of_same_side,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.III_2
 
 /--
-info: 'Audit.III_2_outside' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+info: 'Audit.III_2_outside' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate2,
+ Elements.Postulate3,
+ Elements.Postulate4,
+ Quot.sound,
+ Elements.Tacit.add_assoc,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.exists_centre,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.not_on_line_of_same_side,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.III_2_outside
@@ -753,13 +855,105 @@ info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
 #print axioms Audit.adjacent_eq_of_right
 
 /--
-info: 'Audit.inside_of_between' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+info: 'Audit.inside_of_between' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate2,
+ Elements.Postulate3,
+ Elements.Postulate4,
+ Quot.sound,
+ Elements.Tacit.add_assoc,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.exists_centre,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.not_on_line_of_same_side,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.inside_of_between
 
 /--
-info: 'Audit.outside_of_between' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+info: 'Audit.outside_of_between' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate2,
+ Elements.Postulate3,
+ Elements.Postulate4,
+ Quot.sound,
+ Elements.Tacit.add_assoc,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_add_of_between,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_degenerate,
+ Elements.Tacit.area_eq_zero_of_on_line,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.exists_centre,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.exists_point_on_line,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.not_on_line_of_same_side,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition]
 -/
 #guard_msgs in
 #print axioms Audit.outside_of_between

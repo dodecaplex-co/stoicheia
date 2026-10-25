@@ -10,7 +10,7 @@ System E, §3.3 (Avigad, Dean and Mumma, 2009). Postulates 1, 2 and 3 are the
 "lines and circles" rules and Points rule 4, and they live in `Postulates.lean`.
 One rule here is ours, not System E's: that every circle has a centre
 (`exists_centre`), whose content is Euclid's Definitions I.15 and I.16.
-Points rule 9 is proved in `Elements.Figure.Circles` from the remaining rules.
+Points rule 9 is proved after III.2 in `Elements.BookIII.Prop02`.
 
 The optional list `avoid` lets a new point be chosen different from any points
 already in the figure, as System E's "[distinct from …]" clauses do.

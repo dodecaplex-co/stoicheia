@@ -1,8 +1,8 @@
 # exhaustive: every configuration on small grids
 # command: python3 -I tests/model/exhaustive.py
 # seeds: 7 (for area_congruent's isometries)
-# commit: 096804d0a4643c1986854862a2e411878b9ad36a (harness files as committed)
-# harness sha256: 85626e64af49d65ce63a55ec57d3cefc481e87a5cb704c114dff58de2b755d25
+# commit: 2ce08a8eaf9bba34a3d2c4b0f7f02a71e271b13c (harness files as committed)
+# harness sha256: 379b610970bc9d49a12fc6a34c04d28b606423c67c70997c598a3ec0b2e03d8e
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-24
 # time: 102.8 s
@@ -63,18 +63,18 @@ derived.centre_inside                          5832        72      0     0.0s
 derived.inside_not_on                          5832      1260      0     0.0s
 Definition15                                 268272      2448      0     0.1s
 derived.on_circle_of_len_eq                  268272      2448      0     0.1s
-derived.inside_of_len_lt                    8470728      5776      0     3.0s
-derived.len_lt_of_inside                    8470728      5776      0     3.0s
+derived.inside_of_len_lt                    8470728      5776      0     2.9s
+derived.len_lt_of_inside                    8470728      5776      0     2.9s
 circle_eq                                    156816      2448      0     0.1s
 between_of_inside_chord                       44924      3228      0     0.1s
 derived.inside_of_between                    857088     76104      0     2.2s
-derived.outside_of_between                  1399680    281664      0     3.4s
+derived.outside_of_between                  1399680    281664      0     3.5s
 derived.not_same_side_of_circles_meet         53976      1704      0     0.0s
 circles_meet_same_side                       802816    216488      0     1.0s
 derived.circles_meet_opposite_side           802816    216488      0     1.0s
 derived.circles_meet_of_on_inside_outside    2309472     49616      0     1.6s
 circles_meet                                 156816     10668      0     0.1s
-derived.line_meets_circle_of_opposite_sides   22578464   6161192      0    22.5s
+derived.line_meets_circle_of_opposite_sides   22578464   6161192      0    22.6s
 derived.line_meets_circle_of_inside          109728     30204      0     0.0s
 line_circle_between                          398880     44088      0     0.3s
 line_circle_beyond                           398880     80320      0     0.3s

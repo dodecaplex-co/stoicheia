@@ -14,8 +14,8 @@ declaration; the build fails if it is not. The generator described in the
 [README](../../README.md) writes the laws from the elaborated declarations, and
 `Check/Circles.lean` also compares each locked law's translation here with
 its generated field. The retired rules `centre_unique`, `inside_of_between`,
-`not_same_side_of_circles_meet` and `exists_point_outside_circle` are compared directly
-with their library declarations, including binder kinds. Their concrete plane proofs
+`outside_of_between`, `not_same_side_of_circles_meet` and `exists_point_outside_circle`
+are compared directly with their library declarations, including binder kinds. Their concrete plane proofs
 remain as derived facts, with no generated assumption fields. Overlapping translations
 keep their statements under distinct names.
 
@@ -132,7 +132,8 @@ def inside_of_between : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α →
     S.InsideCircle B α ∨ S.OnCircle B α → S.Between A C B → S.InsideCircle C α
 
-/-- `Elements.Tacit.outside_of_between` (Circle 3), hand-translated. The lock prints it as
+/-- `Elements.Tacit.outside_of_between` (Circle 3), hand-translated.
+The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {α : Elements.Circle}, Or (Elements.InsideCircle A α)
 (Elements.OnCircle A α) → Not (Elements.InsideCircle C α) → Elements.Between A C B →
 Elements.OutsideCircle B α`. -/
