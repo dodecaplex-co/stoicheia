@@ -1302,7 +1302,7 @@ def lean_declared():
     return declared_names(lean_code())
 
 
-def use_pattern(names, longer=()):
+def use_pattern(names, longer=(), shadowed=()):
     """A use of a declaration by one of `names`: the first, its full name, may stand
     qualified (`BookI.Prop46.square_eq`). A projection of it is a use
     (`Prop20.collinear_iff.mpr`, `Prop46.square_eq.symm`, `.1`), but not a longer name
@@ -1310,7 +1310,12 @@ def use_pattern(names, longer=()):
     `longer` names giving each such name's rest (`part`); nor a longer name that runs on
     without a dot (`Prop45.append'` for `Prop45.append`), nor a field of something else
     (`h.area_pos` for `Prop14.area_pos`)."""
-    alts = [r"(?:\w+\.)*" + re.escape(names[0])] + [re.escape(x) for x in names[1:]]
+    shadowed = set(shadowed)
+    qualification = "*" if names[0] not in shadowed else "+"
+    alts = [rf"(?:\w+\.){qualification}" + re.escape(names[0])]
+    alts += [re.escape(x) for x in names[1:] if x not in shadowed]
+    if not alts:
+        return re.compile(r"(?!)")
     rests = "|".join(re.escape(x) for x in longer)
     after = r"[\w'!?]" + (rf"|\.(?:{rests})(?![\w'!?])" if rests else "")
     return re.compile(r"(?<![\w.'])(?:" + "|".join(alts) + rf")(?!{after})")
@@ -1358,6 +1363,42 @@ def commands(code):
     return out
 
 
+def command_body(text):
+    """The value of a declaration command, without its name, binders or result type."""
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    stack = []
+    for i, char in enumerate(text):
+        if char in pairs:
+            stack.append(pairs[char])
+        elif stack and char == stack[-1]:
+            stack.pop()
+        elif not stack and text.startswith(":=", i):
+            return text[:i], text[i + 2:]
+        elif (not stack and text.startswith("where", i)
+              and (i == 0 or not (text[i - 1].isalnum() or text[i - 1] in "_'"))
+              and (i + 5 == len(text)
+                   or not (text[i + 5].isalnum() or text[i + 5] in "_'"))):
+            return text[:i], text[i + 5:]
+    return text, ""
+
+
+def bound_names(header, body):
+    """The simple names bound by a declaration header or locally in its value."""
+    names = set()
+    for group in re.findall(r"[({\[⦃]([^(){}\[\]⦃⦄]*)[)}\]⦄]", header):
+        left, colon, _ = group.partition(":")
+        if colon:
+            names.update(re.findall(r"(?<![\w'])[_\w][\w']*", left))
+    names.update(re.findall(r"\b(?:have|let|set)\s+([_\w][\w']*)\s*(?::|:=|←)", body))
+    return names
+
+
+def command_uses(names, longer, text):
+    """Whether a declaration command's value refers to one of `names`."""
+    header, body = command_body(text)
+    return bool(body and use_pattern(names, longer, bound_names(header, body)).search(body))
+
+
 @functools.cache
 def users_in(code, declared):
     """Who uses what in one Lean file without comments, `code`, `declared` being the names
@@ -1371,7 +1412,7 @@ def users_in(code, declared):
             continue
         longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
         users[name] = {user for user, text in found if user != name
-                       and use_pattern(own_names(name, user), longer).search(text)}
+                       and command_uses(own_names(name, user), longer, text)}
     return users
 
 
@@ -1386,8 +1427,9 @@ def use_kind(name, own, code, declared, proofs):
     `Segment.exists_tangent` in III.16's file serves only `Segment.compare_alike`, which
     nothing uses. A mention in a comment is no use."""
     longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
-    if any(use_pattern(root_names(name), longer).search(text)
-           for path, text in code.items() if path != own):
+    if any(command_uses(root_names(name), longer, text)
+           for path, source in code.items() if path != own
+           for _, text in commands(source)):
         return "later"
     users = users_in(code[own], declared)
     seen, todo = {name}, [name]
@@ -1447,6 +1489,38 @@ theorem Prop9.deep : True := trivial
 
 theorem Prop9.mid : True := Prop9.deep
 
+theorem Prop9.bound : True := trivial
+
+theorem Prop9.bound_shadow (bound : True) : True := bound
+
+theorem Prop9.local : True := trivial
+
+theorem Prop9.local_shadow : True := by
+  have local : True := trivial
+  exact local
+
+theorem Prop9.let_bound : True := trivial
+
+theorem Prop9.let_shadow : True := by
+  let let_bound : True := trivial
+  exact let_bound
+
+def Prop9.header_type : Prop := True
+
+theorem Prop9.header_mention (_ : Prop9.header_type) : True := trivial
+
+theorem Prop9.qualified : True := trivial
+
+theorem Prop9.qualified_shadow (qualified : True) : True := by
+  have := Prop9.qualified
+  exact qualified
+
+theorem Prop9.unqualified : True := trivial
+
+theorem Prop9.unqualified_mid : True := unqualified
+
+theorem Prop9.unqualified_top : True := unqualified_mid
+
 theorem Prop9.inner : True := trivial
 
 private theorem hidden : True := Prop9.inner
@@ -1469,6 +1543,8 @@ theorem Prop9.general : True := by
   have := Prop9.mid
   have := hidden
   have := rule_own
+  have := Prop9.qualified_shadow trivial
+  have := Prop9.unqualified_top
   exact Fitted.fan.within
 
 end Elements.BookI
@@ -1514,6 +1590,15 @@ USE_CASES = [   # (a declaration of the first file, how it is used)
                                       # the companion uses
     ("Prop9.mid", "own"),             # by the companion
     ("Prop9.deep", "own"),            # only by `Prop9.mid`: at a remove
+    ("Prop9.bound", "beside"),
+    ("Prop9.local", "beside"),
+    ("Prop9.let_bound", "beside"),
+    ("Prop9.header_type", "beside"),
+    ("Prop9.qualified", "own"),
+    ("Prop9.qualified_shadow", "own"),
+    ("Prop9.unqualified", "own"),
+    ("Prop9.unqualified_mid", "own"),
+    ("Prop9.unqualified_top", "own"),
     ("Prop9.inner", "own"),           # only by the private `hidden`, which the companion uses
     ("Prop9.part", "beside"),         # only by `Prop9.aside`, which nothing uses
     ("Prop9.support", "beside"),      # only by `Prop9.shared`, which the other file uses and
