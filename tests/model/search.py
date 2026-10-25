@@ -366,55 +366,6 @@ def _(c):
     return all(w is not None and on_line(w, L) for w in ws) and len(ws) >= 2
 
 
-@axiom('exists_point_on_line_off_line', dict(L=L_, M=L_))
-def _(c):
-    L, M = c['L'], c['M']
-    if L == M:
-        return None
-    rng = c['_rng']
-    ws = [lattice_on_line(L, rng, spread=10**6) for _ in range(5)]
-    good = [w for w in ws if on_line(w, L) and not on_line(w, M)]
-    return len(set(good)) >= 2
-
-
-@axiom('exists_point_between', dict(B=P, C=P, L=L_))
-def _(c):
-    B, Cc, L = c['B'], c['C'], c['L']
-    if not (on_line(B, L) and on_line(Cc, L) and B != Cc):
-        return None
-    ws = [(B[0] + Fr(1, k) * (Cc[0] - B[0]), B[1] + Fr(1, k) * (Cc[1] - B[1])) for k in (2, 3, 4)]
-    return all(on_line(w, L) and between(B, w, Cc) for w in ws)
-
-
-@axiom('exists_point_same_side', dict(B=P, L=L_))
-def _(c):
-    B, L = c['B'], c['L']
-    if on_line(B, L):
-        return None
-    v = L[0] * B[0] + L[1] * B[1] + L[2]   # the line's value at B, as model.py's lval
-    s = (v > 0) - (v < 0)                  # and its sign, as sgn
-    ws = [(B[0] + k * s * L[0], B[1] + k * s * L[1]) for k in (1, 2, 3)]
-    return all(same_side(w, B, L) for w in ws)
-
-
-@axiom('exists_point_opposite_side', dict(B=P, L=L_))
-def _(c):
-    B, L = c['B'], c['L']
-    if on_line(B, L):
-        return None
-    v = L[0] * B[0] + L[1] * B[1] + L[2]   # the line's value at B, as model.py's lval
-    n2 = L[0] ** 2 + L[1] ** 2
-    ws = [(B[0] - Fr(k * v, n2) * L[0], B[1] - Fr(k * v, n2) * L[1]) for k in (2, 3, 4)]
-    return all(opposite(w, B, L) for w in ws)
-
-
-@axiom('exists_point_on_circle', dict(al=C_))
-def _(c):
-    al = c['al']
-    ws = [(float(al[0]) + math.sqrt(al[2]) * math.cos(t), float(al[1]) + math.sqrt(al[2]) * math.sin(t)) for t in (0.1, 0.2, 0.3)]
-    return all(f_on_circle(w, al) for w in ws)
-
-
 @axiom('exists_point_inside_circle', dict(al=C_))
 def _(c):
     al = c['al']
@@ -474,11 +425,6 @@ def _(c):
     return _cm_side(c, True)
 
 
-@axiom('circles_meet_opposite_side', dict(al=C_, be=C_, B=P, C=P, D=P, L=L_))
-def _(c):
-    return _cm_side(c, False)
-
-
 # ---- Diagram: generalities
 @axiom('line_unique', dict(A=P, B=P, L=L_, M=L_))
 def _(c):
@@ -490,20 +436,6 @@ def _(c):
 
 
 
-@axiom('centre_inside', dict(A=P, al=C_))
-def _(c):
-    if not is_centre(c['A'], c['al']):
-        return None
-    return inside(c['A'], c['al'])
-
-
-@axiom('inside_not_on', dict(A=P, al=C_))
-def _(c):
-    if not inside(c['A'], c['al']):
-        return None
-    return not on_circle(c['A'], c['al'])
-
-
 # ---- Between
 @axiom('between_symm', dict(A=P, B=P, C=P))
 def _(c):
@@ -511,20 +443,6 @@ def _(c):
     if not between(A, B, Cc):
         return None
     return between(Cc, B, A)
-
-
-@axiom('ne_of_between', dict(A=P, B=P, C=P))
-def _(c):
-    if not between(c['A'], c['B'], c['C']):
-        return None
-    return c['A'] != c['B']
-
-
-@axiom('ne_of_between_ends', dict(A=P, B=P, C=P))
-def _(c):
-    if not between(c['A'], c['B'], c['C']):
-        return None
-    return c['A'] != c['C']
 
 
 @axiom('not_between_of_between', dict(A=P, B=P, C=P))
@@ -535,38 +453,6 @@ def _(c):
     return not between(B, A, Cc)
 
 
-@axiom('on_line_of_between', dict(A=P, B=P, C=P, L=L_))
-def _(c):
-    A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
-    if not (between(A, B, Cc) and on_line(A, L) and on_line(B, L)):
-        return None
-    return on_line(Cc, L)
-
-
-@axiom('on_line_of_between_ends', dict(A=P, B=P, C=P, L=L_))
-def _(c):
-    A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
-    if not (between(A, B, Cc) and on_line(A, L) and on_line(Cc, L)):
-        return None
-    return on_line(B, L)
-
-
-@axiom('between_of_between_left', dict(A=P, B=P, C=P, D=P))
-def _(c):
-    A, B, Cc, D = c['A'], c['B'], c['C'], c['D']
-    if not (between(A, B, Cc) and between(A, D, B)):
-        return None
-    return between(A, D, Cc)
-
-
-@axiom('between_of_between_right', dict(A=P, B=P, C=P, D=P))
-def _(c):
-    A, B, Cc, D = c['A'], c['B'], c['C'], c['D']
-    if not (between(A, B, Cc) and between(B, Cc, D)):
-        return None
-    return between(A, B, D)
-
-
 @axiom('between_cases', dict(A=P, B=P, C=P, L=L_))
 def _(c):
     A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
@@ -575,29 +461,7 @@ def _(c):
     return between(A, B, Cc) or between(B, A, Cc) or between(A, Cc, B)
 
 
-@axiom('not_between_of_between_between', dict(A=P, B=P, C=P, D=P))
-def _(c):
-    A, B, Cc, D = c['A'], c['B'], c['C'], c['D']
-    if not (between(A, B, Cc) and between(A, B, D)):
-        return None
-    return not between(Cc, B, D)
-
-
 # ---- Same side
-@axiom('same_side_refl', dict(A=P, L=L_))
-def _(c):
-    if on_line(c['A'], c['L']):
-        return None
-    return same_side(c['A'], c['A'], c['L'])
-
-
-@axiom('same_side_symm', dict(A=P, B=P, L=L_))
-def _(c):
-    if not same_side(c['A'], c['B'], c['L']):
-        return None
-    return same_side(c['B'], c['A'], c['L'])
-
-
 @axiom('not_on_line_of_same_side', dict(A=P, B=P, L=L_))
 def _(c):
     if not same_side(c['A'], c['B'], c['L']):
@@ -613,23 +477,7 @@ def _(c):
     return same_side(B, Cc, L)
 
 
-@axiom('same_side_or', dict(A=P, B=P, C=P, L=L_))
-def _(c):
-    A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
-    if on_line(A, L) or on_line(B, L) or on_line(Cc, L) or same_side(A, B, L):
-        return None
-    return same_side(A, Cc, L) or same_side(B, Cc, L)
-
-
 # ---- Pasch
-@axiom('pasch1', dict(A=P, B=P, C=P, L=L_))
-def _(c):
-    A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
-    if not (between(A, B, Cc) and same_side(A, Cc, L)):
-        return None
-    return same_side(A, B, L)
-
-
 @axiom('pasch2', dict(A=P, B=P, C=P, L=L_))
 def _(c):
     A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
@@ -638,45 +486,7 @@ def _(c):
     return same_side(B, Cc, L)
 
 
-@axiom('pasch3', dict(A=P, B=P, C=P, L=L_))
-def _(c):
-    A, B, Cc, L = c['A'], c['B'], c['C'], c['L']
-    if not (between(A, B, Cc) and on_line(B, L)):
-        return None
-    return not same_side(A, Cc, L)
-
-
-@axiom('pasch4', dict(A=P, B=P, C=P, L=L_, M=L_))
-def _(c):
-    A, B, Cc, L, M = (c[k] for k in 'ABCLM')
-    if not (L != M and on_line(B, L) and on_line(B, M) and on_line(A, M) and on_line(Cc, M)
-            and A != Cc and A != B and Cc != B and not same_side(A, Cc, L)):
-        return None
-    return between(A, B, Cc)
-
-
 # ---- Triple incidence
-@axiom('triple_incidence1', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_))
-def _(c):
-    A, B, Cc, D, L, M, N = (c[k] for k in 'ABCDLMN')
-    if not (on_line(A, L) and on_line(A, M) and on_line(A, N) and on_line(B, L) and on_line(Cc, M)
-            and on_line(D, N) and same_side(Cc, D, L) and same_side(B, Cc, N)):
-        return None
-    return not same_side(B, D, M)
-
-
-@axiom('triple_incidence2', dict(A=P, B=P, C=P, D=P, L=L_, M=L_, N=L_))
-def _(c):
-    A, B, Cc, D, L, M, N = (c[k] for k in 'ABCDLMN')
-    if not (on_line(A, L) and on_line(A, M) and on_line(A, N) and on_line(B, L) and on_line(Cc, M)
-            and on_line(D, N) and same_side(Cc, D, L) and not same_side(B, D, M)
-            and not on_line(D, M) and B != A):
-        return None
-    return same_side(B, Cc, N)
-
-
-
-
 # ---- Circles
 @axiom('between_of_inside_chord', dict(A=P, B=P, C=P, L=L_, al=C_))
 def _(c):
@@ -714,23 +524,6 @@ def _(c):
 
 
 
-@axiom('line_meets_circle_of_inside', dict(A=P, L=L_, al=C_))
-def _(c):
-    A, L, al = c['A'], c['L'], c['al']
-    if not (inside(A, al) and on_line(A, L)):
-        return None
-    v = L[0] * al[0] + L[1] * al[1] + L[2]   # the centre's value, as model.py's line_meets_circle
-    return v * v < al[2] * (L[0] ** 2 + L[1] ** 2)
-
-
-@axiom('circles_meet_of_on_inside_outside', dict(A=P, B=P, al=C_, be=C_))
-def _(c):
-    A, B, al, be = c['A'], c['B'], c['al'], c['be']
-    if not (on_circle(A, al) and in_or_on(B, al) and inside(A, be) and outside(B, be)):
-        return None
-    return circles_meet(al, be)
-
-
 @axiom('circles_meet', dict(A=P, B=P, al=C_, be=C_))
 def _(c):
     A, B, al, be = c['A'], c['B'], c['al'], c['be']
@@ -740,13 +533,6 @@ def _(c):
 
 
 # ---- Metric
-@axiom('eq_of_len_eq_zero', dict(A=P, B=P))
-def _(c):
-    if d2(c['A'], c['B']) != 0:
-        return None
-    return c['A'] == c['B']
-
-
 @axiom('len_self', dict(A=P))
 def _(c):
     return d2(c['A'], c['A']) == 0
@@ -780,12 +566,6 @@ def _(c):
 def _(c):
     A, B, Cc = c['A'], c['B'], c['C']
     return area2(A, B, Cc) == area2(Cc, A, B)
-
-
-@axiom('area_swap', dict(A=P, B=P, C=P))
-def _(c):
-    A, B, Cc = c['A'], c['B'], c['C']
-    return area2(A, B, Cc) == area2(A, Cc, B)
 
 
 @axiom('area_congruent', dict(A=P, B=P, C=P, D=P, E=P, F=P))
@@ -829,30 +609,6 @@ def _(c):
             and d2(A, B) == d2(A, Cc)):
         return None
     return al == be
-
-
-@axiom('on_circle_of_len_eq', dict(A=P, B=P, C=P, al=C_))
-def _(c):
-    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
-    if not (is_centre(A, al) and on_circle(B, al) and d2(A, Cc) == d2(A, B)):
-        return None
-    return on_circle(Cc, al)
-
-
-@axiom('inside_of_len_lt', dict(A=P, B=P, C=P, al=C_))
-def _(c):
-    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
-    if not (is_centre(A, al) and on_circle(B, al) and d2(A, Cc) < d2(A, B)):
-        return None
-    return inside(Cc, al)
-
-
-@axiom('len_lt_of_inside', dict(A=P, B=P, C=P, al=C_))
-def _(c):
-    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
-    if not (is_centre(A, al) and on_circle(B, al) and inside(Cc, al)):
-        return None
-    return d2(A, Cc) < d2(A, B)
 
 
 # ---- Transfer: angles
@@ -935,16 +691,6 @@ def _(c):
         return None
     A, B, Cc, D = (c[k] for k in 'ABCD')
     return area2(A, Cc, D) + area2(D, Cc, B) == area2(A, D, B)
-
-
-@axiom('between_of_area_add', dict(A=P, B=P, C=P, D=P, L=L_))
-def _(c):
-    if not _area_line_hyp(c):
-        return None
-    A, B, Cc, D = (c[k] for k in 'ABCD')
-    if area2(A, Cc, D) + area2(D, Cc, B) != area2(A, D, B):
-        return None
-    return between(A, Cc, B)
 
 
 # ---- Superposition

@@ -1724,14 +1724,24 @@ def checkRoundTrip : CommandElabM Unit := do
   unless errors.isEmpty do throwError "{"\n".intercalate errors.toList}"
 
 /-- Compare the definition `planted`, over the signature, with the statement of the
-library's axiom or theorem `lib`, as `checkRoundTrip` compares a generated law.
-This checks the hand translations of retired rules and tests that the comparison catches
-the changes it is meant to. -/
+library's axiom or theorem `lib`, as `checkRoundTrip` compares a generated law, including
+binder kinds. This checks the hand translations of retired rules and tests that the
+comparison catches the changes it is meant to. When the hand `LineMeetsCircle` is present,
+check its type and value against the library's definition before admitting its reverse
+translation. The vocabulary used to generate the locked laws stays unchanged. -/
 def comparePlanted (planted lib : Name) : CommandElabM Unit := do
   let env ← getEnv
-  let p ← match plan env with
+  let mut p ← match plan env with
     | .ok p => pure p
     | .error e => throwError "{e}"
+  let handWord := `Model.Hand.Intersections.LineMeetsCircle
+  let libWord := `Elements.LineMeetsCircle
+  if env.contains handWord then
+    let some (.defnInfo word) := env.find? libWord
+      | throwError "`{libWord}` is not a definition"
+    let errors ← liftTermElabM <| compareDefinition p handWord word.value word.type false
+    unless errors.isEmpty do throwError "{"\n".intercalate errors.toList}"
+    p := { p with inverse := p.inverse.insert handWord { name := libWord, overS := true } }
   let some ci := env.find? lib | throwError "no `{lib}`"
   let errors ← liftTermElabM <| compareDefinition p planted ci.type (.sort 0) true
   unless errors.isEmpty do throwError "{"\n".intercalate errors.toList}"

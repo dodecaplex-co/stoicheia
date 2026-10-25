@@ -1,4 +1,6 @@
 import Elements.Figure.Lines
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 
 /-!
 # Book Zero: rays

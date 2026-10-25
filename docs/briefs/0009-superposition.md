@@ -8,6 +8,27 @@ and places, so that neither proof writes a count or a position
 ([the decision](../decisions/2026-10-22-superposition-symbols-from-list.md)). `Symbols`,
 `Rule.apply`, the rule, the lock and every statement are unchanged.*
 
+*21 October 2026: the second retirement wave lands, with the review of the cited laws'
+proofs that round 4 ties to it (#150, question 4's reconciliation and question 5's credit
+to the side).* Thirty-one more System E rules are theorems. Four of them, `same_side_symm`,
+`pasch3`, `eq_of_len_eq_zero` and `triple_incidence2`, bring construction rules into the
+proofs of four of the seven laws I.4 cites: `neOfLen` and `rayUnique`, through Metric 1,
+which draws a circle, and `rayOfAngle` and `rayOfAngleSide`, through Same side 2, Triple
+incidence 2 and Pasch 3. I.8 cites the first two as well. Only `lenSymm`, `angleSymm` and
+`areaCongruent` are proved with none. The certificate's `cited_laws` lists each law's
+construction rules, and the audit pins record each proof's axioms. The kept side AC serves
+`rayOfAngle`, whose law names it as its third straight line; `rayOfAngleSide` uses no side.
+Its law is Pasch 3, now proved by joining the law's point P to a point of the line
+(`Postulate1` in `Elements/Figure/RuleBase.lean`), and `rayOfAngle`'s proof, through Same
+side 5 inside Triple incidence 2, may join P to a point it produces. In I.4, P is the
+placed corner C′, so round 1's defect, a straight line drawn through a point of the
+placement, returns inside these proofs, outside the placement. Only question 4's
+permissive reading admits it: each law asserts no existence, and citing it draws nothing in
+the placement, whatever its proof draws. No retired axiom is restored to avoid it. The
+table under "What the laws' proofs draw" and the lines that described the laws' proofs in
+the present tense now give this revision's values; what they record of earlier revisions
+stands.
+
 *21 October 2026, #150, question 2: part 4 of the restriction is now a theorem.
 `Rule.Figure` is the statement of `Rule.infer` without its cited-law hypothesis, tied to the
 locked rule by `Rule.iff_figure`, and `Rule.Figure.restrict` proves that it passes to any part
@@ -63,6 +84,18 @@ The landed retirements also change the overlap catalogue: Circle 4 is a corollar
 I.7, Diagram-angle 3 follows I.13, and Generalities 2 is proved in Book Zero. Circle 2
 is proved from Circle 3, which remains III.2's axiom overlap. The restricted rule
 separately retires the construction shortcuts for I.2, I.3 and I.23. A2 has not landed.
+
+**Baseline update, 21 October 2026: the second wave is integrated.** By the owner's
+decision of 19 October ("Please do both. 79 is rather large with so many books in front
+of us"), thirty-one more rules became theorems; the merge of `lean/retire-axioms-2` at
+`d2c45450` with the wave's preparation, itself merged with this replacement (`bae3d09f`),
+integrates them after it, and a later merge brings in #150's answers to questions 4 and 2.
+The foundation has 48 axioms, including 42 tacit rules, with `Tacit.superposition` still
+restated as `Elements.Superposition.Rule Elements.primitives`; the regenerated vocabulary
+keeps its 208 entries, and the certificate has 41 expectations. The audit pins of
+`Audit/Superposition.lean` that named retired rules now record what Lean prints. No
+superposition statement changes here, and the review of the cited laws' proofs that round 4
+ties to this landing is the note of 21 October on the second retirement wave above.
 
 **Round 4's correction.** The owner approved questions 2, 4 and 5 "as prototyped", and
 asked that the prototyped work be finished in an issue of its own, #150. There each answer
@@ -318,8 +351,12 @@ keeps (`kept`):
 The first four preserve the former existential rule's conclusion (`Placed I …`). The fifth
 was added in round 2. It is Euclid's own object: "the straight line AC will also coincide with DF"
 speaks of the side AC as it falls. With it, the law of one ray for one angle can name all
-three of its straight lines and be proved without drawing any (below), and nothing is drawn
-inside the placement. Its model obligation is now proved: wherever the triangle can be laid
+three of its straight lines and be proved without drawing any of them (below), and nothing
+is drawn inside the placement. The side serves the law's first half, `rayOfAngle`; the
+second, `rayOfAngleSide`, uses none. Since the second retirement, the proofs of both halves
+draw other straight lines, outside the placement, one of them through the law's point P,
+which in I.4 is C′ (the note of 21 October on the second retirement wave above); citing
+the law still draws nothing in the placement. Its model obligation is now proved: wherever the triangle can be laid
 down, the straight line through D and C′ must exist too, which Postulate 1 gives, since D is
 not C′. The owner approved this kept side, as prototyped, under question 5 on 20 October
 2026. That cost is checked by reading the model's proof; #150 tracks a theorem for it.
@@ -379,27 +416,37 @@ one):
 | Law | Proof | Construction rules it uses |
 |---|---|---|
 | Metric 3, Metric 4, Metric 9 | the axioms `len_symm`, `angle_symm`, `area_congruent` | none |
-| Distinct ends | Book Zero's `ne_of_len_eq` | none |
-| One point at one distance on a ray | Book Zero's `OnRay.eq_of_len_eq` | none |
-| One ray for one angle, both halves | `onLine_of_angle_eq_named` in `Elements/Figure/Superposition.lean`, and Pasch 3 for the side | none |
-| I.7 | the edition's I.7, supplied by the theorem that cites it | Postulates 1, 2 and 3 and seven other construction rules; it also rests on the restricted superposition rule through I.5 and I.4 |
+| Distinct ends | Book Zero's `ne_of_len_eq` | Postulates 1 and 3 and four other construction rules, through the proved Metric 1 (`eq_of_len_eq_zero`), which draws a circle |
+| One point at one distance on a ray | Book Zero's `OnRay.eq_of_len_eq` | the same six, through Metric 1 |
+| One ray for one angle, its straight line | `onLine_of_angle_eq_named` in `Elements/Figure/Superposition.lean`, with the side laid down as its third straight line | Postulates 1, 2 and 3 and eight other construction rules, through the proved Same side 2 and Triple incidence 2 |
+| One ray for one angle, its side | Pasch 3, with no side | Postulates 1 and 3 and six other construction rules, through the proved Pasch 3, which joins the law's point P to a point of the line |
+| I.7 | the edition's I.7, supplied by the theorem that cites it | Postulates 1, 2 and 3 and eight other construction rules; it also rests on the restricted superposition rule through I.5 and I.4 |
+
+Before the second retirement the last column read "none" for every law but I.7, and I.7's
+row "seven other construction rules".
 
 Each law but I.7 is proved by a theorem of its own in `Elements/Figure/Superposition.lean`,
 and the certificate lists the construction rules beneath each law's proof (`cited_laws`);
-at this revision it lists none for any law I.4 cites. In round 1, one ray for
+before the second retirement it listed none for any law I.4 cites, and since it lists them
+for four of the seven. In round 1, one ray for
 one angle was proved through Book Zero's `onRay_of_angle_eq`, which draws the straight lines
 DE, DF and DP (Postulate 1, and `exists_point` through `Triangle.angle_pos`): with P the
 laid-down C′, that drew through a point of the placement. Round 2 states the law with its
 three straight lines named, the third the side laid down, and proves it again with no
-construction.
+construction. Since the second retirement both halves are proved with constructions again,
+through the proved rules beneath them, and each proof, in some case of its argument, joins
+P to another point by a straight line, though the first still draws none of its three
+named straight lines.
 
 **I.7 remains.** Its proof, with its helpers, draws the six straight lines joining its four
 points (Postulate 1), finds where AD and CB cross (an intersection rule), produces AC and AD
 (Postulate 2), and cites I.5, which cuts off with I.3 and so uses its circles (Postulate 3).
 Inside I.8's placement, I.7's point C is G, the laid-down corner. The I.7 *statement* asserts
-no existence, and citing it draws nothing in the placement. At this revision every law
-I.4's derivation cites is proved with no construction rule, as `cited_laws` shows; I.8's
-cites I.7, where Euclid's argument uses it ("But they cannot be so constructed. [I. 7]",
+no existence, and citing it draws nothing in the placement. Before the second retirement
+every law I.4's derivation cites was proved with no construction rule; since it, four are
+proved with construction rules, as `cited_laws` shows, and so are two of the three other
+laws I.8's derivation cites. I.8's also cites I.7, where Euclid's argument uses it ("But
+they cannot be so constructed. [I. 7]",
 the reference Heath's). The owner approved this permissive reading, as prototyped, under
 question 4 on 20 October 2026. `Cited.drawsNothing`, which classified the laws by hand,
 was retired on 21 October 2026 (#150, route (b)): the certificate computes each law's
@@ -425,7 +472,10 @@ dependencies must be checked again at A2's landing. The certificate's `cited_law
 show those construction rules law by law; the supporting prose and audit pins must be
 reviewed again. Under the stricter reading of question 4, this would affect I.4 as well as I.8.
 Retired axioms must not be restored to preserve the earlier classification. That review
-belongs to the second wave's landing ("Landing"), and #150 tracks it.
+belongs to the second wave's landing ("Landing"), and #150 tracks it. *Done at that
+landing* (the note of 21 October on the second retirement wave above): the four laws are
+as named here, `cited_laws` and the audit pins record their construction rules, and no
+retired axiom is restored.
 
 ## How I.4 and I.8 keep Euclid's arguments
 
@@ -473,10 +523,14 @@ D's side; c′ is where C comes down and g where A comes down, Euclid's own lett
 
 One equality leaves the placement: ∠BAC = ∠EDF, which is I.8's conclusion.
 
-**What the proofs rest on.** The production I.4 has 26 axioms in its closure, I.8 has 56,
-Lean's three logical axioms included. These are exactly their former axiom-name sets, with
-`Tacit.superposition` restated. I.4's construction rules, Postulate 1 and `exists_point`,
-enter before the placement, in drawing DE and DF and proving the corners distinct. I.8
+**What the proofs rest on.** Before the second retirement, the production I.4 had 26
+axioms in its closure and I.8 had 56, Lean's three logical axioms included: exactly their
+former axiom-name sets, with `Tacit.superposition` restated. I.4's construction rules,
+Postulate 1 and `exists_point`, entered before the placement, in drawing DE and DF and
+proving the corners distinct. Since that retirement I.4 has 39 and I.8 has 45. Postulate 1
+and `exists_point` still enter before the placement; I.4's nine other construction rules,
+Postulates 2 and 3 among them, enter only through the proofs of the four laws named under
+"What the laws' proofs draw". I.8
 cites I.7, which cites I.5 and so the rebuilt I.4. Every dependent proof has rebuilt against
 the restricted axiom. Heath's 27 lines in I.4 and 24 in I.8, the enunciations and both
 statements are unchanged against `39ae65c`.
@@ -837,7 +891,8 @@ regenerated; the record of each condition is:
   Resolve its modify/delete conflict in
   `Staging/Superposition/Derivations.lean` by carrying needed geometric support into
   `Elements/Figure/Superposition.lean`, not by restoring the prototype. Preserve both
-  waves' root imports, and restore no retired axiom.
+  waves' root imports, and restore no retired axiom. *Done at the second wave's landing*
+  (the note of 21 October on the second retirement wave above).
 - **The combined sources are regenerated.** The exact outputs and the six records read
   again at `bd86a7b6` are recorded in the
   [decisions entry](0002-decisions.md#20-october-2026). Regenerate and recheck them again
@@ -968,7 +1023,8 @@ from round 2. The other items record the delivered design or the continuing proc
    too, in the four laws named under "What the laws' proofs draw". The
    classification, set by hand, was retired on 21 October 2026; the certificate's
    `cited_laws` gives each law's construction rules, and #150 tracks the review at the
-   second wave's landing.
+   second wave's landing, recorded in the note of 21 October on the second retirement
+   wave above.
 5. **The side laid down, approved 20 October 2026.** The owner accepted the prototype's
    kept side AC as a straight line through D and C′, so the angle-to-ray argument draws no
    line inside the placement. The model proves

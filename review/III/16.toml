@@ -40,7 +40,7 @@ note = "One step shows that no point of AE but A is on the circle; it gives both
 at = "For, if possible, let another straight line be so interposed"
 kind = "case"
 helper = "Prop1.perpendicular"
-note = "Euclid's figure keeps FA off the centre and G, the foot of DG, away from A. If FA passes through the centre, `Tacit.centre_inside`, the rule we assume as System E, Generalities 3, supplies D within; otherwise I.12 draws DG and `Prop1.perpendicular`, proved using I.13, rules out G at A, since only one straight line there is at right angles to AD, with no reference to either proposition printed by Heath here."
+note = "Euclid's figure keeps FA off the centre and G, the foot of DG, away from A. If FA passes through the centre, `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, supplies D within; otherwise I.12 draws DG and `Prop1.perpendicular`, proved using I.13, rules out G at A, since only one straight line there is at right angles to AD, with no reference to either proposition printed by Heath here."
 
 [[passage]]
 at = "and the angle DAG is less than a right angle"
@@ -51,7 +51,7 @@ note = "Euclid takes the angle DAG to be less than a right angle without a print
 [[passage]]
 at = "But DA is equal to DH"
 kind = "grouped"
-note = "Our proof names no point H: DG, less than the radius DA, puts G within the circle by `Tacit.inside_of_len_lt`, the rule we assume as System E, Diagram-segment 4, which the supposed interposition forbids. One step carries both sentences."
+note = "Our proof names no point H: DG, less than the radius DA, puts G within the circle by `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), proved in `Elements/Figure/Incidence.lean`, which the supposed interposition forbids. One step carries both sentences."
 
 [[passage]]
 at = "Therefore another straight line cannot be interposed"
@@ -68,13 +68,13 @@ note = "Proved as its own companion, III.16 semicircle."
 at = "and the remaining angle contained by the circumference CHA"
 kind = "carried"
 helper = "Prop16.remaining"
-note = "For the remaining angle, `Prop16.horn_within` excludes points on AF and on its far side, which would be within the circle near A. It uses `Tacit.same_side_or`, the rule we assume as System E, Same side 5, to put every point of the horn on E's side of AF."
+note = "For the remaining angle, `Prop16.horn_within` excludes points on AF and on its far side, which would be within the circle near A. It uses `Tacit.same_side_or` (System E, Same side 5), proved in `Elements/Figure/Incidence.lean`, to put every point of the horn on E's side of AF."
 
 [[passage]]
 at = "For, if there is any rectilineal angle greater than the angle contained"
 kind = "different"
 helper = "Prop16.near_inside"
-note = "Euclid infers an interposed straight line from the supposed angle comparisons; the Lean instead uses `Prop16.near_inside` for containment and `near_across` for whole small circles of excess, through I.12, I.17, I.19, I.20 and III.2, for which Heath prints no references here. To put the interior point on the required ray, `Prop16.sameSideOf_of_inside` uses III.2 with `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4); `near_across` takes a crossing of the circumference by `Tacit.line_circle_between` (System E, Intersections 4), all three rules we assume."
+note = "Euclid infers an interposed straight line from the supposed angle comparisons; the Lean instead uses `Prop16.near_inside` for containment and `near_across` for whole small circles of excess, through I.12, I.17, I.19, I.20 and III.2, for which Heath prints no references here. To put the interior point on the required ray, `Prop16.sameSideOf_of_inside` uses III.2 with `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`; `near_across` takes a crossing of the circumference by `Tacit.line_circle_between` (System E, Intersections 4), the two intersection rules being assumed."
 
 [[passage]]
 at = "But such a straight line cannot be interposed"
@@ -99,10 +99,11 @@ note = "G is drawn within the circle and H beyond G, on the circumference, as th
 
 [review]
 stage = "full"
-commit = "23ac78ba"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dd281e3d8032ec91"
-run = "brief 0005 stage 5, ship R3 (#29); the mixed-angle companions and their steps, written by Claude, read also by GPT-6 Astra (Codex); lines 105, 119 and 241 of Prop16.lean, of unknown family, read by both"
+run = "brief 0005 stage 5, ship R3 (#29); the mixed-angle companions and their steps, written by Claude, read also by GPT-6 Astra (Codex); lines 105, 119 and 241 of Prop16.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 23ac78ba"
+text = "sha256:809acb7745556361"
 
 [review.items]
 statement = "pass"
