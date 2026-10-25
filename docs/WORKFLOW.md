@@ -463,6 +463,23 @@ it for a train of class R3 and above, install it once:
 python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
 ```
 
+On a Python marked externally managed ([PEP 668](https://peps.python.org/pep-0668/)), as
+Homebrew's is on macOS and the system Python of recent Debian and Ubuntu releases is, pip
+refuses that install with `externally-managed-environment`. Make a virtual environment
+outside the checkout, since a folder inside it is an untracked path, which the sequence's
+`git status` line prints and `check_links.py` reads, and install the parser with its
+`python3`; then run the checks with that `python3` (`run_checks.py` runs each `python3` of
+the sequence with the interpreter that runs it), or activate the environment, and give it
+to the pre-flight as `STOICHEIA_PYTHON` ([section 10](#landing-work-pull-requests)). Never
+pass `--break-system-packages`, which overrides the refusal and installs into the Python
+that Homebrew or the system's package manager looks after.
+
+```sh
+python3 -m venv ~/.venvs/stoicheia
+~/.venvs/stoicheia/bin/python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
+~/.venvs/stoicheia/bin/python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition
+```
+
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
 worktree, as the pre-flight's does: a file that any command above leaves changed or new,
