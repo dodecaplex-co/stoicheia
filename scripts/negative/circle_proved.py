@@ -1,9 +1,10 @@
 """Without a build: Circle 2, `Tacit.inside_of_between`, taken out of the axiom lock (restored
 after) and out of the tables of `facts.json`, read into memory, and given as proved in its
-`proved_rules`. Proved without a forbidden axiom beneath it, Circle 2 must be refused by
-name: `check_fidelity.check_lock` must say that it is proved without another forbidden
-circle rule. Proved from Circle 3, still in the lock, it must pass. The check's earlier
-findings are kept.
+`proved_rules`, its `proved_rule_cites` as facts.json gives it, which for Circle 2 cites
+nothing. Proved without a forbidden axiom beneath it or a citation of III.2, Circle 2 must
+be refused by name: `check_fidelity.check_lock` must say that it is proved without another
+forbidden circle rule. Proved from Circle 3, still in the lock, it must pass. The check's
+earlier findings are kept.
 """
 
 import json
@@ -15,7 +16,7 @@ BUILDS = False
 
 
 def plant() -> None:
-    """A proved Circle 2 must still bring in Circle 3 as a locked axiom."""
+    """A proved Circle 2, citing nothing in facts.json, must bring in locked Circle 3."""
     inside, outside = "Tacit.inside_of_between", "Tacit.outside_of_between"
     path = nt.ROOT / "Certificate/axioms.lock"
     saved = path.read_bytes()
