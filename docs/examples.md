@@ -134,14 +134,15 @@ representation, and extend Euclid's worked case where a later citer needs it.
   The page says the whole enunciation is proved, names both companions in its table,
   explains where they carry the closing sentences, and gives each its certificate.
 
+III.24 uses its companions another way: its main theorem carries the whole enunciation, and
+one companion keeps an alternative proof. The main theorem keeps Euclid's application of
+one segment to the other (`placement`) and argues the coincidence of the circumferences
+point by point, in place of his reductio, so its route is `modified`. The proof by the
+radii is kept as the companion `Prop24.equalCircles`, which proves less: the circles equal,
+and the circumferences equal in our measure. The [page](../book/III/24.md) shows it beside
+Euclid's proof as the alternative, and the [record](../review/III/24.toml) says so in its
+route note.
+
 **Do not copy.** Full coverage does not make the representation's limits disappear, and a
 proof after the main theorem still needs a clear connection to the sentences it carries.
 The record and the page must describe the declarations that actually do the work.
-
-III.24 is a second example of the kind, with an alternative proof among its companions.
-The main theorem keeps Euclid's application of one segment to the other (`placement`) and
-argues the coincidence of the circumferences point by point, in place of his reductio, so
-its route is `modified`. The proof by the radii is kept as the companion
-`Prop24.equalCircles`, which proves less: the circles equal, and the circumferences equal
-in our measure. The [page](../book/III/24.md) shows it beside Euclid's proof as the
-alternative, and the [record](../review/III/24.toml) says so in its route note.

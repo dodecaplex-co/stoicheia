@@ -266,8 +266,13 @@ brief for [#97], not yet on main).
 
 *25 October 2026: stage 3 has since moved into `Elements/`, with train C6a ([#240], 21
 October). The III.24 called staged above is now `Prop24` in
-[`Elements/BookIII/Prop24.lean`](../../Elements/BookIII/Prop24.lean), written as above,
-and `Staging/` holds no part of stage 3. The paragraph above is left as drafted.*
+[`Elements/BookIII/Prop24.lean`](../../Elements/BookIII/Prop24.lean), which writes the
+segments as above; `circumference AEB A E B` is written by its companion
+`Prop24.equalCircles`, in the same file. `Staging/` holds no part of stage 3. [#67] gave
+III.30 a companion in arcs, `Prop30.halves`, and III.30's statement keeps `standing`. The
+move landed before the arc's field order was decided, so of question 3's two limits the
+later one, the consolidation release, is the one that stands. The paragraph above is left
+as drafted.*
 
 **Options.**
 
