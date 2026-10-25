@@ -6,9 +6,11 @@
   `tests/model/hyperbolic.py`, and `gs_convex` among the latter's generator makers. The
   test that each entry is needed would fail on all three, on main, between the
   retirement's landing and the narrowing's, and no pull request may change a check
-  together with what that check judges. Wave two met the same dependency between
-  retirement and allow-list narrowing. So this train, landing before the retirement, has
-  Circle 3's law work out
+  together with what that check judges. Wave two met the same problem, and on 21 October
+  2026 the owner chose, from the three options put to them then, "A prep PR first, no
+  exception" ([#119](https://github.com/jackChallis/stoicheia/issues/119) is the
+  coordinator's record); the coordinator's orders of 24 October take that course for
+  Circle 3. So this train, landing before the retirement, has Circle 3's law work out
   in its own body what those names gave it, and narrows the list by exactly the three.
 
   In `search.py` the law tests `inside(A, al) or on_circle(A, al)` where it called
