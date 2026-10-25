@@ -395,9 +395,9 @@ What is not proved is named in section 3, and neither proposition needs it. The 
 3. **The shared steps.** Each goes after the propositions it rests on, so nothing that
    cites Book I goes into the foundations.
    - The plan put `len_lt_of_add_lt` (I.20) beside `Prop20.collinear_iff` in
-     `Elements/BookI/HelpersTriangles.lean`, where brief 0006's stage 3 put it. It stays in
-     `Elements/BookIII/MixedAngles.lean`, with its own proof, by the
-     [decision of 25 October 2026](../decisions/2026-10-25-mixed-angles-homes.md).
+     `Elements/BookI/HelpersTriangles.lean`, where brief 0006's stage 3 put it.
+     `len_lt_of_add_lt` stays in `Elements/BookIII/MixedAngles.lean`, with its own proof,
+     by the [decision of 25 October 2026](../decisions/2026-10-25-mixed-angles-homes.md).
    - The original plan put what rests on I.12, I.17, I.19 or I.20 in
      `Elements/BookIII/Squares.lean`, with Book III's other steps that cite Book I. It put
      `foot_nearest` beside `Foot.exists` and `Foot.unique`, adapted to take `Foot` as its
