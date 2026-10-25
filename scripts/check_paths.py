@@ -621,7 +621,8 @@ def repository() -> tuple[Path, dict[str, str]]:
 
 def git(root: Path, *args: str, env: dict[str, str] | None = None) -> bytes:
     try:
-        done = subprocess.run(["git", *args], cwd=root, env=env, capture_output=True)
+        done = subprocess.run(["git", "--no-replace-objects", *args], cwd=root, env=env,
+                              capture_output=True)
     except OSError as e:
         fail(f"cannot run Git ({e})")
     if done.returncode != 0:
