@@ -182,9 +182,11 @@ def diff_paths(base: str, head: str, cwd: str | None = None) -> list[str]:
 # symbols past ASCII. The reader knows `module`, `prelude`, the modifiers `public`,
 # `private` and `meta`, and imports, each `import`, after an optional `all`, taking one
 # module, several to a line if need be (`import A import B`); and between them spaces,
-# tabs and line breaks, and comments as Lean reads them, `--` to the line's end and `/-` to
-# its matching `-/`, nested. A module's parts are plain, an ASCII letter or `_` then ASCII
-# letters, digits and `_'!?`, or quoted, of ASCII letters, digits and `_'!?-`
+# tabs and line breaks, and comments as Lean reads them (comment_end, below): `--` to the
+# line's end, and `/-` to its matching `-/`, nested, its body beginning past its third
+# character, so that `/-/- -/` is one comment. A module's parts are plain, an ASCII
+# letter or `_` then ASCII letters, digits and `_'!?`, or quoted, of ASCII letters, digits
+# and `_'!?-`
 # (`«areas-p5»`), joined by dots. The header ends at the first other word, or the first
 # other ASCII character, where Lean's ends too: an `import` later in a file, in a string
 # say, is no import. Anything else before the header ends is Unread: an `import` with no
@@ -206,23 +208,46 @@ def named(char: str) -> str:
     return repr(char) if char.isascii() and char.isprintable() else f"U+{ord(char):04X}"
 
 
+# The scripts' one reader of where a Lean comment ends is heath.py's `comment_end` (#206,
+# #349). This file is run alone, from a temporary directory with -I, and can import
+# nothing of the repository's, so it holds a copy of that one function, word for word;
+# tests/test_risk.py holds the copy to heath's, by its source and by what it reads (the
+# coordinator's ruling of 22 October 23:50).
+def comment_end(src: str, i: int) -> int | None:
+    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
+    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
+    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
+    docstrings and nested blocks among them, just past the `-/` that closes it, or None
+    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
+    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
+    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
+    `read_lean` and `lean_comments`, and check_style's notes call this (#206). It uses
+    nothing else of this file, so that a program that cannot import it holds a copy, word
+    for word, which its tests hold to this one: the Jev generator, and risk.py from
+    #349's second train."""
+    if src.startswith("--", i):
+        end = src.find("\n", i)
+        return len(src) if end < 0 else end
+    j, nested = i + 3, 1
+    while j < len(src):
+        pair = src[j:j + 2]
+        nested += (pair == "/-") - (pair == "-/")
+        j += 2 if pair in ("/-", "-/") else 1
+        if not nested:
+            return j
+    return None
+
+
 def past_space(text: str, pos: int) -> int:
-    """Where the white space and comments that start at pos end."""
+    """Where the white space and comments that start at pos end: each comment as Lean
+    reads it (comment_end), so that the `-/` of `/-/- -/` closes it, as Lean has it, and
+    an import after it is read. A block no `-/` closes runs to the end of the text."""
     while pos < len(text):
         if text[pos] in SPACE:
             pos += 1
-        elif text.startswith("--", pos):
-            end = text.find("\n", pos)
-            pos = len(text) if end < 0 else end
-        elif text.startswith("/-", pos):
-            depth, pos = 1, pos + 2
-            while depth and pos < len(text):
-                if text.startswith("/-", pos):
-                    depth, pos = depth + 1, pos + 2
-                elif text.startswith("-/", pos):
-                    depth, pos = depth - 1, pos + 2
-                else:
-                    pos += 1
+        elif text.startswith(("--", "/-"), pos):
+            end = comment_end(text, pos)
+            pos = len(text) if end is None else end
         else:
             break
     return pos
