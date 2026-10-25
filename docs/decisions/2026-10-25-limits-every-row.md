@@ -1,6 +1,6 @@
-- **The test of the limitations allowed reads every row of the table, and keeps a made-up
-  row to its own proposition (#421).** The coordinator's orders of 24 October 2026 assign
-  card #421, which security reviews of #214 raised: two places where
+- **The test of the limitations allowed reads every line of its section that holds a `|`,
+  and holds a made-up row off III.31 (#421).** The coordinator's orders of 24 October 2026
+  assign card #421, which security reviews of #214 raised: two places where
   `tests/test_acceptance_limits.py` was safe but not exact. Neither can matter while the
   table of [ACCEPTANCE, "The limitations allowed"](../ACCEPTANCE.md#the-limitations-allowed)
   names no limitation, as it has named none since pull request #414 of 24 October; each
@@ -21,7 +21,8 @@
   with a made-up row allowing III.16 partial with the tag `mixed-angles-omitted`, checked
   P3's refusals for III.16 alone. Inside the same patch, it now also asks that III.31,
   made partial with that same tag, get the refusal for a limitation the table does not
-  name, so that a row is shown to allow its own proposition and no other.
+  name, so that the row is shown not to allow III.31, another proposition with the same
+  tag.
 
   Each was checked by mutation, in memory, with the test's source compiled under its own
   path and no file of the repository changed. With a compact row for III.16 added after
