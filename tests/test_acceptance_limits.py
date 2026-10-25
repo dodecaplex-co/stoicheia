@@ -77,6 +77,20 @@ class AllowedLimits(unittest.TestCase):
             self.assertEqual(self.p3_failures("III.31", "partial", ["mixed-angles-omitted"]),
                              self.unlisted("partial"))
 
+    def test_a_row_for_a_full_record_fails(self):
+        # An allowance that outlives its need is stale (#162, item 3): with a made-up row for
+        # III.16, its full record fails P3, with the row's tag, without it and with its own;
+        # and III.31, a full record the row does not name, still passes.
+        stale = ["the statement is full, so its allowance as a partial statement with "
+                 "`mixed-angles-omitted` is stale: its row in ALLOWED_LIMITS and in "
+                 "docs/ACCEPTANCE.md's table is to go"]
+        with patch.object(acceptance, "ALLOWED_LIMITS",
+                          {"III.16": ("partial", "mixed-angles-omitted")}):
+            for ref, expected in (("III.16", stale), ("III.31", [])):
+                for tags in ([], ["mixed-angles-omitted"], ["mixed-angles-local"]):
+                    with self.subTest(ref=ref, tags=tags):
+                        self.assertEqual(self.p3_failures(ref, "full", tags), expected)
+
     def test_figures_short_of_full_fail_whatever_tags(self):
         # #116: the allowance for I.45 and II.14 is withdrawn, so a restricted or partial
         # statement of either fails as any limitation the table does not name.
@@ -89,6 +103,8 @@ class AllowedLimits(unittest.TestCase):
                                          self.unlisted(scope))
 
     def test_full_statements_pass_with_or_without_tag(self):
+        # The table as it is, empty, names no row, so a full statement passes whatever its
+        # tags; one that a row names fails, as stale (test_a_row_for_a_full_record_fails).
         for ref in ("I.45", "II.14", "III.16", "III.31"):
             for tags in ([], ["figure-with-dissection"], ["mixed-angles-omitted"]):
                 with self.subTest(ref=ref, tags=tags):
