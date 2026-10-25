@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Focused cases for Certificate/Facts.lean's restricted-calculus C.N. 4 detection, its
-module boundary, and its construction rules and cited laws; and for check_fidelity.py's
-reading of the expectations on them.
+module boundary, its construction rules and cited laws, and its shared steps; and for
+check_fidelity.py's reading of the expectations on them.
 
     export PATH=$HOME/.elan/bin:$PATH
     lake build
@@ -47,6 +47,11 @@ A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
 construction rules, a field of facts.json's top level and a field of every entry are read,
 and an expectation that is malformed, unmet or asks nothing fails.
+
+A fifth class compiles a fixture written in the test, over the foundations' Common
+Notions: a tacit rule proved from III.2, which III.3 calls itself and III.4 only through a
+lemma outside its namespace. III.3's shared steps list the rule, bringing in III.2;
+III.4's list the lemma and not the rule.
 
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
@@ -691,6 +696,53 @@ class ExpectationTests(unittest.TestCase):
                                                   "`\"every\": \"entry\"`")
         self.assertFailsOnce(dict(self.PIN, excludes=[]), "and an effective predicate")
         self.assertFailsOnce(dict(self.PIN, law="lenSymm"), "needs `field` and `why`")
+
+
+class SharedStepTests(unittest.TestCase):
+    """A proved tacit rule among an entry's shared steps, on a fixture written here
+    (#429): the expectation over every entry's `shared_steps` can see a rule only where
+    the walk lists it. A rule the entry's own Lean calls is listed, bringing in the
+    proposition it is proved from, as Circle 2 brings in III.2; one it calls only through
+    a lemma outside its namespace is not, and that lemma is listed instead."""
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.TemporaryDirectory(prefix="stoicheia-steps-") as tmp:
+            work = Path(tmp)
+            env, fixture_modules = prepare_package(work)
+            (work / "Elements.lean").write_text(
+                "import Elements.Foundations.CommonNotions\n"
+                "namespace Elements\n"
+                "def companions : List (Lean.Name × String) := []\n"
+                "theorem BookIII.Prop2 (a : Length) : a + 0 = a := Tacit.add_zero a\n"
+                "theorem Tacit.rule (a : Length) : a + 0 = a := BookIII.Prop2 a\n"
+                "theorem CertificateFixture.via (a : Length) : a + 0 = a := Tacit.rule a\n"
+                "theorem BookIII.Prop3 (a : Length) : a + 0 = a := Tacit.rule a\n"
+                "theorem BookIII.Prop4 (a : Length) : a + 0 = a := CertificateFixture.via a\n"
+                "end Elements\n"
+            )
+            compile_module(work, env, fixture_modules, "Elements")
+            certificate_result = subprocess.run(
+                ["lake", "env", "lean", "Facts.lean"],
+                cwd=work, env=env, capture_output=True, text=True, timeout=120,
+            )
+            if certificate_result.returncode:
+                raise AssertionError(
+                    f"certificate: lake env lean exited {certificate_result.returncode}\n"
+                    + certificate_result.stdout + certificate_result.stderr
+                )
+            facts = json.loads((work / "facts.json").read_text())
+        cls.steps = {entry["ref"]: {step["name"]: step["brings_in"]
+                                    for step in entry["shared_steps"]}
+                     for entry in facts["propositions"]}
+        if set(cls.steps) != {"III.2", "III.3", "III.4"}:
+            raise AssertionError(f"unexpected fixture subjects: {sorted(cls.steps)}")
+
+    def test_a_rule_called_directly_is_listed(self):
+        self.assertEqual(self.steps["III.3"], {"Tacit.rule": ["III.2"]})
+
+    def test_a_rule_called_through_a_lemma_is_not(self):
+        self.assertEqual(self.steps["III.4"], {"CertificateFixture.via": ["III.2"]})
 
 
 if __name__ == "__main__":

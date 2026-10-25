@@ -1318,10 +1318,11 @@ def use_pattern(names, longer=()):
 
 def root_names(name):
     """The names a declaration made at the root goes by wherever the edition's Lean names
-    it (`_root_.Elements.Tacit.adjacent_eq_of_right`): Lean's own name, from `Elements.` on,
-    which may stand qualified (`Tacit.adjacent_eq_of_right`), and each shorter ending of it,
-    as a file that opens its namespace writes it (`adjacent_eq_of_right`, after
-    `open Tacit`). Any other name goes by itself."""
+    it (`_root_.Elements.Tacit.adjacent_eq_of_right`): Lean's own name less `Elements.`
+    (`Tacit.adjacent_eq_of_right`), which may stand qualified further
+    (`Elements.Tacit.adjacent_eq_of_right`), and each shorter ending of it, as a file that
+    opens its namespace writes it (`adjacent_eq_of_right`, after `open Tacit`). Any other
+    name goes by itself."""
     if not name.startswith("_root_."):
         return [name]
     parts = name.split(".")[1:]

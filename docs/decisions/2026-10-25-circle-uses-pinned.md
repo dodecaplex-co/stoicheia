@@ -3,8 +3,8 @@
   [#429](https://github.com/jackChallis/stoicheia/issues/429)).** The coordinator's orders
   of 24 October 2026 assign card #429, from the reviews of that day, after #294. Two
   claims about the proved circle rules were kept by review alone, and one script counted
-  too much as a page's own. No Lean file, lock, statement, definition or `--` line
-  changes, and `facts.json` stays as it was.
+  too much as a page's own. The train changes no Lean file, lock, statement or
+  definition, nor any `--` line; `facts.json` stays as it was.
 
   Book III's introduction says of Circle 2 and Circle 3 that no proof here uses either.
   Section 7 of the formalization guide says that no certificate entry uses them, and that
@@ -25,11 +25,11 @@
   there a list of objects, as `shared_steps` is, is read by each object's `name`. An entry
   without the field, a step without a name, and a `facts.json` with no entries each fail,
   since each would otherwise let the pin pass. One expectation of this form keeps the
-  three rules out of every entry's `shared_steps`, where the existing form would need one
-  for each of the 140 entries. An expectation naming one entry still refuses to read
-  `shared_steps` by name, as a test from #150's review asks. The pre-flight compares a
-  key it has no rule for, such as `every`, exactly, so dropping or altering it later is a
-  check change, as dropping a `ref` is.
+  three rules out of the `shared_steps` of all 140 entries. An expectation naming one
+  entry could not do so even for that entry, for it still refuses to read `shared_steps`
+  by name, as a test from #150's review asks. The pre-flight compares a key it has no
+  rule for, such as `every`, exactly, so dropping or altering it later is a check change,
+  as dropping a `ref` is.
 
   What the pin cannot see is a rule called only through another lemma outside the entry's
   namespace, one of `Elements/BookIII/MixedAngles.lean`, say, or another proposition's
@@ -83,7 +83,10 @@
   no expectation or listed name is removed.
 
   This entry approves the change to `tests/test_certificate.py`, which gains three tests
-  of the new form and a clause in each of two docstrings.
+  of the new form, a class of two tests that runs the certificate on a fixture written in
+  the file, where an entry that calls a proved rule itself lists it among its shared
+  steps and one that calls it only through another lemma lists that lemma instead, and
+  words on both in its docstrings.
 
   This entry approves the change to `Certificate/FIELDS.md`, whose row for `shared_steps`
   now says when a proved rule is listed there and what is pinned, and whose list of
