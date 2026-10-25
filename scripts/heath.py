@@ -1223,7 +1223,7 @@ def _token(src: str, i: int, closed: bytes, can_project: bool, field_dot: bool,
     hole is the caller's to say. A blank, which begins no other token, is tried first.
     Where a comment, a raw string or a «…» name ends comes from `ends` if given, as the
     scan of holes (`_Ends.hole`) gives it, since other holes may begin within one; else
-    from `comment_end` and `_find`, as the reading that writes the marks, which passes
+    from `comment_end`, `_name` and `_find`, as the reading that writes the marks, which passes
     each place once, gives it."""
     c, j = src[i], i + 1
     if c.isspace():
@@ -1277,7 +1277,8 @@ def _name(src: str, i: int, marks: list) -> int:
     name: its parts (`_part`) joined by a `.` before FIRST or `«` (NAME_GOES_ON), so that
     `«a».r` is one name. `marks` gains each «…» part ("name"). A name that begins with
     plain parts IDENT reads, and the scan reads the `.` and the «…» name after them as
-    tokens of their own, which mark the text and leave the scan as one token would."""
+    tokens of their own, which give the same marks and leave the scan as one token
+    would."""
     while True:
         j = _part(src, i)
         if src[i] == "«":
