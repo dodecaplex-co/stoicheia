@@ -260,8 +260,9 @@ while `Foot` was staged, and is not stated through it: it keeps its current inte
 `len_lt_of_add_lt` is I.20 with its degenerate case, which `Prop20.collinear_iff` states as
 an equality, now proved in `Elements/BookI/HelpersTriangles.lean`; `len_lt_of_add_lt` keeps
 its own proof from `between_cases`. Both stay in `Elements/BookIII/MixedAngles.lean`, as
-brief 0011 allows, by the [decision of 25 October 2026](../decisions/2026-10-25-mixed-angles-homes.md);
-condition 3 gives the homes first planned.
+brief 0011 allows, by the
+[decision of 25 October 2026](../decisions/2026-10-25-mixed-angles-homes.md); condition 3
+gives the homes first planned.
 
 ### The routes
 
@@ -401,8 +402,8 @@ What is not proved is named in section 3, and neither proposition needs it. The 
      `Elements/BookIII/Squares.lean`, with Book III's other steps that cite Book I. It put
      `foot_nearest` beside `Foot.exists` and `Foot.unique`, adapted to take `Foot` as its
      hypothesis. The landed theorem stays in `Elements/BookIII/MixedAngles.lean` with its
-     point-and-right-angle interface, by the same decision. The plan put `near_inside_of_angle`, `near_across`, the `surrounds_`
-     facts, `WithinAngle.surrounds`
+     point-and-right-angle interface, by the same decision. The plan put
+     `near_inside_of_angle`, `near_across`, the `surrounds_` facts, `WithinAngle.surrounds`
      and `WithinAngle.nearVertexOpen`, `NearVertexOpen.mono_near`, and the checks and order
      laws that use them: `WithinAngle.locallyLess_of_lt`, `.locallyLess_iff`,
      `.locallyEqual_iff`, `LocallyLess.trans`, `.congr_left` and `.congr_right`.

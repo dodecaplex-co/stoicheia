@@ -10,13 +10,13 @@
 
   The move is declined, for three reasons. It is optional, as the brief says. Stating
   `foot_nearest` through `Foot` would change a shared interface, with its direct callers in
-  MixedAngles.lean. The staged route in `Staging/Routes/Touching.lean` calls
-  `len_lt_of_add_lt` directly; it reaches `foot_nearest` only through
+  `Elements/BookIII/MixedAngles.lean`. The staged route in `Staging/Routes/Touching.lean`
+  calls `len_lt_of_add_lt` directly; it reaches `foot_nearest` only through
   `surrounds_sameSideOf`, so changing that interface need not change the staged caller.
-  And neither move would change what is proved or what any
-  proposition rests on: `foot_nearest` cites I.17 and I.19 where it is, and
-  `len_lt_of_add_lt` keeps its own proof from `between_cases`. One file keeps the machinery
-  of the mixed angles together for a reader, the reason the brief gives for the module.
+  And neither move would change what any proposition states or rests on: wherever they
+  live, `foot_nearest` cites I.17 and I.19, and `len_lt_of_add_lt` cites I.20, with
+  `between_cases` for three points on one straight line. One file keeps the machinery of
+  the mixed angles together for a reader, the reason the brief gives for the module.
 
   The prototype's report, `docs/reports/mixed-angles-prototype.md`, called the two moves
   future work and pending; its section 2 and its condition 3 now say that both steps stay,
