@@ -315,6 +315,7 @@ class WorkflowStep:
     continue_on_error: object
     has_shell_override: bool
     has_working_directory: bool
+    working_directory: object
 
 
 @dataclass(frozen=True)
@@ -399,6 +400,7 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
             continue_on_error=step.get("continue-on-error"),
             has_shell_override="shell" in step,
             has_working_directory="working-directory" in step,
+            working_directory=step.get("working-directory"),
         ))
     defaults = (default_run_settings(workflow, "CI workflow") |
                 default_run_settings(job, "CI check job"))
@@ -441,6 +443,16 @@ ELAN_INSTALL = (
     " | sh -s -- -y --default-toolchain none",
     'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
 )
+# The pinned YAML parser, which the check of #346 (Units' lane-condition test, a file of the
+# registry) needs: the last line of the setup, after elan, isolated (-I, which takes in -P)
+# and from the runner's temporary directory, as queue-integrity installs it, so that
+# nothing at the checkout's root, a pip.py or a pip/ folder, can run in its place (the
+# coordinator's rulings of 24 October 02:35, 02:40 and 03:35, and that of 19:45, which
+# gives it the form tests/test_check_queue.py requires of every module run in CI). It
+# alone of the job's steps has a working directory, and only that one.
+PIP_INSTALL = ('python3 -I -m pip install -r '
+               '"$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"',)
+PIP_DIRECTORY = "${{ runner.temp }}"
 
 
 def is_modeled_setup(step: WorkflowStep) -> bool:
@@ -472,15 +484,18 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
         raise AssertionError("CI check job has an environment override")
     setup_order = (*SETUP_ACTIONS, None)  # The actions, then the elan install.
     setup_index = 0
+    parser_installed = False
     commands = []
     for step in job.steps:
+        is_parser = (step.uses is None and step.run == PIP_INSTALL
+                     and step.working_directory == PIP_DIRECTORY)
         if step.has_condition:
             raise AssertionError(f"CI check step {step.name!r} has an if condition")
         if step.has_continue_on_error and step.continue_on_error is not False:
             raise AssertionError(f"CI check step {step.name!r} can continue on error")
         if step.has_shell_override:
             raise AssertionError(f"CI check step {step.name!r} has a shell override")
-        if step.has_working_directory:
+        if step.has_working_directory and not is_parser:
             raise AssertionError(f"CI check step {step.name!r} has a working directory")
         if step.environment:
             raise AssertionError(f"CI check step {step.name!r} has an environment override")
@@ -491,10 +506,20 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
                 raise AssertionError("CI check setup sequence differs from the required prefix")
             setup_index += 1
             continue
+        if is_parser:
+            # The pinned parser's install comes once, straight after the elan install; one
+            # after the run is refused there, as the run finds no install before it.
+            if setup_index != len(setup_order):
+                raise AssertionError("CI check setup prefix is incomplete before the parser's "
+                                     "install")
+            if parser_installed:
+                raise AssertionError("CI check setup sequence differs from the required prefix")
+            parser_installed = True
+            continue
         if step.uses is not None or RUN_CHECKS not in step.run:
             raise AssertionError(f"CI check step {step.name!r} is neither the run of the "
                                  "registry's checks nor the modelled setup")
-        if setup_index != len(setup_order):
+        if setup_index != len(setup_order) or not parser_installed:
             raise AssertionError("CI check setup prefix is incomplete before the first check")
         if step.run != (RUN_CHECKS,):
             raise AssertionError(f"CI check step {step.name!r} has an unsupported run body")
@@ -11100,11 +11125,10 @@ class Units(unittest.TestCase):
 
     def test_every_step_after_the_lane_step_carries_its_condition(self):
         # #339 added steps to CI's negative job without the condition, and every R0 to R2
-        # pull request then failed once it had landed. Now this test finds such a step: on
-        # any branch in seconds (Units), and on main within six hours, on the cadence that
-        # runs this suite. (It fails the pull request that adds the step only once it runs
-        # on the pull request's path, #346.) Every workflow is read; CI's negative and
-        # formal-model jobs must have the lane step, first.
+        # pull request then failed once it had landed. Now this test finds such a step on
+        # every pull request in CI's check job (#346), in seconds when Units is run directly,
+        # and on main within six hours on the cadence that runs this suite. Every workflow
+        # is read; CI's negative and formal-model jobs must have the lane step, first.
         workflows = {path.name: yaml.safe_load(path.read_text())
                      for path in sorted((SOURCE / ".github/workflows").glob("*.y*ml"))}
         for name, workflow in workflows.items():
@@ -11222,6 +11246,28 @@ class Units(unittest.TestCase):
         def reverse_setup_actions(workflow, job):
             job["steps"][:2] = reversed(job["steps"][:2])
 
+        parser = PIP_INSTALL[0]
+
+        def parser_run(run, keep_directory):
+            def change(workflow, job):
+                step = step_running(job, parser)
+                step["run"] = run
+                if not keep_directory:
+                    step.pop("working-directory")
+            return change
+
+        def move_parser(after):
+            def move(workflow, job):
+                step = step_running(job, parser)
+                job["steps"].remove(step)
+                if after:
+                    job["steps"].insert(job["steps"].index(step_running(job, certificate)) + 1,
+                                        step)
+                else:
+                    elan = next(s for s in job["steps"] if "elan-init.sh" in s.get("run", ""))
+                    job["steps"].insert(job["steps"].index(elan), step)
+            return move
+
         cases = (
             ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
             ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
@@ -11279,6 +11325,37 @@ class Units(unittest.TestCase):
                  env=override), "has an environment override"),
             ("job container", lambda workflow, job: job.update(container="example/stub"),
              "unmodeled settings"),
+            # The pinned parser's install (#346): that one line, once, straight after elan,
+            # from the runner's temporary directory. A changed line is refused in that
+            # directory, as a step with a working directory, and in the checkout too.
+            *((f"{label}{where}", parser_run(run, keep), message)
+              for label, run in (
+                  ("another requirements file",
+                   "python3 -I -m pip install -r requirements.txt"),
+                  ("an extra package", parser + " six"),
+                  ("the install without -I", parser.replace(" -I", "")),
+                  ("the install with -P alone", parser.replace(" -I", " -P")))
+              for where, keep, message in (
+                  (", in the temporary directory", True, "has a working directory"),
+                  (", in the checkout", False, unmodeled))),
+            ("the parser's install in the checkout",
+             lambda workflow, job: step_running(job, parser).pop("working-directory"),
+             unmodeled),
+            ("the parser's install in another directory",
+             lambda workflow, job: step_running(job, parser).update(
+                 {"working-directory": "${{ github.workspace }}"}),
+             "has a working directory"),
+            ("the parser's install after the run", move_parser(after=True),
+             "setup prefix is incomplete"),
+            ("the parser's install twice",
+             lambda workflow, job: job["steps"].insert(
+                 job["steps"].index(step_running(job, parser)),
+                 step_running(job, parser).copy()), "setup sequence differs"),
+            ("the parser's install before elan", move_parser(after=False),
+             "setup prefix is incomplete"),
+            ("no parser's install",
+             lambda workflow, job: job["steps"].remove(step_running(job, parser)),
+             "setup prefix is incomplete"),
         )
         for label, mutate, message in cases:
             with self.subTest(label=label):
@@ -12316,7 +12393,7 @@ class Units(unittest.TestCase):
                 self.assertTrue(self.law(body), body)
         for decorator in ("@axiom('x', dict())", "@axiom('x', dict(A=P, L=L_, al=C_), gs_p4)",
                           "@axiom('x', dict(A=P), gs_cm('side'))",
-                          "@axiom('x', dict(A=P), gs_convex())"):
+                          "@axiom('x', dict(A=P), gs_cm())"):
             with self.subTest(decorator=decorator):
                 self.assertTrue(self.law("pass", head=f"{decorator}\ndef _(c):\n"))
 
