@@ -1873,8 +1873,10 @@ class QueueTests(unittest.TestCase):
                     for line in str(step.get("run", "")).splitlines():
                         if re.search(r"\bpython3?(?:\s+-\S+)*\s+-m\b", line):
                             modules.append((name, job, step.get("working-directory"), line))
+        # The check job installs the parser the lane-condition check reads the workflows
+        # with (checks/24-lane-condition.toml, #346).
         self.assertEqual(sorted(job for _, job, _, _ in modules),
-                         ["queue-gaps", "queue-integrity"])
+                         ["check", "queue-gaps", "queue-integrity"])
         for name, job, directory, line in modules:
             with self.subTest(job=job):
                 self.assertEqual(directory, "${{ runner.temp }}")
