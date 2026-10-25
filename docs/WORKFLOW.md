@@ -1631,23 +1631,23 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       scan reads what the push sends: every git command `safe_push.py` runs itself, the
       scan's among them, reads with git's replacement objects off, whatever the caller's
       environment holds (#256), its `git status` check among them. The programs it runs
-      as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS`, which
-      is present under the launcher or after a hand-over and otherwise only if the caller
-      set it, and the four that name git's global and system configuration files or shut
-      them, or the system attributes file, out (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`,
-      `GIT_CONFIG_NOSYSTEM`, `GIT_ATTR_NOSYSTEM`, #430), each as the caller set it, so
-      that a check finds its repository by its working directory (#355) and reads the
-      configuration files safe_push's own git reads. No command `safe_push.py` runs
-      itself, git's or another's, gets one of the caller's
-      variables that tie git to one repository (`GIT_DIR`, `GIT_INDEX_FILE`,
-      `GIT_WORK_TREE` and the rest that `git rev-parse --local-env-vars` lists), but
-      `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
-      the hook's repository or index: each command finds its repository by its working
-      directory too, the hand-over's included (#357). The harness sets one itself, the
-      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
-      `git safe-push` unsets the same variables before its first git command, so a
-      caller's `GIT_DIR` cannot make it fetch another repository's origin and run that
-      repository's harness (#359).
+      as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS` and the
+      four that name git's global and system configuration files or shut them, or the
+      system attributes file, out (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`,
+      `GIT_CONFIG_NOSYSTEM`, `GIT_ATTR_NOSYSTEM`, #430), each as the caller set it (a
+      relative configuration file's path excepted), so that a check finds its repository
+      by its working directory (#355) and reads the configuration files safe_push's own
+      git reads; `GIT_NO_REPLACE_OBJECTS` is present under the launcher or after a
+      hand-over and otherwise only if the caller set it. No command `safe_push.py` runs
+      itself, git's or another's, gets one of the caller's variables that tie git to one
+      repository (`GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE` and the rest that
+      `git rev-parse --local-env-vars` lists), but `GIT_NO_REPLACE_OBJECTS` as above, so
+      that a hook's variables never send its git to the hook's repository or index: each
+      command finds its repository by its working directory too, the hand-over's included
+      (#357). The harness sets one itself, the temporary `GIT_INDEX_FILE` of the
+      main-checks cache's base tree. The launcher behind `git safe-push` unsets the same
+      variables before its first git command, so a caller's `GIT_DIR` cannot make it
+      fetch another repository's origin and run that repository's harness (#359).
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:

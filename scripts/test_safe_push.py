@@ -10538,6 +10538,16 @@ class HookEnvironment(unittest.TestCase):
         self.assertIn("GIT_DIR", listed)
         self.assertEqual(sorted(safe_push.CONFIG_FILE_VARIABLES), sorted(files))
         self.assertEqual(sorted(set(files) & (safe_push.REPOSITORY_VARIABLES | listed)), [])
+        # A relative GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM is dropped, for git would read
+        # it from the directory it is in, the commit's worktree for a check; an empty one,
+        # which shuts its file out, is kept, as an absolute one is.
+        for name in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+            for value, kept in (("planted.cfg", False), ("sub/planted.cfg", False),
+                                ("~/planted.cfg", False), ("", True), ("/a/file", True)):
+                with mock.patch.dict(os.environ, dict(self.clean(), **{name: value}),
+                                     clear=True):
+                    self.assertEqual(safe_push.tool_env().get(name),
+                                     value if kept else None, (name, value))
 
     def test_a_check_reads_the_configuration_files_the_caller_names(self):
         # #430: a check, started as the pre-flight starts one, reads git's global and
@@ -10546,10 +10556,14 @@ class HookEnvironment(unittest.TestCase):
         # file that GIT_CONFIG_SYSTEM names sets stoicheia.system. Under a
         # GIT_CONFIG_GLOBAL naming an empty file the check does not see the first, and
         # under GIT_CONFIG_NOSYSTEM it does not see the second. The caller's
-        # GIT_CONFIG_COUNT and GIT_CONFIG_PARAMETERS, which would set both, reach no check.
+        # GIT_CONFIG_COUNT and GIT_CONFIG_PARAMETERS, which would set both, reach no check,
+        # nor does a relative GIT_CONFIG_GLOBAL naming a file planted at the top of the
+        # repository the check runs in.
         tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
         for name in ("check", "logs"):
             (tmp / name).mkdir()
+        self.git("init", "-q", str(tmp / "check"))
+        (tmp / "check" / "planted.cfg").write_text("[stoicheia]\n\tglobal = from-the-worktree\n")
         (Path(self.env["HOME"]) / ".gitconfig").write_text("[stoicheia]\n\tglobal = from-home\n")
         (tmp / "empty").write_text("")
         (tmp / "system").write_text("[stoicheia]\n\tsystem = from-the-system-file\n")
@@ -10574,12 +10588,20 @@ class HookEnvironment(unittest.TestCase):
         def directly(env) -> str:
             return subprocess.run(check, cwd=tmp / "check", env=env, capture_output=True,
                                   text=True, check=True).stdout
-        self.assertEqual((directly(caller), directly(dict(caller, **settings))),
+        self.assertEqual((directly(caller), directly(dict(caller, **settings)),
+                          directly(dict(caller, GIT_CONFIG_GLOBAL="planted.cfg"))),
                          ("stoicheia.global=from-home\nstoicheia.system=from-the-system-file\n",
-                          "stoicheia.global=from-count\nstoicheia.system=from-parameters\n"))
+                          "stoicheia.global=from-count\nstoicheia.system=from-parameters\n",
+                          "stoicheia.global=from-the-worktree\n"
+                          "stoicheia.system=from-the-system-file\n"))
         empty = str(tmp / "empty")
         self.assertEqual(seen(GIT_CONFIG_GLOBAL=empty),
                          "stoicheia.global=\nstoicheia.system=from-the-system-file\n")
+        # An empty GIT_CONFIG_GLOBAL shuts HOME's .gitconfig out too; a relative one is
+        # dropped, so the check reads HOME's, never the worktree's planted file.
+        self.assertEqual((seen(GIT_CONFIG_GLOBAL=""), seen(GIT_CONFIG_GLOBAL="planted.cfg")),
+                         ("stoicheia.global=\nstoicheia.system=from-the-system-file\n",
+                          "stoicheia.global=from-home\nstoicheia.system=from-the-system-file\n"))
         self.assertEqual(seen(GIT_CONFIG_GLOBAL=empty, GIT_CONFIG_NOSYSTEM="1"),
                          "stoicheia.global=\nstoicheia.system=\n")
         # With no GIT_CONFIG_GLOBAL, git reads HOME's .gitconfig, as it does for every caller

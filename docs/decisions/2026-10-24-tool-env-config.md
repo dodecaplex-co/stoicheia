@@ -9,23 +9,30 @@
   `GIT_ATTR_NOSYSTEM`, which shut out the system configuration and the system attributes
   file. So a check read `~/.gitconfig` and the system configuration even where the
   caller had shut them out, as the landing tool's tests do with `hermetic_git()`, and
-  the system attributes file even where the caller had set `GIT_ATTR_NOSYSTEM`. TS's
+  the system attributes file even where the caller had set `GIT_ATTR_NOSYSTEM`. A
   review of [#376](https://github.com/jackChallis/stoicheia/issues/376), whose
   [entry](2026-10-24-hermetic-xdg.md) names the gap, found it on 24 October, and card
   #430 records it, as a gap in the tests' hermetic intent and not a known failure.
 
-  Now `tool_env()` keeps those four as the caller gives them, named in a new set,
-  `CONFIG_FILE_VARIABLES`, beside `GIT_NO_REPLACE_OBJECTS`. None of them is in
-  `REPOSITORY_VARIABLES`, or in the list that `git rev-parse --local-env-vars` prints, so
-  safe_push's own git, which drops only those, keeps all four, and a check now reads the
-  same configuration files as that git. Each was weighed on its own:
-  - `GIT_CONFIG_GLOBAL` is kept. The file it names may set `core.hooksPath`,
-    `safe.directory`, a url rewrite or an `includeIf`; dropped, git reads `~/.gitconfig`
-    in its place, which may set the same, and which the caller chooses as well, by the
-    `HOME` and `XDG_CONFIG_HOME` that `tool_env()` keeps. A relative path in it is read
-    from the top of the repository the check's git works in, and so is a relative `HOME`.
-  - `GIT_CONFIG_SYSTEM` is kept, for the same reason: dropped, git reads the system file
-    of the git that the caller's `PATH` finds.
+  Now `tool_env()` keeps those four, named in a new set, `CONFIG_FILE_VARIABLES`, beside
+  `GIT_NO_REPLACE_OBJECTS`, as the caller gives them, unless one of the two that name a
+  file holds a relative path. None of them is in `REPOSITORY_VARIABLES`, or in the list
+  that `git rev-parse --local-env-vars` prints, so safe_push's own git, which drops only
+  those, keeps all four, and a check now reads the same configuration files as that git,
+  save one named by a relative path. Each was weighed on its own:
+  - `GIT_CONFIG_GLOBAL` is kept when it holds an absolute path, or nothing, which shuts
+    the global files out. The file it names may set `core.hooksPath`, `safe.directory`,
+    a url rewrite or an `includeIf`; dropped, git reads in its place the global files
+    that `HOME` and `XDG_CONFIG_HOME` locate, `~/.gitconfig` and
+    `$XDG_CONFIG_HOME/git/config`, which may set the same, and which the caller chooses
+    as well, for `tool_env()` keeps both variables, as it always has. A relative path in
+    it is dropped: git would read it from the directory it is in, for most settings the
+    top of the check's worktree, which is a temporary worktree of the commit under check,
+    so the commit could supply the file. Without it, git reads the global files, as it
+    did before.
+  - `GIT_CONFIG_SYSTEM` is kept on the same terms, and for the same reason: dropped, git
+    reads the system file of the git that the caller's `PATH` finds. An empty one shuts
+    that file out; a relative one is dropped, as a relative `GIT_CONFIG_GLOBAL` is.
   - `GIT_CONFIG_NOSYSTEM` and `GIT_ATTR_NOSYSTEM` are kept: each only takes a file away
     from what git reads.
 
@@ -42,20 +49,26 @@
   tests. The first sets the four variables, each of `REPOSITORY_VARIABLES`, and a
   `GIT_CONFIG_KEY_0` with its value in the caller's environment, and finds that
   `tool_env()` keeps the four as given and `GIT_NO_REPLACE_OBJECTS`, and nothing else of
-  git's, `GIT_DIR`, `GIT_INDEX_FILE` and `GIT_CONFIG_COUNT` among what it drops; and that
-  none of the four is in `REPOSITORY_VARIABLES` or the list git prints. The second plants
-  a setting in the `.gitconfig` of a `HOME` of the test's own, never the user's, another
-  in a file that `GIT_CONFIG_SYSTEM` names, and the same two keys again, one through each
-  of the caller's `GIT_CONFIG_COUNT` and `GIT_CONFIG_PARAMETERS`. It shows each plant live
-  in a check started directly, then starts the check as the pre-flight starts one: under
-  a `GIT_CONFIG_GLOBAL` naming an empty file, the check does not see the `HOME` setting;
-  under `GIT_CONFIG_NOSYSTEM`, it does not see the system file's; it never sees the
-  settings the caller's `GIT_CONFIG_COUNT` and `GIT_CONFIG_PARAMETERS` carry; and with no
-  `GIT_CONFIG_GLOBAL`, it sees the `HOME` setting, as git reads it for any caller that
-  names no file. The class's two tests of a check under a hook now expect it to keep, of
-  git's variables, `GIT_NO_REPLACE_OBJECTS` and the three with which the class shuts
-  git's configuration and attributes files out, where they expected
-  `GIT_NO_REPLACE_OBJECTS` alone, an expectation as exact as before.
+  git's, `GIT_DIR`, `GIT_INDEX_FILE` and `GIT_CONFIG_COUNT` among what it drops; that
+  none of the four is in `REPOSITORY_VARIABLES` or the list git prints; and that a
+  relative `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` is dropped, where an empty or an
+  absolute one is kept. The second plants a setting in the `.gitconfig` of a `HOME` of
+  the test's own, never the user's, another in a file that `GIT_CONFIG_SYSTEM` names, and
+  the same two keys again, one through each of the caller's `GIT_CONFIG_COUNT` and
+  `GIT_CONFIG_PARAMETERS`. It shows each plant live in a check started directly, then
+  starts the check as the pre-flight starts one: under a `GIT_CONFIG_GLOBAL` naming an
+  empty file, the check does not see the `HOME` setting; under `GIT_CONFIG_NOSYSTEM`, it
+  does not see the system file's; it never sees the settings the caller's
+  `GIT_CONFIG_COUNT` and `GIT_CONFIG_PARAMETERS` carry; and with no `GIT_CONFIG_GLOBAL`,
+  it sees the `HOME` setting, as git reads it for any caller that names no file. A third
+  plant, at the top of the repository the check runs in, is read by the check started
+  directly under a relative `GIT_CONFIG_GLOBAL` that names it; started as the pre-flight
+  starts one, under that relative path the check sees the `HOME` setting instead, and
+  under an empty `GIT_CONFIG_GLOBAL` it does not see the `HOME` setting either. The
+  class's two tests of a check under a hook now expect it to keep, of git's variables,
+  `GIT_NO_REPLACE_OBJECTS` and the three with which the class shuts git's configuration
+  and attributes files out, where they expected `GIT_NO_REPLACE_OBJECTS` alone, an
+  expectation as exact as before.
 
   `HermeticModule` gains a test that reads git's own report of the system attributes
   file it would read, `git var GIT_ATTR_SYSTEM`: none, for the module's git, for
@@ -67,8 +80,11 @@
   a scratch clone, `HookEnvironment`'s four tests and that new test failed, the planted
   check reading the `HOME` setting under the empty `GIT_CONFIG_GLOBAL`. With
   `scripts/safe_push.py` as main holds it, the same five failed. With `GIT_ATTR_NOSYSTEM`
-  taken out of `hermetic_git()` alone, the new test of `HermeticModule` failed. With the
-  change in place, all five pass.
+  taken out of `hermetic_git()` alone, the new test of `HermeticModule` failed. With
+  `tool_env()` keeping a relative path as well, `HookEnvironment`'s two new tests
+  failed, the planted check reading the worktree's file; with a relative
+  `GIT_CONFIG_SYSTEM` kept, the first of them failed, and with an empty value dropped,
+  both. With the change in place, all five pass.
 
   This entry approves the change to `scripts/safe_push.py`, in which `tool_env()` keeps
   the variables of the new `CONFIG_FILE_VARIABLES` beside `KEPT_GIT_VARIABLES`, with the

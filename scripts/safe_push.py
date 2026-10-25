@@ -54,7 +54,8 @@ order, and the first that fails stops it with a message saying why:
    name its global and system configuration files or shut them, or the system attributes
    file, out (CONFIG_FILE_VARIABLES), which tie git to no repository: so a check finds
    its repository by its working directory, never by a hook's GIT_DIR (#355), and reads
-   the configuration files that safe_push.py's own git reads (#430). Nor
+   the configuration files that safe_push.py's own git reads, save one named by a
+   relative path, which tool_env() drops (#430). Nor
    does any command safe_push.py runs itself, git's or another's, get a variable that
    ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
    GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
@@ -707,14 +708,18 @@ KEPT_GIT_VARIABLES = frozenset({"GIT_NO_REPLACE_OBJECTS"})
 # The variables that name git's global and system configuration files, or shut them, or
 # the system attributes file, out: the checks keep them too (#430). None ties git to a
 # repository, and none is in REPOSITORY_VARIABLES: safe_push's own git already keeps all
-# four, and a check reads the same configuration files as that git. Dropped, they let a
-# check read ~/.gitconfig and the system's files where the caller had shut them out, as
-# the test module's hermetic_git() does. Kept, GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM may
-# name a file that sets core.hooksPath, safe.directory, a url rewrite or an includeIf;
-# but so may the files git reads in their place: the ~/.gitconfig found by the HOME and
-# XDG_CONFIG_HOME that the checks keep from the same caller, and the system file of the
-# git that the caller's PATH finds. A relative path in HOME, XDG_CONFIG_HOME or either of
-# the two is read alike, from the top of the repository the check's git works in.
+# four, and a check reads the same configuration files as that git, but for a relative
+# path (below). Dropped, they let a check read ~/.gitconfig and the system's files where
+# the caller had shut them out, as the test module's hermetic_git() does. Kept,
+# GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM may name a file that sets core.hooksPath,
+# safe.directory, a url rewrite or an includeIf; but so may the files git reads in their
+# place: the global files that HOME and XDG_CONFIG_HOME locate, ~/.gitconfig and
+# $XDG_CONFIG_HOME/git/config (the checks keep both variables from the same caller), and
+# the system file of the git that the caller's PATH finds. A relative GIT_CONFIG_GLOBAL or
+# GIT_CONFIG_SYSTEM is dropped, though: git would read it from the directory it is in,
+# for most settings the top of the commit's worktree, so the commit under check could
+# supply the file. Without it, git reads the files it reads when the variable is unset,
+# as before #430. An empty one, which shuts its file out, is kept, as an absolute one is.
 # GIT_CONFIG_NOSYSTEM and GIT_ATTR_NOSYSTEM only take a file away. GIT_CONFIG_COUNT and
 # GIT_CONFIG_PARAMETERS, which carry settings themselves, stay dropped with the
 # repository variables.
@@ -727,10 +732,14 @@ def tool_env() -> dict:
     and no variable of git's but those KEPT_GIT_VARIABLES and CONFIG_FILE_VARIABLES name,
     so that each check finds its repository by its working directory, never by what a hook
     left set (#355), and reads no global or system configuration, and no system
-    attributes file, that the caller shut out (#430)."""
+    attributes file, that the caller shut out (#430), save by a relative GIT_CONFIG_GLOBAL
+    or GIT_CONFIG_SYSTEM, which it drops, as CONFIG_FILE_VARIABLES says."""
     env = {name: value for name, value in os.environ.items()
            if not name.startswith("GIT_") or name in KEPT_GIT_VARIABLES
            or name in CONFIG_FILE_VARIABLES}
+    for name in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+        if env.get(name) and not os.path.isabs(env[name]):
+            del env[name]       # a relative path, which the commit could supply
     elan = str(Path.home() / ".elan" / "bin")
     env["PATH"] = elan + os.pathsep + env.get("PATH", "")
     return env
