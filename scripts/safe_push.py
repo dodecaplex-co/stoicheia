@@ -56,8 +56,11 @@ order, and the first that fails stops it with a message saying why:
    ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
    GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
    the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
-   working directory too, the hand-over's included (#357). The harness sets one itself,
-   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
+   working directory too, the hand-over's included (#357), but main()'s one git
+   rev-parse before any step, which is given the caller's GIT_DIR and GIT_WORK_TREE on
+   its command line, as --git-dir= and --work-tree=, to see the repository they name
+   (#186). The harness sets one itself, on purpose: base_tree's temporary
+   GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main. First, before the commit is checked out, the
    paths guards. They read the tree of each commit the push brings (origin/main..the
    commit), each tree once, and a finding names, for each tree that holds it, the first
@@ -622,7 +625,9 @@ class NothingToPush(Exception):
 # repository and its index: `git worktree add` would check the commit out into a linked
 # worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
 # one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
-# repository by the working directory each command names; the one the harness sets itself,
+# repository by the working directory each command names, but in main()'s one read of the
+# repository the caller's GIT_DIR and GIT_WORK_TREE name, given to it as git's options
+# (#186); the one the harness sets itself,
 # base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
 # 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
 REPOSITORY_VARIABLES = frozenset({

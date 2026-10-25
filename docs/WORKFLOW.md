@@ -1690,7 +1690,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    linked worktree, which sets `GIT_DIR`, it drops Git's location variables (`GIT_DIR`,
    `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest) once it has found the repository, so
    that every check reads the fresh worktree, never the caller's index or HEAD; it
-   refuses when they name another repository. It stops, saying why, at the first step
+   refuses when `GIT_DIR` or `GIT_WORK_TREE` names another repository. It stops, saying
+   why, at the first step
    that fails:
    1. *Preconditions.* The commit exists; `git fetch origin`; origin/main is an ancestor
       of the commit, so a direct merge at that base holds exactly the tree checked; the
@@ -1727,7 +1728,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       `GIT_WORK_TREE` and the rest that `git rev-parse --local-env-vars` lists), but
       `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
       the hook's repository or index: each command finds its repository by its working
-      directory too, the hand-over's included (#357). The harness sets one itself, the
+      directory too, the hand-over's included (#357). One `git rev-parse` before any step
+      is the exception: it is given the caller's `GIT_DIR` and `GIT_WORK_TREE` on its
+      command line, as `--git-dir=` and `--work-tree=`, and only reads where they point,
+      so that a run they would send to another repository is refused (#186). The harness
+      sets one itself, the
       temporary `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
       `git safe-push` unsets the same variables before its first git command, so a
       caller's `GIT_DIR` cannot make it fetch another repository's origin and run that

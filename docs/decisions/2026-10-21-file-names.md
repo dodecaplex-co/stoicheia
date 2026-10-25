@@ -46,9 +46,9 @@
   disk could not hold a twin as two files; and the negative tests' plant
   `scripts/negative/path_faults.py` plants eight (a case twin of `README.md` and one of
   a protected file, `Certificate/fields.md`, a space, an upper-case extension, a symbolic
-  link, an executable bit, an svg under `book/` and a misnamed review record) in a copy of the
-  edition's index that passes unplanted, leaving the real index and `git status` as they
-  were. Every finding is one line of printable ASCII, naming its
+  link, an executable bit, an svg under `book/` and a misnamed review record) in a copy
+  of the edition's index that passes unplanted, leaving the real index and `git status`
+  as they were. Every finding is one line of printable ASCII, naming its
   rule and its path, with any name inside the reason escaped as Git quotes a path. A
   module planted beside the script, such as `scripts/unicodedata.py`, is never read in
   place of the standard library's: the script takes its own folder off `sys.path` before
@@ -82,9 +82,16 @@
   repository, drops Git's location variables (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`
   and the rest; a Git alias run from a linked worktree sets `GIT_DIR`), so that every
   check in its fresh worktrees reads that worktree and never the caller's index or HEAD;
-  when they name another repository, it refuses. In step 4, as a second line, a failure of
-  origin/main's path check, or of its cases, refuses a pull request whatever else it
-  changes, guides and protected paths alone included: every path is what the check judges,
+  when `GIT_DIR` or `GIT_WORK_TREE` names another repository, it refuses. Since the
+  harness gives no command a repository variable of the caller's
+  ([#357](2026-10-22-own-git-no-repository-variables.md)), the one `git rev-parse` that
+  sees where they point is given them on its command line, as `--git-dir=` and
+  `--work-tree=`: it is the one command that does not find its repository by its working
+  directory, a departure from that entry, and it gets none of the variables in its
+  environment, so only `base_tree` still names one in `keep`. In step 4, as a second
+  line, a failure of origin/main's path check, or of its cases, refuses a pull request
+  whatever else it changes, guides and protected paths alone included: every path is what
+  the check judges,
   so a looser `scripts/check_paths.py` cannot land in the same pull request as the path it
   would let in. Each pass of the checks, in steps 3 and 4, begins with the worktree at the
   commit, or is refused: its HEAD the commit, its index the commit's tree, no file flagged
