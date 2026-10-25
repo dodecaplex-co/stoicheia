@@ -7084,7 +7084,7 @@ def main(argv=None) -> int:
     # the repository they name; the bounds of discovery reach it as they are.
     options = [f"{option}={os.environ[name]}" for name, option in
                (("GIT_DIR", "--git-dir"), ("GIT_WORK_TREE", "--work-tree"))
-               if os.environ.get(name)]
+               if name in os.environ]
     active = located(options=options)
     if expected is None:
         print("safe_push: cannot independently find the repository from the current "
