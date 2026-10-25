@@ -107,7 +107,7 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `0d7567abbe59`, 2026-10-25, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `442989248536`, 2026-10-25, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
 In the plane: **4,098,108** configurations met an axiom's hypotheses (1,217,675 in the search, 2,247,172 exhaustive, 633,261 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 500,226 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
