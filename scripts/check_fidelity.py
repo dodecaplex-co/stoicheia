@@ -1082,10 +1082,13 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
     `construction_rules` instead, and fails when the entry cites no such law. `includes`,
     `excludes` and `count` read nothing else: on any other field, as `shared_steps` or a
     scalar is, they fail rather than read it as empty. An expectation with no `ref` reads
-    a field of facts.json's top level, as `construction_rules` is, from `facts`. An
-    expectation that asks nothing fails: `includes` and `excludes` are effective only
-    when nonempty lists of names, while `equals` and `count`, an object with an integer
-    `is`, are effective whenever present."""
+    a field of facts.json's top level, as `construction_rules` is, from `facts`. One with
+    `"every": "entry"` and no `ref` reads its field in every entry of `by_ref` instead, and
+    asks only that it `excludes` some names: there a list of objects, as `shared_steps`
+    is, is read by each object's `name`, and fails unless every object has one, so that no
+    entry's `shared_steps` can name Circle 3, say. An expectation that asks nothing fails:
+    `includes` and `excludes` are effective only when nonempty lists of names, while
+    `equals` and `count`, an object with an integer `is`, are effective whenever present."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -1095,7 +1098,7 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         fail(f"{rel(path)}: expected a JSON object with a list `expectations` ({e})")
         return
-    known = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why"}
+    known = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why", "every"}
     for i, x in enumerate(expectations, 1):
         label = f"{rel(path)}, expectation {i}"
         reads_names = isinstance(x, dict) and (
@@ -1117,7 +1120,38 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
             fail(f"{label}: `includes` and `excludes` must be lists of names, and `count` "
                  "an object with an integer `is` and, if it has one, a string `prefix`")
             continue
+        if "every" in x and (x["every"] != "entry"
+                             or set(x) - {"every", "field", "excludes", "why"}):
+            fail(f"{label}: an expectation over every entry is `\"every\": \"entry\"`, with "
+                 "a `field` and a nonempty `excludes`, and no `ref`, `law`, `includes`, "
+                 "`equals` or `count`")
+            continue
         field, why = x["field"], x["why"]
+        if "every" in x:
+            # With no entry to read, every `excludes` would pass.
+            if not by_ref:
+                fail(f"{label}: reads every entry, but facts.json has none")
+            for ref, (_, p) in by_ref.items():
+                if field not in p:
+                    fail(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
+                    continue
+                value = p[field]
+                if isinstance(value, dict):
+                    listed = list(value)
+                elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+                    listed = value
+                elif isinstance(value, list) and all(
+                        isinstance(v, dict) and isinstance(v.get("name"), str) for v in value):
+                    listed = [v["name"] for v in value]
+                else:
+                    fail(f"{ref}: its {field} is not a list of names, an object or a list of "
+                         f"objects each with a `name`, so `excludes` cannot read it ({label}: "
+                         f"{why})")
+                    continue
+                for name in x["excludes"]:
+                    if name in listed:
+                        fail(f"{ref}: its {field} should not include {name} ({label}: {why})")
+            continue
         if "ref" in x:
             ref = x["ref"]
             if ref not in by_ref:

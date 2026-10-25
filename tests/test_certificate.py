@@ -45,8 +45,8 @@ and a law named with no proof found fails the run (I.5).
 
 A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
-construction rules and a field of facts.json's top level are read, and an expectation that
-is malformed, unmet or asks nothing fails.
+construction rules, a field of facts.json's top level and a field of every entry are read,
+and an expectation that is malformed, unmet or asks nothing fails.
 
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
@@ -450,7 +450,8 @@ class ConstructionTests(unittest.TestCase):
 class ExpectationTests(unittest.TestCase):
     """check_fidelity.py's reading of tests/certificate_expectations.json, on small facts,
     without Lean (#150, question 4): a cited law's construction rules, read by its `law`; a
-    field of facts.json's top level, read with no `ref`; and each expectation that is
+    field of facts.json's top level, read with no `ref`; a field of every entry, read with
+    `"every": "entry"`, a shared step by its `name` (#429); and each expectation that is
     malformed, unmet or asks nothing, failing with its own message."""
 
     def facts(self, **i4):
@@ -637,6 +638,59 @@ class ExpectationTests(unittest.TestCase):
                               "equals": []},
                              "but its cited_laws is not a list of objects each with a `law` "
                              "name", facts=self.facts(cited_laws=beside))
+
+    STEP = {"name": "Tacit.outside_of_between", "brings_in": ["III.2"], "file": "f", "line": 1}
+    PIN = {"every": "entry", "field": "shared_steps", "excludes": ["Tacit.outside_of_between"]}
+
+    def test_every_entry_is_read(self):
+        # #429: no entry may list Circle 3 among its shared steps. The pin reads every
+        # entry, and a shared step by its `name`.
+        facts = self.facts(shared_steps=[self.STEP])
+        facts["propositions"][1]["shared_steps"] = []
+        self.assertFailsOnce(self.PIN, "I.4: its shared_steps should not include "
+                                       "Tacit.outside_of_between", facts=facts)
+        self.assertEqual(self.problems(
+            dict(self.PIN, excludes=["Tacit.inside_of_between"]),
+            {"every": "entry", "field": "axioms", "excludes": ["Postulate4"]},
+            facts=facts), [])
+        self.assertFailsOnce({"every": "entry", "field": "axioms", "excludes": ["Postulate1"]},
+                             "I.8: its axioms should not include Postulate1", facts=facts)
+        facts["propositions"][1]["shared_steps"] = [self.STEP]
+        errors = self.problems(self.PIN, facts=facts)
+        self.assertEqual(len(errors), 2, errors)
+        for ref, error in zip(("I.4", "I.8"), errors):
+            self.assertIn(f"{ref}: its shared_steps should not include", error)
+
+    def test_every_entry_must_be_readable(self):
+        # Read as empty, an entry with no field, or a step with no name, would let the pin
+        # pass; and so would no entries at all.
+        self.assertFailsOnce(self.PIN, "but its entry has no field `shared_steps`",
+                             facts=self.facts(shared_steps=[]))
+        nameless, mixed = [dict(self.STEP, name=None)], [self.STEP, "Tacit.inside_of_between"]
+        for facts in (self.facts(shared_steps=nameless), self.facts(shared_steps=mixed)):
+            facts["propositions"][1]["shared_steps"] = []
+            with self.subTest(steps=facts["propositions"][0]["shared_steps"]):
+                self.assertFailsOnce(self.PIN, "I.4: its shared_steps is not a list of names, "
+                                               "an object or a list of objects each with a "
+                                               "`name`", facts=facts)
+        errors = self.problems(dict(self.PIN, field="cited_laws"))
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(all("is not a list of names" in e for e in errors), errors)
+        self.assertFailsOnce(self.PIN, "reads every entry, but facts.json has none",
+                             facts={"propositions": []})
+
+    def test_a_malformed_every_fails(self):
+        for expectation in (dict(self.PIN, every="entries"),
+                            dict(self.PIN, every=True),
+                            dict(self.PIN, ref="I.4"),
+                            dict(self.PIN, includes=["Tacit.inside_of_between"]),
+                            dict(self.PIN, equals=[]),
+                            dict(self.PIN, count={"is": 0})):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "an expectation over every entry is "
+                                                  "`\"every\": \"entry\"`")
+        self.assertFailsOnce(dict(self.PIN, excludes=[]), "and an effective predicate")
+        self.assertFailsOnce(dict(self.PIN, law="lenSymm"), "needs `field` and `why`")
 
 
 if __name__ == "__main__":
