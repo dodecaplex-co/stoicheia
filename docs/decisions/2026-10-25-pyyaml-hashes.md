@@ -1,4 +1,4 @@
-- - **PyYAML pinned by hash as well as by version, for every install of the parser the
+- **PyYAML pinned by hash as well as by version, for every install of the parser the
   landing tool's tests read the workflows with (tooling,
   [#430](https://github.com/jackChallis/stoicheia/issues/430), from
   [#346](https://github.com/jackChallis/stoicheia/issues/346)).**
@@ -12,16 +12,17 @@
   wheels, so that the file pip picks is listed wherever it installs, on CI's Linux runners
   or on a contributor's macOS or Linux, and a machine with no wheel of its own builds from
   the sdist. That build installs PyYAML's build requirements, setuptools and Cython, which
-  its `pyproject.toml` names without versions, with no hash check, since pip passes no
-  hashes to the install of build requirements. An index can send any machine there, CI's
-  runners included, by listing a wheel under a digest this file does not hold: pip passes
-  over that wheel for the listed sdist. Ruling the sdist out in CI, with
-  `--only-binary :all:` on its five installs, is a change to the workflows, proposed to
-  the coordinator; this train does not make it. A `--hash` turns on pip's hash-checking
-  mode for every install of the file, with no flag, and pip then refuses a file whose
-  SHA-256 digest is not listed. So no workflow step, command, permission or test changes,
-  and the train is of class R3, by `scripts/risk.py`. The merge group's install reads the
-  file at the group's base, so it checks the digests once this change is on main.
+  its `pyproject.toml` does not pin, with no hash check, since pip passes no hashes to the
+  install of build requirements. An index can send any machine there, CI's runners
+  included, by listing a wheel under a digest this file does not hold: pip passes over
+  that wheel for the listed sdist. Ruling the sdist out in CI, with `--only-binary :all:`
+  on its five installs, is a change to the workflows and to the tests that pin their
+  commands, proposed to the coordinator; this train does not make it. A `--hash` turns on
+  pip's hash-checking mode for every install of the file, with no flag, and pip then
+  installs no PyYAML file whose SHA-256 digest is not listed. So no workflow step,
+  command, permission or test changes, and the train is of class R3, by `scripts/risk.py`.
+  The merge group's install reads the file at the group's base, so it checks the digests
+  once this change is on main.
 
   The digests are the `urls[].digests.sha256` of PyPI's page for the release,
   <https://pypi.org/pypi/PyYAML/6.0.3/json>, sorted; PyPI's Simple index, which pip
@@ -41,12 +42,14 @@
   was still listed. With wheels alone allowed (`--only-binary :all:`), the altered wheel
   was the one candidate, and pip refused it with its hash error, "THESE PACKAGES DO NOT
   MATCH THE HASHES FROM THE REQUIREMENTS FILE". The case the hashes are for, an index
-  serving other bytes under a listed file's name and digest, was planted too: a copy of
-  that wheel with one byte added, offered by a folder in place of the index
-  (`--no-index --find-links`), was refused under the file as written, and installed under
-  main's file. `pip download` for CI's platform fetched the wheel CI installs, and checked
-  its digest. WORKFLOW, section 8, now says that the parser is pinned by version and hash.
+  serving other bytes under a listed file's name, with a digest of their own or none, was
+  planted too: a copy of that wheel with one byte added, offered by a folder in place of
+  the index (`--no-index --find-links`), which gives no digest, was refused under the file
+  as written, and installed under main's file. `pip download` for CI's platform fetched
+  the wheel CI installs, and checked its digest. WORKFLOW, section 8, now says that the
+  parser is pinned by version and hash.
 
   This entry approves the change to `scripts/requirements-test_safe_push.txt`, which pins
   PyYAML 6.0.3 by the SHA-256 digest of each of its 73 files on PyPI as well as by its
-  version, under a comment saying where the digests come from and how to refresh them.
+  version, under a comment saying where the digests come from, what they do not cover and
+  how to refresh them.
