@@ -314,7 +314,7 @@ class WorkflowStep:
     continue_on_error: object
     has_shell_override: bool
     has_working_directory: bool
-    working_directory: object = None
+    working_directory: object
 
 
 @dataclass(frozen=True)
@@ -446,8 +446,8 @@ ELAN_INSTALL = (
 # registry) needs: the last line of the setup, after elan, isolated (-I, which takes in -P)
 # and from the runner's temporary directory, as queue-integrity installs it, so that
 # nothing at the checkout's root, a pip.py or a pip/ folder, can run in its place (the
-# coordinator's rulings of 24 October 02:35, 02:40 and 03:35, and the form
-# tests/test_check_queue.py requires of every module run in CI, 24 October 19:45). It
+# coordinator's rulings of 24 October 02:35, 02:40 and 03:35, and that of 19:45, which
+# gives it the form tests/test_check_queue.py requires of every module run in CI). It
 # alone of the job's steps has a working directory, and only that one.
 PIP_INSTALL = ('python3 -I -m pip install -r '
                '"$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"',)

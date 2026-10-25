@@ -33,21 +33,24 @@
   one.
 
   The test of the `check` job's shape allowed no setup step beyond checkout, Python and
-  elan. By the coordinator's ruling of 24 October 02:40, as amended at 03:35 and 19:45,
-  it now allows that one install, exactly that line, once, straight after elan, with no
-  condition, environment or shell, from `${{ runner.temp }}`, the one working directory
-  it allows any step. Every case it refused before is still refused. Two kinds of message change: with elan removed, the refusal now reads
-  "CI check setup prefix is incomplete before the parser's install", not "CI check setup
-  prefix is incomplete before the first check"; and the three cases that name a planted
-  step by its place (an unlisted action, and the checkout or the Python setup after the
-  run) name a place one further on, since the job has one step more. Fourteen new planted
-  cases are refused: the install of another requirements file, an extra package on the
-  line, the install without `-I`, and the install with `-P` alone, each from the
-  temporary directory and from the checkout; the install in the checkout, and in another
-  directory; the install after the run of the checks, the install twice, the install
-  before elan, and no install. With the guard that refuses each taken out, its case was
-  seen to be accepted. The train is of class R5, since it changes the
-  CI workflow.
+  elan. By the coordinator's ruling of 24 October 02:40, as amended at 03:35 and 19:45, it
+  now allows that one install, exactly that line, once, straight after elan, with no
+  condition, environment or shell, from `${{ runner.temp }}`, the one working directory it
+  allows, and on that step alone. Every case it refused before is still refused. Two kinds
+  of message change: with elan removed, the refusal now reads "CI check setup prefix is
+  incomplete before the parser's install", not "CI check setup prefix is incomplete before
+  the first check"; and the three cases that name a planted step by its place (an unlisted
+  action, and the checkout or the Python setup after the run) name a place one further on,
+  since the job has one step more. Fourteen new planted cases are refused: the install of
+  another requirements file, an extra package on the line, the install without `-I`, and
+  the install with `-P` alone, each from the temporary directory and from the checkout;
+  the install in the checkout, and in another directory; the install after the run of the
+  checks, the install twice, the install before elan, and no install. With the test that
+  decides each taken out, its case was seen to be accepted: the line's equality, for a
+  changed line in the temporary directory; the directory's, for the install in the
+  checkout or in another directory; both, for a changed line from the checkout; and for
+  the last four, the guard of order or count that refuses it. The train is of class R5,
+  since it changes the CI workflow.
 
   This entry approves the new file `checks/24-lane-condition.toml`, which runs the
   lane-condition test of `scripts/test_safe_push.py` in CI's `check` job at order 135.
