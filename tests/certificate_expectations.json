@@ -76,13 +76,13 @@
       "ref": "III.2",
       "field": "own_axioms",
       "excludes": ["Tacit.inside_of_between"],
-      "why": "III.2's own Lean does not call Circle 2 (Argon's second review; #65). Since Circle 2 is now a theorem, excluding its name from own_axioms no longer checks for such a call; the separate axioms pin excludes its underlying Circle 3."
+      "why": "III.2's own Lean does not call Circle 2 (Argon's second review; #65). Circle 2 has been a theorem since 19 October 2026, so excluding its name from own_axioms cannot detect a call to it; nor can the axioms pin's exclusion of Circle 3, a theorem too since 24 October 2026 (#294). Both are now proved after III.2, in Elements/BookIII/Prop02.lean, from its corollary Prop2.within, and a proof of III.2 cannot use a theorem proved from III.2, since Lean admits no circular proof."
     },
     {
       "ref": "III.2",
       "field": "inherited",
       "excludes": ["Tacit.inside_of_between"],
-      "why": "No lemma that III.2 calls uses Circle 2 (#65). Since Circle 2 is now a theorem, excluding its name from inherited no longer checks for such a use; the separate axioms pin excludes its underlying Circle 3."
+      "why": "No lemma that III.2 calls uses Circle 2 (#65). Circle 2 has been a theorem since 19 October 2026, so excluding its name from inherited cannot detect such a use; nor can the axioms pin's exclusion of Circle 3, a theorem too since 24 October 2026 (#294). Both are now proved after III.2, from its corollary Prop2.within, so no lemma that III.2 calls can use either: Lean admits no circular proof."
     },
     {
       "ref": "I.5",
@@ -100,19 +100,31 @@
       "ref": "III.2",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "III.2 does not rest on Circle 3: its own Lean calls neither Circle 3 nor the theorem Circle 2, and III.1, which it cites, shows its middle point within the circle by III.2's own argument (#60). Circle 2's retired name is also kept out of the axiom list."
+      "why": "This pin once checked that III.2 did not rest on Circle 3, then an axiom, and kept Circle 2's retired name out of its axiom list (#60). Since 24 October 2026 both are theorems, proved after III.2 from its corollary Prop2.within (#294), so excluding their names from axioms can no longer fail: a theorem is in no entry's axioms. What keeps III.2 off them now is Lean: a proof of III.2 cannot use a theorem proved from III.2, since Lean admits no circular proof."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and does not rest on Circle 3 (#60). Circle 2's retired name is also kept out of the axiom list."
+      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and does not rest on Circle 3 (#60). Since 24 October 2026 Circle 2 and Circle 3 are both theorems, proved after III.2 (#294), so excluding their names from axioms can no longer fail. A proof that used either would cite III.2, since the walk that finds an entry's cites passes through proved rules (the II.1 pin), and check_fidelity refuses III.1's citing III.2, which does not come before it; the pin on III.1's cites, next, can fail."
+    },
+    {
+      "ref": "III.1",
+      "field": "cites",
+      "excludes": ["III.2"],
+      "why": "III.1 does not rest on Circle 3, in the claim's present form (#60, #294): it does not cite III.2, as a proof using Circle 2, Circle 3, Points 9 or Intersection 2 would. All four are proved after III.2 since 24 October 2026, and a proof that uses any of them cites III.2, for the walk that finds an entry's cites passes through proved rules, as the II.1 pin shows."
     },
     {
       "ref": "II.14",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and does not rest on Circle 3 (#60). Circle 2's retired name is also kept out of the axiom list."
+      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and does not rest on Circle 3 (#60). Since 24 October 2026 Circle 2 and Circle 3 are both theorems, proved after III.2 (#294), so excluding their names from axioms can no longer fail. A proof that used either would cite III.2, since the walk that finds an entry's cites passes through proved rules (the II.1 pin), and check_fidelity refuses II.14's citing III.2, which does not come before it; the pin on II.14's cites, next, can fail."
+    },
+    {
+      "ref": "II.14",
+      "field": "cites",
+      "excludes": ["III.2"],
+      "why": "II.14 does not rest on Circle 3, in the claim's present form (#60, #294): it does not cite III.2, as a proof using Circle 2, Circle 3, Points 9 or Intersection 2 would. All four are proved after III.2 since 24 October 2026, and a proof that uses any of them cites III.2, for the walk that finds an entry's cites passes through proved rules, as the II.1 pin shows."
     },
     {
       "ref": "I.4",
@@ -317,7 +329,7 @@
       "field": "construction_rules",
       "includes": ["Postulate1", "Postulate2", "Postulate3", "Postulate5", "Tacit.circles_meet", "Tacit.circles_meet_same_side", "Tacit.exists_point", "Tacit.exists_point_inside_circle", "Tacit.exists_point_on_line", "Tacit.line_circle_between", "Tacit.line_circle_beyond", "Tacit.lines_meet_of_opposite_sides"],
       "excludes": ["Definition15", "Postulate4", "Tacit.superposition", "Tacit.pasch3", "Tacit.outside_of_between", "Tacit.angle_le_two_right"],
-      "why": "A construction rule is an axiom whose conclusion asserts existence once the project's definitions are unfolded (docs/FORMALIZATION.md, section 9): the postulates that draw, the rules that give a point, and those that conclude CirclesMeet or LinesMeet are among them. A rule that concludes an equality, a negation, OutsideCircle, an order read through its instance, or the restricted rule is not. Every rule it requires stays an axiom after the second retirement wave, and so does every rule it excludes but Tacit.pasch3, which that wave proves as a theorem (#150, question 4)."
+      "why": "A construction rule is an axiom whose conclusion asserts existence once the project's definitions are unfolded (docs/FORMALIZATION.md, section 9): the postulates that draw, the rules that give a point, and those that conclude CirclesMeet or LinesMeet are among them. A rule that concludes an equality, a negation, OutsideCircle, an order read through its instance, or the restricted rule is not. Every rule it requires is still an axiom, and so is every rule it excludes but two: Tacit.pasch3, which the second retirement wave proves as a theorem, and Tacit.outside_of_between (Circle 3), which concludes OutsideCircle and has been a theorem since 24 October 2026, proved after III.2 (#294). A theorem is in no list of axioms, so excluding those two can no longer fail (#150, question 4)."
     },
     {
       "ref": "III.1",
