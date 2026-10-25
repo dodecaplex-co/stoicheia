@@ -595,7 +595,7 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         ov = record["overlap"]
         if any(re.search(r"\s", r) for r in [ov["rule"]] + ov.get("also", [])):
             bad("[overlap]: `rule` and `also` name axioms as facts.json writes them, "
-                "as 'Tacit.outside_of_between'")
+                "as 'Tacit.circle_eq'")
         if ov["kind"] not in OVERLAPS:
             bad(f"[overlap]: `kind` is one of {', '.join(OVERLAPS)}, the overlap catalogue's "
                 f"three kinds, not {ov['kind']!r}")
