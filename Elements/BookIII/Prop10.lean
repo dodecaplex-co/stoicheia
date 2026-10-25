@@ -100,9 +100,8 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle}
   obtain ⟨A, hA, hA_AC, hAKX⟩ := line_circle_beyond hK_in hK_AC hX_AC hKX_ne.symm
   obtain ⟨C, hC, hC_AC, hCKA⟩ := line_circle_beyond hK_in hK_AC hA_AC (ne_of_between hAKX)
   obtain ⟨NO, hL_NO, hY_NO⟩ := Postulate1 L Y hLY_ne
-  /- N is on H's side of BG, and O on the other side, as in the figure. -/
-  obtain ⟨O, hO, hO_NO, hOLY⟩ := line_circle_beyond hL_in hL_NO hY_NO hLY_ne.symm
-  obtain ⟨N, hN, hN_NO, hNLO⟩ := line_circle_beyond hL_in hL_NO hO_NO (ne_of_between hOLY)
+  /- O is on the other side of BG from H, as in the figure. -/
+  obtain ⟨O, -, hO_NO, hOLY⟩ := line_circle_beyond hL_in hL_NO hY_NO hLY_ne.symm
   have hBK_ne : B ≠ K := ne_of_between hBKH
   have hBL_ne : B ≠ L := ne_of_between hBLG
   have hBKC : ∠ B K C = ∟ := by
