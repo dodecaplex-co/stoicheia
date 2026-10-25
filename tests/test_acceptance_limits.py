@@ -42,8 +42,16 @@ class AllowedLimits(unittest.TestCase):
         self.assertEqual(acceptance.ALLOWED_LIMITS, expected)
         text = (ROOT / "docs/ACCEPTANCE.md").read_text(encoding="utf-8")
         section = text.split("## The limitations allowed\n", 1)[1].split("\n## ", 1)[0]
-        rows = [line.split("|")[1:-1] for line in section.splitlines()
-                if line.startswith("| I")]
+        # Every line of the section that holds a | is read (#421): the header and its
+        # delimiter row as the table has them today, then each row, however compact or
+        # indented; a | anywhere else fails, so that no row written with a | is passed over.
+        lines = [line.strip() for line in section.splitlines() if "|" in line]
+        self.assertEqual([line for line in lines if not line.startswith("|")], [],
+                         "a line of the section holds a | but begins no row of the table")
+        header = ["| Proposition | Scope | Tag | Why |", "|---|---|---|---|"]
+        self.assertEqual(lines[:2], header,
+                         "the table's header has changed: read its rows by the new one")
+        rows = [line.split("|")[1:-1] for line in lines[2:]]
         self.assertEqual(
             [(ref.strip(), scope.strip(), tag.strip().strip("`"))
              for ref, scope, tag, why in rows],
@@ -52,7 +60,8 @@ class AllowedLimits(unittest.TestCase):
 
     def test_an_allowed_row_asks_its_scope_and_tag(self):
         # The table is empty, so a made-up row keeps P3's two refusals for a listed
-        # proposition tested: the scope not allowed, and the allowed scope without its tag.
+        # proposition tested: the scope not allowed, and the allowed scope without its tag;
+        # and the row does not allow III.31, given the same tag (#421).
         with patch.object(acceptance, "ALLOWED_LIMITS",
                           {"III.16": ("partial", "mixed-angles-omitted")}):
             self.assertEqual(
@@ -65,6 +74,8 @@ class AllowedLimits(unittest.TestCase):
                     ])
             self.assertEqual(self.p3_failures("III.16", "restricted", ["mixed-angles-omitted"]),
                              self.unlisted("restricted"))
+            self.assertEqual(self.p3_failures("III.31", "partial", ["mixed-angles-omitted"]),
+                             self.unlisted("partial"))
 
     def test_figures_short_of_full_fail_whatever_tags(self):
         # #116: the allowance for I.45 and II.14 is withdrawn, so a restricted or partial
