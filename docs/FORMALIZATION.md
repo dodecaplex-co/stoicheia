@@ -576,11 +576,16 @@ dependencies.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
 - **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
-  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
-  each name must stay in the axiom lock, or name a theorem whose `proved_rules` entry
-  in `facts.json` includes another forbidden circle rule still in the lock as an axiom.
-  Thus a proved rule remains forbidden through the axiom beneath it; a missing name,
-  or a proof without such an axiom, fails the check.
+  `Tacit.outside_of_between` as an axiom, and no entry before III.2 uses either, whether
+  through its own proof or through a lemma it uses; a rule proved from III.2 may be used
+  after III.2, and the use cites III.2. Each name must stay in the axiom lock, or name a
+  theorem whose `proved_rules` entry in `facts.json` includes another forbidden circle
+  rule still in the lock as an axiom, or whose `proved_rule_cites` entry includes III.2,
+  with III.2 proved and resting on neither rule. Thus a proved rule remains forbidden
+  through the axiom beneath it, or, if it is proved from III.2, every entry that uses it
+  cites III.2 through it, so that no entry before III.2 can use it (no later citations,
+  below); a missing name, a proof with neither, or a proof citing an III.2 that is
+  missing, unproved or itself resting on either rule, fails the check.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -593,8 +598,10 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Aud
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
-Circle 3 renamed in the lock; and Circle 2 proved without Circle 3 beneath it, with a
-matching case that still rests on locked Circle 3 and must pass;
+Circle 3 renamed in the lock; Circle 2 proved with neither Circle 3 beneath it nor III.2
+cited, with a matching case that still rests on locked Circle 3 and must pass; and both
+proved with neither beneath, citing nothing or an III.2 that rests on Circle 3, with a
+matching case citing the real III.2 that must pass;
 placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each
