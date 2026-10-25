@@ -11,12 +11,18 @@
   corrects what it said of a rerun of the failed jobs.
 
   What #411 showed. On 24 October the coordinator re-ran one shard of run 40122901299 of
-  the cadence workflow with "re-run failed jobs". The verdict job's fetch, which names no
-  `run-id`, found all 16 artifacts, and the proof passed on all 466 tests. So a rerun of
-  the failed jobs is judged, as a rerun of all the jobs is, on every shard's list: the
-  lists of the shards it runs again, and those the other shards kept in the earlier
-  attempt. #411 is closed, and the `run-id` fix it proposed, with the `actions: read` that
-  fix would add to two jobs, is not made.
+  the cadence workflow, a run on a branch every job of which had passed, by itself: a
+  second attempt that ran that shard again, and the verdict job, which needs it. The
+  verdict job's fetch, which names no `run-id`, found all 16 artifacts of the run, each
+  shard's list and log, the first attempt's among them, and the proof passed on all 466
+  tests. A rerun of the failed jobs makes a later attempt of the same kind, which runs
+  some of the jobs again and the verdict with them, and fetches the same way. So a rerun
+  in part is judged, as a rerun of all the jobs is, on every shard's list: the lists of
+  the shards it runs again, and those the others kept in an earlier attempt. (Card #443,
+  carrying this from #425, called #411's rerun one of the failed jobs; the coordinator's
+  log of 24 October says that one shard, shard 5, was run again alone.) #411 is closed,
+  and the `run-id` fix it proposed, with the `actions: read` that fix would add to two
+  jobs, is not made.
 
   The texts. In `.github/workflows/safe-push-tests.yml`, the comment on the step that
   keeps a shard's list said that a rerun of the failed jobs alone stays red; it now says

@@ -639,12 +639,15 @@ tests it ran, each with its outcome, to the file `--ran` names, and keeps it as 
 artifact, a test having failed or not, for 35 days; and it keeps its log, from which the
 report takes the tests that failed. A run re-run either way is judged on every shard's
 list ([#411](https://github.com/jackChallis/stoicheia/issues/411),
-[the decision](decisions/2026-10-25-rerun-failed-jobs.md)): one re-run with "re-run all
-jobs" afresh, and one re-run with "re-run failed jobs" on the lists of the shards it
-re-runs and on those the other shards kept in the earlier attempt, which its fetch finds,
-as #411 saw on GitHub: one shard of run 40122901299 re-run so, the fetch found all 16
-artifacts, with no `run-id`, and the proof passed on all 466 tests. The proof never passes
-on lists it cannot see, should GitHub ever withhold one. Then the `safe-push-tests` job,
+[the decision](decisions/2026-10-25-rerun-failed-jobs.md)). One re-run with "re-run all
+jobs" is judged afresh. One re-run in part, as with "re-run failed jobs", is judged on the
+lists of the shards it runs again and on those the others kept in an earlier attempt,
+which the verdict's fetch finds. #411 saw it on GitHub: one shard of run 40122901299,
+every job of which had passed, was run again alone, and the verdict's fetch, which names
+no `run-id`, found all 16 artifacts, every shard's list and log, the first attempt's among
+them; the proof passed on all 466 tests. A re-run of the failed jobs makes a later attempt
+of the same kind and fetches the same way. The proof never passes on lists it cannot see,
+should GitHub ever withhold one. Then the `safe-push-tests` job,
 which needs the shards and runs whatever they did, checks out the commit they ran, as they
 did, fetches every list and runs `python3 scripts/test_safe_push.py --cover DIR`, which
 lists the tests with unittest's loader at that commit, reads N from the matrix, and fails,

@@ -68,12 +68,15 @@ jobs:
         # Kept when a test failed too, so that the proof names it. A shard that stops
         # before its end writes no list and keeps none, and the proof then fails. A shard
         # run again replaces its list. Kept for 35 days. Either kind of rerun is judged on
-        # every shard's list (#411): a rerun of all the jobs afresh, and a rerun of the
-        # failed jobs alone on the lists of the shards it runs again and on those the other
-        # shards kept in the earlier attempt, which its fetch finds. #411 saw it on GitHub:
-        # one shard of run 40122901299 run again so, the fetch found all 16 artifacts, with
-        # no run-id, and the proof passed on all 466 tests. The proof never passes on lists
-        # it cannot see, should GitHub ever withhold one.
+        # every shard's list (#411): a rerun of all the jobs afresh, and a rerun of some of
+        # them, as of the failed jobs, on the lists of the shards it runs again and on those
+        # the others kept in an earlier attempt, which the verdict's fetch finds. #411 saw it
+        # on GitHub: one shard of run 40122901299, every job of which had passed, was run
+        # again alone, and the verdict's fetch, which names no run-id, found all 16
+        # artifacts, every shard's list and log, the first attempt's among them; the proof
+        # passed on all 466 tests. A rerun of the failed jobs makes a later attempt of the
+        # same kind and fetches the same way. The proof never passes on lists it cannot see,
+        # should GitHub ever withhold one.
         if: always()
         uses: actions/upload-artifact@v5
         with:
