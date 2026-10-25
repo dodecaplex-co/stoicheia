@@ -237,7 +237,10 @@ proofs", names what each shared step brings in. So the mishnah does not restate 
 "records", explain what a cited proposition or shared step brings in, or trace the paths
 of Postulate 5, Postulates 1 to 4, Definition I.15, the Common Notions or the tacit rules.
 It speaks of them only when the reason is this proposition's story, and then says "the
-Lean cites": a departure from Euclid's route (the proofs of I.2 and I.5 use no Postulate 2;
+Lean cites": a departure from Euclid's route (I.2 uses no Postulate 2; I.5 takes the produced
+sides as given, but still rests on it through proved rules, in its own Lean the order rule
+`Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and Metric 8,
+`Tacit.area_swap`, and through I.4, which it cites;
 the Lean cites I.10 in I.42 and I.17 in II.12, where Heath gives no reference: one clause
 naming the step), a gap the text leaves (I.1's circles, I.35's G), or a landmark
 (Postulate 5, called on in the text at I.29, I.44 and II.10; I.31's proof, which does not

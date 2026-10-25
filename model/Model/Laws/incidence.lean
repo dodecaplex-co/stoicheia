@@ -9,13 +9,17 @@ public import Model.Hand
 **Hand-translated: this file is written by hand,** like `Model/Hand.lean`, alongside the
 generated laws described in the [README](../../README.md). Each law here is the library's,
 word for word, with `S.Point` for `Elements.Point`, `S.OnLine` for `Elements.OnLine`, and
-so on. Its printed statement is quoted above it, from the lock or, for the retired
-`centre_unique`, its unchanged theorem type. Each binder keeps its original kind.
+so on. Its printed statement is quoted above it, from the lock or, for a retired
+rule such as `centre_unique` or `centre_inside`, its unchanged theorem type. Each binder keeps its original kind.
 `Check/Incidence.lean` puts the library's own words in for `S` and asks the kernel whether
 each result is the original declaration; the build fails if it is not. The same check
 file compares each locked law's translation with its generated
 law, and `centre_unique` directly with the library declaration, including binder kinds.
 Its concrete plane proof remains as a derived fact, with no generated assumption field.
+The same holds for `centre_inside` and `inside_not_on`, now proved using circle crossings
+and Circle 1 in `Elements/Figure/RuleBase.lean`, and for `exists_point_between` and
+`exists_point_on_line_off_line`, proved using smaller circles and uniqueness of a line,
+respectively, in `Elements/Figure/Incidence.lean`.
 
 The laws are those of a straight line and the points on it:
 
@@ -75,12 +79,12 @@ Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.Centre
 def centre_unique : Prop :=
   ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.Centre B α → A = B
 
-/-- `Elements.Tacit.centre_inside`, hand-translated. The lock prints it as `∀ {A :
+/-- `Elements.Tacit.centre_inside`, hand-translated. The theorem's unchanged type is `∀ {A :
 Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.InsideCircle A α`. -/
 def centre_inside : Prop :=
   ∀ {A : S.Point} {α : S.Circle}, S.Centre A α → S.InsideCircle A α
 
-/-- `Elements.Tacit.inside_not_on`, hand-translated. The lock prints it as `∀ {A :
+/-- `Elements.Tacit.inside_not_on`, hand-translated. The theorem's unchanged type is `∀ {A :
 Elements.Point} {α : Elements.Circle}, Elements.InsideCircle A α → Not (Elements.OnCircle A
 α)`. -/
 def inside_not_on : Prop :=
@@ -110,14 +114,14 @@ def exists_point_on_line : Prop :=
   ∀ (L : S.Line) (avoid : List S.Point), ∃ A : S.Point, S.OnLine A L ∧ ¬ A ∈ avoid
 
 /-- `Elements.Tacit.exists_point_on_line_off_line` (Points 2, off a second line),
-hand-translated. The lock prints it as `∀ {L M : Elements.Line}, Ne L M → ∀ (avoid : List
+hand-translated. The theorem's unchanged type is `∀ {L M : Elements.Line}, Ne L M → ∀ (avoid : List
 Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Not
 (Elements.OnLine A M)) (Not (Membership.mem avoid A)))`. -/
 def exists_point_on_line_off_line : Prop :=
   ∀ {L M : S.Line}, L ≠ M → ∀ (avoid : List S.Point),
     ∃ A : S.Point, S.OnLine A L ∧ ¬ S.OnLine A M ∧ ¬ A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_between` (Points 3), hand-translated. The lock prints it as
+/-- `Elements.Tacit.exists_point_between` (Points 3), hand-translated. The theorem's unchanged type is
 `∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L →
 Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And
 (Elements.OnLine A L) (And (Elements.Between B A C) (Not (Membership.mem avoid A)))`. -/

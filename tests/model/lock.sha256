@@ -79,6 +79,22 @@
 # Superposition.Rule primitives, and the vocabulary at 208 words; the harness keeps wave
 # one's removals and the restricted law's placement check with its kept side.
 #
+# Renewed on 21 October 2026, when 31 more axioms became theorems, merged after the restricted
+# rule (the owner's decision of 19 October 2026: "Please do both. 79 is rather large with so
+# many books in front of us"):
+# Tacit.area_swap, Tacit.between_of_area_add, Tacit.between_of_between_left,
+# Tacit.between_of_between_right, Tacit.centre_inside, Tacit.circles_meet_of_on_inside_outside,
+# Tacit.circles_meet_opposite_side, Tacit.eq_of_len_eq_zero, Tacit.exists_point_between,
+# Tacit.exists_point_on_circle, Tacit.exists_point_on_line_off_line,
+# Tacit.exists_point_opposite_side, Tacit.exists_point_same_side, Tacit.inside_not_on,
+# Tacit.inside_of_len_lt, Tacit.len_lt_of_inside, Tacit.line_meets_circle_of_inside,
+# Tacit.ne_of_between, Tacit.ne_of_between_ends, Tacit.not_between_of_between_between,
+# Tacit.on_circle_of_len_eq, Tacit.on_line_of_between, Tacit.on_line_of_between_ends,
+# Tacit.pasch1, Tacit.pasch3, Tacit.pasch4, Tacit.same_side_or, Tacit.same_side_refl,
+# Tacit.same_side_symm, Tacit.triple_incidence1 and Tacit.triple_incidence2. Their laws
+# leave laws.toml, search.py and hyperbolic.py, and derived.py keeps checking each; the other
+# 48 axioms and every word are unchanged, byte for byte.
+#
 # Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
 # main's 79 axioms and Tacit.exists_centre, 80 in all, with 121 words of vocabulary. The
 # eight retired rules stay out of laws.toml, search.py and hyperbolic.py, exists_centre's law
@@ -100,6 +116,14 @@
 # harness keeps the restricted law's placement check with its kept side and exists_centre's
 # law, and MODEL.md's counts are written again by run.py --full --write in the same change.
 #
+# Renewed on 21 October 2026, when the second retirement was merged with train C6a (#240):
+# 49 axioms, main's 80 less the 31 above, with main's 238 words of vocabulary: the lock is
+# main's lock less the 31 lines of the retired axioms; every other axiom and every word is
+# main's byte for byte, and the header names decision entries as main's `--write-lock` now
+# writes it. The 31 laws leave laws.toml, search.py and hyperbolic.py,
+# exists_centre's law stays in them, and MODEL.md's counts are written again by
+# run.py --full --write in the same change.
+#
 # Renewed on 21 October 2026, when train C6a at 529c93f7 was merged into train C6b: the
 # lock is train C6a's, 80 axioms and 238 words, with train C6b's four words, Foot,
 # Arc.Less, Arc.Semicircle and Arc.Greater, 242 words in all. The 80 axioms are
@@ -119,4 +143,10 @@
 # II.14 outline and II.14 outline_side reach, with what Lean declares for them; the 80 axioms
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
-1431ed4a2de9c92c99fba0d32aaba0d4905302d9c31b57e9fb074b180584f792  Certificate/axioms.lock
+#
+# Renewed on 22 October 2026, when the second retirement was merged with main at 5e5e51dc,
+# after brief 0013's outline companions: 49 axioms, main's 80 less the 31 above, with main's
+# 262 words of vocabulary; every other axiom and every word is main's byte for byte. The
+# 31 laws stay out of laws.toml, search.py and hyperbolic.py, exists_centre's law stays in
+# them, and MODEL.md's counts are written again by run.py --full --write in the same change.
+589b8c3791414d63a8c5b735ba9c4d4adddf1c4f7a271eaef918820c9d844965  Certificate/axioms.lock
