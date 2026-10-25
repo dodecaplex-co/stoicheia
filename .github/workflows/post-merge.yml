@@ -1,0 +1,306 @@
+# The workflow at after receives the App key; this repository alone cannot make
+# that authority independent, so the App's power is bounded instead. It reads the
+# repository's contents and writes none (this job's own token pushes the revert
+# branch), so a key taken from it can make no branch, tag or release; it is no
+# ruleset's bypass actor; and queue-integrity, run from main's copy, refuses any entry
+# any bot wrote, queued, last edited or last renamed, save the exact revert of a failed push's merges
+# while an open main-red issue names the run. WORKFLOW, section 10, and the owner's
+# setup steps say what the owner configures.
+name: Post-merge
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      issues: read
+    uses: ./.github/workflows/ci.yml
+
+  revert:
+    needs: integration
+    if: failure()
+    runs-on: ubuntu-latest
+    # Configure this environment to permit deployments from main only. Its App
+    # secrets must not be repository secrets available to pull requests or groups.
+    environment: auto-revert
+    permissions:
+      # contents: write lets this job's own token push revert/<12 hex> (the App writes
+      # nothing to contents); it lasts only as long as the job.
+      contents: write
+      issues: write
+      actions: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      BEFORE: ${{ github.event.before }}
+      AFTER: ${{ github.event.after }}
+      RUN_ID: ${{ github.run_id }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.after }}
+
+      - name: Read the failed jobs
+        if: always()
+        id: failed
+        env:
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jobs=$(mktemp "$RUNNER_TEMP/failed-jobs.XXXXXX")
+          response=$(mktemp "$RUNNER_TEMP/jobs-response.XXXXXX")
+          if gh api --paginate --slurp \
+            "repos/$REPOSITORY/actions/runs/$RUN_ID/attempts/$RUN_ATTEMPT/jobs?per_page=100" > "$response" \
+            && jq -er '
+              if type != "array" or length == 0 or any(.[]; (.jobs | type) != "array")
+              then error("Unreadable jobs") else
+                [.[] | .jobs[] | select(.conclusion != null and
+                  .conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral")
+                  | if (.name | type) == "string" then .name + ": " + .conclusion
+                    else error("Unreadable job name") end]
+                | if length > 0 then join("\n") else error("No failed jobs found") end
+              end' "$response" > "$jobs"; then
+            echo "readable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Failed job details could not be read; integration reported failure." > "$jobs"
+            echo "readable=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "path=$jobs" >> "$GITHUB_OUTPUT"
+
+      - name: Take the revert script from the previous main
+        if: always()
+        id: trusted
+        shell: bash
+        run: |
+          set -euo pipefail
+          script=$(mktemp "$RUNNER_TEMP/auto-revert.XXXXXX")
+          reason="The previous main commit is invalid."
+          if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE" != 0000000000000000000000000000000000000000 ]]; then
+            response=$(mktemp "$RUNNER_TEMP/previous-runs.XXXXXX")
+            verdict=$(mktemp "$RUNNER_TEMP/previous-verdict.XXXXXX")
+            reason="The previous main's post-merge runs could not be read."
+            if gh api --paginate --slurp \
+              "repos/$REPOSITORY/actions/workflows/post-merge.yml/runs?head_sha=$BEFORE&event=push&branch=main&per_page=100" \
+              > "$response" && jq -er --arg before "$BEFORE" '
+                def integer: type == "number" and . == floor;
+                if type != "array" or length == 0 or any(.[];
+                  type != "object" or (.workflow_runs | type) != "array" or
+                  (.total_count | integer | not) or .total_count < 0)
+                then error("Unreadable previous runs") else
+                  .[0].total_count as $count |
+                  if any(.[]; .total_count != $count) then error("Inconsistent run count") else
+                    [.[] | .workflow_runs[]] |
+                    if length != $count or (map(.id) | unique | length) != $count or any(.[];
+                      type != "object" or (.id | integer | not) or .id <= 0 or
+                      .head_sha != $before or .head_branch != "main" or .event != "push" or
+                      .path != ".github/workflows/post-merge.yml" or (.status | type) != "string" or
+                      (has("conclusion") | not) or
+                      (.conclusion != null and (.conclusion | type) != "string"))
+                    then error("Incomplete or mismatched previous runs")
+                    elif length == 0 then "No post-merge run was found for the previous main."
+                    else max_by(.id) |
+                      if .status == "completed" and .conclusion == "success" then "success"
+                      else "The latest post-merge run for the previous main did not conclude success." end
+                    end
+                  end
+                end' "$response" > "$verdict"; then
+              reason=$(cat "$verdict")
+              if [[ "$reason" == success ]]; then
+                reason="The successful previous main has no readable revert script."
+                if git show "$BEFORE:scripts/auto_revert.py" > "$script" && test -s "$script"; then
+                  echo "script=$script" >> "$GITHUB_OUTPUT"
+                  echo "reason=" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+              fi
+            fi
+          fi
+          rm -f "$script"
+          echo "script=" >> "$GITHUB_OUTPUT"
+          printf 'reason=%s\n' "$reason" >> "$GITHUB_OUTPUT"
+
+      - name: Record the failure and enqueue the revert
+        if: always() && steps.trusted.outputs.script != '' && steps.failed.outputs.readable == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOICHEIA_REVERT_APP_ID: ${{ secrets.STOICHEIA_REVERT_APP_ID }}
+          STOICHEIA_REVERT_APP_KEY: ${{ secrets.STOICHEIA_REVERT_APP_KEY }}
+          TRUSTED_SCRIPT: ${{ steps.trusted.outputs.script }}
+          FAILED_JOBS: ${{ steps.failed.outputs.path }}
+        run: |
+          python3 -I "$TRUSTED_SCRIPT" --before "$BEFORE" --after "$AFTER" \
+            --repo "$REPOSITORY" --run-url "$RUN_URL" --failed-jobs "$(cat "$FAILED_JOBS")"
+
+      - name: Open the issue when the trusted script or failed jobs are unavailable
+        if: always() && (steps.trusted.outputs.script == '' || steps.failed.outputs.readable != 'true')
+        env:
+          FAILED_JOBS: ${{ steps.failed.outputs.path }}
+          TRUST_FAILURE: ${{ steps.trusted.outputs.reason }}
+        shell: bash
+        # This fallback uses shell and the runner's tools only. No repository code
+        # runs with credentials, including on the first push that adds this workflow.
+        run: |
+          set -euo pipefail
+          labels=$(mktemp "$RUNNER_TEMP/revert-labels.XXXXXX")
+          gh api --paginate "repos/$REPOSITORY/labels?per_page=100" --jq '.[].name' > "$labels"
+          for label in blocks-release main-red; do
+            if ! grep -Fxq "$label" "$labels"; then
+              created=$(gh api --method POST "repos/$REPOSITORY/labels" -f name="$label" -f color=b60205 \
+                -f description="Main integration failure requiring attention" --jq '.name')
+              test "$created" = "$label"
+            fi
+          done
+          body=$(mktemp "$RUNNER_TEMP/revert-issue.XXXXXX")
+          {
+            printf "Main's integration checks failed.\n\nBefore: %s\nAfter: %s\n\n" "$BEFORE" "$AFTER"
+            printf 'Trains and commits, newest first:\n'
+            if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$AFTER" =~ ^[0-9a-f]{40}$ ]]; then
+              history=$(mktemp "$RUNNER_TEMP/revert-history.XXXXXX")
+              if git -c core.hooksPath=/dev/null log --first-parent --format='%H %s' "$BEFORE..$AFTER" > "$history"; then
+                while IFS= read -r line; do
+                  commit=${line%% *}
+                  subject=${line#* }
+                  if [[ "$subject" =~ ^Merge\ pull\ request\ \#([1-9][0-9]*)\ from\  ]]; then
+                    number=${BASH_REMATCH[1]}
+                    title=$(gh api "repos/$REPOSITORY/pulls/$number" --jq '.title') \
+                      || title="Title could not be read"
+                    printf -- '- #%s: %s (merge %s)\n' "$number" "$title" "$commit"
+                  else
+                    printf -- '- %s\n' "$line"
+                  fi
+                done < "$history"
+              else
+                printf 'The train history could not be read.\n'
+              fi
+            else
+              printf 'The push range could not be read.\n'
+            fi
+            printf '\nFailed jobs:\n'
+            if test -n "$FAILED_JOBS" && test -s "$FAILED_JOBS"; then
+              cat "$FAILED_JOBS"
+            else
+              printf 'Failed job details could not be read; integration reported failure.\n'
+            fi
+            printf '\nFailed run: %s\nRun: %s\n\n' "$RUN_ID" "$RUN_URL"
+            printf '%s\n' "${TRUST_FAILURE:-The trusted script or failed jobs could not be read.}"
+            printf 'Issue only; no automatic revert or pull request was attempted.\n'
+          } > "$body"
+          payload=$(mktemp "$RUNNER_TEMP/revert-payload.XXXXXX")
+          jq -n --arg title "Main integration failed at ${AFTER:0:12}" --rawfile body "$body" \
+            '{title: $title, body: $body, labels: ["blocks-release", "main-red"]}' > "$payload"
+          gh api --method POST "repos/$REPOSITORY/issues" --input "$payload" --jq '"Opened issue #" + (.number | tostring)'
+          exit 1
+
+  clear:
+    needs: integration
+    if: needs.integration.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # actions: read names the later push's run when main has moved on.
+      actions: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      BEFORE: ${{ github.event.before }}
+      AFTER: ${{ github.event.after }}
+      RUNS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.after }}
+
+      - name: Clear main-red after successful integration of the current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          report_moved() {
+            local tip="$1"
+            local result="${2:-no label was changed}"
+            local later runs run
+            later=$(mktemp "$RUNNER_TEMP/later-run.XXXXXX")
+            runs="repos/$REPOSITORY/actions/workflows/post-merge.yml/runs"
+            run=""
+            if gh api "$runs?head_sha=$tip&event=push&branch=main&per_page=100" \
+              | jq -er --arg tip "$tip" '
+                  [.workflow_runs[] | if type == "object" then . else error("Unreadable run") end
+                    | select(.head_sha == $tip and .head_branch == "main" and .event == "push"
+                        and .path == ".github/workflows/post-merge.yml") | .id]
+                  | if length > 0 and all(.[]; type == "number" and . == floor and . > 0)
+                    then max else error("No readable run") end' > "$later"; then
+              run=$(cat "$later")
+            fi
+            if [[ "$run" =~ ^[1-9][0-9]*$ ]]; then
+              echo "Main has moved on from $AFTER to $tip: the later push's post-merge run" \
+                "$run, $RUNS_URL/$run, decides, and $result."
+            else
+              echo "Main has moved on from $AFTER to $tip: no post-merge run for $tip could" \
+                "be read yet; the later push's run decides, and $result."
+            fi
+          }
+          # No repository code runs here, not even the previous main's: a fix that lands
+          # after a failed push must not run the failed push's script with issues: write.
+          tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if ! [[ "$tip" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Main's tip could not be read."
+            exit 1
+          fi
+          # Main has moved on only when its tip, read now, is another commit: then this
+          # success clears nothing, the later push's run decides, and this run still
+          # passed. Any other failure of the clear, at main's own tip, fails the job.
+          if [[ "$tip" != "$AFTER" ]]; then
+            report_moved "$tip"
+            exit 0
+          fi
+          issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")
+          gh api --paginate --slurp "repos/$REPOSITORY/issues?state=open&labels=main-red&per_page=100" \
+            | jq -c '
+                if type != "array" or length == 0 or any(.[]; type != "array") then error("Unreadable issues")
+                else [.[][] | select(has("pull_request") | not)
+                  | if .state == "open" and (.number | type) == "number" and .number > 0
+                      and any(.labels[]; .name == "main-red") then {number, body}
+                    else error("Unreadable issue") end] | .[] end' > "$issues"
+          while IFS= read -r issue; do
+            number=$(jq -er '.number' <<< "$issue")
+            issue_after=$(jq -er '
+              if (.body | type) != "string" then error("Unreadable body") else
+                [.body | split("\n")[] | select(test("^After: [0-9a-f]{40}$"))] |
+                if length == 1 then .[0][7:] else error("Missing or repeated After line") end
+              end' <<< "$issue" 2> /dev/null) || {
+                echo "Issue #$number keeps main-red: its After line is missing or unreadable."
+                continue
+              }
+            if ! git -c core.hooksPath=/dev/null -c core.fsmonitor=false \
+              merge-base --is-ancestor "$issue_after" "$AFTER" 2> /dev/null; then
+              echo "Issue #$number keeps main-red: its After commit is not $AFTER or an ancestor of it."
+              continue
+            fi
+            tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+            if ! [[ "$tip" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Main's tip could not be read."
+              exit 1
+            fi
+            if [[ "$tip" != "$AFTER" ]]; then
+              report_moved "$tip" "no further label was changed"
+              exit 0
+            fi
+            gh api --method DELETE "repos/$REPOSITORY/issues/$number/labels/main-red" \
+              | jq -e 'type == "array" and all(.[]; (.name | type) == "string" and .name != "main-red")' > /dev/null
+          done < "$issues"

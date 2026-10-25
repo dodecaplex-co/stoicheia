@@ -314,9 +314,22 @@ Ships' captains enforcing a few pages each do not, between them, make one voice.
 ## 8. Validation on the integrated revision
 
 This section is the one home of the commands; every other page links here and keeps only
-the subset its reader runs. The evidence belongs to the revision being delivered. On it,
-run exactly what CI's `check` job runs, in its order (`python3 scripts/run_checks.py --job
-check` runs it so, as CI does):
+the subset its reader runs. The evidence belongs to the revision being delivered.
+`.github/workflows/ci.yml` runs on `pull_request` and `merge_group`, and can be called by
+another workflow. It no longer runs on branch pushes. The main push's
+`.github/workflows/post-merge.yml` calls it after the merge.
+
+| Run | Tree checked | Main used by the acceptance comparison |
+|---|---|---|
+| Local pre-flight | The exact committed head, in temporary worktrees | The pre-flight runs no acceptance comparison |
+| Pull request CI | GitHub's proposed merge of the pull request into main | That merge's first parent; the event's base if the checkout is the head itself |
+| Merge group CI | The group's head: main plus the queued pull requests ahead, in order | The event's group base |
+| Post-merge integration | The main push's exact `after` commit | The main tip before the push, `before` |
+
+The merge group's run checks the exact combined tree that the queue will merge. A
+pre-flight or a pull request run alone cannot check the interaction with trains queued
+ahead. On the integrated revision, run exactly what CI's `check` job runs, in its order
+(`python3 scripts/run_checks.py --job check` runs it so, as CI does):
 
 <!-- checks -->
 ```sh
@@ -380,13 +393,15 @@ generated page or not, fails it, so the sequence runs on a committed revision. M
 run on their own, each in isolation: CI's `risk`, which classifies the change (below);
 `negative`, `model`, `formal-model`, `acceptance` and `queue-integrity`, more of CI's on
 each pull request, `negative` and `formal-model` of them by the class `risk` gives; and
-three on a cadence, in the `safe-push-tests` workflow (below): `safe-push-tests`, and
-`negative-tests` and `formal-model-kernel`, which run on main the commands of CI's
-`negative` and `formal-model` jobs. Below, the first commands are those of CI's
-`negative`, `model` and `formal-model` jobs, and so of the cadence's two; the next two
-run the acceptance job's tests and checklist without its CI comparison, and the last two
-run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs run for
-which class", after the block, and those of `queue-integrity` after that:
+on a cadence, in the `safe-push-tests` workflow (below), the shards of `safe-push-shards`
+and the `safe-push-tests` job, which gives the verdict on them, and `negative-tests` and
+`formal-model-kernel`, which run on main the commands of CI's `negative` and
+`formal-model` jobs. Below, the first commands are those of CI's `negative`, `model` and
+`formal-model` jobs, and so of the cadence's two; the next two run the acceptance job's
+tests and checklist without its CI comparison, and the last three run the tests the
+shards run, whole and then one shard as the cadence runs it; the commands of `risk` are
+under "Which jobs run for which class", after the block, and those of `queue-integrity`
+after that:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -400,7 +415,8 @@ python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the compari
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 python3 -m pip install -r scripts/requirements-test_safe_push.txt
-python3 scripts/test_safe_push.py      # the `safe-push-tests` job, on a cadence: no Lean
+python3 scripts/test_safe_push.py      # every test the shards run, in one run: no Lean
+python3 scripts/test_safe_push.py --shard 3/8 --ran "${RUNNER_TEMP:-/tmp}/ran-3.json"   # the third shard of eight, as the cadence runs it
 ```
 
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
@@ -413,19 +429,24 @@ rule of its table that matches it, R5 when none does, and the change the highest
 files' classes. The job runs main's copy of the script, never the change's own, so a
 change cannot lower its own class by editing it. A pull request into main is classified
 so, exactly, from GitHub's merge commit (a checkout that is not that merge of its head is
-R5). CI runs on a pull request's events and on a push to main, never on the push of
-another branch or of a tag, so each commit of a pull request runs once
-([the decision](decisions/2026-10-22-checks-by-risk.md)). A pull request whose run starts
-with the `release` label, a pull request into another branch, a push to main and any
-other event are R5. The label is read from the event that started the run, and `git
-safe-push` adds a pull request's labels after it pushes, so a label given with that push
-counts from the next push; main's run after the merge runs `negative` and `formal-model`
-in full (`acceptance` runs only on a pull request); and the merge gate holds a release
-until the full pre-flight has run on its head and a run of the `safe-push-tests` workflow
-there has passed each of its three jobs ([section 10, "Landing work: pull
-requests"](#landing-work-pull-requests), step 4). `check`, `model`,
-`acceptance` and `queue-integrity` run for every class. `negative` runs in full for R3,
-R4 and R5.
+R5). CI runs on a pull request's events, on a merge group, and after each push to main
+through the post-merge workflow's call, which runs under the push's event; never on the
+push of another branch or of a tag, so each commit of a pull request runs once
+([the decision](decisions/2026-10-22-checks-by-risk.md)), and of CI's runs the merge gate
+waits for the pull request's alone. A pull request whose run starts with the `release`
+label, a pull request into another branch, a push to main (the post-merge workflow's
+call), a merge group and any other event are R5: a merge group's run is R5 by the job's
+last case, whatever its entries change, so every job runs in full on every group. The
+label is read from the event that started the run, and `git safe-push` adds a pull
+request's labels after it pushes, so a label given with that push counts from the next
+push; main's run after the merge runs every job in full; and the merge gate holds a
+release until the full pre-flight has run on its head and a run of the `safe-push-tests`
+workflow there has passed each of its jobs, the shards among them, but `report` ([section
+10, "Landing work: pull requests"](#landing-work-pull-requests), step 4). `check`, `model`, `acceptance`,
+`queue-integrity` and `queue-gaps` run for every class, with no `needs: risk`:
+`queue-integrity` runs its offline cases on every pull request and its judge on every
+group, and `queue-gaps` does its work on merge groups only. `negative` runs in full for
+R3, R4 and R5.
 `formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
 `Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
 class to a file of the main package that the formal model imports, directly or through
@@ -460,15 +481,18 @@ October ([the decision](decisions/2026-10-22-checks-by-risk.md)):
 | Pre-flight ([section 10](#landing-work-pull-requests), step 2) | steps 1 to 3, the scans and the guards, 10 to 30 seconds; step 4 left to CI | steps 1 to 4, step 4 being this section's sequence and the negative tests, 9 to 19 minutes, and twice that when a check input changes | as R3 |
 | CI on the pull request | `check` (3.5 to 6.5 minutes), `model` and `acceptance` (4.5 minutes); `negative` passes at once, and `formal-model` too unless the change touches its inputs | as R0 to R2, and `negative` in full (15.5 minutes) | as R3, and `formal-model` in full (8 minutes) |
 
-Main's run after each merge is R5, and runs `negative` and `formal-model` in full beside
-`check` and `model`; `acceptance` runs only on a pull request. The cadence, the
-`safe-push-tests` workflow, runs its three jobs on main every six hours, whatever landed:
-the safe_push tests (72 to 78 minutes, and 137 on the slow run cited below), the negative
-tests in full, and the formal model's build and kernel re-check. A release runs three
+Main's run after each merge, the post-merge workflow's call, is R5, and runs every job in
+full: `negative` and `formal-model` beside `check`, `model` and `acceptance`, which runs on
+every event CI runs on. The cadence, the
+`safe-push-tests` workflow, runs on main every six hours, whatever landed: the safe_push
+tests, in eight shards side by side (in one job they took 72 to 78 minutes, and 137 on the
+slow run cited below), the negative tests in full, and the formal model's build and kernel
+re-check. A release runs three
 things at its own head: the full
 pre-flight, since its label makes it R5; its pull request's CI, in full when its run
-starts with the label; and a run of the `safe-push-tests` workflow, whose three jobs must
-each pass ([section 10](#landing-work-pull-requests), step 4). So the negative tests check
+starts with the label; and a run of the `safe-push-tests` workflow, whose jobs, the shards
+among them, must each pass, but `report` ([section 10](#landing-work-pull-requests), step
+4). So the negative tests check
 a change of R0 to R2 only once it has landed, on main: a break they would have caught
 shows within six hours, and holds the release until its repair lands.
 
@@ -484,39 +508,76 @@ script, from the base commit, but GitHub takes the workflow file itself from the
 request, which could change it, so the job only shows the hold: the authority is the merge
 gate, which reads the issues again when the coordinator merges (section 10).
 
-The `safe-push-tests` job runs `python3 scripts/test_safe_push.py`, the tests of the gate
-every pull request lands through (section 10), in a workflow of its own,
-`.github/workflows/safe-push-tests.yml`: every six hours on main, and on demand
+The `safe-push-tests` workflow, `.github/workflows/safe-push-tests.yml`, runs
+`python3 scripts/test_safe_push.py`, the tests of the gate every pull request lands through
+(section 10), on a cadence of its own: every six hours on main, and on demand
 (`workflow_dispatch`), never on a pull request. The owner, 22 October 2026: "I'm fine that
 this needs to run on a cadence and blocks release but every run no. And it has to be fast"
-([the decision](decisions/2026-10-22-suite-on-cadence.md)). On the same triggers the
+([the decision](decisions/2026-10-22-suite-on-cadence.md)). The tests run in shards, and
+the job named `safe-push-tests` gives the verdict on them (below). On the same triggers the
 workflow runs two more jobs, as CI's `negative` and `formal-model` jobs run them:
 `negative-tests`, the build and the negative tests in full, and `formal-model-kernel`, the
 formal model's build and its kernel re-check, neither sharing a required check's name. A red
 run on main, any of the three jobs failed, cancelled or timed out, opens one issue labelled
 `blocks-release`, or adds the run to the one already open, with the run's link, the jobs
-that were red and the tests of `scripts/test_safe_push.py` that failed, so the release
-waits for it until the issue is closed, with a link to a later green run; that
-is done by a fourth job, the only one with leave to write issues, which runs no code of
-the repository. For now a red run holds the release alone (whether trains of tooling hold
-as well while the cadence is red is left to a later part of #274): trains of every class
-go on landing while the issue is open, each by its own class, and so does the repair,
-which is a train like any other, classed by its files (a repair to a check is R3, to a
-proof R2, and takes that lane). The issue is closed with a link to a later run on main
-in which all three jobs are green, and the release waits for that. The suite's tests
-read the whole tree,
-content as well as code: the check
-inputs safe_push guards, the workflows, this page, whose first command block they compare
-with the registry's render, the registry itself, which they hold to safe_push's reading of
-it and the `check` job to its one step, and content such as `heath/I/01.md`, the
-decisions page, `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and
-`facts.json`, over which they run `check_fidelity.py` and `render.py`; so any change can
-break them, and the next run shows it. They need Git with the whole history and the pinned
-PyYAML, but no Lean and no network. On the cadence the whole suite has taken 72 to 78
-minutes on GitHub's runners, and 137 on a slow one, and the job may take 300; `FullChecks`,
-the one test that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, there as
-anywhere. Each of the three jobs reads the repository with no other permission, and its
-checkout keeps no token.
+that were red and the tests of `scripts/test_safe_push.py` that failed, read from every
+shard's log, so the release waits for it until the issue is closed, with a link to a later
+green run; that is done by the `report` job, the only one with leave to write issues, which
+runs no code of the repository. For now a red run holds the release alone (whether trains
+of tooling hold as well while the cadence is red is left to a later part of #274): trains
+of every class go on landing while the issue is open, each by its own class, and so does
+the repair, which is a train like any other, classed by its files (a repair to a check is
+R3, to a proof R2, and takes that lane). The issue is closed with a link to a later run on
+main in which all three jobs are green, and the release waits for that. The suite's tests
+read the whole tree, content as well as code: the check inputs safe_push guards, the
+workflows, this page, whose first command block they compare with the registry's render,
+the registry itself, which they hold to safe_push's reading of it and the `check` job to
+its one step, and content such as `heath/I/01.md`, the decisions page,
+`docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and `facts.json`, over
+which they run `check_fidelity.py` and `render.py`; so any change can break them, and the
+next run shows it. They need Git with the whole history and the pinned PyYAML, but no Lean
+and no network; `FullChecks`, the one test that needs Lean, is skipped without
+`STOICHEIA_SLOW_TESTS=1`, there as anywhere. Every job but `report` reads the repository
+with no other permission, and its checkout keeps no token.
+
+**The shards.** In one job, on the cadence, the whole suite took 72 to 78 minutes on
+GitHub's runners, and 137 on a slow one; on as slow a runner it reached the job's limit,
+then 150 minutes, and was cancelled there
+([the decision of 23 October](decisions/2026-10-23-cadence-timeout.md)). So the workflow
+runs it as eight shards side by side (#233,
+[the decision](decisions/2026-10-24-safe-push-shards.md)): the `safe-push-shards` job's
+matrix runs `python3 scripts/test_safe_push.py --shard K/N --ran FILE` for each K from 1
+to N, N being written once in the workflow, in the matrix, whose `strategy.job-total`
+each shard is given as N; each shard may take 60 minutes, and none stops the others when
+it fails. Every test
+runs in exactly one shard: `--shard` lists the tests with unittest's own loader, so that a
+new test is never missed, and deals them out by the seconds each took on a GitHub runner,
+kept in `scripts/test_safe_push_times.json`, the heaviest first, each to the shard with the
+least time so far. The times were read from the CI run of #239 on 21 October, when the
+suite had 288 tests; a test the file does not name, one added or renamed since, weighs their
+median, and each shard's log names it. The proof is built from what the shards ran, not
+from the dealing. Each shard writes the tests it ran, each with its outcome, to the file
+`--ran` names, and keeps it as an artifact, a test having failed or not, for 35 days; and
+it keeps its log, from which the report takes the tests that failed. Whether a later
+attempt of the run can fetch a list an earlier attempt kept is GitHub's to say, and
+nothing relies on it: a run re-run with "re-run all jobs" is judged afresh, and one re-run
+with "re-run failed jobs", whose proof may not see the other shards' earlier lists, then
+stays red, for the proof never passes on lists it cannot see. Then
+the `safe-push-tests` job, which needs the shards and runs whatever they did, checks out
+the commit they ran, as they did, fetches every list and runs
+`python3 scripts/test_safe_push.py --cover DIR`, which lists the tests with unittest's
+loader at that commit, reads N from the matrix, and fails, naming each, on a test no shard
+ran, a test run twice, a shard that left no list (as one that stops before its end leaves
+none), a test the loader does not list, and a test that did not pass. Its verdict is green
+only when two things hold, each judged on its own: GitHub's result for the matrix is
+success, which it is only when every shard succeeded; and the proof passed. A shard that
+failed, was cancelled, stopped at its time limit or was skipped, or a list missing, makes
+the job red, never skipped, and the run red with it. Both are needed: should a later
+attempt see a list an earlier one kept, that list stays when, in a rerun of all the jobs,
+its shard is cancelled before it keeps a new one, so the proof alone could pass; and the
+matrix's result says nothing of which tests ran. To run one shard as the cadence does, give its
+number and the count, as in `python3 scripts/test_safe_push.py --shard 3/8`; without
+`--shard` the whole suite runs.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
 head commit of every pull request of R3 to R5 (section 10): those of `check` as
@@ -538,38 +599,44 @@ checks that main's ruleset requires, `check`, `model`, `negative`, `formal-model
 whose every run was skipped, holds the merge. `safe-push-tests` runs on no pull request,
 so it holds no merge, unless it is dispatched on a pull request's branch; a red run of it
 holds the release instead, and a release's merge needs a green run of it at the release's
-own head. GitHub uses the ruleset when merging, and there the two differ, for requiring
-`acceptance` does not by itself prove that the pull request's checklist ran: the
-workflow also runs on pushes to main, where that job is conditionally skipped, and GitHub
-accepts a skipped job even when it is required ([GitHub
+own head. GitHub uses the ruleset when merging. The workflow no longer
+runs on branch pushes, and `acceptance` runs on every event it does run on; GitHub would
+still accept a skipped job even when it is required ([GitHub
 documentation](https://docs.github.com/en/pull-requests/reference/status-checks)). The
 merge gate does not count a skipped run as a pass, so it waits for the pull request's own
 run of `acceptance` to pass. The ruleset and the remaining merge requirements are in
 [section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
-On pull requests and pushes, `queue-integrity` installs the pinned YAML parser with which
-the offline cases read `ci.yml`, then runs those cases; on a merge group it installs
-nothing, so the Python that runs the judge holds nothing a group names. Locally, install
-the parser in a virtual environment outside the tree (a system Python may refuse the
-install, and `python3 -I` does not see a user install), then run what CI runs:
+On pull requests and post-merge main runs, `queue-integrity` installs the pinned YAML
+parser with which the offline cases read `ci.yml`, then runs the offline cases in
+`tests/test_check_queue.py`, `tests/test_check_train.py` and `tests/test_auto_revert.py`,
+each with `python3 -I`; on a merge group it installs nothing, so the Python that runs the
+judge holds nothing a group names. Locally, install the parser in a virtual environment
+outside the tree (a system Python may refuse the install, and `python3 -I` does not see a
+user install), then run what CI runs:
 
 ```sh
 python3 -m venv "${TMPDIR:-/tmp}/stoicheia-queue" && . "${TMPDIR:-/tmp}/stoicheia-queue/bin/activate"
 python3 -m pip install -r scripts/requirements-test_safe_push.txt   # CI's `queue-integrity` job
 python3 -I tests/test_check_queue.py
 python3 -I tests/test_check_train.py
+python3 -I tests/test_auto_revert.py
 ```
 
-Its other step is the merge queue's judge: it takes `scripts/` from a group's base and
-runs that `check_queue.py`, running none of the group's scripts, though GitHub runs the
-group's own copy of this workflow file (section 10 says what must hold it). It has no
-event to run on yet, since this workflow does not run on `merge_group` until the queue
-lands (section 10). The `check` job's `check_queue.py --tree .` step, which the
-pre-flight runs too, checks the decisions page line by line as section 10's rule (d)
-describes; conflict markers in tracked text are S23's, in `scripts/check_style.py`. The
-train and queue checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38,
-its `--merge-base` in 2.40 and `--attr-source` in 2.42); with an older Git they refuse
-every train and group as unreadable.
+On a merge group `queue-integrity` is the queue's judge: it takes `scripts/` from the
+group's base and runs that `check_queue.py` with the event's head, base and repository,
+running none of the group's scripts and building and rendering nothing, though GitHub
+runs the group's own copy of this workflow file (section 10 says what must hold it).
+`queue-gaps` waits for acceptance and, on a merge group, chooses the tests of what the
+group changes in a step that holds the job's token, to read GitHub, and runs none of them
+(`--gaps --plan`); its last step, which holds no token, runs them (`--run-plan`).
+Section 10 gives the rules. The `check` job renders the same group and checks the pages
+are current, and its `check_queue.py --tree .` step, which the pre-flight runs too,
+checks the decisions page line by line as section 10's rule (d) describes; conflict
+markers in tracked text are S23's, in `scripts/check_style.py`. The train and queue
+checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38, its
+`--merge-base` in 2.40 and `--attr-source` in 2.42); with an older Git they refuse every
+train and group as unreadable.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -877,7 +944,8 @@ looked into.
     which refuses a pull request labelled `release` while any issue or pull request
     labelled `blocks-release` is open, or when GitHub cannot be read. That merge also
     needs the full pre-flight of the release's head, which its label makes R5, and a green
-    run of the `safe-push-tests` workflow at that exact head, each of its three jobs passed
+    run of the `safe-push-tests` workflow at that exact head, each of its jobs passed, the
+    shards among them, but `report`
     (`gh workflow run safe-push-tests.yml --ref <branch>`; section 8), the head's copy of
     that workflow being origin/main's: a change to it lands first, in a pull request of
     its own. The `release-gate` job runs on the
@@ -921,7 +989,10 @@ corrections and the common voice, as Books I and II have since their tags.
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
 on main requires a pull request and the checks `check`, `model`, `negative`,
 `formal-model` and `acceptance` (the last two added on 20 October 2026), and blocks force
-pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
+pushes and deletion. When the owner enables the merge queue, the owner adds
+`queue-integrity` and `queue-gaps` to those required checks; the queue is off until then,
+and the coordinator holds the setup steps below. Locally, the pre-push hook refuses
+every push to main. Agents
 never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
 findings recorded in the pull request, not by approvals. Tags, releases, release notes,
@@ -961,7 +1032,8 @@ untouched; the coordinator resolves the decisions page only for a member opened 
 entry files that added its entry there, and regenerates the pages once. The train passes
 the pre-flight of its combined head and CI once, and merges as one pull request, whose
 body lists each branch with its reviews (the `Members` table below) and the issue it
-closes. A train never carries a check change together with content that check judges:
+closes. Once the owner turns the merge queue on, several trains may enter it together
+(below). A train never carries a check change together with content that check judges:
 trains of checks and trains of content are separate, and this rule refuses the
 combination even when origin/main's checks pass. A branch that fails the train's
 pre-flight leaves the train.
@@ -1028,9 +1100,9 @@ adds the checker too: no commit's own copy ever judges it, so the checker lands 
 as an ordinary pull request. An unreadable checker or a refused train stops the
 pre-flight. `--body-file` is read once, as UTF-8, before the checks: the train check,
 the dry run's body and the body posted are that same text. `--merge` runs the train
-check again, on the pull request's current body, and refuses if a later read of the
-body, by the gates, by the merge's own read or by the last gates before the merge,
-differs from the text checked.
+check again, in both modes, on the pull request's current body, and refuses if a later
+read of the body, by the gates, by the merge's own read or by the last gates before the
+merge, differs from the text checked.
 
 **Building a train that passes.** Start the train from origin/main, never from a
 member. Merge each member once, at its final head, after its reviews and `/no-mistakes`
@@ -1087,15 +1159,14 @@ there. A command of another
 job (`model`, `negative`, `formal-model`, `acceptance`) is still a step of the CI workflow
 and, where the pre-flight runs it, a line of `scripts/safe_push.py`.
 
-**The merge queue's judge.** The merge queue is not in use: the owner has not enabled
-it, and CI does not yet run on `merge_group`. Its judge, `scripts/check_queue.py`, is on
-main first, so that the change that brings the queue in is reviewed against it. The
-post-merge workflow, the automatic revert and `safe_push.py`'s queue mode follow in a
-pull request of their own. That pull request lands as an ordinary one: it meets the
-`--tree` step and the offline cases of `queue-integrity`, not the judge, which runs only
-on merge groups. The queue must not be turned on before CI runs on `merge_group`: until
-then no required check reports on a group, so every group would time out and leave the
-queue.
+**The merge queue.** The queue is off until the owner turns it on ("Turning it on",
+below). Its judge, `scripts/check_queue.py`, landed first, in a pull request of its own,
+so that the change that brought in the post-merge workflow, the automatic revert and
+`safe_push.py`'s queue mode was reviewed against it
+([20 October 2026](briefs/0002-decisions.md#20-october-2026)). That change landed as an
+ordinary pull request, which the judge does not see: it runs only on merge groups. CI
+runs on `merge_group` as well as on pull requests, so that every required check reports
+on a group; without that, every group would time out and leave the queue.
 
 Once the queue is on, GitHub makes a group for each queued train: main plus the trains
 ahead of it, then that train, in queue order. Several passing entries can be batched
@@ -1125,16 +1196,25 @@ are:
   same order.
 - **(b) Nothing unchecked.** Each entry has one visible pre-flight block naming exactly
   its head, the base it was compared against and the harness: the main commit whose
-  `scripts/safe_push.py` ran it (today's pre-flight names its base as its harness; the
-  judge also accepts a later main commit, which the queue mode to come may record). The
+  `scripts/safe_push.py` ran it (the pre-flight names its base as its harness; the judge
+  also accepts a later main commit). The
   base must be the newest commit of the group base's first-parent chain that the head
   contains, which is what safe_push records (origin/main's tip when the pre-flight
   ran), so an old base cannot be named for a head built on a newer main; the harness
-  commit must be that base or a later commit of the same chain, never an older one. The
+  commit must be that base or a later commit of the same chain, never an older one.
+  `--merge` holds the body's block to this same rule, read on main as it finds it,
+  before it takes the block as current (step 4, below). The
   block must name the harness commit's blob, give a passing verdict, and show every full
   check that harness runs, by its own `CHECKS` and `NEGATIVE` lists, with no failure; a
   block written before the `Verdict` line existed does not pass, so its pull request
-  needs a fresh pre-flight. The block is a declaration: anyone who can edit the pull
+  needs a fresh pre-flight. A block that left the full checks to CI passes in their
+  place only for a train of R0 to R2: the `LOW_CLASSES` of its harness must hold the
+  class it names, and two diffs, each classed by main's `scripts/risk.py` with the
+  train's labels, must be R0 to R2 and change no check input and no protected path but
+  judged content: the block's own, from its base to its head, and what the entry's merge
+  brings into the group, from the merge's first parent, as CI's risk job classes a pull
+  request's merge commit. The group's own CI run is classed R5, so every check runs on
+  the group before it merges. The block is a declaration: anyone who can edit the pull
   request's body can type one, and the judge checks it for consistency with the
   repository, not as proof that a pre-flight ran. Its authenticity must be held by
   something a group cannot change, as above, before the queue is turned on. A `train/`
@@ -1206,34 +1286,221 @@ Git gives an attribute that can change how a checkout writes it: `working-tree-e
 `filter`, `ident`, `text`, `eol` or `crlf`, set, unset or with a value.
 
 Every entry other than an automatic revert must have its head in this repository, and no
-bot, the revert App's above all, may have written it: trains are written and queued by
-people. Of an entry still in the queue, no bot may have put it there or last edited its
-body either; of one already merged, the merged prefix of the group, the judge reads only
-its head's repository and who wrote it, since GitHub's queue no longer lists it and its
-own group judged it when it merged. GraphQL names a bot by a login without the "[bot]"
-that REST adds, so the actor's type is read, not its login.
+bot, the revert App's above all, may have written it: trains are written, named and
+queued by people. Of an entry still in the queue, no bot may have put it there, last
+edited its body or last renamed it (the last rename is read from its timeline; the title
+goes into main's merge commit); of one already merged, the merged prefix of the group,
+the judge reads only its head's repository and who wrote it, since GitHub's queue no
+longer lists it and its own group judged it when it merged. GraphQL names a bot by a
+login without the "[bot]" that REST adds, so the actor's type is read, not its login.
+And while an issue labelled `main-red` is open, an entry in the queue lands only as
+main's fix: its body must declare, as `--merge` reads it, every open `main-red` issue
+and no other ("Out of a red main", below), or the judge refuses it.
 
-The queue accepts a revert without an ordinary pre-flight only from the configured
-App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,
-when its named run is a failed post-merge run of a push to main, its branch is
-`revert/` and that push's first 12 hexadecimal digits, an open issue labelled
-`main-red` names the run, the merges it names are exactly the merges of that push (its
-`before` and `after` read from GitHub's record of pushes to main), newest first, and
-its tree is exactly those merges reverted.
-
-**The gaps of what is new.** `check_queue.py --gaps`, for the `queue-gaps` job that lands
-with the queue, takes the union of the entries' derived changes and their declarations.
-A changed `tests/test_*.py` runs with `python3 -I`, and a changed `scripts/test_*.py`
-runs itself; a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
+**The gaps of what is new.** In the `queue-gaps` job, `check_queue.py --gaps` takes the
+union of the entries' derived changes and their declarations. A changed
+`tests/test_*.py` runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself;
+a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
 `scripts/test_<name>.py` tests. The safe_push test command is
 `python3 scripts/test_safe_push.py`. A file the group deletes asks for no test; when an
 entry has more than one merge base, it asks for the tests of what it changes against
 any of them, and a deletion excuses a test only if it is a deletion against all. Each
-selected command runs once, with no token in its environment, and a failure fails the
-job. Changed propositions have their acceptance items printed from the acceptance
-artifact, as a report of the verdict already judged there. Declared rules are printed
-for the reader. Foundations need no extra run here, since `model` and
-`formal-model` run on every group.
+selected command runs once, and a failure fails the job. Changed propositions have
+their acceptance items printed from the acceptance artifact, as a report of the
+verdict already judged there. Declared rules are printed for the reader. Foundations
+need no extra run here, since `model` and `formal-model` run on every group.
+
+The tests are the group's own code, and on Linux a process can read its parent's
+environment (`/proc/<ppid>/environ`), so no test runs in a step that holds the token.
+The step that holds the job's token, to read GitHub, runs main's
+`check_queue.py --gaps --plan <file>`, which chooses the tests, prints the reports above
+and writes the chosen commands to a new file, running none of them. The next step
+installs main's pinned YAML parser, which the queue's tests import, from
+`scripts/requirements-test_safe_push.txt` at the group's base, with
+`python3 -I -m pip` run from the runner's temporary directory, so that nothing in the
+group's checkout can run in pip's place; it comes after the token's last step, since
+what pip installs could run in any later Python. The last step declares no token, and
+neither does any step after the choosing: it runs main's
+`check_queue.py --run-plan <file> --head <sha>`, which reads no GitHub, checks that the
+plan is for that head and that the checkout is that head, unchanged, runs only
+commands of the forms above, for files of that checkout, and refuses to run any test
+while a variable whose name holds `TOKEN` is in its environment. `--gaps` without
+`--plan`, run by hand, refuses the same way.
+
+This split keeps the token out of the tests' environment, files, caches and artifacts.
+It does not keep it out of the job: the runner process holds the job's token until the
+job ends, and every step runs beneath it, so a test that can read the runner's memory (a
+hosted runner gives its steps `sudo`) could read the token there. So `queue-gaps`' token
+is read-only by design: its permissions are contents, pull requests, actions and issues,
+each read only, and the token ends with the job.
+
+**Auto-eject.** With GitHub's "only merge non-failing pull requests" setting, a train
+merges only when its own group passed. If a group fails, GitHub removes its last
+train and rebuilds the groups after it without that train. Thus an earlier passing
+train need not wait for a broken later one, and the later groups are tested again
+without the rejected change.
+
+**Auto-revert.** `.github/workflows/post-merge.yml` reruns integration on each main push.
+If it fails, the workflow takes `scripts/auto_revert.py` from the previous main, the
+push's `before` commit, but only when the post-merge run on `before` itself passed;
+otherwise it opens the issue alone and says why. It runs the script in Python's
+isolated mode, importing no code from the failed checkout. The `auto-revert`
+environment must allow main alone and hold `STOICHEIA_REVERT_APP_ID` and
+`STOICHEIA_REVERT_APP_KEY`. The script reverts each merge in the push's first-parent
+chain, newest first, reading merge attributes from `before`, never from the tree it
+reverts (`git --attr-source`, which needs Git 2.42 or later), pushes `revert/<after12>`
+with the job's own token, and opens and enqueues one pull request, its head pinned, with
+that App's installation token. A push that holds a commit other than a two-parent merge
+is not reverted: the issue says so. A revert that changes `.github/workflows/` cannot be
+pushed with the job's token, so it is left to the coordinator, and the issue says so.
+If main has moved on since the failed push, it reverts nothing and leaves the issue,
+since a later push's own run then decides. A push that GitHub records as a plain pull
+request merge, rather than a push or a queue merge, is reverted and enqueued by the App
+like any other; but the judge finds the failed push only among the pushes and queue
+merges GitHub records for main, so it refuses that revert, which leaves the queue, and
+the issue stays open for the coordinator, who lands the revert by hand as a red main's
+fix (below). The pull request carries `auto-revert`, the reverted requests' kind labels,
+`security-review` when a protected path changes, a `Failed run: <id>` line and
+`Reverts: <sha>` lines; the script pushes to no branch but `revert/<12 hex>`. The App
+lets that pull request trigger CI; a pull request opened with `GITHUB_TOKEN` would
+not trigger it.
+
+The decisions record, the decisions page with the entries in `docs/decisions/` that
+tooling/decision-entries brings, is history, only ever added to, so a revert never
+removes a decision's text: after the reverts, in a commit of its own, the script puts
+`docs/decisions/` and the decisions page back as they were at the failed push's tip, as
+the advice for a revert by hand that tooling/decision-entries brings restores both from
+origin/main. Everything else is the exact revert. A path the failed push's tip lacks
+stays absent, so without the folder only the page is kept.
+
+A link on the kept record can outlive what it names: the page links to a file the
+reverted push added, say, or to a heading of a page it changed, and the revert takes
+that away. The revert's own `check_links.py` step would then fail, and the queue eject
+it. So before it pushes, the script reads every relative link of the kept page and of
+the kept Markdown files under `docs/decisions/`, as `scripts/check_links.py` reads and
+resolves them (its reading copied, since the script imports no repository code), and if
+one that resolves at the failed push's tip would not resolve in the revert, it pushes
+nothing: it records the issue only, names the links and says to revert by hand. A
+revert made by hand meets the same links. `python3 scripts/check_links.py`, which the
+pre-flight runs, names them, and each is mended in the revert's own pull request,
+keeping the decision's words (a link to the file as it stood at the failed push's tip,
+say), before it lands.
+
+The workflow records an issue with `GITHUB_TOKEN`, labelled `blocks-release` and
+`main-red`, naming the trains, their merge commits, the failed jobs and the run. It
+does this before attempting the revert. Without the App credentials, it records the
+issue and the pause, with no revert. Unreadable history or a conflicting revert also
+leaves an issue; if the previous main has no readable script, or the failed jobs cannot
+be read, the workflow's own fallback opens the issue without running repository code.
+
+The queue accepts a revert without an ordinary pre-flight only from the configured
+App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,
+when its named run is a failed post-merge run of a push to main, its branch is
+`revert/` and that push's first 12 hexadecimal digits, and an open issue labelled
+`main-red` names the run on its own `Run:` line, by this repository's address for the
+run (a run of another repository, or an address elsewhere in the issue, names nothing).
+The push, its `before` and `after` read from GitHub's record of pushes to main, must be
+two-parent merges only, and the merges the revert names must be exactly those, newest
+first. The revert's one merge base with main must be the push's tip, `after`, and
+`after..head` exactly the reverts and at most one keep commit, with no merge: one
+commit for each named merge, in that order, whose tree is that merge reverted onto the
+last (merge attributes read from `before`, as the script reads them), then, only where
+the reverts changed the decisions record, one commit whose tree keeps
+`docs/decisions/` and the decisions page as at `after`, as above. Nothing else may
+differ, so a revert that takes a train's lines off the page, or changes it in any other
+way, refuses, and so does one built on a later main, or through any other commit. The
+commits' messages are not read. The job that clears `main-red` runs no repository code
+at all.
+
+The revert job is one of the named run's own jobs, so the revert's group can be judged
+while that run is still in progress. The judge then reads the run again every 15
+seconds, for up to 10 minutes, and judges it once GitHub reports it completed: a run
+that concluded failure admits the revert, under the rules above, and any other
+conclusion refuses it. A run still not completed after 10 minutes refuses it too, so
+the revert leaves the queue and the issue stays open; the coordinator then lands the
+revert as a red main's fix (below). A revert that takes away a pass the acceptance
+ratchet recorded (a train that brought a record to full, say) fails `acceptance` in its
+own group, which compares it with the failed push, and a revert by hand fails it in its
+own CI just the same; then the coordinator fixes main forward, or re-runs a run that
+failed by chance, instead of reverting. Comparing a verified revert with main as it was
+before the reverted merge is a change to the acceptance check of its own, which lands
+after the queue (#245).
+
+Two limits are stated rather than closed. The workflow that holds the App's key is read
+from main, so code that has landed there could take the key. A key taken that way still
+writes nothing to the repository's contents (the App only reads them; the revert job's
+own token, which lasts as long as the job, pushes the revert branch), so it makes no
+branch, tag or release; it is no ruleset's bypass actor; and it lands nothing but the
+revert above, since the queue refuses any other entry a bot wrote, queued, last edited
+or last renamed. The revert's own title and body are the App's words, which a taken key
+could choose; the judge reads the body's `Reverts:` and `Failed run:` lines and the
+tree, not the rest. It can still open, label and edit pull requests, and take entries
+out of the queue. Reverting such a change does
+not take the key back: the owner makes a new key. And the pre-flight block
+in a pull request body is evidence the coordinator's harness wrote, which anyone who can
+edit the body could imitate; the queue checks it for the head and the harness, and
+`git safe-push --merge` remains the way trains are queued.
+
+Landing through `--merge` pauses while an open `main-red` issue exists or the latest
+completed post-merge run at main's tip concluded anything other than success, neutral
+or skipped. A tip with no completed run is not itself marked red; unreadable health
+answers refuse. The queue's judge holds the same pause for trains already queued, or
+queued without `--merge`: in a group judged while an issue labelled `main-red` is open,
+it refuses every entry but the automatic revert and a declared fix (below), so the rest
+leave the queue. A group the judge passed before the issue opened, during the post-merge
+run, can still merge, since the judge runs once for each build of a group. It reads the
+open issues only, not the post-merge runs. Successful integration clears `main-red` only
+after confirming that the successful commit is still main's tip, and only from an issue
+whose exact `After: <40 hex>` line names that commit or one of its ancestors. An issue
+with a missing or unreadable line, or one naming another commit, keeps the label; the
+issue stays open with `blocks-release` for the coordinator. The clear reads main again
+before each removal. Main has moved on only when its tip, read afresh, is readable and
+another commit: then the clear job, like `auto_revert.py --clear --after`, changes no
+further label and passes, naming that commit and its post-merge run, which decides, or
+saying that no run for it can be read yet. So a run whose integration passed is never
+marked failed for main's moving. A clear that fails at main's own tip still fails, as
+does one that cannot read the tip.
+
+**Out of a red main.** While main is red, `--merge` lands only its fix. With the queue
+off, or without the revert App, only a merge moves main's tip, so the fix comes through
+`--merge` like any pull request, and its body declares it: on a line of its own, where
+GitHub shows it (not in a comment or a code block), `Fixes main-red: #<n>`, or
+`Fixes main-red: #<n>, #<m>` for several, naming every open `main-red` issue once and no
+other. The declaration lifts the pause for that pull request alone. Every other gate
+holds: its own CI must pass, as every merge's must, and in queue mode its group's too;
+main's health is shown as a note, not as ok, in the summary. A declaration that names
+too few issues or too many, names one twice, or is not in that form, refuses, and so
+does more than one such line. A failed run with no open `main-red` issue leaves nothing
+to declare: the coordinator labels its issue `main-red` again first. The fix may be a
+revert made by hand, as for a train that changed `.github/workflows/`; it keeps the
+decisions record, and mends each link on it that the revert would break, as
+`check_links.py` names them ("Auto-revert", above). Once it is on
+main, its own post-merge run decides: a passing run at the new tip clears `main-red`,
+and a failing one is a failed push like any other.
+
+**Turning it on.** The queue remains off until the owner enables it, and not before the
+owner has chosen the authenticated source for the pre-flight's evidence that rule (b)
+asks for. The coordinator holds these steps: add the merge queue rule for main, keep
+merge commits and enable "only merge non-failing pull requests"; require `check`,
+`model`, `negative`, `formal-model`, `acceptance`, `queue-integrity` and `queue-gaps`;
+set the queue's status check timeout to 150 minutes: `acceptance`'s limit of 60 minutes,
+then `queue-gaps`' of 75, which starts only once `acceptance` ends, and 15 for waiting
+on runners. `queue-gaps` may run the tests of `safe_push.py`, `check_queue.py` and
+`check_train.py` in one group, near 40 minutes as measured off GitHub, and its choosing
+step, like `queue-integrity` (limit 20 minutes), may wait up to 10 minutes for a
+revert's run to complete before it judges the revert (above): a shorter timeout ejects
+sound slow groups, and every automatic revert whose run is still in progress. These
+numbers are measured again on the queue's trial, and `QUEUE_TIMEOUT` in `safe_push.py`,
+how long `--merge` follows an entry, is twice the status check timeout, for one rebuild
+behind a group that fails. Then install the revert App for this repository with contents
+read, and pull requests and merge queues write (a train that changed
+`.github/workflows/` cannot be pushed by the job's token, and is reverted by hand); add
+the rulesets that keep branches other than `revert/**` and tags to the owner; restrict
+the `auto-revert` environment to main and put the App credentials there, not in
+repository secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login
+as REST spells it, `<the App's slug>[bot]`. With the queue off, `--merge` follows the
+direct merge path below. The issue and the pause still apply if the App has not been set
+up.
 
 **Decision entries.** A new decision is a file of its own in `docs/decisions/`, so that
 pull requests queued together do not collide at the end of
@@ -1304,7 +1571,7 @@ git safe-push --branch <name> --label <kind>       # the pre-flight, the push, a
 git safe-push --branch <name>                      # after a fix: again, on the new head
 gh pr ready <n>                                    # when the reviews are done
 git safe-push --merge <n> --dry-run                # the gates, and no merge
-git safe-push --merge <n>                          # the gates, then a merge commit
+git safe-push --merge <n>                          # the gates, then queue or direct merge
 ```
 
 For `train/*`, add `--body-file <path>` to every `--branch` command above.
@@ -1323,9 +1590,12 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 `STOICHEIA_PYTHON` when it is set, else the first of `python3.14`, `python3.13`,
 `python3.12`, `python3.11` and `python3` that is; without one, they refuse.
 
-1. **A branch.** The change is committed on a branch from origin/main. When main moves,
-   origin/main is merged into the branch, never rebased onto: review records stamp the
-   branch's commits, and a rebase would orphan the stamps.
+1. **A branch.** The change is committed on a branch from origin/main. Before a push,
+   it must contain the current origin/main. If main moved, merge it into the branch,
+   never rebase onto it: review records stamp the branch's commits, and a rebase would
+   orphan the stamps. With the queue off this still holds at the merge; with the queue
+   on, the group checks a head alongside the changes that reached main or queued ahead
+   since its pre-flight.
 2. **The pre-flight.** `git safe-push --branch <name>` checks the exact commit (HEAD, or
    `--commit <sha>`), then pushes it to that branch, never to main and never forced, and
    opens the pull request onto main, or updates the open one. It reads the commit alone,
@@ -1335,7 +1605,7 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    that a branch cannot weaken the harness that judges it. It stops, saying why, at the
    first step that fails:
    1. *Preconditions.* The commit exists; `git fetch origin`; origin/main is an ancestor
-      of the commit, so that the merge commit holds exactly the tree checked; the
+      of the commit, so a direct merge at that base holds exactly the tree checked; the
       branch, if origin has it, is an ancestor of the commit too; the branch is not main;
       the branch name and the title, which are public, hold nothing the secret scan
       refuses. No tag or release is made. The installed hook and launcher are compared
@@ -1370,7 +1640,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
       the hook's repository or index: each command finds its repository by its working
       directory too, the hand-over's included (#357). The harness sets one itself, the
-      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree.
+      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
+      `git safe-push` unsets the same variables before its first git command, so a
+      caller's `GIT_DIR` cannot make it fetch another repository's origin and run that
+      repository's harness (#359).
       `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
@@ -1629,20 +1902,41 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    pushes and opens pull requests. Each blocking or material finding (section 9) is
    resolved, and the pull request says how. A fix is a new commit on the branch, and the
    pre-flight runs again.
-4. **The merge.** `git safe-push --merge <n>` runs the secret scan and the guards on the
-   pull request's head against the current origin/main again, every time: the
+4. **The merge.** `git safe-push --merge <n>` reads main's effective rules; an unreadable
+   answer refuses. A `merge_queue` rule selects queue mode. In either mode it checks
+   main's health (a red main admits only its fix: "Out of a red main", above) and runs
+   the secret scan and guards on the pull request's head again, every time. With the
+   queue off, the base is current origin/main, which the head must contain. With the
+   queue on, the base is the newest commit of current origin/main's first-parent chain
+   that the head contains, which is what its pre-flight recorded, so the head need not
+   contain the intervening main changes. It is not the head's merge base with main,
+   which lies off the chain when a member was merged on its own before its train: so
+   `--merge`'s own checks, its train check and the queue's judge (rule (b), above)
+   compare against one base. The
    pre-flight's record is a local file, which code the pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
-   checks, which CI runs as well, and only when origin/main's harness made it; otherwise
-   they run again too. A record that left them to CI for its class stands in only while
-   the class, recomputed then by origin/main's classifier for that head against that
-   base, is still R0 to R2; otherwise step 4 runs again, by the class. The body must
-   already carry the summary of this head and origin/main, and every other part
-   safe_push wrote must be up to date. `--merge` never
-   writes the pull request body: when one of those parts is stale, it refuses before
-   writing, and the coordinator runs the pre-flight to refresh the body before starting
-   a fresh merge attempt. It merges only when those pass; CI on that head is green,
-   subject to the ruleset and the local check judgement described in
+   checks, which CI runs as well, and only for this head and base with the running
+   origin/main harness's blob, and never for a head that changes the checks (`scripts/`,
+   `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) or any protected
+   path, since CI runs a head's own copies and its own workflow, and only the pre-flight
+   runs origin/main's on it; otherwise they run again too. A record that left them to CI
+   for its class stands in only while the class, recomputed then by origin/main's
+   classifier for that head against that base, is still R0 to R2; otherwise step 4 runs
+   again, by the class. The body must already carry
+   the summary of this head, its base and harness held to the queue's judge's rule
+   (rule (b), above), read on current origin/main, in both modes: the base the newest
+   commit of main's first-parent chain that the head contains, which is what the
+   pre-flight records, and the harness that base or a later commit of the chain (with
+   the queue off, both are main's tip); for a train, with its train step passing. So a
+   summary the judge would refuse is never taken as current, and one it would accept
+   is, its base the one the merge checks against, even when the head's merge base with
+   main lies off main's chain. Every other part safe_push wrote must be up to
+   date; a body edited in GitHub's page, which keeps CRLF line ends, is up to date when
+   it differs from those parts by line ends alone. `--merge` never writes the
+   pull request body: when one of those parts is stale, it refuses before writing, and
+   the coordinator runs the pre-flight to refresh the body before starting a fresh merge
+   attempt. It merges only when those pass; CI on that head is green, subject to the
+   ruleset and the local check judgement described in
    [section 8](#8-validation-on-the-integrated-revision); no box marked **Required** in
    its checklist is unticked, nor one marked **Required if protected** when a protected
    path changes, and none of the template's
@@ -1676,7 +1970,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    only with a green run of `.github/workflows/safe-push-tests.yml` at that exact head:
    completed and successful, its jobs `safe-push-tests`, `negative-tests` and
    `formal-model-kernel` each there and passed (safe_push's `SUITE_JOBS`), and every other
-   job passed but `report`, which runs only for a red run on main (#301). A run at the head
+   job passed, the shards of `safe-push-shards` among them, but `report`, which runs only
+   for a red run on main (#301). A run at the head
    runs the head's copy of that workflow, which could drop a job, so the head's copy must
    be origin/main's: a release that changes it is refused, and the change lands first, in
    a pull request of its own. Malformed pull request labels refuse
@@ -1685,8 +1980,23 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    release gate makes no issue-list read for an ordinary pull request. The title and
    the branch name, which go into main's merge commit, hold
    nothing the secret scan refuses; it carries a label for its kind, and
-   `security-review` when a protected path changes; and it is not a draft. Then
-   `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
+   `security-review` when a protected path changes; and it is not a draft. These gates
+   hold in both modes; in queue mode they are read when the pull request is queued, and
+   the queue does not read the release hold again before it merges (the owner's OK
+   before the tag still holds a release).
+
+   **Queue on:** main's health is checked again at its current tip, and the head is
+   enqueued with GraphQL `enqueuePullRequest`, `expectedHeadOid` pinned to the checked
+   head. The script follows the entry to a merge or removal from the queue. A merge
+   succeeds only when origin/main holds the named two-parent merge with the checked
+   head as its second parent. Its tree includes the trains ahead, checked by the
+   group's CI; it need not equal the pull request head's tree. An ejection is exit 1,
+   with the last observed group's checks when readable. An unreadable verdict,
+   interruption or timeout after the enqueue was attempted is exit 3,
+   "queued; verdict not followed", with no revert advised. A dry run enqueues nothing.
+
+   **Queue off:** main must still be the checked base, and its health is checked again.
+   Then `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
    commit's subject and body given (GitHub's own words: the owner GitHub names for the
    head, never the one in origin's URL, which names the old owner after a transfer, and
    refused when GitHub names none an account could have; the branch name, scanned; and
@@ -1752,15 +2062,15 @@ and closes the fork's with a link to it.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
-in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in place of
-another copy, is written to `harness/`, named by its blobs; and, with
-`--main-checks-cache`, origin/main's pass of step 4 in `main-checks/`. `sh
-scripts/install_hooks.sh` installs the launcher and the pre-push hook: the hook refuses
-every push to main, scans a push to any other branch (its name included) with
-origin/main's copy of the secret scan (`safe_push.py --scan-push`), copied out of git and
-run with git's replacement objects off (#256), whichever remote it goes to (another
-remote's main is never run, and without origin/main's copy the push is refused), and
-refuses to push or delete a tag. With the
+in `preflight/`, which `--branch` and `--merge` write and only `--merge` reads (step 4,
+above); origin/main's harness, when it runs in place of another copy, is written to
+`harness/`, named by its blobs; and, with `--main-checks-cache`, origin/main's pass of
+step 4 in `main-checks/`. `sh scripts/install_hooks.sh` installs the launcher and the
+pre-push hook: the hook refuses every push to main, scans a push to any other branch (its
+name included) with origin/main's copy of the secret scan (`safe_push.py --scan-push`),
+copied out of git and run with git's replacement objects off (#256), whichever remote it
+goes to (another remote's main is never run, and without origin/main's copy the push is
+refused), and refuses to push or delete a tag. With the
 owner's OK for a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin
 refs/tags/<tag>`, and the hook still scans the commits it points to and an annotated
 tag's message. An installed hook or launcher takes a change to its source in
@@ -1775,5 +2085,5 @@ cases include unfinished work left unwritten, closed or unlabelled issues, open 
 issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
 request merging without reading the blockers;
 `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all. The
-`safe-push-tests` job runs the tests, without that run, every six hours on main and on
-demand (section 8).
+`safe-push-tests` workflow runs the tests, in eight shards and without that run, every six
+hours on main and on demand (section 8).

@@ -1,3 +1,4 @@
+import Elements.Figure.Basics
 import Elements.Figure.Circles
 import Check.Hand
 import Check.Generator
@@ -51,29 +52,29 @@ example : Model.Hand.triple_incidence3 original =
 
 /-! ## The hand translations against generated laws or declaration types -/
 
-example (S : Model.Signature) : Model.Hand.same_side_refl S =
-    Model.Law.Tacit.same_side_refl S := rfl
-example (S : Model.Signature) : Model.Hand.same_side_symm S =
-    Model.Law.Tacit.same_side_symm S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.same_side_refl
+  ``Elements.Tacit.same_side_refl)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.same_side_symm
+  ``Elements.Tacit.same_side_symm)
 example (S : Model.Signature) : Model.Hand.not_on_line_of_same_side S =
     Model.Law.Tacit.not_on_line_of_same_side S := rfl
 example (S : Model.Signature) : Model.Hand.same_side_trans S =
     Model.Law.Tacit.same_side_trans S := rfl
-example (S : Model.Signature) : Model.Hand.same_side_or S =
-    Model.Law.Tacit.same_side_or S := rfl
-example (S : Model.Signature) : Model.Hand.pasch1 S =
-    Model.Law.Tacit.pasch1 S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.same_side_or
+  ``Elements.Tacit.same_side_or)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.pasch1
+  ``Elements.Tacit.pasch1)
 example (S : Model.Signature) : Model.Hand.pasch2 S =
     Model.Law.Tacit.pasch2 S := rfl
-example (S : Model.Signature) : Model.Hand.pasch3 S =
-    Model.Law.Tacit.pasch3 S := rfl
-example (S : Model.Signature) : Model.Hand.pasch4 S =
-    Model.Law.Tacit.pasch4 S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.pasch3
+  ``Elements.Tacit.pasch3)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.pasch4
+  ``Elements.Tacit.pasch4)
 
-example (S : Model.Signature) : Model.Hand.triple_incidence1 S =
-    Model.Law.Tacit.triple_incidence1 S := rfl
-example (S : Model.Signature) : Model.Hand.triple_incidence2 S =
-    Model.Law.Tacit.triple_incidence2 S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.triple_incidence1
+  ``Elements.Tacit.triple_incidence1)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.triple_incidence2
+  ``Elements.Tacit.triple_incidence2)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.triple_incidence3
   ``Elements.Tacit.triple_incidence3)
 

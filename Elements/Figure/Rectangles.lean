@@ -1,4 +1,5 @@
 import Elements.Figure.Parallelograms
+import Elements.Figure.RuleBase
 import Elements.Figure.Circles
 import Elements.Foundations.DefinitionsII
 

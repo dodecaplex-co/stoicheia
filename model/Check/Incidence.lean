@@ -1,3 +1,4 @@
+import Elements.Figure.Basics
 import Elements.Figure.Circles
 import Elements.Foundations.Postulates
 import Check.Hand
@@ -63,13 +64,17 @@ example (S : Model.Signature) : Model.Hand.Postulate1 S = Model.Law.Postulate1 S
 example (S : Model.Signature) : Model.Hand.line_unique S = Model.Law.Tacit.line_unique S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.centre_unique
   ``Elements.Tacit.centre_unique)
-example (S : Model.Signature) : Model.Hand.centre_inside S = Model.Law.Tacit.centre_inside S := rfl
-example (S : Model.Signature) : Model.Hand.inside_not_on S = Model.Law.Tacit.inside_not_on S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.centre_inside
+  ``Elements.Tacit.centre_inside)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_not_on
+  ``Elements.Tacit.inside_not_on)
 example (S : Model.Signature) : Model.Hand.lines_meet_of_opposite_sides S = Model.Law.Tacit.lines_meet_of_opposite_sides S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point S = Model.Law.Tacit.exists_point S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point_on_line S = Model.Law.Tacit.exists_point_on_line S := rfl
-example (S : Model.Signature) : Model.Hand.exists_point_on_line_off_line S = Model.Law.Tacit.exists_point_on_line_off_line S := rfl
-example (S : Model.Signature) : Model.Hand.exists_point_between S = Model.Law.Tacit.exists_point_between S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_on_line_off_line
+  ``Elements.Tacit.exists_point_on_line_off_line)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_between
+  ``Elements.Tacit.exists_point_between)
 example (S : Model.Signature) : Model.Hand.Postulate2 S = Model.Law.Postulate2 S := rfl
 
 end Check

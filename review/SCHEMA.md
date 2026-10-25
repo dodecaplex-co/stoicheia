@@ -98,7 +98,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.outside_of_between"`. |
-| `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6 needs `"Tacit.centre_inside"`. |
+| `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6's record listed `"Tacit.centre_inside"` until that rule became a theorem. |
 | `kind` | `"states"`, `"gives"` or `"step"` | yes | The kind of the proposition's row in the catalogue (below). |
 | `note` | string | for `step` | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. For a step, which step the rule carries, and in which proof. |
 
@@ -110,7 +110,9 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   (historically, III.2 and Circle 2, before that rule became a theorem).
 - **gives**: the proposition follows from the rule at once, in a short proof from at most
   three rules that cites no proposition, any other rules only drawing or naming the figure
-  (III.2 from Circle 3, III.5 and III.6).
+  (III.2 from Circle 3; III.5 from Diagram-segment 2 with Generalities 4; III.6's
+  contact-within case from Diagram-segment 2 with Generalities 4 and its contact-without
+  case from Generalities 3; Generalities 3 and 4 are theorems now).
 - **step**: inside some proof, the rule carries a step that is the proposition's content,
   or a case of it, and does not give the proposition at once (as for I.13, a consequence of
   which, Metric 5, carries a step of I.47's proof).
@@ -298,9 +300,9 @@ d040117, and serve as test values: at that commit, `heath.review_fingerprint` gi
 `sha256:5ea666d96871b7f8` for I.40. Their `text` is `heath.text_hash` of each example as
 printed here, which `python3 scripts/heath.py` checks.
 
-III.16 is partial: the clause about the angle of the semicircle and the horn-like angle
-is not stated, its porism is proved on its own, and one run of sentences has no Lean
-beneath it.
+At d040117, III.16 was partial: the clause about the angle of the semicircle and the
+horn-like angle was not stated, its porism was proved on its own, and one run of sentences
+had no Lean beneath it.
 
 ```toml
 # review/III/16.toml
@@ -356,6 +358,12 @@ lean = "sha256:061379c1f0411141"
 text = "sha256:47c9097b39a8fcc7"
 reviewer = "Claude Opus 5.5"
 ```
+
+III.16's mixed angles have since been stated: [its current record](III/16.toml) has full
+scope, lists `"III.16 semicircle"`, `"III.16 remaining"` and `"III.16 acute"` as
+companions, and carries `mixed-angles-local` where this example carries
+`mixed-angles-omitted`, which no record now carries. The example above remains the fixture
+from commit d040117.
 
 At d040117, I.40 was restricted: the theorem took the two bases end to end.
 

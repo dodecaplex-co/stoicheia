@@ -10,9 +10,11 @@ intersection rules beyond `Model/Hand.lean`, and separate hand copies of the two
 words they reach in `Hand.Intersections`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration.
 `Check/Intersections.lean` compares each locked law and hand word here with its generated
-counterpart. The retired rules `line_meets_circle_of_opposite_sides`, `inside_of_between`
-and `not_same_side_of_circles_meet` are compared directly with their library declarations,
-including binder kinds. Their concrete plane proofs remain as derived facts, with no
+counterpart. The retired rules `line_meets_circle_of_opposite_sides`,
+`line_meets_circle_of_inside`, `inside_of_between` and `not_same_side_of_circles_meet` are
+compared directly with their library declarations. Since 19 October 2026 no locked law
+reaches `Elements.LineMeetsCircle`, so the generator no longer writes it, and Intersections 2
+and 3 use the hand copy here, itself checked against the library's word. Their concrete plane proofs remain as derived facts, with no
 generated assumption fields. Overlapping translations keep their statements under
 distinct names.
 
@@ -79,14 +81,15 @@ The theorem's unchanged type is
 (Elements.OnCircle B α) → Elements.OppositeSides A B L → Elements.LineMeetsCircle L α`. -/
 def line_meets_circle_of_opposite_sides : Prop :=
   ∀ {A B : S.Point} {L : S.Line} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α →
-    S.InsideCircle B α ∨ S.OnCircle B α → S.OppositeSides A B L → S.LineMeetsCircle L α
+    S.InsideCircle B α ∨ S.OnCircle B α → S.OppositeSides A B L →
+    Intersections.LineMeetsCircle S L α
 
-/-- `Elements.Tacit.line_meets_circle_of_inside` (Intersection 3), by hand. The lock prints
-it as `∀ {A : Elements.Point} {L : Elements.Line} {α : Elements.Circle},
+/-- `Elements.Tacit.line_meets_circle_of_inside` (Intersection 3), by hand. The theorem's unchanged type
+is `∀ {A : Elements.Point} {L : Elements.Line} {α : Elements.Circle},
 Elements.InsideCircle A α → Elements.OnLine A L → Elements.LineMeetsCircle L α`. -/
 def line_meets_circle_of_inside : Prop :=
   ∀ {A : S.Point} {L : S.Line} {α : S.Circle}, S.InsideCircle A α → S.OnLine A L →
-    S.LineMeetsCircle L α
+    Intersections.LineMeetsCircle S L α
 
 /-! ## Where a line crosses a circle -/
 
