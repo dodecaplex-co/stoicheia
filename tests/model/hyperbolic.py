@@ -639,21 +639,6 @@ def g_two_circles(rng):
 
 def gs_cm(kind):
     def g(rng):
-        # One kind, for outside_of_between, draws a single circle: A and C each its seed, a
-        # point on it, its centre or a point anywhere, and B beyond C on the ray from A. It
-        # is a kind of a generator other laws use, so that it needs no generator of its own.
-        if kind == 'out':
-            c = g_circle(rng)
-            pool = [SEEDS[c], pt_on_circle(c, rng), centre(c)]
-            A = rng.choice(pool) if rng.random() < 0.6 else rand_pt(rng)
-            C = rng.choice(pool) if rng.random() < 0.5 else rand_pt(rng)
-            if A == C:
-                return None
-            k = rng.choice([Fr(3, 2), Fr(5, 4), Fr(2)])
-            B = (A[0] + k * (C[0] - A[0]), A[1] + k * (C[1] - A[1]))
-            if not in_disc(B):
-                return None
-            return dict(A=A, B=B, C=C, al=c)
         r = g_two_circles(rng)
         if r is None:
             return None
