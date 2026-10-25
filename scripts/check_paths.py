@@ -93,8 +93,8 @@ EXTENSIONLESS = frozenset({"LICENSE", "NOTICE", "lean-toolchain", "model/lean-to
                            "scripts/hooks/pre-push", "scripts/hooks/safe-push"})
 # P4: the top-level folders.
 TOP_FOLDERS = frozenset({".github", "Audit", "Certificate", "Elements", "Staging", "assets",
-                         "book", "checks", "docs", "figures", "heath", "mishnah", "model", "reading",
-                         "review", "scripts", "tests"})
+                         "book", "checks", "docs", "figures", "heath", "mishnah", "model",
+                         "reading", "review", "scripts", "tests"})
 # P4: the files at the root, beside Markdown named in capitals (ROOT_MARKDOWN).
 ROOT_FILES = frozenset({".gitignore", "AGENTS.md", "Audit.lean", "CERTIFICATE.md",
                         "CITATION.cff", "CLAUDE.md", "CONTRIBUTING.md", "Elements.lean",

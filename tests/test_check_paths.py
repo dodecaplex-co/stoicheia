@@ -155,12 +155,15 @@ class Rules(unittest.TestCase):
                      ".gitkeep", "figures/I/01.png", "lakefile.lean", "Elements/a.py",
                      "review/I/01.md", "scripts/notes.md", "Audit/other.py",
                      "Certificate/other.lock", "docs/run.sh", "TRAILING-.md",
-                     "DOUBLE--HYPHEN.md", "LOWER-case.md", "A-.md", "README_2.md"):
+                     "DOUBLE--HYPHEN.md", "LOWER-case.md", "A-.md", "README_2.md",
+                     "checks/x.json", "checks/notes.md", "scripts/other.json"):
             with self.subTest(name=name):
                 self.refused(4, entries(name), name)
         self.accepted(*entries("README.md", "SECURITY.md", "LICENSE-PROSE.md", "CITATION.cff",
                                "CODE-OF-CONDUCT.md", "A1-B2.md", "Audit/screen.py",
-                               "Certificate/axioms.lock", "review/SCHEMA.md"),
+                               "Certificate/axioms.lock", "review/SCHEMA.md",
+                               "checks/27-a-check.toml", "checks/README.md",
+                               "scripts/test_safe_push_times.json"),
                       (EXECUTABLE, "scripts/hooks/pre-push"))
 
     def test_p5_book_names(self):

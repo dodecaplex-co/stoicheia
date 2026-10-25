@@ -44,9 +44,9 @@
   in memory beside good paths, Book IV's and Book X's among them; the test file plants
   faults straight into the indexes of throwaway repositories, where a case-insensitive
   disk could not hold a twin as two files; and the negative tests' plant
-  `scripts/negative/path_faults.py` plants eight (a case twin of `README.md` and one of a protected file,
-  `Certificate/fields.md`, a space, an upper-case extension, a symbolic link, an
-  executable bit, an svg under `book/` and a misnamed review record) in a copy of the
+  `scripts/negative/path_faults.py` plants eight (a case twin of `README.md` and one of
+  a protected file, `Certificate/fields.md`, a space, an upper-case extension, a symbolic
+  link, an executable bit, an svg under `book/` and a misnamed review record) in a copy of the
   edition's index that passes unplanted, leaving the real index and `git status` as they
   were. Every finding is one line of printable ASCII, naming its
   rule and its path, with any name inside the reason escaped as Git quotes a path. A
