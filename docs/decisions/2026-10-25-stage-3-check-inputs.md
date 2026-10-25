@@ -7,9 +7,9 @@
   applies one segment to the other, as Euclid does, and its record has the scope `full` and
   the route `modified`, with the proof by the radii kept as the companion
   `Prop24.equalCircles` and shown on the page as the alternative. Two check inputs still
-  spoke of stage 3 as to come. This change brings them up to date and carries no content,
-  so it lands in a pull request of its own, as a check change must. No Lean file, lock,
-  statement, definition, record or `--` line changes.
+  spoke of stage 3 as to come. Both are brought up to date here, apart from the prose and
+  the report that stage 3 also left behind, which are content and land separately. No
+  Lean file, lock, statement, definition, record or `--` line changes.
 
   The review schema's bullet for the route `alternative` gave as its example III.24's
   proof by the radii, "once stage 3 gives Euclid's own". Stage 3 has given it, and no
