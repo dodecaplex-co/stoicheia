@@ -822,13 +822,29 @@ class CircleRuleTests(unittest.TestCase):
         self.enterContext(patch.object(negative.check_fidelity, "errors", self.errors))
         self.enterContext(redirect_stdout(io.StringIO()))
 
-    def fixture(self, locked, proved=None):
+    def fixture(self, locked, proved=None, cites=None, propositions=None):
+        """facts.json's tables, the lock holding `locked`, and the entries `propositions`
+        (III.1 and a sound III.2 when None)."""
         types = {name: "fixture statement" for name in locked}
         self.lock.write_text(negative.check_fidelity.render_lock(types, {}))
-        facts = {"axiom_types": types, "axiom_modules": {}, "vocabulary": {}}
+        facts = {"axiom_types": types, "axiom_modules": {}, "vocabulary": {},
+                 "propositions": [self.entry("III.1"), self.entry("III.2")]
+                 if propositions is None else propositions}
         if proved is not None:
             facts["proved_rules"] = proved
+        if cites is not None:
+            facts["proved_rule_cites"] = cites
         return facts
+
+    @staticmethod
+    def entry(ref, **fields):
+        """An entry's fields that the circle guard reads, resting on no circle rule, with
+        `fields` in their place."""
+        lemma = {"name": "BookI.Prop5.base", "file": "Elements/BookI/Helpers.lean", "line": 27}
+        return {"ref": ref, "kind": "proposition", "status": "proved", "cites": ["I.5"],
+                "axioms": ["Postulate1", "Postulate2"],
+                "shared_steps": [dict(lemma, brings_in=["I.5"])],
+                "inherited": {"Postulate2": [lemma]}, **fields}
 
     def test_locked_rules_need_no_proved_rules_key(self):
         facts = self.fixture((self.inside, self.outside))
@@ -868,6 +884,120 @@ class CircleRuleTests(unittest.TestCase):
             self.assertIn(rule, error)
             self.assertIn("proved without another forbidden circle rule", error)
 
+    def refuses_circle3(self, facts, *wanted):
+        """check_lock finds one fault in `facts`, Circle 3's, saying each of `wanted`."""
+        self.errors.clear()
+        negative.check_fidelity.check_lock(facts, self.lock)
+        self.assertEqual(len(self.errors), 1, self.errors)
+        self.assertIn(f"{self.outside} (Circle 3): ", self.errors[0])
+        for words in wanted:
+            self.assertIn(words, self.errors[0])
+
+    def refuses_as_unproved(self, facts):
+        self.refuses_circle3(facts, "proved without another forbidden circle rule",
+                             "or a proof that cites III.2")
+
+    def test_rules_proved_from_a_sound_iii2_pass(self):
+        facts = self.fixture((self.inside,), {self.outside: ["Postulate1"]},
+                             {self.outside: ["I.5", "III.2"]})
+        self.assertEqual(negative.check_fidelity.check_lock(facts, self.lock), 1)
+        self.assertEqual(self.errors, [])
+        # Then Circle 2, proved from Circle 3, cites III.2 through it, as the entries would.
+        facts = self.fixture((), {self.inside: [], self.outside: ["Postulate1"]},
+                             {self.inside: ["III.2"], self.outside: ["III.2"]})
+        self.assertEqual(negative.check_fidelity.check_lock(facts, self.lock), 0)
+        self.assertEqual(self.errors, [])
+
+    def test_a_rule_proved_citing_nothing_is_refused(self):
+        for cites in ({}, {self.outside: []}, {self.outside: ["I.5"]},
+                      {self.inside: ["III.2"]}):
+            with self.subTest(cites=cites):
+                self.refuses_as_unproved(self.fixture((self.inside,), {self.outside: []}, cites))
+
+    def test_a_rule_citing_other_propositions_but_not_iii2_is_refused(self):
+        for cited in (["III.1"], ["III.3"], ["III.1", "III.3"], ["III.20"], ["II.2"]):
+            with self.subTest(cited=cited):
+                self.refuses_as_unproved(
+                    self.fixture((self.inside,), {self.outside: []}, {self.outside: cited}))
+
+    def test_a_rule_citing_a_missing_or_unproved_iii2_is_refused(self):
+        for propositions, fault in (
+                ([self.entry("III.1")], "III.2 has no entry in facts.json"),
+                ([], "III.2 has no entry in facts.json"),
+                ([self.entry("III.2", status="sketched")], "III.2 is 'sketched', not \"proved\""),
+                ([self.entry("III.2", status="proved-pending")],
+                 "III.2 is 'proved-pending', not \"proved\"")):
+            with self.subTest(fault=fault, propositions=len(propositions)):
+                facts = self.fixture((self.inside,), {self.outside: []},
+                                     {self.outside: ["III.2"]}, propositions)
+                self.refuses_circle3(facts, "proved by a proof that cites III.2, but " + fault)
+
+    def test_a_rule_citing_an_iii2_that_rests_on_a_circle_rule_is_refused(self):
+        def lemma(name):
+            return {"name": name, "file": "Elements/Foundations/Tacit/Diagram.lean", "line": 152}
+        for name, rule in negative.check_fidelity.FORBIDDEN_CIRCLE_RULES.items():
+            for fields, fault in (
+                    ({"axioms": ["Postulate1", name]},
+                     f"rests on {name} ({rule}) among its axioms"),
+                    ({"shared_steps": [dict(lemma(name), brings_in=["I.5"])]},
+                     f"names {name} ({rule}) among its shared steps"),
+                    ({"inherited": {"Postulate1": [lemma("len_pos"), lemma(name)]}},
+                     f"names {name} ({rule}) among the lemmas it inherits through")):
+                with self.subTest(rule=rule, fault=fault):
+                    facts = self.fixture((self.inside,), {self.outside: []},
+                                         {self.outside: ["III.2"]},
+                                         [self.entry("III.1"), self.entry("III.2", **fields)])
+                    self.refuses_circle3(facts, "proved by a proof that cites III.2, but "
+                                         "III.2 itself " + fault)
+
+    def test_missing_or_malformed_cites_count_as_citing_nothing(self):
+        for cites in (None, ["III.2"], "III.2", {self.outside: "III.2"},
+                      {self.outside: {"III.2": True}}, {self.outside: None},
+                      {self.outside: 2}):
+            with self.subTest(cites=cites):
+                self.refuses_as_unproved(self.fixture((self.inside,), {self.outside: []}, cites))
+
+    def test_a_malformed_iii2_entry_is_refused_without_a_crash(self):
+        def facts(propositions):
+            return self.fixture((self.inside,), {self.outside: []}, {self.outside: ["III.2"]},
+                                propositions)
+        absent = facts([])
+        del absent["propositions"]
+        for case, given, fault in (
+                ("no propositions", absent, "III.2 has no entry"),
+                ("propositions not a list", facts({"ref": "III.2"}), "III.2 has no entry"),
+                ("entries not objects", facts([None, "III.2", ["III.2"]]), "III.2 has no entry"),
+                ("no status", facts([{k: v for k, v in self.entry("III.2").items()
+                                      if k != "status"}]), "III.2 is None, not \"proved\""),
+                ("axioms a string", facts([self.entry("III.2", axioms=self.outside)]),
+                 "III.2's `axioms` is not a list"),
+                ("shared steps a string", facts([self.entry("III.2", shared_steps=self.outside)]),
+                 "III.2's `shared_steps` is not a list of objects"),
+                ("shared steps of names", facts([self.entry("III.2", shared_steps=[self.outside])]),
+                 "III.2's `shared_steps` is not a list of objects"),
+                ("inherited a list", facts([self.entry("III.2", inherited=[self.outside])]),
+                 "III.2's `inherited` is not an object of lists of objects"),
+                ("inherited of strings",
+                 facts([self.entry("III.2", inherited={"Postulate1": self.outside})]),
+                 "III.2's `inherited` is not an object of lists of objects"),
+                ("inherited of names",
+                 facts([self.entry("III.2", inherited={"Postulate1": [self.outside]})]),
+                 "III.2's `inherited` is not an object of lists of objects")):
+            with self.subTest(case=case):
+                self.refuses_circle3(given, "proved by a proof that cites III.2, but " + fault)
+
+    def test_a_rule_proved_from_a_locked_rule_needs_nothing_of_iii2(self):
+        for propositions in ([], [self.entry("III.2", status="sketched")],
+                             [self.entry("III.2", axioms=[self.outside])]):
+            for cites in (None, {}, {self.inside: []}, {self.inside: ["III.2"]},
+                          {self.inside: "III.2"}):
+                with self.subTest(propositions=propositions, cites=cites):
+                    self.errors.clear()
+                    facts = self.fixture((self.outside,), {self.inside: [self.outside]}, cites,
+                                         propositions)
+                    self.assertEqual(negative.check_fidelity.check_lock(facts, self.lock), 1)
+                    self.assertEqual(self.errors, [])
+
     def test_circle_plant_checks_both_cases_and_restores_either_lock(self):
         for retired in (False, True):
             with self.subTest(retired=retired):
@@ -904,6 +1034,57 @@ class CircleRuleTests(unittest.TestCase):
                     self.assertEqual(self.lock.read_bytes(), saved)
                     self.assertEqual(self.errors, ["a previous finding"])
                     self.assertEqual(json.loads((self.root / "facts.json").read_text()), facts)
+
+    def test_iii2_plant_checks_three_cases_and_restores_any_lock(self):
+        rules = (self.inside, self.outside)
+        for locked in (rules, (self.outside,), ()):
+            with self.subTest(locked=locked):
+                facts = self.fixture(locked, {self.inside: [self.outside]} if locked else
+                                     {self.inside: [], self.outside: []})
+                (self.root / "facts.json").write_text(json.dumps(facts))
+                saved = self.lock.read_bytes()
+                saved_facts = (self.root / "facts.json").read_bytes()
+                self.errors[:] = ["a previous finding"]
+                refusals = []
+                with patch.object(negative, "refusals", refusals), \
+                        patch.object(negative.check_fidelity, "check_lock",
+                                     wraps=negative.check_fidelity.check_lock) as check:
+                    plant("circle_from_iii2")()
+                self.assertEqual(check.call_count, 3)
+                calls = [call.args[0] for call in check.call_args_list]
+                for call, cited in zip(calls, ([], ["III.2"], ["III.2"])):
+                    self.assertEqual(call["proved_rules"], {self.inside: [], self.outside: []})
+                    self.assertEqual(call["proved_rule_cites"],
+                                     {self.inside: cited, self.outside: cited})
+                    self.assertFalse(set(rules) & set(call["axiom_types"]))
+                self.assertEqual(calls[1]["propositions"], facts["propositions"])
+                self.assertEqual(calls[2]["propositions"][1]["axioms"],
+                                 facts["propositions"][1]["axioms"] + [self.outside])
+                self.assertEqual(negative.failures, [])
+                self.assertEqual(len(refusals), 2)
+                self.assertEqual(self.errors, ["a previous finding"])
+                self.assertEqual(self.lock.read_bytes(), saved)
+                self.assertEqual((self.root / "facts.json").read_bytes(), saved_facts)
+
+    def test_iii2_plant_restores_on_failure_or_interrupt(self):
+        for locked in ((self.inside, self.outside), ()):
+            for exception in (RuntimeError, KeyboardInterrupt):
+                for calls in (1, 3):
+                    with self.subTest(locked=locked, exception=exception, calls=calls):
+                        facts = self.fixture(locked)
+                        (self.root / "facts.json").write_text(json.dumps(facts))
+                        saved = self.lock.read_bytes()
+                        self.errors[:] = ["a previous finding"]
+                        effects = [None] * (calls - 1) + [exception("interrupted")]
+                        with patch.object(negative, "refusals", []), \
+                                patch.object(negative.check_fidelity, "check_lock",
+                                             side_effect=effects):
+                            with self.assertRaises(exception):
+                                plant("circle_from_iii2")()
+                        self.assertEqual(self.lock.read_bytes(), saved)
+                        self.assertEqual(self.errors, ["a previous finding"])
+                        self.assertEqual(json.loads((self.root / "facts.json").read_text()),
+                                         facts)
 
 
 class AbsentTrackedFileTests(unittest.TestCase):
