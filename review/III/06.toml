@@ -19,7 +19,7 @@ note = "Diagram-segment 2 with Generalities 4 ends contact within at once; Gener
 [[passage]]
 at = "For, if possible, let it be F"
 kind = "case"
-note = "Contact without ends here: F would be within both circles, which contact without forbids. It is the case Euclid leaves to the reader, and the Lean puts F within each circle by `Tacit.centre_inside`, a rule we assume (System E, Generalities 3)."
+note = "Contact without ends here: F would be within both circles, which contact without forbids. It is the case Euclid leaves to the reader, and the Lean puts F within each circle by the proved rule `Tacit.centre_inside` (System E, Generalities 3)."
 
 [[passage]]
 at = "let FC be joined"
@@ -44,10 +44,11 @@ note = "Like Heath's, this figure draws the impossible supposition: F as one cen
 
 [review]
 stage = "full"
-commit = "f2195c72"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "e00da4b4"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:958b7aa40e178ec7"
-run = "brief 0005 stage 5, ship R3 (#29); the reading of C, the supposition, the radii by Definition15 and their equation, written by Codex, read also by Claude Opus 5.5; line 44 of Prop06.lean, of unknown family, read by both; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, a reader of the other family from the Codex lines of the proof, reader F2-w2m2cl at f2195c72"
+run = "brief 0005 stage 5, ship R3 (#29); the reading of C, the supposition, the radii by Definition15 and their equation, written by Codex, read also by Claude Opus 5.5; line 44 of Prop06.lean, of unknown family, read by both; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, a reader of the other family from the Codex lines of the proof, reader F2-w2m2cl at f2195c72; focused re-read after axiom wave two (card 337): the retired-rule wording only, by OpenAI Codex, GPT-6 Astra, against e00da4b4; full read at f2195c72"
+text = "sha256:775d5cfb4962c48b"
 
 [review.items]
 statement = "pass"
