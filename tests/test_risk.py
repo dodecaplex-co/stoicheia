@@ -194,6 +194,53 @@ class Header(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(risk.imported_modules(text), expected)
 
+    def test_comments_are_read_as_lean_reads_them(self):
+        # #349: a block's body begins past its third character, so `/-/- -/` is a whole
+        # comment and the `-/` of `/--/` closes nothing, as Lean's tokenizer ends them.
+        # Read the old way, the first hid the import after it (a narrower set of the
+        # model's inputs), and the second read one inside a doc comment and missed the one
+        # after it. (Lean refuses a doc comment before an import; reading the import after
+        # it all the same is the reader's widening, as above.)
+        cases = (
+            ("/-/- -/\nimport A\n", ["A"]),
+            ("/--/\nimport X -/\nimport A\n", ["A"]),
+            ("/-/- -/ import A /-/- /- nested -/ -/ import B\n", ["A", "B"]),
+            ("/- unclosed\nimport A\n", []),
+        )
+        for text, expected in cases:
+            with self.subTest(text=text):
+                self.assertEqual(risk.imported_modules(text), expected)
+
+    def test_the_comment_reader_is_heath_s_word_for_word(self):
+        # risk.py runs alone, so it keeps a copy of the scripts' one comment reader,
+        # heath.comment_end (#206, #349): the same function, by its syntax tree (its code
+        # and its docstring; a comment inside it is not compared), and, in the test after
+        # this, reading the same on a corpus of comments, strings, character literals and
+        # «…» names.
+        import ast
+        import inspect
+        import heath
+        def body(function):
+            tree = ast.parse(inspect.getsource(function))
+            return ast.dump(tree)
+        self.assertEqual(body(risk.comment_end), body(heath.comment_end))
+
+    def test_the_comment_reader_reads_as_heath_s(self):
+        # Apart from its source, so that a drift in either copy fails this on its own.
+        import heath
+        corpus = (
+            "/-/- -/ import A", "/--/ x -/ y", "/-- doc -/ theorem t", "/-! module -/",
+            "/- a /- nested /- deeper -/ -/ -/ after", "/- unclosed /- -/", "-- line\nnext",
+            "-- last line", "def s := \"/- not a comment -/\" -- but this is",
+            "def c := '\"' /- after a character -/", "def c := '(' -- a bracket's character",
+            "def «x /- y» := 1 /- -/", "/-/--/-/", "--/-\n/--\n-/", "/---/ -/", "",
+        )
+        for text in corpus:
+            for i in range(len(text)):
+                if text.startswith(("--", "/-"), i):
+                    with self.subTest(text=text, at=i):
+                        self.assertEqual(risk.comment_end(text, i), heath.comment_end(text, i))
+
     def test_a_header_the_reader_cannot_read_cleanly_is_unread(self):
         # Lean 4.35 reads a file for each of the first five (named on the right) that a
         # reader matching Lean less closely would leave out of the set; this one fails

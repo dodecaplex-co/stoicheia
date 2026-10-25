@@ -16,13 +16,13 @@ note = "The statement gives the tangent DE, the contact C and the centre F; the 
 at = "For, if not, let FG be drawn from F perpendicular to DE"
 kind = "helper"
 helper = "BookI.Prop12"
-note = "Euclid draws FG perpendicular to DE; the Lean uses I.12, for which Heath prints no reference here. Beneath the setting-out, the Lean first proves F off DE with `Touches.not_inside` and `Tacit.centre_inside`, the rule we assume as System E, Generalities 3."
+note = "Euclid draws FG perpendicular to DE; the Lean uses I.12, for which Heath prints no reference here. Beneath the setting-out, the Lean first proves F off DE with `Touches.not_inside` and `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`."
 
 [[passage]]
 at = "But FC is equal to FB"
 kind = "helper"
 helper = "Tacit.line_circle_between"
-note = "Euclid reads B on FG between F and G and takes FC equal to FB. The Lean proves G outside the circle using `Touches.not_inside` and the definition of touching, puts F within it by `Tacit.centre_inside` (System E, Generalities 3) and takes B by `Tacit.line_circle_between` (System E, Intersections 4), both rules we assume, and equates the radii by `Definition15`, Euclid's definition of a circle, which we also assume as a rule."
+note = "Euclid reads B on FG between F and G and takes FC equal to FB. The Lean proves G outside the circle using `Touches.not_inside` and the definition of touching, puts F within it by the proved rule `Tacit.centre_inside` (System E, Generalities 3) and takes B by `Tacit.line_circle_between` (System E, Intersections 4), a rule we assume, and equates the radii by `Definition15`, Euclid's definition of a circle, which we also assume as a rule."
 
 [[passage]]
 at = "the less than the greater: which is impossible"
@@ -40,10 +40,11 @@ note = "The figure shows the impossible supposition with G distinct from C: FG i
 
 [review]
 stage = "full"
-commit = "c2bafbb6"
+commit = "e00da4b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c05e2d0569c0489f"
-run = "brief 0005 stage 5, ship R3 (#29)"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4"
+text = "sha256:89ba3a397472522c"
 
 [review.items]
 statement = "pass"
