@@ -256,6 +256,7 @@ import re
 import shlex
 import shutil
 import signal
+import site
 import stat
 import statistics
 import subprocess
@@ -1030,18 +1031,46 @@ def reset_gh() -> None:
                                     "suite_runs": {"*": [GREEN_SUITE]}, "calls": []}))
 
 
-def hermetic_git() -> None:
+def hermetic_git(xdg: Path) -> None:
     """The test process's git, and every process it starts, reads no variable of git's
     that the runner set and no global or system configuration (#360). Run under a hook,
     the runner's GIT_DIR and GIT_INDEX_FILE named the hook's repository, and the module's
     own git (setUpModule's clone, config and commit among it) acted on that repository;
     a global core.hooksPath could reach them too, running its hooks on the tests' commits
     and taking install_hooks.sh's hooks where it points. Each test that needs a variable
-    of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself."""
+    of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself.
+
+    Nor does it read git's default global ignore and attributes files (#376), which git
+    reads with the global configuration shut out: $XDG_CONFIG_HOME/git/ignore and
+    attributes, or ~/.config/git's when XDG_CONFIG_HOME is unset or empty. A rule there
+    could hide a file a test makes from `git status`, and so from the dirty-tree and
+    freshness tests. XDG_CONFIG_HOME names `xdg`, an empty directory made here, under TMP
+    and removed with it; it is no variable of git's, so every process started with the
+    module's environment keeps it, safe_push.py's own git, its checks and the launcher
+    among them. core.excludesFile names the null device too, as HookEnvironment's -c
+    option does, and so does core.attributesFile, both through GIT_CONFIG_COUNT: that
+    reaches every git started with this environment as it is, but not those that
+    safe_push.py and the launcher start, which drop GIT_CONFIG_COUNT with git's other
+    repository variables (#357, #359), so that there XDG_CONFIG_HOME alone shuts the
+    files out. A test that wants an excludes or attributes file of its own names it with
+    -c, which git reads after GIT_CONFIG_COUNT; one set in a repository's own
+    configuration loses to GIT_CONFIG_COUNT. HOME stays the runner's.
+
+    With the global and system configuration shut out, git takes safe.directory only from
+    its command line or GIT_CONFIG_COUNT, never from a repository's own configuration, so
+    a checkout owned by another user stops setUpModule at its first git command, with
+    git's "detected dubious ownership": run the tests as the checkout's owner. The module
+    sets no safe.directory of its own: `*`, set through GIT_CONFIG_COUNT, would let every
+    git started with the module's environment as it is use a repository another user
+    owns, which is what git's check of ownership is for, and the tests' own clones, made
+    by the user running them, need none."""
     for name in [name for name in os.environ if name.startswith("GIT_")]:
         del os.environ[name]
-    os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
-    os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
+    xdg.mkdir()
+    os.environ.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
+                      XDG_CONFIG_HOME=str(xdg), GIT_CONFIG_COUNT="2",
+                      GIT_CONFIG_KEY_0="core.excludesFile", GIT_CONFIG_VALUE_0=os.devnull,
+                      GIT_CONFIG_KEY_1="core.attributesFile", GIT_CONFIG_VALUE_1=os.devnull)
 
 
 # The line setUpModule prints when it is done: GitHub stamps each line of a CI log with its
@@ -1051,14 +1080,17 @@ SETUP_DONE = "setUpModule is done: the throwaway clone and its bare origin are r
 
 def setUpModule():
     global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
-    hermetic_git()
+    TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
+    # unittest skips tearDownModule when setUpModule fails, but runs the module's cleanups,
+    # after tearDownModule otherwise, when TMP is already gone.
+    unittest.addModuleCleanup(shutil.rmtree, TMP, ignore_errors=True)
+    hermetic_git(TMP / "xdg")
     if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
         # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
         # that dry-run cleanup still requires an empty temporary directory.
         selected = subprocess.run(["xcrun", "--find", "git"], capture_output=True,
                                   text=True, check=True).stdout.strip()
         TEST_PATH = str(Path(selected).parent) + os.pathsep + TEST_PATH
-    TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
     ORIGIN, WORK, LOG = TMP / "origin.git", TMP / "work", TMP / "cache" / "pushes.log"
     GH, GH_STATE = TMP / "fake-gh", TMP / "fake-gh.json"
     GH.write_text(FAKE_GH.replace("@PYTHON@", sys.executable))
@@ -9873,9 +9905,18 @@ class Registry(unittest.TestCase):
 class HermeticModule(unittest.TestCase):
     """#360: one test of this module, its setUpModule with it, run from a linked worktree
     under a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, leaves
-    the repository as it was: its HEAD, index and files, and the shared configuration."""
+    the repository as it was: its HEAD, index and files, and the shared configuration.
+    #376: run under a global ignore file and attributes file planted where git looks for
+    them, the module's git still sees the files the tests make."""
 
     CHILD = "STOICHEIA_TEST_HERMETIC_CHILD"
+
+    def runner_env(self) -> dict:
+        """This process's environment less what hermetic_git set, the GIT_CONFIG_
+        variables and XDG_CONFIG_HOME: a runner's, with the machine's own configuration
+        and XDG_CONFIG_HOME unset."""
+        return {name: value for name, value in os.environ.items()
+                if not name.startswith("GIT_CONFIG") and name != "XDG_CONFIG_HOME"}
 
     def test_the_module_under_a_hooks_git_dir(self):
         if os.environ.get(self.CHILD):
@@ -9901,8 +9942,7 @@ class HermeticModule(unittest.TestCase):
             heads = (g("-C", main, "rev-parse", "HEAD"), g("-C", linked, "rev-parse", "HEAD"))
             # As a runner under a hook has it: the hook's variables, and the machine's own
             # configuration, which hermetic_git shuts out.
-            env = {name: value for name, value in plain.items()
-                   if name not in ("GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_GLOBAL")}
+            env = self.runner_env()
             env.update(GIT_DIR=str(git_dir), GIT_INDEX_FILE=str(git_dir / "index"),
                        **{self.CHILD: "1"})
             r = subprocess.run([sys.executable, str(HERE / "test_safe_push.py"),
@@ -9916,6 +9956,81 @@ class HermeticModule(unittest.TestCase):
                               g("-C", linked, "rev-parse", "HEAD")), heads)
             self.assertEqual(sorted(p.name for p in linked.iterdir()), [".git", "a.txt"])
             self.assertEqual(r.returncode, 0, r.stderr[-2000:])
+
+    def test_the_module_under_a_global_ignore_and_attributes(self):
+        # #376: git reads its default global ignore and attributes files with the global
+        # configuration shut out, from $XDG_CONFIG_HOME/git, or from ~/.config/git when
+        # XDG_CONFIG_HOME is unset or empty. Planted in both places at once, under a HOME of the
+        # test's own, rules for new.txt, the file Registry's dirty-tree test makes and
+        # run_checks.py's `git status` must list, change no test's result: that test and
+        # test_git_reads_no_global_ignore_or_attributes, run in a process of their own,
+        # pass.
+        if os.environ.get(self.CHILD):
+            self.skipTest("the planted run itself")
+        tests = ("Registry.test_run_checks_fails_an_empty_check_that_prints",
+                 "HermeticModule.test_git_reads_no_global_ignore_or_attributes")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            home, xdg, repo = tmp / "home", tmp / "xdg", tmp / "repo"
+            for folder in (home / ".config" / "git", xdg / "git", repo):
+                folder.mkdir(parents=True)
+            for folder in (home / ".config" / "git", xdg / "git"):
+                (folder / "ignore").write_text("new.txt\n")
+                (folder / "attributes").write_text("new.txt -diff\n")
+            (repo / "new.txt").write_text("A new file.\n")
+            # The planted HOME hides no package the module imports from the user's own
+            # site-packages.
+            planted = dict(self.runner_env(), HOME=str(home), PYTHONUSERBASE=site.getuserbase())
+            for where, extra in (("XDG_CONFIG_HOME", {"XDG_CONFIG_HOME": str(xdg)}),
+                                 ("HOME's .config", {})):
+                with self.subTest(where=where):
+                    env = dict(planted, **extra)
+                    # The plant is live: git as #360 left the module's, the global and
+                    # system configuration shut out and nothing more, ignores new.txt
+                    # and unsets its diff.
+                    before = dict(env, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+                    git(repo, "init", "-q", env=before)
+                    self.assertEqual((git(repo, "status", "--porcelain", env=before),
+                                      git(repo, "check-attr", "diff", "new.txt", env=before)),
+                                     ("", "new.txt: diff: unset\n"))
+                    r = subprocess.run([sys.executable, str(HERE / "test_safe_push.py"),
+                                        *tests], cwd=tmp, env=dict(env, **{self.CHILD: "1"}),
+                                       capture_output=True, text=True, timeout=900)
+                    self.assertEqual(r.returncode, 0, r.stderr[-3000:])
+                    self.assertIn("Ran 2 tests", r.stderr)
+                    self.assertNotIn("skipped", r.stderr)
+
+    def test_git_reads_no_global_ignore_or_attributes(self):
+        # #376: a new file in a repository of the test's own is listed by `git status`,
+        # the module's and safe_push's (whose run() drops GIT_CONFIG_COUNT), and git
+        # gives it no ignore rule and no attribute, whatever the runner's global ignore
+        # and attributes files say (the planted run above names it in both).
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp:
+            repo, other = Path(tmp) / "repo", Path(tmp) / "xdg"
+            for folder in (repo, other / "git"):
+                folder.mkdir(parents=True)
+            git(repo, "init", "-q")
+            (repo / "deep" / "er").mkdir(parents=True)
+            (repo / "deep" / "er" / "new.txt").write_text("A new file.\n")
+            ignored = subprocess.run(["git", "check-ignore", "-v", "deep/er/new.txt"],
+                                     cwd=repo, capture_output=True, text=True)
+            self.assertEqual((git(repo, "status", "--porcelain"),
+                              safe_push.status_lines(repo, []).stdout,
+                              (ignored.returncode, ignored.stdout),
+                              git(repo, "check-attr", "-a", "deep/er/new.txt")),
+                             ("?? deep/\n", "?? deep/\n", (1, ""), ""))
+            # The second guard: the module's git names the null device as its excludes and
+            # attributes files, through GIT_CONFIG_COUNT, so a git that keeps the module's
+            # environment but is given another XDG_CONFIG_HOME, whose git/ignore and
+            # git/attributes name the file, still lists it and gives it no attribute.
+            (other / "git" / "ignore").write_text("new.txt\n")
+            (other / "git" / "attributes").write_text("new.txt -diff\n")
+            env = dict(os.environ, XDG_CONFIG_HOME=str(other))
+            files = [git(repo, "config", "--get", key, check=False)
+                     for key in ("core.excludesFile", "core.attributesFile")]
+            self.assertEqual((files, git(repo, "status", "--porcelain", env=env),
+                              git(repo, "check-attr", "-a", "deep/er/new.txt", env=env)),
+                             ([os.devnull + "\n"] * 2, "?? deep/\n", ""))
 
 
 # The report step needs bash and jq, as GitHub's runners have; there, a missing one fails
