@@ -553,9 +553,10 @@ it fails. Every test
 runs in exactly one shard: `--shard` lists the tests with unittest's own loader, so that a
 new test is never missed, and deals them out by the seconds each took on a GitHub runner,
 kept in `scripts/test_safe_push_times.json`, the heaviest first, each to the shard with the
-least time so far. The times were read from the CI run of #239 on 21 October, when the
-suite had 288 tests; a test the file does not name, one added or renamed since, weighs their
-median, and each shard's log names it. The proof is built from what the shards ran, not
+least time so far. The times are read from a green cadence run's shard steps by
+`python3 scripts/test_safe_push.py --times-from-log`, whose note in the file names the run
+and its commit ([the decision](decisions/2026-10-24-shard-times.md)); a test the file does
+not name, one added or renamed since, weighs their median, and each shard's log names it. The proof is built from what the shards ran, not
 from the dealing. Each shard writes the tests it ran, each with its outcome, to the file
 `--ran` names, and keeps it as an artifact, a test having failed or not, for 35 days; and
 it keeps its log, from which the report takes the tests that failed. Whether a later

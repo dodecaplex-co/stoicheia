@@ -234,8 +234,8 @@ are listed by unittest's own loader and dealt out by the seconds each took on a 
 runner, kept in test_safe_push_times.json beside this file, so that each test runs in
 exactly one shard; a test missing there weighs their median. Each shard writes the tests
 it ran, with their outcomes (`--ran FILE`), and `--cover DIR` proves from those lists that
-every test the loader lists ran once and passed. `--times-from-log` writes the times file
-from a CI run's log. Without --shard the whole suite runs.
+every test the loader lists ran once, and passed or was skipped. `--times-from-log` writes
+the times file from a CI run's log. Without --shard the whole suite runs.
 """
 
 from __future__ import annotations
@@ -8964,7 +8964,8 @@ class RiskPreflight(Edge):
     it is R5. --merge takes a record that left step 4 to CI only while the class,
     recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
     head, and with a green run of safe-push-tests there, the head's copy of that workflow
-    being origin/main's, each of its three jobs there and passed."""
+    being origin/main's: each of the three jobs the gate names there and passed, and every
+    other job but `report`, the eight shards among them, passed too."""
 
     SHORT = "left to CI"
     FULL = "internal test flag, local origin"
@@ -9346,7 +9347,7 @@ class RiskPreflight(Edge):
                  ({"suite_runs": {"*": [with_job(510, "safe-push-shards (8)", "cancelled")]}},
                   "safe-push-shards (8) cancelled"),
                  # A run of a workflow that dropped a job, or that ran one trivial job alone:
-                 # each of the workflow's three jobs must be there.
+                 # each of the three jobs the gate names must be there.
                  ({"suite_runs": {"*": [dict(GREEN_SUITE, id=507, jobs=[
                      j for j in SUITE_JOBS if j["name"] != "negative-tests"])]}},
                   "run 507: negative-tests missing"),
@@ -9355,10 +9356,18 @@ class RiskPreflight(Edge):
                   "run 508: safe-push-tests missing, negative-tests missing, "
                   "formal-model-kernel missing"),
                  ({"suite_read_fail": True}, "unreadable"))
+        # Each case starts from what the pre-flight left, origin's main and branch and the
+        # stand-in's state, its calls among them, so that a case that merged by mistake
+        # changes no other case's outcome (#425).
+        pushed, main, branch = self.gh_state(), self.origin_main(), self.origin_branch()
+
+        def from_the_preflight(state: dict) -> None:
+            git(ORIGIN, "update-ref", "refs/heads/main", main)
+            git(ORIGIN, "update-ref", f"refs/heads/{BRANCH}", branch)
+            GH_STATE.write_text(json.dumps(dict(pushed, **state)))
         for state, why in cases:
             with self.subTest(why=why):
-                self.set_gh(lambda s: (s.pop("suite_read_fail", None),
-                                       s.update(suite_runs={"*": [GREEN_SUITE]}), s.update(state)))
+                from_the_preflight(state)
                 r = self.merge()
                 out = r.stdout + r.stderr
                 self.assertEqual(r.returncode, 1, out)
@@ -9367,8 +9376,7 @@ class RiskPreflight(Edge):
                 self.assertIn(f"gh workflow run safe-push-tests.yml --ref {BRANCH}"
                               if why != "unreadable" else "unreadable", out)
                 self.assertEqual(self.merges(), [])
-        self.set_gh(lambda s: (s.pop("suite_read_fail", None),
-                               s.update(suite_runs={sha: [other, GREEN_SUITE]})))
+        from_the_preflight({"suite_runs": {sha: [other, GREEN_SUITE]}})
         r = self.merge()
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, out)
@@ -10021,23 +10029,35 @@ class CadenceReport(unittest.TestCase):
     """The cadence workflow's report step (.github/workflows/safe-push-tests.yml), run as
     GitHub runs it, bash with -e and pipefail, on the shards' logs of a thousand long
     failures, with a stand-in for gh: it opens the issue, listing the first hundred (#300),
-    from every shard's log (#233)."""
+    from every shard's log (#233), and names the shards whose logs show them red (#425)."""
 
-    def run_report(self, script: str, failures: int):
+    def run_report(self, script: str, failures: int, planted: dict | None = None):
+        """The report's step run on the shards' logs, `failures` failing tests dealt among
+        them, each shard's log in `planted` replaced by its text there, or by no log when
+        that is None: the step's result, and the body of the issue it opened, or None."""
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             # Each line longer than the 300 characters the step keeps, so the thousand it
             # keeps (301,000 bytes) are far more than a pipe holds, and a reader that stops
             # early closes it. The failures are dealt among the shards' logs in turn, each
-            # log in a folder of its own, as the step's fetch lays them down.
+            # log in a folder of its own, as the step's fetch lays them down; each shard
+            # also ran one test that passed, and its log ends as unittest ends it.
             name = "test_" + "x" * 250
             shards = ci_shard_count(ci_jobs())
             for shard in range(1, shards + 1):
-                folder = tmp / "log" / f"test_safe_push-log-{shard}"
-                folder.mkdir(parents=True)
-                (folder / f"test_safe_push-{shard}.log").write_text("".join(
-                    f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
-                    for i in range(shard - 1, failures, shards)) + "Ran 125 tests\n")
+                failed = range(shard - 1, failures, shards)
+                text = (f"Shard {shard} of {shards}: {len(failed) + 1} of {failures + shards} "
+                        "tests, about 1 s by the times measured on a GitHub runner, the module's "
+                        f"setup included.\ntest_passes (__main__.Units.test_passes) ... ok\n"
+                        + "".join(f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
+                                  for i in failed)
+                        + f"Ran {len(failed) + 1} tests in 1.000s\n\n"
+                        + (f"FAILED (failures={len(failed)})\n" if failed else "OK\n"))
+                text = (planted or {}).get(shard, text)
+                if text is not None:
+                    folder = tmp / "log" / f"test_safe_push-log-{shard}"
+                    folder.mkdir(parents=True)
+                    (folder / f"test_safe_push-{shard}.log").write_text(text)
             bin_dir = tmp / "bin"
             bin_dir.mkdir()
             gh = bin_dir / "gh"
@@ -10086,6 +10106,36 @@ class CadenceReport(unittest.TestCase):
         self.assertIsNotNone(body, "no issue was opened")
         self.assertNotIn("(the first 100)", body)
         self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
+
+    def test_the_shards_whose_logs_show_them_red_are_named(self):
+        # #425: GitHub gives the matrix one result, so the report reads each shard's log:
+        # three shards with a failure each; the fifth's log cut off before unittest's
+        # summary, though a test's output in it says OK and names 99 shards; and
+        # the last shard, eight, with no log, which the other logs' "Shard K of 8" names.
+        # The other shards, whose logs end in OK, are not named.
+        shards = ci_shard_count(ci_jobs())
+        cut = (f"Shard 5 of {shards}: 2 of 11 tests, about 1 s by the times measured on a "
+               "GitHub runner, the module's setup included.\n"
+               "test_passes (__main__.Units.test_passes) ... a line the test wrote\nOK\n"
+               f"Shard 1 of 99: a line the test wrote\n")
+        r, body = self.run_report(self.report_script(), 3, {5: cut, shards: None})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
+        named = [line for line in body.splitlines() if line.startswith("- shard ")]
+        self.assertEqual(named, [
+            "- shard 1: FAILED (failures=1)", "- shard 2: FAILED (failures=1)",
+            "- shard 3: FAILED (failures=1)",
+            "- shard 5: its log stops before unittest's summary (cut off or cancelled)",
+            f"- shard {shards}: it kept no log"])
+        self.assertIn("Shards whose kept logs show them red (the run's page gives each shard's "
+                      "result):", body)
+        self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
+        # No shard's log shows it red, as when only the proof failed.
+        r, body = self.run_report(self.report_script(), 0)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("No shard's kept log shows it red (the run's page gives each shard's "
+                      "result).", body)
+        self.assertNotIn("- shard ", body)
 
     def test_a_reader_that_stops_early_would_end_the_step(self):
         # The form #300 replaced: head stops reading, printf meets a closed pipe, and
@@ -12734,17 +12784,36 @@ LOG_LINE = re.compile(r"(?:(?P<job>[^\t]*)\t[^\t]*\t)?\ufeff?(?P<stamp>\d{4}-\d\
                       r"\d\d:\d\d:\d\d)(?P<fraction>\.\d+)?Z ?(?P<text>.*)")
 # A test's line at verbosity 2, `test_x (__main__.Class.test_x) ... ok`.
 TEST_LINE = re.compile(r"(?P<method>test\w*) \((?:\w+\.)*?(?P<cls>\w+)\.(?P=method)\)")
-RUN_STEP = "##[group]Run python3 scripts/test_safe_push.py"
+# A step of a job's log opens with its group line, `##[group]Run ` and its script's first
+# line; then, before the step's `##[endgroup]`, GitHub echoes each line of its script in
+# cyan, then its shell and its env. A line of a script that runs this script (#425): the
+# old step's one line, or the second of the cadence's shard step, which opens with
+# `set -o pipefail`.
+STEP_LINE = "##[group]Run "
+SCRIPT_LINE = re.compile(r"\x1b\[36;1m(?P<line>.*)\x1b\[0m")
+RUNS_SCRIPT = re.compile(r"\s*python3 scripts/test_safe_push\.py(?:\s|$)")
+# actions/checkout's last word on the commit it checked out: git's command, then the commit.
+CHECKOUT_LINE = re.compile(r"\[command\]\S*git log -1 --format=%H")
+# A log saved as `gh run view ID --log > run-ID.log`, whose name alone gives its run.
+RUN_LOG_NAME = re.compile(r"run-(?P<id>\d+)\.log")
 TIMES_ABOUT = (
     "Seconds each test of scripts/test_safe_push.py took on a GitHub runner, to a tenth of "
     "a second, written by `python3 scripts/test_safe_push.py --times-from-log` from the "
-    "times GitHub stamped on the lines of {source} on {date} ({shards} shards, {tests} "
-    "tests). Each shard's log is at verbosity 2, and a test's line is written when the "
-    "test ends, so a test's time runs from the line before its own to the last line of its "
-    "output. setUpModule is the module's setup, the clone of the repository, which every "
-    "shard pays once: the median of the shards' setups, each from the shard's report to "
-    "the line setUpModule prints when its clone is ready. `--shard K/N` deals the tests "
-    "out by these times; a test missing here weighs their median.")
+    "times GitHub stamped on the lines of {source}{commit} on {date} ({shards} shards, "
+    "{tests} tests). {counts} Each shard's log is at verbosity 2, and a test's line is "
+    "written when the test ends, so a test's time runs from the line before its own to the "
+    "last line of its output. setUpModule is the module's setup, the clone of the "
+    "repository, which every shard pays once: the median of the shards' setups, each from "
+    "the shard's report to the line setUpModule prints when its clone is ready. "
+    "`--shard K/N` deals the tests out by these times; a test missing here weighs their "
+    "median.")
+
+
+@dataclass(frozen=True)
+class LogTimes:
+    data: dict                   # the times file: its note, the setup and each test's seconds
+    unmeasured: tuple[str, ...]  # the tests the loader lists that no log times: the median
+    dropped: tuple[str, ...]     # the tests the logs time that the loader no longer lists
 
 
 def stamp_seconds(stamp: str, fraction: str | None) -> float:
@@ -12753,17 +12822,31 @@ def stamp_seconds(stamp: str, fraction: str | None) -> float:
 
 
 def script_runs(lines: list[tuple[float, str]]):
-    """The lines of each step of one job's log that runs this script, after its first."""
-    run = None
+    """The lines of each step of one job's log whose script runs this script on one of its
+    lines, after the step's group line: that line, or one GitHub echoes in cyan before the
+    step's `##[endgroup]`. A line of an action's `with`, of the step's env or of its output
+    is none of them."""
+    script, run, header = [], None, False
     for stamp, text in lines:
-        if text.startswith("##[group]Run ") or text == "Post job cleanup.":
-            if run is not None:
+        if text.startswith(STEP_LINE) or text == "Post job cleanup.":
+            if run is not None and any(map(RUNS_SCRIPT.match, script)):
                 yield run
-            run = [] if text.startswith(RUN_STEP) else None
+            header = text.startswith(STEP_LINE)
+            script, run = [text[len(STEP_LINE):]] if header else [], [] if header else None
         elif run is not None:
             run.append((stamp, text))
-    if run is not None:
+            if header and text == "##[endgroup]":
+                header = False
+            elif header and (echo := SCRIPT_LINE.fullmatch(text)):
+                script.append(echo["line"])
+    if run is not None and any(map(RUNS_SCRIPT.match, script)):
         yield run
+
+
+def checkouts(lines: list[tuple[float, str]]) -> set[str]:
+    """The commits actions/checkout says it checked out in one job's log."""
+    return {after for (_, text), (_, after) in zip(lines, lines[1:])
+            if CHECKOUT_LINE.fullmatch(text) and re.fullmatch(r"[0-9a-f]{40}", after)}
 
 
 def shard_times(lines: list[tuple[float, str]]) -> tuple[float, list[tuple[str, float]]]:
@@ -12798,10 +12881,16 @@ def shard_times(lines: list[tuple[float, str]]) -> tuple[float, list[tuple[str, 
     return setup, times
 
 
-def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
+def times_from_logs(logs: dict[str, str], discovered: list[str]) -> LogTimes:
     """The times file, from CI logs by name: each run of this script there with its tests'
-    lines, in any job (one job's log, or a whole run's from `gh run view RUN --log`).
-    ValueError, naming each fault, unless they give each test of `discovered` once."""
+    lines, in any job (one job's log, or a whole run's from `gh run view RUN --log`), for
+    the tests of `discovered`. A test it lists with no line in the logs weighs their
+    median, as it does in `--shard`, and a test of the logs it no longer lists is left out,
+    by the coordinator's ruling of 24 October 18:58 (#425): else a branch that adds a test
+    could never be timed from an older run. ValueError, naming each fault, when the logs
+    hold no run, when a run does not show its times, when a test ran twice, or when they
+    time no test of `discovered`. The note names the run, by a log's name run-ID.log, the
+    commit the jobs checked out, and the tests that weigh the median."""
     jobs: dict[tuple[str, str], list[tuple[float, str]]] = {}
     for name, log in logs.items():
         for raw in log.split("\n"):
@@ -12809,7 +12898,7 @@ def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
             if line:
                 jobs.setdefault((name, line["job"] or ""), []).append(
                     (stamp_seconds(line["stamp"], line["fraction"]), line["text"]))
-    problems, setups, seconds, where, firsts = [], [], {}, {}, []
+    problems, setups, seconds, where, firsts, commits = [], [], {}, {}, [], set()
     for (name, job), lines in jobs.items():
         label = f"{name}, {job}" if job else name
         for run in script_runs(lines):
@@ -12822,6 +12911,7 @@ def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
                 continue
             setups.append(setup)
             firsts.append(run[0][0])
+            commits |= checkouts(lines)
             for key, value in times:
                 if key in seconds:
                     problems.append(f"{key} ran in {where[key]} and again in {label}.")
@@ -12829,22 +12919,40 @@ def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
     if not setups and not problems:
         problems.append("These logs hold no run of scripts/test_safe_push.py with its tests' "
                         "lines.")
-    if not problems:
-        problems += [f"{key} has no line in these logs." for key in discovered
-                     if key not in seconds]
-        problems += [f"{key} ran in {where[key]}, but unittest's loader does not list it here."
-                     for key in sorted(set(seconds) - set(discovered))]
+    listed = set(discovered)
+    if not problems and not listed & set(seconds):
+        problems.append(f"None of the {len(seconds)} tests these logs time is one unittest's "
+                        "loader lists here.")
     if problems:
         raise ValueError("\n".join(problems))
+    unmeasured = tuple(sorted(listed - set(seconds)))
+    dropped = tuple(sorted(set(seconds) - listed))
+    kept = {key: value for key, value in sorted(seconds.items()) if key in listed}
     pulls = sorted({number for log in logs.values()
                     for number in re.findall(r"refs/remotes/pull/(\d+)/merge", log)})
+    runs = [match["id"] for name in logs if (match := RUN_LOG_NAME.fullmatch(Path(name).name))]
+    if runs and len(runs) == len(logs):
+        source = (f"the log of GitHub Actions run {runs[0]}" if len(runs) == 1
+                  else "the logs of GitHub Actions runs " + ", ".join(runs))
+        source += f", the CI run of pull request #{pulls[0]}" if len(pulls) == 1 else ""
+    elif len(pulls) == 1:
+        source = f"the CI run of pull request #{pulls[0]}"
+    else:
+        source = "the CI logs " + ", ".join(Path(name).name for name in logs)
+    commit = ("" if not commits else f", at commit {next(iter(commits))}," if len(commits) == 1
+              else ", at commits " + ", ".join(sorted(commits)) + ",")
+    counts = (f"{len(unmeasured)} of the {len(listed)} tests unittest's loader listed when "
+              "this file was written had no line there, and "
+              f"{'weighs' if len(unmeasured) == 1 else 'weigh'} their median")
+    if dropped:
+        counts += (f"; {safe_push.plural(len(dropped), 'test')} timed there that it no longer "
+                   f"listed {'was' if len(dropped) == 1 else 'were'} left out")
     first = datetime.datetime.fromtimestamp(min(firsts), datetime.timezone.utc)
-    return {"about": TIMES_ABOUT.format(
-                source=(f"the CI run of pull request #{pulls[0]}" if len(pulls) == 1
-                        else "the CI logs " + ", ".join(logs)),
-                date=f"{first.day} {first:%B %Y}", shards=len(setups), tests=len(seconds)),
-            "setUpModule": round(statistics.median(setups), 1),
-            "tests": dict(sorted(seconds.items()))}
+    return LogTimes({"about": TIMES_ABOUT.format(
+                         source=source, commit=commit, date=f"{first.day} {first:%B %Y}",
+                         shards=len(setups), tests=len(kept), counts=counts + "."),
+                     "setUpModule": round(statistics.median(setups), 1),
+                     "tests": kept}, unmeasured, dropped)
 
 
 def write_times(data: dict, path: Path = TIMES) -> None:
@@ -12853,17 +12961,31 @@ def write_times(data: dict, path: Path = TIMES) -> None:
 
 def times_command(logs: list[Path]) -> int:
     """`--times-from-log LOG...`: the times file, written from the shards' CI logs, against
-    this checkout's tests as unittest's loader lists them."""
+    this checkout's tests as unittest's loader lists them. It names on stderr, with their
+    count, the tests with no line in the logs, which weigh the median, and the tests of the
+    logs that the loader no longer lists, which are left out. A log saved as run-ID.log
+    names its run in the file's note."""
+    discovered = [time_key(test) for test in loaded_tests()]
     try:
-        data = times_from_logs({str(path): path.read_text(encoding="utf-8", errors="replace")
-                                for path in logs},
-                               [time_key(test) for test in loaded_tests()])
+        read = times_from_logs({str(path): path.read_text(encoding="utf-8", errors="replace")
+                                for path in logs}, discovered)
     except (OSError, ValueError) as error:
         print(f"No times written to scripts/{TIMES.name}:\n{error}", file=sys.stderr)
         return 1
-    write_times(data)
-    print(f"Wrote scripts/{TIMES.name}: {len(data['tests'])} tests, setUpModule "
-          f"{data['setUpModule']} s.")
+    median = statistics.median(read.data["tests"].values())
+    for key in read.unmeasured:
+        print(f"No line for {key} in these logs: it weighs their median, {median:g} s.",
+              file=sys.stderr)
+    for key in read.dropped:
+        print(f"{key} is timed in these logs, but unittest's loader no longer lists it: it is "
+              "left out.", file=sys.stderr)
+    print(f"{len(read.unmeasured)} of the {len(discovered)} tests unittest's loader lists have "
+          f"no line in these logs, and weigh their median, {median:g} s; "
+          f"{safe_push.plural(len(read.dropped), 'test')} timed there, which it no longer "
+          "lists, left out.", file=sys.stderr)
+    write_times(read.data)
+    print(f"Wrote scripts/{TIMES.name}: {len(read.data['tests'])} tests, setUpModule "
+          f"{read.data['setUpModule']} s.")
     return 0
 
 
@@ -12973,15 +13095,18 @@ def step_runs(condition: str | None, context: dict[str, str], failed: bool,
 def resolved(value, context: dict[str, str]):
     """`value` with each ${{ name }} in it read from `context`, as GitHub reads an env, a
     `with` or a script before the step runs; a value that is not a string, as it is. A
-    name the context does not give is a ValueError."""
+    name the context does not give is a ValueError, and so is any other `${{`, such as a
+    function's call or a name without its spaces, which this model does not read (#425)."""
     if not isinstance(value, str):
         return value
 
     def read(match) -> str:
+        if match[1] is None:
+            raise ValueError(f"an expression this model does not read, in {value!r}")
         if match[1] not in context:
             raise ValueError(f"a context this model is not given: {match[1]!r}")
         return context[match[1]]
-    return re.sub(r"\$\{\{ ([\w.-]+) \}\}", read, value)
+    return re.sub(r"\$\{\{ ([\w.-]+) \}\}|\$\{\{", read, value)
 
 
 def run_steps(steps: list[dict], context: dict[str, str], passes) -> tuple[list[str], str]:
@@ -13543,11 +13668,12 @@ class Shards(unittest.TestCase):
                     script_command(argv)
                 self.assertEqual(stopped.exception.code, 2)
 
-    def test_the_times_from_a_ci_log(self):
-        # A few lines in the form of a CI log as `gh run view RUN --log` gives it: two
-        # shards, each with setUpModule's line, and a test whose output takes two lines;
-        # the step of the proof, which runs no test, and another job's tests, which are
-        # not this script's. A job's own log, without the job and step, reads the same.
+    def ci_log(self) -> tuple[list[str], list[str], list[str], list[str]]:
+        """A few lines in the form of a CI log as `gh run view RUN --log` gives it, each
+        shard's step of one line, as the CI run of #239 ran them: two shards, each with
+        setUpModule's line, and a test whose output takes two lines; then the step of the
+        proof, which runs no test, and another job's tests, which are not this script's;
+        and the four tests the shards ran."""
         def job(name: str, lines: list[str]) -> list[str]:
             return [f"{name}\tUNKNOWN STEP\t{line}" for line in lines]
 
@@ -13605,9 +13731,33 @@ class Shards(unittest.TestCase):
                 "Accepts.test_nothing_to_push",
                 "DecisionEntries.test_a_bare_top_level_directory_ends_no_sentence",
                 "FullChecks.test_full_sequence_on_a_good_commit"]
+        return one, two, others, keys
+
+    def times_command_on(self, lines: list[str], discovered: list[str]):
+        """times_command on a log of `lines`, saved as run.log, unittest's loader listing
+        `discovered`: its status, what it said on stderr, and the times file it wrote, or
+        None. The file it writes is caught; scripts/test_safe_push_times.json is not."""
+        tests = [mock.Mock(**{"id.return_value": f"__main__.{key}"}) for key in discovered]
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "run.log"
+            log.write_text("\n".join(lines) + "\n")
+            err = io.StringIO()
+            with mock.patch.object(sys.modules[__name__], "loaded_tests", return_value=tests), \
+                    mock.patch.object(sys.modules[__name__], "write_times") as write, \
+                    contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                code = times_command([log])
+        return code, err.getvalue(), write.call_args.args[0] if write.called else None
+
+    def test_the_times_from_a_ci_log(self):
+        # The log's two shards, each step of one line, read; and a job's own log, without
+        # the job and step, read the same. Then each refusal, by the coordinator's ruling of
+        # 24 October 18:58 (#425): a count of tests' lines that differs from unittest's, no
+        # line from setUpModule, a run cut short, a test that ran twice, logs that time no
+        # test the loader lists, and logs that hold no run.
+        one, two, others, keys = self.ci_log()
 
         def times(lines: list[str], discovered: list[str] = keys) -> dict:
-            return times_from_logs({"run.log": "\n".join(lines) + "\n"}, discovered)
+            return times_from_logs({"run.log": "\n".join(lines) + "\n"}, discovered).data
 
         data = times(two + others + one)
         self.assertEqual(data["tests"], {keys[0]: 10.6, keys[1]: 0.2, keys[2]: 5.5,
@@ -13619,7 +13769,7 @@ class Shards(unittest.TestCase):
             write_times(data, Path(tmp) / "times.json")
             self.assertEqual(load_times(Path(tmp) / "times.json"), (5.8, data["tests"]))
         alone = times_from_logs({"job.txt": "\n".join(line.split("\t", 2)[2] for line in one)},
-                                keys[:2])
+                                keys[:2]).data
         self.assertEqual((alone["setUpModule"], alone["tests"]),
                          (5.5, {keys[0]: 10.6, keys[1]: 0.2}))
 
@@ -13640,12 +13790,148 @@ class Shards(unittest.TestCase):
         self.assertEqual(refused(one + two + [line.replace("(1)", "(3)") for line in one]),
                          f"{keys[0]} ran in {label} (1) and again in {label} (3).\n"
                          f"{keys[1]} ran in {label} (1) and again in {label} (3).")
-        self.assertEqual(refused(one + two, keys + ["Later.test_added"]),
-                         "Later.test_added has no line in these logs.")
-        self.assertEqual(refused(one + two, keys[1:]), f"{keys[0]} ran in {label} (1), but "
-                         "unittest's loader does not list it here.")
+        self.assertEqual(refused(one + two, ["Later.test_added"]),
+                         "None of the 4 tests these logs time is one unittest's loader lists "
+                         "here.")
         self.assertEqual(refused(others), "These logs hold no run of scripts/test_safe_push.py "
                          "with its tests' lines.")
+        # The command, refused, writes nothing.
+        code, said, written = self.times_command_on(others, keys)
+        self.assertEqual((code, written), (1, None), said)
+        self.assertTrue(said.startswith(f"No times written to scripts/{TIMES.name}:\n"), said)
+
+    def test_a_listed_test_with_no_line_in_the_logs_weighs_the_median(self):
+        # The coordinator's ruling of 24 October 18:58 (#425): a test the loader lists that
+        # the logs do not time, as one a branch added after the run, is no refusal. The file
+        # leaves it out, so it weighs their median when the shards are dealt, as any test
+        # the file does not name; the command names it on stderr, with the count, and the
+        # file's note gives the count.
+        one, two, _, keys = self.ci_log()
+        added = ["Later.test_added", "Later.test_renamed"]
+        code, said, written = self.times_command_on(one + two, keys + added)
+        self.assertEqual(code, 0, said)
+        self.assertEqual(written["tests"], {keys[0]: 10.6, keys[1]: 0.2, keys[2]: 5.5,
+                                            keys[3]: 191.4})
+        median = statistics.median(written["tests"].values())
+        self.assertEqual(median, 8.05)
+        for key in added:
+            self.assertIn(f"No line for {key} in these logs: it weighs their median, 8.05 s.\n",
+                          said)
+        self.assertIn("2 of the 6 tests unittest's loader lists have no line in these logs, and "
+                      "weigh their median, 8.05 s; 0 tests timed there, which it no longer "
+                      "lists, left out.\n", said)
+        self.assertIn("2 of the 6 tests unittest's loader listed when this file was written had "
+                      "no line there, and weigh their median.", written["about"])
+        plan = shard_plan(keys + added, 2, written["tests"], written["setUpModule"])
+        self.assertEqual((plan.unmeasured, plan.median), (tuple(added), median))
+
+    def test_a_logged_test_the_loader_no_longer_lists_is_left_out(self):
+        # The coordinator's ruling of 24 October 18:58 (#425): a test the logs time that the
+        # loader no longer lists, as one renamed or removed since the run, is no refusal:
+        # the file leaves it out, and the command names it on stderr, with the count.
+        one, two, _, keys = self.ci_log()
+        code, said, written = self.times_command_on(one + two, keys[1:])
+        self.assertEqual(code, 0, said)
+        self.assertEqual(written["tests"], {keys[1]: 0.2, keys[2]: 5.5, keys[3]: 191.4})
+        self.assertIn(f"{keys[0]} is timed in these logs, but unittest's loader no longer lists "
+                      "it: it is left out.\n", said)
+        self.assertIn("0 of the 3 tests unittest's loader lists have no line in these logs, and "
+                      "weigh their median, 5.5 s; 1 test timed there, which it no longer lists, "
+                      "left out.\n", said)
+        self.assertIn("; 1 test timed there that it no longer listed was left out.",
+                      written["about"])
+
+    def test_the_times_from_the_cadences_shard_step(self):
+        # #425: the cadence's shard step runs a script of two lines, so its group line is
+        # `Run set -o pipefail`, and this script's command comes inside the group, echoed in
+        # cyan, as in the log of run 40135685522; it is read, and the note names the run, by
+        # the log's name, and the commit the jobs checked out. A step whose script does not
+        # run this script is not read, though its output holds a test's lines: one whose
+        # script only echoes the command, and an action's whose `with` holds the command on
+        # a line of its own, not in cyan, as its output does after its ##[endgroup].
+        def cyan(line: str) -> str:
+            return f"\x1b[36;1m{line}\x1b[0m"
+
+        commit = "8839a510a1595d084a60bd7ef1f819dee7846990"
+        rule = "-" * 70
+
+        def job(name: str, lines: list[str]) -> list[str]:
+            return [f"{name}\tUNKNOWN STEP\t2026-10-24T21:{line}" for line in lines]
+
+        def shard(k: int, step: str) -> list[str]:
+            return [f"46:3{k}.2675057Z [command]/usr/bin/git log -1 --format=%H",
+                    f"46:3{k}.2702837Z {commit}",
+                    f"{step}Z ##[group]Run set -o pipefail",
+                    f"{step}Z " + cyan("set -o pipefail"),
+                    f"{step}Z " + cyan(f'python3 scripts/test_safe_push.py --shard {k}/8 --ran '
+                                       f'"$RUNNER_TEMP/ran-{k}.json" 2>&1 | tee '
+                                       f'"$RUNNER_TEMP/test_safe_push-{k}.log"'),
+                    f"{step}Z shell: /usr/bin/bash -e {{0}}",
+                    f"{step}Z env:",
+                    f"{step}Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64",
+                    f"{step}Z ##[endgroup]"]
+
+        def summary(at: str, ran: int) -> list[str]:
+            return [f"{at}0Z ", f"{at}1Z {rule}",
+                    f"{at}2Z Ran {ran} test{'s' if ran != 1 else ''} in 2.000s", f"{at}3Z ",
+                    f"{at}4Z OK"]
+
+        first = job("safe-push-shards (1)", shard(1, "46:39.3126511") + [
+            "46:40.3481350Z No measured time for Later.test_added in "
+            "scripts/test_safe_push_times.json: it weighs their median, 2.7 s.",
+            "46:40.3662875Z Shard 1 of 8: 2 of 5 tests, about 347 s by the times measured on a "
+            "GitHub runner, the module's setup included.",
+            f"46:41.1877196Z {SETUP_DONE}",
+            "46:41.2482660Z test_a_few_failures_are_listed_whole "
+            "(__main__.CadenceReport.test_a_few_failures_are_listed_whole) ... ok",
+            "46:43.5556706Z test_advised_revert_restores_only_what_origin_main_holds "
+            "(__main__.DecisionEntries.test_advised_revert_restores_only_what_origin_main_holds)"
+            " ... ok"] + summary("46:43.600000", 2) + [
+            "46:43.7000000Z ##[group]Run actions/upload-artifact@v5"])
+        second = job("safe-push-shards (2)", shard(2, "46:35.0212430") + [
+            "46:36.0000000Z Shard 2 of 8: 1 of 5 tests, about 205 s by the times measured on a "
+            "GitHub runner, the module's setup included.",
+            f"46:36.1775861Z {SETUP_DONE}",
+            "46:40.0000000Z test_dry_run_interrupted (__main__.DryRun.test_dry_run_interrupted) "
+            "... ok"] + summary("46:40.100000", 1) + ["46:40.2000000Z Post job cleanup."])
+
+        def decoy(step: list[str]) -> list[str]:
+            # A whole run of a test the loader lists, which no shard ran.
+            return step + [
+                "47:00.0000000Z Shard 9 of 9: 1 of 5 tests, about 1 s by the times measured on "
+                "a GitHub runner, the module's setup included.",
+                f"47:01.0000000Z {SETUP_DONE}",
+                "47:02.0000000Z test_planted (__main__.Decoy.test_planted) ... ok"] + summary(
+                "47:02.100000", 1)
+
+        decoys = job("decoys", decoy([
+            "46:59.0000000Z ##[group]Run echo python3 scripts/test_safe_push.py",
+            "46:59.0000000Z " + cyan("echo python3 scripts/test_safe_push.py"),
+            "46:59.0000000Z ##[endgroup]"]) + decoy([
+            "47:10.0000000Z ##[group]Run actions/github-script@v7",
+            "47:10.0000000Z with:",
+            "47:10.0000000Z   script: set -o pipefail",
+            "47:10.0000000Z     python3 scripts/test_safe_push.py --shard 1/8",
+            "47:10.0000000Z ##[endgroup]",
+            "47:10.5000000Z " + cyan("python3 scripts/test_safe_push.py --shard 1/8")]))
+        keys = ["CadenceReport.test_a_few_failures_are_listed_whole",
+                "DecisionEntries.test_advised_revert_restores_only_what_origin_main_holds",
+                "DryRun.test_dry_run_interrupted", "Decoy.test_planted", "Later.test_added"]
+        log = "\n".join(decoys + second + first) + "\n"
+        read = times_from_logs({"run-40135685522.log": log}, keys)
+        self.assertEqual(read.data["tests"], {keys[0]: 0.1, keys[1]: 2.3, keys[2]: 3.8})
+        self.assertEqual(read.data["setUpModule"], 0.5)
+        self.assertEqual((read.unmeasured, read.dropped),
+                         (("Decoy.test_planted", "Later.test_added"), ()))
+        self.assertIn("the lines of the log of GitHub Actions run 40135685522, at commit "
+                      f"{commit}, on 24 October 2026 (2 shards, 3 tests). 2 of the 5 tests "
+                      "unittest's loader listed when this file was written had no line there, "
+                      "and weigh their median.", read.data["about"])
+        # A log of another name gives no run, and its folder never reaches the note.
+        elsewhere = times_from_logs({"/some/folder/shards.log": log}, keys).data["about"]
+        self.assertIn(f"the lines of the CI logs shards.log, at commit {commit}, on 24 October",
+                      elsewhere)
+        self.assertNotIn("/some/folder", elsewhere)
 
     def test_every_shard_runs_its_part_of_the_suite(self):
         jobs = self.jobs()
@@ -13809,6 +14095,24 @@ class Shards(unittest.TestCase):
             with self.subTest(condition=condition), self.assertRaises(ValueError):
                 step_runs(condition, {"github.ref": "refs/heads/main"}, False)
 
+    def test_an_expression_the_model_does_not_read_is_refused(self):
+        # #425: resolved() reads each `${{ name }}` from the context it is given, and
+        # refuses any other `${{`, which it would otherwise hand the step as it stands.
+        context = {"matrix.shard": "3", "runner.temp": "RUNNER_TEMP"}
+        self.assertEqual(resolved("${{ runner.temp }}/ran-${{ matrix.shard }}.json", context),
+                         "RUNNER_TEMP/ran-3.json")
+        self.assertEqual((resolved(35, context), resolved("no expression", context)),
+                         (35, "no expression"))
+        for value in ("${{ hashFiles('model/lake-manifest.json') }}", "${{matrix.shard}}",
+                      "${{ matrix.shard}}", "ran-${{ matrix.shard }} ${{", "${{ fromJSON(x) }}"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError) as caught:
+                    resolved(value, context)
+                self.assertIn("an expression this model does not read", str(caught.exception))
+        with self.assertRaises(ValueError) as caught:
+            resolved("${{ github.sha }}", context)
+        self.assertEqual(str(caught.exception), "a context this model is not given: 'github.sha'")
+
     # The planted reds: whole runs of the cadence workflow, its jobs and steps read from it,
     # by CadenceRun. Each test fails when the guard it names is taken away.
 
@@ -13841,6 +14145,9 @@ class Shards(unittest.TestCase):
                               "the proof that every test ran once and passed): failure", run.body)
                 self.assertNotIn("negative-tests", run.body)
                 self.assertIn(f"FAIL: {failed} (a stand-in", run.body)
+                self.assertEqual([line for line in run.body.splitlines()
+                                  if line.startswith("- shard ")],
+                                 [f"- shard {shard}: FAILED (failures=1)"])
                 calls = "\n".join(run.calls)
                 if open_issue is None:
                     self.assertIn(f"issue create --title {REPORT_TITLE} --label blocks-release "
@@ -13873,6 +14180,7 @@ class Shards(unittest.TestCase):
                           "ended 'failure'", run.said["verdict"])
             self.assertIsNotNone(run.body, run.said.get("report"))
             self.assertIn("No failing test is named in the shards' logs", run.body)
+            self.assertIn("No shard's kept log shows it red", run.body)
 
     @unittest.skipUnless(REPORT_TOOLS, REPORT_TOOLS_REASON)
     def test_a_cancelled_or_skipped_shard_turns_the_verdict_red(self):

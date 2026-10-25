@@ -32,8 +32,9 @@ jobs:
     # release pull request's run need not be R5: the merge
     # gate holds a release until the full pre-flight has run on its head and a run there
     # of the safe-push-tests workflow, the head's copy being main's, has passed each of its
-    # three jobs: the safe_push tests, the negative tests in full, and the formal model's
-    # build and kernel re-check (docs/decisions/2026-10-22-checks-by-risk.md).
+    # jobs but the report, which a green run skips: the safe_push tests' eight shards and
+    # the verdict on them, the negative tests in full, and the formal model's build and
+    # kernel re-check (docs/decisions/2026-10-22-checks-by-risk.md).
     runs-on: ubuntu-latest
     permissions:
       contents: read
