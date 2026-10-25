@@ -112,11 +112,12 @@ propositions. No catalogue row is added by the screen.
 
 That run is no longer a true account of this screen. Axiom wave one (19 October 2026)
 had not reached that branch: it made eight rules theorems, five of them rules about
-circles, and the second axiom retirement made 31 more, nine of them rules about circles;
-all fourteen have left CIRCLE. The screen tries the 49 axioms of the certificate, 11 of
-them in CIRCLE with Tacit.exists_centre, and it unfolds, budgets and leaves out rules as
-described above. III.2 closed by Circle 2 in the runs on 89c5da4 and on 19 October, and
-Circle 2 is one of wave one's eight.
+circles, the second axiom retirement made 31 more, nine of them rules about circles, and
+the third (24 October 2026) made Circle 3 (Tacit.outside_of_between) a theorem, proved
+after III.2; all fifteen have left CIRCLE. The screen tries the 48 axioms of the
+certificate, 10 of them in CIRCLE with Tacit.exists_centre, and it unfolds, budgets and
+leaves out rules as described above. III.2 closed by Circle 2 in the runs on 89c5da4 and
+on 19 October, and Circle 2 is one of wave one's eight.
 
 Run on the statements of 58018a3 (21 October 2026), the second axiom retirement's before
 train C6a was merged into it, the 15,860 attempts over the 122 statements made 28,060 tries
@@ -226,9 +227,8 @@ PARTS = {
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
 CIRCLE = """Definition15 Postulate3 Tacit.exists_centre Tacit.between_of_inside_chord
-Tacit.outside_of_between Tacit.circles_meet Tacit.line_circle_between
-Tacit.line_circle_beyond Tacit.circles_meet_same_side Tacit.exists_point_inside_circle
-Tacit.circle_eq""".split()
+Tacit.circles_meet Tacit.line_circle_between Tacit.line_circle_beyond
+Tacit.circles_meet_same_side Tacit.exists_point_inside_circle Tacit.circle_eq""".split()
 
 # The phrases, and the words for "any number", unfolded in every attempt.
 DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet CirclesCut

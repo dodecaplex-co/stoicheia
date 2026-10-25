@@ -59,10 +59,29 @@ order, and the first that fails stops it with a message saying why:
    itself, git's or another's, get a variable that ties git to one repository
    (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE and their kin, as `git
    rev-parse --local-env-vars` lists them) from the caller, but GIT_NO_REPLACE_OBJECTS
-   as above: each finds its repository by its
-   working directory too, the hand-over's included (#357). The harness sets one itself,
+   as above: each finds its repository by its working directory too, the hand-over's
+   included (#357), but main()'s one git rev-parse before any step, which is given the
+   caller's GIT_DIR and GIT_WORK_TREE on its command line, as --git-dir= and
+   --work-tree=, to see the repository they name (#186). The harness sets one itself,
    on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
-3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
+3. Invariant guards against origin/main. First, before the commit is checked out, the
+   paths guards. They read the tree of each commit the push brings (origin/main..the
+   commit), each tree once, and a finding names, for each tree that holds it, the first
+   commit with that tree, at most three and then "and N more":
+   - every path is plain printable ASCII, with no space; no two paths, nor two folders of
+     them, are one name once casefolded and NFC-normalised, as a case-insensitive disk
+     (macOS's default) compares them; and none is a protected path or a check input
+     spelt otherwise (LAKEFILE.lean, Scripts/x.py): such a twin, as certificate/FIELDS.md
+     beside Certificate/FIELDS.md, or Scripts/json.py beside scripts/, is checked out
+     over the file or into the folder the protected paths and the check inputs name,
+     unseen by both;
+   - every path keeps origin/main's own standard (docs/WORKFLOW.md, "File names"):
+     origin/main's scripts/check_paths.py, read from its blob and run in this process,
+     judges each tree, before any of the commit's code has run, and refuses when it does
+     not load or fails on a tree. When origin/main has no check_paths.py, as before the
+     pull request that brings it, a note says so.
+   They read the trees, which such a disk cannot hold, and when they refuse, no worktree
+   is made. Then, in a fresh temporary worktree of the commit, the guards below. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
    the decisions page, holds the entries written before that rule, and a pull request
@@ -136,7 +155,25 @@ order, and the first that fails stops it with a message saying why:
    copies, which must pass. A check that fails with origin/main's copies is noted for the
    security review, and refuses the commit when it also changes what the checks judge
    (keep_apart, below): a check change lands in a pull request of its own, before the
-   code it checks. Two kinds of failure are not a check's verdict, and are noted only:
+   code it checks. Step 3 has already judged every commit's tree by origin/main's standard
+   for paths, before any of the commit's code ran; as a second line, a failure here of
+   origin/main's path check (check_paths.py and its cases) refuses the commit whatever
+   else it changes: every path is what it judges, so a looser check cannot land with the
+   path it would let in. Each pass begins with the worktree at the commit, or is refused,
+   since the commit's code may have run in an earlier one: its HEAD the commit, its index
+   the commit's tree, no file flagged skip-worktree or assume-unchanged (either keeps git
+   from looking at the file on disk), and `git status --porcelain --untracked-files=all`
+   empty, each asked of git with stat settings at their defaults, no fsmonitor, untracked
+   cache or hook, and, as the worktrees are made, file modes compared and no conversion or
+   attributes but the system's (attr.tree the empty tree), whatever the shared .git/config
+   says, and refused while the shared .git/info/attributes exists; then every ignored file
+   is removed but the build's caches, .lake/ and model/.lake/, a channel the commit's
+   build already has (#197). This asks git and compares no bytes, so routes past it remain
+   (a hand-edited index, a process left running, a .git below the root among them; #218),
+   each needing code of this commit or one checked before to have run first, through a
+   change to a protected script or its Lean at elaboration (#197). origin/main's copies
+   are taken out again by a reset to the commit. Two kinds of failure are not a check's
+   verdict, and are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
@@ -195,11 +232,12 @@ is not a draft; a pull request labelled release waits until no blocks-release is
 pull request is open, read from GitHub at the gate, with any unreadable response refusing
 the merge, merges only on a record of the full pre-flight of its head (never one that left
 step 4 to CI), and only with a green run of .github/workflows/safe-push-tests.yml at its
-exact head, whose copy of that workflow is origin/main's, with each of the workflow's
-three jobs there and passed, and every job passed but the one that reports a red run on
-main (suite_gate, #301). Malformed labels refuse; the merge and pre-flight watcher ignore
-a stale release-gate job from Release gate only on an ordinary pull request with readable
-labels.
+exact head, whose copy of that workflow is origin/main's, with each of the three jobs the
+gate names there and passed (the verdict on the safe_push tests' shards, the negative
+tests, the formal model's check), and every other job passed, the eight shards among them,
+but the one that reports a red run on main (suite_gate, #301). Malformed labels refuse;
+the merge and pre-flight watcher ignore a stale release-gate job from Release gate only on
+an ordinary pull request with readable labels.
 The pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
@@ -253,6 +291,8 @@ import datetime
 import hashlib
 import html
 import importlib.util
+import inspect
+import io
 import json
 import math
 import os
@@ -276,6 +316,7 @@ import tomllib
 import traceback  # noqa: F401
 import types
 import unicodedata
+from collections import Counter
 from pathlib import Path
 from typing import NamedTuple
 
@@ -474,7 +515,11 @@ RISK_TIMEOUT = 300        # seconds origin/main's risk.py may take to class a ch
 # (#301), the head's copy of it being origin/main's, since a run at the head runs the
 # head's copy: each of its jobs in SUITE_JOBS there and passed, and every other job too,
 # save the one that reports a red run on main, which a green run skips. SUITE_JOBS are
-# the workflow's jobs but that one (Units holds them to the workflow).
+# the workflow's jobs but that one and the matrix of its eight shards, safe-push-shards,
+# whose jobs GitHub names `safe-push-shards (K)`: the verdict on the shards,
+# safe-push-tests, which needs them, the negative tests and the formal model's check. The
+# gate holds each shard's job to have passed as it holds any job it does not name (Units
+# holds both to the workflow).
 SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
@@ -588,7 +633,9 @@ class NothingToPush(Exception):
 # repository and its index: `git worktree add` would check the commit out into a linked
 # worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
 # one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
-# repository by the working directory each command names; the one the harness sets itself,
+# repository by the working directory each command names, but in main()'s one read of the
+# repository the caller's GIT_DIR and GIT_WORK_TREE name, given to it as git's options
+# (#186); the one the harness sets itself,
 # base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
 # 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
 REPOSITORY_VARIABLES = frozenset({
@@ -2228,6 +2275,253 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
                 f"{', '.join(d + '/' for d in top)}")
 
 
+PLAIN_PATH = re.compile(r"[\x21-\x7e]+")      # printable ASCII, the space excluded
+
+
+def path_fold(s: str) -> str:
+    """A path as a case-insensitive disk compares it: NFC, casefolded, then NFC again."""
+    return unicodedata.normalize("NFC", unicodedata.normalize("NFC", s).casefold())
+
+
+def path_shown(path: str) -> str:
+    """A path as it is when plain, else escaped, so that a space shows, and two spellings
+    that look alike (é, and e with a combining accent) differ on the page."""
+    return path if PLAIN_PATH.fullmatch(path) else ascii(path)
+
+
+def path_faults(paths: list[str], directories: list[str] | tuple[str, ...] = ()) -> list[str]:
+    """What guard_paths refuses in a tree's paths, a line each: a path that is not plain
+    printable ASCII, since HFS+ and APFS ignore or fold some code points that casefolding
+    and NFC keep; a protected path or a check input spelt otherwise (LAKEFILE.lean,
+    Scripts/x.py), which such a disk opens as the one the rules name, whether or not the
+    tree holds that one; and paths, or folders of them, equal under path_fold (a file or a
+    folder listed twice, or a file and a folder of one name, among them), named where they
+    first meet, with their twins. The directories are the tree's own folder entries, an
+    empty one among them, judged as its paths are."""
+    def listing(under: list[str]) -> str:
+        more = f" and {len(under) - 3} more" if len(under) > 3 else ""
+        return ", ".join(path_shown(f) for f in under[:3]) + more
+
+    faults = []
+    all_paths = [*paths, *directories]
+    for p in all_paths:
+        odd = sorted({c for c in p if not PLAIN_PATH.fullmatch(c)})
+        if odd:
+            faults.append(f"{path_shown(p)}: not plain printable ASCII "
+                          f"({', '.join(f'U+{ord(c):04X}' for c in odd)})")
+    # #186: the protected-path rule and keep_apart compare spellings, so a
+    # name they protect, spelt otherwise, is refused here, its twin in the tree or not.
+    named = {path_fold(q.rstrip("/")): q for q in PROTECTED + CHECK_INPUTS}
+    respelt: dict[str, tuple[str, list[str]]] = {}   # a spelling -> (the name, paths under it)
+    for p in all_paths:
+        parts = p.split("/")
+        for i in range(1, len(parts) + 1):
+            name = "/".join(parts[:i])
+            own = named.get(path_fold(name))
+            if own is not None and name != own.rstrip("/"):
+                key = name + "/" if i < len(parts) else name
+                respelt.setdefault(key, (own, []))[1].append(p)
+                break
+    for key in sorted(respelt):
+        own, under = respelt[key]
+        shown = f"{path_shown(key)} ({listing(under)})" if key.endswith("/") else path_shown(key)
+        faults.append(f"{shown}: the protected path {own}, spelt otherwise, which a "
+                      f"case-insensitive disk (macOS's default) opens as {own}, unseen by the "
+                      "protected-path rule and keep_apart")
+    met: dict[str, list[str]] = {}       # a fold -> its spellings: a folder once, with "/"
+    files: dict[str, list[str]] = {}     # a folder, with "/" -> the paths under it
+    directory_names = set()
+    for directory in directories:
+        folder = directory + "/"
+        if folder not in directory_names:
+            met.setdefault(path_fold(directory), []).append(folder)
+            directory_names.add(folder)
+        parts = directory.split("/")
+        for i in range(1, len(parts)):
+            parent = "/".join(parts[:i]) + "/"
+            if parent not in directory_names:
+                met.setdefault(path_fold(parent[:-1]), []).append(parent)
+                directory_names.add(parent)
+            files.setdefault(parent, []).append(directory)
+    for directory, n in Counter(directories).items():
+        if n > 1:
+            met.setdefault(path_fold(directory), []).extend([directory + "/"] * (n - 1))
+    for p in paths:
+        parts = p.split("/")
+        for i in range(1, len(parts)):
+            folder = "/".join(parts[:i]) + "/"
+            if folder not in directory_names:
+                met.setdefault(path_fold(folder[:-1]), []).append(folder)
+                directory_names.add(folder)
+            files.setdefault(folder, []).append(p)
+        met.setdefault(path_fold(p), []).append(p)
+    twins = {key for key, spellings in met.items() if len(spellings) > 1}
+    for key in sorted(twins):
+        if "/" in key and key.rsplit("/", 1)[0] in twins:
+            continue        # met already, at a folder above
+        names = []
+        for s in sorted(met[key]):
+            under = files.get(s, [])
+            names.append(f"{path_shown(s)} ({listing(under)})" if under else path_shown(s))
+        faults.append(f"{' and '.join(names)}: equal once casefolded and NFC-normalised, "
+                      "so a case-insensitive disk (macOS's default) checks them out as one, "
+                      "the one over the other")
+    return faults
+
+
+PATH_STANDARD = "scripts/check_paths.py"
+
+
+@contextlib.contextmanager
+def off_path(repo):
+    """sys.path without '', any entry that is not a string, and any entry inside the
+    repository judged or this file's folder, so that origin/main's code run within imports
+    no module planted there. An entry is inside when it, or a folder above it, is one of
+    the two by file identity (os.path.samestat), followed as written and as resolved: a
+    case variant on a case-insensitive disk, or a link into the repository, is caught. The
+    same list, with its contents, is put back afterwards, whatever the code did to it."""
+    roots = []
+    for root in (repo, os.path.dirname(os.path.realpath(__file__))):
+        with contextlib.suppress(OSError):
+            roots.append(os.stat(root))
+
+    def inside(entry) -> bool:
+        if not isinstance(entry, str) or not entry:
+            return True
+        for start in (os.path.abspath(entry), os.path.realpath(entry)):
+            here = start
+            while True:
+                with contextlib.suppress(OSError):      # a missing path is skipped
+                    if any(os.path.samestat(os.stat(here), r) for r in roots):
+                        return True
+                if os.path.dirname(here) == here:
+                    break
+                here = os.path.dirname(here)
+        return False
+
+    kept, saved = sys.path, list(sys.path)
+    try:
+        sys.path = [p for p in saved if not inside(p)]
+        yield
+    finally:
+        kept[:] = saved
+        sys.path = kept
+
+
+def base_standard(repo, base):
+    """origin/main's scripts/check_paths.py, loaded from its blob as a module, or None when
+    origin/main has none, as before the pull request that brings it. Nothing is written to
+    disk; it is compiled as an import compiles it, without this file's __future__ import,
+    and loaded as a module, not run as a script, so its trim of sys.path, which is a
+    script's alone, never runs. It is loaded, and guard_paths calls its `findings`, under
+    off_path, so that its imports find no module planted in the repository. `findings`
+    judges a tree's (mode, path) entries, as its --rev does. A copy that cannot be read or
+    loaded raises (SystemExit too), and guard_paths refuses on it."""
+    if not git_ok(repo, "cat-file", "-e", f"{base}:{PATH_STANDARD}"):
+        return None
+    source = git(repo, "cat-file", "blob", f"{base}:{PATH_STANDARD}", binary=True)
+    standard = types.ModuleType("origin_main_check_paths")
+    # It reads __file__ only to find the repository it is run in, which is never asked here.
+    standard.__file__ = str(Path(repo) / PATH_STANDARD)
+    with off_path(repo):
+        exec(compile(source, f"origin/main:{PATH_STANDARD}", "exec", dont_inherit=True),
+             vars(standard))
+    return standard
+
+
+def guard_paths(repo, base, sha, rep: Report) -> bool:
+    """Every path plain printable ASCII, no two of them, nor two folders of them, one name
+    on a case-insensitive disk, and none a protected path or a check input spelt otherwise
+    (#186): such a twin of a protected file or a check input is checked out over it, unseen
+    by the protected-path rule and keep_apart. And every path kept to origin/main's own
+    standard (base_standard), which judges the trees before any of the commit's code has
+    run, so none can keep a path from it. It judges the tree of each commit the push brings
+    (base..sha), each tree once, since the merge puts them all in main's history; a finding
+    names, for each tree that holds it, the first commit with that tree, at most three and
+    then "and N more". It reads the trees, not a worktree, which such a disk cannot hold,
+    and check_commit runs it before the commit is checked out. A standard that does not
+    load, or that fails on a tree (its fail() exits), refuses, naming the error. Whether
+    both passed."""
+    def judge(call):
+        """call(), or None and the error it ends in, SystemExit too (check_paths' fail()),
+        with what it printed: a crash refuses, and is never a traceback or a pass."""
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                return call(), None
+        except (Exception, SystemExit) as e:
+            said = err.getvalue().strip()
+            return None, f"{e!r}" + (f": {said}" if said else "")
+
+    standard, unloaded = judge(lambda: base_standard(repo, base))
+    # "commit <sha>" and then its tree, for each commit, the oldest first and sha last.
+    words = git(repo, "rev-list", "--reverse", "--format=%T", f"{base}..{sha}").split()
+    commits = list(zip(words[1::3], words[2::3])) or [(sha, f"{sha}^{{tree}}")]
+    found: dict[str, list[str]] = {}     # a fault -> the first commit of each tree holding it
+    theirs: dict[str, list[str]] = {}    # the same, for origin/main's standard's findings
+    counted: dict[str, int] = {}         # a tree judged -> its paths
+    for commit, tree in commits:
+        if tree in counted:
+            continue
+        out = git(repo, "ls-tree", "-r", "-t", "-z", "--full-tree", tree, binary=True)
+        # Each entry: its mode, type and object, a tab and its path, as --rev reads them.
+        records = [(fields.split(), path.decode("utf-8", "surrogateescape"))
+                   for fields, tab, path in (e.partition(b"\t") for e in out.split(b"\0") if e)
+                   if tab]
+        entries = [(fields[0].decode("ascii", "replace"), path)
+                   for fields, path in records if len(fields) == 3 and fields[1] != b"tree"]
+        directories = [path for fields, path in records
+                       if len(fields) == 3 and fields[1] == b"tree"]
+        paths = [p for _, p in entries]
+        counted[tree] = len(set(paths))
+        for fault in path_faults(paths, directories):
+            found.setdefault(fault, []).append(commit)
+        if standard is not None:
+            with off_path(repo):        # its imports in findings, too, read nothing planted
+                # A copy from before its findings took the tree's folders judges the leaves;
+                # asked inside judge, so a findings missing or uncallable refuses by name.
+                def theirs_of():
+                    if "directories" in inspect.signature(standard.findings).parameters:
+                        named = standard.findings(entries, directories=directories)
+                        return [str(f) for f in named]
+                    return [str(f) for f in standard.findings(entries)]
+                judged, crash = judge(theirs_of)
+            if crash is not None:       # a crash of origin/main's check refuses, as a finding
+                judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {crash}"]
+            for finding in judged:
+                theirs.setdefault(finding, []).append(commit)
+
+    def listed(faults: dict[str, list[str]]) -> str:
+        lines = []
+        for fault, held in faults.items():
+            more = f" and {len(held) - 3} more" if len(held) > 3 else ""
+            lines.append(f"{fault} (in {'commit' if len(held) == 1 else 'commits'} "
+                         f"{', '.join(c[:12] for c in held[:3])}{more})")
+        return "\n".join(lines)
+
+    trees = f"the trees of {plural(len(commits), 'commit')}"
+    if found:
+        rep.add("3", "paths", "FAIL", listed(found))
+    else:
+        rep.add("3", "paths", "ok", f"{plural(counted[commits[-1][1]], 'path')} at {sha[:12]}, "
+                f"and {trees}: each path plain printable ASCII, none a protected path spelt "
+                "otherwise, and no two of them, nor two folders, equal once casefolded and "
+                "NFC-normalised")
+    name = "paths (origin/main's standard)"
+    if unloaded is not None:
+        rep.add("3", name, "FAIL", f"origin/main's {PATH_STANDARD} does not load: {unloaded}")
+    elif standard is None:
+        rep.add("3", name, "note", f"origin/main has no {PATH_STANDARD}, as before the pull "
+                "request that brings it: there is no standard of origin/main's to judge the "
+                "trees by")
+    elif theirs:
+        rep.add("3", name, "FAIL", listed(theirs))
+    else:
+        rep.add("3", name, "ok", f"origin/main's {PATH_STANDARD}, run before any of the "
+                f"commit's code, finds nothing in {trees} (docs/WORKFLOW.md, \"File names\")")
+    return not (found or theirs or unloaded)
+
+
 def guard_entries(repo, base, sha, rep: Report) -> None:
     """Decision entries are dated history: a commit only adds them, beside the README,
     which stays once added. "no entry added" when it adds none, whatever edit it makes to
@@ -2303,10 +2597,11 @@ def slug_of(label: str) -> str:
 
 
 @contextlib.contextmanager
-def base_copies(repo, base, wt: Path, changes: list[tuple[str, str]]):
+def base_copies(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
     """origin/main's copies of the check inputs the commit changes, put in place in the
     worktree (and the files the commit adds to them taken out); the worktree is reset
-    to the commit afterwards. Yields the pathspecs that keep them out of `git status`."""
+    to the commit, `sha`, afterwards, never to HEAD, which the checks run could move.
+    Yields the pathspecs that keep them out of `git status`."""
     for status, path in changes:
         target = wt / path
         if target.is_symlink() or target.is_file():
@@ -2327,8 +2622,8 @@ def base_copies(repo, base, wt: Path, changes: list[tuple[str, str]]):
     try:
         yield [f":(exclude,literal){p}" for _, p in changes]
     finally:
-        run(["git", "reset", "-q", "--hard", "HEAD"], wt)
-        run(["git", "clean", "-fdq"], wt)
+        run(["git", *DISK_AS_IS, "reset", "-q", "--hard", sha], wt)
+        run(["git", *DISK_AS_IS, "clean", "-fdq"], wt)
 
 
 BASE_PASS = " (origin/main's checks)"
@@ -2339,17 +2634,118 @@ BASE_PASS = " (origin/main's checks)"
 FRESHNESS = ("generated pages", EMPTY_CHECK)
 
 
-def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
+# For `git worktree add`, and with DISK_AS_IS: files written and compared as the commit
+# holds them, whatever the shared .git/config says. Code of this commit or one checked
+# before can write that config, where core.fileMode=false lets git status pass a changed
+# executable bit, and core.autocrlf=true, or attributes in the global attributes file
+# (core.attributesFile, by default ~/.config/git/attributes) or in a tree attr.tree
+# names, make git's own checkout write bytes the commit does not hold (eol,
+# working-tree-encoding, a smudge filter), which git status then compares through, or
+# git status pass a changed file (a clean filter). attr.tree is pinned to the empty
+# tree, which git then reads in place of every .gitattributes, an ignored one on disk
+# among them, so that none applies. The id is SHA-1's empty tree, as this repository and
+# every clone of it are SHA-1, and git knows it without the object; a value git cannot
+# resolve it ignores, reading .gitattributes again. The shared .git/info/attributes,
+# which no setting turns off, at_commit refuses; the system attributes file, outside the
+# clone, is not pinned.
+AS_COMMITTED = ("-c", "core.fileMode=true", "-c", "core.autocrlf=false",
+                "-c", "core.attributesFile=/dev/null",
+                "-c", "attr.tree=4b825dc642cb6eb9a060e54bf8d69288fbee4904")
+# Git's stat settings at their defaults, no fsmonitor, untracked cache or hook, and
+# AS_COMMITTED's pins, for at_commit's commands and base_copies' reset and clean:
+# in the shared .git/config, core.checkStat=minimal or core.trustctime=false lets git
+# status pass a change of the same size with its time put back; the untracked cache or
+# an fsmonitor hook can answer in git's place; and a hook in the shared .git/hooks
+# (post-index-change, which git status and a reset run) can write a file once git has
+# looked. core.hooksPath=/dev/null runs no hook, as git-config(1) documents.
+DISK_AS_IS = ("-c", "core.checkStat=default", "-c", "core.trustctime=true",
+              "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false",
+              "-c", "core.hooksPath=/dev/null", *AS_COMMITTED)
+# The build's caches, which a pass keeps; at_commit removes every other ignored file.
+CACHES = ("/.lake", "/model/.lake")
+
+
+def at_commit(wt: Path, sha: str) -> None:
+    """Refused unless the worktree is the commit: its HEAD the commit, its index the
+    commit's tree, no entry of the index flagged skip-worktree or assume-unchanged (which
+    keep git from looking at the file on disk), and `git status --porcelain
+    --untracked-files=all` empty, so that no file on disk differs from the index and none
+    stands untracked beside them. Each is asked of git with stat settings at their
+    defaults, no fsmonitor, untracked cache or hook, and, as worktrees are made, file
+    modes compared and no conversion or attributes but the system's (DISK_AS_IS, attr.tree
+    the empty tree), whatever the shared .git/config says, and refused while the shared
+    .git/info/attributes exists; then every ignored file but the build's caches, .lake/
+    and model/.lake/ (CACHES, a channel the commit's build already has, #197), is removed,
+    so the next pass reads no scripts/json.pyc left behind. The commit's own code, run in
+    an earlier pass (its render.py, say), could have changed any of these, and
+    origin/main's checks, which read the index and the files, would judge another tree.
+    This asks git and compares no bytes, so routes past it remain (a hand-edited index, a
+    process left running, a .git below the root among them; #218), each needing code of
+    this commit or one checked before to have run first, through a change to a protected
+    script or its Lean at elaboration (#197)."""
+    head = run(["git", *DISK_AS_IS, "rev-parse", "--verify", "--quiet", "HEAD"],
+               wt).stdout.strip()
+    indexed = git_ok(wt, *DISK_AS_IS, "diff-index", "--cached", "--quiet", sha, "--")
+    if head != sha or not indexed:
+        raise Refusal(f"before a pass of the checks, the worktree {wt} is no longer the "
+                      f"commit {sha[:12]} (its HEAD is {head[:12] or 'unreadable'}, or its "
+                      "index differs): something run in an earlier pass changed it")
+    # The shared .git/info/attributes applies to every worktree whatever the settings say:
+    # working-tree-encoding or eol there makes git's own checkout write bytes the commit
+    # does not hold, and git status compare through them.
+    found = run(["git", *DISK_AS_IS, "rev-parse", "--path-format=absolute", "--git-path",
+                 "info/attributes"], wt)
+    attributes = found.stdout.strip()
+    if found.returncode != 0 or not attributes:
+        raise Refusal("before a pass of the checks, git cannot name the info/attributes of "
+                      f"the worktree {wt}")
+    if os.path.lexists(attributes):
+        raise Refusal(f"before a pass of the checks, {attributes} exists: attributes there "
+                      "apply to every worktree of the clone, whatever git's settings say, "
+                      f"and can make git's own checkout write bytes the commit {sha[:12]} "
+                      "does not hold; remove it")
+    # ls-files -v tags an entry H, S when skip-worktree, M when unmerged, and in lower case
+    # when assume-unchanged: any tag but H is refused. A fresh worktree's entries are all H.
+    tags = run(["git", *DISK_AS_IS, "ls-files", "-v", "-z"], wt, binary=True)
+    flagged = [e[2:].decode(errors="replace") for e in tags.stdout.split(b"\0")
+               if e and not e.startswith(b"H ")]
+    status = run(["git", *DISK_AS_IS, "status", "--porcelain", "--untracked-files=all"], wt)
+    listed = status.stdout.splitlines()
+
+    def some(items: list[str]) -> str:
+        return ", ".join(items[:3]) + (f" and {len(items) - 3} more" if len(items) > 3 else "")
+
+    if tags.returncode != 0 or status.returncode != 0:
+        why = "git ls-files -v or git status fails in it"
+    elif flagged:
+        why = f"flagged skip-worktree or assume-unchanged: {some(flagged)}"
+    elif listed:
+        why = f"git status lists {some(listed)}"
+    else:
+        # Only now, with nothing untracked but what is ignored: -x reads no ignore file,
+        # so each ignored file goes, and only the -e patterns, the caches, are kept.
+        keep = [arg for cache in CACHES for arg in ("-e", cache)]
+        if run(["git", *DISK_AS_IS, "clean", "-ffdxq", *keep], wt).returncode == 0:
+            return
+        why = "git clean of its ignored files fails in it"
+    raise Refusal(f"before a pass of the checks, the files on disk in the worktree {wt} may "
+                  f"no longer be the commit {sha[:12]} ({why}): something run in an earlier "
+                  "pass changed them")
+
+
+def passes(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
     """(label, the outcome of a failure, status excludes) for each pass of the checks:
     with origin/main's copies of the check inputs; and, when the commit changes any,
     with the commit's own, which must pass, while a failure with origin/main's is noted
     for the security review (and refuses the commit, if it changes what the checks
-    judge as well: keep_apart)."""
+    judge as well: keep_apart). Each begins at the commit, `sha` (at_commit)."""
+    at_commit(wt, sha)
     if not changes:
         yield "", "FAIL", []
         return
-    with base_copies(repo, base, wt, changes) as excludes:
+    with base_copies(repo, base, sha, wt, changes) as excludes:
         yield BASE_PASS, "note", excludes
+    at_commit(wt, sha)
     yield " (the commit's checks)", "FAIL", []
 
 
@@ -2537,7 +2933,7 @@ LAW_GLOBALS = {
             "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "ang",
             "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
             "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
-            "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
+            "inside", "is_centre", "is_right_angle", "lattice_on_line",
             "length", "line_circle_points", "line_through",
             "lines_meet", "mag_vals", "on_circle", "on_line", "opposite", "outside",
             "same_side", "sub", "triangle"}),
@@ -2548,7 +2944,7 @@ LAW_GLOBALS = {
             "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
             "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
             "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
-            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
+            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "inside",
             "is_centre", "is_right", "line_through", "lines_meet",
             "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
             "opposite", "outside", "pt_on_line", "pts_on_line",
@@ -2558,7 +2954,7 @@ LAW_GLOBALS = {
             "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
             "gs_cong", "gs_lc", "gs_lines_meet", "gs_p4", "gs_p5", "gs_pasch",
             "gs_rays", "gs_sup"}),
-        "generator maker": frozenset({"gs_cm", "gs_convex"}),
+        "generator maker": frozenset({"gs_cm"}),
     },
 }
 LAW_BUILTINS = frozenset({"abs", "all", "any", "float", "len", "range", "set", "tuple"})
@@ -2907,12 +3303,26 @@ def pinned(repo, base, sha, path: str) -> bool:
     return under(path, PINNED) or counts_moved(repo, base, sha, path)
 
 
+# origin/main's path check and its cases, by the names of their entries in the registry
+# (checks/, as check_sequence reads it; each name is its command's words): every path of
+# the tree is what they judge, so a failure of either is a verdict whatever else the
+# commit changes (keep_apart). Units holds them to the registry's names, so that an entry
+# reworded there cannot drop the rule unseen.
+PATH_CHECKS = ("python3 -I tests/test_check_paths.py",
+               "python3 scripts/check_paths.py --self-test")
+
+
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     """A check change is a pull request of its own, landed before the code it checks
     (docs/WORKFLOW.md, "Landing work: pull requests"). So when a check fails with
     origin/main's copies, the commit may change nothing the checks judge: a check
     weakened in the same pull request as the code it would catch is refused, not only
-    noted. Two failures are not a verdict, and do not count. Pages gone stale under
+    noted. A failure of origin/main's path check (PATH_CHECKS) refuses the commit
+    whatever else it changes, even when that is only protected paths and guides, which
+    are not judged: every path is what it judges, so a looser check_paths.py cannot land
+    with the path it would let in. This is a second line: step 3 has already judged every
+    commit's tree by origin/main's standard (guard_paths), before any of the commit's code
+    ran. Two failures are not a verdict, and do not count. Pages gone stale under
     origin/main's copies (FRESHNESS): a renderer's change shows in the pages it
     regenerates, and the commit's own pass still needs them current. And any failure on a
     commit whose only check inputs changed are pinned values (pinned): a re-proof that
@@ -2930,6 +3340,15 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
+    paths = [name for name in failed if name in PATH_CHECKS]
+    if paths:       # #186, a looser path check: no judged file needed, no pinned value excuses it
+        rep.add(stage, "check change kept apart", "FAIL",
+                f"origin/main's path check fails on the commit ({', '.join(paths)}): every "
+                "path is what it judges, so the commit is refused whatever else it changes. "
+                "Land a change to scripts/check_paths.py first, in a pull request of its "
+                "own, and the paths it lets in after it (docs/WORKFLOW.md, \"Landing work: "
+                "pull requests\")")
+        return True
     judged = judged_files(repo, base, sha) if failed else []
     if not judged:
         return False
@@ -3075,7 +3494,7 @@ def beyond_low(repo, base, sha) -> list[str]:
 
 def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     repo, base, sha = ctx.repo, ctx.base, ctx.sha
-    rep.heading(f"3. Invariant guards against origin/main, in {wt}")
+    print(f"  in a fresh worktree of the commit, {wt}", flush=True)
     statements = guard_statements(repo, base, sha, wt, rep)
     guard_lock(repo, base, sha, rep)
     protected = guard_protected(repo, base, sha, rep)
@@ -3084,7 +3503,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_entries(repo, base, sha, rep)
     guard_registry(repo, sha, rep, base)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
-    with contextlib.closing(passes(repo, base, wt, inputs)) as each:
+    with contextlib.closing(passes(repo, base, sha, wt, inputs)) as each:
         for label, fail, excludes in each:
             guard_fidelity(wt, rep, logs, label, fail)
             guard_generated(wt, rep, logs, label, fail, excludes)
@@ -3104,7 +3523,8 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
 def worktree(repo, sha, parent: Path, name: str):
     """A fresh detached worktree of the commit, removed afterwards, on a failure too."""
     path = parent / name
-    git(repo, "worktree", "add", "--detach", "--quiet", str(path), sha)
+    # No hooksPath: the tests' checkout_marker needs post-checkout; hooks left over: #218.
+    git(repo, *AS_COMMITTED, "worktree", "add", "--detach", "--quiet", str(path), sha)
     try:
         yield path
     finally:
@@ -3331,13 +3751,13 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
 
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
     # the worktree back before the worktree is removed.
-    with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
+    with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
         for label, fail, excludes in each:
             checks(sequence, wt, label, fail, excludes, 10)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
-        with contextlib.closing(passes(ctx.repo, ctx.base, neg, inputs)) as each:
+        with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, neg, inputs)) as each:
             for label, fail, excludes in each:
                 checks(NEGATIVE, neg, label, fail, excludes, 30)
                 kept_apart(label)
@@ -3920,6 +4340,15 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
     harness, stands in for step 4 alone (--merge; checks_record); steps 2 and 3,
     including the train check when given, always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
+    rep.heading("3. Invariant guards against origin/main")
+    # Before the commit is checked out (#186): on a case-insensitive disk a twin is written
+    # over what it shadows, and a module in a twin folder (Scripts/json.py) would run in the
+    # checks; checking out a hostile tree is where git's own flaws have been; and no code of
+    # the commit has run yet to keep a path from origin/main's standard. So a refusal here
+    # comes before any worktree is made.
+    if not guard_paths(ctx.repo, ctx.base, ctx.sha, rep):
+        failed = [s.name for s in rep.failed() if s.stage == "3"]
+        raise Refusal(f"the invariant guards refused: {', '.join(failed)}")
     with tempfile.TemporaryDirectory(prefix="stoicheia-push-") as tmp:
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
@@ -5517,9 +5946,11 @@ def suite_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
     at its exact head (#301): a completed, successful run of
     .github/workflows/safe-push-tests.yml whose head is the pull request's, in which each
     job of SUITE_JOBS is there and passed, and every other job passed too, save `report`,
-    which runs only for a red run on main and so is skipped in a green one. Those jobs are
-    the suite of scripts/test_safe_push.py, the negative tests in full and the formal
-    model's build and kernel re-check, which CI runs on a pull request only by its class.
+    which runs only for a red run on main and so is skipped in a green one. The jobs of
+    SUITE_JOBS are the verdict on the shards of scripts/test_safe_push.py, the negative
+    tests in full and the formal model's build and kernel re-check, which CI runs on a pull
+    request only by its class; the shards, the eight jobs of the matrix the verdict needs,
+    are among the others, each held to have passed.
     A run at the head runs the head's copy of the workflow, which could drop or empty a
     job, so the head's copy must be origin/main's: a change to it lands first, in a pull
     request of its own. An ordinary pull request asks GitHub nothing here; unreadable
@@ -6601,6 +7032,15 @@ the pre-flight, and merge it when its gates pass:
 or check the commit alone, pushing nothing: git safe-push --dry-run
 (`git safe-push` runs origin/main's copy of this script: sh scripts/install_hooks.sh)"""
 
+# The variables that place a repository, its work tree, its index or its objects: git's own
+# `git rev-parse --local-env-vars`, less the `-c` settings it passes on to a submodule too
+# and the two that choose whether replacement refs apply, with the namespace and the
+# bounds of discovery. main() drops them once they have found the repository.
+GIT_LOCATION = ("GIT_DIR", "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE", "GIT_INDEX_FILE",
+                "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                "GIT_GRAFT_FILE", "GIT_SHALLOW_FILE", "GIT_CONFIG", "GIT_PREFIX",
+                "GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES", "GIT_DISCOVERY_ACROSS_FILESYSTEM")
+
 
 def main(argv=None) -> int:
     global ARGV, CI_POLL, CI_APPEAR_TIMEOUT
@@ -6660,13 +7100,60 @@ def main(argv=None) -> int:
         CI_POLL = float(os.environ.get("STOICHEIA_TEST_CI_POLL", CI_POLL))
         CI_APPEAR_TIMEOUT = float(os.environ.get("STOICHEIA_TEST_CI_APPEAR", CI_APPEAR_TIMEOUT))
 
-    r = run(["git", "rev-parse", "--show-toplevel"], Path.cwd())
-    if r.returncode != 0:
-        print("safe_push: run it inside the repository", file=sys.stderr)
-        return 2
-    repo = Path(r.stdout.strip())
+    original_cwd = Path.cwd()
     if args.scan_push:
-        return scan_push_main(repo, *args.scan_push)
+        # The scan reads the repository Git hands the hook, never its work tree, so it runs
+        # as on origin/main, before the location check below: Git hands a hook a relative
+        # GIT_WORK_TREE unchanged (#186).
+        r = run(["git", "rev-parse", "--show-toplevel"], original_cwd)
+        if r.returncode != 0:
+            print("safe_push: run it inside the repository", file=sys.stderr)
+            return 2
+        return scan_push_main(Path(r.stdout.strip()), *args.scan_push)
+    # #186, a linked worktree's GIT_DIR: a shell alias run from one, as `git safe-push`
+    # is, sets GIT_DIR (and GIT_PREFIX). Left set, it would point every git command in the
+    # fresh worktrees at the caller's index and HEAD, and check_paths.py would refuse to
+    # run. Every git call here names its directory, so the variables go, once they have
+    # found the repository; and it must be the one git finds from there without them.
+    def located(env=None, options=()) -> tuple[Path, Path] | None:
+        r = run(["git", *options, "rev-parse", "--show-toplevel", "--absolute-git-dir"],
+                original_cwd, env=env)
+        lines = r.stdout.splitlines() if r.returncode == 0 else []
+        if len(lines) != 2 or not all(line.strip() for line in lines):
+            return None
+        return Path(lines[0]).resolve(), Path(lines[1]).resolve()
+
+    discovery_env = os.environ.copy()
+    for name in GIT_LOCATION:
+        discovery_env.pop(name, None)
+    expected = located(discovery_env)
+    # run() gives no command the caller's GIT_DIR or GIT_WORK_TREE (#357), so this read
+    # passes them as git's own options, which git reads as it reads the variables, to see
+    # the repository they name; the bounds of discovery reach it as they are.
+    options = [f"{option}={os.environ[name]}" for name, option in
+               (("GIT_DIR", "--git-dir"), ("GIT_WORK_TREE", "--work-tree"))
+               if name in os.environ]
+    active = located(options=options)
+    if expected is None:
+        print("safe_push: cannot independently find the repository from the current "
+              "directory with Git location variables unset", file=sys.stderr)
+        return 2
+    if active is None:
+        print("safe_push: cannot read the repository selected by Git location variables",
+              file=sys.stderr)
+        return 2
+    if active != expected:
+        print(f"safe_push: GIT_DIR, GIT_WORK_TREE or another such variable names a "
+              f"repository other than the one git finds from {original_cwd}: run it from "
+              "inside the checkout, with them unset", file=sys.stderr)
+        return 2
+    for name in GIT_LOCATION:
+        os.environ.pop(name, None)
+    if located() != expected:
+        print("safe_push: the repository changed after Git location variables were unset",
+              file=sys.stderr)
+        return 2
+    repo = expected[0]
     signal.signal(signal.SIGTERM, _terminate)
     signal.signal(signal.SIGHUP, _terminate)
     if args.merge is not None:

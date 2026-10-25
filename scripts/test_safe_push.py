@@ -101,6 +101,30 @@ one commit and runs safe_push.py against that origin:
   entry naming them, a protected path is named only whole (a line naming
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
+- the case twins of issue #186, planted straight into an index, since this disk cannot
+  hold them: a twin of a protected file (certificate/FIELDS.md, and Certificate/fields.md
+  beside it), a check input in a twin folder (Scripts/json.py, which then runs in no
+  check), a protected name spelt otherwise with no twin in the tree (LAKEFILE.lean), two
+  spellings of one name under NFC, and a path with a space are each refused by step 3's
+  paths guard, at the pre-flight and at the merge, before any worktree is made, and in
+  an earlier commit of the push too, each tree judged once, while an ordinary commit
+  passes it; a path origin/main's own standard refuses (docs/x.yaml) is refused there too,
+  before any worktree, by origin/main's check_paths.py, read from its blob, and when
+  origin/main has none a note says so, while one that does not load, or exits, refuses,
+  and its imports, at its load and in its findings, find no module planted in the
+  repository through a sys.path entry inside it, however spelt (a case variant among
+  them); a looser check_paths.py is refused with the path it lets in, wherever that path
+  stands, by origin/main's standard in step 3 and again by keep_apart, a second line,
+  even when the commit's render.py hides the path from the worktree's index, since each
+  pass of the checks begins at the commit, its HEAD, index and files on disk unmoved as
+  git sees them (a file flagged skip-worktree is refused, and so is a change hidden by
+  stat settings, core.fileMode=false or a clean filter through attr.tree, written into
+  the shared config, or by the shared info/attributes or an ignored .gitattributes on
+  disk; a hook planted in the shared hooks folder runs under plain git but never in
+  at_commit; and neither core.autocrlf=true nor eol=crlf through attr.tree changes a
+  worktree made), with every ignored file but the build's caches removed (a planted
+  scripts/json.pyc); and `git safe-push`, run from a linked worktree as the lane runs it,
+  drops the GIT_DIR its alias is given before any check runs;
 - the decision entries of docs/decisions/, each a page of its own: a new line in an
   entry the push adds approves as one on the page does, a link there resolving from
   docs/decisions/ for a protected path and a deleted directory alike, its words never
@@ -234,8 +258,8 @@ are listed by unittest's own loader and dealt out by the seconds each took on a 
 runner, kept in test_safe_push_times.json beside this file, so that each test runs in
 exactly one shard; a test missing there weighs their median. Each shard writes the tests
 it ran, with their outcomes (`--ran FILE`), and `--cover DIR` proves from those lists that
-every test the loader lists ran once and passed. `--times-from-log` writes the times file
-from a CI run's log. Without --shard the whole suite runs.
+every test the loader lists ran once, and passed or was skipped. `--times-from-log` writes
+the times file from a CI run's log. Without --shard the whole suite runs.
 """
 
 from __future__ import annotations
@@ -263,6 +287,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import time
 import unicodedata
 import unittest
 from dataclasses import dataclass
@@ -1178,6 +1203,56 @@ class Clone(unittest.TestCase):
         git(WORK, "commit", "-q", "-m", message, env=env)
         return git(WORK, "rev-parse", "HEAD").strip()
 
+    def plant(self, message: str, files: dict, remove=()) -> str:
+        """A commit of HEAD's tree with `files` added straight into an index of its own,
+        and the paths `remove` taken out of it, since a case-insensitive disk cannot hold
+        a case twin, nor two spellings of one name (with neither, HEAD's tree again). HEAD
+        moves to it; the working tree and its index are left as they were."""
+        index = TMP / "planted.index"
+        env = dict(os.environ, GIT_INDEX_FILE=str(index))
+        git(WORK, "read-tree", "HEAD", env=env)
+        for path, text in files.items():
+            blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=WORK,
+                                  input=text, capture_output=True, text=True, check=True)
+            # git on macOS writes an NFD path as NFC unless told not to.
+            git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--add",
+                "--cacheinfo", f"100644,{blob.stdout.strip()},{path}", env=env)
+        for path in remove:
+            git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--force-remove",
+                "--", path, env=env)
+        git(WORK, "commit", "-q", "--allow-empty", "-m", message, env=env)
+        index.unlink(missing_ok=True)
+        return git(WORK, "rev-parse", "HEAD").strip()
+
+    def mktree(self, records: list[tuple[str, str, str, str]]) -> str:
+        listing = "".join(f"{mode} {kind} {oid}\t{name}\n"
+                          for mode, kind, oid, name in records)
+        made = subprocess.run(["git", "mktree"], cwd=WORK, input=listing,
+                              capture_output=True, text=True)
+        self.assertEqual(made.returncode, 0, made.stdout + made.stderr)
+        return made.stdout.strip()
+
+    def tree_commit(self, records: list[tuple[str, str, str, str]], message: str) -> str:
+        tree = self.mktree(records)
+        return git(WORK, "commit-tree", tree, "-p", BASE, "-m", message).strip()
+
+    def path_guard(self, sha: str) -> safe_push.Report:
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            safe_push.guard_paths(WORK, BASE, sha, rep)
+        return rep
+
+    def checkout_marker(self) -> Path:
+        """A file that stays absent until a worktree is made: `git worktree add` runs the
+        post-checkout hook, which writes it. The hook goes when the test ends."""
+        marker = TMP / "checked-out"
+        marker.unlink(missing_ok=True)
+        hook = hooks_dir() / "post-checkout"
+        hook.write_text(f'#!/bin/sh\necho "$PWD" >> "{marker}"\n')
+        hook.chmod(0o755)
+        self.addCleanup(hook.unlink, missing_ok=True)
+        return marker
+
     def new_base(self, message: str, write: dict) -> str:
         """A commit on origin's main, as a merged pull request would leave it."""
         sha = self.commit(message, write)
@@ -1325,7 +1400,7 @@ class Accepts(Clone):
         self.assertEqual(self.origin_main(), BASE)
         self.assertIsNone(self.origin_branch())
         for name in ("commit", "fast-forward", "harness", "secrets", "statements", "axiom lock",
-                     "protected paths", "heath/", "directories", "review records"):
+                     "protected paths", "heath/", "directories", "paths", "review records"):
             self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
         self.assertIn("leaf n261", out)
 
@@ -1619,6 +1694,247 @@ class Directories(Clone):
         self.assertEqual(self.guard(r.stdout, "directories"), "ok", r.stdout)
 
 
+class CaseTwins(Clone):
+    """Issue #186: paths equal once casefolded and NFC-normalised are one file on a
+    case-insensitive disk (macOS's default), so a twin of a protected file or of a check
+    input is checked out over it, unseen by the protected-path rule and keep_apart. Each
+    commit is planted straight into an index, since this disk cannot hold both."""
+
+    def refused_by_paths(self, r) -> tuple[str, str]:
+        """The output of a run refused by the paths guard, and that guard's detail."""
+        out = self.assertRefused(r, "invariant guards refused: paths")
+        self.assertEqual(self.guard(out, "paths"), "FAIL", out)
+        detail = re.search(r"^\s+FAIL\s+paths: (.*(?:\n {8}.*)*)", out, re.M).group(1)
+        return out, detail
+
+    def test_case_twin_of_a_protected_file_refused(self):
+        self.plant("A case twin of a protected file",
+                   {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("certificate/ (certificate/FIELDS.md)", detail)
+        self.assertIn("Certificate/ (Certificate/FIELDS.md", detail)
+
+    def test_case_twin_of_a_check_input_refused(self):
+        # Checked out on this disk, Scripts/json.py lands in scripts/, where
+        # check_fidelity.py's `import json` would run it: nothing more runs in step 3.
+        marker = TMP / "planted-module-ran"
+        self.plant("A case twin of a check input, in a twin folder", {
+            "Scripts/json.py": "import os\nopen(os.environ['STOICHEIA_TEST_PLANTED'], 'w')\n"})
+        env = dict(clean_env(), STOICHEIA_TEST_PLANTED=str(marker))
+        out, detail = self.refused_by_paths(self.safe_push(env=env))
+        self.assertIn("Scripts/ (Scripts/json.py)", detail)
+        self.assertIn("scripts/ (scripts/", detail)
+        self.assertIsNone(self.step(out, "review records"), out)
+        self.assertFalse(marker.exists(), "a module in a twin folder ran")
+
+    def test_unicode_twins_and_a_space_refused(self):
+        # No path on main has a second spelling under NFC, so the commit plants both.
+        nfc = "docs/café.md"
+        nfd = unicodedata.normalize("NFD", nfc)
+        space = "docs/a b.md"
+        self.assertNotEqual(nfc, nfd)
+        self.plant("Two spellings of one name, and a space",
+                   {nfc: "Composed.\n", nfd: "Decomposed.\n", space: "A space.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        for path in (nfc, nfd, space):
+            self.assertIn(f"{ascii(path)}: not plain printable ASCII", detail)
+        self.assertIn(f"{ascii(nfd)} and {ascii(nfc)}: equal once casefolded", detail)
+
+    def test_case_twin_in_one_folder_refused(self):
+        # #186's plainest case: two files of one folder, differing only in case.
+        bad = self.plant("A case twin beside a protected file",
+                         {"Certificate/fields.md": "Checked out over Certificate/FIELDS.md.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("Certificate/FIELDS.md and Certificate/fields.md: equal once casefolded",
+                      detail)
+        self.assertIn(f"(in commit {bad[:12]})", detail)
+
+    def test_protected_name_spelt_otherwise_refused(self):
+        # #186: main has no lakefile.lean, so LAKEFILE.lean twins nothing; but
+        # a case-insensitive disk opens it as lakefile.lean, which Lake reads and runs.
+        self.plant("A protected name spelt otherwise", {"LAKEFILE.lean": "-- Run by Lake.\n"})
+        out, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("LAKEFILE.lean: the protected path lakefile.lean, spelt otherwise", detail)
+        self.assertIsNone(self.step(out, "protected paths"), out)
+
+    def test_refused_before_any_worktree(self):
+        # #186: the paths guard reads the trees, and refuses before the commit
+        # is checked out. `git worktree add` runs the post-checkout hook, so a hook that
+        # leaves a marker shows whether a worktree was made.
+        self.plant("A case twin of a protected file",
+                   {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        marker = self.checkout_marker()
+        out, _ = self.refused_by_paths(self.safe_push())
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        self.assertIsNone(self.step(out, "statements"), out)
+        # The hook does mark a worktree made, as safe_push makes one.
+        probe = TMP / "probe-worktree"
+        git(WORK, "worktree", "add", "--detach", "--quiet", str(probe), BASE)
+        git(WORK, "worktree", "remove", "--force", str(probe))
+        self.assertTrue(marker.exists(), "the post-checkout hook did not run")
+
+    def test_twin_in_an_earlier_commit_refused(self):
+        # #186: the merge puts every commit the push brings in main's history, so the tree
+        # of each is judged, not only the last one's, and a finding names, for each tree that
+        # holds it, the first commit with that tree.
+        bad = self.plant("A case twin",
+                         {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        head = self.plant("The twin taken out again", {}, remove=["certificate/FIELDS.md"])
+        self.assertNotIn("certificate/", git(WORK, "ls-tree", "--name-only", head))
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("certificate/ (certificate/FIELDS.md)", detail)
+        self.assertIn(f"the one over the other (in commit {bad[:12]})", detail)
+        self.assertNotIn(head[:12], detail)
+
+    def test_each_tree_judged_once(self):
+        # A tree two commits share is read once, and the finding names each commit whose
+        # tree holds it, the first of each tree.
+        first = self.plant("A case twin", {"Certificate/fields.md": "A twin.\n"})
+        self.plant("The same tree", {})
+        last = self.plant("And a page", {"docs/style-notes.md": "Plain.\n"})
+        rep, out = safe_push.Report(), io.StringIO()
+        with mock.patch.object(safe_push, "path_faults", wraps=safe_push.path_faults) as judged, \
+                contextlib.redirect_stdout(out):
+            self.assertFalse(safe_push.guard_paths(WORK, BASE, last, rep))
+        self.assertEqual(judged.call_count, 2, out.getvalue())
+        (step,) = [s for s in rep.steps if s.name == "paths"]
+        self.assertEqual(step.outcome, "FAIL")
+        self.assertIn(f": equal once casefolded and NFC-normalised, so a case-insensitive disk "
+                      f"(macOS's default) checks them out as one, the one over the other (in "
+                      f"commits {first[:12]}, {last[:12]})", step.detail)
+
+    def test_a_path_origin_mains_standard_refuses_is_refused_before_any_worktree(self):
+        # #186, origin/main's standard in step 3: docs/x.yaml is neither a twin nor a name
+        # spelt otherwise, so safe_push's own paths guard passes it; origin/main's
+        # check_paths.py, run on the trees before the commit is checked out, refuses it,
+        # though no check changed, and no worktree is made.
+        bad = self.commit("A page in yaml", {"docs/x.yaml": "a: 1\n"})
+        marker = self.checkout_marker()
+        out = self.assertRefused(self.safe_push(),
+                                 "the invariant guards refused: paths (origin/main's standard)")
+        self.assertEqual(self.guard(out, "paths"), "ok", out)
+        self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL", out)
+        self.assertIn("P3 docs/x.yaml: ", out)
+        self.assertIn(f"(in commit {bad[:12]})", out)
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        self.assertIsNone(self.step(out, "statements"), out)
+
+    def test_origin_main_without_the_standard_is_a_note(self):
+        # Before the pull request that brings scripts/check_paths.py, origin/main has none:
+        # the guard says so and goes on. With one, it is loaded from origin/main's blob as a
+        # module, and this process's sys.path and modules are left as they were.
+        bare = self.commit("No standard", remove=[safe_push.PATH_STANDARD])
+        sha = self.commit("A page in yaml", {"docs/x.yaml": "a: 1\n"})
+        rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
+        with contextlib.redirect_stdout(out):
+            self.assertTrue(safe_push.guard_paths(WORK, bare, sha, rep), out.getvalue())
+            self.assertFalse(safe_push.guard_paths(WORK, BASE, sha, rep), out.getvalue())
+        standard = "paths (origin/main's standard)"
+        self.assertEqual([(s.name, s.outcome) for s in rep.steps],
+                         [("paths", "ok"), (standard, "note"), ("paths", "ok"), (standard, "FAIL")])
+        self.assertIn("origin/main has no scripts/check_paths.py", rep.steps[1].detail)
+        self.assertIn("P3 docs/x.yaml: ", rep.steps[3].detail)
+        self.assertEqual(sys.path, path)
+        self.assertNotIn("origin_main_check_paths", sys.modules)
+
+    def test_a_standard_that_does_not_load_or_exits_refuses(self):
+        # origin/main's check_paths.py is compiled as an import compiles it, without
+        # safe_push's __future__ import, and its imports, at its load and in its findings,
+        # never read a module planted in the repository judged, here on sys.path as when
+        # safe_push is run from its scripts/, and again by a case variant of the clone's
+        # folder (that folder on a case-insensitive disk, no folder elsewhere); a copy that
+        # does not load, or whose findings exits (its fail()), refuses as a FAIL, naming the
+        # error, never a traceback or a pass.
+        text = self.text(safe_push.PATH_STANDARD)
+        standard = safe_push.base_standard(WORK, BASE)
+        self.assertNotIsInstance(standard.findings.__annotations__["entries"], str)
+        ran = TMP / "planted-module-ran"
+        planted = WORK / "scripts" / "stoicheia_planted.py"
+        planted.write_text(f"open({str(ran)!r}, 'w').close()\n")
+        self.addCleanup(planted.unlink)
+
+        def findings_that(body: str) -> str:
+            return text.replace("def findings(entries", "def findings(entries, *_):\n"
+                                f"    {body}\n\n\ndef unused(entries", 1)
+
+        broken = {
+            "ModuleNotFoundError": "import stoicheia_planted\n" + text,
+            "SyntaxError": text + "\ndef (\n",
+            "SystemExit(1): ✗ paths: a fault of the check": findings_that(
+                "fail('a fault of the check')"),
+            "fails on the tree: ModuleNotFoundError": findings_that(
+                "import stoicheia_planted")}
+        variant = str(TMP.parent / TMP.name.upper() / "work" / "scripts")
+        with mock.patch.object(sys, "path", [variant]), safe_push.off_path(WORK):
+            # Matched by the folder's identity, not by its spelling.
+            self.assertEqual(sys.path, [] if os.path.isdir(variant) else [variant])
+        rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
+        run_from_scripts = [variant, str(WORK / "scripts"), *path]
+        with mock.patch.object(sys, "path", list(run_from_scripts)), \
+                contextlib.redirect_stdout(out):
+            for source in broken.values():
+                base = self.commit("A broken standard", {safe_push.PATH_STANDARD: source})
+                self.assertFalse(safe_push.guard_paths(WORK, base, base, rep), out.getvalue())
+                self.assertEqual(sys.path, run_from_scripts)
+        self.assertEqual(sys.path, path)
+        judged = [s for s in rep.steps if s.name == "paths (origin/main's standard)"]
+        self.assertEqual([s.outcome for s in judged], ["FAIL"] * len(broken), out.getvalue())
+        for step, error in zip(judged, broken):
+            self.assertIn(error, step.detail)
+        self.assertIn("does not load: ModuleNotFoundError", judged[0].detail)
+        self.assertIn("fails on the tree: SystemExit(1)", judged[2].detail)
+        self.assertFalse(ran.exists(), "a module planted in the repository ran")
+
+    def test_ordinary_commit_passes(self):
+        self.commit("A page of its own name", {"docs/style-notes.md": "Plain.\n"})
+        r = self.safe_push("--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "paths"), "ok", r.stdout)
+
+    def test_explicit_tree_directories_are_validated_before_checkout(self):
+        empty = self.mktree([])
+        blob = git(WORK, "hash-object", "-w", os.devnull).strip()
+        child = self.mktree([("100644", "blob", blob, "a.md")])
+        collision = self.mktree([
+            ("100644", "blob", blob, "same"),
+            ("040000", "tree", child, "same"),
+        ])
+        cases = {
+            "invalid empty directory": [
+                ("040000", "tree", empty, "bad directory")],
+            "duplicate directories": [
+                ("040000", "tree", child, "docs"),
+                ("040000", "tree", self.mktree([("100644", "blob", blob, "b.md")]),
+                 "docs")],
+            "directory twins": [
+                ("040000", "tree", child, "Docs"),
+                ("040000", "tree", child, "docs")],
+            "file and directory collision": [
+                ("040000", "tree", collision, "docs")],
+        }
+        for label, records in cases.items():
+            with self.subTest(label=label):
+                sha = self.tree_commit(records, label)
+                rep = self.path_guard(sha)
+                self.assertEqual(rep.steps[0].name, "paths", rep.steps)
+                self.assertEqual(rep.steps[0].outcome, "FAIL", rep.steps)
+
+    def test_valid_nested_and_empty_tree_directories_pass_the_guard(self):
+        empty = self.mktree([])
+        blob = git(WORK, "hash-object", "-w", os.devnull).strip()
+        nested = self.mktree([("100644", "blob", blob, "a.md")])
+        docs = self.mktree([
+            ("040000", "tree", empty, "empty"),
+            ("040000", "tree", nested, "nested"),
+        ])
+        sha = self.tree_commit([("040000", "tree", docs, "docs")],
+                               "Valid explicit directories")
+        rep = self.path_guard(sha)
+        self.assertEqual([(step.name, step.outcome) for step in rep.steps],
+                         [("paths", "ok"), ("paths (origin/main's standard)", "ok")],
+                         rep.steps)
+
+
 class Hook(Clone):
     def push(self, refspec, **env) -> subprocess.CompletedProcess:
         e = clean_env()
@@ -1654,6 +1970,25 @@ class Hook(Clone):
                 self.assertIn(f"pre-push: refusing the push to {ref}", r.stderr)
                 self.assertIsNone(self.origin_branch(ref.removeprefix("refs/heads/")))
         self.assertNotIn(TOKEN, r.stdout + r.stderr, "the hook repeats the secret")
+
+    def test_hook_scans_a_push_with_a_relative_pair_from_a_subfolder(self):
+        # #186: Git runs the hook at the top with GIT_DIR made absolute, but passes a
+        # relative GIT_WORK_TREE on unchanged; the scan still runs, and decides.
+        good = self.commit("A commit", {"docs/reading.md": self.text("docs/reading.md") + "\nX.\n"})
+        bad = self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        for sha, ref, passes in ((good, "refs/heads/good", True), (bad, "refs/heads/bad", False)):
+            with self.subTest(ref=ref):
+                r = subprocess.run(["git", "--git-dir=../.git", "--work-tree=..", "push",
+                                    "origin", f"{sha}:{ref}"], cwd=WORK / "scripts",
+                                   env=clean_env(), capture_output=True, text=True)
+                if passes:
+                    self.assertEqual(r.returncode, 0, r.stderr)
+                    self.assertIn(f"the secret scan of the push to {ref}", r.stdout + r.stderr)
+                else:
+                    self.assertNotEqual(r.returncode, 0, r.stderr)
+                    self.assertIn(f"pre-push: refusing the push to {ref}", r.stderr)
+                    self.assertIn("the secret scan found", r.stdout + r.stderr)
+                    self.assertIsNone(self.origin_branch("bad"))
 
     def test_hook_never_runs_another_remotes_main(self):
         # Security review: a push to another remote (a contributor's fork, fetched) is
@@ -3473,7 +3808,8 @@ class Merge(Edge):
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
         out = self.merge("--dry-run").stdout
         self.assertIn("the full checks are not repeated", out)
-        for name in ("secrets", "statements", "protected paths", "heath/", "review records"):
+        for name in ("secrets", "statements", "protected paths", "heath/", "paths",
+                     "review records"):
             self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
 
     def test_forged_record_does_not_skip_the_scan_or_the_guards(self):
@@ -3539,6 +3875,21 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "heath/"), "FAIL", out)
         self.assertEqual(self.origin_main(), BASE)
+
+    def test_case_twin_head_refused_at_the_merge(self):
+        # Issue #186: the guards the merge runs again include the paths.
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        bad = self.plant("A case twin pushed by hand",
+                         {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{bad}:refs/heads/{BRANCH}")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "paths"), "FAIL", out)
+        self.assertIn("certificate/ (certificate/FIELDS.md)", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.merges(), [])
 
     def test_protected_change_needs_its_label(self):
         path = "scripts/check_style.py"
@@ -5932,6 +6283,9 @@ class ProtectedPaths(Edge):
     RETAINED_AXIOM = "Tacit.line_unique"
 
     def test_protected_change_without_a_decision_refused(self):
+        # origin/main's standard refuses three of these names in step 3, before the
+        # protected-path rule runs (#186); that rule, a second line, refuses each of them too.
+        by_name = (".gitattributes", "lakefile.lean", "model/lakefile.lean")
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
                      ".gitignore", "lakefile.lean", "Audit/Overlaps.lean", "Audit.lean",
@@ -5941,8 +6295,16 @@ class ProtectedPaths(Edge):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 old = self.text(path) if (WORK / path).exists() else ""
-                self.commit(f"Touch {path}", {path: old + "\n# for the test\n"})
-                out = self.assertRefused(self.safe_push(), "protected paths", path)
+                sha = self.commit(f"Touch {path}", {path: old + "\n# for the test\n"})
+                out = self.assertRefused(self.safe_push(), path)
+                if path in by_name:
+                    self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL",
+                                     out)
+                    rep, log = safe_push.Report(), io.StringIO()
+                    with contextlib.redirect_stdout(log):
+                        safe_push.guard_protected(WORK, BASE, sha, rep)
+                    out = log.getvalue()
+                self.assertIn("protected paths", out)
                 self.assertEqual(self.guard(out, "protected paths"), "FAIL", out)
 
     def test_decision_naming_another_file_does_not_count(self):
@@ -6942,6 +7304,350 @@ class ProtectedPaths(Edge):
                 self.assertTrue(refused, out)
                 self.assertIn("docs/reading.md", out)
 
+    def test_a_looser_path_check_is_refused_with_the_path_it_lets_in(self):
+        # #186: .yaml let in by check_paths.py, and a .yaml under a guides'
+        # folder, which keep_apart counts as unjudged. origin/main's path check judges every
+        # path, so its failure refuses the commit, whatever else it changes. This is the
+        # second line: end to end, step 3's paths guards refuse the commit first (below).
+        path = "scripts/check_paths.py"
+        changes = {path: self.replaced(path, '"yml", "sha256", "sh"',
+                                       '"yml", "yaml", "sha256", "sh"'),
+                   "docs/templates/x.yaml": "a: 1\n"}
+        changes.update(self.decision(f"`{path}` takes .yaml, for the test."))
+        sha = self.commit("Let .yaml in, and add one", changes)
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        self.assertFalse(self.kept_apart(sha, "python3 scripts/check_links.py")[0])
+        for check in safe_push.PATH_CHECKS:
+            with self.subTest(check=check):
+                refused, out = self.kept_apart(sha, check)
+                self.assertTrue(refused, out)
+                self.assertIn(f"origin/main's path check fails on the commit ({check})", out)
+        # Step 4's own wiring, which the internal flag skips: origin/main's check_paths.py
+        # refuses x.yaml, and the commit is refused before its own copy runs.
+        name = "python3 scripts/check_paths.py --self-test"
+        check = (name, [sys.executable, "scripts/check_paths.py", "--self-test"])
+        refusal, out = self.full_checks(sha, [check], [])
+        self.assertEqual(refusal, "a check changed together with what it checks", out)
+        self.assertEqual(self.guard(out, name + safe_push.BASE_PASS), "note", out)
+        self.assertIn("docs/templates/x.yaml", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIsNone(self.step(out, name + " (the commit's checks)"), out)
+
+    # Run at the top of the commit's render.py: it takes the yaml file out of the
+    # worktree's index and commits there, so that origin/main's path check, run in that
+    # worktree in step 4, would not see it.
+    HIDE = '''
+import os as _os, subprocess as _sp
+if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
+           capture_output=True).returncode == 0:
+    _sp.run(["git", "rm", "-q", "--cached", "docs/templates/x.yaml"], capture_output=True)
+    _os.remove("docs/templates/x.yaml")
+    _sp.run(["git", "commit", "-q", "-m", "Out of sight"], capture_output=True)
+'''
+
+    def test_a_render_that_hides_the_path_is_refused(self):
+        # #186, the commit's own code keeping a path from origin/main's path check: a
+        # looser check_paths.py, the yaml file it lets in, and a render.py that hides that
+        # file. origin/main's standard refuses it in step 3, before the commit is checked
+        # out, so the render.py never runs.
+        checks, render = "scripts/check_paths.py", "scripts/render.py"
+        loose = self.replaced(checks, '"yml", "sha256", "sh"', '"yml", "yaml", "sha256", "sh"')
+        loose = loose.replace('"docs": frozenset({"md", "toml",',
+                              '"docs": frozenset({"md", "yaml", "toml",', 1)
+        text = self.text(render)
+        end = text.index('"""', 3) + 3          # after the module's docstring
+        changes = {checks: loose, render: text[:end] + self.HIDE + text[end:],
+                   "docs/templates/x.yaml": "a: 1\n"}
+        changes.update(self.decision(f"`{checks}` and `{render}` take .yaml, for the test."))
+        sha = self.commit("Let .yaml in, add one, and hide it", changes)
+        marker = self.checkout_marker()
+        out = self.assertRefused(self.safe_push(), "P3 docs/templates/x.yaml: ")
+        self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL", out)
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        # The second line, as the exploit ran: past the paths guards, the commit's own pass
+        # in step 3 runs its render.py, which moves the worktree's HEAD and index; step 4's
+        # first pass then refuses the worktree before any check reads it.
+        rep, log = safe_push.Report(), io.StringIO()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        refusal = None
+        paths_only = [(n, [safe_push.PY, *n.split()[1:]]) for n in safe_push.PATH_CHECKS]
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                mock.patch.object(safe_push, "NEGATIVE", []), contextlib.redirect_stdout(log):
+            parent = Path(tmp)
+            (parent / "logs").mkdir()
+            with safe_push.worktree(WORK, sha, parent, "check") as wt:
+                guarded = safe_push.guards(ctx, wt, rep, parent / "logs")
+                moved = git(wt, "rev-parse", "HEAD").strip()
+                try:
+                    safe_push.full_checks(ctx, wt, parent, guarded.check_inputs, rep,
+                                          parent / "logs", paths_only)
+                except safe_push.Refusal as e:
+                    refusal = str(e)
+        self.assertNotEqual(moved, sha, f"the render.py did not move HEAD:\n{log.getvalue()}")
+        self.assertIn(f"is no longer the commit {sha[:12]}", refusal or "", log.getvalue())
+        self.assertEqual([s.name for s in rep.steps if s.stage == "4"], [], log.getvalue())
+
+    def test_each_pass_begins_at_the_commit(self):
+        # origin/main's copies are taken out by a reset to the commit, never to HEAD, so a
+        # HEAD moved in origin/main's pass is put back; and a pass begun with HEAD moved, or
+        # the index changed, is refused.
+        path = "scripts/check_links.py"
+        sha = self.commit("A check", {path: self.text(path) + "\n# for the test\n"})
+        changes = [("M", path)]
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, sha, Path(tmp), "check") as wt:
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)
+                git(wt, "commit", "-q", "--allow-empty", "-m", "Moved in origin/main's pass")
+                self.assertEqual(next(each)[0], " (the commit's checks)")
+                self.assertEqual(git(wt, "rev-parse", "HEAD").strip(), sha)
+                git(wt, "commit", "-q", "--allow-empty", "-m", "Moved in the commit's pass")
+            with self.assertRaisesRegex(safe_push.Refusal, f"no longer the commit {sha[:12]}"):
+                next(safe_push.passes(WORK, BASE, sha, wt, changes))
+            git(wt, "reset", "-q", "--hard", sha)
+            git(wt, "rm", "-q", "--cached", "README.md")
+            with self.assertRaisesRegex(safe_push.Refusal, "or its index differs"):
+                next(safe_push.passes(WORK, BASE, sha, wt, []))
+
+    def test_a_pass_begun_with_a_file_hidden_on_disk_is_refused(self):
+        # HEAD and the index at the commit do not show the files on disk: a file changed
+        # there and flagged skip-worktree, or assume-unchanged, is hidden from git status,
+        # so the flag is refused; and so is a change git status shows, or an untracked file.
+        disk = "the files on disk in the worktree"
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "check") as wt:
+            self.assertEqual(next(safe_push.passes(WORK, BASE, BASE, wt, []))[0], "")
+            (wt / "README.md").write_text("Changed on disk.\n")
+            for flag in ("--skip-worktree", "--assume-unchanged"):
+                with self.subTest(flag=flag):
+                    git(wt, "update-index", flag, "README.md")
+                    self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all"),
+                                     "")
+                    self.assertEqual(git(wt, "rev-parse", "HEAD").strip(), BASE)
+                    self.assertTrue(safe_push.git_ok(wt, "diff-index", "--cached", "--quiet",
+                                                     BASE, "--"))
+                    with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*flagged "
+                                                "skip-worktree or assume-unchanged: README.md"):
+                        next(safe_push.passes(WORK, BASE, BASE, wt, []))
+                    git(wt, "update-index", flag.replace("--", "--no-", 1), "README.md")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                        "README.md"):
+                next(safe_push.passes(WORK, BASE, BASE, wt, []))
+            git(wt, "reset", "-q", "--hard", BASE)
+            (wt / "docs" / "left-behind.md").write_text("Untracked.\n")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists \\?\\? "
+                                        "docs/left-behind.md"):
+                next(safe_push.passes(WORK, BASE, BASE, wt, []))
+            (wt / "docs" / "left-behind.md").unlink()
+            # Stat settings the commit's code could write into the shared .git/config, under
+            # which git status passes a change of the same size with its time put back, are
+            # overridden. That config is the test clone's, never this repository's.
+            common = Path(git(wt, "rev-parse", "--path-format=absolute",
+                              "--git-common-dir").strip()).resolve()
+            self.assertEqual(common, (WORK / ".git").resolve())
+            self.assertTrue(common.is_relative_to(TMP.resolve()), common)
+            with self.subTest(settings="core.checkStat=minimal, core.trustctime=false"):
+                readme, then = wt / "README.md", 1_600_000_000_000_000_000
+                os.utime(readme, ns=(then, then))
+                git(wt, "update-index", "--refresh")    # an old time, so not racily clean
+                for key, value in (("core.checkStat", "minimal"), ("core.trustctime", "false")):
+                    git(wt, "config", key, value)
+                    self.addCleanup(git, WORK, "config", "--unset", key)
+                    self.assertEqual(git(WORK, "config", "--get", key).strip(), value)
+                # git reads a file's times to the second, so the change comes in a later
+                # second than the ctime the index holds, as a later pass's would.
+                held = int(os.stat(readme).st_ctime)
+                while int(time.time()) <= held:
+                    time.sleep(0.05)
+                data = readme.read_bytes()
+                readme.write_bytes(data.swapcase())
+                os.utime(readme, ns=(then, then))
+                self.assertEqual(len(readme.read_bytes()), len(data))
+                self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all"), "")
+                with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                            "README.md"):
+                    next(safe_push.passes(WORK, BASE, BASE, wt, []))
+
+    def test_the_shared_git_folder_cannot_hide_a_change(self):
+        # Code of this commit or one checked before can write the clone's shared .git,
+        # which every worktree reads: under core.fileMode=false git status passes a
+        # changed executable bit; a hook git status runs can write a file once git has
+        # looked; info/attributes, or core.autocrlf=true or attr.tree set before a
+        # worktree is made, makes git's own checkout write bytes the commit does not hold;
+        # and a clean filter, named through attr.tree or by a .gitattributes an ignore
+        # file hides, has git status pass a change of the same size. Each is planted in
+        # the test clone, never this repository, and taken out again, on a failure too and
+        # when the test ends.
+        common = Path(git(WORK, "rev-parse", "--path-format=absolute",
+                          "--git-common-dir").strip()).resolve()
+        self.assertEqual(common, (WORK / ".git").resolve())
+        self.assertTrue(common.is_relative_to(TMP.resolve()), common)
+
+        @contextlib.contextmanager
+        def setting(key: str, value: str):
+            was = git(WORK, "config", "--local", "--get", key, check=False).strip()
+            put_back = ("config", "--local", *((key, was) if was else ("--unset", key)))
+            self.addCleanup(git, WORK, *put_back, check=False)
+            git(WORK, "config", "--local", key, value)
+            try:
+                yield
+            finally:
+                git(WORK, *put_back, check=False)
+
+        @contextlib.contextmanager
+        def planted(path: Path, text: str):
+            self.assertTrue(path.resolve().is_relative_to(common), path)
+            self.addCleanup(path.unlink, missing_ok=True)
+            path.write_text(text)
+            try:
+                yield path
+            finally:
+                path.unlink(missing_ok=True)
+
+        disk = "the files on disk in the worktree"
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "check") as wt:
+            readme = wt / "README.md"
+            with self.subTest(setting="core.fileMode=false"), \
+                    setting("core.fileMode", "false"):
+                readme.chmod(0o755)
+                try:
+                    self.assertEqual(git(wt, "status", "--porcelain"), "")
+                    with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
+                                                "lists  M README.md"):
+                        safe_push.at_commit(wt, BASE)
+                finally:
+                    readme.chmod(0o644)
+            with self.subTest(hook="post-index-change"):
+                marker = TMP / "index-changed"
+                self.addCleanup(marker.unlink, missing_ok=True)
+                hook = f'#!/bin/sh\necho "$PWD" >> "{marker}"\n'
+                with planted(hooks_dir() / "post-index-change", hook) as path:
+                    path.chmod(0o755)
+                    # A new time on a file has git status write the refreshed index, and
+                    # run the hook: it runs under git's own settings, and not in at_commit.
+                    os.utime(readme, (1_600_000_000, 1_600_000_000))
+                    git(wt, "status", "--porcelain")
+                    self.assertTrue(marker.exists(), "the hook did not run")
+                    marker.unlink()
+                    os.utime(readme, (1_600_000_100, 1_600_000_100))
+                    safe_push.at_commit(wt, BASE)
+                    self.assertFalse(marker.exists(), "a hook ran in at_commit")
+            with self.subTest(attributes="info/attributes"):
+                path = Path(git(wt, "rev-parse", "--path-format=absolute", "--git-path",
+                                "info/attributes").strip())
+                named = re.escape(str(path))
+                with planted(path, "*.md eol=crlf\n"):
+                    with self.assertRaisesRegex(safe_push.Refusal,
+                                                f"{named} exists: attributes there apply"):
+                        safe_push.at_commit(wt, BASE)
+                safe_push.at_commit(wt, BASE)
+        # core.autocrlf=true, set before the worktree is made, would check README.md's LF
+        # endings out as CRLF, and git status, which trusts the times, would pass them.
+        held = safe_push.show_bytes(WORK, BASE, "README.md")
+        self.assertIn(b"\n", held)
+        self.assertNotIn(b"\r\n", held)
+        with self.subTest(setting="core.autocrlf=true"), \
+                setting("core.autocrlf", "true"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "crlf") as wt:
+            self.assertEqual((wt / "README.md").read_bytes(), held)
+            safe_push.at_commit(wt, BASE)
+        # attr.tree names a tree whose .gitattributes git reads in place of every other:
+        # eol=crlf there would check README.md out as CRLF, and a clean filter there has
+        # git status pass a change of the same size. AS_COMMITTED pins it to the empty
+        # tree, git's own for the clone's object format. Each tree is written into the
+        # test clone's objects only.
+        with self.subTest(pin="attr.tree"):
+            self.assertIn(f"attr.tree={safe_push.empty_tree(WORK)}", safe_push.AS_COMMITTED)
+
+        def attributes(text: str) -> str:
+            def put(*args: str, data: str) -> str:
+                return subprocess.run(["git", *args], cwd=WORK, input=data, text=True,
+                                      capture_output=True, check=True).stdout.strip()
+            blob = put("hash-object", "-w", "--stdin", data=text)
+            return put("mktree", data=f"100644 blob {blob}\t.gitattributes\n")
+
+        with self.subTest(setting="attr.tree naming eol=crlf"), \
+                setting("attr.tree", attributes("*.md text eol=crlf\n")), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "attr-tree") as wt:
+            self.assertIn("eol: crlf", git(WORK, "check-attr", "eol", "--", "README.md"))
+            self.assertEqual((wt / "README.md").read_bytes(), held)
+            safe_push.at_commit(wt, BASE)
+        # The filter swaps the case of letters back. It is named for README.md alone: any
+        # other file git reads again, as it can one written in the second its index was,
+        # would be compared through it too.
+        swapped = held.swapcase()
+        self.assertNotEqual(swapped, held)
+        with self.subTest(setting="attr.tree naming a clean filter"), \
+                setting("attr.tree", attributes("/README.md filter=swapcase\n")), \
+                setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "filter") as wt:
+            (wt / "README.md").write_bytes(swapped)
+            # Plain git passes the change; --no-optional-locks keeps it from writing the
+            # index, which would take the file's new times and hide it from any status.
+            self.assertEqual(git(wt, "--no-optional-locks", "status", "--porcelain"), "")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                        "README.md"):
+                safe_push.at_commit(wt, BASE)
+        # A .gitattributes on disk, hidden from git status by an ignore file the config
+        # names, would name the filter too: the empty tree is read in its place, where an
+        # attr.tree git cannot resolve (an empty value, say) would leave it read.
+        with self.subTest(attributes="an ignored .gitattributes"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "ignored") as wt:
+            ignore = Path(tmp) / "ignore"
+            ignore.write_text("/.gitattributes\n")
+            with setting("core.excludesFile", str(ignore)), \
+                    setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"):
+                (wt / ".gitattributes").write_text("/README.md filter=swapcase\n")
+                (wt / "README.md").write_bytes(swapped)
+                # The module's own git names core.excludesFile through GIT_CONFIG_COUNT,
+                # which a repository's setting loses to: -c names the file here, as
+                # setUpModule says. The harness's git drops GIT_CONFIG_COUNT and reads the
+                # setting from the shared configuration, as the attack has it.
+                self.assertEqual(git(wt, "-c", f"core.excludesFile={ignore}",
+                                     "--no-optional-locks", "status", "--porcelain"), "")
+                with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
+                                            "lists  M README.md"):
+                    safe_push.at_commit(wt, BASE)
+
+    def test_an_ignored_file_left_between_passes_is_removed(self):
+        # git status leaves ignored files out, and origin/main's checks would import a
+        # scripts/json.pyc the commit's code left, or a stale pyc of heath: each pass
+        # begins with every ignored file removed but the build's caches, which are kept,
+        # from origin/main's pass to the commit's, and from step 3's to step 4's.
+        path = "scripts/check_links.py"
+        sha = self.commit("A check", {path: self.text(path) + "\n# for the test\n"})
+        changes = [("M", path)]
+        planted = ("scripts/json.pyc", "scripts/__pycache__/heath.cpython-312.pyc")
+        caches = (".lake/build/kept", "model/.lake/kept")
+
+        def plant() -> None:
+            for rel in planted + caches:
+                (wt / rel).parent.mkdir(parents=True, exist_ok=True)
+                (wt / rel).write_text("Left by the commit's code.\n")
+            self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all", "--",
+                                 *planted, *caches), "")       # ignored: git status is silent
+
+        def removed() -> None:
+            self.assertEqual([rel for rel in planted if (wt / rel).exists()], [])
+            self.assertEqual([rel for rel in caches if not (wt / rel).exists()], [])
+
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, sha, Path(tmp), "check") as wt:
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)
+                plant()
+                self.assertEqual(next(each)[0], " (the commit's checks)")
+                removed()
+                plant()
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)     # step 4's first
+                removed()
+
     def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
         # The stage 2 pattern: the certificate changes, the pages and a record's stamp
         # follow, and the guides say why; none of that is judged. A record's other lines,
@@ -7470,6 +8176,112 @@ class HandOver(Edge):
         out = self.safe_push("--dry-run").stdout
         self.assertEqual(self.guard(out, "pre-push hook"), "note", out)
         self.assertIn("differs from origin/main's scripts/hooks/pre-push", out)
+
+
+class LinkedWorktree(Edge):
+    """#186: `git safe-push` is a shell alias, and git gives a shell
+    alias run from a linked worktree, as the lane runs it, GIT_DIR (and GIT_PREFIX). Left
+    set, GIT_DIR would point every git command in the fresh worktrees at the caller's index
+    and HEAD, and check_paths.py would refuse to run at all; so safe_push drops the
+    variables that place a repository once they have found it."""
+
+    def linked(self) -> Path:
+        """A linked worktree of the clone at BASE, with work of the caller's staged in it,
+        removed when the test ends."""
+        path = TMP / "linked"
+        git(WORK, "worktree", "add", "--quiet", "--detach", str(path), BASE)
+        self.addCleanup(git, WORK, "worktree", "remove", "--force", str(path), check=False)
+        (path / "README.md").write_text((path / "README.md").read_text() + "\nStaged.\n")
+        git(path, "add", "README.md")
+        return path
+
+    def test_git_safe_push_from_a_linked_worktree(self):
+        # The commit checked is not the caller's HEAD, and the caller has work staged: with
+        # GIT_DIR left set, `git status` in the fresh worktree would read the caller's
+        # index, and the generated pages would look stale.
+        sha = self.good_commit()
+        linked = self.linked()
+        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", "--dry-run",
+                            "--commit", sha], cwd=linked, env=clean_env(),
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        for name in ("paths", "statements", "review records", "generated pages"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        self.assertIn("4. The full local checks", out)
+        self.assertEqual(git(linked, "rev-parse", "HEAD").strip(), BASE)
+        self.assertEqual(git(linked, "diff", "--cached", "--name-only").split(), ["README.md"])
+        self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 2, out)
+
+    def test_location_variables_gone_before_the_checks(self):
+        # As the alias sets them, and more: none is left when the pre-flight or the merge
+        # begins, and the repository is the linked worktree.
+        linked = self.linked()
+        gitdir = git(linked, "rev-parse", "--absolute-git-dir").strip()
+        common = git(linked, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
+        planted = {"GIT_DIR": gitdir, "GIT_PREFIX": "", "GIT_COMMON_DIR": common,
+                   "GIT_WORK_TREE": str(linked),
+                   "GIT_OBJECT_DIRECTORY": str(Path(common) / "objects"),
+                   "GIT_INDEX_FILE": str(Path(gitdir) / "index"), "GIT_NAMESPACE": "caller",
+                   "GIT_CEILING_DIRECTORIES": str(TMP)}
+        seen = []
+
+        def record(repo, *args):
+            seen.append((Path(repo).resolve(),
+                         sorted(name for name in safe_push.GIT_LOCATION if name in os.environ)))
+            return 0
+
+        for argv in (["--dry-run"], ["--merge", "1", "--dry-run"]):
+            with self.subTest(argv=argv), mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push, "preflight_main", record), \
+                    mock.patch.object(safe_push, "merge_main", record), \
+                    mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(linked):
+                self.assertEqual(safe_push.main(argv), 0)
+        self.assertEqual(seen, [(linked.resolve(), [])] * 2)
+
+    def test_a_foreign_git_dir_and_work_tree_pair_is_refused_before_dispatch(self):
+        other = TMP / "foreign-pair"
+        git(TMP, "init", "--quiet", str(other))
+        self.addCleanup(shutil.rmtree, other, ignore_errors=True)
+        planted = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other)}
+        for argv in (["--dry-run"], ["--merge", "1", "--dry-run"]):
+            with self.subTest(argv=argv), mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push, "preflight_main",
+                                      side_effect=AssertionError("the pre-flight ran")), \
+                    mock.patch.object(safe_push, "merge_main",
+                                      side_effect=AssertionError("the merge ran")), \
+                    mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(WORK), \
+                    contextlib.redirect_stderr(io.StringIO()) as err:
+                self.assertEqual(safe_push.main(argv), 2)
+                self.assertIn("names a repository other than the one git finds",
+                              err.getvalue())
+
+    def test_a_variable_naming_another_repository_refused(self):
+        # Dropped, GIT_DIR must leave the repository git finds as it was: here it names
+        # another, so the run stops rather than judge a different one.
+        other = TMP / "another-repository"
+        git(TMP, "init", "--quiet", str(other))
+        self.addCleanup(shutil.rmtree, other, ignore_errors=True)
+        err = io.StringIO()
+        with mock.patch.dict(os.environ, {"GIT_DIR": str(other / ".git")}), \
+                mock.patch.object(safe_push, "preflight_main",
+                                  side_effect=AssertionError("the pre-flight ran")), \
+                mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(WORK), \
+                contextlib.redirect_stderr(err):
+            self.assertEqual(safe_push.main(["--dry-run"]), 2)
+        self.assertIn("names a repository other than the one git finds", err.getvalue())
+
+    def test_git_location_holds_gits_own_list(self):
+        # git's own list of the variables that tie a command to one repository, less the
+        # `-c` settings, which git passes on to a submodule too, and the two that choose
+        # whether replacement refs apply.
+        kept = {"GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT", "GIT_NO_REPLACE_OBJECTS",
+                "GIT_REPLACE_REF_BASE"}
+        theirs = set(git(WORK, "rev-parse", "--local-env-vars").split())
+        self.assertIn("GIT_DIR", theirs)
+        self.assertLessEqual(theirs - kept, set(safe_push.GIT_LOCATION))
+        self.assertLessEqual({"GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES"},
+                             set(safe_push.GIT_LOCATION))
 
 
 class PrivatePaths(Edge):
@@ -8057,7 +8869,7 @@ class MainChecksCache(Edge):
             parent = Path(tmp)
             env = dict(os.environ, GIT_INDEX_FILE=str(parent / "index"))
             with safe_push.worktree(WORK, sha, parent, "check") as wt:
-                with safe_push.base_copies(WORK, BASE, wt, inputs):
+                with safe_push.base_copies(WORK, BASE, sha, wt, inputs):
                     git(wt, "read-tree", "HEAD", env=env)
                     git(wt, "add", "-A", env=env)
                     laid = git(wt, "write-tree", env=env).strip()
@@ -8182,9 +8994,11 @@ class MainChecksCache(Edge):
         self.assertIn(f"full output in {log}\n", noted.detail)
         self.assertNotIn(str(miss.logs), noted.detail)
         # Every command went through the stand-in for sandbox-exec (run), git with
-        # replacement objects off (#256).
+        # replacement objects off (#256), and the worktree made as the commit holds it
+        # (AS_COMMITTED, #186).
         self.assertIn(f"git {' '.join(safe_push.NO_REPLACE_REFS)} -c core.quotePath=false "
-                      "worktree add", self.wrapped.read_text())
+                      f"{' '.join(safe_push.AS_COMMITTED)} worktree add",
+                      self.wrapped.read_text())
 
     def test_the_key_and_the_entry_follow_the_sequence_step_4_runs(self):
         # Step 4 runs origin/main's registry, whose sequence ends in the model's job and so
@@ -8994,7 +9808,8 @@ class RiskPreflight(Edge):
     it is R5. --merge takes a record that left step 4 to CI only while the class,
     recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
     head, and with a green run of safe-push-tests there, the head's copy of that workflow
-    being origin/main's, each of its three jobs there and passed."""
+    being origin/main's: each of the three jobs the gate names there and passed, and every
+    other job but `report`, the eight shards among them, passed too."""
 
     SHORT = "left to CI"
     FULL = "internal test flag, local origin"
@@ -9376,7 +10191,7 @@ class RiskPreflight(Edge):
                  ({"suite_runs": {"*": [with_job(510, "safe-push-shards (8)", "cancelled")]}},
                   "safe-push-shards (8) cancelled"),
                  # A run of a workflow that dropped a job, or that ran one trivial job alone:
-                 # each of the workflow's three jobs must be there.
+                 # each of the three jobs the gate names must be there.
                  ({"suite_runs": {"*": [dict(GREEN_SUITE, id=507, jobs=[
                      j for j in SUITE_JOBS if j["name"] != "negative-tests"])]}},
                   "run 507: negative-tests missing"),
@@ -9385,10 +10200,18 @@ class RiskPreflight(Edge):
                   "run 508: safe-push-tests missing, negative-tests missing, "
                   "formal-model-kernel missing"),
                  ({"suite_read_fail": True}, "unreadable"))
+        # Each case starts from what the pre-flight left, origin's main and branch and the
+        # stand-in's state, its calls among them, so that a case that merged by mistake
+        # changes no other case's outcome (#425).
+        pushed, main, branch = self.gh_state(), self.origin_main(), self.origin_branch()
+
+        def from_the_preflight(state: dict) -> None:
+            git(ORIGIN, "update-ref", "refs/heads/main", main)
+            git(ORIGIN, "update-ref", f"refs/heads/{BRANCH}", branch)
+            GH_STATE.write_text(json.dumps(dict(pushed, **state)))
         for state, why in cases:
             with self.subTest(why=why):
-                self.set_gh(lambda s: (s.pop("suite_read_fail", None),
-                                       s.update(suite_runs={"*": [GREEN_SUITE]}), s.update(state)))
+                from_the_preflight(state)
                 r = self.merge()
                 out = r.stdout + r.stderr
                 self.assertEqual(r.returncode, 1, out)
@@ -9397,8 +10220,7 @@ class RiskPreflight(Edge):
                 self.assertIn(f"gh workflow run safe-push-tests.yml --ref {BRANCH}"
                               if why != "unreadable" else "unreadable", out)
                 self.assertEqual(self.merges(), [])
-        self.set_gh(lambda s: (s.pop("suite_read_fail", None),
-                               s.update(suite_runs={sha: [other, GREEN_SUITE]})))
+        from_the_preflight({"suite_runs": {sha: [other, GREEN_SUITE]}})
         r = self.merge()
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, out)
@@ -10077,23 +10899,35 @@ class CadenceReport(unittest.TestCase):
     """The cadence workflow's report step (.github/workflows/safe-push-tests.yml), run as
     GitHub runs it, bash with -e and pipefail, on the shards' logs of a thousand long
     failures, with a stand-in for gh: it opens the issue, listing the first hundred (#300),
-    from every shard's log (#233)."""
+    from every shard's log (#233), and names the shards whose logs show them red (#425)."""
 
-    def run_report(self, script: str, failures: int):
+    def run_report(self, script: str, failures: int, planted: dict | None = None):
+        """The report's step run on the shards' logs, `failures` failing tests dealt among
+        them, each shard's log in `planted` replaced by its text there, or by no log when
+        that is None: the step's result, and the body of the issue it opened, or None."""
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             # Each line longer than the 300 characters the step keeps, so the thousand it
             # keeps (301,000 bytes) are far more than a pipe holds, and a reader that stops
             # early closes it. The failures are dealt among the shards' logs in turn, each
-            # log in a folder of its own, as the step's fetch lays them down.
+            # log in a folder of its own, as the step's fetch lays them down; each shard
+            # also ran one test that passed, and its log ends as unittest ends it.
             name = "test_" + "x" * 250
             shards = ci_shard_count(ci_jobs())
             for shard in range(1, shards + 1):
-                folder = tmp / "log" / f"test_safe_push-log-{shard}"
-                folder.mkdir(parents=True)
-                (folder / f"test_safe_push-{shard}.log").write_text("".join(
-                    f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
-                    for i in range(shard - 1, failures, shards)) + "Ran 125 tests\n")
+                failed = range(shard - 1, failures, shards)
+                text = (f"Shard {shard} of {shards}: {len(failed) + 1} of {failures + shards} "
+                        "tests, about 1 s by the times measured on a GitHub runner, the module's "
+                        f"setup included.\ntest_passes (__main__.Units.test_passes) ... ok\n"
+                        + "".join(f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
+                                  for i in failed)
+                        + f"Ran {len(failed) + 1} tests in 1.000s\n\n"
+                        + (f"FAILED (failures={len(failed)})\n" if failed else "OK\n"))
+                text = (planted or {}).get(shard, text)
+                if text is not None:
+                    folder = tmp / "log" / f"test_safe_push-log-{shard}"
+                    folder.mkdir(parents=True)
+                    (folder / f"test_safe_push-{shard}.log").write_text(text)
             bin_dir = tmp / "bin"
             bin_dir.mkdir()
             gh = bin_dir / "gh"
@@ -10142,6 +10976,36 @@ class CadenceReport(unittest.TestCase):
         self.assertIsNotNone(body, "no issue was opened")
         self.assertNotIn("(the first 100)", body)
         self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
+
+    def test_the_shards_whose_logs_show_them_red_are_named(self):
+        # #425: GitHub gives the matrix one result, so the report reads each shard's log:
+        # three shards with a failure each; the fifth's log cut off before unittest's
+        # summary, though a test's output in it says OK and names 99 shards; and
+        # the last shard, eight, with no log, which the other logs' "Shard K of 8" names.
+        # The other shards, whose logs end in OK, are not named.
+        shards = ci_shard_count(ci_jobs())
+        cut = (f"Shard 5 of {shards}: 2 of 11 tests, about 1 s by the times measured on a "
+               "GitHub runner, the module's setup included.\n"
+               "test_passes (__main__.Units.test_passes) ... a line the test wrote\nOK\n"
+               f"Shard 1 of 99: a line the test wrote\n")
+        r, body = self.run_report(self.report_script(), 3, {5: cut, shards: None})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
+        named = [line for line in body.splitlines() if line.startswith("- shard ")]
+        self.assertEqual(named, [
+            "- shard 1: FAILED (failures=1)", "- shard 2: FAILED (failures=1)",
+            "- shard 3: FAILED (failures=1)",
+            "- shard 5: its log stops before unittest's summary (cut off or cancelled)",
+            f"- shard {shards}: it kept no log"])
+        self.assertIn("Shards whose kept logs show them red (the run's page gives each shard's "
+                      "result):", body)
+        self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
+        # No shard's log shows it red, as when only the proof failed.
+        r, body = self.run_report(self.report_script(), 0)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("No shard's kept log shows it red (the run's page gives each shard's "
+                      "result).", body)
+        self.assertNotIn("- shard ", body)
 
     def test_a_reader_that_stops_early_would_end_the_step(self):
         # The form #300 replaced: head stops reading, printf meets a closed pipe, and
@@ -10960,6 +11824,57 @@ class Units(unittest.TestCase):
         self.assertIn("`review/I/05.toml`: touched, not re-stamped", records)
         self.assertIn("`review/I/06.toml`: touched, not re-stamped", records)
 
+    def test_path_faults(self):
+        # Issue #186: paths equal once casefolded and NFC-normalised, each pair named once,
+        # where they first meet; and paths that are not plain printable ASCII.
+        faults = safe_push.path_faults
+        self.assertEqual(faults(["Certificate/FIELDS.md", "scripts/json.py", "docs/STYLE.md",
+                                 "docs/style-notes.md", "LICENSE", "LICENSE-PROSE.md"]), [])
+        nfc, sharp = "docs/café.md", "docs/straße.md"
+        nfd = unicodedata.normalize("NFD", nfc)
+        cases = (
+            (["Certificate/FIELDS.md", "Certificate/fields.md"],
+             "Certificate/FIELDS.md and Certificate/fields.md"),
+            (["Certificate/FIELDS.md", "certificate/FIELDS.md"],
+             "Certificate/ (Certificate/FIELDS.md) and certificate/ (certificate/FIELDS.md)"),
+            (["scripts/heath.py", "Scripts/json.py"],
+             "Scripts/ (Scripts/json.py) and scripts/ (scripts/heath.py)"),
+            (["A/b/x", "a/b/X", "a/c"], "A/ (A/b/x) and a/ (a/b/X, a/c)"),
+            (["docs/x", "docs/x/y"], "docs/x and docs/x/ (docs/x/y)"),
+            (["docs/x", "docs/x"], "docs/x and docs/x"),
+            (["docs/STRASSE.md", sharp], f"docs/STRASSE.md and {ascii(sharp)}"),
+            ([nfc, nfd], f"{ascii(nfd)} and {ascii(nfc)}"),
+        )
+        for paths, twins in cases:
+            with self.subTest(paths=paths):
+                found = [f for f in faults(paths) if "equal once casefolded" in f]
+                self.assertEqual(len(found), 1, found)
+                self.assertTrue(found[0].startswith(twins + ": "), found)
+        for path, code in (("docs/a b.md", "U+0020"), (nfd, "U+0301"), (nfc, "U+00E9"),
+                           ("docs/a\tb.md", "U+0009"), ("docs/a\x7fb.md", "U+007F")):
+            with self.subTest(path=path):
+                self.assertEqual(faults([path]),
+                                 [f"{ascii(path)}: not plain printable ASCII ({code})"])
+        # #186: a protected path or a check input spelt otherwise, though the
+        # tree holds no twin of it, since such a disk opens it as the name the rules know.
+        self.assertEqual(faults(["lakefile.lean", "model/lakefile.lean", ".gitattributes",
+                                 "scripts/x.py", "review/SCHEMA.md"]), [])
+        for path, own, shown in (
+                ("LAKEFILE.lean", "lakefile.lean", "LAKEFILE.lean"),
+                ("model/Lakefile.lean", "model/lakefile.lean", "model/Lakefile.lean"),
+                (".GITATTRIBUTES", ".gitattributes", ".GITATTRIBUTES"),
+                ("Scripts/x.py", "scripts/", "Scripts/ (Scripts/x.py)"),
+                ("Review/SCHEMA.md", "review/SCHEMA.md", "Review/SCHEMA.md"),
+                ("TESTS/model/run.py", "tests/", "TESTS/ (TESTS/model/run.py)")):
+            with self.subTest(path=path):
+                self.assertEqual(faults([path, "docs/STYLE.md"]),
+                                 [f"{shown}: the protected path {own}, spelt otherwise, which a "
+                                  f"case-insensitive disk (macOS's default) opens as {own}, "
+                                  "unseen by the protected-path rule and keep_apart"])
+        # A folder spelt otherwise is named once, with the paths under it.
+        (fault,) = faults(["Scripts/a.py", "Scripts/b.py"])
+        self.assertTrue(fault.startswith("Scripts/ (Scripts/a.py, Scripts/b.py): "), fault)
+
     def test_a_crash_once_the_sandbox_is_set_imports_nothing(self):
         # A command's output that is not UTF-8 makes run() raise, and an exception that
         # reaches Python's own handler imports traceback and a dozen more, found first in
@@ -11208,6 +12123,14 @@ class Units(unittest.TestCase):
                                        + m.group(3), workflow)
         self.assertNotEqual(changed, workflow)
         self.assertEqual(pattern.sub("", changed), pattern.sub("", workflow))
+
+    def test_path_checks_are_read_from_checks(self):
+        # #186, a looser path check: keep_apart's rule names the two path commands as the
+        # registry names them, so that an entry reworded there cannot drop the rule unseen.
+        self.assertEqual(safe_push.PATH_CHECKS, ("python3 -I tests/test_check_paths.py",
+                                                 "python3 scripts/check_paths.py --self-test"))
+        self.assertLessEqual(set(safe_push.PATH_CHECKS),
+                             {e.name for e in registry.load(SOURCE)})
 
     def test_suite_jobs_are_the_workflows_own(self):
         # The release's gate (suite_gate, #301) names the jobs a run of the safe-push-tests
@@ -12532,7 +13455,7 @@ class Units(unittest.TestCase):
                 self.assertTrue(self.law(body), body)
         for decorator in ("@axiom('x', dict())", "@axiom('x', dict(A=P, L=L_, al=C_), gs_p4)",
                           "@axiom('x', dict(A=P), gs_cm('side'))",
-                          "@axiom('x', dict(A=P), gs_convex())"):
+                          "@axiom('x', dict(A=P), gs_cm())"):
             with self.subTest(decorator=decorator):
                 self.assertTrue(self.law("pass", head=f"{decorator}\ndef _(c):\n"))
 
@@ -12950,17 +13873,37 @@ LOG_LINE = re.compile(r"(?:(?P<job>[^\t]*)\t[^\t]*\t)?\ufeff?(?P<stamp>\d{4}-\d\
                       r"\d\d:\d\d:\d\d)(?P<fraction>\.\d+)?Z ?(?P<text>.*)")
 # A test's line at verbosity 2, `test_x (__main__.Class.test_x) ... ok`.
 TEST_LINE = re.compile(r"(?P<method>test\w*) \((?:\w+\.)*?(?P<cls>\w+)\.(?P=method)\)")
-RUN_STEP = "##[group]Run python3 scripts/test_safe_push.py"
+# A step of a job's log opens with its group line, `##[group]Run ` and its script's first
+# line; then, before the step's `##[endgroup]`, GitHub echoes each line of its script in
+# cyan, then its shell and its env. A line of a script that runs this script (#425): the
+# old step's one line, or the second of the cadence's shard step, which opens with
+# `set -o pipefail`.
+STEP_LINE = "##[group]Run "
+SCRIPT_LINE = re.compile(r"\x1b\[36;1m(?P<line>.*)\x1b\[0m")
+RUNS_SCRIPT = re.compile(r"\s*python3 scripts/test_safe_push\.py(?:\s|$)")
+# actions/checkout's last word on the commit it checked out: git's command, then the commit.
+CHECKOUT_LINE = re.compile(r"\[command\]\S*git log -1 --format=%H")
+# A log saved as `gh run view ID --log > run-ID.log`: the note takes the run from the
+# name, though the log names it too, in upload-artifact's URLs.
+RUN_LOG_NAME = re.compile(r"run-(?P<id>\d+)\.log")
 TIMES_ABOUT = (
     "Seconds each test of scripts/test_safe_push.py took on a GitHub runner, to a tenth of "
     "a second, written by `python3 scripts/test_safe_push.py --times-from-log` from the "
-    "times GitHub stamped on the lines of {source} on {date} ({shards} shards, {tests} "
-    "tests). Each shard's log is at verbosity 2, and a test's line is written when the "
-    "test ends, so a test's time runs from the line before its own to the last line of its "
-    "output. setUpModule is the module's setup, the clone of the repository, which every "
-    "shard pays once: the median of the shards' setups, each from the shard's report to "
-    "the line setUpModule prints when its clone is ready. `--shard K/N` deals the tests "
-    "out by these times; a test missing here weighs their median.")
+    "times GitHub stamped on the lines of {source}{commit} on {date} ({shards} shards, "
+    "{tests} tests). {counts} Each shard's log is at verbosity 2, and a test's line is "
+    "written when the test ends, so a test's time runs from the line before its own to the "
+    "last line of its output. setUpModule is the module's setup, the clone of the "
+    "repository, which every shard pays once: the median of the shards' setups, each from "
+    "the shard's report to the line setUpModule prints when its clone is ready. "
+    "`--shard K/N` deals the tests out by these times; a test missing here weighs their "
+    "median.")
+
+
+@dataclass(frozen=True)
+class LogTimes:
+    data: dict                   # the times file: its note, the setup and each test's seconds
+    unmeasured: tuple[str, ...]  # the tests the loader lists that no log times: the median
+    dropped: tuple[str, ...]     # the tests the logs time that the loader no longer lists
 
 
 def stamp_seconds(stamp: str, fraction: str | None) -> float:
@@ -12969,17 +13912,31 @@ def stamp_seconds(stamp: str, fraction: str | None) -> float:
 
 
 def script_runs(lines: list[tuple[float, str]]):
-    """The lines of each step of one job's log that runs this script, after its first."""
-    run = None
+    """The lines of each step of one job's log whose script runs this script on one of its
+    lines, after the step's group line: that line, or one GitHub echoes in cyan before the
+    step's `##[endgroup]`. A line of an action's `with`, of the step's env or of its output
+    is none of them."""
+    script, run, header = [], None, False
     for stamp, text in lines:
-        if text.startswith("##[group]Run ") or text == "Post job cleanup.":
-            if run is not None:
+        if text.startswith(STEP_LINE) or text == "Post job cleanup.":
+            if run is not None and any(map(RUNS_SCRIPT.match, script)):
                 yield run
-            run = [] if text.startswith(RUN_STEP) else None
+            header = text.startswith(STEP_LINE)
+            script, run = [text[len(STEP_LINE):]] if header else [], [] if header else None
         elif run is not None:
             run.append((stamp, text))
-    if run is not None:
+            if header and text == "##[endgroup]":
+                header = False
+            elif header and (echo := SCRIPT_LINE.fullmatch(text)):
+                script.append(echo["line"])
+    if run is not None and any(map(RUNS_SCRIPT.match, script)):
         yield run
+
+
+def checkouts(lines: list[tuple[float, str]]) -> set[str]:
+    """The commits actions/checkout says it checked out in one job's log."""
+    return {after for (_, text), (_, after) in zip(lines, lines[1:])
+            if CHECKOUT_LINE.fullmatch(text) and re.fullmatch(r"[0-9a-f]{40}", after)}
 
 
 def shard_times(lines: list[tuple[float, str]]) -> tuple[float, list[tuple[str, float]]]:
@@ -13014,10 +13971,16 @@ def shard_times(lines: list[tuple[float, str]]) -> tuple[float, list[tuple[str, 
     return setup, times
 
 
-def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
+def times_from_logs(logs: dict[str, str], discovered: list[str]) -> LogTimes:
     """The times file, from CI logs by name: each run of this script there with its tests'
-    lines, in any job (one job's log, or a whole run's from `gh run view RUN --log`).
-    ValueError, naming each fault, unless they give each test of `discovered` once."""
+    lines, in any job (one job's log, or a whole run's from `gh run view RUN --log`), for
+    the tests of `discovered`. A test it lists with no line in the logs weighs their
+    median, as it does in `--shard`, and a test of the logs it no longer lists is left out,
+    by the coordinator's ruling of 24 October 18:58 (#425): else a branch that adds a test
+    could never be timed from an older run. ValueError, naming each fault, when the logs
+    hold no run, when a run does not show its times, when a test ran twice, or when they
+    time no test of `discovered`. The note names the run, by a log's name run-ID.log, the
+    commit the jobs checked out, and the tests that weigh the median."""
     jobs: dict[tuple[str, str], list[tuple[float, str]]] = {}
     for name, log in logs.items():
         for raw in log.split("\n"):
@@ -13025,7 +13988,7 @@ def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
             if line:
                 jobs.setdefault((name, line["job"] or ""), []).append(
                     (stamp_seconds(line["stamp"], line["fraction"]), line["text"]))
-    problems, setups, seconds, where, firsts = [], [], {}, {}, []
+    problems, setups, seconds, where, firsts, commits = [], [], {}, {}, [], set()
     for (name, job), lines in jobs.items():
         label = f"{name}, {job}" if job else name
         for run in script_runs(lines):
@@ -13038,6 +14001,7 @@ def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
                 continue
             setups.append(setup)
             firsts.append(run[0][0])
+            commits |= checkouts(lines)
             for key, value in times:
                 if key in seconds:
                     problems.append(f"{key} ran in {where[key]} and again in {label}.")
@@ -13045,22 +14009,40 @@ def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
     if not setups and not problems:
         problems.append("These logs hold no run of scripts/test_safe_push.py with its tests' "
                         "lines.")
-    if not problems:
-        problems += [f"{key} has no line in these logs." for key in discovered
-                     if key not in seconds]
-        problems += [f"{key} ran in {where[key]}, but unittest's loader does not list it here."
-                     for key in sorted(set(seconds) - set(discovered))]
+    listed = set(discovered)
+    if not problems and not listed & set(seconds):
+        problems.append(f"None of the {len(seconds)} tests these logs time is one unittest's "
+                        "loader lists here.")
     if problems:
         raise ValueError("\n".join(problems))
+    unmeasured = tuple(sorted(listed - set(seconds)))
+    dropped = tuple(sorted(set(seconds) - listed))
+    kept = {key: value for key, value in sorted(seconds.items()) if key in listed}
     pulls = sorted({number for log in logs.values()
                     for number in re.findall(r"refs/remotes/pull/(\d+)/merge", log)})
+    runs = [match["id"] for name in logs if (match := RUN_LOG_NAME.fullmatch(Path(name).name))]
+    if runs and len(runs) == len(logs):
+        source = (f"the log of GitHub Actions run {runs[0]}" if len(runs) == 1
+                  else "the logs of GitHub Actions runs " + ", ".join(runs))
+        source += f", the CI run of pull request #{pulls[0]}" if len(pulls) == 1 else ""
+    elif len(pulls) == 1:
+        source = f"the CI run of pull request #{pulls[0]}"
+    else:
+        source = "the CI logs " + ", ".join(Path(name).name for name in logs)
+    commit = ("" if not commits else f", at commit {next(iter(commits))}," if len(commits) == 1
+              else ", at commits " + ", ".join(sorted(commits)) + ",")
+    counts = (f"{len(unmeasured)} of the {len(listed)} tests unittest's loader listed when "
+              "this file was written had no line there, and "
+              f"{'weighs' if len(unmeasured) == 1 else 'weigh'} their median")
+    if dropped:
+        counts += (f"; {safe_push.plural(len(dropped), 'test')} timed there that it no longer "
+                   f"listed {'was' if len(dropped) == 1 else 'were'} left out")
     first = datetime.datetime.fromtimestamp(min(firsts), datetime.timezone.utc)
-    return {"about": TIMES_ABOUT.format(
-                source=(f"the CI run of pull request #{pulls[0]}" if len(pulls) == 1
-                        else "the CI logs " + ", ".join(logs)),
-                date=f"{first.day} {first:%B %Y}", shards=len(setups), tests=len(seconds)),
-            "setUpModule": round(statistics.median(setups), 1),
-            "tests": dict(sorted(seconds.items()))}
+    return LogTimes({"about": TIMES_ABOUT.format(
+                         source=source, commit=commit, date=f"{first.day} {first:%B %Y}",
+                         shards=len(setups), tests=len(kept), counts=counts + "."),
+                     "setUpModule": round(statistics.median(setups), 1),
+                     "tests": kept}, unmeasured, dropped)
 
 
 def write_times(data: dict, path: Path = TIMES) -> None:
@@ -13069,17 +14051,31 @@ def write_times(data: dict, path: Path = TIMES) -> None:
 
 def times_command(logs: list[Path]) -> int:
     """`--times-from-log LOG...`: the times file, written from the shards' CI logs, against
-    this checkout's tests as unittest's loader lists them."""
+    this checkout's tests as unittest's loader lists them. It names on stderr, with their
+    count, the tests with no line in the logs, which weigh the median, and the tests of the
+    logs that the loader no longer lists, which are left out. A log saved as run-ID.log
+    names its run in the file's note."""
+    discovered = [time_key(test) for test in loaded_tests()]
     try:
-        data = times_from_logs({str(path): path.read_text(encoding="utf-8", errors="replace")
-                                for path in logs},
-                               [time_key(test) for test in loaded_tests()])
+        read = times_from_logs({str(path): path.read_text(encoding="utf-8", errors="replace")
+                                for path in logs}, discovered)
     except (OSError, ValueError) as error:
         print(f"No times written to scripts/{TIMES.name}:\n{error}", file=sys.stderr)
         return 1
-    write_times(data)
-    print(f"Wrote scripts/{TIMES.name}: {len(data['tests'])} tests, setUpModule "
-          f"{data['setUpModule']} s.")
+    median = statistics.median(read.data["tests"].values())
+    for key in read.unmeasured:
+        print(f"No line for {key} in these logs: it weighs their median, {median:g} s.",
+              file=sys.stderr)
+    for key in read.dropped:
+        print(f"{key} is timed in these logs, but unittest's loader no longer lists it: it is "
+              "left out.", file=sys.stderr)
+    print(f"{len(read.unmeasured)} of the {len(discovered)} tests unittest's loader lists have "
+          f"no line in these logs, and weigh their median, {median:g} s; "
+          f"{safe_push.plural(len(read.dropped), 'test')} timed there, which it no longer "
+          "lists, left out.", file=sys.stderr)
+    write_times(read.data)
+    print(f"Wrote scripts/{TIMES.name}: {len(read.data['tests'])} tests, setUpModule "
+          f"{read.data['setUpModule']} s.")
     return 0
 
 
@@ -13189,15 +14185,18 @@ def step_runs(condition: str | None, context: dict[str, str], failed: bool,
 def resolved(value, context: dict[str, str]):
     """`value` with each ${{ name }} in it read from `context`, as GitHub reads an env, a
     `with` or a script before the step runs; a value that is not a string, as it is. A
-    name the context does not give is a ValueError."""
+    name the context does not give is a ValueError, and so is any other `${{`, such as a
+    function's call or a name without its spaces, which this model does not read (#425)."""
     if not isinstance(value, str):
         return value
 
     def read(match) -> str:
+        if match[1] is None:
+            raise ValueError(f"an expression this model does not read, in {value!r}")
         if match[1] not in context:
             raise ValueError(f"a context this model is not given: {match[1]!r}")
         return context[match[1]]
-    return re.sub(r"\$\{\{ ([\w.-]+) \}\}", read, value)
+    return re.sub(r"\$\{\{ ([\w.-]+) \}\}|\$\{\{", read, value)
 
 
 def run_steps(steps: list[dict], context: dict[str, str], passes) -> tuple[list[str], str]:
@@ -13759,11 +14758,12 @@ class Shards(unittest.TestCase):
                     script_command(argv)
                 self.assertEqual(stopped.exception.code, 2)
 
-    def test_the_times_from_a_ci_log(self):
-        # A few lines in the form of a CI log as `gh run view RUN --log` gives it: two
-        # shards, each with setUpModule's line, and a test whose output takes two lines;
-        # the step of the proof, which runs no test, and another job's tests, which are
-        # not this script's. A job's own log, without the job and step, reads the same.
+    def ci_log(self) -> tuple[list[str], list[str], list[str], list[str]]:
+        """A few lines in the form of a CI log as `gh run view RUN --log` gives it, each
+        shard's step of one line, as the CI run of #239 ran them: two shards, each with
+        setUpModule's line, and a test whose output takes two lines; then the step of the
+        proof, which runs no test, and another job's tests, which are not this script's;
+        and the four tests the shards ran."""
         def job(name: str, lines: list[str]) -> list[str]:
             return [f"{name}\tUNKNOWN STEP\t{line}" for line in lines]
 
@@ -13821,9 +14821,33 @@ class Shards(unittest.TestCase):
                 "Accepts.test_nothing_to_push",
                 "DecisionEntries.test_a_bare_top_level_directory_ends_no_sentence",
                 "FullChecks.test_full_sequence_on_a_good_commit"]
+        return one, two, others, keys
+
+    def times_command_on(self, lines: list[str], discovered: list[str]):
+        """times_command on a log of `lines`, saved as run.log, unittest's loader listing
+        `discovered`: its status, what it said on stderr, and the times file it wrote, or
+        None. The file it writes is caught; scripts/test_safe_push_times.json is not."""
+        tests = [mock.Mock(**{"id.return_value": f"__main__.{key}"}) for key in discovered]
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "run.log"
+            log.write_text("\n".join(lines) + "\n")
+            err = io.StringIO()
+            with mock.patch.object(sys.modules[__name__], "loaded_tests", return_value=tests), \
+                    mock.patch.object(sys.modules[__name__], "write_times") as write, \
+                    contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                code = times_command([log])
+        return code, err.getvalue(), write.call_args.args[0] if write.called else None
+
+    def test_the_times_from_a_ci_log(self):
+        # The log's two shards, each step of one line, read; and a job's own log, without
+        # the job and step, read the same. Then each refusal, by the coordinator's ruling of
+        # 24 October 18:58 (#425): a count of tests' lines that differs from unittest's, no
+        # line from setUpModule, a run cut short, a test that ran twice, logs that time no
+        # test the loader lists, and logs that hold no run.
+        one, two, others, keys = self.ci_log()
 
         def times(lines: list[str], discovered: list[str] = keys) -> dict:
-            return times_from_logs({"run.log": "\n".join(lines) + "\n"}, discovered)
+            return times_from_logs({"run.log": "\n".join(lines) + "\n"}, discovered).data
 
         data = times(two + others + one)
         self.assertEqual(data["tests"], {keys[0]: 10.6, keys[1]: 0.2, keys[2]: 5.5,
@@ -13835,7 +14859,7 @@ class Shards(unittest.TestCase):
             write_times(data, Path(tmp) / "times.json")
             self.assertEqual(load_times(Path(tmp) / "times.json"), (5.8, data["tests"]))
         alone = times_from_logs({"job.txt": "\n".join(line.split("\t", 2)[2] for line in one)},
-                                keys[:2])
+                                keys[:2]).data
         self.assertEqual((alone["setUpModule"], alone["tests"]),
                          (5.5, {keys[0]: 10.6, keys[1]: 0.2}))
 
@@ -13856,12 +14880,148 @@ class Shards(unittest.TestCase):
         self.assertEqual(refused(one + two + [line.replace("(1)", "(3)") for line in one]),
                          f"{keys[0]} ran in {label} (1) and again in {label} (3).\n"
                          f"{keys[1]} ran in {label} (1) and again in {label} (3).")
-        self.assertEqual(refused(one + two, keys + ["Later.test_added"]),
-                         "Later.test_added has no line in these logs.")
-        self.assertEqual(refused(one + two, keys[1:]), f"{keys[0]} ran in {label} (1), but "
-                         "unittest's loader does not list it here.")
+        self.assertEqual(refused(one + two, ["Later.test_added"]),
+                         "None of the 4 tests these logs time is one unittest's loader lists "
+                         "here.")
         self.assertEqual(refused(others), "These logs hold no run of scripts/test_safe_push.py "
                          "with its tests' lines.")
+        # The command, refused, writes nothing.
+        code, said, written = self.times_command_on(others, keys)
+        self.assertEqual((code, written), (1, None), said)
+        self.assertTrue(said.startswith(f"No times written to scripts/{TIMES.name}:\n"), said)
+
+    def test_a_listed_test_with_no_line_in_the_logs_weighs_the_median(self):
+        # The coordinator's ruling of 24 October 18:58 (#425): a test the loader lists that
+        # the logs do not time, as one a branch added after the run, is no refusal. The file
+        # leaves it out, so it weighs their median when the shards are dealt, as any test
+        # the file does not name; the command names it on stderr, with the count, and the
+        # file's note gives the count.
+        one, two, _, keys = self.ci_log()
+        added = ["Later.test_added", "Later.test_renamed"]
+        code, said, written = self.times_command_on(one + two, keys + added)
+        self.assertEqual(code, 0, said)
+        self.assertEqual(written["tests"], {keys[0]: 10.6, keys[1]: 0.2, keys[2]: 5.5,
+                                            keys[3]: 191.4})
+        median = statistics.median(written["tests"].values())
+        self.assertEqual(median, 8.05)
+        for key in added:
+            self.assertIn(f"No line for {key} in these logs: it weighs their median, 8.05 s.\n",
+                          said)
+        self.assertIn("2 of the 6 tests unittest's loader lists have no line in these logs, and "
+                      "weigh their median, 8.05 s; 0 tests timed there, which it no longer "
+                      "lists, left out.\n", said)
+        self.assertIn("2 of the 6 tests unittest's loader listed when this file was written had "
+                      "no line there, and weigh their median.", written["about"])
+        plan = shard_plan(keys + added, 2, written["tests"], written["setUpModule"])
+        self.assertEqual((plan.unmeasured, plan.median), (tuple(added), median))
+
+    def test_a_logged_test_the_loader_no_longer_lists_is_left_out(self):
+        # The coordinator's ruling of 24 October 18:58 (#425): a test the logs time that the
+        # loader no longer lists, as one renamed or removed since the run, is no refusal:
+        # the file leaves it out, and the command names it on stderr, with the count.
+        one, two, _, keys = self.ci_log()
+        code, said, written = self.times_command_on(one + two, keys[1:])
+        self.assertEqual(code, 0, said)
+        self.assertEqual(written["tests"], {keys[1]: 0.2, keys[2]: 5.5, keys[3]: 191.4})
+        self.assertIn(f"{keys[0]} is timed in these logs, but unittest's loader no longer lists "
+                      "it: it is left out.\n", said)
+        self.assertIn("0 of the 3 tests unittest's loader lists have no line in these logs, and "
+                      "weigh their median, 5.5 s; 1 test timed there, which it no longer lists, "
+                      "left out.\n", said)
+        self.assertIn("; 1 test timed there that it no longer listed was left out.",
+                      written["about"])
+
+    def test_the_times_from_the_cadences_shard_step(self):
+        # #425: the cadence's shard step runs a script of two lines, so its group line is
+        # `Run set -o pipefail`, and this script's command comes inside the group, echoed in
+        # cyan, as in the log of run 40135685522; it is read, and the note names the run, by
+        # the log's name, and the commit the jobs checked out. A step whose script does not
+        # run this script is not read, though its output holds a test's lines: one whose
+        # script only echoes the command, and an action's whose `with` holds the command on
+        # a line of its own, not in cyan, as its output does after its ##[endgroup].
+        def cyan(line: str) -> str:
+            return f"\x1b[36;1m{line}\x1b[0m"
+
+        commit = "8839a510a1595d084a60bd7ef1f819dee7846990"
+        rule = "-" * 70
+
+        def job(name: str, lines: list[str]) -> list[str]:
+            return [f"{name}\tUNKNOWN STEP\t2026-10-24T21:{line}" for line in lines]
+
+        def shard(k: int, step: str) -> list[str]:
+            return [f"46:3{k}.2675057Z [command]/usr/bin/git log -1 --format=%H",
+                    f"46:3{k}.2702837Z {commit}",
+                    f"{step}Z ##[group]Run set -o pipefail",
+                    f"{step}Z " + cyan("set -o pipefail"),
+                    f"{step}Z " + cyan(f'python3 scripts/test_safe_push.py --shard {k}/8 --ran '
+                                       f'"$RUNNER_TEMP/ran-{k}.json" 2>&1 | tee '
+                                       f'"$RUNNER_TEMP/test_safe_push-{k}.log"'),
+                    f"{step}Z shell: /usr/bin/bash -e {{0}}",
+                    f"{step}Z env:",
+                    f"{step}Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64",
+                    f"{step}Z ##[endgroup]"]
+
+        def summary(at: str, ran: int) -> list[str]:
+            return [f"{at}0Z ", f"{at}1Z {rule}",
+                    f"{at}2Z Ran {ran} test{'s' if ran != 1 else ''} in 2.000s", f"{at}3Z ",
+                    f"{at}4Z OK"]
+
+        first = job("safe-push-shards (1)", shard(1, "46:39.3126511") + [
+            "46:40.3481350Z No measured time for Later.test_added in "
+            "scripts/test_safe_push_times.json: it weighs their median, 2.7 s.",
+            "46:40.3662875Z Shard 1 of 8: 2 of 5 tests, about 347 s by the times measured on a "
+            "GitHub runner, the module's setup included.",
+            f"46:41.1877196Z {SETUP_DONE}",
+            "46:41.2482660Z test_a_few_failures_are_listed_whole "
+            "(__main__.CadenceReport.test_a_few_failures_are_listed_whole) ... ok",
+            "46:43.5556706Z test_advised_revert_restores_only_what_origin_main_holds "
+            "(__main__.DecisionEntries.test_advised_revert_restores_only_what_origin_main_holds)"
+            " ... ok"] + summary("46:43.600000", 2) + [
+            "46:43.7000000Z ##[group]Run actions/upload-artifact@v5"])
+        second = job("safe-push-shards (2)", shard(2, "46:35.0212430") + [
+            "46:36.0000000Z Shard 2 of 8: 1 of 5 tests, about 205 s by the times measured on a "
+            "GitHub runner, the module's setup included.",
+            f"46:36.1775861Z {SETUP_DONE}",
+            "46:40.0000000Z test_dry_run_interrupted (__main__.DryRun.test_dry_run_interrupted) "
+            "... ok"] + summary("46:40.100000", 1) + ["46:40.2000000Z Post job cleanup."])
+
+        def decoy(step: list[str]) -> list[str]:
+            # A whole run of a test the loader lists, which no shard ran.
+            return step + [
+                "47:00.0000000Z Shard 9 of 9: 1 of 5 tests, about 1 s by the times measured on "
+                "a GitHub runner, the module's setup included.",
+                f"47:01.0000000Z {SETUP_DONE}",
+                "47:02.0000000Z test_planted (__main__.Decoy.test_planted) ... ok"] + summary(
+                "47:02.100000", 1)
+
+        decoys = job("decoys", decoy([
+            "46:59.0000000Z ##[group]Run echo python3 scripts/test_safe_push.py",
+            "46:59.0000000Z " + cyan("echo python3 scripts/test_safe_push.py"),
+            "46:59.0000000Z ##[endgroup]"]) + decoy([
+            "47:10.0000000Z ##[group]Run actions/github-script@v7",
+            "47:10.0000000Z with:",
+            "47:10.0000000Z   script: set -o pipefail",
+            "47:10.0000000Z     python3 scripts/test_safe_push.py --shard 1/8",
+            "47:10.0000000Z ##[endgroup]",
+            "47:10.5000000Z " + cyan("python3 scripts/test_safe_push.py --shard 1/8")]))
+        keys = ["CadenceReport.test_a_few_failures_are_listed_whole",
+                "DecisionEntries.test_advised_revert_restores_only_what_origin_main_holds",
+                "DryRun.test_dry_run_interrupted", "Decoy.test_planted", "Later.test_added"]
+        log = "\n".join(decoys + second + first) + "\n"
+        read = times_from_logs({"run-40135685522.log": log}, keys)
+        self.assertEqual(read.data["tests"], {keys[0]: 0.1, keys[1]: 2.3, keys[2]: 3.8})
+        self.assertEqual(read.data["setUpModule"], 0.5)
+        self.assertEqual((read.unmeasured, read.dropped),
+                         (("Decoy.test_planted", "Later.test_added"), ()))
+        self.assertIn("the lines of the log of GitHub Actions run 40135685522, at commit "
+                      f"{commit}, on 24 October 2026 (2 shards, 3 tests). 2 of the 5 tests "
+                      "unittest's loader listed when this file was written had no line there, "
+                      "and weigh their median.", read.data["about"])
+        # A log of another name gives no run, and its folder never reaches the note.
+        elsewhere = times_from_logs({"/some/folder/shards.log": log}, keys).data["about"]
+        self.assertIn(f"the lines of the CI logs shards.log, at commit {commit}, on 24 October",
+                      elsewhere)
+        self.assertNotIn("/some/folder", elsewhere)
 
     def test_every_shard_runs_its_part_of_the_suite(self):
         jobs = self.jobs()
@@ -14024,6 +15184,24 @@ class Shards(unittest.TestCase):
                           "fromJSON('true')", "needs.other.result == 'success'"):
             with self.subTest(condition=condition), self.assertRaises(ValueError):
                 step_runs(condition, {"github.ref": "refs/heads/main"}, False)
+
+    def test_an_expression_the_model_does_not_read_is_refused(self):
+        # #425: resolved() reads each `${{ name }}` from the context it is given, and
+        # refuses any other `${{`, which it would otherwise hand the step as it stands.
+        context = {"matrix.shard": "3", "runner.temp": "RUNNER_TEMP"}
+        self.assertEqual(resolved("${{ runner.temp }}/ran-${{ matrix.shard }}.json", context),
+                         "RUNNER_TEMP/ran-3.json")
+        self.assertEqual((resolved(35, context), resolved("no expression", context)),
+                         (35, "no expression"))
+        for value in ("${{ hashFiles('model/lake-manifest.json') }}", "${{matrix.shard}}",
+                      "${{ matrix.shard}}", "ran-${{ matrix.shard }} ${{", "${{ fromJSON(x) }}"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError) as caught:
+                    resolved(value, context)
+                self.assertIn("an expression this model does not read", str(caught.exception))
+        with self.assertRaises(ValueError) as caught:
+            resolved("${{ github.sha }}", context)
+        self.assertEqual(str(caught.exception), "a context this model is not given: 'github.sha'")
 
     # The planted reds: whole runs of the cadence workflow, its jobs and steps read from it,
     # by CadenceRun. Each test fails when the guard it names is taken away.

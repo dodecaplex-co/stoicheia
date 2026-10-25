@@ -102,10 +102,6 @@ def outside(P, c):
     return ch2(P, centre(c)) > c[2]
 
 
-def in_or_on(P, c):
-    return ch2(P, centre(c)) <= c[2]
-
-
 def is_centre(P, c):
     return P == centre(c)
 
@@ -612,52 +608,6 @@ def gs_chord(rng):
     return dict(A=A, B=B, C=C, L=L, al=c)
 
 
-def gs_convex(kind):
-    def g(rng):
-        # Two kinds draw no circle: the lines of pasch4 and of the triple incidence laws.
-        # They are kinds of a generator the other laws use, so that they need no generator
-        # of their own.
-        if kind == 'pasch4':   # two lines through B, and A and C on the second
-            B = rand_pt(rng)
-            L = g_line_thru(rng, B)
-            M = g_line_thru(rng, B) if rng.random() < 0.9 else L
-            return dict(A=g_pt_on(rng, M, [B]), B=B, C=g_pt_on(rng, M, [B]), L=L, M=M)
-        if kind == 'ti':   # three lines through A, and B, C and D on them
-            A = rand_pt(rng)
-            L = g_line_thru(rng, A)
-            M = g_line_thru(rng, A) if rng.random() < 0.9 else L
-            Nn = g_line_thru(rng, A) if rng.random() < 0.9 else M
-            return dict(A=A, B=g_pt_on(rng, L, [A]), C=g_pt_on(rng, M, [A]), D=g_pt_on(rng, Nn, [A]),
-                        L=L, M=M, N=Nn)
-        c = g_circle(rng)
-        if kind == 'opposite':
-            A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
-            B = rng.choice([pt_on_circle(c, rng), centre(c), rand_pt(rng)])
-            if A is None or B is None or A == B:
-                return None
-            t = Fr(rng.randint(1, 4), 5)
-            X = (A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1]))
-            L = g_line_thru(rng, X) if rng.random() < 0.8 else g_line_thru(rng, rand_pt(rng))
-            return dict(A=A, B=B, L=L, al=c)
-        pool = [SEEDS[c], pt_on_circle(c, rng), centre(c)]
-        A = rng.choice(pool) if rng.random() < 0.6 else rand_pt(rng)
-        if kind == 'in':
-            B = rng.choice(pool) if rng.random() < 0.6 else rand_pt(rng)
-            if A == B:
-                return None
-            t = Fr(rng.randint(1, 4), 5)
-            return dict(A=A, B=B, C=(A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1])), al=c)
-        C = rng.choice(pool) if rng.random() < 0.5 else rand_pt(rng)
-        if A == C:
-            return None
-        k = rng.choice([Fr(3, 2), Fr(5, 4), Fr(2)])
-        B = (A[0] + k * (C[0] - A[0]), A[1] + k * (C[1] - A[1]))
-        if not in_disc(B):
-            return None
-        return dict(A=A, B=B, C=C, al=c)
-    return g
-
-
 def g_two_circles(rng):
     """two circles through a common point P (they then share P's mirror image in the line of
     centres), or concentric, or equal, or touching"""
@@ -689,6 +639,21 @@ def g_two_circles(rng):
 
 def gs_cm(kind):
     def g(rng):
+        # One kind, for outside_of_between, draws a single circle: A and C each its seed, a
+        # point on it, its centre or a point anywhere, and B beyond C on the ray from A. It
+        # is a kind of a generator other laws use, so that it needs no generator of its own.
+        if kind == 'out':
+            c = g_circle(rng)
+            pool = [SEEDS[c], pt_on_circle(c, rng), centre(c)]
+            A = rng.choice(pool) if rng.random() < 0.6 else rand_pt(rng)
+            C = rng.choice(pool) if rng.random() < 0.5 else rand_pt(rng)
+            if A == C:
+                return None
+            k = rng.choice([Fr(3, 2), Fr(5, 4), Fr(2)])
+            B = (A[0] + k * (C[0] - A[0]), A[1] + k * (C[1] - A[1]))
+            if not in_disc(B):
+                return None
+            return dict(A=A, B=B, C=C, al=c)
         r = g_two_circles(rng)
         if r is None:
             return None
@@ -1093,16 +1058,6 @@ def _(c):
             and on_circle(C, al) and B != C):
         return None
     return between(B, A, C)
-
-
-
-
-@axiom('outside_of_between', dict(A=P, B=P, C=P, al=C_), gs_convex('out'))
-def _(c):
-    A, B, C, al = c['A'], c['B'], c['C'], c['al']
-    if not (in_or_on(A, al) and not inside(C, al) and between(A, C, B)):
-        return None
-    return outside(B, al)
 
 
 

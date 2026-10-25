@@ -9,10 +9,13 @@ straight line. The pin records the full axiom list Lean reports for that declara
 Renaming the declaration, changing its type or changing its axioms fails `lake build Audit`.
 This is step 4 of brief 0008, guarding the construction before the centre restatements.
 
-At each renewal, read the whole list and check that Circle 3 (`Tacit.outside_of_between`)
-and `sorryAx` are absent. Circle 2 (`Tacit.inside_of_between`) and `Tacit.centre_unique`
-are theorems since axiom wave one: Circle 2 is proved from Circle 3, so the absence of
-Circle 3 excludes it too, but no axiom list shows a call to `centre_unique`.
+At each renewal, read the whole list and check that `sorryAx` is absent. Circle 2
+(`Tacit.inside_of_between`) and Circle 3 (`Tacit.outside_of_between`) are theorems since
+24 October 2026, proved after III.2, so no axiom list can show them; the certificate's walk
+from III.1 passes through this construction and through the Tacit theorems, so a use of
+either would make III.1 cite III.2, a later proposition, which the certificate refuses.
+`Tacit.centre_unique` is a theorem since axiom wave one, and no axiom list shows a call
+to it either.
 `Tacit.exists_centre` is admitted by the owner's decision of 18 October 2026 on issue
 #59, "approved, as Astra recommends". The pin cannot show that its centre is used only
 inside the proof that D is within the circle, nor that

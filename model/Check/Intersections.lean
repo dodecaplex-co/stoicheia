@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop07
 import Elements.Figure.Circles
+import Elements.BookIII.Prop02
 import Check.Hand
 import Check.Generator
 import Model.Laws.intersections
@@ -89,8 +90,8 @@ example (S : Model.Signature) : Model.Hand.between_of_inside_chord_intersections
     Model.Law.Tacit.between_of_inside_chord S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_between_intersections
   ``Elements.Tacit.inside_of_between)
-example (S : Model.Signature) : Model.Hand.outside_of_between_intersections S =
-    Model.Law.Tacit.outside_of_between S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.outside_of_between_intersections
+  ``Elements.Tacit.outside_of_between)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.not_same_side_of_circles_meet_intersections
   ``Elements.Tacit.not_same_side_of_circles_meet)
 

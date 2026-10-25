@@ -26,9 +26,9 @@ two supposed centres bisect the same straight line through the circle by Definit
 and equal doubles have equal halves. A point within a circle, on a straight line that
 meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
 System E's Circle 2, that between two points on or within a circle every point is within
-it (`inside_of_between`), is now proved from Circle 3, `outside_of_between`, in
-Book Zero's `Circles.lean`. Circle 3 stays an axiom and gives III.2 at once, but our
-III.1 and III.2 do without it. A point
+it (`inside_of_between`), and its Circle 3 (`outside_of_between`), each of which gives
+III.2 at once, are proved after III.2, from it, since 24 October 2026; our III.1 and III.2
+do without them, and no proof before III.2 may use them. A point
 between the centre and a point on the circle is within it by Definition I.15
 (`InsideCircle.of_between_centre`), as is a point between the centre and a point within
 the circle when another point of the circle is given
@@ -80,7 +80,7 @@ references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call bes
 - "Let it fall outside, as AEB", and then "Similarly we can prove that neither will it fall on the circumference itself": the two suppositions Heath calls "the destruction of two hypotheses" (vol. 2, p. 9). One comparison serves both. The angles make DE less than DB (I.5, I.16, I.19); outside the circle DE would be greater than the radius DF, and on it equal to the radius.
 - "Let DFE be drawn through": F, where DE crosses the circle, is read off the figure. A straight line from the centre, within the circle, to the supposed point E outside it meets the circle between them (`line_circle_between`, Intersections 4).
 - Euclid's figure keeps the centre off AB, so that DAE and DEB are triangles for I.5 and I.16. When AB passes through D, `Prop2.through_centre` argues apart: DE is a part of DA or of DB, which are equal; and when E is D itself there is no straight line DE.
-- III.2 follows at once from System E's Circle 3 (`outside_of_between`), which now proves Circle 2 (`inside_of_between`) in Book Zero. This is still an overlap with an axiom; our III.2 uses neither that axiom nor the Circle 2 theorem. III.2 takes its centre from the rule, where Heath's reference is III.1, whose call would do no work; III.1 puts its own D within the circle by III.2's argument (`Prop1.within`): the gap Todhunter points out under III.1.
+- III.2 follows at once from System E's Circle 3 (`outside_of_between`), and from its Circle 2 (`inside_of_between`). Neither is assumed: both are proved after III.2, from its corollary `Prop2.within`, and our III.2 uses neither. III.2 takes its centre from the rule, where Heath's reference is III.1, whose call would do no work; III.1 puts its own D within the circle by III.2's argument (`Prop1.within`): the gap Todhunter points out under III.1.
 
 ## III.3
 - "But the right angle AFE is equal to the right angle BFE": for the converse our statement gives only that AFE is right. Its neighbour BFE is right as well, by `adjacent_eq_of_right` (System E, Diagram-angle 3), now proved after I.13 by taking one right angle from two.
