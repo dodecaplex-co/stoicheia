@@ -1,14 +1,14 @@
-# commit: 1df5d14ba85a3aafb98930e0113ceec1fcdfd50f (harness files as committed)
-# harness: 6a680d3f099549d1ace213c657905c3087aec6d9a845044ecee698a6f0accbc6
+# commit: b154908253c506b08e928541794f256665aa5105 (harness files as committed)
+# harness: ba027154ab8234dc1afaddcaf867c645ce8ce5cef024cfbb38dcf8734e2904c8
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-24
 
-configurations meeting an axiom's hypotheses in the plane: 4,427,399
+configurations meeting an axiom's hypotheses in the plane: 4,097,933
   search-seed1: 405,923
   search-seed2: 405,997
   search-seed3: 405,580
-  exhaustive: 2,528,836
-  structured: 681,063
+  exhaustive: 2,247,172
+  structured: 633,261
 counterexamples in the plane: 0; mutations caught: 15 of 15
 
 Axiom                               Search, seeds 1-3  Exhaustive  Structured             Hyperbolic
@@ -41,7 +41,7 @@ Tacit.not_on_line_of_same_side                    315      45,192           ·  
 Tacit.same_side_trans                             211     724,792      33,327                  5,113
 Tacit.pasch2                                      318       3,872       8,435                  1,401
 Tacit.between_of_inside_chord                     239       3,228      37,732                  8,315
-Tacit.outside_of_between                          453     281,664      47,802                  2,023
+Tacit.outside_of_between                          453           ·           ·                  2,023
 Tacit.lines_meet_of_opposite_sides                 22      26,248      39,362                  4,489
 Tacit.circles_meet                              1,389      10,668       1,587                  2,551
 Tacit.len_self                                 60,000          25           ·                 20,000
@@ -62,15 +62,16 @@ Tacit.on_line_of_area_eq_zero                  24,513       2,112           ·  
 Tacit.area_add_of_between                          20       6,176      55,499                  8,475
 Tacit.superposition                                98     363,888      71,970                  8,669
 
-configurations meeting a derived property's hypotheses: 9,525,564
-  exhaustive: 7,819,222
-  structured: 1,706,342
+configurations meeting a derived property's hypotheses: 9,855,030
+  exhaustive: 8,100,886
+  structured: 1,754,144
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
 | `derived.adjacent_eq_of_right` | 1,072 | 25,166 |
 | `derived.not_same_side_of_circles_meet` | 1,704 | 939 |
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
+| `derived.outside_of_between` | 281,664 | 47,802 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
