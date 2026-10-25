@@ -257,11 +257,13 @@ jobs:
           python3 scripts/check_model_kernel.py
 
   report:
-    # A red run of main (any of the three jobs failed, cancelled or timed out) opens one
-    # issue labelled blocks-release, or comments on the one already open, with the run's
-    # link, the jobs that were red, and the tests that failed. This job alone may write
-    # issues, and it runs no code of the repository: it reads the logs the shards left and
-    # calls gh. The issue's title is the one it had before the second and third jobs
+    # A red run of main (any of the three jobs it needs failed, cancelled or timed out:
+    # safe-push-tests, which is red whenever a shard is, negative-tests or
+    # formal-model-kernel) opens one issue labelled blocks-release, or comments on the one
+    # already open, with the run's link, the jobs that were red, the shards whose kept logs
+    # show them red, and the tests that failed. This job alone may write issues, and it
+    # runs no code of the repository: it reads the logs the shards left and calls gh. The
+    # issue's title is the one it had before negative-tests and formal-model-kernel
     # joined, so an issue already open is found.
     needs: [safe-push-tests, negative-tests, formal-model-kernel]
     if: >-
@@ -310,6 +312,45 @@ jobs:
             if [ "$TESTS" = success ]; then
               echo "The tests of \`scripts/test_safe_push.py\` passed; the run's page has the red jobs' logs."
             elif [ -n "$logs" ]; then
+              # Which shards were red, by the logs they kept (#425): GitHub gives the matrix
+              # one result, and this job reads no API but the issues'. A shard is named by
+              # the K of its log's name, up to the N of the first "Shard K of N:" line of
+              # each log, which the shard prints before its tests: red when its log has no
+              # unittest summary after its "Ran" line (cut off or cancelled), or one that is
+              # not OK, or when it kept no log. A shard can be red for a step its log does
+              # not show, and a shard of a rerun that kept no log may leave an earlier
+              # attempt's, so the issue sends the reader to the run's page for each result.
+              shards=$({
+                find "$RUNNER_TEMP/log" -type f -name 'test_safe_push-*.log' |
+                  sed -n 's|.*/test_safe_push-\([0-9][0-9]*\)\.log$|\1|p'
+                find "$RUNNER_TEMP/log" -type f -name 'test_safe_push-*.log' -exec sed -n \
+                  '/^Shard [0-9][0-9]* of [0-9][0-9]*: /{s/^Shard [0-9][0-9]* of \([0-9][0-9]*\): .*/\1/p;q;}' {} \;
+              } | sort -n | sed -n '$p')
+              red="$RUNNER_TEMP/red-shards.md"
+              : > "$red"
+              k=1
+              while [ "$k" -le "${shards:-0}" ]; do
+                log=$(find "$RUNNER_TEMP/log" -type f -name "test_safe_push-$k.log" | sed -n 1p)
+                if [ -z "$log" ]; then
+                  echo "- shard $k: it kept no log" >> "$red"
+                else
+                  end=$(awk '/^Ran [0-9]+ tests? in /{ran=1; last=""; next} ran && /^(OK|FAILED)/{last=$0} END{print last}' "$log" | cut -c1-200)
+                  case "$end" in
+                    OK*) ;;
+                    "") echo "- shard $k: its log stops before unittest's summary (cut off or cancelled)" >> "$red" ;;
+                    *) printf -- '- shard %s: %s\n' "$k" "$end" >> "$red" ;;
+                  esac
+                fi
+                k=$((k + 1))
+              done
+              if [ -s "$red" ]; then
+                echo "Shards whose kept logs show them red (the run's page gives each shard's result):"
+                echo
+                cat "$red"
+              else
+                echo "No shard's kept log shows it red (the run's page gives each shard's result)."
+              fi
+              echo
               # Every shard's log that was kept, each read whole.
               all=$(find "$RUNNER_TEMP/log" -type f -name 'test_safe_push-*.log' -exec cat {} + |
                 grep -E '^(FAIL|ERROR): ' | sort -u | cut -c1-300 || true)
@@ -334,7 +375,7 @@ jobs:
               echo "The run left no shard's log; the run's page says why."
             fi
             echo
-            echo "This issue holds the release until it is closed, with a link to a later run of this workflow on main in which all three jobs are green (docs/WORKFLOW.md, section 8)."
+            echo "This issue holds the release until it is closed, with a link to a later run of this workflow on main in which every job is green, each shard among them, the report alone skipped (docs/WORKFLOW.md, section 8)."
           } > "$body"
           number=$(
             gh api --method GET --paginate --slurp "repos/$GH_REPO/issues" \
