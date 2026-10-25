@@ -60,7 +60,7 @@ stage = "full"
 commit = "95b0f2c5c"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:03095adc821c7267"
-run = "card #423, ship C7: re-read after six unused bindings were dropped; the drops written by Claude, read by GPT-6 Astra (Codex)"
+run = "brief 0005 stage 5, ship R3 (#29); the companions and helpers half_lt, angle_type, isosceles, equalCircles, image and equalMeasure, written by Codex, read also by Claude Opus 5.5; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c"
 text = "sha256:079e00fa3a158af9"
 
 [review.items]
