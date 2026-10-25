@@ -11,17 +11,18 @@
   exception" ([#119](https://github.com/jackChallis/stoicheia/issues/119) is the
   coordinator's record); the coordinator's orders of 24 October take that course for
   Circle 3. So this train, landing before the retirement, has Circle 3's law work out
-  in its own body what those names gave it, and narrows the list by exactly the three.
+  in its own body what `in_or_on` gave it, and draw from a new kind of `gs_cm` what
+  `gs_convex` gave it, and narrows the list by exactly the three.
 
   In `search.py` the law tests `inside(A, al) or on_circle(A, al)` where it called
   `in_or_on`, which was that expression. In `hyperbolic.py` it tests
   `ch2(A, centre(al)) <= al[2]` where it called `in_or_on`, which was that comparison,
   and it samples with `gs_cm('out')`, a new kind of the generator maker the two
   circle-meeting laws already use, into which the draws of `gs_convex('out')` move
-  unchanged, as #119's preparation moved two samplers into `gs_convex`. Since wave two,
-  Circle 3's law was the one user of `gs_convex`, so the whole function goes, with its
-  kinds that nothing drew from any more; each harness's `in_or_on`, which nothing else
-  there called, goes too. The copy of Circle 3's predicate in `tests/model/derived.py` is
+  unchanged, as wave two's preparation, #413, moved two samplers into `gs_convex`.
+  Since wave two, Circle 3's law was the one user of `gs_convex`, so the whole function
+  goes, with its kinds that nothing drew from any more; each harness's `in_or_on`, which
+  nothing else there called, goes too. The copy of Circle 3's predicate in `tests/model/derived.py` is
   unchanged. No other law changes, and the law decides as before on every configuration,
   drawing the same random numbers in the same order.
 
@@ -36,7 +37,8 @@
   longer calls `in_or_on` and that helper is removed.
 
   This entry approves the change to `tests/model/hyperbolic.py`, where Circle 3's law
-  calls neither `in_or_on` nor `gs_convex`, and `gs_cm` gains the kind `'out'`.
+  calls neither `in_or_on` nor `gs_convex`, `gs_cm` gains the kind `'out'`, and
+  `in_or_on` and `gs_convex` are removed.
 
   This entry approves the change to `scripts/safe_push.py`, whose `LAW_GLOBALS` loses
   `in_or_on` twice and `gs_convex` once, and nothing else.
@@ -49,7 +51,8 @@
 
   This entry approves `tests/model/results/angle_check.txt` as rewritten by this run.
 
-  This entry approves `tests/model/results/exhaustive.txt`, whose timings alone differ.
+  This entry approves `tests/model/results/exhaustive.txt`, where, below its header, only
+  the timings differ.
 
   This entry approves `tests/model/results/grid_check.txt`, the lattice's report from
   this run.

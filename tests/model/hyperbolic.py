@@ -639,9 +639,9 @@ def g_two_circles(rng):
 
 def gs_cm(kind):
     def g(rng):
-        # One kind draws a single circle: Circle 3's, with A and C among the circle's points
-        # or anywhere, and B beyond C on the ray from A. It is a kind of a generator other
-        # laws use, so that it needs no generator of its own.
+        # One kind, for outside_of_between, draws a single circle: A and C each its seed, a
+        # point on it, its centre or a point anywhere, and B beyond C on the ray from A. It
+        # is a kind of a generator other laws use, so that it needs no generator of its own.
         if kind == 'out':
             c = g_circle(rng)
             pool = [SEEDS[c], pt_on_circle(c, rng), centre(c)]
