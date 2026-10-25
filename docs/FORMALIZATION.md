@@ -770,9 +770,9 @@ proof to the assumptions it uses.
 
 The proofs of Points 9 (`exists_point_outside_circle`) and Intersection 2
 (`line_meets_circle_of_opposite_sides`) used Circle 3; since 24 October 2026 they take
-that step from III.2 itself (`Prop2`, `Prop2.within`). The certificate's walk passes through proved rules, so no proposition, porism or
-companion before III.2 may use either of them, as with Circle 2 and Circle 3 themselves
-(section 7).
+that step from III.2 itself (`Prop2`, `Prop2.within`). The certificate's walk passes
+through proved rules, so no proposition, porism or companion before III.2 may use either
+of them, as with Circle 2 and Circle 3 themselves (section 7).
 
 By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
 many books in front of us"), 31 more rules became theorems, proved that day. They were proved against a lock of 79 axioms, which they took to 48; in the
