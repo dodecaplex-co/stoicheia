@@ -7600,8 +7600,12 @@ if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
                     setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"):
                 (wt / ".gitattributes").write_text("/README.md filter=swapcase\n")
                 (wt / "README.md").write_bytes(swapped)
-                self.assertEqual(git(wt, "--no-optional-locks", "status", "--porcelain"),
-                                 "")
+                # The module's own git names core.excludesFile through GIT_CONFIG_COUNT,
+                # which a repository's setting loses to: -c names the file here, as
+                # setUpModule says. The harness's git drops GIT_CONFIG_COUNT and reads the
+                # setting from the shared configuration, as the attack has it.
+                self.assertEqual(git(wt, "-c", f"core.excludesFile={ignore}",
+                                     "--no-optional-locks", "status", "--porcelain"), "")
                 with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
                                             "lists  M README.md"):
                     safe_push.at_commit(wt, BASE)
@@ -8860,7 +8864,7 @@ class MainChecksCache(Edge):
             parent = Path(tmp)
             env = dict(os.environ, GIT_INDEX_FILE=str(parent / "index"))
             with safe_push.worktree(WORK, sha, parent, "check") as wt:
-                with safe_push.base_copies(WORK, BASE, wt, inputs):
+                with safe_push.base_copies(WORK, BASE, sha, wt, inputs):
                     git(wt, "read-tree", "HEAD", env=env)
                     git(wt, "add", "-A", env=env)
                     laid = git(wt, "write-tree", env=env).strip()
@@ -8985,9 +8989,11 @@ class MainChecksCache(Edge):
         self.assertIn(f"full output in {log}\n", noted.detail)
         self.assertNotIn(str(miss.logs), noted.detail)
         # Every command went through the stand-in for sandbox-exec (run), git with
-        # replacement objects off (#256).
+        # replacement objects off (#256), and the worktree made as the commit holds it
+        # (AS_COMMITTED, #186).
         self.assertIn(f"git {' '.join(safe_push.NO_REPLACE_REFS)} -c core.quotePath=false "
-                      "worktree add", self.wrapped.read_text())
+                      f"{' '.join(safe_push.AS_COMMITTED)} worktree add",
+                      self.wrapped.read_text())
 
     def test_the_key_and_the_entry_follow_the_sequence_step_4_runs(self):
         # Step 4 runs origin/main's registry, whose sequence ends in the model's job and so

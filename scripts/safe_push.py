@@ -56,8 +56,10 @@ order, and the first that fails stops it with a message saying why:
    ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
    GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
    the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
-   working directory too, the hand-over's included (#357). The harness sets one itself,
-   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
+   working directory too, the hand-over's included (#357). The harness passes them on
+   purpose twice, each named to run() in `keep`: base_tree's temporary GIT_INDEX_FILE,
+   and the caller's location variables, once, as main() compares the repository they
+   name with the one git finds without them (#186).
 3. Invariant guards against origin/main. First, before the commit is checked out, the
    paths guards. They read the tree of each commit the push brings (origin/main..the
    commit), each tree once, and a finding names, for each tree that holds it, the first
@@ -623,8 +625,9 @@ class NothingToPush(Exception):
 # worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
 # one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
 # repository by the working directory each command names; the one the harness sets itself,
-# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
-# 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
+# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`, as are the caller's
+# location variables for main()'s one read of the repository they name (#186). The list
+# is git 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
 REPOSITORY_VARIABLES = frozenset({
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
     "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
@@ -636,8 +639,9 @@ REPOSITORY_VARIABLES = frozenset({
 def own_env(env=None, keep=()) -> dict:
     """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but those
     KEPT_GIT_VARIABLES names, so that a check started with tool_env() keeps
-    GIT_NO_REPLACE_OBJECTS (#355, #357), and those `keep` names, which the harness sets
-    itself, on purpose (base_tree's temporary GIT_INDEX_FILE)."""
+    GIT_NO_REPLACE_OBJECTS (#355, #357), and those `keep` names, which the harness passes
+    on purpose (base_tree's temporary GIT_INDEX_FILE, and main()'s read of the repository
+    the caller's location variables name)."""
     return {name: value for name, value in (os.environ if env is None else env).items()
             if name not in REPOSITORY_VARIABLES or name in KEPT_GIT_VARIABLES
             or name in frozenset(keep)}
@@ -7067,9 +7071,9 @@ def main(argv=None) -> int:
     # fresh worktrees at the caller's index and HEAD, and check_paths.py would refuse to
     # run. Every git call here names its directory, so the variables go, once they have
     # found the repository; and it must be the one git finds from there without them.
-    def located(env=None) -> tuple[Path, Path] | None:
+    def located(env=None, keep=()) -> tuple[Path, Path] | None:
         r = run(["git", "rev-parse", "--show-toplevel", "--absolute-git-dir"],
-                original_cwd, env=env)
+                original_cwd, env=env, keep=keep)
         lines = r.stdout.splitlines() if r.returncode == 0 else []
         if len(lines) != 2 or not all(line.strip() for line in lines):
             return None
@@ -7079,7 +7083,9 @@ def main(argv=None) -> int:
     for name in GIT_LOCATION:
         discovery_env.pop(name, None)
     expected = located(discovery_env)
-    active = located()
+    # run() drops the caller's location variables from every command (#357): this one
+    # read keeps them, on purpose, to see the repository they name.
+    active = located(keep=GIT_LOCATION)
     if expected is None:
         print("safe_push: cannot independently find the repository from the current "
               "directory with Git location variables unset", file=sys.stderr)
