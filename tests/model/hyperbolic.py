@@ -647,16 +647,9 @@ def gs_cm(kind):
         L = line_through(C, D) if C != D else g_line_thru(rng, C)
         if kind == 'side':
             return dict(al=c1, be=c2, B=rand_pt(rng), C=C, D=D, L=L)
-        if kind == 'nss':
-            Q = reflect(P, L) if C != D else pt_on_circle(c1, rng)
-            Cc, Dd = (P, Q) if rng.random() < 0.8 else (P, P)
-            return dict(A=C, B=D, C=Cc, D=Dd, L=L, al=c1, be=c2)
         on1 = [P] + [pt_on_circle(c1, rng) for _ in range(5)]
         in2 = [X for X in on1 if inside(X, c2)]
         A = rng.choice(in2) if in2 and rng.random() < 0.8 else rng.choice(on1)
-        if kind == 'oio':
-            B = rng.choice([rand_pt(rng), C, D, pt_on_circle(c1, rng), g_along(C, A, Fr(1, 2))])
-            return dict(A=A, B=B, al=c1, be=c2)
         on2 = [P] + [pt_on_circle(c2, rng) for _ in range(5)]
         in1 = [X for X in on2 if inside(X, c1)]
         B = rng.choice(in1) if in1 and rng.random() < 0.8 else rng.choice(on2)
