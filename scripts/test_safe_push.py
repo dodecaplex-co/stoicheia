@@ -14170,9 +14170,9 @@ class CadenceRun:
     what it said; a shard among `cancelled` is cancelled as its tests start. The proof is
     cover_command, by the command its step gives. The verdict's and the report's scripts
     run under bash, as GitHub runs them, the report's with a stand-in for gh. Artifacts are
-    kept by name in a folder that every attempt of the run shares, the case in which a
-    rerun could see an earlier attempt's lists (whether GitHub's fetch does is not
-    tried, and nothing relies on it), and fetched by pattern, each into a folder of its own; an artifact among `lost` is
+    kept by name, and fetched by pattern, each into a folder of its own, from a folder that
+    every attempt of the run shares, so that a rerun sees an earlier attempt's lists, as
+    GitHub's fetch did in a rerun of the failed jobs (#411); an artifact among `lost` is
     kept and then lost. negative-tests and formal-model-kernel, which need Lean, end as
     `given` says, success unless it says otherwise."""
 
