@@ -264,6 +264,11 @@ leave `standing` in III.27 alone. Book IV will write arcs too: its regular figur
 inscribed by the equal circumferences their sides cut off (brief 0012, Book IV's draft
 brief for [#97], not yet on main).
 
+*25 October 2026: stage 3 has since moved into `Elements/`, with train C6a ([#240], 21
+October). The III.24 called staged above is now `Prop24` in
+[`Elements/BookIII/Prop24.lean`](../../Elements/BookIII/Prop24.lean), written as above,
+and `Staging/` holds no part of stage 3. The paragraph above is left as drafted.*
+
 **Options.**
 
 - *Keep both words, and explain* the middle letter, in their docstrings, the vocabulary and
@@ -649,3 +654,4 @@ correction. Each finding, and what was done:
 [#76]: https://github.com/jackChallis/stoicheia/issues/76
 [#89]: https://github.com/jackChallis/stoicheia/pull/89
 [#97]: https://github.com/jackChallis/stoicheia/issues/97
+[#240]: https://github.com/jackChallis/stoicheia/pull/240

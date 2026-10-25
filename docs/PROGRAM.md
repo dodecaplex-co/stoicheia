@@ -186,7 +186,8 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 ## 4. Decisions later books depend on
 
 - **Arcs and segments** (stage 3) are what Book IV will inscribe and circumscribe with;
-  their definitions and `Circumference.add` must be settled first.
+  their definitions and `Circumference.add` are settled, in
+  `Elements/Foundations/DefinitionsIII.lean` and `Elements/BookIII/Circumferences.lean`.
 - **Construction inputs.** A construction receives only what the problem gives; its
   correctness may quantify over more (stage 4, III.25). Book IV's brief adopts this.
 - **Proportion** (Book V): Eudoxus's definition taken literally, the Archimedean property
