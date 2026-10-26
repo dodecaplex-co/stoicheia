@@ -77,9 +77,11 @@ be compared, fail the job. In three steps:
    of the certificate, the script checks every item on CI's checked-out revision,
    normally the pull request's test merge commit, and writes its verdicts with `--json`.
 2. It checks main in a worktree beside it. On a pull request, main is the checkout's first
-   parent if it has two parents, otherwise the pull request's recorded base commit; in a
-   merge-queue group, the group's base commit; on a push to main, main as it was before the
-   push. Main is built and its
+   parent when the checkout has two parents and the second is the pull request's head (the
+   test merge commit); otherwise, when the checkout is the pull request's head itself, the
+   pull request's recorded base commit; and any other checkout fails the job. In a
+   merge-queue group, main is the group's base commit; on a push to main, main as it was
+   before the push. Main is built and its
    certificate computed with the pull request's own checks copied in (`scripts/`, `tests/`,
    `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
    checks judges both. Main keeps its own values pinned to its content:
@@ -231,8 +233,8 @@ evidence = "docs/reports/…"
 ## Where the older criteria went
 
 The two older lists of criteria, brief 0005's stage 6 and the ten criteria WORKFLOW's
-section 9 once listed, are retired: this checklist replaces both, and each older criterion
-is met by the items its row names. Brief 0005's stage 6, item by item:
+section 9 once listed, are retired: this checklist replaces both. The tables below name,
+for each older criterion, the items that take it up. Brief 0005's stage 6, item by item:
 
 | Brief 0005 | Here |
 |---|---|
@@ -261,7 +263,7 @@ WORKFLOW, section 9, criterion by criterion:
 | 5. Route accurate; every exception visible | P4, P12 |
 | 6. Dependency closure, axiom boundaries and certificate cover every claim | P1, P5, E1, E2 |
 | 7. Quotations, attributions and commentary checked | P7, P14 |
-| 8. Figures and page inspected | P8, P15 |
+| 8. Figures and page inspected | P8, P15 for the figures; for the page, P4 (the committed page is what `render.py` makes from the record) and B3 (the book read straight through) |
 | 9. The required checks pass on the integrated revision | E1 to E5, with the rest of the [machine] items |
 | 10. A reviewer other than the author, named with the commit | P2, P16 |
 
