@@ -15,23 +15,22 @@
   figure does not draw. `scripts/heath.py` reads the key as a boolean, not required, as it
   reads `every_case`; `load_review` refuses, naming the record, a `some_cases` that is not
   true or false, a `some_cases = true` with no `case` or with no `note`, and a `[figure]`
-  that gives `every_case` and `some_cases` together, whatever their values. P8 of
-  `scripts/check_acceptance.py`
+  that sets both `every_case` and `some_cases` true. P8 of `scripts/check_acceptance.py`
   is unchanged: it still asks a theorem of several cases for the `case` text.
   `scripts/check_style.py` is unchanged too, since its `review_texts` reads only the
   string keys `REVIEW_SHOWN` names, `case` and `note`. No record uses the key yet, so no
   page changes; III.35's record sets it in a train of its own, after this check lands, as
   WORKFLOW section 10 asks.
 
-  This entry approves `scripts/heath.py` with the new key `some_cases` and its four new
-  refusals: a value that is not true or false, a `some_cases = true` with no `case`, one
-  with no `note`, and the key beside `every_case`. This entry approves
-  `scripts/render.py` with the caption's third
+  This entry approves `scripts/heath.py` with the new key `some_cases` and its three new
+  refusals: a `some_cases = true` with no `case`, one with no `note`, and one beside
+  `every_case = true`. This entry approves `scripts/render.py` with the caption's third
   lead, "Drawn for some of its cases". This entry approves `tests/test_check_style.py`
   with its new cases in `FigureCaption`: the caption with `some_cases`, a record read with
   it, and the records refused. Each of the fourteen new cases passes with this change.
-  With main's `scripts/heath.py` and `scripts/render.py`, thirteen failed; the other one,
-  a caption with `some_cases = false` that keeps "Drawn for one case", holds what main's
+  With main's `scripts/heath.py` and `scripts/render.py`, twelve failed; the other two, a
+  caption with `some_cases = false` that keeps "Drawn for one case", and one with
+  `some_cases` and a `note` but no `case` that shows its `note` alone, hold what main's
   `scripts/render.py` already wrote. This entry approves `review/SCHEMA.md` with the key's
   row, and `case` and `note` widened to name it, and STYLE, section 7, and the proposition
   template gain the key beside `every_case`.
