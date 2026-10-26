@@ -1338,7 +1338,7 @@ class BookThree(unittest.TestCase):
                 for name in row['state']['represented_objects']:
                     self.assertIn('Elements.' + name, generator.index.decls)
                 self.assertEqual(sorted(bridges), sorted(set(verdict[1])))
-        for n in (14, 16, 18, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
+        for n in (13, 14, 16, 18, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
             self.assertTrue(rows[f'III.{n}']['state']['bridges'], n)
         state = rows['III.35']['state']
         self.assertTrue({'sq', 'Square'} <= set(state['definitions']))
@@ -1366,6 +1366,45 @@ class BookThree(unittest.TestCase):
             with self.subTest(n=n):
                 self.assertEqual(bool(set(questions.MIXED_BRIDGES) & set(bridges)), n in (16, 18, 31))
                 self.assertEqual(bool(set(questions.CONTACT_BRIDGES) & set(bridges)), n == 18)
+
+    def test_iii_13_gets_both_readings_of_touching_and_its_three_agreements(self):
+        # III.13's record passes its representations on touching read of the whole circles,
+        # which its companions prove the same as Definition III.3 read at the point of contact
+        # (#126); its row supplies both readings and the three agreements. III.11 and III.12
+        # carry the same tag and mark the item `n/a`, so they get none.
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        record = questions.tomllib.loads(generator.evidence.read('review/III/13.toml'))
+        self.assertEqual(record['review']['items']['representations'], 'pass')
+        self.assertEqual(questions.TOUCHING_BRIDGES, ['Elements.BookIII.Prop13.touchesInternally_iff',
+                                                      'Elements.BookIII.Prop13.touchesExternally_iff',
+                                                      'Elements.BookIII.Prop13.circlesTouch_iff'])
+        words = ['TouchesInternally', 'TouchesExternally', 'CirclesTouch',
+                 'TouchesInternallyAt', 'TouchesExternallyAt', 'CirclesTouchAt']
+        state = rows['III.13']['state']
+        self.assertEqual(rows['III.13']['expected'], 'bridge stated')
+        self.assertEqual(sorted(state['bridges']), sorted(questions.TOUCHING_BRIDGES))
+        self.assertEqual(state['represented_objects'], words)
+        # The words at the point are said with `Touching.Near`, which the glossary supplies too.
+        self.assertTrue(set(words) | {'Touching.Near'} <= set(state['definitions']))
+        # Each agreement is one of the companions the record names, and is attached.
+        self.assertEqual(sorted(state['attached_statements']), sorted(record['statement']['companions']))
+        self.assertEqual(sorted(questions.heath.parse_ref(a).lean for a in state['attached_statements']),
+                         sorted(questions.TOUCHING_BRIDGES))
+        for n in (11, 12):
+            with self.subTest(ref=f'III.{n}'):
+                other = questions.tomllib.loads(generator.evidence.read(f'review/III/{n}.toml'))
+                self.assertEqual(other['representation']['tags'], ['touching-whole-circles'])
+                self.assertEqual(other['review']['items']['representations'], 'n/a')
+                self.assertEqual(generator.bundle('III', n), ([], []))
+                self.assertEqual(rows[f'III.{n}']['expected'], 'no bridge required')
+                self.assertEqual(rows[f'III.{n}']['state']['bridges'], {})
+        # No other proposition of Book III gets the agreements.
+        for n in range(1, 38):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(n=n):
+                self.assertEqual(bool(set(questions.TOUCHING_BRIDGES) & set(bridges)), n == 13)
+                self.assertEqual('TouchesInternallyAt' in definitions, n == 13)
 
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
@@ -1414,7 +1453,8 @@ class BookThree(unittest.TestCase):
             f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')) for ref in rows}
         passed = [ref for ref, record in records.items()
                   if record['review'].get('items', {}).get('representations') == 'pass']
-        self.assertEqual(len(passed), 46)
+        self.assertEqual(len(passed), 47)
+        self.assertIn('III.13', passed)
         self.assertIn('III.18', passed)
         for ref in passed:
             with self.subTest(ref=ref):
@@ -1439,6 +1479,9 @@ class BookThree(unittest.TestCase):
                     self.assertIn(name, generator.checked(ref, records[ref], state))
         for ref, table, name in (('III.16', 'definitions', 'MixedAngle.WellFormed'),
                                  ('II.1', 'definitions', 'InOrder'),
+                                 ('III.13', 'definitions', 'TouchesInternallyAt'),
+                                 ('III.13', 'definitions', 'TouchesExternallyAt'),
+                                 ('III.13', 'definitions', 'CirclesTouchAt'),
                                  ('III.18', 'definitions', 'MixedAngle'),
                                  ('III.18', 'definitions', 'MixedAngle.WellFormed'),
                                  ('III.18', 'bridges', 'Elements.BookIII.Prop18.branch')):

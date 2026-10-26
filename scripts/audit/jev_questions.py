@@ -768,6 +768,7 @@ REGISTRY = {
                'Rectilineal Rectilineal.area Apart Apart.area',
     'DefinitionsII': 'Rectangle Contain rect sq',
     'DefinitionsIII': 'EqualCircles Touches TouchesInternally TouchesExternally CirclesTouch '
+                      'Touching.Near TouchesInternallyAt TouchesExternallyAt CirclesTouchAt '
                       'WithinAngle MixedAngle MixedAngle.vertex MixedAngle.region '
                       'MixedAngle.WellFormed LocallyWithin NearVertex Surrounds NearVertexOpen '
                       'LocallyLess LocallyEqual MixedAngle.Exceeds MixedAngle.FallsShort CirclesCut '
@@ -893,6 +894,11 @@ MIXED_BRIDGES = ['Elements.WithinAngle.locallyLess_iff', 'Elements.WithinAngle.l
 # III.18's angle of contact, named by any straight line from the point of contact into the
 # circle, is near that point the one the diameter names, as its record's note says.
 CONTACT_BRIDGES = ['Elements.BookIII.Prop18.branch', 'Elements.BookIII.Prop18.contact_locallyEqual']
+# Circles touching, read of the whole circles, are the same as touching read at the point of
+# contact (Definition III.3, as Heath prefers it), for any two circles, as III.13's record says.
+TOUCHING_BRIDGES = ['Elements.BookIII.Prop13.touchesInternally_iff',
+                    'Elements.BookIII.Prop13.touchesExternally_iff',
+                    'Elements.BookIII.Prop13.circlesTouch_iff']
 # A straight line's distance from the centre is the perpendicular to its foot (Definition III.4).
 FOOT_BRIDGES = ['Elements.Foot.exists', 'Elements.Foot.unique']
 RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
@@ -928,6 +934,10 @@ def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[st
         bridges += ['Elements.InOrder.between_end', 'Elements.rect_self_left',
                     'Elements.rect_self_right', 'Elements.sq_self']
     if book == 'III':
+        if n == 13:
+            definitions += ['TouchesInternally', 'TouchesExternally', 'CirclesTouch',
+                            'TouchesInternallyAt', 'TouchesExternallyAt', 'CirclesTouchAt']
+            bridges += TOUCHING_BRIDGES
         if n == 14:
             definitions += ['Foot']
             bridges += FOOT_BRIDGES

@@ -26,8 +26,10 @@
   definitions and bridges its connection rests on, and one marked `n/a` none; a guard
   refuses a row that leaves out a declaration its record's representation note names, or
   one the generator's tables say the record checked. For Book III these are the bridges
-  that tie each represented object to Euclid's: the segment given by its circle, base and a point on its side (III.21), the
-  measure of a circumference by the angle standing on it and its congruence, the kind of a
+  that tie each represented object to Euclid's: circles touching one another, read of the
+  whole circles and proved the same as Definition III.3 read at the point of contact
+  (III.13, whose words of touching at a point the generator now reads from the foundations),
+  the segment given by its circle, base and a point on its side (III.21), the measure of a circumference by the angle standing on it and its congruence, the kind of a
   segment against two right angles, the angle with a circumference read as a region near its
   vertex (for III.18 also that every straight line from the point of contact into the
   circle names the same angle of contact near that point), the foot of a perpendicular, and
