@@ -4,19 +4,26 @@ note = "The angles at any two points of one segment are equal, in a segment of a
 fingerprint = "sha256:60a9c816badb070c"
 
 [route]
-kind = "modified"
-note = "Euclid's argument for a segment greater than a semicircle, where it works; for the semicircle and the less segment, Simson's completion (Heath, vol. 2, pp. 49–50): AF drawn through the centre to C, and Euclid's case twice."
+kind = "euclid"
+note = "Euclid's two steps, for a segment of any size: the angles BAD and BED are each half of the one angle at the centre standing on the circumference BCD (III.20), and halves of one angle are equal. The angle at the centre may be two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's; with it his argument covers the semicircle and the less segment too, which Heath says it does not with angles at the centre less than two right angles (vol. 2, p. 49), and Simson's completion is not needed. III.20, cited as Heath cites it, itself cites I.13 and III.2, which Heath's references for III.20 do not give."
+
+[[passage]]
+at = "Let ABCD be a circle"
+kind = "helper"
+helper = "exists_oppositeSidesOf"
+note = "In Euclid's figure C only names the circle and its circumference BCD. The Lean takes a point C across BD from A and E by `exists_oppositeSidesOf` (System E, Points 6) to name that circumference for III.20; the angle at the centre reads only the side (`angleAtCentre.congr`)."
 
 [[passage]]
 at = "For let the centre of the circle ABCD be taken"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F without a reference from Heath here. The Lean obtains F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E."
+note = "Euclid takes the centre F without a reference from Heath here. The Lean obtains F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. III.20 takes the centre itself, so nothing below names F; it is that centre, for a circle has one centre (`centre_unique`)."
+unused = ["F", "hF"]
 
 [[passage]]
 at = "let BF, FD be joined"
 kind = "given"
-note = "The angle BFD is named by its three points, so joining BF and FD needs no further construction in the Lean."
+note = "The angle at the centre is the circle's, standing on the circumference BCD (`angleAtCentre`), and III.20 makes it up from angles at the centre itself, so the joins BF, FD need no construction in the Lean."
 
 [[passage]]
 at = "therefore the angle BAD is equal to the angle BED"
@@ -24,26 +31,21 @@ kind = "helper"
 helper = "Magnitude.eq_of_add_self_eq"
 note = "Euclid infers that BAD and BED are equal because both are halves of BFD. `Magnitude.eq_of_add_self_eq` proves that equal doubles have equal halves by ruling out either strict inequality."
 
-[[passage]]
-at = "Therefore etc."
-kind = "different"
-note = "For a segment equal to or less than a semicircle, the Lean uses Simson's completion: produce AF to C by `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, with F within the circle by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and put C across BD from A and E: when F is on BD, `Tacit.pasch3` (System E, Pasch 3), also proved there, separates A and C; when F is beyond BD, `OppositeSides.exists_between` finds X on BD between A and F using the assumed rule `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4), also proved there, `between_inner` puts F between X and C by sorting the orders with the assumed rule `Tacit.between_cases` (System E, Between 6), and `Tacit.pasch2` (System E, Pasch 2) puts F and C on the same side of BD, opposite A and E, Pasch 2 being assumed. The Lean then finds the crossings Y of AC and Z of EC with BD by `OppositeSides.exists_between`, puts them within the circle by III.2, for which Heath prints no reference here, and between B and D by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1, so `angle_add_of_between` splits both angles; from the crossings Y and Z, four applications of `SameSideOf.of_cross` use Pasch 2 to put A and E on D's side of BC and on B's side of DC, the same-segment placings Simson reads off his figure; in both positions of F, Pasch 2 also puts F on A's side of BC and DC because F lies between C and A, so the Lean applies Euclid's greater-segment argument, proved above from III.20, to both new chords and adds the equal angles; Heath prints no further reference here."
-
 [figure]
 case = "the segment BAED greater than a semicircle, with F on A's and E's side of BD"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:54a61ea628e84e01"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb"
-text = "sha256:d126818faf44e78d"
+commit = "5afb1d6a4"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:c023135d2332c0dc"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex)"
+text = "sha256:46661cf244fedf67"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
