@@ -10,10 +10,11 @@
 #                            the reader needs in order to read the statement rightly.
 #
 # `meaning` is one plain line. A tag that changes how a whole statement is read may
-# also have `badge`, a few words that stand beside the green check on the page ("as
-# Euclid states it, in our measure of circumferences") and mark its row of the
-# certificate with a †. A new tag is added here, with its meaning, before any record uses
-# it. Python reads this file with tomllib; heath.load_terms() checks it.
+# also have `badge`, a few words eligible to stand beside the green check on the page
+# ("as Euclid states it, in our measure of circumferences"). The renderer may keep that
+# badge to statements that use the representation; when shown, it also marks the row of
+# the certificate with a †. A new tag is added here, with its meaning, before any record
+# uses it. Python reads this file with tomllib; heath.load_terms() checks it.
 
 [tag.adjacent-bases]
 kind = "scope"
