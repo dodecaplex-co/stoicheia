@@ -196,8 +196,8 @@ STATUS_LINE = {
 }
 
 # A review record's answers in a word, for the index and the certificate. The scope
-# words are the same everywhere a reader meets them: whole (as Euclid states it),
-# restricted, in part.
+# words are the same everywhere a reader meets them: whole (the whole enunciation),
+# restricted, in part. The keys qualify "whole" for the bracketed I.40 and III.12.
 SCOPE_WORD = {"full": "whole", "restricted": "restricted", "partial": "in part"}
 ROUTE_WORD = {"euclid": "Euclid's", "modified": "Euclid's", "alternative": "different"}
 # A proposition Heath prints in brackets as a later addition (I.40, III.12) has no
