@@ -594,20 +594,6 @@ def g_circle(rng, pool=()):
     return make_circle(C, P)
 
 
-def gs_chord(rng):
-    c = g_circle(rng)
-    B, C = pt_on_circle(c, rng), pt_on_circle(c, rng)
-    if B is None or C is None or B == C:
-        return None
-    L = line_through(B, C)
-    if rng.random() < 0.6:
-        t = Fr(rng.randint(1, 4), 5)
-        A = (B[0] + t * (C[0] - B[0]), B[1] + t * (C[1] - B[1]))
-    else:
-        A = g_pt_on(rng, L, [B, C])
-    return dict(A=A, B=B, C=C, L=L, al=c)
-
-
 def g_two_circles(rng):
     """two circles through a common point P (they then share P's mirror image in the line of
     centres), or concentric, or equal, or touching"""
@@ -639,6 +625,20 @@ def g_two_circles(rng):
 
 def gs_cm(kind):
     def g(rng):
+        if kind == 'chord':
+            # Circle 1's chords: two points of one circle, and a point of their straight line,
+            # most often between them.
+            c = g_circle(rng)
+            B, C = pt_on_circle(c, rng), pt_on_circle(c, rng)
+            if B is None or C is None or B == C:
+                return None
+            L = line_through(B, C)
+            if rng.random() < 0.6:
+                t = Fr(rng.randint(1, 4), 5)
+                A = (B[0] + t * (C[0] - B[0]), B[1] + t * (C[1] - B[1]))
+            else:
+                A = g_pt_on(rng, L, [B, C])
+            return dict(A=A, B=B, C=C, L=L, al=c)
         r = g_two_circles(rng)
         if r is None:
             return None
@@ -1029,7 +1029,7 @@ def _(c):
 
 
 # ---- Circles
-@axiom('between_of_inside_chord', dict(A=P, B=P, C=P, L=L_, al=C_), gs_chord)
+@axiom('between_of_inside_chord', dict(A=P, B=P, C=P, L=L_, al=C_), gs_cm('chord'))
 def _(c):
     A, B, C, L, al = (c[k] for k in ('A', 'B', 'C', 'L', 'al'))
     if not (on_line(A, L) and on_line(B, L) and on_line(C, L) and inside(A, al) and on_circle(B, al)
