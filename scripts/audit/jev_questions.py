@@ -949,6 +949,8 @@ def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[st
         if n in (23, 24, 25, 30, 33, 34):
             definitions += SEGMENT_DEFINITIONS
             bridges += SEGMENT_BRIDGES
+        if n == 34:
+            bridges += ['Elements.Tacit.exists_centre']
         if n in (24, 25, 26, 27, 28, 29, 30):
             definitions += MEASURE_DEFINITIONS
             bridges += MEASURE_BRIDGES
@@ -1911,8 +1913,9 @@ class Generator:
             self.evidence.read(wrong)
             row['source']['control_figure'] = wrong
         row = control('12-I.39-commentary', 'conflicts')
-        change(row, ['state', 'commentary'], 'EBC is a part of DBC and the less',
-               'EBC is a part of DBC and the greater')
+        change(row, ['state', 'commentary'],
+               'equal triangles on opposite sides of BC need not make AD parallel to BC',
+               'equal triangles on opposite sides of BC must make AD parallel to BC')
         row = control('12-I.40-commentary', 'conflicts')
         change(row, ['state', 'commentary'], 'with BC and CE meeting at C',
                'with BC and CE apart')

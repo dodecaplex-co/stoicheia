@@ -47,8 +47,8 @@ sys.modules[SPEC.name] = questions
 SPEC.loader.exec_module(questions)
 
 COMMENTARY_CHANGES = {
-    '12-I.39-commentary': ('EBC is a part of DBC and the less',
-                          'EBC is a part of DBC and the greater'),
+    '12-I.39-commentary': ('equal triangles on opposite sides of BC need not make AD parallel to BC',
+                          'equal triangles on opposite sides of BC must make AD parallel to BC'),
     '12-I.40-commentary': ('with BC and CE meeting at C', 'with BC and CE apart'),
 }
 BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'

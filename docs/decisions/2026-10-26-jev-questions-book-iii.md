@@ -34,6 +34,8 @@
   vertex (for III.18 also that every straight line from the point of contact into the
   circle names the same angle of contact near that point), the foot of a perpendicular, and
   Book II's `rect` and `sq` for III.35 to III.37.
+  III.34 also receives `Tacit.exists_centre`, which its representation note names as the
+  centre used to draw the tangent.
   I.4's and I.8's rows now supply what their records say they checked: the meanings of the
   rule of superposition's symbols and their bridges, the cited laws, their meanings, and the
   statements of the theorems that establish them, and for I.8 `SameSideOf.of_line`. I.45's and II.14's rows supply the outline of a
