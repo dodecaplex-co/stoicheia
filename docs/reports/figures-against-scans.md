@@ -96,6 +96,8 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 
 ## Book II
 
+*26 October 2026:* each of Book II's 14 figures was read again against its scan at `bedbba23`, after the letters were set upright and II.5's P moved clear of the gnomon's arc, which moved no point, line or arc. Each reads as its row says, and each record that names a case names the one Heath draws.
+
 | | Heath's figure | Reading |
 |---|---|---|
 | [II.1](../../book/II/01.md) | [n395](https://archive.org/download/thirteenbookseu02heibgoog/page/n395.jpg) | As Heath's. |
