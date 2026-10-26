@@ -23,8 +23,8 @@ USE = f"  have _retired := @Elements.{RULE}\n"
 
 
 def plant() -> None:
-    """`Tacit.centre_unique` used in III.2's proof, adding no axiom and no citation: only
-    the pin on III.2's `proved_rules` can refuse it."""
+    """`Tacit.centre_unique` used in III.2's proof, adding no axiom and no citation: of the
+    pins, only the one on III.2's `proved_rules` can refuse it."""
     name = f"{RULE} in III.2's proof, its axioms unchanged"
     pins = json.loads((nt.ROOT / "tests/certificate_expectations.json").read_text())
     numbers = [i for i, x in enumerate(pins["expectations"], 1)
