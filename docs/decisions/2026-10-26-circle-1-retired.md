@@ -152,3 +152,7 @@
 
   This entry approves the change to `Audit/Crossing.lean`, five pins regenerated without
   Circle 1, and two comments made true now that Circle 1 is a theorem after III.2.
+
+  This entry approves the change to `Audit/screen.py`, whose `CIRCLE` list drops Circle 1,
+  leaving nine names, so that the screen does not stop on a name that is no longer an axiom,
+  and whose account of its runs names this retirement and the counts of the lock it leaves.
