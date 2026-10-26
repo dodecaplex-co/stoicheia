@@ -162,7 +162,8 @@ All 99 of Books I–III, each with its porism and its companions.
 ## The limitations allowed
 
 P3 allows a statement short of full only when this table names it, with the tag that says
-why; the table names none now. The list in the script (`ALLOWED_LIMITS` in
+why; the table names none now. P3 also fails a full record that the table still names,
+so a row goes when its record becomes full. The list in the script (`ALLOWED_LIMITS` in
 `scripts/check_acceptance.py`) changes with this table, in a change to the check of its
 own.
 
