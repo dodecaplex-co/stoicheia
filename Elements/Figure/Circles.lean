@@ -140,11 +140,11 @@ theorem Tacit.triple_incidence3 {A B C D E : Point} {L M N : Line}
     exact pasch3 (between_at_crossing hLR hAL hAR hXR hER he hXA hAE.symm hn) hAM hXE_M
   exact same_side_trans (same_side_symm hCX) hXE_L
 
-/-- A point on a circle is not its centre. -/
+/-- A point on a circle is not its centre: a radius is not nothing (the radius rule). -/
 theorem ne_of_centre_of_on (hA : Centre A α) (hC : OnCircle C α) : C ≠ A := by
   intro h
   subst h
-  exact inside_not_on (centre_inside hA) hC
+  exact radius_ne_zero hA hC (len_self _)
 
 /-- A point farther from the centre than the circumference is outside the
 circle. -/
