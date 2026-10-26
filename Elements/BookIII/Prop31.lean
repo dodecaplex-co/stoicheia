@@ -174,7 +174,7 @@ angle CAR, placed along AC on B's side, is the angle CAB, for on one side one ra
 given angle; near A it lies within the circle (`near_inside_of_angle`); and every circle
 about A holds whole circles within the circle and within the angle between AB and CA
 produced beyond A, which are in the angle of the greater segment and not in CAB. -/
-theorem Prop31.greater_gt_right {A B C E R : Point} {ABCD : Circle} (hE : Centre E ABCD)
+theorem Prop31.greater_gt_right {A B C E R : Point} {ABCD : Circle} (_hE : Centre E ABCD)
     (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)
     (hBEC : Between B E C) (hAB : A ≠ B) (hAC : A ≠ C) (hBAC : ∠ B A C = ∟)
     (hR : SameSideOf R B A C) (hCAR : ∠ C A R = ∟) :
@@ -217,7 +217,7 @@ from B, every circle about A holds a whole circle within the angle of the less s
 produced to F, the points of AC near A are within the circle, those of AF are without it,
 and the circumference crosses between them, within the angle CAF, which is on D's side of
 AC (`near_across`). -/
-theorem Prop31.less_nearVertex {A B C D E : Point} {ABCD : Circle} (hE : Centre E ABCD)
+theorem Prop31.less_nearVertex {A B C D E : Point} {ABCD : Circle} (_hE : Centre E ABCD)
     (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)
     (hBEC : Between B E C) (hAB : A ≠ B) (hAC : A ≠ C) (hBD : OppositeSidesOf B D A C) :
     NearVertexOpen A (MixedAngle.ofSegment A C ABCD D).region := by
