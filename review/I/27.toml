@@ -29,10 +29,11 @@ note = "Like Heath's, this figure draws Euclid's impossible supposition: AB and 
 
 [review]
 stage = "full"
-commit = "b58079e0"
+commit = "a749b979e"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:4cf303fe995ab67d"
-run = "brief 0005 stage 5, ship F2 wave-two re-read"
+run = "brief 0005 stage 5, ship F2 wave-two re-read; card #30's [figure] lines (figures against the scans), read in full, by Claude Opus 5.5, reader G2-figIread, at a749b979e"
+text = "sha256:dbe53ef738cd4b63"
 
 [review.items]
 statement = "pass"
