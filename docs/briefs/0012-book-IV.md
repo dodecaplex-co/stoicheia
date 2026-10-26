@@ -7,7 +7,7 @@ draft described below, not approved, and its scratch,
 [`docs/reports/crew/scratch-IV/`](../reports/crew/scratch-IV/), stays on main as committed,
 built by nothing; its order of work (section 11) begins only after the owner's gate. Brief
 0010, whose approval the opening below awaits, was approved that day; its question 3, on
-which question 8 below waits, is still open.*
+which question 8 below waits, was left open.*
 
 *19 October 2026. **A draft, for challenge and for the owner's and the coordinator's
 approval: nothing in it is frozen, and nothing changes with it.** Book IV is the first new

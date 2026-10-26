@@ -5,8 +5,8 @@ day](../decisions/2026-10-21-briefs-0010-and-0012.md) records the owner's ruling
 coordinator's reading of it, by which each question of section 8 takes this brief's
 recommendation. The option the owner chose names the brief "with its centre aliases", an
 amendment of 19 October not yet in this file (a sentence added on 25 October, as the
-entry's note of that day says). Question 3, on which the brief makes no choice, stays open
-until it is settled, before the consolidation release.*
+entry's note of that day says). Question 3, on which the brief makes no choice, was left
+open that day, to be settled before the consolidation release.*
 
 *Drafted 18 October 2026 and brought up to main on 19 October. **A draft, for the owner's
 approval: nothing changes until it is approved.** The owner decided on 18 October
