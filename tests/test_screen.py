@@ -25,9 +25,12 @@ functions to small inputs, each with the answer the screen should give.
 * The pass over the rules: an error on a case's lines is a refusal of that case's rule in
   that case's way; any other error stops the screen.
 * The pass over the definitions: a definition reached that no list provides for, a name
-  that is not the edition's, a failed run or an empty one stops the screen.
-* The known rows: III.2, III.5 and III.6 must close by a rule; closed only by the bare try,
-  a row is lost.
+  that is not the edition's, a failed run or an empty one stops the screen. The 36 words of
+  trains C6a and C6b and of the outlines are listed, and each, left unlisted, stops it, as
+  a new word does; the recursors Lean makes, as `MixedAngle.casesOn`, are followed, not
+  listed.
+* The known rows: each row of KNOWN (III.5 alone, since III.2 and III.6 left it) must close
+  by a rule; closed only by the bare try, a row is lost.
 * The lists: the definitions unfolded, chosen and left as they are do not overlap; every
   file of tries proves the controls, and unfolds every definition listed.
 * The record of a run (--write) and its check (--check-current), with a stand-in for git:
@@ -309,6 +312,54 @@ class Definitions(unittest.TestCase):
         for n in ["BookI.Prop1", "Postulate1"] + screen.DEFS + list(screen.CHOSEN):
             self.assertIn(f"`Elements.{n}", text)
         self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
+
+    # The words train C6a brought in, which the pass reached and no list named until #416
+    # (its eighteenth, `MixedAngle.casesOn`, is Lean's own, and followed), and the words of
+    # train C6b and of the outlines (brief 0013) that it reached too.
+    C6A = ("Arc.Congruent", "Arc.Drawn", "Arc.measure", "InSegment", "LocallyLess",
+           "LocallyWithin", "MixedAngle.Exceeds", "MixedAngle.FallsShort",
+           "MixedAngle.WellFormed", "MixedAngle.region", "MixedAngle.vertex", "NearVertexOpen",
+           "OnArc", "OnSideOrLine", "Places", "Surrounds", "WithinAngle")
+    LATER = ("Arc.Greater", "Arc.Less", "Arc.Semicircle", "Foot", "OnFiniteLine",
+             "OnOrInsideTriangle", "Figures.Covers", "Figures.Divides", "Figures.GoodRay",
+             "Figures.LoopBoundary", "Figures.LoopInside", "Figures.Outline.Boundary",
+             "Figures.Outline.Inside", "Figures.Outline.Region", "Figures.Outline.area",
+             "Figures.Outline.depth", "Figures.RayCrosses", "Figures.crossingCount",
+             "Figures.sides")
+
+    def test_the_words_of_c6a_and_after_are_listed(self):
+        words = self.C6A + self.LATER
+        self.assertEqual(len(set(words)), 36)
+        self.assertEqual(set(words) - set(screen.DEFS), {"Figures.Outline.area"})
+        self.assertEqual(screen.CHOSEN["Figures.Outline.area"], "Screen.outline_area_spec")
+        self.assertIn("theorem outline_area_spec ", screen.SPECS)
+        self.assertEqual(screen.definitions(self.log("Triangle", *words), True),
+                         {"Triangle", *words})
+
+    def test_a_word_of_c6as_kind_left_unlisted_stops_the_screen(self):
+        # Each of the words, taken out of its list again, stops the pass, which names it and
+        # nothing else; so does a new word defined by cases on a mixed angle that no list
+        # names.
+        for word in self.C6A + self.LATER:
+            lists = {"DEFS": [d for d in screen.DEFS if d != word],
+                     "CHOSEN": {k: v for k, v in screen.CHOSEN.items() if k != word}}
+            with self.subTest(word=word), mock.patch.multiple(screen, **lists), \
+                    self.assertRaises(SystemExit) as stop:
+                screen.definitions(self.log(*self.C6A, *self.LATER), True)
+            self.assertIn(f"reaches {[word]},", str(stop.exception.code))
+        with self.assertRaises(SystemExit) as stop:
+            screen.definitions(self.log(*self.C6A, "MixedAngle.apex"), True)
+        self.assertIn("reaches ['MixedAngle.apex'],", str(stop.exception.code))
+
+    def test_the_recursors_lean_makes_are_followed_not_listed(self):
+        # `MixedAngle.casesOn`, which the matcher of `MixedAngle.vertex` calls, is Lean's own:
+        # the pass follows it, as it does the matchers, and does not list it. Were it printed,
+        # the screen would stop.
+        self.assertIn("isAuxRecursor env n", screen.REACH)
+        self.assertNotIn("MixedAngle.casesOn",
+                         screen.DEFS + list(screen.CHOSEN) + screen.CARRIERS)
+        with self.assertRaises(SystemExit):
+            screen.definitions(self.log("Triangle", "MixedAngle.casesOn"), True)
 
 
 class KnownRows(unittest.TestCase):
