@@ -24,6 +24,7 @@ commit = "9b7dad70"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:620d018ada992821"
 run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 9b7dad70"
+text = "sha256:31471eeaa30f9408"
 
 [review.items]
 statement = "pass"
