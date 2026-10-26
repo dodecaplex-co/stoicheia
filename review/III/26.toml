@@ -9,7 +9,7 @@ note = "Euclid's one argument for angles of every size: equal angles at the circ
 
 [representation]
 tags = ["angle-measure"]
-note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc.Congruent`), the congruence through Common Notion 4, as circumferences that coincide. So \"in equal circles\" does real work: in unequal circles equal angles give equal measures, but no congruence. The centres G and H are given, as the enunciation speaks of angles at the centres. The clause given at the centres speaks of the angles BGC, EHF themselves, less than two right angles, as Euclid's are; within the proof the angles at the centres standing on BKC and ELF are of any size (`angleAtCentre`)."
+note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc.Congruent`), the congruence through Common Notion 4, as circumferences that coincide. So \"in equal circles\" does real work: in unequal circles equal angles give equal measures, but no congruence. The centres G and H are given, as the enunciation speaks of angles at the centres. The clause given at the centres speaks of the angles BGC, EHF themselves, less than two right angles, as Euclid's are, and so asks that G lie across BC from K, and H across EF from L, where those angles stand on BKC and ELF; within the proof the angles at the centres standing on BKC and ELF are of any size (`angleAtCentre`)."
 
 [[passage]]
 at = "and the angle at G is equal to the angle at H"
@@ -50,11 +50,11 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "full"
-commit = "d2e249c39"
+commit = "90238039b"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:67e7ae1bfa109a7f"
-run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex)"
-text = "sha256:4e6ed2d383196dd3"
+run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:e0fc0c78ffd4594d"
 
 [review.items]
 statement = "pass"
