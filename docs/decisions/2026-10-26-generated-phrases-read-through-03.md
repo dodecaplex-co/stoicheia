@@ -29,8 +29,7 @@
   The line over every commentary echoed the refrain that [STYLE](../STYLE.md), section 3,
   retires ("what Lean made us say out loud") and promised a modern way on pages that have
   none. It now reads "Our commentary: why Euclid's proof, and ours, look as they do.", the
-  readers' wording, and `README.md`'s list of what a page holds says the same, with the
-  modern way "where it helps". The heading of the tacit rules of magnitude in each page's
+  readers' wording. The heading of the tacit rules of magnitude in each page's
   list of rules says "Rules of magnitude", as STYLE section 4 names them, not "Laws".
 
   The badge "in our measure of circumferences" stood beside III.24 and III.25, whose main
@@ -45,10 +44,13 @@
   III.29; it now lists the statements that use the measure among the records that carry
   it: III.26 to III.30, both companions of III.24, and III.25's `Prop25.kind`.
 
-  `README.md`'s row for the overlap audit said that each current overlap in the catalogue
-  is proved from the rules named; two of the catalogue's four rows, where a rule supplies
-  a step, have no audit lemma, and the row now says so, as the limitations review
-  proposed.
+  The same orders gave this work two lines of `README.md`'s own prose: its list of what a
+  page holds, to say what the line over every commentary now says, and its row for the
+  overlap audit, which says that each current overlap in the catalogue is proved from the
+  rules named, though two of the catalogue's four rows, where a rule supplies a step, have
+  no audit lemma. A change to the renderer lands apart from content its checks judge, so
+  those two lines follow in a train of their own, after this one; here `README.md`
+  changes only in the rows `render.py` writes.
 
   The change is to what `render.py` writes and to one meaning's list: no check, test,
   expected value or lock changes, and no record, Lean file, mishnah or figure. P4 of
