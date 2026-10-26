@@ -24,8 +24,9 @@ remains". The angles standing on them at points of the circles on the centres' s
 acute, and Euclid's argument makes those equal. Then III.22 leaves the angles at A and D as
 what remains of two right angles, after Heath, who says that his remarks on III.26's cases
 "apply here also" (vol. 2, p. 59). Where the angles are right, the centres lie
-on BC and EF, and there is no angle at the centre to halve: each angle is an angle in a
-semicircle, and right. `Prop24.angle_type` reads that off the measure of the circumference,
+on BC and EF, and there are no angles BGC, EHF of ours, for our angles are never straight;
+the angle at the centre is then two right angles (`angleAtCentre.semicircle`), but the
+proof does not halve it: each angle is an angle in a semicircle, and right. `Prop24.angle_type` reads that off the measure of the circumference,
 so in this case alone the angles are read off the measure. `Prop27.sides` sorts the three
 cases: equal circumferences put the centres alike. Nothing here uses
 `Circumference.standing`.
@@ -182,8 +183,9 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
          equal. -/
       exact (euclid hA hD hGA hHD heq).2
     · /- The angles at A and D are right, a case Euclid's figure leaves aside. The centres
-         lie on BC and EF, and our angles are never straight, so there is no angle BGC here
-         for III.20 to halve. Each angle at A and D is an angle in a semicircle, and right
+         lie on BC and EF, and our angles are never straight, so there is no angle BGC here;
+         the angle at the centre is two right angles (`angleAtCentre.semicircle`), and we do
+         not halve it. Each angle at A and D is an angle in a semicircle, and right
          (`Prop24.angle_type`, whose other two cases would put the centre off BC or EF); the
          two are each the one right angle, and so equal. This case still rests on the
          measure of the circumference: `Prop24.angle_type` reads the right angle off it, the

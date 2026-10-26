@@ -23,7 +23,7 @@ unused = ["F", "hF"]
 [[passage]]
 at = "let BF, FD be joined"
 kind = "given"
-note = "The angle BFD is named by its three points, so joining BF and FD needs no further construction in the Lean."
+note = "The angle at the centre is the circle's, standing on the circumference BCD (`angleAtCentre`), and III.20 makes it up from angles at the centre itself, so the joins BF, FD need no construction in the Lean."
 
 [[passage]]
 at = "therefore the angle BAD is equal to the angle BED"

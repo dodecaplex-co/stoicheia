@@ -16,8 +16,9 @@
   [Elements/BookIII/Prop20.lean](../../Elements/BookIII/Prop20.lean), under
   `Elements.BookIII`. One staged step, that an angle of a triangle is less than two right
   angles, is not carried over: it repeated a lemma of I.13's file,
-  `triangle_angle_lt_two_right`, by I.13 and Common Notion 5, which loses the word
-  `private` and nothing else, so that `.reflex_gt` and `.size` cite it from that one home.
+  triangle_angle_lt_two_right, by I.13 and Common Notion 5, which loses the word
+  `private` and takes the name `Prop13.angle_lt_two_right`, by FORMALIZATION's rule for a
+  proposition's helpers, its statement and proof unchanged, so that `.reflex_gt` and `.size` cite it from that one home.
   Book I's public `Figures.OutlineBound.angle_lt_two_right` gives the same fact, but rests
   on Metric 5, and citing it would have added that axiom to III.26 and to the propositions
   that cite III.26, so it is not cited.
@@ -43,16 +44,20 @@
   release notes, which list such a change and say where the old form went, belong to the
   owner and are written at the next release.
 
-  The review records of III.20, III.21, III.26 and III.27 now say what is true of the new
-  Lean, and their verdicts are removed while their stamps stay those of the last reading,
-  so each waits for a reader who wrote none of it. III.21's route becomes `euclid`; III.26's
+  The review records of III.20, III.21, III.26 and III.27 were made to say what is true of
+  the new Lean, with their verdicts taken out, and then read in full by an independent
+  reader who wrote none of them, who stamped them at `d2e249c39`; the records of III.24 and
+  III.28, whose Lean changes by the one citation, and of I.13, whose lemma loses the word
+  `private` and is renamed, were read again for that change, and stamped at `d2e249c39`
+  (III.28's, after one note was corrected, at `4aad4576`). Review then corrected III.21's
+  passage note on the joins and III.27's commentary on the right angles, and gave I.13's
+  lemma its name; those two records, with I.13's and III.20's for the name, were read and
+  stamped again. III.21's route becomes `euclid`; III.26's
   stays `modified`, because the congruence of the circumferences that remain is still
   argued by III.22 and III.24 rather than by Euclid's subtraction. The mishnah of the four,
-  the gap catalogue's entries for III.20, III.21 and III.26, the overlap catalogue's
+  the gap catalogue's entries for III.20, III.21, III.26 and III.27, the overlap catalogue's
   sentence on the staging folder, and an addendum to the
-  [routes report](../reports/routes-book-III.md) record the rest. The records of III.24
-  and III.28, whose Lean changes by the one citation, and of I.13, whose lemma loses the
-  word `private`, are read again too. Book III's brief keeps its dated bullets on III.20
+  [routes report](../reports/routes-book-III.md) record the rest. Book III's brief keeps its dated bullets on III.20
   and III.21 and gains a dated note under each saying what is overtaken.
 
   By the coordinator's orders of 25 October 2026, given as owner of the foundations, this
