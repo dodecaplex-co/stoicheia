@@ -25,7 +25,7 @@ note = "Euclid leaves the second direction to the same reasoning. The Lean prove
 
 [figure]
 case = "AB and CD meeting at G in the direction of B, D, as in Heath's figure"
-note = "Like Heath's, this figure draws Euclid's impossible supposition: AB and CD, produced, meeting at G. Heath bends BG and DG to reach G; our drawing keeps them straight, so the alternate angles supposed equal appear unequal."
+note = "Like Heath's, this figure draws Euclid's impossible supposition. Heath bends BG and DG to reach G; our drawing keeps them straight, so the alternate angles supposed equal appear unequal."
 
 [review]
 stage = "full"
