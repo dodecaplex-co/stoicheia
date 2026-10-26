@@ -73,8 +73,9 @@
   given with the kinds below; a kind with no test always applies. When the kind due does
   not apply, the plant takes the next kind that does, counting round the list in the same
   way, and the generator records why each kind passed over did not apply; if no kind
-  applies, nothing is sent and the work stops for a ruling. Within its kind, the change is the simplest one that makes the fault: it is written
-  into the generator, and reviewed with it, before any request is sent. No change may be
+  applies, nothing is sent and the work stops for a ruling. Within its kind, the change is
+  the simplest one that makes the fault: it is written into the generator, and reviewed
+  with it, before any request is sent. No change may be
   found by a surface sign, such as a hypothesis named for what it does or a word in the
   state that marks it as planted. The kinds:
 
