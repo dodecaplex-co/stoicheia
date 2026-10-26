@@ -23,11 +23,11 @@
   The tag `mixed-angles-omitted` leaves `review/terms.toml`. The [decisions
   record](../briefs/0002-decisions.md) kept it "while a record uses it", and none does.
   `docs/FORMALIZATION.md` no longer names it, so it does not change. Every case in
-  `tests/test_acceptance_limits.py` that gives a record the tag in memory passes
-  unchanged: those that show what P3 does with a made-up allowance and with a stale one,
-  that it refuses III.16 and III.31 short of full and passes them full whatever their
-  tags, and that it refuses an alternative route. P3 compares a record's tags with an
-  allowance's, and never looks a tag up in the terms.
+  `tests/test_acceptance_limits.py` that gives a record the tag in memory passes,
+  unchanged by item 5's commits: those that show what P3 does with a made-up allowance and
+  with a stale one, that it refuses III.16 and III.31 short of full and passes them full
+  whatever their tags, and that it refuses an alternative route. P3 compares a record's
+  tags with an allowance's, and never looks a tag up in the terms.
 
   Item 5 loosens nothing: its commits change no check, test or lock (item 3's change to
   P3, on the same branch, has its own entry), and no record, Lean file, mishnah, figure or
