@@ -22,6 +22,9 @@ straight from Lean's own proof terms:
   `collectAxioms` goes, so that, like the postulates, they include those of the
   entries it cites, with the calculus's `Coincidence.step` counted as Common Notion 4
   when named in a walked local declaration's value;
+* which proved rules it rests on: the tacit rules that are theorems now, which
+  `collectAxioms` passes through without a trace, found by a walk that goes wherever it
+  goes and must find exactly the axioms it finds;
 * which shared steps it calls on (`Prop30.meet`, `Prop34.bisect`, `Rectangle.eq_rect`),
   and the entries each one brings in;
 * for I.4 and I.8, whose derivations cite laws inside a hypothetical placement, each law
@@ -36,8 +39,9 @@ those under `Init`, `Std` and `Lean` whose `.olean`, as the search path finds it
 the library of the running Lean toolchain. A module's name is not evidence of its origin.
 The run checks itself against Lean: for every entry, the axioms `collectAxioms` finds must be exactly
 those the entry uses itself, together with those of the entries it cites and of the
-Common Notions it calls on; and those it uses itself must be exactly those its own Lean
-names, together with those it inherits. If they ever differ, the run fails.
+Common Notions it calls on; those it uses itself must be exactly those its own Lean
+names, together with those it inherits; and the walk that finds its proved rules must find
+exactly the axioms `collectAxioms` finds. If they ever differ, the run fails.
 
 For the whole environment it also records the module that declares every axiom of
 this project, and of every axiom an entry rests on; the `opaque` words; the exact
@@ -205,6 +209,41 @@ def allNotions (env : Environment) (toolchain : NameSet) (root : Name) : m NameS
     for d in mentions ci do
       unless seen.contains d do todo := todo.push d
   return notions
+
+/-- What `beneath` finds under a declaration. -/
+structure Beneath where
+  /-- Every axiom it rests on, as `collectAxioms` finds them. -/
+  axioms : NameSet := {}
+  /-- Every proved rule it rests on. -/
+  rules : NameSet := {}
+
+/-- Every axiom and every proved rule beneath `root`. A proved rule is one of `rules`, the
+tacit rules that are theorems now (`proved_rules`, below). The walk goes wherever
+`collectAxioms` goes, through everything `mentions` gives: the entries `root` cites and
+what they cite in turn, the Common Notions, the shared steps, and the proved rules
+themselves, so that a rule proved from another brings in both. It records an axiom where
+`directDeps` does, at a mention, and stops only at declarations from Lean's own modules;
+any other module outside `Elements` is refused. A proved rule is a theorem, so
+`collectAxioms` passes through it without a trace, and an axiom list can only show the
+axioms beneath it. The run checks, for every entry, that this walk finds exactly the
+axioms `collectAxioms` finds, Lean's own aside, so the proved rules come from the walk
+that finds the entry's axioms. -/
+def beneath (env : Environment) (toolchain rules : NameSet) (root : Name) : m Beneath := do
+  let mut seen : NameSet := {}
+  let mut todo : Array Name := #[root]
+  let mut found : Beneath := {}
+  while h : todo.size > 0 do
+    let c := todo.back
+    todo := todo.pop
+    if seen.contains c then continue
+    seen := seen.insert c
+    unless ← isLocal env toolchain c do continue
+    let some ci := env.find? c | continue
+    for d in mentions ci do
+      if (env.find? d).any (·.isAxiom) then found := { found with axioms := found.axioms.insert d }
+      if rules.contains d then found := { found with rules := found.rules.insert d }
+      unless seen.contains d do todo := todo.push d
+  return found
 
 /-- The shared steps `root` calls on itself: this project's own lemmas and definitions
 that live outside the namespace `home`, such as a lemma of Book Zero, `Prop30.meet`, the
@@ -634,6 +673,29 @@ run_cmd do
     axiomsOf := axiomsOf.insert cn (← collectAxioms cn)
   let euclidOnly (xs : Array Name) : Array Name :=
     xs.filter fun a => !leanFoundations.contains a && a != ``sorryAx
+  /- Proved tacit rules keep their names when they leave the axiom lock. Record what
+     Lean finds beneath each, so the policy check can still refuse a forbidden rule, and
+     the entries each cites, found by the entries' own walk, `directDeps`: an entry whose
+     proof uses a proved rule is found to cite every entry in the rule's list. They are
+     listed before the entries, so that each entry records which of them it rests on, and
+     a pin can refuse an entry that comes to use one. -/
+  let mut provedRules : Array (String × Json) := #[]
+  let mut provedRuleCites : Array (String × Json) := #[]
+  let mut ruleSet : NameSet := {}
+  for (n, ci) in env.constants.toList do
+    -- Only this project's own tacit rules, by declaring module, as `isLocal` decides; a
+    -- listing, not a walk, so a constant from another module is skipped here, not refused.
+    let own := (env.getModuleIdxFor? n).all fun idx =>
+      (`Elements).isPrefixOf env.header.moduleNames[idx.toNat]!
+    unless own && (`Elements.Tacit).isPrefixOf n do continue
+    if let .thmInfo _ := ci then
+      let axs := euclidOnly (← collectAxioms n)
+      provedRules := provedRules.push
+        (nameStr n, toJson ((axs.map nameStr).qsort (· < ·)))
+      let cites := (← directDeps env toolchain entrySet n).cites
+      provedRuleCites := provedRuleCites.push
+        (nameStr n, toJson ((cites.toList.map refOf).toArray.qsort (· < ·)))
+      ruleSet := ruleSet.insert n
   let mut entries : Array Json := #[]
   /- What each lemma an entry calls brings in, found once. -/
   let mut lemmaAxioms : Std.HashMap Name (Array Name) := {}
@@ -677,6 +739,16 @@ run_cmd do
     unless missing.isEmpty && extra.isEmpty do
       logError m!"{s.ref}: the walk does not account for Lean's axioms: collectAxioms has \
         {missing.toList} beyond what it finds, and it finds {extra} that collectAxioms does not"
+    /- The proved rules it rests on, from a walk that must find exactly Lean's axioms of
+       the entry: a proved rule leaves no trace in them but the axioms beneath it. -/
+    let under ← beneath env toolchain ruleSet p
+    let walked := euclidOnly under.axioms.toList.toArray
+    let unwalked := found.filter (!walked.contains ·)
+    let unfound := walked.filter (!found.contains ·)
+    unless unwalked.isEmpty && unfound.isEmpty do
+      logError m!"{s.ref}: the walk for its proved rules does not find Lean's axioms: \
+        collectAxioms has {unwalked.toList} beyond what it finds, and it finds \
+        {unfound.toList} that collectAxioms does not"
     /- Its own axioms, and those it inherits: each axiom it uses itself that its own Lean
        does not name, with every lemma it calls that brings the axiom in, in name order. -/
     let own ← ownDeps env toolchain entrySet p s.home
@@ -797,6 +869,8 @@ run_cmd do
       ("cites", Json.arr ((deps.cites.toList.map refOf).toArray.qsort (· < ·) |>.map Json.str)),
       ("common_notions", Json.arr (notionRefs.eraseDups.toArray.map Json.str)),
       ("axioms", Json.arr ((found.map nameStr).qsort (· < ·) |>.map Json.str)),
+      ("proved_rules", Json.arr ((under.rules.toList.map nameStr).toArray.qsort (· < ·)
+        |>.map Json.str)),
       ("direct_axioms", Json.arr ((deps.direct.toList.map nameStr).toArray.qsort (· < ·)
         |>.map Json.str)),
       ("own_axioms", Json.arr ((ownFound.map nameStr).qsort (· < ·) |>.map Json.str)),
@@ -823,25 +897,6 @@ run_cmd do
           pure s!" := {← Elab.Command.liftTermElabM <| printExpr v}" else pure ""
       | none => pure ""
     words := words.push (nameStr w, Json.str s!"{kind} : {type}{value}")
-  /- Proved tacit rules keep their names when they leave the axiom lock. Record what
-     Lean finds beneath each, so the policy check can still refuse a forbidden rule, and
-     the entries each cites, found by the entries' own walk, `directDeps`: an entry whose
-     proof uses a proved rule is found to cite every entry in the rule's list. -/
-  let mut provedRules : Array (String × Json) := #[]
-  let mut provedRuleCites : Array (String × Json) := #[]
-  for (n, ci) in env.constants.toList do
-    -- Only this project's own tacit rules, by declaring module, as `isLocal` decides; a
-    -- listing, not a walk, so a constant from another module is skipped here, not refused.
-    let own := (env.getModuleIdxFor? n).all fun idx =>
-      (`Elements).isPrefixOf env.header.moduleNames[idx.toNat]!
-    unless own && (`Elements.Tacit).isPrefixOf n do continue
-    if let .thmInfo _ := ci then
-      let axs := euclidOnly (← collectAxioms n)
-      provedRules := provedRules.push
-        (nameStr n, toJson ((axs.map nameStr).qsort (· < ·)))
-      let cites := (← directDeps env toolchain entrySet n).cites
-      provedRuleCites := provedRuleCites.push
-        (nameStr n, toJson ((cites.toList.map refOf).toArray.qsort (· < ·)))
   let out := Json.mkObj [("lean_version", Json.str Lean.versionString),
     ("propositions", Json.arr entries),
     ("axiom_modules", Json.mkObj (axiomModules.toList.map fun (n, m) => (n, Json.str m))),
