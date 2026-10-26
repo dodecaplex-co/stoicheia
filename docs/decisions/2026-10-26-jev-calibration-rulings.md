@@ -56,6 +56,7 @@
   III.37, a control in the bar's entry, is now a plant, and III.29 leaves the set. The
   plants of Book III take P13's kinds in turn, as the bar's entry says.
 
-  The bar's check of the lists now reads against the lists as this entry restates them:
-  if the records at the calibration's commit give, for any question and book, other
-  lists, nothing is sent, and the work stops for a ruling.
+  The bar's check of the lists now reads against the bar's lists, with P13's list for
+  Book III as this entry restates it: if the records at the calibration's commit give,
+  for any question and book, other lists, nothing is sent, and the work stops for a
+  ruling.
