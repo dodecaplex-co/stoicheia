@@ -1,4 +1,5 @@
-<!-- Source: T. L. Heath, The Thirteen Books of Euclid's Elements, vol. 1 (Cambridge, 1908), pp. 153–155. Public domain. Transcribed from the Internet Archive scan thirteenbookseu02heibgoog. -->
+<!-- Source: T. L. Heath, The Thirteen Books of Euclid's Elements, vol. 1 (Cambridge, 1908), pp. 153–155; scan leaves n173–n175. Public domain. Transcribed from the Internet Archive scan thirteenbookseu02heibgoog. -->
+<!-- The scan leaves were checked against the page images on 26 October 2026: n173 opens Book I with the definitions (p. 153, no number printed), n174 is p. 154, and n175 is p. 155, where the common notions end and Heath's notes begin. -->
 # Book I
 
 ## Definitions

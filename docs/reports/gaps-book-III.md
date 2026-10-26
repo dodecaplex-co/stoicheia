@@ -314,8 +314,10 @@ use one.
   III.32, `Prop24.isosceles`, `Circumference.semicircle`); the radius AD beyond the
   centre D, to the diameter III.16 asks for, in its porism (`Prop16.porism`); DA beyond
   A in III.33; and FB beyond B in III.34, so that the touching line EF runs on through
-  B to either side. Where Euclid draws a straight line through to the circle (III.1,
-  III.10, III.20, III.23), Intersections 5 does the producing, as in I.2.
+  B to either side; and in III.10 the two perpendiculars beyond their feet, since the
+  argument needs a second point of each and never where it meets the circle. Where
+  Euclid draws a straight line through to the circle (III.1, III.20, III.23),
+  Intersections 5 does the producing, as in I.2.
 - **Postulate 3 and Definition I.15**: circles Euclid does not draw. The two of I.1
   find a point off a straight line (`exists_off_line`), in III.1, III.17, III.33 and
   III.34, and inside `BookI.Prop46.sq`, which brings them to III.14 and III.37. A

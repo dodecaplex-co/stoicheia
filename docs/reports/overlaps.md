@@ -501,7 +501,7 @@ between the centre and F, and Book Zero's `InsideCircle.of_between_centre` puts 
 by Definition I.15 and the rules that relate "within" to the radius, with no proposition.
 
 The later proofs that called Circle 2 take the step in one of three ways. Where both ends
-are on the circle, III.2's own case, they cite III.2: III.10, III.15, III.21, III.22,
+are on the circle, III.2's own case, they cite III.2: III.15, III.21, III.22,
 III.23 and its companion `Prop23.point`, III.25's companion `Prop25.of_circle` in the
 meeting fact `Prop25.meets`, III.30, and III.32 in its helper `Prop32.sameSide`. Where one end is the centre and the other is on the circle, they use
 `InsideCircle.of_between_centre`: III.7, III.8, III.12, III.15, III.17, III.20, III.34 and
@@ -511,7 +511,8 @@ within. Where an end is within the circle and is not its centre, they cite III.2
 corollary `Prop2.within`, III.2 for ends on or within the circle, whose proof produces the
 straight line to meet the circle and finds the point between the two points where it meets
 it: III.7, III.11, III.15 and III.23. III.13 cites III.2, where Heath's reference is
-III.2.
+III.2. III.10 once cited III.2 too, to put K and L within the circle before carrying its
+perpendiculars through it; it now produces them by Postulate 2 and needs no point within.
 
 Three more corollaries after III.2 take the place of Book Zero lemmas that rested on
 Circle 2: `Prop2.triangle`, that three points of a circle are not on one straight line,

@@ -66,7 +66,7 @@
 "Tacit.same_side_trans" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Elements.SameSide A C L → Elements.SameSide B C L"
 "Tacit.superposition" = "Elements.Superposition.Rule Elements.primitives"
 
-[vocabulary]  # 262
+[vocabulary]  # 263
 "Angle" = "def : Type := Elements.Magnitude Elements.Kind.angle"
 "Apart" = "structure : Type"
 "Apart.area" = "def : Elements.Apart → Elements.Area := fun (R : Elements.Apart) => Elements.Magnitude.sum (List.map (fun (t : Prod Elements.Point (Prod Elements.Point Elements.Point)) => Elements.area (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) (Elements.Apart.pieces R))"
@@ -138,6 +138,7 @@
 "Line" = "opaque : Type"
 "LineMeetsCircle" = "def : Elements.Line → Elements.Circle → Prop := fun (L : Elements.Line) (α : Elements.Circle) => Exists fun (A : Elements.Point) => Exists fun (B : Elements.Point) => And (Ne A B) (And (Elements.OnLine A L) (And (Elements.OnCircle A α) (And (Elements.OnLine B L) (Elements.OnCircle B α))))"
 "LinesMeet" = "def : Elements.Line → Elements.Line → Prop := fun (L M : Elements.Line) => And (Ne L M) (Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (Elements.OnLine A M))"
+"LocallyEqual" = "def : Elements.Point → (Elements.Point → Prop) → (Elements.Point → Prop) → Prop := fun (A : Elements.Point) (R S : Elements.Point → Prop) => And (Elements.LocallyWithin A R S) (Elements.LocallyWithin A S R)"
 "LocallyLess" = "def : Elements.Point → (Elements.Point → Prop) → (Elements.Point → Prop) → Prop := fun (A : Elements.Point) (R S : Elements.Point → Prop) => And (Elements.LocallyWithin A R S) (Elements.NearVertexOpen A fun (P : Elements.Point) => And (S P) (Not (R P)))"
 "LocallyWithin" = "def : Elements.Point → (Elements.Point → Prop) → (Elements.Point → Prop) → Prop := fun (A : Elements.Point) (R S : Elements.Point → Prop) => Exists fun (γ : Elements.Circle) => And (Elements.Centre A γ) (∀ (P : Elements.Point), Elements.InsideCircle P γ → R P → S P)"
 "Magnitude" = "def : Elements.Kind → Type := fun (k : Elements.Kind) => NonemptyType.type (Elements.MagnitudeImpl k)"

@@ -156,9 +156,13 @@
 # unchanged, byte for byte. Its law leaves laws.toml, search.py and hyperbolic.py, and
 # derived.py keeps checking it as derived.outside_of_between.
 #
+# Renewed on 25 October 2026, when LocallyEqual joined the vocabulary (#130): only the
+# statement of the companion III.18 contact_locallyEqual reaches it; the 48 axioms and every
+# word already locked are unchanged, byte for byte, so MODEL.md's account stands as it was.
+#
 # Renewed on 26 October 2026, when the rule that a radius is not nothing,
 # Tacit.radius_ne_zero, joined the axioms by the owner's decision of 25 October 2026 (#473):
-# 49 axioms, the other 48 and the 262 words of the vocabulary unchanged, byte for byte. Its
+# 49 axioms, the other 48 and the 263 words of the vocabulary unchanged, byte for byte. Its
 # law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
 # counts, in the same change; run.py --full --write rewrites the results.
-5570bfb411ea8f03e33d8a0305ff81415408a8e893ce0979b35b2e7a214efd08  Certificate/axioms.lock
+3e93a25dc4485c8d2df6a4bf0910dbae15a1c14bc7050bb1153edd18bebef456  Certificate/axioms.lock
