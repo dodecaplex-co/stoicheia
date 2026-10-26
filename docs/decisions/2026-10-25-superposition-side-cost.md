@@ -5,10 +5,10 @@
   and does the part of each that touches neither the audit nor the brief; neither item is
   finished here, and the last paragraph names what is left of each. The kept side is AC,
   laid down as a straight line through D and C′. This entry records no decision on it,
-  and, on the side itself, the change adds only a theorem that states its cost and two
-  sentences that name the side and that cost. No axiom, no
-  statement, no definition and no `--` line changes, and no entry of
-  `Certificate/axioms.lock`.
+  and, on the side itself, the change adds only a theorem that states its cost, two
+  sentences that name the side and that cost, and the model's descriptions of its proof
+  by that theorem, named below. No axiom, no statement, no definition and no `--` line
+  changes, and no entry of `Certificate/axioms.lock`.
 
   Until now the side's cost was checked by reading the model's proof of superposition:
   D is not C′, since C′ is on H's side of L and D is on L, and the model's Postulate 1
@@ -32,8 +32,9 @@
   `model/Model/Laws/superposition.lean`, and `tests/model/MODEL.md`, in the superposition
   row of its table of why each rule holds and in its account of the formal model.
 
-  This entry approves the change to `tests/model/MODEL.md` that names the new theorem in
-  that row and in that account.
+  This entry approves the change to `tests/model/MODEL.md` that, in that row and in that
+  account, names the new theorem and describes the proof of `superposition` by it, by
+  Same side 3 and by Postulate 1.
 
   System E's superposition, as Avigad, Dean and Mumma state it (§3.7, p. 725), lists the
   facts of the triangle laid down in two sets, Π₁ for SAS and Π₂ for SSS, and neither
@@ -47,5 +48,6 @@
   the pin of `Rule.of_placement_of_join` in `Audit/Superposition.lean`, a protected path,
   at `[propext, Quot.sound]`; and, in brief 0009, a citation of the theorem where the brief
   still says that the side's cost is checked by reading the model's proof (its round-4
-  correction, its account of what the placement keeps, and its answer to question 5), and
+  correction, its account of what the placement keeps, its account of the model obligation
+  and its answer to question 5), and
   the kept side, with its cost and a p. 725 citation, in its comparison "Against System E".

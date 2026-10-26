@@ -454,9 +454,10 @@ through the starting point and placed third corner, the kept side. These are num
 tests of the sufficient placement for the restricted rule, by `Rule.of_placement`;
 there is no Lean proof of the hyperbolic model here. As in the plane
 ([above](#superposition)), the check of the kept side is a construction smoke test: it
-cannot fail on its own, since the placed third corner is checked to lie strictly on the
-chosen side of the line the triangle is laid along, and so is not the starting point,
-which is on that line; and no mutation targets it. Marvin Jay Greenberg's
+cannot fail on its own, since the line is drawn through the starting point and the placed
+third corner, and that corner is checked to lie strictly on the chosen side of the line
+the triangle is laid along, so is not the starting point, which is on that line; and no
+mutation targets it. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 

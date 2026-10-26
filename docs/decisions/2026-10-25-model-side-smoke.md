@@ -12,9 +12,11 @@
   triangle hypothesis.
 
   In scratch copies of the two samplers, never committed, with the side's conjuncts
-  counted apart, the side was reached with every other check of the placement passing 33
-  and 28 times in the Euclidean search (20,000 samples, seeds 1 and 2) and 857 and 860
-  times in the hyperbolic one (2,000 samples, seeds 1 and 2), and it failed none of them.
+  counted apart and superposition run alone, the side was reached with every other check
+  of the placement passing 33 and 28 times in the Euclidean search (20,000 samples, seeds
+  1 and 2) and 857 and 860 times in the hyperbolic one (2,000 samples, seeds 1 and 2),
+  and it failed none of them; the committed runs, with every rule, reach it 34 and 35
+  times and 8,691 times, with no counterexample.
 
   So the page now says so: in the superposition row of its table of why each rule holds,
   and in its paragraph on the hyperbolic plane. No harness code, law, mutation, count,
