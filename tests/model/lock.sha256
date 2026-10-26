@@ -165,4 +165,9 @@
 # joined the vocabulary: only the statements of III.13's companions touchesInternally_iff,
 # touchesExternally_iff and circlesTouch_iff reach them; the 48 axioms and every word
 # already locked are unchanged, byte for byte, so MODEL.md's account stands as it was.
-9dbedf61bac8740ae5da9818b3af0f675839bd5b2715b0cc4f165bcbb83983f3  Certificate/axioms.lock
+#
+# Renewed on 26 October 2026, when angleAtCentre, the angle at the centre of any size
+# (#129), joined the vocabulary: only the statements of III.20 and its companion III.20
+# circumference reach it; the 48 axioms and every word already locked are unchanged, byte
+# for byte, so MODEL.md's account stands as it was.
+9265a082f7114a20b41ae39690f326a61827250f477e80aad8e8fd99c159e0cb  Certificate/axioms.lock
