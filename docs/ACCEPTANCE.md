@@ -18,10 +18,11 @@ Each item is one of two kinds:
 
 The checklist merges the criteria of brief 0005's stage 6, Astra's measure of 95/100, with
 the ten release criteria that [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity),
-section 9, once listed, and with what has changed since both were written: the kernel replay, the stricter rule for
-runs of `--` lines, review stamps tied to a commit, companions as certificate entries,
-stage 4b's goal of a full statement for every record, and Staging. [Where the older
-criteria went](#where-the-older-criteria-went) traces each one here.
+section 9, once listed, and with what has changed since both were written: the kernel
+replay, the stricter rule for runs of `--` lines, review stamps tied to a commit,
+companions as certificate entries, stage 4b's goal of a full statement for every record,
+and Staging. [Where the older criteria went](#where-the-older-criteria-went) traces each
+one here.
 
 ## Running it
 

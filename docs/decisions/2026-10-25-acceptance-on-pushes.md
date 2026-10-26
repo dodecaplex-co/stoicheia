@@ -12,10 +12,10 @@
   that the job runs on every event CI runs on, a pull request, a merge-queue group and a
   push to main, and its step 2 gives, event by event, the commit that stands for main, as
   the workflow's own step does: on a pull request the checkout's first parent when it
-  has exactly two parents and the second is the pull request's head, else the recorded base when the checkout is that
-  head, and any other checkout fails the job; in a group its base; on a push, main
-  before the push. Its steps speak of the checked-out revision, not of the pull request
-  alone.
+  has exactly two parents and the second is the pull request's head, else the recorded
+  base when the checkout is that head, and any other checkout fails the job; in a group
+  its base; on a push, main before the push. Its steps speak of the checked-out
+  revision, not of the pull request alone.
 
   What was kept twice. WORKFLOW's section 9 still listed its ten release criteria,
   saying that the checklist incorporates them. It now names
