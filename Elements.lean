@@ -135,6 +135,7 @@ import Elements.BookII.Prop14
 import Elements.BookIII.Squares
 import Elements.BookIII.Prop01
 import Elements.BookIII.Prop02
+import Elements.BookIII.Feet
 import Elements.BookIII.Prop03
 import Elements.BookIII.Prop04
 import Elements.BookIII.Prop05

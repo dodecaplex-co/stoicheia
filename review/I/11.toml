@@ -10,7 +10,7 @@ kind = "euclid"
 [[passage]]
 at = "Let a point D be taken at random on AC"
 kind = "case"
-note = "Euclid takes D on AC, with C between A and B in his figure. The Lean also admits C at A, when there is no AC to take D on, so it takes D to be B; otherwise `Tacit.exists_point_between` (System E, Points 3) supplies D between A and C, now proved in `Elements/Figure/Incidence.lean` by drawing a smaller concentric circle and using Circle 1, Definition I.15 and circle crossings."
+note = "Euclid takes D on AC, with C between A and B in his figure. The Lean also admits C at A, when there is no AC to take D on, so it takes D to be B; otherwise `Tacit.exists_point_between` (System E, Points 3) supplies D between A and C, now proved in `Elements/Figure/Incidence.lean` by drawing a smaller concentric circle and using Definition I.15 and circle crossings."
 
 [[passage]]
 at = "let CE be made equal to CD"

@@ -51,7 +51,7 @@ theorem Prop1.within {A B D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA : 
   have hD_L := on_line_of_between_ends hADB hA_L hB_L
   by_cases hG_L : OnLine G L
   · obtain rfl : G = D := Prop1.middle hADB hAD
-      (between_of_inside_chord hG_L hA_L hB_L (centre_inside hG) hA hB hAB)
+      (between_of_centre_chord hG_L hA_L hB_L hG hA hB hAB)
       (by rw [len_symm A G, Definition15 hG hA hB])
     exact centre_inside hG
   have hGAB : Triangle G A B := (Triangle.of_line hA_L hB_L hAB hG_L).cab
@@ -179,7 +179,7 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
        that DAG and DBG are triangles for I.8. -/
     have hG_L : ¬ OnLine G L := fun hG_L =>
       hG_N ((Prop1.middle hADB hAD
-        (between_of_inside_chord hG_L hA_L hB_L (centre_inside hG) hA hB hAB)
+        (between_of_centre_chord hG_L hA_L hB_L hG hA hB hAB)
         (by rw [len_symm A G, Definition15 hG hA hB])) ▸ hD_N)
     have hDAG : Triangle D A G := Triangle.of_line hD_L hA_L hDA hG_L
     have hDBG : Triangle D B G := Triangle.of_line hD_L hB_L hDB hG_L
@@ -214,11 +214,11 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
   -- Therefore G is not the centre of the circle ABC.
   -- Similarly we can prove that neither is any other point except F.
   -- Therefore the point F is the centre of the circle ABC.
-  /- The centre is within the circle, hence between C and E. Its equal radii
+  /- The centre lies between C and E, since either other order would make one of its
+     radii a part of the other (`between_of_centre_chord`). Its equal radii
      make it the middle point F, the step Heath says Euclid takes for granted
      (vol. 2, p. 8). -/
-  have hCGE := between_of_inside_chord hG_N hC_N hE_N (centre_inside hG) hC hE
-    (ne_of_between_ends hCDE)
+  have hCGE := between_of_centre_chord hG_N hC_N hE_N hG hC hE (ne_of_between_ends hCDE)
   obtain rfl : G = F := Prop1.middle hCFE hCF hCGE (by rw [len_symm C G, Definition15 hG hC hE])
   exact ⟨G, C, D, E, hG, hADB, hAD, hC, hE, hCDE, hADC, hCFE, hCF⟩
   -- PORISM. From this it is manifest that, if in a circle a straight line cut a straight line
@@ -242,7 +242,7 @@ theorem Prop1.porism {A B C D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA 
   have hC_L : ¬ OnLine C L := (show Triangle A B C from hC).off_line hA_L hB_L
   by_cases hG_L : OnLine G L
   · have hGD : G = D := Prop1.middle hADB hAD
-      (between_of_inside_chord hG_L hA_L hB_L (centre_inside hG) hA hB hAB)
+      (between_of_centre_chord hG_L hA_L hB_L hG hA hB hAB)
       (by rw [len_symm A G, Definition15 hG hA hB])
     subst G
     obtain ⟨M, hD_M, hC_M⟩ := Postulate1 D C (fun e => hC_L (e ▸ hD_L))

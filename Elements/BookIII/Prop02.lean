@@ -63,7 +63,7 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
   have hDE_DB : ‖D E‖ < ‖D B‖ := by
     by_cases hD_L : OnLine D L
     · exact Prop2.through_centre
-        (between_of_inside_chord hD_L hA_L hB_L (centre_inside hD) hA hB hAB)
+        (between_of_centre_chord hD_L hA_L hB_L hD hA hB hAB)
         hAEB hD_L hA_L hDA_DB
     have hDAB : Triangle D A B := Triangle.of_line hA_L hB_L hAB hD_L |>.cab
     have hDAE : Triangle D A E :=

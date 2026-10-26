@@ -62,7 +62,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "Therefore the point F is the centre of the circle ABC."
 kind = "helper"
 helper = "Prop1.middle"
-note = "Euclid takes for granted that a centre on CE is its middle point. The Lean uses `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, as in the earlier case on AB, then equal radii and `Prop1.middle` identify G with F."
+note = "Euclid takes for granted that a centre on CE is its middle point. The Lean puts G between C and E by Book Zero's `between_of_centre_chord`, Circle 1 (`Tacit.between_of_inside_chord`) for a centre, proved without that rule from Definition I.15, the three orders of three points on a straight line (System E, Between 6) and our radius rule: either other order would make one radius a part of the other. It does the same in the earlier case on AB, and in the porism's. Then equal radii and `Prop1.middle` identify G with F."
 
 [[passage]]
 at = "PORISM. From this it is manifest"

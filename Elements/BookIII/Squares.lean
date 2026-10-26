@@ -18,10 +18,11 @@ straight lines, with the fact that the square on a straight line is something.
 The propositions that compare those squares (III.14, III.35, III.36) draw a
 perpendicular from the centre to a straight line in the circle, and read off the figure
 that it falls within the straight line, between its ends, before III.3 bisects it there.
-That is said once too (`foot_between`). And every straight line has one foot of the
-perpendicular from a point, the point itself when the straight line passes through it
-(`Foot.exists`, `Foot.unique`), so that `Foot`, by which the companions of III.14 and III.15
-measure a straight line's distance from the centre, names one point.
+That is said once too (`foot_between`), after III.2, in `Elements/BookIII/Feet.lean`. And
+every straight line has one foot of the perpendicular from a point, the point itself when
+the straight line passes through it (`Foot.exists`, `Foot.unique`), so that `Foot`, by
+which the companions of III.14 and III.15 measure a straight line's distance from the
+centre, names one point.
 
 Two segments on one base, on one side of it, in equal circles and of one kind, are one
 segment of one circle: their centres are equally far from the ends of the base and lie
@@ -84,40 +85,6 @@ theorem BookI.Prop46.sq {A B C D : Point} (h : sq A B = sq C D) : ‖A B‖ = �
     rw [len_symm A B, len_symm C D]
     exact this
 
-/-- **The perpendicular from the centre falls within.** The perpendicular drawn from the
-centre E to a straight line AB in the circle, not through the centre, falls between
-A and B. Its foot F is nearer the centre than any other point P of the straight
-line: in the triangle EFP the angle at F is right, so the angle at P is less than a
-right angle [I. 17], and EP, opposite the greater angle, is greater than EF [I. 19].
-So F is nearer than A or than B, which are on the circle; it is within the circle,
-and so between them (System E, Circle 1). Euclid reads it off the figure in III.14,
-III.35 and III.36, before III.3 bisects the straight line there. [I. 17, I. 19] -/
-theorem foot_between {A B E F : Point} {α : Circle} (hE : Centre E α) (hA : OnCircle A α)
-    (hB : OnCircle B α) (hE_AB : ¬ Collinear A B E) (hF : Collinear A B F)
-    (hEF : ∀ P : Point, Collinear A B P → P ≠ F → ∠ E F P = ∟) : Between A F B := by
-  have hAB : A ≠ B := Triangle.ne₁₂ hE_AB
-  obtain ⟨M, hA_M, hB_M, hF_M⟩ := hF
-  have hE_M : ¬ OnLine E M := Triangle.off_line hE_AB hA_M hB_M
-  /- Any other point P of the straight line is farther from E than F is. -/
-  have nearer : ∀ P : Point, OnLine P M → P ≠ F → ‖E F‖ < ‖E P‖ := by
-    intro P hP_M hPF
-    have hFPE : Triangle F P E := Triangle.of_line hF_M hP_M hPF.symm hE_M
-    have hEFP : Triangle E F P := hFPE.cab
-    have hright : ∠ E F P = ∟ := hEF P ⟨M, hA_M, hB_M, hP_M⟩ hPF
-    /- The angles EFP, FPE are less than two right angles [I. 17]. -/
-    have h17 := (BookI.Prop17 hEFP).1
-    rw [hright] at h17
-    have hP : ∠ F P E < ∠ E F P := hright ▸ Magnitude.lt_of_add_lt_add_left h17
-    /- The greater angle is subtended by the greater side [I. 19]. -/
-    exact BookI.Prop19 hEFP hP
-  /- F is within the circle: nearer the centre than A, or than B. -/
-  have hF_in : InsideCircle F α := by
-    by_cases hAF : A = F
-    · have hBF : B ≠ F := fun e => hAB (hAF.trans e.symm)
-      exact inside_of_len_lt hE hB (nearer B hB_M hBF)
-    · exact inside_of_len_lt hE hA (nearer A hA_M hAF)
-  exact between_of_inside_chord hF_M hA_M hB_M hF_in hA hB hAB
-
 /-- Every straight line has a foot of the perpendicular from any point (`Foot`, Definitions
 III.4 and III.5): the perpendicular drawn to it, or the point itself when it is on the
 straight line (and when A and B are one point). [I. 12] -/
@@ -160,14 +127,14 @@ namespace Elements.BookIII
 open Tacit
 
 /-- A centre on the straight line through two different points of its circle lies
-between them: it is within the circle (`centre_inside`), and a point of that straight line
-within the circle lies between the two (`between_of_inside_chord`). In the semicircle case
-this puts each centre between the ends of the base. -/
+between them: either other order would make one radius a part of the other
+(`between_of_centre_chord`). In the semicircle case this puts each centre between the ends
+of the base. -/
 theorem Aligned.centre_between {B C O : Point} {α : Circle} (hBC : B ≠ C)
     (hO : Centre O α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hline : Collinear B C O) : Between B O C := by
   obtain ⟨L, hB_L, hC_L, hO_L⟩ := hline
-  exact between_of_inside_chord hO_L hB_L hC_L (centre_inside hO) hB hC hBC
+  exact between_of_centre_chord hO_L hB_L hC_L hO hB hC hBC
 
 /-- Two points between B and C, equally far from B, coincide. Both lie on the ray
 from B through C, where a distance fixes one point. This identifies the two centres

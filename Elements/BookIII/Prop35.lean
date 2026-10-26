@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Feet
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop12
 import Elements.BookI.Prop47
