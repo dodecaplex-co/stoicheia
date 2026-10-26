@@ -72,8 +72,8 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[derived.py](derived.py)** keeps 41 numerical predicates under names beginning
   `derived.`: one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
   proved after III.2 since 24 October 2026, among them; and Circle 1's
-  (`between_of_inside_chord`), still an axiom, prepared to survive its retirement after
-  III.2 (#477).
+  (`between_of_inside_chord`), still an axiom, prepared for its retirement after III.2,
+  which the owner approved on 25 October 2026 (#477).
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
   predicates in all: 35 axiom laws and the 41 retained derived properties, with degenerate
   configurations included.
@@ -109,9 +109,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `442989248536`, 2026-10-25, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `242da9a7f107`, 2026-10-26, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,098,108** configurations met an axiom's hypotheses (1,217,675 in the search, 2,247,172 exhaustive, 633,261 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 500,226 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,063,054** configurations met an axiom's hypotheses (1,223,581 in the search, 2,243,944 exhaustive, 595,529 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 511,547 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -143,28 +143,29 @@ In the plane: **4,098,108** configurations met an axiom's hypotheses (1,217,675 
 | `Tacit.not_on_line_of_same_side` | 315 | 45,192 | · | 4,389 |
 | `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
 | `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
-| `Tacit.between_of_inside_chord` | 239 | 3,228 | 37,732 | 8,315 |
+| `Tacit.between_of_inside_chord` | 239 | · | · | 8,315 |
 | `Tacit.lines_meet_of_opposite_sides` | 14 | 26,248 | 39,362 | 4,460 |
 | `Tacit.circles_meet` | 1,313 | 10,668 | 1,587 | 2,555 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
 | `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
-| `Tacit.angle_symm` | 15,588 | 14,400 | · | 6,996 |
+| `Tacit.radius_ne_zero` | 6,375 | · | · | 11,393 |
+| `Tacit.angle_symm` | 15,398 | 14,400 | · | 6,991 |
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_congruent` | 54,727 | 375,479 | 94,050 | 10,764 |
-| `Tacit.len_add_of_between` | 4,805 | 304 | · | 9,878 |
-| `Tacit.circle_eq` | 788 | 2,448 | 27,089 | 4,415 |
-| `Tacit.angle_eq_zero_of_same_ray` | 15,206 | 1,208 | · | 2,827 |
-| `Tacit.same_ray_of_angle_eq_zero` | 15,115 | 1,208 | · | 2,728 |
-| `Tacit.angle_add_of_inside` | 5 | 77,960 | 24,987 | 3,773 |
-| `Tacit.angle_eq_of_same_rays` | 6,977 | 60,032 | 8,676 | 4,150 |
-| `Tacit.area_eq_zero_of_on_line` | 24,891 | 2,112 | · | 4,680 |
-| `Tacit.on_line_of_area_eq_zero` | 24,727 | 2,112 | · | 4,668 |
-| `Tacit.area_add_of_between` | 23 | 6,176 | 55,499 | 8,515 |
-| `Tacit.superposition` | 112 | 363,888 | 71,970 | 8,691 |
+| `Tacit.area_congruent` | 54,707 | 375,479 | 94,050 | 10,822 |
+| `Tacit.len_add_of_between` | 4,768 | 304 | · | 9,863 |
+| `Tacit.circle_eq` | 822 | 2,448 | 27,089 | 4,354 |
+| `Tacit.angle_eq_zero_of_same_ray` | 15,210 | 1,208 | · | 2,725 |
+| `Tacit.same_ray_of_angle_eq_zero` | 15,092 | 1,208 | · | 2,729 |
+| `Tacit.angle_add_of_inside` | 3 | 77,960 | 24,987 | 3,756 |
+| `Tacit.angle_eq_of_same_rays` | 6,916 | 60,032 | 8,676 | 4,197 |
+| `Tacit.area_eq_zero_of_on_line` | 24,858 | 2,112 | · | 4,713 |
+| `Tacit.on_line_of_area_eq_zero` | 24,602 | 2,112 | · | 4,658 |
+| `Tacit.area_add_of_between` | 19 | 6,176 | 55,499 | 8,450 |
+| `Tacit.superposition` | 100 | 363,888 | 71,970 | 8,755 |
 
-Separately, **9,855,030** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **9,895,990** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -173,6 +174,7 @@ Separately, **9,855,030** configurations met a retained derived property's hypot
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
 | `derived.outside_of_between` | 281,664 | 47,802 |
+| `derived.between_of_inside_chord` | 3,228 | 37,732 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |

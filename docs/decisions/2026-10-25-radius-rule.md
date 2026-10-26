@@ -43,7 +43,7 @@
   What moves now. Nothing cites the rule yet, so no certificate changes: `facts.json`
   gains the rule's statement and module in its registry of axioms, and no entry's axioms
   or citations move. The lock goes from 48 axioms to 49, and its tacit rules from 42 to
-  43; its vocabulary keeps its 262 words, byte for byte. When Circle 1 is retired after
+  43; its vocabulary is unchanged, byte for byte. When Circle 1 is retired after
   III.2 (#477), the lock comes back down to 48. The generated pages move only in their
   counts and in the line numbers of their links into the foundations file, which grew
   above `len_self`. Six sentences that said the foundations have one rule of our own, or
@@ -109,8 +109,9 @@
   joined the model, and the counts that `render.py` moved.
 
   The numerical model's results are written again by
-  `python3 -I tests/model/run.py --full --write`, run at this train's commit once it is
-  made, which also rewrites the counts between MODEL.md's own markers.
+  `python3 -I tests/model/run.py --full --write`, run at commit `3a2ba2364a3a`, this
+  train's merge of main, where every check passed; it also rewrote the counts between
+  MODEL.md's own markers.
 
   Each result file that run rewrites is approved in a sentence of its own. The angle and
   area check's output, `tests/model/results/angle_check.txt`, is approved. The full grid
