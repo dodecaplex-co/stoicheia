@@ -100,8 +100,16 @@ note = "G is drawn within the circle, where the proof puts it, and H, where DG p
 
 [review]
 stage = "full"
-commit = "07416606e"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:dd281e3d8032ec91"
-run = "brief 0005 stage 5, ship R3 (#29); the mixed-angle companions and their steps, written by Claude, read also by GPT-6 Astra (Codex); lines 105, 119 and 241 of Prop16.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 23ac78ba; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x)"
-text = "sha256:159f05efa6522fdc"
+commit = "c803fb9a2"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:235eeb8a6ec29d4e"
+run = "brief 0005 stage 5, ship R3 (#29); the mixed-angle companions and their steps, written by Claude, read also by GPT-6 Astra (Codex); lines 105, 119 and 241 of Prop16.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 23ac78ba; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); card #547, ship ER: Euclid's reductio in III.16's companions and III.24 (the III.18 texts that cited the direct argument corrected), written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:bd9b0efa4b1ec4b2"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

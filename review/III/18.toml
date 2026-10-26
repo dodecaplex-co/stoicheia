@@ -47,8 +47,16 @@ note = "The figure shows the impossible supposition with G distinct from C: FG i
 
 [review]
 stage = "full"
-commit = "8d1358248"
+commit = "c803fb9a2"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:7ecfaa05ae91135c"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #130, ship ER: read in full after the angle of contact after III.18 moved in, with its four companions, written by Claude, read by GPT-6 Astra (Codex)"
-text = "sha256:a8a5ebd0aa17fe54"
+lean = "sha256:7f79fbb2bcc56ecd"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #130, ship ER: read in full after the angle of contact after III.18 moved in, with its four companions, written by Claude, read by GPT-6 Astra (Codex); card #547, ship ER: Euclid's reductio in III.16's companions and III.24 (the III.18 texts that cited the direct argument corrected), written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:ae8c4c0888764819"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
