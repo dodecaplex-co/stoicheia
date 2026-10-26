@@ -54,11 +54,11 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "full"
-commit = "81424ad0a"
+commit = "71146bf3f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:03307d9e71d6c0dc"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex)"
-text = "sha256:9835f462d8ba1fe3"
+lean = "sha256:208f247dcb8d0295"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f"
+text = "sha256:6e776d12f07c072e"
 
 [review.items]
 statement = "pass"

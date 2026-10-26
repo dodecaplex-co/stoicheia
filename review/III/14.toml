@@ -87,10 +87,10 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "full"
-commit = "918efd90"
+commit = "71146bf3f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:4e99fba888723a6e"
-run = "card #131, ship ER: re-read after III.1's call was dropped; lines 78 and 115 of Prop14.lean, of unknown family, read also by GPT-6 Astra (Codex); the calls of III.1 and centre_unique dropped (#131), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two (card 119) merged with main at dc4ec99f, which brought ER-promote332 and ER-iii1calls: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write ER's changes, reader F2-w2m3cx at 918efd90"
+lean = "sha256:70af5bfc9fea60a9"
+run = "card #131, ship ER: re-read after III.1's call was dropped; lines 78 and 115 of Prop14.lean, of unknown family, read also by GPT-6 Astra (Codex); the calls of III.1 and centre_unique dropped (#131), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two (card 119) merged with main at dc4ec99f, which brought ER-promote332 and ER-iii1calls: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write ER's changes, reader F2-w2m3cx at 918efd90; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f"
 text = "sha256:1a42bd2cee5c9126"
 
 [review.items]
