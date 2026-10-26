@@ -1064,6 +1064,10 @@ def hermetic_git(xdg: Path) -> None:
     a global core.hooksPath could reach them too, running its hooks on the tests' commits
     and taking install_hooks.sh's hooks where it points. Each test that needs a variable
     of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself.
+    GIT_ATTR_NOSYSTEM keeps git from the system attributes file too (#430), as
+    GIT_CONFIG_NOSYSTEM keeps it from the system configuration. The launcher keeps both,
+    with GIT_CONFIG_GLOBAL, and safe_push.py keeps the three for its own git and, through
+    tool_env(), for its checks.
 
     Nor does it read git's default global ignore and attributes files (#376), which git
     reads with the global configuration shut out: $XDG_CONFIG_HOME/git/ignore and
@@ -1093,7 +1097,7 @@ def hermetic_git(xdg: Path) -> None:
         del os.environ[name]
     xdg.mkdir()
     os.environ.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
-                      XDG_CONFIG_HOME=str(xdg), GIT_CONFIG_COUNT="2",
+                      GIT_ATTR_NOSYSTEM="1", XDG_CONFIG_HOME=str(xdg), GIT_CONFIG_COUNT="2",
                       GIT_CONFIG_KEY_0="core.excludesFile", GIT_CONFIG_VALUE_0=os.devnull,
                       GIT_CONFIG_KEY_1="core.attributesFile", GIT_CONFIG_VALUE_1=os.devnull)
 
@@ -8053,7 +8057,8 @@ class HandOver(Edge):
         # clone's origin/main harness, never the other's.
         plain = {name: value for name, value in clean_env().items()
                  if not name.startswith("GIT_")}
-        plain.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        plain.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
+                     GIT_ATTR_NOSYSTEM="1")
         tmp = Path(tempfile.mkdtemp(prefix="launcher-359-", dir=TMP))
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         marker, foreign = tmp / "the-foreign-harness-ran", tmp / "foreign"
@@ -10729,16 +10734,18 @@ class HermeticModule(unittest.TestCase):
     under a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, leaves
     the repository as it was: its HEAD, index and files, and the shared configuration.
     #376: run under a global ignore file and attributes file planted where git looks for
-    them, the module's git still sees the files the tests make."""
+    them, the module's git still sees the files the tests make. #430: git reports no system
+    attributes file for the module's git, safe_push.py's own or a check's."""
 
     CHILD = "STOICHEIA_TEST_HERMETIC_CHILD"
 
     def runner_env(self) -> dict:
         """This process's environment less what hermetic_git set, the GIT_CONFIG_
-        variables and XDG_CONFIG_HOME: a runner's, with the machine's own configuration
-        and XDG_CONFIG_HOME unset."""
+        variables, GIT_ATTR_NOSYSTEM and XDG_CONFIG_HOME: a runner's, with the machine's
+        own configuration and XDG_CONFIG_HOME unset."""
         return {name: value for name, value in os.environ.items()
-                if not name.startswith("GIT_CONFIG") and name != "XDG_CONFIG_HOME"}
+                if not name.startswith("GIT_CONFIG")
+                and name not in ("GIT_ATTR_NOSYSTEM", "XDG_CONFIG_HOME")}
 
     def test_the_module_under_a_hooks_git_dir(self):
         if os.environ.get(self.CHILD):
@@ -10853,6 +10860,30 @@ class HermeticModule(unittest.TestCase):
             self.assertEqual((files, git(repo, "status", "--porcelain", env=env),
                               git(repo, "check-attr", "-a", "deep/er/new.txt", env=env)),
                              ([os.devnull + "\n"] * 2, "?? deep/\n", ""))
+
+    def test_git_names_no_system_attributes_file(self):
+        # #430: hermetic_git sets GIT_ATTR_NOSYSTEM, so git reads no system attributes file.
+        # Planting one would take root: git looks for it where it was built to look
+        # (/etc/gitattributes for Apple's git), and has no variable, as GIT_CONFIG_SYSTEM
+        # is for the system configuration, that names another file in its place. So this
+        # reads git's own report of the file it would read,
+        # `git var GIT_ATTR_SYSTEM`, which names none for the module's git, for
+        # safe_push.py's own and for a check started with tool_env(); with the variable
+        # taken away, git names one each time, so the variable is what keeps the file out.
+        def reports() -> list:
+            found = [subprocess.run(["git", "var", "GIT_ATTR_SYSTEM"], cwd=TMP,
+                                    capture_output=True, text=True),
+                     safe_push.run(["git", "var", "GIT_ATTR_SYSTEM"], TMP),
+                     safe_push.run(["sh", "-c", "git var GIT_ATTR_SYSTEM"], TMP,
+                                   env=safe_push.tool_env())]
+            return [(r.returncode, r.stdout) for r in found]
+
+        self.assertEqual(reports(), [(1, "")] * 3)
+        with mock.patch.dict(os.environ):
+            del os.environ["GIT_ATTR_NOSYSTEM"]
+            named = reports()
+        self.assertEqual([code for code, _ in named], [0] * 3, named)
+        self.assertTrue(all(out.strip() for _, out in named), named)
 
 
 # The report step needs bash and jq, as GitHub's runners have; there, a missing one fails
@@ -10993,10 +11024,12 @@ class OwnGitUnderHook(Edge):
     def plain_env(self) -> dict:
         """clean_env() with no variable of git's, so the test's own git is not the hook's,
         and no global or system configuration, so no hook or setting of the machine's runs
-        in it (a global core.hooksPath would run on `git worktree add`)."""
+        in it (a global core.hooksPath would run on `git worktree add`), nor the system
+        attributes file."""
         env = {name: value for name, value in clean_env().items()
                if not name.startswith("GIT_")}
-        env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
+                   GIT_ATTR_NOSYSTEM="1")
         return env
 
     def dry_run_under_hook(self, work_tree: bool) -> None:
@@ -11275,21 +11308,28 @@ class HookEnvironment(unittest.TestCase):
     check, given a hook's GIT_DIR and GIT_INDEX_FILE naming a linked worktree's git
     directory, as on 22 October, builds and commits to a repository of its own and leaves
     the enclosing one as it was: its HEAD, index and files, and the shared configuration,
-    which git init with that GIT_DIR once turned bare."""
+    which git init with that GIT_DIR once turned bare. And the configuration files a check
+    reads (#430): it keeps the caller's variables that name git's global and system
+    configuration files or shut them, or the system attributes file, out, and reads those
+    files as they say, save a relative GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM, which it
+    drops, while every variable that ties git to a repository but
+    GIT_NO_REPLACE_OBJECTS is still dropped."""
 
     IDENT = ["-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
              "-c", "commit.gpgsign=false"]
 
     def setUp(self):
-        # The test's own git reads no variable of git's, no global or system configuration
-        # and no hook of the machine's: it builds its repositories hermetically.
+        # The test's own git reads no variable of git's, no global or system configuration,
+        # no system attributes file and no hook of the machine's: it builds its
+        # repositories hermetically.
         tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
         for name in ("home", "xdg", "hooks"):
             (tmp / name).mkdir()
         self.env = {name: value for name, value in os.environ.items()
                     if not name.startswith("GIT_")}
         self.env.update(HOME=str(tmp / "home"), XDG_CONFIG_HOME=str(tmp / "xdg"),
-                        GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+                        GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
+                        GIT_ATTR_NOSYSTEM="1")
         self.options = ["-c", f"core.hooksPath={tmp / 'hooks'}",
                         "-c", f"core.excludesFile={os.devnull}"]
 
@@ -11348,10 +11388,15 @@ class HookEnvironment(unittest.TestCase):
             self.assertEqual(sorted(p.name for p in linked.iterdir()), [".git", "a.txt"])
             self.assertEqual(rep.steps[-1].outcome, "ok", [s.outcome for s in rep.steps])
             self.assertEqual(self.git("-C", str(inner), "log", "--format=%s"), "inner\n")
+            # Of git's variables, the check keeps GIT_NO_REPLACE_OBJECTS and the three with
+            # which this test shuts git's configuration and attributes files out (#430),
+            # and none of the hook's.
             kept = sorted(name for name in env if name.startswith("GIT_"))
-            self.assertEqual(kept, ["GIT_NO_REPLACE_OBJECTS"])
+            self.assertEqual(kept, ["GIT_ATTR_NOSYSTEM", "GIT_CONFIG_GLOBAL",
+                                    "GIT_CONFIG_NOSYSTEM", "GIT_NO_REPLACE_OBJECTS"])
             self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1")
-            self.assertEqual(seen.read_text(), "GIT_NO_REPLACE_OBJECTS=1\n")
+            self.assertEqual(seen.read_text(), f"GIT_ATTR_NOSYSTEM=1\nGIT_CONFIG_GLOBAL="
+                             f"{os.devnull}\nGIT_CONFIG_NOSYSTEM=1\nGIT_NO_REPLACE_OBJECTS=1\n")
 
     def test_a_hooks_git_dir_and_index_reach_no_check(self):
         # The incident's shape: GIT_DIR and GIT_INDEX_FILE alone, naming a linked worktree.
@@ -11359,6 +11404,100 @@ class HookEnvironment(unittest.TestCase):
 
     def test_with_the_hooks_work_tree_too(self):
         self.check_under_hook({"GIT_WORK_TREE": "WORKTREE"})
+
+    def test_a_check_keeps_the_configuration_files_named(self):
+        # #430: tool_env() keeps the caller's GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM,
+        # GIT_CONFIG_NOSYSTEM and GIT_ATTR_NOSYSTEM as given, beside GIT_NO_REPLACE_OBJECTS,
+        # and still drops every other variable that ties git to a repository (GIT_DIR,
+        # GIT_INDEX_FILE and GIT_CONFIG_COUNT among them) and git's other variables
+        # (GIT_CONFIG_KEY_0 here).
+        files = {"GIT_CONFIG_GLOBAL": "/a/global", "GIT_CONFIG_SYSTEM": "/a/system",
+                 "GIT_CONFIG_NOSYSTEM": "1", "GIT_ATTR_NOSYSTEM": "1"}
+        planted = {name: "/planted" for name in safe_push.REPOSITORY_VARIABLES}
+        planted.update(GIT_CONFIG_KEY_0="core.hooksPath", GIT_CONFIG_VALUE_0="/planted")
+        with mock.patch.dict(os.environ, {**self.clean(), **planted, **files}, clear=True):
+            env = safe_push.tool_env()
+        self.assertEqual({name: value for name, value in env.items()
+                          if name.startswith("GIT_")},
+                         dict(files, GIT_NO_REPLACE_OBJECTS="/planted"))
+        for name in ("GIT_DIR", "GIT_INDEX_FILE", "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS"):
+            self.assertNotIn(name, env)
+        # The four are CONFIG_FILE_VARIABLES, and none ties git to a repository: none is
+        # among REPOSITORY_VARIABLES, or in git's own list of the variables that do.
+        listed = set(self.git("-C", str(SOURCE), "rev-parse", "--local-env-vars").split())
+        self.assertIn("GIT_DIR", listed)
+        self.assertEqual(sorted(safe_push.CONFIG_FILE_VARIABLES), sorted(files))
+        self.assertEqual(sorted(set(files) & (safe_push.REPOSITORY_VARIABLES | listed)), [])
+        # A relative GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM is dropped, for git would read
+        # it from the directory it is in, the commit's worktree for a check; an empty one,
+        # which shuts its file out, is kept, as an absolute one is.
+        for name in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+            for value, kept in (("planted.cfg", False), ("sub/planted.cfg", False),
+                                ("~/planted.cfg", False), ("", True), ("/a/file", True)):
+                with mock.patch.dict(os.environ, dict(self.clean(), **{name: value}),
+                                     clear=True):
+                    self.assertEqual(safe_push.tool_env().get(name),
+                                     value if kept else None, (name, value))
+
+    def test_a_check_reads_the_configuration_files_the_caller_names(self):
+        # #430: a check, started as the pre-flight starts one, reads git's global and
+        # system configuration files as the caller's variables name them. The .gitconfig
+        # of the test's own HOME, never the user's, sets stoicheia.global, and a planted
+        # file that GIT_CONFIG_SYSTEM names sets stoicheia.system. Under a
+        # GIT_CONFIG_GLOBAL naming an empty file the check does not see the first, and
+        # under GIT_CONFIG_NOSYSTEM it does not see the second. The caller's
+        # GIT_CONFIG_COUNT and GIT_CONFIG_PARAMETERS, which would set both, reach no check,
+        # nor does a relative GIT_CONFIG_GLOBAL naming a file planted at the top of the
+        # repository the check runs in.
+        tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        for name in ("check", "logs"):
+            (tmp / name).mkdir()
+        self.git("init", "-q", str(tmp / "check"))
+        (tmp / "check" / "planted.cfg").write_text("[stoicheia]\n\tglobal = from-the-worktree\n")
+        (Path(self.env["HOME"]) / ".gitconfig").write_text("[stoicheia]\n\tglobal = from-home\n")
+        (tmp / "empty").write_text("")
+        (tmp / "system").write_text("[stoicheia]\n\tsystem = from-the-system-file\n")
+        check = ["sh", "-c", 'for key in stoicheia.global stoicheia.system; do '
+                 'printf "%s=%s\\n" "$key" "$(git config --get "$key")"; done']
+        caller = {name: value for name, value in self.clean().items()
+                  if not name.startswith("GIT_")}
+        caller.update(GIT_CONFIG_SYSTEM=str(tmp / "system"))
+        settings = {"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "stoicheia.global",
+                    "GIT_CONFIG_VALUE_0": "from-count",
+                    "GIT_CONFIG_PARAMETERS": "'stoicheia.system'='from-parameters'"}
+
+        def seen(**variables) -> str:
+            with mock.patch.dict(os.environ, dict(caller, **settings, **variables),
+                                 clear=True):
+                return safe_push.run_step("4", "a check that reads git's configuration",
+                                          check, tmp / "check", safe_push.Report(),
+                                          tmp / "logs", 1, fail="note")
+
+        # The plants are live: started directly, the check reads HOME's .gitconfig and the
+        # planted system file, and the caller's settings in place of both.
+        def directly(env) -> str:
+            return subprocess.run(check, cwd=tmp / "check", env=env, capture_output=True,
+                                  text=True, check=True).stdout
+        self.assertEqual((directly(caller), directly(dict(caller, **settings)),
+                          directly(dict(caller, GIT_CONFIG_GLOBAL="planted.cfg"))),
+                         ("stoicheia.global=from-home\nstoicheia.system=from-the-system-file\n",
+                          "stoicheia.global=from-count\nstoicheia.system=from-parameters\n",
+                          "stoicheia.global=from-the-worktree\n"
+                          "stoicheia.system=from-the-system-file\n"))
+        empty = str(tmp / "empty")
+        self.assertEqual(seen(GIT_CONFIG_GLOBAL=empty),
+                         "stoicheia.global=\nstoicheia.system=from-the-system-file\n")
+        # An empty GIT_CONFIG_GLOBAL shuts HOME's .gitconfig out too; a relative one is
+        # dropped, so the check reads HOME's, never the worktree's planted file.
+        self.assertEqual((seen(GIT_CONFIG_GLOBAL=""), seen(GIT_CONFIG_GLOBAL="planted.cfg")),
+                         ("stoicheia.global=\nstoicheia.system=from-the-system-file\n",
+                          "stoicheia.global=from-home\nstoicheia.system=from-the-system-file\n"))
+        self.assertEqual(seen(GIT_CONFIG_GLOBAL=empty, GIT_CONFIG_NOSYSTEM="1"),
+                         "stoicheia.global=\nstoicheia.system=\n")
+        # With no GIT_CONFIG_GLOBAL, git reads HOME's .gitconfig, as it does for every caller
+        # that names none.
+        self.assertEqual(seen(),
+                         "stoicheia.global=from-home\nstoicheia.system=from-the-system-file\n")
 
 
 class Units(unittest.TestCase):

@@ -463,6 +463,26 @@ which runs it for a train of class R3 and above, install it once:
 python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
 ```
 
+On a Python marked externally managed ([PEP 668](https://peps.python.org/pep-0668/)), as
+Homebrew's is on macOS and the system Python of recent Debian and Ubuntu releases is, pip
+refuses that install with `externally-managed-environment`. Install the parser into a
+virtual environment made outside the checkout: one made inside it by a Python before 3.13
+is an untracked folder, which the sequence's `git status` line prints. On Debian and
+Ubuntu, `python3 -m venv` needs the `python3-venv` package. Run the checks with the
+environment's `python3`, or activate it: `run_checks.py` runs each `python3` of the
+sequence with the interpreter that runs it. Either way, name it to the pre-flight in
+`STOICHEIA_PYTHON` ([section 10](#landing-work-pull-requests)), as the launcher may
+otherwise find a `python3.14` outside it. Never pass `--break-system-packages`: it
+overrides the refusal and installs into the Python that Homebrew or the system's package
+manager looks after.
+
+```sh
+python3 -m venv ~/.venvs/stoicheia
+~/.venvs/stoicheia/bin/python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
+~/.venvs/stoicheia/bin/python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition
+export STOICHEIA_PYTHON=~/.venvs/stoicheia/bin/python3   # for the pre-flight (section 10)
+```
+
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
 worktree, as the pre-flight's does: a file that any command above leaves changed or new,
@@ -689,9 +709,9 @@ On pull requests and post-merge main runs, `queue-integrity` installs the pinned
 parser with which the offline cases read `ci.yml`, then runs the offline cases in
 `tests/test_check_queue.py`, `tests/test_check_train.py` and `tests/test_auto_revert.py`,
 each with `python3 -I`; on a merge group it installs nothing, so the Python that runs the
-judge holds nothing a group names. Locally, install the parser in a virtual environment
-outside the tree (a system Python may refuse the install, and `python3 -I` does not see a
-user install), then run what CI runs:
+judge holds nothing a group names. Locally, run them in a virtual environment that holds
+the parser, outside the tree (`python3 -I` does not see a user install): the one made
+above serves, activated, or make a fresh one, as here, then run what CI runs:
 
 ```sh
 python3 -m venv "${TMPDIR:-/tmp}/stoicheia-queue" && . "${TMPDIR:-/tmp}/stoicheia-queue/bin/activate"
@@ -1721,25 +1741,30 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       scan reads what the push sends: every git command `safe_push.py` runs itself, the
       scan's among them, reads with git's replacement objects off, whatever the caller's
       environment holds (#256), its `git status` check among them. The programs it runs
-      as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS`, which
-      is present under the launcher or after a hand-over and otherwise only if the caller
-      set it, so that a check finds its repository by its working directory (#355). No
-      command `safe_push.py` runs itself, git's or another's, gets one of the caller's
-      variables that tie git to one repository (`GIT_DIR`, `GIT_INDEX_FILE`,
-      `GIT_WORK_TREE` and the rest that `git rev-parse --local-env-vars` lists), but
-      `GIT_NO_REPLACE_OBJECTS` as above, so that a hook's variables never send its git to
-      the hook's repository or index: each command finds its repository by its working
-      directory too, the hand-over's included (#357). One `git rev-parse` before any step
-      is the exception: it is given the caller's `GIT_DIR` and `GIT_WORK_TREE` on its
-      command line, as `--git-dir=` and `--work-tree=`, and only reads where they point,
-      so that a run they would send to another repository is refused (#186). The harness
-      sets one itself, the
-      temporary `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
+      as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS` and the
+      four that name git's global and system configuration files or shut them, or the
+      system attributes file, out (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`,
+      `GIT_CONFIG_NOSYSTEM`, `GIT_ATTR_NOSYSTEM`, #430), each as the caller set it (but a
+      relative path in either of the first two, which is dropped), so that a check finds
+      its repository by its working directory (#355) and reads the configuration files
+      safe_push's own git reads, save one named by such a relative path;
+      `GIT_NO_REPLACE_OBJECTS` is present under the launcher or after a hand-over and
+      otherwise only if the caller set it. No command
+      `safe_push.py` runs itself, git's or another's, gets one of the caller's variables
+      that tie git to one repository (`GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE` and the
+      rest that `git rev-parse --local-env-vars` lists), but `GIT_NO_REPLACE_OBJECTS` as
+      above, so that a hook's variables never send its git to the hook's repository or
+      index: each command finds its repository by its working directory too, the
+      hand-over's included (#357). One `git rev-parse` before any step is the
+      exception: it is given the caller's `GIT_DIR` and `GIT_WORK_TREE` on its command
+      line, as `--git-dir=` and `--work-tree=`, and only reads where they point, so that
+      a run they would send to another repository is refused (#186). The harness sets
+      one itself, the temporary
+      `GIT_INDEX_FILE` of the main-checks cache's base tree. The launcher behind
       `git safe-push` unsets the same variables before its first git command, so a
       caller's `GIT_DIR` cannot make it fetch another repository's origin and run that
-      repository's harness (#359).
-      `check_acceptance.py`, the only check that reads git's objects for its verdict, is
-      #237's.
+      repository's harness (#359). `check_acceptance.py`, the only check that reads git's
+      objects for its verdict, is #237's.
    3. *Invariant guards,* against origin/main. First, before the commit is checked out,
       two paths guards read the tree of each commit the push brings (from origin/main to
       the commit, each tree once; a finding names, for each tree that holds it, the first
