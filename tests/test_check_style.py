@@ -2477,15 +2477,10 @@ class FigureCaption(unittest.TestCase):
                 ({"case": self.CASE + ".", "every_case": True, "note": "N."},
                  f"Drawn for every case: {self.CASE}. N."),
                 ({"every_case": True, "note": "N."}, "N."),
-                ({"case": self.CASE, "some_cases": True},
-                 f"Drawn for some of its cases: {self.CASE}."),
                 ({"case": self.CASE + ".", "some_cases": True, "note": "N."},
                  f"Drawn for some of its cases: {self.CASE}. N."),
-                ({"case": self.CASE, "every_case": False, "some_cases": False},
-                 f"Drawn for one case: {self.CASE}."),
-                ({"case": self.CASE, "every_case": False, "some_cases": True},
-                 f"Drawn for some of its cases: {self.CASE}."),
-                ({"some_cases": True, "note": "N."}, "N.")]:
+                ({"case": self.CASE, "some_cases": False},
+                 f"Drawn for one case: {self.CASE}.")]:
             with self.subTest(figure=figure):
                 self.assertEqual(render.figure_note({"figure": figure}), want)
 
@@ -2531,8 +2526,10 @@ class FigureCaption(unittest.TestCase):
                 (f'case = "{self.CASE}"\nsome_cases = true', "`some_cases` needs the `note`"),
                 (f'case = "{self.CASE}"\nsome_cases = "yes"', "`some_cases` must be true or false"),
                 (f'case = "{self.CASE}"\nsome_cases = 1', "`some_cases` must be true or false"),
-                (f'case = "{self.CASE}"\nevery_case = true\nsome_cases = true\nnote = "N."',
-                 "`every_case` and `some_cases` cannot both be true")]:
+                *[(f'case = "{self.CASE}"\nevery_case = {every}\n'
+                   f'some_cases = {some}\nnote = "N."',
+                   "`every_case` and `some_cases` cannot appear together")
+                  for every in ("true", "false") for some in ("true", "false")]]:
             with self.subTest(figure=figure):
                 with self.assertRaises(heath.ReviewError) as caught:
                     self.load(figure)

@@ -81,8 +81,10 @@ If it no longer matches, a statement changed after the review.
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
   way (III.8, whose last step compares the angles at the centre by I.24).
-- **alternative**: a different proof altogether, labelled as one on the page (III.24's
-  proof by the radii, once stage 3 gives Euclid's own).
+- **alternative**: a different proof altogether, labelled as one on the page. No route of
+  Books I to III may be one ([ACCEPTANCE](../docs/ACCEPTANCE.md), P3): an alternative proof
+  is kept there as a companion beside Euclid's route, as III.24's proof by the radii is
+  (`Prop24.equalCircles`, beside its `modified` route).
 
 ### `[representation]`: how Euclid's objects are put into Lean
 
