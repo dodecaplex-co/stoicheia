@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Focused cases for Certificate/Facts.lean's restricted-calculus C.N. 4 detection, its
-module boundary, and its construction rules and cited laws; and for check_fidelity.py's
-reading of the expectations on them.
+module boundary, its construction rules and cited laws, and its shared steps; and for
+check_fidelity.py's reading of the expectations on them.
 
     export PATH=$HOME/.elan/bin:$PATH
     lake build
@@ -45,8 +45,13 @@ and a law named with no proof found fails the run (I.5).
 
 A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
-construction rules and a field of facts.json's top level are read, and an expectation that
-is malformed, unmet or asks nothing fails.
+construction rules, a field of facts.json's top level and a field of every entry are read,
+and an expectation that is malformed, unmet or asks nothing fails.
+
+A fifth class compiles a fixture written in the test, over the foundations' Common
+Notions: a tacit rule proved from III.2, which III.3 calls itself and III.4 only through a
+lemma outside its namespace. III.3's shared steps list the rule, bringing in III.2;
+III.4's list the lemma and not the rule.
 
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
@@ -450,7 +455,8 @@ class ConstructionTests(unittest.TestCase):
 class ExpectationTests(unittest.TestCase):
     """check_fidelity.py's reading of tests/certificate_expectations.json, on small facts,
     without Lean (#150, question 4): a cited law's construction rules, read by its `law`; a
-    field of facts.json's top level, read with no `ref`; and each expectation that is
+    field of facts.json's top level, read with no `ref`; a field of every entry, read with
+    `"every": "entry"`, a shared step by its `name` (#429); and each expectation that is
     malformed, unmet or asks nothing, failing with its own message."""
 
     def facts(self, **i4):
@@ -637,6 +643,106 @@ class ExpectationTests(unittest.TestCase):
                               "equals": []},
                              "but its cited_laws is not a list of objects each with a `law` "
                              "name", facts=self.facts(cited_laws=beside))
+
+    STEP = {"name": "Tacit.outside_of_between", "brings_in": ["III.2"], "file": "f", "line": 1}
+    PIN = {"every": "entry", "field": "shared_steps", "excludes": ["Tacit.outside_of_between"]}
+
+    def test_every_entry_is_read(self):
+        # #429: no entry may list Circle 3 among its shared steps. The pin reads every
+        # entry, and a shared step by its `name`.
+        facts = self.facts(shared_steps=[self.STEP])
+        facts["propositions"][1]["shared_steps"] = []
+        self.assertFailsOnce(self.PIN, "I.4: its shared_steps should not include "
+                                       "Tacit.outside_of_between", facts=facts)
+        self.assertEqual(self.problems(
+            dict(self.PIN, excludes=["Tacit.inside_of_between"]),
+            {"every": "entry", "field": "axioms", "excludes": ["Postulate4"]},
+            facts=facts), [])
+        self.assertFailsOnce({"every": "entry", "field": "axioms", "excludes": ["Postulate1"]},
+                             "I.8: its axioms should not include Postulate1", facts=facts)
+        facts["propositions"][1]["shared_steps"] = [self.STEP]
+        errors = self.problems(self.PIN, facts=facts)
+        self.assertEqual(len(errors), 2, errors)
+        for ref, error in zip(("I.4", "I.8"), errors):
+            self.assertIn(f"{ref}: its shared_steps should not include", error)
+
+    def test_every_entry_must_be_readable(self):
+        # Read as empty, an entry with no field, or a step with no name, would let the pin
+        # pass; and so would no entries at all.
+        self.assertFailsOnce(self.PIN, "but its entry has no field `shared_steps`",
+                             facts=self.facts(shared_steps=[]))
+        nameless, mixed = [dict(self.STEP, name=None)], [self.STEP, "Tacit.inside_of_between"]
+        for facts in (self.facts(shared_steps=nameless), self.facts(shared_steps=mixed)):
+            facts["propositions"][1]["shared_steps"] = []
+            with self.subTest(steps=facts["propositions"][0]["shared_steps"]):
+                self.assertFailsOnce(self.PIN, "I.4: its shared_steps is not a list of names, "
+                                               "an object or a list of objects each with a "
+                                               "`name`", facts=facts)
+        errors = self.problems(dict(self.PIN, field="cited_laws"))
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(all("is not a list of names" in e for e in errors), errors)
+        self.assertFailsOnce(self.PIN, "reads every entry, but facts.json has none",
+                             facts={"propositions": []})
+
+    def test_a_malformed_every_fails(self):
+        for expectation in (dict(self.PIN, every="entries"),
+                            dict(self.PIN, every=True),
+                            dict(self.PIN, ref="I.4"),
+                            dict(self.PIN, includes=["Tacit.inside_of_between"]),
+                            dict(self.PIN, equals=[]),
+                            dict(self.PIN, count={"is": 0})):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "an expectation over every entry is "
+                                                  "`\"every\": \"entry\"`")
+        self.assertFailsOnce(dict(self.PIN, excludes=[]), "and an effective predicate")
+        self.assertFailsOnce(dict(self.PIN, law="lenSymm"), "needs `field` and `why`")
+
+
+class SharedStepTests(unittest.TestCase):
+    """A proved tacit rule among an entry's shared steps, on a fixture written here
+    (#429): the expectation over every entry's `shared_steps` can see a rule only where
+    the walk lists it. A rule the entry's own Lean calls is listed, bringing in the
+    proposition it is proved from, as Circle 2 brings in III.2; one it calls only through
+    a lemma outside its namespace is not, and that lemma is listed instead."""
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.TemporaryDirectory(prefix="stoicheia-steps-") as tmp:
+            work = Path(tmp)
+            env, fixture_modules = prepare_package(work)
+            (work / "Elements.lean").write_text(
+                "import Elements.Foundations.CommonNotions\n"
+                "namespace Elements\n"
+                "def companions : List (Lean.Name × String) := []\n"
+                "theorem BookIII.Prop2 (a : Length) : a + 0 = a := Tacit.add_zero a\n"
+                "theorem Tacit.rule (a : Length) : a + 0 = a := BookIII.Prop2 a\n"
+                "theorem CertificateFixture.via (a : Length) : a + 0 = a := Tacit.rule a\n"
+                "theorem BookIII.Prop3 (a : Length) : a + 0 = a := Tacit.rule a\n"
+                "theorem BookIII.Prop4 (a : Length) : a + 0 = a := CertificateFixture.via a\n"
+                "end Elements\n"
+            )
+            compile_module(work, env, fixture_modules, "Elements")
+            certificate_result = subprocess.run(
+                ["lake", "env", "lean", "Facts.lean"],
+                cwd=work, env=env, capture_output=True, text=True, timeout=120,
+            )
+            if certificate_result.returncode:
+                raise AssertionError(
+                    f"certificate: lake env lean exited {certificate_result.returncode}\n"
+                    + certificate_result.stdout + certificate_result.stderr
+                )
+            facts = json.loads((work / "facts.json").read_text())
+        cls.steps = {entry["ref"]: {step["name"]: step["brings_in"]
+                                    for step in entry["shared_steps"]}
+                     for entry in facts["propositions"]}
+        if set(cls.steps) != {"III.2", "III.3", "III.4"}:
+            raise AssertionError(f"unexpected fixture subjects: {sorted(cls.steps)}")
+
+    def test_a_rule_called_directly_is_listed(self):
+        self.assertEqual(self.steps["III.3"], {"Tacit.rule": ["III.2"]})
+
+    def test_a_rule_called_through_a_lemma_is_not(self):
+        self.assertEqual(self.steps["III.4"], {"CertificateFixture.via": ["III.2"]})
 
 
 if __name__ == "__main__":

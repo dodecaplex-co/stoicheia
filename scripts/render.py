@@ -1316,11 +1316,28 @@ def use_pattern(names, longer=()):
     return re.compile(r"(?<![\w.'])(?:" + "|".join(alts) + rf")(?!{after})")
 
 
+def root_names(name):
+    """The names a declaration made at the root goes by wherever the edition's Lean names
+    it (`_root_.Elements.Tacit.adjacent_eq_of_right`): Lean's own name less `Elements.`
+    (`Tacit.adjacent_eq_of_right`), which may stand qualified further
+    (`Elements.Tacit.adjacent_eq_of_right`), and each shorter ending of it, as a file that
+    opens its namespace writes it (`adjacent_eq_of_right`, after `open Tacit`). Any other
+    name goes by itself."""
+    if not name.startswith("_root_."):
+        return [name]
+    parts = name.split(".")[1:]
+    parts = parts[1:] if parts[0] == "Elements" else parts
+    return [".".join(parts[j:]) for j in range(len(parts))]
+
+
 def own_names(name, user):
     """The names a declaration goes by inside `user`, another declaration of its file:
     its full name, and each shorter ending of it that Lean reads there, since the proof
     of `A.B.c` reads names inside the namespace `A.B` (`fan.growth` for
-    `Fitted.fan.growth` inside `Fitted.fan.within`)."""
+    `Fitted.fan.growth` inside `Fitted.fan.within`); or, made at the root, its
+    `root_names`."""
+    if name.startswith("_root_."):
+        return root_names(name)
     parts, space = name.split("."), user.split(".")[:-1]
     return [".".join(parts[j:]) for j in range(len(parts)) if parts[:j] == space[:j]]
 
@@ -1328,32 +1345,59 @@ def own_names(name, user):
 def commands(code):
     """[name, text] for each command of a Lean file without comments: its first line,
     which starts at the margin, and the lines after it up to the next that does, as the
-    edition's Lean is laid out. The name is the declaration's (`Prop14.area_pos`), or ""
-    for a command that declares nothing (`open Tacit`)."""
+    edition's Lean is laid out. The name is the declaration's (`Prop14.area_pos`), a
+    private one's too (`inside_point_of_chord`), or "" for a command that declares nothing
+    (`open Tacit`, an `example`)."""
     out = []
     for line in code.splitlines(keepends=True):
         if not out or line.strip() and not line[0].isspace():
-            m = DECLARATION.match(line)
+            m = DECLARATION.match(line.removeprefix("private "))
             out.append([m.group(1) if m else "", line])
         else:
             out[-1][1] += line
     return out
 
 
-def use_kind(name, own, code, declared):
+@functools.cache
+def users_in(code, declared):
+    """Who uses what in one Lean file without comments, `code`, `declared` being the names
+    the edition's Lean declares: {each declaration of the file: the names of the other
+    commands that use it}, its own declaration line and body aside, as `commands` names
+    them."""
+    found = commands(code)
+    users = {}
+    for name, _ in found:
+        if not name:
+            continue
+        longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
+        users[name] = {user for user, text in found if user != name
+                       and use_pattern(own_names(name, user), longer).search(text)}
+    return users
+
+
+def use_kind(name, own, code, declared, proofs):
     """How a declaration after a theorem, named as a page lists it (`Prop46.square_eq`,
     `Fitted.fan`), is used, read from `code`, the Lean files of the edition by path with
     their comments taken out, its own file being `own`, and `declared`, the names they
-    declare: "later" if another file uses it, "own" if only other declarations of its own
-    file do, and "beside" if nothing does, its own declaration line and body aside. A
-    mention in a comment is no use."""
+    declare: "later" if another file uses it; "own" if the page's own proofs, `proofs`
+    (the proposition's theorem, its porism and its companions), use it, or use a
+    declaration of its file that uses it, at any remove; and "beside" otherwise, when
+    nothing uses it, or only declarations of its file that those proofs do not use, as
+    `Segment.exists_tangent` in III.16's file serves only `Segment.compare_alike`, which
+    nothing uses. A mention in a comment is no use."""
     longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
-    if any(use_pattern([name], longer).search(text)
+    if any(use_pattern(root_names(name), longer).search(text)
            for path, text in code.items() if path != own):
         return "later"
-    if any(use_pattern(own_names(name, user), longer).search(text)
-           for user, text in commands(code[own]) if user != name):
-        return "own"
+    users = users_in(code[own], declared)
+    seen, todo = {name}, [name]
+    while todo:
+        for user in users.get(todo.pop(), ()):
+            if user in proofs:
+                return "own"
+            if user not in seen:
+                seen.add(user)
+                todo.append(user)
     return "beside"
 
 
@@ -1399,11 +1443,41 @@ theorem Fitted.fan.within : True := by
 
 theorem Fitted.fan : True := trivial
 
+theorem Prop9.deep : True := trivial
+
+theorem Prop9.mid : True := Prop9.deep
+
+theorem Prop9.inner : True := trivial
+
+private theorem hidden : True := Prop9.inner
+
+theorem Prop9.part : True := trivial
+
+theorem Prop9.aside : True := Prop9.part
+
+theorem Prop9.support : True := trivial
+
+theorem Prop9.shared : True := Prop9.support
+
+theorem _root_.Elements.Tacit.rule_beside : True := trivial
+
+theorem _root_.Elements.Tacit.rule_later : True := Tacit.rule_beside
+
+theorem _root_.Elements.Tacit.rule_own : True := trivial
+
+theorem Prop9.general : True := by
+  have := Prop9.mid
+  have := hidden
+  have := rule_own
+  exact Fitted.fan.within
+
 end Elements.BookI
 """,
     "Prop10.lean": """import Elements.BookI.Prop09
 
 namespace Elements.BookI
+
+open Tacit
 
 /-- After `Prop9.noted`, which is named here only in comments. -/
 theorem Prop10 : True := by
@@ -1412,11 +1486,17 @@ theorem Prop10 : True := by
   have := Fitted.fan.part
   have := Prop9.iff.mpr trivial
   have := Prop9.pair.1
+  have := Prop9.shared
+  have := rule_later
   exact BookI.Prop9.later
 
 end Elements.BookI
 """,
 }
+
+# The page's own proofs in the first file: the proposition's theorem, its porism and its
+# companion.
+USE_PROOFS = {"Prop9", "Prop9.porism", "Prop9.general"}
 
 USE_CASES = [   # (a declaration of the first file, how it is used)
     ("Prop9.later", "later"),         # in the other file, qualified
@@ -1430,7 +1510,19 @@ USE_CASES = [   # (a declaration of the first file, how it is used)
     ("Fitted.fan.part", "later"),
     ("Fitted.fan", "beside"),         # only in `Fitted.fan.part` and `fan.growth`, longer
                                       # names declared beside it, not projections of it
-    ("Fitted.fan.growth", "own"),     # as `fan.growth`, inside `Fitted.fan.within`
+    ("Fitted.fan.growth", "own"),     # as `fan.growth`, inside `Fitted.fan.within`, which
+                                      # the companion uses
+    ("Prop9.mid", "own"),             # by the companion
+    ("Prop9.deep", "own"),            # only by `Prop9.mid`: at a remove
+    ("Prop9.inner", "own"),           # only by the private `hidden`, which the companion uses
+    ("Prop9.part", "beside"),         # only by `Prop9.aside`, which nothing uses
+    ("Prop9.support", "beside"),      # only by `Prop9.shared`, which the other file uses and
+                                      # no proof of the page does
+    ("Prop9.shared", "later"),
+    ("_root_.Elements.Tacit.rule_later", "later"),   # in the other file as `rule_later`
+    ("_root_.Elements.Tacit.rule_beside", "beside"),  # only by another proved rule, as
+                                                      # `Tacit.rule_beside`
+    ("_root_.Elements.Tacit.rule_own", "own"),       # by the companion, as `rule_own`
 ]
 
 # And the Proof row names a proposition's companions in the order its review record lists
@@ -1476,7 +1568,7 @@ def use_self_check():
     own = next(iter(USE_FILES))
     faults = []
     for name, want in USE_CASES:
-        got = use_kind(name, own, code, declared)
+        got = use_kind(name, own, code, declared, USE_PROOFS)
         if got != want:
             faults.append(f"{name} read as {got!r}, not {want!r}")
     for order, want in ORDER_CASES:
@@ -1504,8 +1596,8 @@ def lean_listing(book, n, facts):
     """The Lean of a page: the main theorem open; the lemmas before it folded in one
     <details>, with their names and line count; and the porism, companions and other
     declarations after it folded in another, those that later propositions use named apart
-    from the lemmas only this proposition's own proofs use and from those nothing uses,
-    which stand beside it (`use_kind`)."""
+    from the lemmas this proposition's own proofs use, at any remove, and from those
+    neither uses, which stand beside it (`use_kind`)."""
     parts = lean_parts(book, n)
     companions = {f"Prop{n}.{heath.parse_ref(a).name}"
                   for a in facts.get(f"{book}.{n}", {}).get("attached", [])
@@ -1534,7 +1626,8 @@ def lean_listing(book, n, facts):
         comp = [x for x in parts.after_names if x in companions]
         rest = [x for x in parts.after_names if x not in porism + comp]
         own = heath.lean_path(book, n)
-        kind = {x: use_kind(x, own, lean_code(), lean_declared()) for x in rest}
+        proofs = {f"Prop{n}", f"Prop{n}.porism"} | companions
+        kind = {x: use_kind(x, own, lean_code(), lean_declared(), proofs) for x in rest}
         later = [x for x in rest if kind[x] == "later"]
         local = [x for x in rest if kind[x] == "own"]
         beside = [x for x in rest if kind[x] == "beside"]
