@@ -51,7 +51,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 
 ## Book I
 
-*25 October 2026:* each of Book I's 48 figures was read again against its scan at `bedbba23`, after the letters were set upright and I.1's D and I.2's E moved clear of the strokes beside them, which moved no point or stroke. Each reads as its row says. I.4's record carries the line proposed above as written ([#295](https://github.com/jackChallis/stoicheia/issues/295)), and I.27's the rest of its line, in words of its own; their rows say so.
+*26 October 2026:* each of Book I's 48 figures was read again against its scan on 25 October 2026, at `bedbba23`, after the letters were set upright and I.1's D and I.2's E moved clear of the strokes beside them, which moved no point or stroke. Each reads as its row says. I.4's record carries the line proposed above as written ([#295](https://github.com/jackChallis/stoicheia/issues/295)), and I.27's the rest of its line, in words of its own; their rows say so.
 
 | | Heath's figure | Reading |
 |---|---|---|
