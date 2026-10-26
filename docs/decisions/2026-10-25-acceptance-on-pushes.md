@@ -11,8 +11,8 @@
   as [WORKFLOW](../WORKFLOW.md), section 8, already said. ACCEPTANCE's "In CI" now says
   that the job runs on every event CI runs on, a pull request, a merge-queue group and a
   push to main, and its step 2 gives, event by event, the commit that stands for main, as
-  the workflow's own step does: on a pull request the checkout's first parent when the
-  second is the pull request's head, else the recorded base when the checkout is that
+  the workflow's own step does: on a pull request the checkout's first parent when it
+  has exactly two parents and the second is the pull request's head, else the recorded base when the checkout is that
   head, and any other checkout fails the job; in a group its base; on a push, main
   before the push. Its steps speak of the checked-out revision, not of the pull request
   alone.
