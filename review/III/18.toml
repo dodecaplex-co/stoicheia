@@ -1,11 +1,17 @@
 # review/III/18.toml
 [statement]
 scope = "full"
-note = "The centre F is given; it is off DE because F is within the circle and no point of DE is."
-fingerprint = "sha256:8e256532a8501ef2"
+note = "For any straight line touching a circle, `Prop18.contact_lt` and `Prop18.semicircle_gt` compare III.16's two angles with acute angles; `Prop18.acute` with any."
+companions = ["III.18 contact_locallyEqual", "III.18 contact_lt", "III.18 semicircle_gt", "III.18 acute"]
+fingerprint = "sha256:c091c8d1991be2a0"
 
 [route]
 kind = "euclid"
+note = "`Prop18` follows Euclid, with the centre F given; F is off DE, for it is within the circle and no point of DE is. The companions follow in Euclid's order and cite nothing later than III.18. Let AE touch the circle at A, and AB be the diameter through A: III.18 puts AE at right angles to AB (`Prop18.diameter`), so AE is III.16's straight line and III.16's two parts hold for it (`Prop18.parts`); III.16's comparisons then hold for AE, cited from III.16's own steps (`Prop16.horn_lt`, `Prop16.semicircle_gt`), which argue directly from its second part where Euclid argues by reductio, the one departure, as III.16's record declares. `Prop18.contact_locallyEqual` and `Prop18.contact_lt` take the centre from `Tacit.exists_centre`, a rule we assume; `Prop18.semicircle_gt` and `Prop18.acute` keep the centre D, through which the diameter is drawn, and `Prop18.acute` places every acute angle at A by I.23."
+
+[representation]
+tags = ["mixed-angles-local"]
+note = "The angle of the semicircle and the angle of contact are mixed angles (`MixedAngle`), read and compared near A as in III.16. An angle of contact is as Euclid draws it (`MixedAngle.WellFormed`) when A is on the circle, AE touches it there, and a point B off AE names a branch of the circumference, the ray AB passing within the circle. Every such B is on the diameter's side of AE (`Prop18.branch`), and near A every such B names the same region, the angle of contact of III.16's figure (`Prop18.contact_locallyEqual`). No addition, ratio or motion of mixed angles is claimed."
 
 [[passage]]
 at = "For let a straight line DE touch the circle ABC at the point C"
@@ -36,20 +42,21 @@ kind = "grouped"
 note = "The reductio shows that the foot G of the perpendicular from F is C itself, so FC is that perpendicular, and no other straight line is left to prove."
 
 [figure]
+case = "the radius FC to the point of contact C, as in the main theorem; the angles its companions compare are drawn in III.16's figure"
 note = "The figure shows the impossible supposition with G distinct from C: FG is supposed perpendicular to DE, but the perpendicular in the drawn geometry is FC."
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:c05e2d0569c0489f"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4"
-text = "sha256:89ba3a397472522c"
+commit = "8d1358248"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:7ecfaa05ae91135c"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #130, ship ER: read in full after the angle of contact after III.18 moved in, with its four companions, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:a8a5ebd0aa17fe54"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
