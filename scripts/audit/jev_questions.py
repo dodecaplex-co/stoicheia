@@ -3017,13 +3017,17 @@ def calibration_file(path: Path) -> tuple[str, list[dict], bytes]:
     rows = jev.read_rows(path)
     calibration = [row.get('calibration') for row in rows]
     require(all(isinstance(c, dict) for c in calibration), f'{path.name}: not a calibration question file')
-    names = {c.get('question') for c in calibration}
+    questions = [c.get('question') for c in calibration]
+    require(all(isinstance(question, str) for question in questions),
+            f'{path.name}: every calibration.question must be text')
+    names = set(questions)
     require(len(names) == 1 and next(iter(names)) in QUESTIONS,
             f'{path.name}: rows of no question, or of more than one')
     name = next(iter(names))
     spec = QUESTIONS[name]
     roles = [c.get('role') for c in calibration]
     refs = [row.get('ref') for row in rows]
+    require(all(isinstance(ref, str) for ref in refs), f'{path.name}: every ref must be text')
     require(len(rows) == 20 and roles.count('control') == 10 and roles.count('plant') == 10,
             f'{path.name}: {len(rows)} rows, {roles.count("control")} controls and '
             f'{roles.count("plant")} plants, not the 20 rows, 10 and 10, the entry fixes')

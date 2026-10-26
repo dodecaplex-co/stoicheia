@@ -2126,6 +2126,28 @@ class Tally(TallyLines, unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertIn('is used twice', err)
 
+    def test_calibration_question_and_ref_must_be_text(self):
+        rows = [json.loads(line) for line in self.data.splitlines()]
+        invalid = (('missing', None, True), ('null', None, False), ('list', [], False),
+                   ('object', {}, False), ('numeric', 13, False))
+        for field, message in (('question', 'every calibration.question must be text'),
+                               ('ref', 'every ref must be text')):
+            for kind, value, missing in invalid:
+                with self.subTest(field=field, kind=kind):
+                    changed = copy.deepcopy(rows)
+                    target = changed[0]['calibration'] if field == 'question' else changed[0]
+                    if missing:
+                        del target[field]
+                    else:
+                        target[field] = value
+                    self.use(b''.join(json.dumps(row, ensure_ascii=False).encode() + b'\n'
+                                      for row in changed))
+                    status, out, err = self.tally([])
+                    self.assertEqual(status, 1, out + err)
+                    self.assertTrue(err.startswith('refused: '), err)
+                    self.assertIn(message, err)
+                    self.assertNotIn('Traceback', out + err)
+
     def test_a_label_or_line_repeated_or_not_the_row_s_is_refused(self):
         self.refused(self.clean_run() + [self.clean_run()[0]], 'answered twice')
         for key, value in (('ref', 'I.1'), ('item', 9), ('seeded', 1), ('id', 'nowhere')):
