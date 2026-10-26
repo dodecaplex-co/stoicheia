@@ -263,7 +263,7 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCir
       SameSideOf N Q C D → ∠ A P B = ∠ C Q D → ‖M A‖ = ‖N C‖ := by
     intro P Q hP hQ hMP hNQ hPQ
     exact Prop24.isosceles hMP.triangle hNQ.triangle hMA hNC hAB (by
-      rw [Prop20 hM hP hA hB hMP, Prop20 hN hQ hC hD hNQ, hPQ])
+      rw [Prop20.special hM hP hA hB hMP, Prop20.special hN hQ hC hD hNQ, hPQ])
   have diam : Between A M B → Between C N D → ‖M A‖ = ‖N C‖ := by
     intro hAMB hCND
     have d₁ : ‖A B‖ = ‖M A‖ + ‖M A‖ := by
