@@ -7,17 +7,21 @@
   ([decisions record](../briefs/0002-decisions.md)). No Lean file, lock, statement,
   definition, record or `--` line changes.
 
-  The tag. `[tag.centre-given]` said that a statement gave the circle its centre as a
-  hypothesis, a hypothesis that the centre rule, once locked, made empty. The rule
-  `Tacit.exists_centre` is in the lock, the statements that only assumed a centre take
-  one inside their proofs (step 6), and no record carries the tag: `grep -rl centre-given
-  review` finds only `review/terms.toml`, and no script or test names it. Brief 0008's
-  step 7 takes it out of `review/terms.toml` in a pull request of its own, since that file
-  is protected; this is that pull request. The record schema now refuses the tag, as it
-  refuses any tag that `review/terms.toml` does not define.
+  The tag. `[tag.centre-given]` said that a statement gave the circle its centre, named or
+  as `∃ G, Centre G α`, as a hypothesis. Where the hypothesis asked only that some centre
+  exist, the centre rule, once locked, gives it for every circle, and those statements now
+  take a centre inside their proofs (step 6). A statement that names its centre keeps that
+  hypothesis, since the existence of some centre does not identify the point named, as
+  the decision says. Since step 6 no record carries the tag: before this change
+  `grep -rl centre-given review` found only `review/terms.toml`, and after it finds
+  nothing. No script or test names it. Brief 0008's step 7 takes it out of
+  `review/terms.toml` in a pull request of its own, since that file is protected; this is
+  that pull request. The record schema now refuses the tag, as it refuses any tag that
+  `review/terms.toml` does not define.
 
-  The pin. III.1's construction takes a centre from the rule to prove that D is within, so
-  its certificate carries `Tacit.exists_centre`, and `facts.json` gives it 39 tacit rules.
+  The pin. III.1 takes a centre from the rule in two places, inside its construction to
+  prove that D is within and in its reductio for the supposed centre G, so its
+  certificate carries `Tacit.exists_centre`, and `facts.json` gives it 39 tacit rules.
   Its expectation in `tests/certificate_expectations.json` counted those 39 but did not
   name the rule, so a certificate in which another tacit rule took its place would pass.
   The expectation now also `includes` `Tacit.exists_centre`, its `why` says so, and the
