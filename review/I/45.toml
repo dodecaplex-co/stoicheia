@@ -36,10 +36,10 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
+commit = "a973c8726"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:df27ec018e27a2ab"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x)"
 text = "sha256:c84dca7ade7fb67a"
 
 [review.items]
