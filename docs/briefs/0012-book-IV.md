@@ -1,8 +1,8 @@
 # Brief 0012: Book IV, figures in and about a circle
 
-*Status, 21 October 2026: outside the consolidation release. The owner ruled this brief
-outside that release, as [the decisions entry of that
-day](../decisions/2026-10-21-briefs-0010-and-0012.md) records. It stays the draft described
+*Status, 21 October 2026: outside the consolidation release. The owner chose, of the
+options put to them that day, to rule this brief outside that release, as [the decisions
+entry of that day](../decisions/2026-10-21-briefs-0010-and-0012.md) records. It stays the draft described
 below, not approved, and its scratch, [`docs/reports/crew/scratch-IV/`](../reports/crew/scratch-IV/),
 stays on main as committed, built by nothing; its order of work (section 11) begins only
 after the owner's gate. Brief 0010, whose approval the opening below awaits, was approved
