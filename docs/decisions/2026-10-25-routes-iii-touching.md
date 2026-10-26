@@ -33,7 +33,9 @@
   III.11 and III.12 by a route that is not Euclid's; they come after III.13 and cite
   neither, and the overlap catalogue,
   [docs/reports/overlaps.md](../reports/overlaps.md), gains a dated entry among its near
-  misses that says so.
+  misses that says so. Two of that report's sentences which this move makes untrue are
+  corrected with it: the number of files left in `Staging/Routes/`, and the remark under
+  III.6 that agreement with Heath's reading at the contact is not established.
 
   No staged theorem's statement is a fact already in `Elements/`, as Lean confirmed: the
   four copies the staged file once held left it at 4a6d9a49, and the five facts it shares
