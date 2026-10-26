@@ -17,8 +17,12 @@ that the full theory cannot prove a placement by later construction propositions
 
 The combined placement, keeping all three sides and all three angles, follows
 LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar
-and Xujie Si, with warm thanks. Equivalence with System E's two-rule presentation is
-not claimed. The edition permits direct use of this rule only in I.4 and I.8.
+and Xujie Si, with warm thanks. Our placement also keeps the side AC, as a straight
+line through D and C′, which neither of System E's sets, Π₁ and Π₂, lists (§3.7,
+p. 725). Its cost is a strict same-side fact and a straight line through two distinct
+points, as the theorem `Rule.of_placement_of_join` shows. Equivalence with System E's
+two-rule presentation is not claimed. The edition permits direct use of this rule only
+in I.4 and I.8.
 -/
 
 namespace Elements
