@@ -91,7 +91,7 @@ declaration, record or lock changes.
 - **Heath's statement under III.5.** Section 7's paragraph on III.10 calls the sentence it
   quotes from Heath (vol. 2, p. 12) "the converse Heath gives under III.5". It is not
   III.5's converse. III.5 reads "If two circles cut one another, they will not have the
-  same centre" ([heath/III/05.md](../../heath/III/05.md)), and its converse, that circles
+  same centre" (vol. 2, p. 12; [heath/III/05.md](../../heath/III/05.md)), and its converse, that circles
   with different centres cut one another, is false. Heath gives the statement under III.5,
   beside the enunciation that joins III.5 and III.6: two circles with the same centre and
   one point of their circumferences in common coincide altogether. It is what `circle_eq`
