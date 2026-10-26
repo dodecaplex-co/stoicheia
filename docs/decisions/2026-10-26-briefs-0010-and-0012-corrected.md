@@ -1,7 +1,8 @@
-- **Three corrections to the note of 25 October on the entry ruling on briefs 0010 and 0012
-  (notation and Book IV, #165).** The coordinator's orders of 26 October 2026 correct three
-  points of [the entry of 21 October](2026-10-21-briefs-0010-and-0012.md), in its note of
-  25 October, which stands as written, since an entry is never edited
+- **Three corrections to the entry ruling on briefs 0010 and 0012, two to its note of 25
+  October and one to its title (notation and Book IV, #165).** The coordinator's orders of
+  26 October 2026 correct three points of
+  [the entry of 21 October](2026-10-21-briefs-0010-and-0012.md), two in its note of 25
+  October and one in its title; the entry stands as written, since an entry is never edited
   ([WORKFLOW](../WORKFLOW.md), section 10). First, where the note says that the coordinator
   decides what the choice approves of the centre aliases' amendment, and how it lands,
   read: what the choice approves of the amendment the coordinator reads, asking the owner
