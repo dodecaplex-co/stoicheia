@@ -835,17 +835,9 @@ train and group as unreadable.
   and `cited_laws` from entries that cite laws through one shared theorem or law by law,
   each law with its proofs and the construction rules beneath them; a proof reached only
   through another entry is not found, and a law named with no proof found fails the run.
-  It reads `shared_steps` where a proved rule is called directly, which is listed with the
-  entry it brings in, and through a lemma, which is listed in its place. It checks each
-  entry's `proved_rules` against two stand-in proved rules, the second proved from the
-  first: an entry lists a rule its proof reaches directly, through its own helper, through
-  a lemma, through an entry it cites, through a Common Notion or through its statement
-  alone; both when it reaches the second; and none when it reaches neither
-  ([#168](https://github.com/jackChallis/stoicheia/issues/168)). A copy of the certificate
-  whose walk for those rules stops at each one must fail the run, its check against Lean's
-  `collectAxioms` naming each entry that rests on a rule. Without Lean, it reads the forms
-  of `tests/certificate_expectations.json` as `check_fidelity.py` does, and an expectation
-  that is malformed, unmet or asks nothing fails. It needs the
+  Without Lean, it reads the forms of `tests/certificate_expectations.json` as
+  `check_fidelity.py` does, and an expectation that is malformed, unmet or asks nothing
+  fails. It needs the
   foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
   job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
   delivered.

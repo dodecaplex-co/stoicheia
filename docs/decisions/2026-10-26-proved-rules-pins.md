@@ -61,8 +61,7 @@
   the run fail; and its fixture reaches a rule through a Common Notion. Two comments in
   the certificate's source now speak of every walk of a proof, as its field guide already
   does, since the walk for the vocabulary does not read through `mentions`; the field
-  guide loses a stray reference to a stage. Section 8 of
-  [WORKFLOW](../WORKFLOW.md) describes the new cases of the certificate's tests.
+  guide loses a stray reference to a stage.
 
   The protected file `tests/certificate_expectations.json` takes the four new pins and
   six reworded reasons, and nothing in it is weakened.
