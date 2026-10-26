@@ -204,7 +204,6 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
     "review/III/25.toml": ("S12", "stage 4's records (#28)"),
     # The catalogues and the reports.
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
-    "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
     # S12's report inventory on bd3b72a: 147 findings. These are the initial findings of
     # the new report reach, not later additions to a landed rule.
     "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (147 findings)"),

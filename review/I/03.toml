@@ -18,6 +18,7 @@ commit = "bd86a7b6"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:5d88634ef13cd7a4"
 run = "brief 0009 stage full, ship S3 A1-integration re-read"
+text = "sha256:45031d0f8074016b"
 
 [review.items]
 statement = "pass"
