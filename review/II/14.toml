@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "`Prop14.outline` and `Prop14.outline_side` cover any rectilineal figure, given by its boundary alone; `Prop14` takes two triangles unchecked; the rest take lists of triangles or a rectangle."
+note = "`Prop14.outline` and `Prop14.outline_side` take a figure by its boundary; `Prop14` takes two triangles unchecked; the rest, lists of triangles or a rectangle."
 companions = ["II.14 outline", "II.14 outline_side", "II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:31d611e6d2d47392"
 

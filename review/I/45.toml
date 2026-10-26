@@ -1,7 +1,7 @@
 # review/I/45.toml
 [statement]
 scope = "full"
-note = "`Prop45` takes two triangles unchecked; `Prop45.outline` covers any rectilineal figure, given by its boundary alone; other companions handle checked divisions, sums and adding a triangle."
+note = "`Prop45` takes two triangles unchecked; `Prop45.outline` covers any rectilineal figure by its boundary; others take checked divisions, sums or a triangle more."
 companions = ["I.45 outline", "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:4bc8a67608702506"
 

@@ -1,7 +1,7 @@
 # review/I/40.toml
 [statement]
 scope = "full"
-note = "With its companions: `Prop40.general` takes equal bases anywhere on one straight line, `Prop40.join` gives AD parallel to the straight line of the bases; `Prop40` keeps BC, CE end to end."
+note = "`Prop40.general` takes equal bases anywhere on one straight line, `Prop40.join` gives AD parallel to the bases' line; `Prop40` keeps BC, CE end to end."
 companions = ["I.40 general", "I.40 join", "I.40 special"]
 fingerprint = "sha256:52e7cf8ad9eff8f3"
 
