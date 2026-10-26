@@ -1012,11 +1012,31 @@ BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
 
 
 def statement_names(statement):
-    """The names a facts.json statement uses, each a whole token: string literals are
-    blanked, the statement is cut at white space and brackets, and a prefix `@`, `↑` or
-    `¬` is taken off. So `Elements.circumference℃`, `Other.«Elements.circumference»` and
-    a quoted "Elements.circumference" are not `Elements.circumference`."""
-    tokens = re.split(r"[\s()\[\]{},⟨⟩]+", check_fidelity.without_comments(statement))
+    """The names a facts.json statement uses, each a whole token, read as Lean reads
+    them: a `«…»` component is one piece of its name, whatever it holds; a string literal
+    is no name; anything else is cut at white space and brackets; and a prefix `@`, `↑`
+    or `¬` is taken off. So `Elements.circumference℃`, `Other.«Elements.circumference»`,
+    `Other.«(Elements.circumference)»` and a quoted "Elements.circumference" are not
+    `Elements.circumference`."""
+    tokens, token, i = [], "", 0
+    while i < len(statement):
+        c = statement[i]
+        if c == "«":
+            end = statement.find("»", i)
+            end = len(statement) if end < 0 else end + 1
+            token, i = token + statement[i:end], end
+            continue
+        if c == '"' or c.isspace() or c in "()[]{},⟨⟩":
+            tokens.append(token)
+            token = ""
+        if c == '"':                # skip the literal, escapes and all
+            i += 1
+            while i < len(statement) and statement[i] != '"':
+                i += 2 if statement[i] == "\\" else 1
+        elif not (c.isspace() or c in "()[]{},⟨⟩"):
+            token += c
+        i += 1
+    tokens.append(token)
     return {t.lstrip("@↑¬") for t in tokens if t}
 
 
