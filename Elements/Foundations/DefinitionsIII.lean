@@ -54,7 +54,8 @@ Book III is about circles, and most of its words need no Lean word of their own:
 * No proposition of Book III uses a sector (Definition 10).
 
 The others are here: equal circles; a straight line touching a circle; circles touching
-one another, inside or outside; circles cutting one another; a circumference, compared
+one another, inside or outside, read of the whole circles and, as Heath prefers, at the
+point of contact; circles cutting one another; a circumference, compared
 with a circumference; and the
 angles of III.16 and III.31, contained by a straight line and a circumference.
 
@@ -159,6 +160,33 @@ def TouchesExternally (α β : Circle) (C : Point) : Prop :=
 one within the other, or externally. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
+
+/-- **Near C, every point has the property `p`.** Every point within some circle about C
+has it. This says "near the point" with a circle about it, as Euclid would draw one (Post.
+3), and with no numbers, as `LocallyWithin`, below, says "near the vertex". It is
+`Surrounds p C`, its arguments in the other order. -/
+def Touching.Near (C : Point) (p : Point → Prop) : Prop :=
+  ∃ γ : Circle, Centre C γ ∧ ∀ P : Point, InsideCircle P γ → p P
+
+/-- **Definition III.3**, contact within, read at the point, as Heath prefers. The circles
+`α` and `β` touch one another internally at C, `β` within `α`: they meet at C, they are two
+circles, and near C no point of `β` falls outside `α`. The whole-circle definition,
+`TouchesInternally`, asks it of every point of `β`. -/
+def TouchesInternallyAt (α β : Circle) (C : Point) : Prop :=
+  OnCircle C α ∧ OnCircle C β ∧ α ≠ β ∧
+    Touching.Near C (fun P => OnCircle P β → ¬ OutsideCircle P α)
+
+/-- **Definition III.3**, contact without, read at the point. The circles `α` and `β` touch
+one another externally at C: they meet at C, and near C no point is within both. The
+whole-circle definition, `TouchesExternally`, asks it of every point. -/
+def TouchesExternallyAt (α β : Circle) (C : Point) : Prop :=
+  OnCircle C α ∧ OnCircle C β ∧
+    Touching.Near C (fun P => InsideCircle P α → ¬ InsideCircle P β)
+
+/-- **Definition III.3**, read at the point. The circles `α` and `β` touch one another at C,
+internally, one within the other, or externally. -/
+def CirclesTouchAt (α β : Circle) (C : Point) : Prop :=
+  TouchesInternallyAt α β C ∨ TouchesInternallyAt β α C ∨ TouchesExternallyAt α β C
 
 /-! ### Definition III.7: the angle of a segment, and the angle of contact -/
 
