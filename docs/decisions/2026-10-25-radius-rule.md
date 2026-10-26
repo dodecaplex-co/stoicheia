@@ -26,15 +26,16 @@
   the rules are independent. With a radius rule restored, every other step was proved in
   Lean with neither `circle_eq` nor Circle 1. Metric 1 itself cannot be the restored rule
   under its own name, because the certificate's expectations forbid it as an axiom in the
-  certificates of III.1, its porism, III.2 and II.14; so the rule restored is its
-  equivalent, stated of a circle.
+  certificates of III.1, its porism, III.2 and II.14; so the rule recommended, and
+  restored, is its equivalent, stated of a circle.
 
   Why it is ours, and true. Euclid draws every circle with a centre and a distance
   (Postulate 3), and `Elements/Foundations/Words.lean` reads a `Circle`, in the plane
   that models our words, as a circle of positive radius. System E states no such rule,
   since it follows there from Metric 1 with Generalities 3 and 4, that a centre lies
-  inside its circle and an inside point is not on it; here those three are theorems of
-  Book Zero, so the rule is our own, as `exists_centre` is. The formal model proves it in
+  inside its circle and an inside point is not on it; here the half of Metric 1 it needs
+  (`eq_of_len_eq_zero`) and Generalities 3 and 4 are theorems of Book Zero, so the rule
+  is our own, as `exists_centre` is. The formal model proves it in
   the plane, at once from the type of circles, whose radius must be positive, and the
   numerical model checks it in the plane and in the hyperbolic plane.
 
@@ -44,12 +45,13 @@
   43; its vocabulary keeps its 262 words, byte for byte. When Circle 1 is retired after
   III.2 (#477), the lock comes back down to 48. The generated pages move only in their
   counts and in the line numbers of their links into the foundations file, which grew
-  above `len_self`. Five sentences that said the foundations have one rule of our own, or
-  that the overlap screen's ten circle rules are all the circle rules, would be false the
-  moment the rule lands, so they change with it: the tacit rules' line of `README.md`,
-  the first item of section 7 of `docs/FORMALIZATION.md`, two places in
-  `docs/briefs/book-I.md`, and the account of the screen in `docs/reports/overlaps.md`,
-  which now says the radius rule is not yet in the screen's list.
+  above `len_self`. Six sentences that said the foundations have one rule of our own, or
+  forty-two tacit rules, or that the overlap screen's ten circle rules are all the circle
+  rules, would be false the moment the rule lands, so they change with it: the tacit
+  rules' line of `README.md`, the first item of section 7 of `docs/FORMALIZATION.md`, two
+  places in `docs/briefs/book-I.md`, the tacit rules' count in Book I's introduction,
+  `mishnah/intro/I.md`, and the account of the screen in `docs/reports/overlaps.md`,
+  which now says the radius rule is not in the screen's list.
 
   Approved for the foundations: `Elements/Foundations/Tacit/Metric.lean`, which declares
   the rule under a heading of its own and names it in the module's opening note, and
@@ -79,7 +81,8 @@
   that `render.py` moved.
 
   `model/Model/Audit.lean` is approved with one new pin, that `Euclidean.radius_ne_zero`
-  rests on Lean's three axioms alone, and two comments brought to the new number of laws;
+  rests on Lean's three axioms alone, and two comments brought up to date, one naming the
+  rule, one giving the new number of laws;
   every other pin and guard stays.
 
   The generated `model/Model/Laws.lean` is approved as the generator wrote it, with the

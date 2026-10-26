@@ -54,9 +54,7 @@ Metric 1, that a length is nothing exactly when its ends are one point, with Gen
 and 4, that a centre is inside its circle and an inside point is not on it. Here the half of
 Metric 1 that this needs (`eq_of_len_eq_zero`) and Generalities 3 and 4 are theorems of Book
 Zero (`Elements.Figure.RuleBase`), so this rule is ours. It says only that a radius is
-something, and nothing of how long. Nothing cites it yet: Book Zero proves the same statement today from
-Circle 1 and `circle_eq` (`RuleProofs.Circle.radius_ne_zero`), and a later change (#473)
-rests that proof, and the positive lengths built on it, on this rule instead. -/
+something, and nothing of how long. -/
 
 /-- A circle's radius is not nothing: the straight line from the centre to a point on the
 circle has some length. A rule of our own, not one of System E's: every circle is drawn with

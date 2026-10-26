@@ -23,8 +23,8 @@ The laws here are those about a single circle, or about where a circle and its p
 
 * Postulate 3, which draws a circle, and Definition 15, which makes its radii equal;
 * the generalities about a centre (`centre_unique`, `centre_inside`, `circle_eq`), with our
-  own rule that a radius is not nothing (`radius_ne_zero`), and about the inside of a circle (`inside_not_on`, `inside_of_len_lt`, `len_lt_of_inside`,
-  `on_circle_of_len_eq`);
+  own rule that a radius is not nothing (`radius_ne_zero`), and about the inside of a
+  circle (`inside_not_on`, `inside_of_len_lt`, `len_lt_of_inside`, `on_circle_of_len_eq`);
 * System E's Circle 1 to 4 (`between_of_inside_chord`, `inside_of_between`,
   `outside_of_between`, `not_same_side_of_circles_meet`), which the library owes to Jeremy
   Avigad, Edward Dean and John Mumma, with our thanks;

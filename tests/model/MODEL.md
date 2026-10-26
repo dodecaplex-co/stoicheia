@@ -367,10 +367,10 @@ disc.
 October 2026 ([#473](https://github.com/jackChallis/stoicheia/issues/473)): every circle
 Euclid draws has a centre and a distance (Postulate 3), so its radius is something. In the
 hyperbolic plane too a circle is drawn about its centre through another point, and so has a
-positive radius. Today the rule also follows from the other laws: Book Zero proves the same
+positive radius. When it joined, the other laws gave it already: Book Zero proved the same
 statement from Circle 1 and `circle_eq` (`RuleProofs.Circle.radius_ne_zero`, in
-[RuleBase.lean](../../Elements/Figure/RuleBase.lean)). It is assumed so that Book Zero's
-positive lengths can rest on it in their place, which a later change does.
+[RuleBase.lean](../../Elements/Figure/RuleBase.lean)). It was assumed so that Book Zero's
+positive lengths could rest on it in their place, and so on neither of those rules (#473).
 
 ### From the figure to magnitudes, and back
 

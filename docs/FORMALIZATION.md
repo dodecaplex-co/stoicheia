@@ -429,7 +429,8 @@ dependencies.
   section 2); and a circle's radius is not nothing (`radius_ne_zero`), added by the
   owner's decision of 25 October 2026
   ([its decisions entry](decisions/2026-10-25-radius-rule.md)), since Euclid draws every
-  circle with a distance (Postulate 3). A new rule, or a change to one, is a foundation decision (section 1);
+  circle with a distance (Postulate 3). A new rule, or a change to one, is a foundation
+  decision (section 1);
   `Certificate/axioms.lock` holds every axiom's exact statement, with every definition that
   the axioms' statements or the propositions', porisms' and companions' statements reach
   (`Touches`, `rect`, `Parallel`), so that no word can change what an axiom or a claim
