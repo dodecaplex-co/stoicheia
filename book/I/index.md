@@ -2,7 +2,7 @@
 
 # Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
+**All 48 propositions proved in Lean**, every one as Euclid states it, or for [I.40](40.md) as the text states it. Every proof follows Euclid's argument save [I.40](40.md)'s, which follows the argument Heath prints; each page notes where the Lean departs from the text's sentences. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
 
 Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Each page says how.
 
