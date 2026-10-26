@@ -8,7 +8,7 @@ kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angle at C keeps the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given. The scholiast's wider reading, any triangle acute-angled at B, is not stated: with a right angle at C the foot D is C itself, and with an obtuse angle at C it falls beyond C."
+note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angles at B and C keep the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given. The scholiast's wider reading, any triangle acute-angled at B, is not stated: with a right angle at C the foot D is C itself, and with an obtuse angle at C it falls beyond C."
 
 [[passage]]
 at = "Let ABC be an acute-angled triangle"
