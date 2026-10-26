@@ -1856,17 +1856,18 @@ stand as written.
 
 - **The second round's stamps.** The records of I.13, III.20, III.21, III.24 and III.27
   were stamped again at `5afb1d6a4`, III.24's for its run line, which the reader corrected
-  to name the change it was read for, and III.28's at `7d4aa4370`. III.26's stamp stays at
-  `d2e249c39`.
+  to name the change it was read for, and III.28's at `7d4aa4370`. III.26's record was not
+  read in that round; it was read again in full, and stamped at `90238039b`, for #252.
 - **Whose words were read.** The corrected sentence of III.27's mishnah, III.28's passage
   note on the diameters and the text of III.28's two Lean comments on them were written by
-  the reader of that round, GPT-6 Astra (Codex), in the session that then stamped III.27;
-  the corrected sentence of III.28's mishnah was written by a second session of the same
-  reader; and each was applied word for word (commits `688cabe4d` and `3e021eb5a`). A third
-  session, which wrote none of them, stamped III.28. Every one of these readings is of the
-  family that wrote the sentences, so the stamps on those sentences rest on a reading by
-  their authors' family, not by the other family. The review checked each sentence and
-  found it true of the Lean.
+  the reader of that round, GPT-6 Astra (Codex), in the session that then stamped III.27,
+  at `5afb1d6a4`, a commit before that sentence, which `688cabe4d` carries; the corrected
+  sentence of III.28's mishnah was written by a second session of the same reader; and
+  each was committed word for word (commits `688cabe4d` and `3e021eb5a`). A third session,
+  which wrote none of them, stamped III.28. Every one of these readings is of the family
+  that wrote the sentences, so the stamps on those sentences rest on a reading by their
+  authors' family, not by the other family. The review checked each sentence and found it
+  true of the Lean.
 - **The rule for the name.** The rule cited above for `Prop13.angle_lt_two_right`,
   "FORMALIZATION's rule for a proposition's helpers", should be FORMALIZATION's section 6,
   "Where lemmas live", and its rule for a porism or any corollary: a consequence of one

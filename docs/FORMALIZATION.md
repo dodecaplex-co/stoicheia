@@ -156,16 +156,15 @@ several or makes a choice the word does not: III.13's agreements,
 `Prop13.touchesInternally_iff`, `Prop13.touchesExternally_iff` and
 `Prop13.circlesTouch_iff`, prove for any two circles that touching read of the whole
 circles, our reading, holds exactly when touching read at the point of contact, Heath's,
-does; and III.18's
-`Prop18.contact_locallyEqual` proves that the angle of contact along a straight line
-touching a circle is, near the point of contact, the same angle whichever straight line
-into the circle names its branch. The fidelity check reads only
-`theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the
-edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean)
-(who adds its entry, and when: [WORKFLOW](WORKFLOW.md), section 4); it gets a certificate
-entry ("I.40 general"), which `Certificate/Facts.lean` checks; it is named in the review
-record's `companions`; and it is shown on the page with its own certificate. Each
-companion is approved as a statement with `sorry` before anyone proves it.
+does; and III.18's `Prop18.contact_locallyEqual` proves that the angle of contact along a
+straight line touching a circle is, near the point of contact, the same angle whichever
+straight line into the circle names its branch. The fidelity check reads only
+`theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the edition's
+companions list, [`Elements/Companions.lean`](../Elements/Companions.lean) (who adds its
+entry, and when: [WORKFLOW](WORKFLOW.md), section 4); it gets a certificate entry ("I.40
+general"), which `Certificate/Facts.lean` checks; it is named in the review record's
+`companions`; and it is shown on the page with its own certificate. Each companion is
+approved as a statement with `sorry` before anyone proves it.
 
 ### Names, and how they change
 
