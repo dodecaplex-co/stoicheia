@@ -1,25 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.13 at a glance</title>
-  <desc>Let a circle touch another from inside (red) or from outside (yellow): the straight line through the two centres (black) runs to the point of contact, so there is only one.</desc>
+  <desc>Let a circle touch the blue one from inside (red) or from outside (yellow): the straight line through the two centres (black) runs to the point of contact, so there is only one.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="168.00" cy="160.00" r="104.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
-  <circle cx="116.09" cy="145.12" r="50.00" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="125.70" cy="147.87" r="60.00" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="307.51" cy="85.82" r="54.00" fill="none" stroke="#f2b705" stroke-width="3" stroke-opacity="0.75"/>
   <line x1="168.00" y1="160.00" x2="68.03" y2="131.33" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="168.00" y1="160.00" x2="259.83" y2="111.17" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="259.83" y1="111.17" x2="307.51" y2="85.82" data-unlettered="the straight line of the centres, drawn on to the yellow circle's centre, which Heath's proof does not take" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <circle cx="168.00" cy="160.00" r="4.5" fill="#222222"/>
-  <circle cx="116.09" cy="145.12" r="4.5" fill="#222222"/>
+  <circle cx="125.70" cy="147.87" r="4.5" fill="#222222"/>
   <circle cx="307.51" cy="85.82" r="4.5" data-unlettered="the yellow circle's centre, which Heath's proof does not take" fill="#222222"/>
   <circle cx="68.03" cy="131.33" r="4.5" fill="#222222"/>
   <circle cx="259.83" cy="111.17" r="4.5" fill="#222222"/>
   <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="244.5" y="111.4">A</text>
     <text x="53.6" y="132.1">D</text>
-    <text x="99.3" y="208.7">E</text>
-    <text x="132.9" y="91.4">F</text>
+    <text x="110" y="194">E</text>
+    <text x="138" y="110">F</text>
     <text x="168" y="179.9">G</text>
-    <text x="112.2" y="163.5">H</text>
+    <text x="121.8" y="166.2">H</text>
     <text x="372.4" y="74.1">K</text>
   </g>
 </svg>
