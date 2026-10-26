@@ -54,7 +54,7 @@ meaning = "A segment is given as its whole circle, a straight line in it and one
 
 [tag.angle-measure]
 kind = "representation"
-meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.26–III.30, both companions of III.24, and III.25 kind)."
+meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.26–III.30, both companions of III.24, and III.25's `Prop25.kind`)."
 badge = "in our measure of circumferences"
 
 [tag.redundant-hypothesis]

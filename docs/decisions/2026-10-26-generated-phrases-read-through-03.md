@@ -42,8 +42,8 @@
   names `Elements.circumference`, `Elements.standing` or `Elements.Arc.measure`, each a
   whole name of the statement as `statement_names` reads it. III.26 to III.30 keep it; III.24 and
   III.25 do not. The tag's meaning in `review/terms.toml` listed III.24 and III.26 to
-  III.29; it now lists the records that carry it, III.26 to III.30, and the companions of
-  III.24 and III.25.
+  III.29; it now lists the statements that use the measure among the records that carry
+  it: III.26 to III.30, both companions of III.24, and III.25's `Prop25.kind`.
 
   `README.md`'s row for the overlap audit said that each current overlap in the catalogue
   is proved from the rules named; two of the catalogue's four rows, where a rule supplies
