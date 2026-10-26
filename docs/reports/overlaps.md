@@ -530,10 +530,11 @@ construction is given the fact, and never sees a circle. Book Zero kept its own 
 Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf,
 stated for a circle with no centre given, which nothing used, until they were taken
 out on 24 October 2026 (#294; [below](#a-separate-piece-of-work)). `Staging/Routes/`
-now holds three Lean files, #129's; their theorems rest on neither Circle 2 nor Circle 3
+is gone, for the last of its theorems, #129's, have left it for `Elements/`; they rest on
+neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
-those three Book Zero lemmas, and the same holds of the theorems that have left it for
-`Elements/`. The staged III.1's construction called Circle 2 to put D
+those three Book Zero lemmas, as the theorems that left it before do not. The staged
+III.1's construction called Circle 2 to put D
 within the circle until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean`
 as `Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which
 held it, was retired later that day. Since `Prop2.within` is Circle 2 with no supplied
