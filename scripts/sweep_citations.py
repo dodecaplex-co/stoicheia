@@ -113,12 +113,12 @@ anonymous `have`; every name, where the hit keeps several):
 
 Nothing else declares a hit: not a passage's note, whose words a reader meets and which
 says a hypothesis in words (STYLE, section 1, "Hypotheses in words"), nor a `#` comment
-of the record. TOML does not read a comment, so neither will the records' `text` stamp
-(#77), which is to hash a record as TOML reads it: a declaration there could change with
-no reader's knowledge. `unused` is a key of the record like any other, which
-review/SCHEMA.md defines and which the records' `text` stamp will cover once #77 lands,
-and `check_fidelity.py` fails a name in it that the Lean beneath the passage's run does
-not bind (`unbound_unused`), so a declaration cannot outlive its binding. A helper hit
+of the record. TOML does not read a comment, so neither does the records' `text` stamp
+(#77), which hashes a record as TOML reads it: a declaration there could change with no
+reader's knowledge. `unused` is a key of the record like any other, which
+review/SCHEMA.md defines and which the records' `text` stamp covers, and
+`check_fidelity.py` fails a name in it that the Lean beneath the passage's run does not
+bind (`unbound_unused`), so a declaration cannot outlive its binding. A helper hit
 is never declared: FORMALIZATION, section 5, has a helper supply one step, never a whole
 conclusion, so one is fixed. Nor is a binding with no name of its own, `obtain -` or
 `have _`.

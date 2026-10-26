@@ -23,13 +23,15 @@
   `scripts/review_stamp.py --commit`, which writes it (WORKFLOW, section 6). For a record
   from an older branch that lacks only `text`, and whose text is as it was at its stamp
   commit, `review_stamp.py` run without `--commit` already points to `--migrate-text`,
-  whose code this train leaves alone. The check's list of the records without `text`, the function that wrote its
-  note, the note's printing and the clause of its docstring about the note are gone.
+  whose code this train leaves alone. The check's list of the records without `text`,
+  the function that wrote its note, the note's printing and the clause of its docstring
+  about the note are gone.
   `render.record_current`, by which the status table counts a record as current, no
   longer counts one with no `text` as current.
 
-  `scripts/check_acceptance.py` is not changed, and reads both. Its P2 takes each failure
-  that the review checks of `check_fidelity.py` report of a record, and its P11 to P16 are
+  `scripts/check_acceptance.py` and its tests are not changed; it reads both. Its P2
+  takes each failure that the review checks of `check_fidelity.py` report of a record,
+  save those of its passages, which go to P6, and its P11 to P16 are
   assessed only for a record that `render.record_current` counts as current. So a record
   with no `text` now fails P2, with the message above, and each of its six items reads
   "not yet assessed: the record's stamps are not current (P2)". That was seen in a scratch
@@ -38,8 +40,7 @@
   away; with `heath.py` and `check_fidelity.py` as on the base, P2 said nothing of it.
   The copy holds no history, so I.1's items were not assessed there with the line in
   place either, for its commit, which the copy lacks. On the base every record carries
-  `text`, so no verdict of the acceptance job changes. This train changes neither
-  `check_acceptance.py` nor its tests.
+  `text`, so no verdict of the acceptance job changes.
 
   A new plant, `scripts/negative/missing_text.py`, takes I.1's `text` line out of its
   `[review]` table. It requires `check_fidelity.py` to fail, saying that the record's
@@ -68,7 +69,18 @@
 
   Section 6 of [WORKFLOW](../WORKFLOW.md) and [CONTRIBUTING](../../CONTRIBUTING.md) lose
   their words for the time before every record carried `text`, and
-  [review/SCHEMA.md](../../review/SCHEMA.md) its own.
+  [review/SCHEMA.md](../../review/SCHEMA.md) its own, and the docstring of
+  `scripts/sweep_citations.py` says that the records' `text` stamp covers `unused`, where
+  it said that it would once #77 landed.
+
+  Three things the plan names are not done here. The words for the migration in
+  [`.github/pull_request_template.md`](../../.github/pull_request_template.md), its
+  required box on the review records and the comment under "Review records", stay as they
+  are: a record on an older branch may still gain only its `text` stamp from
+  `--migrate-text`, so they stay true, and `scripts/safe_push.py` holds an open pull
+  request's body to the box's words. PROGRAM.md's "where a record carries a `text` stamp"
+  is the coordinator's to change. Whether a stamp should cover `[review]`'s `stage` and
+  `items` is a card of its own.
 
   This entry approves the change to `scripts/heath.py`: `text` a stamp in `FIELDS`, a
   message for a missing stamp that says what a reader does, and the comment above
@@ -85,6 +97,10 @@
   This entry approves the change to `scripts/review_stamp.py`, whose docstring says that
   `--migrate-text` is for a record stamped before `text` was introduced, as one may be on
   an older branch; its code is as it was.
+
+  This entry approves the change to `scripts/sweep_citations.py`, in its docstring alone,
+  which says that the records' `text` stamp hashes a record as TOML reads it and covers
+  `unused`.
 
   This entry approves the new file `scripts/negative/missing_text.py`, the plant of a
   record with no `text` stamp, with its two cases.
