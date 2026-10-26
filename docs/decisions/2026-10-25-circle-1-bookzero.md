@@ -103,9 +103,9 @@
   they rested on it only through a proposition they cite: counted so, 46 of the 149 rest on
   it (26, 0, 20) where 31 did just before this change (16, 0, 15); at d0eb44ca 25 of the 140
   did (15, 0, 10), and of those 140, 39 do now (26, 0, 13): 13 more by this change, and
-  III.20 by its own proof. 23 proofs name it themselves
-  (15, 0, 8), as just before this change; at d0eb44ca 18 did (14, 0, 4), and of those 140,
-  19 do now (15, 0, 4), III.20 again the one more.
+  III.20 by its own proof. 23 proofs name it themselves (15, 0, 8), as just before this
+  change; at d0eb44ca 18 did (14, 0, 4), and of those 140, 19 do now (15, 0, 4), III.20
+  again the one more.
 
   No proof of Intersection 4 that uses neither Circle 1 nor a centre can be had. The review
   of this change argued it informally, in the manner of `tests/model/MODEL.md`; the argument
@@ -124,10 +124,9 @@
   a point within a circle and a point on it is within, is the disc's convexity, which the
   library first has from III.2.
 
-  What it does not prove. Circle 1 stays an assumption: III.7 and the later propositions of
-  Book III that use it, and `foot_between`, still call it, and 37 of the 149 entries rest on
-  it. Its
-  retirement after III.2 is the next step of #477's plan.
+  What it does not prove. Circle 1 stays an assumption: III.7 and the later propositions
+  of Book III that use it, and `foot_between`, still call it, and 37 of the 149 entries
+  rest on it. Its retirement after III.2 is the next step of #477's plan.
 
   Pinned values that move with the proofs, each read from the run named above.
 
