@@ -13,7 +13,7 @@
   could break, and the proof landed alone. What the card asks is that the certificate
   expectation follow the proof. The expectation added here fails against the certificate
   of the earlier proof, which is the point of it, and so it lands after the proof, not
-  before: landed first, it would have failed every check of main.
+  before: landed first, it would have failed `check_fidelity.py` on main.
 
   The pin reads III.10's `own_axioms`, the axioms its own Lean names, and asks that they
   exclude `Tacit.line_circle_beyond`. It cannot read `axioms` or `inherited`: Intersections
