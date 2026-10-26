@@ -41,13 +41,15 @@ It writes [the report](reports/acceptance-books-I-III.md): a table of items by b
 of every proposition against every item, and every failure, each with what to do about it.
 It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every
 item passes and every check ran; 1 when anything fails or was not run (a check not run is
-not a pass); and 2 when it cannot begin. It needs Python 3.11 or later, `lake` on the
-PATH, and the commits the records name, so a full clone rather than a shallow one. Before
-any check runs it asks Lake, with `lake build --no-build Elements Audit`, whether the
-build is current, since the Lean the checks ask is the build and not the sources; when
-Lake says it is not, by its exit 3, the script says why and what to build, and exits 2
-with nothing written; and when Lake cannot answer (any other exit, a toolchain or
-lakefile problem, say), it says so, and exits 2 as well.
+not a pass); and 2 when it cannot begin. To pass every item it needs Python 3.11 or later,
+`lake` on the PATH, and the commits the records name, so a full clone rather than a shallow
+one. Before any check runs it asks Lake, with `lake build --no-build Elements Audit`,
+whether the build is current, since the Lean the checks ask is the build and not the
+sources; when Lake says it is not, by its exit 3, the script says why and what to build,
+and exits 2 with nothing written; and when Lake cannot answer (any other exit, a toolchain
+or lakefile problem, say), it says so, and exits 2 as well. If there is no `lake`
+executable, it keeps the earlier path: the run continues, and each check that needs Lean
+reports that it could not ask it.
 
 The script stands on the checks already in place rather than restating them:
 `check_fidelity.py`'s functions, `check_style.py`, `check_links.py`, `check_kernel.py`,
@@ -65,10 +67,11 @@ different copies of the script by their hashes. CI uses both options.
 
 `--check-current` runs no check and needs no Lean: it reads the report as HEAD holds it,
 and exits 0 when that report is a run of every item on a commit that HEAD descends from
-and differs from in nothing but the report, with no change of any kind left in the
-worktree; 1, giving each reason, when it is not; and 2 when it cannot begin. It reads the
-report, not the run that wrote it. It is a release step, not one of CI's
-([In CI](#in-ci)).
+and differs from in nothing but the report, with no staged, unstaged or untracked change
+Git reports in the worktree and no tracked file marked assume-unchanged or skip-worktree;
+1, giving each reason, when it is not; and 2 when it cannot begin. It asks Git with
+replacement objects disabled, and reads the report, not the run that wrote it. It is a
+release step, not one of CI's ([In CI](#in-ci)).
 
 ## In CI
 
