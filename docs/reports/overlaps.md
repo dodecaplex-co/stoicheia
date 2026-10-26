@@ -39,18 +39,18 @@ is still an assumption (#477). Generalities 2 and 4 and Intersection 4 are prove
 the circle's centre and our radius rule, and a new lemma, `between_of_centre_chord`, gives
 Circle 1 where the point within is the centre; III.1, its porism and III.2 use it, and rest
 on Circle 1 no longer. Of the 140 entries, 135 rested on Circle 1 and 35 now do, the first
-III.7. Intersection 4 now takes the first circle's centre from `exists_centre`, so I.22
-rests on our rule, and so does every entry that cites I.22, directly or not: 55 entries
-rest on it that did not, I.22 and 16 later propositions of Book I, the whole of Book II,
-and III.14, III.20 and III.25, with their companions. No row leaves or joins the table;
-III.1's "First enters" and the notes on Generalities 2, 3 and 4 below say what moved.
+III.7. Intersection 4 takes the first circle's centre from `exists_centre`, but I.22, which
+used it, has that centre already and now gives it to the lemma that carries the proof
+(`circles_meet_of_centre`), so I.22 rests on neither Circle 1 nor our rule, and no entry
+rests on `exists_centre` that did not: 43 do, as before, the first III.1. No row leaves or
+joins the table; the notes on Generalities 2, 3 and 4 below say what moved.
 
 ## Current axiom overlaps
 
 | Proposition | Assumption | Kind | First enters | Audit lemma |
 |---|---|---|---|---|
 | I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
-| [III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step: a centre for the proof that D is within the circle, by III.2's argument | I.22, through the proved Intersection 4; III.1 is the first proof to call it itself | None |
+| [III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step: a centre for the proof that D is within the circle, by III.2's argument | III.1 | None |
 | [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`), a former assumption now proved (below) | Gives it at once: circles about one centre through one point coincide, and the point of one within the other would be within that circle and on it | III.10, which names it in its own Lean | `Audit.III_5` |
 | [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`), former assumptions now proved (below) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | III.10, which names it in its own Lean | `Audit.III_6` |
 
@@ -61,11 +61,7 @@ proposition whose own Lean names the axiom, is the first entry to rest on it. II
 III.6 do not rest on it: Book Zero's `ne_of_centre_of_on` and `len_lt_of_between`, and for
 III.6 `centre_inside` as well, rest instead on our radius rule (`radius_ne_zero`), which
 gives neither proposition, for it says only that a radius is something. Generalities 3 and
-4 are proved rules, so they enter no certificate as assumptions. Until 26 October 2026 III.1
-was the first entry to rest on `exists_centre`; since then the proof of Intersection 4
-(`circles_meet_of_on_inside_outside`) takes the first circle's centre from it (#477), so I.22,
-which uses that rule to make its two circles meet, is the first, and III.1 the first whose
-own Lean names it.
+4 are proved rules, so they enter no certificate as assumptions.
 
 Circle 2 and Circle 3 are no longer assumptions. Since 24 October 2026 both
 are proved after III.2, in `Elements/BookIII/Prop02.lean`, from its corollary

@@ -19,21 +19,30 @@
   producing the straight line through two supposed centres beyond each to the circle: the
   radius from one centre would be less than itself. Intersection 4
   (`Tacit.circles_meet_of_on_inside_outside`, in `Elements/Figure/Incidence.lean`) takes the
-  first circle's centre: if it is on the second circle it is the witness, and otherwise a
-  crossing of the second circle lies between that centre and a point on or within the first
-  circle, and so within it. Its helper `RuleProofs.Intersections.inside_between_inside_on`,
-  whose only caller it was, is removed; no other Lean file names it. The two lemmas the new
-  proof uses, `InsideCircle.of_between_centre` and `InsideCircle.of_between_centre_of_inside`,
+  first circle's centre from our rule that every circle has a centre (`Tacit.exists_centre`),
+  for System E's rule names none, and gives it to a new lemma placed before it,
+  `circles_meet_of_centre`, which takes the centre as a hypothesis and carries the proof: if
+  the centre is on the second circle it is the witness, and otherwise a crossing of the
+  second circle lies between that centre and a point on or within the first circle, and so
+  within it. That lemma uses neither Circle 1 nor our rule. Intersection 4's former helper
+  `RuleProofs.Intersections.inside_between_inside_on`, whose only caller it was, is removed;
+  no other Lean file names it. The two lemmas the new proof uses, `InsideCircle.of_between_centre` and `InsideCircle.of_between_centre_of_inside`,
   move up from `Circles.lean` into `Incidence.lean` with their names and types. A new lemma,
   `between_of_centre_chord` in `Circles.lean`, is Circle 1 where the point within is the
   centre, proved from Definition I.15, Between 6 and the radius rule: either other order of
   the three points would make one radius a part of the other.
   `RuleProofs.Order.ne_of_centre_of_on`, in `Incidence.lean`, is proved by the radius rule,
   as its twin in `Circles.lean` already was. Once Generalities 4 no longer used Circle 1
-  this lemma did not reach it, but it would have reached our rule that every circle has a
-  centre (`Tacit.exists_centre`) through Generalities 4's new proof, and Diagram-segment 4
-  (`Tacit.len_lt_of_inside`), beneath much of Book I, uses it: proved through Generalities
-  4, it left 92 entries newly resting on that rule; proved by the radius rule, 55.
+  this lemma did not reach it, but it would have reached `exists_centre` through
+  Generalities 4's new proof, and Diagram-segment 4 (`Tacit.len_lt_of_inside`), beneath much
+  of Book I, uses it: proved through Generalities 4, it would leave 92 entries newly resting
+  on that rule, from I.3 on; proved by the radius rule, and with I.22's change below, none.
+
+  What changes in Book I. One line of a proof. `Prop22.meet`, the step of I.22 that makes its
+  two circles meet, has the centre G of the first among its hypotheses, and in
+  `Elements/BookI/Prop22.lean` it now calls `circles_meet_of_centre` with G where it called
+  Intersection 4. No statement, docstring or `--` line of the file changes. Intersection 4
+  keeps its name and type, and no proof in the library now calls it.
 
   What changes in Book III. III.1's four uses of Circle 1 at the centre (in `Prop1.within`,
   in its reductio, in the step that puts the centre between C and E, and in its porism's
@@ -55,18 +64,35 @@
   do, the first of them III.7; counting only an entry's own proof and the proved rules
   beneath it, 53 did and 23 do, and 21 proofs named it themselves and 18 do. No
   proposition of Books I and II rests on it now, nor do III.1 to III.6, III.9, III.10,
-  III.12, III.16 to III.19 and III.25.
+  III.12, III.16 to III.19 and III.25. I.22 rested on 31 axioms and now rests on 30, with 26
+  tacit rules where it had 27: it loses Circle 1 and gains nothing, and rests on neither
+  Circle 1 nor `exists_centre`.
 
-  What else moves. Intersection 4's new proof takes a centre, and System E's rule names
-  none, so it rests on `exists_centre`, our rule. I.22 uses Intersection 4 to make its two
-  circles meet, so I.22 rests on our rule where it rested on Circle 1, and so does every
-  entry that cites I.22, directly or not: 55 entries rest on it that did not, I.22 and 16
-  later propositions of Book I, the whole of Book II, and III.14, III.20 and III.25, with
-  their companions; 98 rest on it in all, where 43 did. III.1's porism does not: it neither
-  calls III.1 nor rests on the rule. A proof of Intersection 4 that uses neither Circle 1 nor
-  a centre was not found; the scoping found that the general step it replaced, that a point
-  between a point within a circle and a point on it is within, is the disc's convexity,
-  which the library first has from III.2.
+  What else moves. No entry rests on `exists_centre` that did not: the same 43 entries rest
+  on it as before, the first of them III.1, and III.1's porism is not among them. Had I.22
+  kept calling Intersection 4, 55 would rest on the rule that do not: I.22 and the 54
+  entries that cite it, directly or not, and do not rest on the rule otherwise. Generalities
+  4 now takes its centre from the rule, so 13 entries of Book III, from III.7, three of them
+  companions, rest on it through their own proofs and the proved rules beneath them, where
+  before they rested on it only through a proposition they cite: counted so, 38 entries rest
+  on it where 25 did, and 18 proofs name it themselves, as before.
+
+  No proof of Intersection 4 that uses neither Circle 1 nor a centre can be had. The review
+  of this change argued it informally, in the manner of `tests/model/MODEL.md`; the argument
+  is not a proof checked in Lean. Add to the plane, with its circles, one circle more, γ,
+  with no centre, whose circumference is two circles far apart that do not meet and whose
+  interior is their two open discs. The laws that speak of a centre (Definition I.15,
+  `circle_eq`, the radius rule, Intersections 8) never apply to γ; superposition speaks of
+  no circle; a point within (Points 8) and the crossings of a straight line (Intersections 4
+  and 5) are found on γ disc by disc; and Intersection 5 holds between γ and any circle, γ
+  itself included, with two crossings each time. Circle 1 and `exists_centre` fail for γ,
+  and so does Intersection 4: take γ for the first circle and for the second an ordinary
+  circle about γ's first disc that misses its second, A on the first disc's circumference and
+  B within the second disc; the second circle meets neither of γ's circumferences. So a
+  proof of Intersection 4 needs Circle 1 or a centre, and System E's rule gives it none. The
+  scoping found that the general step the old proof took from Circle 1, that a point between
+  a point within a circle and a point on it is within, is the disc's convexity, which the
+  library first has from III.2.
 
   What it does not prove. Circle 1 stays an assumption: III.7 and the later propositions of
   Book III that use it, and `foot_between`, still call it, and 35 entries rest on it. Its
@@ -104,16 +130,16 @@
   The companions are sentences this change makes false, changed with it: in
   `docs/FORMALIZATION.md`, the rows of Generalities 2 and 4 and of Intersection 4 among the
   rules now proved, and section 6; in the catalogue of overlaps, `docs/reports/overlaps.md`,
-  a dated paragraph, the cell giving where `exists_centre` first enters (I.22 now, where it
-  was III.1) and the paragraph beneath the table, and the former-overlap rows of Generalities
-  2, 3 and Diagram-segment 3's half, which said those proofs or their audit lemmas rest on
-  Circle 1 or `exists_point`, or gave the porism's counts as 38 and 39; in
-  `docs/reports/gaps-book-I.md`, the notes on I.22's Intersection 4 and I.31's Points 3; in
-  `docs/reports/gaps-book-III.md`, the account of Generalities 2 and the note on III.1's
-  centre between C and E; the note in `review/III/01.toml` on that step; the note in
-  `review/III/02.toml` on AB through the centre; the note in `review/I/22.toml` on
+  a dated paragraph and the former-overlap rows of Generalities 2, 3 and Diagram-segment 3's
+  half, which said those proofs or their audit lemmas rest on Circle 1 or `exists_point`, or
+  gave the porism's counts as 38 and 39; in `docs/reports/gaps-book-I.md`, the notes on
+  I.22's Intersection 4 and I.31's Points 3; in `docs/reports/gaps-book-III.md`, the account
+  of Generalities 2, the note on III.1's centre between C and E, and the account of the
+  shared steps, which put `foot_between` in `Squares.lean`; the same account in Book III's
+  introduction, `mishnah/intro/III.md`; the note in `review/III/01.toml` on that step; the
+  note in `review/III/02.toml` on AB through the centre; the note in `review/I/22.toml` on
   Intersection 4; the notes in `review/I/11.toml` and `review/I/31.toml` that Points 3 used
   Circle 1; and the module note of `RuleBase.lean`, whose proofs use no circle chord now. The
-  records of I.11, I.22, I.31, III.1 and III.2 are stale for their text, and those of III.1,
-  III.2, III.14, III.15, III.35 and III.36 for their Lean, until a reader of the other family
-  reads and stamps them.
+  records of I.11, I.22, I.31, III.1 and III.2 are stale for their text, and those of I.22,
+  III.1, III.2, III.14, III.15, III.35 and III.36 for their Lean, until a reader of the other
+  family reads and stamps them.

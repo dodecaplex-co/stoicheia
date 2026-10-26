@@ -51,8 +51,10 @@ that no point of a straight line touching a circle is within it (`Touches.not_in
 Book III's proofs cite the earlier books as `BookI.PropN` and `BookII.PropN`. The steps
 they share that cite Books I and II live in
 [`Squares.lean`](../../Elements/BookIII/Squares.lean): equal squares are on equal
-straight lines (`BookI.Prop46.sq`), and the perpendicular from the centre to a straight
-line in the circle falls between its ends (`foot_between`). Those that cite III.20–III.22
+straight lines (`BookI.Prop46.sq`). The perpendicular from the centre to a straight line
+in the circle falls between its ends (`foot_between`) in
+[`Feet.lean`](../../Elements/BookIII/Feet.lean), after III.2, for its last step is Circle
+1, which is to be proved after III.2. Those that cite III.20–III.22
 live in [`Circumferences.lean`](../../Elements/BookIII/Circumferences.lean), and are what
 Euclid takes for granted of circumferences, which we measure by twice the angle
 standing on them: a circumference is twice the angle at any point of the other segment

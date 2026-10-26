@@ -248,17 +248,17 @@ theorem InsideCircle.of_between_centre_of_inside {O P R : Point} (hO : Centre O 
   exact inside_of_len_lt hO hR
     (lt_trans (len_lt_of_between h) (len_lt_of_inside hO hR hP))
 
-/-- Two circles cut one another if the first passes through a point A inside the second, and a
-point B outside the second is inside or on the first. (Intersection 4, in LeanEuclid's
-corrected form) Take the centre O of the first circle, within it. If O is on the second
-circle, it is the point within the first that Intersection 5 asks for. If O is within the
-second, the straight line from O to B leaves the second circle between them; if outside, the
-straight line from A to O does. Either crossing lies between the centre and a point on or
-within the first circle, so within it, and Intersection 5 applies. -/
-theorem Tacit.circles_meet_of_on_inside_outside (hAα : OnCircle A α)
+/-- Two circles cut one another if the first, whose centre O is given, passes through a point A
+inside the second, and a point B outside the second is inside or on the first. (Intersection 4,
+in LeanEuclid's corrected form, for a circle with a centre given) O is within the first circle.
+If O is on the second circle, it is the point within the first that Intersection 5 asks for.
+If O is within the second, the straight line from O to B leaves the second circle between
+them; if outside, the straight line from A to O does. Either crossing lies between the centre
+and a point on or within the first circle, so within it, and Intersection 5 applies. This
+proof uses no proposition, and neither Circle 1 nor our rule that every circle has a centre. -/
+theorem circles_meet_of_centre {O : Point} (hO : Centre O α) (hAα : OnCircle A α)
     (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :
     CirclesMeet α β := by
-  obtain ⟨O, hO⟩ := exists_centre α
   have hOα := centre_inside hO
   by_cases hOβ_on : OnCircle O β
   · exact circles_meet hAα hOα hAβ hOβ_on
@@ -275,6 +275,16 @@ theorem Tacit.circles_meet_of_on_inside_outside (hAα : OnCircle A α)
     obtain ⟨L, hAL, hOL⟩ := Postulate1 A O hAO
     obtain ⟨X, hXβ, _, hAXO⟩ := line_circle_between hAβ hAL ⟨hOβ_in, hOβ_on⟩ hOL
     exact circles_meet hAα (InsideCircle.of_between_centre hO hAα (between_symm hAXO)) hAβ hXβ
+
+/-- Two circles cut one another if the first passes through a point A inside the second, and a
+point B outside the second is inside or on the first. (Intersection 4, in LeanEuclid's
+corrected form) Take the centre of the first circle, by our rule that every circle has one
+(`exists_centre`), and the lemma above applies. -/
+theorem Tacit.circles_meet_of_on_inside_outside (hAα : OnCircle A α)
+    (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :
+    CirclesMeet α β := by
+  obtain ⟨O, hO⟩ := exists_centre α
+  exact circles_meet_of_centre hO hAα hBα hAβ hBβ
 
 /-- Let a point be taken on the other side of L from B. (Points 6) Produce the line from B
 through a point of L; Pasch 3 separates its endpoints. -/
