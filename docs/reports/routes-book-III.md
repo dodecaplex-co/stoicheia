@@ -1667,3 +1667,8 @@ outside the repository, passes E6 now. Of its 18 failing items, nine are new aga
 #130 branch's head, 68a110e6: III.13's P2 and P11 to P16, until its record is read again and
 stamped, and III.11's P14 and P16, until its mishnah's changed sentence is read and those
 verdicts are recorded again.
+
+**Completion on the delivered revision.** Commit `3621cd0e` records both reviews against
+`d87e0632f`: III.13's six verdicts pass; III.11's applicable verdicts pass, with
+representations `n/a`. The preceding pending-review account describes the earlier
+snapshot, not the delivered revision.
