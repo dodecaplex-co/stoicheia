@@ -202,7 +202,8 @@ theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
     BookIII.Circumference.standing hD hE hF hEDF.acb] at heq
   have hangle : ∠ B A C = ∠ E D F := Magnitude.eq_of_add_self_eq heq
   refine ⟨hangle, fun hGA hHD => ?_⟩
-  rw [BookIII.Prop20 hG hA hB hC hGA, BookIII.Prop20 hH hD hE hF hHD, hangle]
+  rw [BookIII.Prop20.special hG hA hB hC hGA, BookIII.Prop20.special hH hD hE hF hHD,
+    hangle]
 
 example : type_of% @Elements.BookIII.Prop27 :=
   fun _ hG hH hA hB hC hD hE hF hBAC hEDF heq => III_27_any hG hH hA hB hC hD hE hF hBAC hEDF heq
