@@ -2611,11 +2611,18 @@ DEFAULT_OUTPUTS = (OUTPUT, MANIFEST, *calibration_outputs(CALIBRATION_DIR))
 
 
 def calibration_layout(directory: Path) -> tuple[Path, str]:
-    """A calibration directory and its figure folder under the repository asset root."""
+    """A calibration directory and its figure folder under the repository, outside figures/."""
     resolved = checked_path(directory)
     require(resolved.is_relative_to(ROOT),
             f'{resolved}: calibration output directory must be inside the repository so its '
             'figures have repository-relative asset paths')
+    figure_root = checked_path(ROOT / 'figures')
+    figure_identity = file_identity(figure_root)
+    parents = (resolved, *resolved.parents)
+    require(not resolved.is_relative_to(figure_root)
+            and (figure_identity is None
+                 or figure_identity not in {file_identity(parent) for parent in parents}),
+            f'{resolved}: calibration output directory must not be figures/ or one of its descendants')
     figures = (resolved.relative_to(ROOT) / CALIBRATION_FIGURES).as_posix()
     return resolved, figures
 
@@ -3067,10 +3074,11 @@ def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bo
             f'{where}: written for another input (input_sha256 {line["input_sha256"]!r}, '
             f'input_rows {line["input_rows"]!r})')
     require(line['order_check'] is True, f'{where}: asked without the order check')
+    status = line['status']
     require(isinstance(line['time'], str) and RUN_TIME.fullmatch(line['time'])
             and isinstance(line['model_requested'], str) and line['model_requested'].strip()
             and jev._number(line['latency_s']) and line['latency_s'] >= 0
-            and (line['status'] is None or type(line['status']) is int),
+            and (status is None or type(status) is int and 100 <= status <= 599),
             f'{where}: its time, model asked for, latency or status is not as jev.py run writes it')
     require(isinstance(line['request_sha256'], str) and FINGERPRINT.fullmatch(line['request_sha256'])
             and line['request_sha256'] == fingerprint(row, line['model_requested']),
@@ -3080,7 +3088,7 @@ def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bo
         extra = set(line) - RUN_FIELDS - {'error', 'body'} - (PARTIAL_FIELDS if line['status'] == 200 else set())
         require(not extra, f'{where}: a failed request with {sorted(extra)}; not a line that jev.py run writes')
         require('error' in line, f'{where}: a failed request without an error; not a line that jev.py run writes')
-        error, status = line['error'], line['status']
+        error = line['error']
         if status == 200:
             written = isinstance(error, str) and error.startswith(SHAPE_ERROR) and 'body' in line
         elif status:

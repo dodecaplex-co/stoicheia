@@ -1756,6 +1756,23 @@ class Calibration(unittest.TestCase):
             self.assertIn('must be inside the repository', stderr.getvalue())
             self.assertFalse(out.exists())
 
+    def test_figures_directory_and_descendants_are_refused_before_generation(self):
+        figures = REPOSITORY / 'figures'
+        before = {path.relative_to(figures): path.read_bytes()
+                  for path in figures.rglob('*') if path.is_file()}
+        for out in (figures, figures / 'calibration-output'):
+            with self.subTest(out=out.relative_to(REPOSITORY)):
+                stderr = io.StringIO()
+                with patch.object(questions, 'Generator') as generator, \
+                        redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                    status = questions.main(['--commit', HEAD, '--calibration', '--out', str(out)])
+                self.assertEqual(status, 1, stderr.getvalue())
+                generator.assert_not_called()
+                self.assertIn('must not be figures/', stderr.getvalue())
+                after = {path.relative_to(figures): path.read_bytes()
+                         for path in figures.rglob('*') if path.is_file()}
+                self.assertEqual(after, before)
+
     def test_dry_run_loads_every_request_and_figure(self):
         if not shutil.which('rsvg-convert'):
             self.skipTest('rsvg-convert renders the figures, and is not on the PATH')
@@ -2049,6 +2066,14 @@ class Tally(TallyLines, unittest.TestCase):
                 lines[k] = self.made(self.rows[k])
                 lines[k]['status'] = request_status
                 self.refused(lines, 'a failed request without an error')
+
+    def test_a_non_http_integer_or_boolean_status_is_refused(self):
+        for request_status in (-1, 0, 99, 600, 999, False, True):
+            with self.subTest(status=request_status):
+                lines = self.clean_run()
+                k = self.by_role('plant')[0]
+                lines[k] = self.failed(self.rows[k], request_status)
+                self.refused(lines, 'latency or status is not as jev.py run writes it')
 
     def test_another_model_fails_condition_one(self):
         lines = self.clean_run()
