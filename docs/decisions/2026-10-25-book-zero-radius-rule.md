@@ -76,9 +76,11 @@
 
   This entry approves the change to `Audit/Crossing.lean`, whose pins of III.5 and III.6
   lose `circle_eq`, Circle 1 and `exists_point`, III.5's four more, and gain the radius
-  rule; whose seven bridge pins gain the radius rule and keep `circle_eq`, which the
-  bridges use through III.7, III.8 and III.10; and whose two paragraphs on what the
-  proofs rest on now say that III.5 and III.6 rest on neither rule.
+  rule; whose seven bridge pins gain the radius rule and keep `circle_eq`, which
+  `cut_point` calls itself and `within_point` reaches through III.10; and whose two
+  paragraphs on what the proofs rest on now say that III.5 and III.6 rest on neither rule,
+  and that Postulate 3 enters through Metric 1 and, for III.6, through
+  `RuleProofs.Circle.length_pos` beneath `centre_inside`.
 
   This entry approves the change to `Audit/Overlaps.lean`, whose pins of `III_5_crossing`
   and `III_5_radius` lose `circle_eq` and gain the radius rule, `III_5_radius` with
@@ -86,7 +88,8 @@
   III.27's, III.30's, Diagram-angle 3's and Circle 2's and Circle 3's derivations have the
   rule beside or in place of `circle_eq`; whose pin of `III_6` gains the rule; whose pin
   of `III_5` does not move; and whose module text and four docstrings now say which of
-  these proofs rest on Diagram-segment 2.
+  these proofs rest on Diagram-segment 2, `III_5`'s that Book Zero's lemmas beneath our
+  III.5 rest on the radius rule, which gives neither III.5 nor III.6.
 
   This entry approves the change to `Audit/Superposition.lean`, whose pins of I.4, I.8,
   `onLine_of_angle_eq_named`, I.8's adapter of I.7, `Cited.holds_all` and the four laws
@@ -97,16 +100,25 @@
 
   The companions are sentences this change makes false, changed with it: the `[overlap]`
   notes of `review/III/05.toml` and `review/III/06.toml`, which said each proof rests on
-  Diagram-segment 2 all the same; in the catalogue of overlaps, `docs/reports/overlaps.md`,
-  the current rows' "First enters", the paragraph beneath them, the notes on III.5 and
-  III.6, three rows of the former overlaps and the paragraph on the two short audit proofs
-  of III.5, with a dated paragraph at its head; the rows of Diagram-segment 3's half and
-  Metric 1 in section 7 of `docs/FORMALIZATION.md`; the account of Generalities 3 in
-  `docs/reports/gaps-book-III.md`; and the row for `Audit/` in `README.md`. The Book III
-  brief, `docs/briefs/0004-book-III.md`, gains a dated note, its text unchanged, that the
-  radius rule is a second rule of ours and that III.5 and III.6 rest on it. The pages of
-  III.5 and III.6 (`mishnah/III/05.md`, `mishnah/III/06.md`) and Book III's introduction
-  were read for the same claims and make none, so they do not change. The records of
-  III.5 and III.6 are stale for their text until a reader of the other family reads and
-  stamps them; Book Zero has no records, and no `PropNN.lean` changes, so no record is
-  stale for its Lean.
+  Diagram-segment 2 all the same; the note on Diagram-segment 3's half in
+  `review/II/14.toml`, which said it is proved from Postulate 3 and `circle_eq`; in the
+  catalogue of overlaps, `docs/reports/overlaps.md`, the current rows' "First enters", the
+  paragraph beneath them, the notes on III.5 and III.6, three rows of the former overlaps,
+  the paragraph on the two short audit proofs of III.5, with a dated paragraph at its head,
+  and the paragraph on small certificates, which gave III.5 and III.6 18 tacit rules each;
+  the rows of Diagram-segment 3's half and Metric 1 in section 7 of
+  `docs/FORMALIZATION.md`; in `docs/reports/gaps-book-III.md`, the account of
+  Generalities 3 and the notes on III.8, III.27 and III.33, which said Diagram-segment 3's
+  half is proved from Postulate 3 and `circle_eq`; the paragraph of III.27's page,
+  `mishnah/III/27.md`, on where K falls, which gave that rule's old proof; and the row for
+  `Audit/` in `README.md`. The Book III brief, `docs/briefs/0004-book-III.md`, gains a dated
+  note, its text unchanged, that the radius rule is a second rule of ours and that III.5
+  and III.6 rest on it. Brief 0009, `docs/briefs/0009-superposition.md`, gains a dated
+  note after its table of what the laws' proofs draw, its table unchanged, giving what
+  three of its cells now read: distinct ends and one point at one distance use Postulate 3
+  alone, and one ray's straight line seven other construction rules, not eight. The pages
+  of III.5 and III.6 (`mishnah/III/05.md`, `mishnah/III/06.md`) and Book III's
+  introduction were read for the same claims and make none, so they do not change. The
+  records of II.14, III.5 and III.6 are stale for their text until a reader of the other
+  family reads and stamps them; Book Zero has no records, and no `PropNN.lean` changes, so
+  no record is stale for its Lean.

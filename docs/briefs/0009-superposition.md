@@ -425,6 +425,18 @@ one):
 Before the second retirement the last column read "none" for every law but I.7, and I.7's
 row "seven other construction rules".
 
+*26 October 2026, #473: Book Zero now proves Metric 1 from our radius rule
+(`Tacit.radius_ne_zero`) by Postulate 3 alone, and no proof beneath the laws of distinct
+ends, of one point at one distance and of one ray's straight line uses Generalities 4
+(`inside_not_on`) any more. So the last column of distinct ends now reads "Postulate 3
+alone, through the proved Metric 1 (`eq_of_len_eq_zero`), which draws a circle", that of
+one point at one distance "the same, through Metric 1", and that of one ray's straight line
+"Postulates 1, 2 and 3 and seven other construction rules", without `exists_point`, which
+reached it only through Generalities 4; the rows of one ray's side and of I.7 do not
+change. Before 26 October 2026 the rows of distinct ends and of one point at one distance
+read "Postulates 1 and 3 and four other construction rules" and "the same six", and that
+of one ray's straight line "eight other".*
+
 Each law but I.7 is proved by a theorem of its own in `Elements/Figure/Superposition.lean`,
 and the certificate lists the construction rules beneath each law's proof (`cited_laws`);
 before the second retirement it listed none for any law I.4 cites, and since it lists them

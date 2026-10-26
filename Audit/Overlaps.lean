@@ -103,9 +103,9 @@ one circle. A point of one within the other would then be both within that circl
 it, which Generalities 4, proved since the second axiom retirement, forbids. Our III.5
 takes Euclid's steps and cites neither Diagram-segment 2 nor Circle 4, now a theorem proved
 from I.7 using Diagram-segment 2. Since 26 October 2026 it does not rest on Diagram-segment
-2 either: the proved rules beneath it, `ne_of_centre_of_on` and `len_lt_of_between`, rest
-on our radius rule (`radius_ne_zero`), which gives no proposition, for it says only that a
-radius is something. -/
+2 either: Book Zero's lemmas beneath it, `ne_of_centre_of_on` and `len_lt_of_between`, rest
+on our radius rule (`radius_ne_zero`), which gives neither III.5 nor III.6, for it says only
+that a radius is something. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
   fun ⟨⟨_, _, _, _, _, hC₁, hC₂⟩, ⟨_, hP₁, hP₂⟩, _⟩ ⟨hE₁, hE₂⟩ =>
     inside_not_on (circle_eq hE₁ hE₂ hC₁ hC₂ rfl ▸ hP₂) hP₁

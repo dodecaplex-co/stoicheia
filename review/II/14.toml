@@ -35,7 +35,7 @@ note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives
 at = "With centre G and distance one of the straight lines GB, GF"
 kind = "helper"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), now proved from Postulate 3 and `circle_eq`, with the radius nonzero, in `Elements/Figure/RuleBase.lean`, puts F on it because GF equals GB."
+note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), now proved in `Elements/Figure/RuleBase.lean` by comparing lengths on the straight line from the centre through the point, with our radius rule (`Tacit.radius_ne_zero`) and Postulate 3, puts F on it because GF equals GB; until 26 October 2026 that rule was proved from Postulate 3 and `circle_eq`."
 
 [[passage]]
 at = "let DE be produced to H"

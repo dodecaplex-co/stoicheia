@@ -607,9 +607,11 @@ belongs to the [gap catalogue for Book I](gaps-book-I.md).
 **Small certificates.** Four propositions cite no proposition: I.1 and I.4, Euclid's own
 beginnings, which rest on Postulate 3 with Intersection 5 and on superposition; and III.5
 and III.6, which are rows of the catalogue. In the restated readings, III.5 and III.6 each
-rested on thirteen tacit rules, with Definition I.15 and Postulate 1; since the second axiom
-retirement each rests on 18, with Definition I.15 and Postulates 1 and 3, for the proved
-rules beneath their Book Zero lemmas bring in their own. The line through the point within
+rested on thirteen tacit rules, with Definition I.15 and Postulate 1; from the second axiom
+retirement until 26 October 2026 each rested on 18, with Definition I.15 and Postulates 1
+and 3, for the proved rules beneath their Book Zero lemmas bring in their own; since then
+III.5 rests on 12 and III.6 on 16, our radius rule among them, with Definition I.15 and
+Postulates 1 and 3. The line through the point within
 and the order of its points carry Euclid's comparison, with Common Notion 5 through
 `len_lt_of_between`. Three others, I.25, I.23 and I.19, have the fewest rules in
 `direct_axioms`, three to seven, but each cites propositions and carries Euclid's

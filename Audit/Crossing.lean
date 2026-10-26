@@ -559,7 +559,8 @@ Diagram-segment 2 (`Elements.Tacit.circle_eq`) nor Circle 1
 19 October 2026) until then, the proved rules the proofs use, such as `centre_inside`
 beneath Book Zero's `ne_of_centre_of_on`, rested on both, and on Postulate 3, to show that a
 radius is never nothing (`RuleProofs.Circle.radius_ne_zero`); that lemma now takes it from
-the radius rule, and Postulate 3 enters through Metric 1, proved from the rule. So the pins
+the radius rule, and Postulate 3 enters through Metric 1, proved from the rule, and, for
+III.6, through `RuleProofs.Circle.length_pos` beneath `centre_inside`. So the pins
 show again that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
 check the names of these two declarations' axioms, and the build fails if an admitted proof
 (`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, proved after III.2,
