@@ -213,7 +213,7 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 - **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition,
   and on 22 Oct for the figures given by their outlines).
   The lock holds every word that the axioms' statements or the entries' statements
-  reach: <!-- count:vocabulary -->262<!-- /count -->, including the restricted calculus and its interpretation,
+  reach: <!-- count:vocabulary -->263<!-- /count -->, including the restricted calculus and its interpretation,
   as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
   A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
