@@ -626,8 +626,9 @@ def g_two_circles(rng):
 def gs_cm(kind):
     def g(rng):
         if kind == 'chord':
-            # Circle 1's chords: two points of one circle, and a point of their straight line,
-            # most often between them.
+            # One kind, for between_of_inside_chord, draws a single circle: B and C two points
+            # on it, and A a point of their straight line, most often between them. It is a
+            # kind of a generator other laws use, so that it needs no generator of its own.
             c = g_circle(rng)
             B, C = pt_on_circle(c, rng), pt_on_circle(c, rng)
             if B is None or C is None or B == C:
