@@ -67,11 +67,17 @@ jobs:
       - name: Keep the list of the tests this shard ran, for the proof
         # Kept when a test failed too, so that the proof names it. A shard that stops
         # before its end writes no list and keeps none, and the proof then fails. A shard
-        # run again replaces its list. Kept for 35 days. Whether a later attempt of the run
-        # can fetch a list an earlier attempt kept is GitHub's to say, and nothing relies on
-        # it: a rerun of all the jobs is judged afresh, and a rerun of the failed jobs
-        # alone, whose proof may not see the other shards' earlier lists, then stays red,
-        # for the proof never passes on lists it cannot see.
+        # run again replaces its list. Kept for 35 days. Either kind of rerun is judged on
+        # every shard's list (#411): a rerun of all the jobs afresh, and a rerun of some of
+        # them, as of the failed jobs, on the lists of the shards it runs again and on those
+        # the others kept in an earlier attempt, which the verdict's fetch finds. #411 saw it
+        # on GitHub: one shard of run 40122901299, a green run no job of which had failed,
+        # was run again alone, and the verdict's fetch, which names no run-id, found all 16
+        # artifacts, every shard's list and log, the first attempt's among them, and
+        # fetched the eight lists by its pattern; the proof passed on all 466 tests. A
+        # rerun of the failed jobs makes a later attempt of the same kind and fetches the
+        # same way. The proof never passes on lists it cannot see, should GitHub ever
+        # withhold one.
         if: always()
         uses: actions/upload-artifact@v5
         with:
@@ -105,8 +111,8 @@ jobs:
     #   outcome, and the proof fails on a K from 1 to N with no list, so a shard that did
     #   not run, or stopped before its end, fails it; and on any test that did not pass, so
     #   a shard one of whose tests failed fails it too.
-    # Neither can pass with a shard missing. Both are needed: should a later attempt see a
-    # list an earlier one kept, that list stays when, in a rerun of all the jobs, its
+    # Neither can pass with a shard missing. Both are needed: a later attempt can see a list
+    # an earlier one kept (#411), and that list stays when, in a rerun of all the jobs, its
     # shard is cancelled before it keeps a new one, so the proof alone could pass; and the
     # matrix's result says nothing of which tests ran.
     needs: safe-push-shards
