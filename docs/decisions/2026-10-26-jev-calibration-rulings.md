@@ -21,8 +21,18 @@
   it, asks only that the step do no work, not that the hypothesis it mentions do no other
   work, so its plants need not be that fault, and these two are not. Left in, the kind
   would score a right answer, "all do work", as a missed fault. The
-  coordinator's ruling: "The fourth kind is dropped, and the ten plants take kinds 1 to 3
-  in turn, by the same rule and kind tests." P12's kinds are now three:
+  coordinator's ruling, from [the 26 October comment on
+  #36](https://github.com/jackChallis/stoicheia/issues/36#issuecomment-6416329733):
+
+  > **P12's fourth kind of planted fault is dropped (option 1).** The independent review
+  > found that no kind-4 plant can be a genuine fault under P12's own wording: the
+  > hypothesis does substantive work elsewhere, so "all do work" is the right answer.
+  > Left in, the kind would score correct answers as misses. The ten P12 plants take kinds
+  > 1 to 3 in turn, by the same rule and the same kind tests, so three or four still expect
+  > "an artificial hypothesis use". This corrects a planted fault that was not a fault. The
+  > bar does not move.
+
+  P12's kinds are now three:
 
   - a call of an unrelated proposition whose result is not used (expects "a dummy
     citation");
@@ -40,9 +50,15 @@
   moved from Staging into III.18's Lean file, and III.18's record, read in full again,
   gives its representations item as `pass`, where it gave `n/a` (commits `ccf50c11f` and
   `f94a335b8`, #130), so that III.18 is eligible for P13 and the hash rule gives Book III
-  another list. The coordinator's ruling: "Book III's
-  list is restated by the same hash rule at a named commit of main: III.18 becomes a
-  control, and III.29 leaves the set." The named commit is
+  another list. The coordinator's ruling, from [the 26 October comment on
+  #36](https://github.com/jackChallis/stoicheia/issues/36#issuecomment-6416329733):
+
+  > **P13's Book III list is restated by the same hash rule at a named commit of main
+  > (option 1).** III.18's record became `pass` after the bar landed (#130), so III.18
+  > becomes a control and III.29 leaves the set. Every other list is unchanged. The audit
+  > then judges the records as they stand.
+
+  The named commit is
   `110a01809ed48fc49871137d9a0fb968cad92d11`, the head of main when the ruling was made.
   It is named because at it III.18's record carries the change that made it eligible, and
   the records give, by the bar's rule, every other list exactly as the bar's entry does:
