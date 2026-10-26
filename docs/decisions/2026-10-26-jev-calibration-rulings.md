@@ -2,9 +2,10 @@
   [The bar's entry](2026-10-25-jev-calibration-bar.md) of 25 October 2026 fixes the
   calibration set by rule, and stops the work for a ruling when the set cannot be made as
   it says. Two such questions arose while the generator was reviewed, before any request
-  of the calibration or of the audit had been sent, and on 26 October 2026 the coordinator
-  ruled on both. These are the coordinator's rulings, not the owner's; the coordinator's
-  record of them is [#36](https://github.com/jackChallis/stoicheia/issues/36). This entry
+  of the new calibration, or of the audit it gates, had been sent, and on 26 October 2026
+  the coordinator ruled on both. These are the coordinator's rulings, not the owner's;
+  the coordinator's record of them is
+  [#36](https://github.com/jackChallis/stoicheia/issues/36). This entry
   states them beside the bar's entry, which stands as it was written; where the two
   differ, this entry governs the calibration. Nothing else changes: the questions, their
   clean and defect answers, the order, the run, the bar's four conditions and what
@@ -16,10 +17,10 @@
   hypothesis is mentioned only so that it looks used, and does no substantive work". The
   independent review of the generator found that the two plants the rule gives this kind,
   on I.40 and III.31, mention a hypothesis that does substantive work elsewhere in its
-  proof, so that neither is the fault the answer names. Nor could another plant of the
-  kind be: a proposition is eligible only when its record finds that every hypothesis does
-  work, so every hypothesis a plant of this kind could mention is one that already does.
-  Left in, the kind would score a right answer, "all do work", as a missed fault. The
+  proof, so that neither is the fault the answer names. The kind, as the bar's entry words
+  it, asks only that the step do no work, not that the hypothesis it mentions do no other
+  work, so its plants need not be that fault, and these two are not. Left in, the kind
+  would score a right answer, "all do work", as a missed fault. The
   coordinator's ruling: "The fourth kind is dropped, and the ten plants take kinds 1 to 3
   in turn, by the same rule and kind tests." P12's kinds are now three:
 
@@ -55,6 +56,6 @@
   III.37, a control in the bar's entry, is now a plant, and III.29 leaves the set. The
   plants of Book III take P13's kinds in turn, as the bar's entry says.
 
-  The bar's check of the lists now reads against this one: if the records at the
-  calibration's commit give, for any question and book, other lists than the bar's entry
-  as this entry restates it, nothing is sent, and the work stops for a ruling.
+  The bar's check of the lists now reads against the lists as this entry restates them:
+  if the records at the calibration's commit give, for any question and book, other
+  lists, nothing is sent, and the work stops for a ruling.
