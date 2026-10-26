@@ -131,10 +131,16 @@
 # hand translations with the theorem's type directly, and the generator writes 48 laws,
 # which Model/Assembly.lean gathers.
 #
+# Renewed on 25 October 2026, when LocallyEqual joined the vocabulary (#130): the statement
+# of the companion III.18 contact_locallyEqual is the first to reach it, a word only that
+# companion's statement uses, and no law of the model changes: the 48 axioms and every word
+# already locked are unchanged, byte for byte, and the vocabulary grows from 262 to 263 words.
+# Check/Write.lean wrote Model/Laws.lean again, and only its line naming the lock's hash changed.
+#
 # Renewed on 26 October 2026, when the rule that a radius is not nothing,
 # Tacit.radius_ne_zero, joined the axioms by the owner's decision of 25 October 2026 (#473):
-# 49 axioms, the other 48 and the 262 words of the vocabulary unchanged, byte for byte. The
+# 49 axioms, the other 48 and the 263 words of the vocabulary unchanged, byte for byte. The
 # generator writes its law, Model/Laws/circles.lean translates it by hand, Check/Circles.lean
 # compares that translation with the library's declaration and with the generated law, and
 # Model/Assembly.lean gathers Euclidean.radius_ne_zero, proved in Model/Euclidean/CircleBasics.lean.
-5570bfb411ea8f03e33d8a0305ff81415408a8e893ce0979b35b2e7a214efd08  Certificate/axioms.lock
+3e93a25dc4485c8d2df6a4bf0910dbae15a1c14bc7050bb1153edd18bebef456  Certificate/axioms.lock

@@ -1,11 +1,11 @@
 # hyperbolic: the hyperbolic plane, 20,000 samples per axiom
 # command: python3 -I tests/model/hyperbolic.py 20000 1
 # seeds: 1
-# commit: 442989248536c1a64c0cd47dea59930867865f33 (harness files as committed)
-# harness sha256: fab1bb768c2ffafbe64e2370e6a82f23ddedec6705a87d3629c3d44ccb4bc2b7
+# commit: 3a2ba2364a3a79a6fdf904e1e731826d2661fc1c (harness files as committed)
+# harness sha256: 39910f14220a517dcf9ac2a15799d60c531328b88e9f5a024cf5c60eb5d78b73
 # python: 3.14.2 (CPython, Darwin arm64)
-# date: 2026-10-25
-# time: 96.1 s
+# date: 2026-10-26
+# time: 123.0 s
 
 self-test: law of cosines, reflections, perpendiculars and angle sums on 2000 triangles (worst relative error 3.9e-15)
 axiom                                       tried  hyp held counterex
@@ -43,19 +43,20 @@ lines_meet_of_opposite_sides                20000      4460         0
 circles_meet                                20000      2555         0
 len_self                                    20000     20000         0
 len_symm                                    20000     20000         0
-angle_symm                                  20000      6996         0
+radius_ne_zero                              20000     11393         0
+angle_symm                                  20000      6991         0
 angle_le_two_right                          20000     20000         0
 area_degenerate                             20000     20000         0
 area_rotate                                 20000     20000         0
-area_congruent                              20000     10764         0
-len_add_of_between                          20000      9878         0
-circle_eq                                   20000      4415         0
-angle_eq_zero_of_same_ray                   20000      2827         0
-same_ray_of_angle_eq_zero                   20000      2728         0
-angle_add_of_inside                         20000      3773         0
-angle_eq_of_same_rays                       20000      4150         0
-area_eq_zero_of_on_line                     20000      4680         0
-on_line_of_area_eq_zero                     20000      4668         0
-area_add_of_between                         20000      8515         0
-superposition                               20000      8691         0
-axioms checked: 48  counterexamples to the other axioms: 0  counterexamples to those that must fail (Postulate5): 1189
+area_congruent                              20000     10822         0
+len_add_of_between                          20000      9863         0
+circle_eq                                   20000      4354         0
+angle_eq_zero_of_same_ray                   20000      2725         0
+same_ray_of_angle_eq_zero                   20000      2729         0
+angle_add_of_inside                         20000      3756         0
+angle_eq_of_same_rays                       20000      4197         0
+area_eq_zero_of_on_line                     20000      4713         0
+on_line_of_area_eq_zero                     20000      4658         0
+area_add_of_between                         20000      8450         0
+superposition                               20000      8755         0
+axioms checked: 49  counterexamples to the other axioms: 0  counterexamples to those that must fail (Postulate5): 1189
