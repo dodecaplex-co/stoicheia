@@ -148,6 +148,9 @@ What the proofs show:
 | ✅ | [III.11](book/III/11.md) | whole | Euclid's |  | I.20, III.2, III.6 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 10 | 20 |
 | ✅ | [III.12](book/III/12.md) | whole | the text's | I.20 | I.20, III.6 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 8 | 21 |
 | ✅ | [III.13](book/III/13.md) | whole | Euclid's | III.2, III.11 | III.2, III.11 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 22 |
+| ✅ | &emsp;[III.13 circlesTouch_iff](book/III/13.md#circlesTouch_iff) |  |  |  | III.13 touchesExternally_iff, III.13 touchesInternally_iff | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 0 |
+| ✅ | &emsp;[III.13 touchesExternally_iff](book/III/13.md#touchesExternally_iff) |  |  |  | I.12, I.17, I.19, I.20, I.24, III.2 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 1 | 34 |
+| ✅ | &emsp;[III.13 touchesInternally_iff](book/III/13.md#touchesInternally_iff) |  |  |  | I.12, I.17, I.19, I.20, I.24 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 1 | 34 |
 | ✅ | [III.14](book/III/14.md) | whole | Euclid's | I.47, III.1, III.3 | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 5 | 36 |
 | ✅ | &emsp;[III.14 general](book/III/14.md#general) |  |  |  | I.20, III.14 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 5 | 13 |
 | ✅ | [III.15](book/III/15.md) | whole | Euclid's | I.20, I.24, III.14 | I.3, I.11, I.13, I.17, I.19, I.20, I.24, III.2, III.14 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 41 | 16 | 19 |

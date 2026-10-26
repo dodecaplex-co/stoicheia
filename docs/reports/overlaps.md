@@ -128,8 +128,9 @@ recovers that point from the earlier conditions, with no centre given. It recove
 earlier statements of III.6 and III.11 with no extra hypothesis: III.6 supposes a common
 centre, and III.11 keeps the named centres that its conclusion orders.
 `Audit.III_13_today` asks for no centres, and so gives the earlier III.13, which was
-given them. This keeps the whole-circle reading of touching; it does not establish
-agreement with Heath's preferred local reading at the contact.
+given them. This keeps the whole-circle reading of touching; it does not itself establish
+agreement with Heath's preferred local reading at the contact, which III.13's companions
+prove, for any two circles (`Prop13.circlesTouch_iff`, 25 October 2026, #126).
 
 ## Former axiom overlaps
 
@@ -518,9 +519,10 @@ construction is given the fact, and never sees a circle. Book Zero kept its own 
 Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf,
 stated for a circle with no centre given, which nothing used, until they were taken
 out on 24 October 2026 (#294; [below](#a-separate-piece-of-work)). `Staging/Routes/`
-contains five Lean files; their theorems rest on neither Circle 2 nor Circle 3
+now holds three Lean files, #129's; their theorems rest on neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
-those three Book Zero lemmas. The staged III.1's construction called Circle 2 to put D
+those three Book Zero lemmas, and the same holds of the theorems that have left it for
+`Elements/`. The staged III.1's construction called Circle 2 to put D
 within the circle until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean`
 as `Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which
 held it, was retired later that day. Since `Prop2.within` is Circle 2 with no supplied
@@ -811,6 +813,19 @@ rule.
   [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement kept the
   measure when arcs got a meaning of their own ([brief 0006](../briefs/0006-statements.md),
   stage 3), so this near miss stays.
+
+- **III.11 and III.12, from contact at the point** (25 October 2026, #126). Two steps of
+  III.13's companions prove the conclusions of III.11 and III.12 for circles that touch
+  at a point, Definition III.3 read there as Heath prefers (`TouchesInternallyAt`,
+  `TouchesExternallyAt`): within, the inner centre lies between the outer centre and the
+  point of contact (`TouchesInternallyAt.between`); without, the point of contact lies
+  between the centres (`TouchesExternallyAt.between`). No rule gives either. Each is a
+  proof by I.24 at a centre, with I.20 within and III.2 without, and nothing beneath it
+  rests on Circle 2 or Circle 3; from there the companions prove the reading at the point
+  the same as the whole-circle reading, for any two circles. So this is another route to
+  two conclusions, not an overlap with a rule. Our III.11 and III.12 follow Euclid on the
+  whole-circle reading and do not cite the two steps, which come after III.13, in
+  `Elements/BookIII/Prop13.lean`.
 
 ### A separate piece of work
 
