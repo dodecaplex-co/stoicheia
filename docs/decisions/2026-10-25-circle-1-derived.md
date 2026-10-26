@@ -1,10 +1,11 @@
 - **Circle 1 kept as a derived property of the numerical model, ahead of its retirement
-  (model, [#477](https://github.com/jackChallis/stoicheia/issues/477)).** Preparation P1
-  tracked in #477 is built on #473's train T1, which adds the new axiom
-  `Tacit.radius_ne_zero`. P1 prepares the plan tracked in #477: Circle 1
-  (`Tacit.between_of_inside_chord`) becomes a theorem in `Prop02.lean` after III.2,
-  keeping its name and type, with preparation trains first so that no check fails on main
-  at any commit. When it is proved, its law leaves `tests/model/laws.toml`,
+  (model, [#477](https://github.com/jackChallis/stoicheia/issues/477)).** On 25 October
+  2026, at about 22:45 Pacific, the owner gave the coordinator's three recommendations a
+  single answer: "yes to all three." The coordinator recorded on #477 what that approves,
+  with #473: the new axiom `Tacit.radius_ne_zero`, and the plan this change serves, that
+  Circle 1 (`Tacit.between_of_inside_chord`) become a theorem in `Prop02.lean` after
+  III.2, keeping its name and type, with preparation trains first so that no check fails
+  on main at any commit. When it is proved, its law leaves `tests/model/laws.toml`,
   `tests/model/search.py` and `tests/model/hyperbolic.py`, as Circle 3's did on 24
   October. But the exhaustive and structured harnesses ran Circle 1 by its law's name, and
   would have stopped at that removal. Here, as Circle 3's preparation did
