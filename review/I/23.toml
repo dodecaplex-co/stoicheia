@@ -21,7 +21,7 @@ note = "The statement names a point on each arm, D on CD and E on CE, and we tak
 [[passage]]
 at = "let DE be joined"
 kind = "given"
-note = "Our triangle DCE is named by its corners, so no straight line DE is drawn; its three sides are the three straight lines that I.22 takes."
+note = "Our triangle DCE is named by its corners, so the Lean draws no straight line DE; its three sides are the three straight lines that I.22 takes."
 
 [[passage]]
 at = "and out of three straight lines which are equal to the three straight lines CD, DE, CE"
@@ -31,11 +31,11 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "b7b41f51"
+commit = "ece9c2d71"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:76721a98bbc6660f"
-run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3)"
-text = "sha256:3f6e110564414a34"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
+text = "sha256:99e9e408d4495acd"
 
 [review.items]
 statement = "pass"

@@ -5,7 +5,7 @@ fingerprint = "sha256:3fa81505760e369a"
 
 [route]
 kind = "euclid"
-note = "The proof first splits on whether a centre lies on AC. In Euclid's case, the centre off AC, it takes F from the rule where Euclid takes the centre without a bracket for III.1; III.17 supplies the touching straight line, and III.36 the equality of squares. The case with the centre on AC names that centre F from the split. That branch uses III.17, III.18, III.36, the square comparison (I.3, I.4, I.28, I.34 and I.46), I.20, I.8 and III.16's porism as in the other branch; Heath prints no references in his closing sentence, and `Prop36.through_centre` first puts F between A and C by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume."
+note = "The proof first splits on whether the centre lies on AC. In Euclid's case, the centre off AC, it takes F from `exists_centre` where Euclid takes the centre with no reference from Heath to III.1; III.17 supplies the touching straight line, and III.36 the equality of squares. With the centre on AC, `Prop37.centre_on_secant` uses `Prop36.through_centre` for that equality, then follows the same argument with equal radii, equal squares, I.8 and III.16's porism."
 
 [[passage]]
 at = "For let DE be drawn touching ABC"
@@ -17,7 +17,7 @@ note = "Euclid draws DE touching ABC without a reference in Heath; III.17 suppli
 at = "let the centre of the circle ABC be taken, and let it be F"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "The rule supplying Euclid's centre F is `Tacit.exists_centre`, an assumption with no System E number."
+note = "The Lean takes F from `Tacit.exists_centre`, as the [introduction](index.md) explains."
 
 [[passage]]
 at = "let FE, FB, FD be joined"
@@ -40,7 +40,7 @@ note = "Euclid uses the equality of the radii FE and FB without giving a reason.
 at = "and FD is the common base of the triangles"
 kind = "helper"
 helper = "Prop37.triangle"
-note = "Euclid's figure makes DBF a triangle; the Lean proves it: B, with DB equal to DE, is not on the straight line through D and the centre F. It uses I.20, for which Heath prints no reference here, with the assumed rules `Tacit.between_cases` (System E, Between 6) and `Tacit.len_add_of_between` (System E, Diagram-segment 1), and `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), proved in `Elements/Figure/Incidence.lean`; DEF is a triangle by `Touches.not_inside`, using `Tacit.line_meets_circle_of_inside` (System E, Intersection 3), also proved there, and the proved rule `Tacit.centre_inside` (System E, Generalities 3)."
+note = "`Touches.not_inside` makes DEF a triangle: its centre F is within the circle and cannot lie on DE. `Prop37.triangle` then makes DBF a triangle. If D, B and F were on one straight line, either D would be within the circle, or the equal lengths DB and DE and equal radii would make two sides of DEF equal to the third, contrary to I.20. Heath gives no reference to I.20 here."
 
 [[passage]]
 at = "And FB produced is a diameter"
@@ -58,11 +58,11 @@ case = "the centre F off AC, with distinct contacts B and E on opposite sides of
 
 [review]
 stage = "full"
-commit = "e00da4b4"
+commit = "7b71d1782"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:27dfde68b2204913"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4"
-text = "sha256:2695c6f7eff6b466"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
+text = "sha256:ca0d1519c83db7b7"
 
 [review.items]
 statement = "pass"

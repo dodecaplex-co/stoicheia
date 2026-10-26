@@ -28,7 +28,7 @@ unused = ["hAB_FC"]
 [[passage]]
 at = "and the triangle ABE is equal to the triangle CFE"
 kind = "carried"
-note = "The Lean proves that the triangle ABE equals CFE here, as Euclid states it; the argument goes on by the angles, and does not use it again."
+note = "The equal triangles ABE and CFE are proved here too, as Euclid states them, and are not needed after."
 unused = ["this"]
 
 [[passage]]
@@ -50,11 +50,11 @@ note = "Euclid leaves the argument for the other interior angle to the reader, w
 
 [review]
 stage = "full"
-commit = "86e935fe"
+commit = "ece9c2d71"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:dbc44d9d229e1a48"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14-I16b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4"
-text = "sha256:4e066a8cf10b0b26"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14-I16b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
+text = "sha256:1604227d376d6184"
 
 [review.items]
 statement = "pass"
