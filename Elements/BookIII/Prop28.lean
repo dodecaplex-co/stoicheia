@@ -23,9 +23,11 @@ the greater are equal in measure as the remainders [C.N. 3]. Two steps depart fr
 III.26's own congruence does. The congruence of the greater circumferences cannot come by
 subtraction; it comes from III.24 applied to the greater segments, which are similar, the
 angles in them being the halves of the equal angles at the centres [III. 20]. And when AB
-passes through the centre, the four circumferences are semicircles and there is no angle at
-the centre for III.26 to use; the angle in each semicircle is right (`Prop28.right`, from
-`Prop24.angle_type`, since III.31 comes later), and III.24 gives the congruence.
+passes through the centre, the four circumferences are semicircles. The angle at the centre
+of each is two right angles (`angleAtCentre.semicircle`), but there are no triangle angles
+AKB, DLE for III.26's central-angle clause to use; the angle in each semicircle is right
+(`Prop28.right`, from `Prop24.angle_type`, since III.31 comes later), and III.24 gives the
+congruence.
 -/
 
 namespace Elements.BookIII
@@ -111,10 +113,10 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   rotate_left
   · have hAKB := between_of_inside_chord hK_M hA_M hB_M (centre_inside hK) hA hB hCG.1
     have hDLE := Prop28.diameter hK hL hA hB hD hE hr hAKB hAB hFH.1
-    /- Here the congruences need an argument of their own, for there is no angle at the
-       centre. On either side of the diameters the angle in the semicircle is right
-       (`Prop28.right`), so the segments on matching sides are similar, and on the equal
-       diameters they are congruent [III. 24]. -/
+    /- Here the angle at the centre is two right angles (`angleAtCentre.semicircle`). We
+       obtain congruence from the right angles in the semicircles (`Prop28.right`): the
+       segments on matching sides are similar and, on the equal diameters, congruent
+       [III. 24]. -/
     have hcongr : ∀ {P Q : Point}, Triangle A B P → Triangle D E Q →
         Arc.Congruent ⟨ABC, A, B, P⟩ ⟨DEF, D, E, Q⟩ := by
       intro P Q hABP hDEQ
@@ -170,7 +172,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have hKX : SameSideOf K X A B := OppositeSidesOf.sameSideOf hKG.symm hXG.symm
   have hLY : SameSideOf L Y D E := OppositeSidesOf.sameSideOf hLH.symm hYH.symm
   have hXY : ∠ A X B = ∠ D Y E := Magnitude.eq_of_add_self_eq
-    ((Prop20 hK hX hA hB hKX).symm.trans (hAKB.trans (Prop20 hL hY hD hE hLY)))
+    ((Prop20.special hK hX hA hB hKX).symm.trans
+      (hAKB.trans (Prop20.special hL hY hD hE hLY)))
   have hAXB := Prop24 hA hB hX hD hE hY
     hXG.triangle hYH.triangle hAB hXY
   have hACB : Arc.Congruent ⟨ABC, A, B, C⟩ ⟨DEF, D, E, F⟩ :=
