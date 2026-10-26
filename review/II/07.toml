@@ -33,15 +33,14 @@ note = "Euclid takes DG to be the square on AC. `Square.about_diameter` proves D
 at = "But the gnomon KLM and the squares BG, GD are the whole ADEB and CF"
 kind = "helper"
 helper = "Parallelogram.about_diameter"
-note = "Euclid takes the gnomon and GD as the whole square ADEB and counts CF a second time as BG, the same square named by its other two corners. `Parallelogram.about_diameter` proves that the four parallelograms make up the square, as in II.4."
+note = "Euclid takes the gnomon and GD as the whole square ADEB and counts CF a second time as BG, the same square named by its other two corners. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order H, G and F, then joins the four pieces with `quadArea_add_of_parallelograms`."
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
+commit = "a91d97b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1300a024e78c97c1"
-run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9); read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
-text = "sha256:310562a6f0ad1a6c"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9)"
 
 [review.items]
 statement = "pass"

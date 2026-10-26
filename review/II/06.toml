@@ -46,15 +46,14 @@ note = "Euclid takes LG to be the square on BC. `Square.about_diameter` proves L
 at = "But the gnomon NOP and LG are the whole square CEFD"
 kind = "helper"
 helper = "Parallelogram.about_diameter"
-note = "Euclid takes the gnomon NOP and LG together as the whole square CEFD. `Parallelogram.about_diameter` proves that the four parallelograms make up the square, as in II.4."
+note = "Euclid takes the gnomon NOP and LG together as the whole square CEFD. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order L, H and M, then joins the four pieces with `quadArea_add_of_parallelograms`."
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
+commit = "1e482112"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:39d9d957397fea23"
-run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
-text = "sha256:d1991caf4d223309"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
 
 [review.items]
 statement = "pass"
