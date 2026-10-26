@@ -10,7 +10,7 @@ note = "Euclid draws every parallel in one figure. The companions draw one at a 
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The straight line A is named by its two ends, A₁ and A₂, and the main theorem asks them to differ. The companions do not: A₁A₂ may be nothing, and then every rectangle is nothing, so they claim a little more than Euclid's two straight lines. `Prop1.general` takes the straight line from B cut at points given in order along it (`InOrder`), and adds the rectangles on its segments as a sum over the list; with no point of section the one segment is the whole, and with no point at all the straight line and each rectangle are nothing."
+note = "The straight line A is named by its two ends, A₁ and A₂, and the main theorem asks them to differ. The companions do not: A₁A₂ may be nothing, and then every rectangle is nothing, so they claim a little more than Euclid's two straight lines. `Prop1.general` takes the straight line from B cut at points given in order along it (`InOrder`), and adds the rectangles on its segments as a sum over the list; with no point of section the one segment is the whole, and with no point at all the straight line is nothing, and so is each side of the equation."
 
 [[passage]]
 at = "let BG be made equal to A"
