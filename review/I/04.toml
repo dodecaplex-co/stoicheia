@@ -44,12 +44,15 @@ note = "Heiberg brackets this as an early scholium. A finite straight line enter
 at = "Thus the whole triangle ABC will coincide with the whole triangle DEF"
 kind = "helper"
 helper = "Superposition.Derives.area_of_congruent"
-note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Beneath the next sentence, `Superposition.Derives.area_of_congruent` uses the kept sides and angles and the cited Metric 9 to equate ABC with DB'C', giving the required area equality."
+note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Euclid's coincidence takes the triangle laid down to be ABC itself; beneath the next sentence the Lean makes it ABC's equal by Metric 9 (`Tacit.area_congruent`), which `Superposition.Derives.area_of_congruent` cites with the kept sides and angles: triangles equal in all their sides and angles are equal in area. So Euclid's step from coincidence to equality rests here in part on a rule that would give I.4's area clause at once, applied to ABC and DEF once their remaining sides and angles were proved; the overlap catalogue records it among its near misses."
 
 [[passage]]
 at = "And the remaining angles will also coincide with the remaining angles"
 kind = "grouped"
 note = "The two remaining angle equalities follow inside the placement from the kept angles and the corner coincidences, with Metric 4 reversing the arms where needed. The restricted rule then exports these two equalities together with the base and area equalities, one application for each."
+
+[figure]
+note = "Heath's figure also draws the base bent below EF, the impossible case of two straight lines enclosing a space; ours leaves it out."
 
 [review]
 stage = "full"

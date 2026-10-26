@@ -15,7 +15,7 @@ note = "Euclid produces AB to D with BD equal to CB. The statement takes every D
 at = "let the square AEFD be described on AD"
 kind = "helper"
 helper = "Prop8.cell"
-note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves CH parallel to BL and MN parallel to OP with `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) to form the cells and order points across three parallels, finds G and R with `BookI.Prop30.meet`, and establishes the order of their points with `Parallel.between`."
+note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, each about the diameter DE: through B, BL parallel to AE, cutting DE at K, and MN through K parallel to AD; through C, CH parallel to AE, cutting DE at Q, and OP through Q parallel to AD. It obtains their complements by `Parallelogram.complements`, proves CH parallel to BL and MN parallel to OP with `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) to form the cells and order points across three parallels, finds G and R with `BookI.Prop30.meet`, and establishes the order of their points with `Parallel.between`."
 
 [[passage]]
 at = "while CB is equal to GK, and BD to KN"
