@@ -54,6 +54,7 @@ commit = "1e482112"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:39d9d957397fea23"
 run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
+text = "sha256:da00a0197f0dc8cb"
 
 [review.items]
 statement = "pass"

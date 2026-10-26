@@ -268,7 +268,7 @@ theorem Prop25.complete {A C P B : Point} {α γ : Circle} (hA : OnCircle A α)
   exact hX.1
 
 /-- The centre's position in III.25 determines whether the segment is less than a
-semicircle, a semicircle or greater, and compares its circumference with two right angles.
+semicircle, a semicircle or greater, and how its circumference compares with two right angles.
 B is on P's side of AC, and D lies between A and C. The construction's three conclusions
 place E across AC from B, at D, or on B's side. `Prop25.complete` identifies the constructed
 circle with the given segment's circle, carrying these conclusions to that segment.
