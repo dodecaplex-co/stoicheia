@@ -380,7 +380,7 @@ disc.
 
 | Axiom | Why it holds |
 |---|---|
-| `superposition` | Move the plane rigidly, taking `A` to `D` and the ray from `A` through `B` onto the ray from `D` through `G`, and reflect in `L` if `C` lands on the side away from `H`. Rigid motions keep lengths and angles. `B'` lies on the ray, so `D` is not between `B'` and `G`. The triangle guard puts the image of `C` off `L`, so it can be placed on `H`'s side as `C'`. Same side 3 then puts `C'` off `L`; since `D` is on `L`, `D ≠ C'`, and Postulate 1 draws their straight line for the kept side. `Rule.of_placement_of_join` states this reduction, through `Rule.of_placement`. The numerical harness checks the sufficient construction; the formal model proves the reduction and the construction in Lean. |
+| `superposition` | Move the plane rigidly, taking `A` to `D` and the ray from `A` through `B` onto the ray from `D` through `G`, and reflect in `L` if `C` lands on the side away from `H`. Rigid motions keep lengths and angles. `B'` lies on the ray, so `D` is not between `B'` and `G`. The triangle guard puts the image of `C` off `L`, so it can be placed on `H`'s side as `C'`. Same side 3 then puts `C'` off `L`; since `D` is on `L`, `D ≠ C'`, and Postulate 1 draws their straight line for the kept side. `Rule.of_placement_of_join` states this reduction, through `Rule.of_placement`. The numerical harness checks the sufficient construction; the formal model proves the reduction and the construction in Lean. The harness's check of the kept side is a construction smoke test: it confirms that the harness builds the line, but it cannot fail on its own, since the line is drawn through `D` and `C'`, and `D ≠ C'` already follows from the check that `C'` is on `H`'s side of `L`. No mutation targets it. |
 
 ## The guards and the mutations
 
@@ -452,8 +452,11 @@ triangle. And the hyperbolic plane's motions can lay any triangle down at any po
 along any ray, on either side. The harness also constructs and checks the straight line
 through the starting point and placed third corner, the kept side. These are numerical
 tests of the sufficient placement for the restricted rule, by `Rule.of_placement`;
-`Rule.of_placement_of_join` separates the cost of that side as Same side 3 and Postulate 1.
-There is no Lean proof of the hyperbolic model here. Marvin Jay Greenberg's
+there is no Lean proof of the hyperbolic model here. As in the plane
+([above](#superposition)), the check of the kept side is a construction smoke test: it
+cannot fail on its own, since the placed third corner is checked to lie strictly on the
+chosen side of the line the triangle is laid along, and so is not the starting point,
+which is on that line; and no mutation targets it. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 

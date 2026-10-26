@@ -27,6 +27,13 @@
   Postulate 1, in place of its own proof that D is not C′ and its own call of Postulate 1;
   its module docstring says so. Its axioms are what they were, `propext`,
   `Classical.choice` and `Quot.sound`, and the model's pin of them is unchanged.
+  The model's pages name the new theorem where they described the side by Postulate 1 and
+  `Rule.of_placement`: `model/README.md`, the docstring of
+  `model/Model/Laws/superposition.lean`, and `tests/model/MODEL.md`, in the superposition
+  row of its table of why each rule holds and in its account of the formal model.
+
+  This entry approves the change to `tests/model/MODEL.md` that names the new theorem in
+  that row and in that account.
 
   System E's superposition, as Avigad, Dean and Mumma state it (§3.7, p. 725), lists the
   facts of the triangle laid down in two sets, Π₁ for SAS and Π₂ for SSS, and neither
@@ -36,7 +43,7 @@
   placement also keeps the side AC, which neither set lists, and a bound on what that side costs, by
   the new theorem; no declaration there changes, and no other sentence's claim.
 
-  No protected path changes. What is left of the two items goes to trains of their own:
+  No other protected path changes. What is left of the two items goes to trains of their own:
   the pin of `Rule.of_placement_of_join` in `Audit/Superposition.lean`, a protected path,
   at `[propext, Quot.sound]`; and, in brief 0009, a citation of the theorem where the brief
   still says that the side's cost is checked by reading the model's proof (its round-4
