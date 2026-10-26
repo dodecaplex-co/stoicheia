@@ -336,11 +336,12 @@ def svg_desc(path):
     return " ".join(m.group(1).split()) if m else ""
 
 
+DECLARATION_KEYWORDS = r"theorem|lemma|def|abbrev|structure|inductive|instance"
 DECLARATION = re.compile(
-    r"^(?:theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s({:]+)", re.M)
+    r"^(?:private\s+)?(?:" + DECLARATION_KEYWORDS + r")\s+([^\s({:]+)", re.M)
 # The same, with the keyword: a theorem or lemma is proved, and the rest are definitions.
 DECLARATION_KIND = re.compile(
-    r"^(theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s({:]+)", re.M)
+    r"^(?:private\s+)?(" + DECLARATION_KEYWORDS + r")\s+([^\s({:]+)", re.M)
 
 
 class LeanParts:
@@ -1632,10 +1633,15 @@ CARRIED_CASES = [   # (the helpers of the carried passages; how the sentence mar
     (["Prop40.general"], None),   # another proposition's companion
 ]
 
+DECLARATION_CASES = [
+    ("theorem shown : True := trivial\nprivate theorem hidden : True := trivial\n",
+     [("theorem", "shown"), ("theorem", "hidden")]),
+]
+
 
 def use_self_check():
-    """USE_CASES, read from USE_FILES, ORDER_CASES and CARRIED_CASES; returns the number
-    of cases and the faults."""
+    """USE_CASES, read from USE_FILES, ORDER_CASES, CARRIED_CASES and DECLARATION_CASES;
+    returns the number of cases and the faults."""
     code = {path: check_fidelity.without_comments(src) for path, src in USE_FILES.items()}
     declared = declared_names(code)
     own = next(iter(USE_FILES))
@@ -1662,7 +1668,16 @@ def use_self_check():
             faults.append(f"the carried {helpers!r} were not refused")
         elif f" The list below marks where {want};" not in got:
             faults.append(f"the carried {helpers!r} read as {got!r}, not as {want!r}")
-    return len(USE_CASES) + len(ORDER_CASES) + len(CARRIED_CASES), faults
+    for source, want in DECLARATION_CASES:
+        got = DECLARATION_KIND.findall(source)
+        if got != want:
+            faults.append(f"the declarations read as {got!r}, not as {want!r}")
+        got_names = DECLARATION.findall(source)
+        want_names = [name for _, name in want]
+        if got_names != want_names:
+            faults.append(f"the declaration names read as {got_names!r}, not as {want_names!r}")
+    count = len(USE_CASES) + len(ORDER_CASES) + len(CARRIED_CASES) + 2 * len(DECLARATION_CASES)
+    return count, faults
 
 
 def lean_listing(book, n, facts):
