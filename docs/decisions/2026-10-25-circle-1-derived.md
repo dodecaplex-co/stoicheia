@@ -20,8 +20,8 @@
 
   The model's run, `python3 -I tests/model/run.py --full --write`, was made at commit
   `242da9a7f107`, where this change sits on the radius rule's train, and it passed every
-  check: the plane gave no counterexample, the 15 mutations were all caught, and in the
-  hyperbolic plane only `Postulate5` failed, as it must. Against that train's own run at
+  check: no counterexample turned up in the plane, each of the 15 mutations was caught,
+  and the hyperbolic plane refuted `Postulate5` alone, rightly. Against that train's run at
   `3a2ba2364a3a`, the one difference is where Circle 1's grid and built configurations are
   counted: its 3,228 exhaustive and 37,732 structured ones now count as a derived
   property's, so the plane's total for the axioms is 4,063,054 where it was 4,104,014,
