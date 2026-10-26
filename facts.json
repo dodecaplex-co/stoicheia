@@ -94041,7 +94041,7 @@
       "line": 219,
       "file": "Elements/Figure/RuleBase.lean"}]},
    "enunciation":
-   "**III.25, handed the whole circle** (companion of III.25, \"III.25 of_circle\"). Handed\nthe circle ABC, the core run on the points of its arc on P's side (which meet every\nstraight line from within the base, by `Prop25.meets`) finds a circle that is ABC itself\n(`Prop25.complete`), so its centre E is the centre of ABC. This is III.25's statement\nbefore brief 0006 restated it, with the centre-existence hypothesis removed; it retains\nits certificate. Proved from the core,\n`Prop25.meets` and `Prop25.complete`, it checks that the pieces fit. ",
+   "**III.25, handed the whole circle** (companion of III.25, \"III.25 of_circle\"). Handed\nthe circle ABC, the core run on the points of its arc on P's side (which meet every\nstraight line from within the base, by `Prop25.meets`) finds a circle that is ABC itself\n(`Prop25.complete`), so its centre E is the centre of ABC. This is III.25's statement\nbefore brief 0006 restated it, with the centre-existence hypothesis removed (the `example`\nbelow checks it against that statement); it retains its certificate. Proved from the core,\n`Prop25.meets` and `Prop25.complete`, it checks that the pieces fit. ",
    "direct_axioms":
    ["Definition15",
     "Postulate1",
