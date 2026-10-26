@@ -7,8 +7,9 @@
   `Elements.Tacit.radius_ne_zero`, which says `Centre A α → OnCircle B α → ‖A B‖ ≠ 0`,
   with `A`, `B` and `α` implicit. The straight line from a circle's centre to a point on
   the circle has some length; the rule says nothing of how much. The plan's later steps
-  come in later changes: Book Zero's proofs are moved onto the rule, so that Book Zero no
-  longer uses `Tacit.circle_eq`, and Circle 1 is retired after III.2, under #477. No
+  come in later changes: Book Zero's proofs are moved onto the rule, so that no proved
+  rule of Book Zero rests on `Tacit.circle_eq`, and Circle 1 is retired after III.2, under
+  #477. No
   proposition's or porism's statement, no definition and no `--` line changes, in this
   change or in those.
 
