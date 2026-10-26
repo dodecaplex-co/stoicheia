@@ -56,8 +56,8 @@ Book III is about circles, and most of its words need no Lean word of their own:
 The others are here: equal circles; a straight line touching a circle; circles touching
 one another, inside or outside, read of the whole circles and, as Heath prefers, at the
 point of contact; circles cutting one another; a circumference, compared
-with a circumference; and the
-angles of III.16 and III.31, contained by a straight line and a circumference.
+with a circumference; the angle at the centre standing on a circumference, of any size; and
+the angles of III.16 and III.31, contained by a straight line and a circumference.
 
 **Mixed angles.** III.16 compares the angle of the semicircle, and the remaining angle
 between the circumference and the straight line that touches it, with any acute
@@ -83,7 +83,11 @@ measures a circumference by the angle that stands on it at the circumference
 (Definition 9), taken twice: the circumference `BKC` is `∠ B A C + ∠ B A C`, for a point
 `A` of the circle on the other side of `BC` from `K`. That is the angle it subtends at the
 centre when it is less than a semicircle (III.20); a semicircle is two right angles, and
-the whole circle four.
+the whole circle four. Our angles are less than two right angles, so the angle at the
+centre standing on a circumference, `angleAtCentre`, is a word of its own, read as Euclid
+draws it in III.20's first figure: it may be two right angles or more, a reading made after
+Heath's notes and not Euclid's, and every circumference is its angle at the centre
+(III.20's companion `Prop20.circumference`).
 
 The measure carries no radius. In one circle, or in equal circles, two circumferences
 are equal exactly when their measures are, and that is all Euclid ever asks of them; in
@@ -309,6 +313,19 @@ so equal measures are equal circumferences only in one circle or in equal circle
 noncomputable def circumference (α : Circle) (B K C : Point) : Angle :=
   Classical.epsilon fun x =>
     ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧ x = ∠ B A C + ∠ B A C
+
+/-- **The angle at the centre standing on the circumference BKC.** Let E be the centre
+of the circle α, and AEF a diameter whose ends lie on opposite sides of BC, F on the side
+of K. The diameter divides the angle at the centre standing on the circumference BKC into
+the angles BEF and FEC, as in Euclid's first figure for III.20, and the angle at the
+centre is the two together. When E lies beyond BC, on K's side, it is what is left when
+the angle BEC is taken from four right angles (`angleAtCentre.reflex`), and so greater
+than two right angles (`angleAtCentre.reflex_gt`). Lean chooses one such diameter
+(`Classical.epsilon`), as `circumference` chooses one angle; `angleAtCentre.diameter`
+shows that every such diameter gives the same angle. -/
+noncomputable def angleAtCentre (α : Circle) (B K C : Point) : Angle :=
+  Classical.epsilon fun x => ∃ E A F : Point, Centre E α ∧ OnCircle A α ∧ OnCircle F α ∧
+    Between A E F ∧ OppositeSidesOf A K B C ∧ SameSideOf F K B C ∧ x = ∠ B E F + ∠ F E C
 
 /-- **Definition III.9.** The circumference on which the angle `BAC` stands: the part of
 the circle `α` that the straight lines `AB`, `AC` cut off, from `B` to `C` on the side of

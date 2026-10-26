@@ -201,7 +201,7 @@ value is not printed: that Lean cannot see it is the point. An inductive type's 
 structure's constructors are entries of their own.
 
 At commit d040117 there were 37, all reached from the axioms; with the entries'
-statements, from 17 October 2026, there are <!-- count:vocabulary -->267<!-- /count -->. Among them:
+statements, from 17 October 2026, there are <!-- count:vocabulary -->268<!-- /count -->. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"

@@ -76,7 +76,7 @@ theorem Circumference.centre (hG : Centre G α) (hB : OnCircle B α) (hC : OnCir
     (hGK : OppositeSidesOf G K B C) : circumference α B K C = ∠ B G C := by
   obtain ⟨A, hA, hAG⟩ := Prop2.sameSide hB hC hGK.triangle
   rw [Circumference.eq hA hB hC (hAG.trans_opposite hGK),
-    Prop20 hG hA hB hC hAG.symm]
+    Prop20.special hG hA hB hC hAG.symm]
 
 /-- **The whole circle.** A straight line BC cuts the circle into two circumferences,
 one on each side, and together they are four right angles. Measured at a point of each,

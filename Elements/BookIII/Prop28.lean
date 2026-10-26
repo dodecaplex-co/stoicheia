@@ -170,7 +170,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have hKX : SameSideOf K X A B := OppositeSidesOf.sameSideOf hKG.symm hXG.symm
   have hLY : SameSideOf L Y D E := OppositeSidesOf.sameSideOf hLH.symm hYH.symm
   have hXY : ∠ A X B = ∠ D Y E := Magnitude.eq_of_add_self_eq
-    ((Prop20 hK hX hA hB hKX).symm.trans (hAKB.trans (Prop20 hL hY hD hE hLY)))
+    ((Prop20.special hK hX hA hB hKX).symm.trans
+      (hAKB.trans (Prop20.special hL hY hD hE hLY)))
   have hAXB := Prop24 hA hB hX hD hE hY
     hXG.triangle hYH.triangle hAB hXY
   have hACB : Arc.Congruent ⟨ABC, A, B, C⟩ ⟨DEF, D, E, F⟩ :=

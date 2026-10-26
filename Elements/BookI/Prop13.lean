@@ -227,7 +227,7 @@ private theorem inside_of_angle_add_one_side {A B C D : Point} {L M : Line}
 
 /-- An angle of a triangle is less than two right angles. Produce BA beyond A to E: by
 I.13 the angles BAC, CAE make two right angles, and CAE is greater than nothing. -/
-private theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C) :
+theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C) :
     ∠ B A C < ∟ + ∟ := by
   obtain ⟨L, hB, hA⟩ := Postulate1 B A h.ne₁₂
   obtain ⟨E, hE, hBAE, _⟩ := Postulate2 hB hA h.ne₁₂ []

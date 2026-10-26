@@ -11,6 +11,7 @@ import Elements.BookIII.Prop15
 import Elements.BookIII.Prop16
 import Elements.BookIII.Prop17
 import Elements.BookIII.Prop18
+import Elements.BookIII.Prop20
 import Elements.BookIII.Prop23
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop25
@@ -68,6 +69,8 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookIII.Prop18.contact_lt, "III.18 contact_lt"),
   (``Elements.BookIII.Prop18.semicircle_gt, "III.18 semicircle_gt"),
   (``Elements.BookIII.Prop18.acute, "III.18 acute"),
+  (``Elements.BookIII.Prop20.special, "III.20 special"),
+  (``Elements.BookIII.Prop20.circumference, "III.20 circumference"),
   (``Elements.BookIII.Prop23.point, "III.23 point"),
   (``Elements.BookIII.Prop24.equalCircles, "III.24 equalCircles"),
   (``Elements.BookIII.Prop24.equalMeasure, "III.24 equalMeasure"),
