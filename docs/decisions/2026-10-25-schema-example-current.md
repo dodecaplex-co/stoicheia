@@ -1,5 +1,5 @@
 - **The worked example of III.16 is its current record, and `mixed-angles-omitted` goes
-  (tooling, #162, item 5).** The
+  (tooling, [#162](https://github.com/jackChallis/stoicheia/issues/162), item 5).** The
   coordinator's orders of 25 October 2026 assign item 5 of card #162 to this change, a
   check train of its own. Since III.16 and III.31 state their mixed angles, no record
   carries the tag `mixed-angles-omitted`. It stayed in `review/terms.toml` only because the
