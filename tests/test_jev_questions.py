@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
-"""Jev question controls and file containment, with no Lean, network or credentials.
+"""Jev question controls, the calibration set, its tally and file containment, with no Lean,
+network or credentials.
 
     python3 -I tests/test_jev_questions.py
 
 File access cases use temporary directories and stubs of Git's file and directory queries.
 Import cases index Lean headers written to a temporary directory. Helper cases plant modules
 there that leave a marker if they ever run, and run a copy of the generator beside them.
-The control case generates all rows in memory against the real HEAD and reports its
-duration. No case writes to the repository or its Git metadata.
+One full generation against the real HEAD, the audit of Books I to III and then its
+calibration set, is made in memory once and shared by the control, Book III, calibration,
+figure restoring and tally cases, which report its duration; the controls are generated
+again, at the evidence commit of the audit of Books I and II, in a clone. Figures are restored
+from that generation's manifest into a temporary repository. The tally reads result lines
+written here as `jev.py run` writes them. No case writes to the repository or its Git metadata.
 """
 
 from __future__ import annotations
 
 import builtins
 import copy
+import hashlib
 import importlib.util
 import io
 import json
@@ -39,8 +45,7 @@ SPEC.loader.exec_module(questions)
 COMMENTARY_CHANGES = {
     '12-I.39-commentary': ('EBC is a part of DBC and the less',
                           'EBC is a part of DBC and the greater'),
-    '12-I.40-commentary': ('our I.38 makes ABC equal to FCE',
-                          'our I.38 makes ABC greater than FCE'),
+    '12-I.40-commentary': ('with BC and CE meeting at C', 'with BC and CE apart'),
 }
 BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'
 BODY = '\nnamespace Elements\n\nend Elements\n'
@@ -94,7 +99,9 @@ HEADERS = (
 HELPER_NAMES = ('jev_questions_test_first', 'jev_questions_test_second')
 
 
-class FileContainment(unittest.TestCase):
+class TemporaryRepository:
+    """A repository in a temporary folder, with Git's file and directory queries stubbed."""
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -175,6 +182,8 @@ class FileContainment(unittest.TestCase):
                 with self.assertRaisesRegex(questions.Refusal, message):
                     action()
 
+
+class FileContainment(TemporaryRepository, unittest.TestCase):
     def test_evidence_symlink_refused_before_read(self):
         link = self.root / 'link'
         link.symlink_to(self.outside)
@@ -1116,6 +1125,48 @@ class HelperModules(unittest.TestCase):
         self.assertEqual(self.ran(), [])
 
 
+HEAD = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, text=True).strip()
+EVIDENCE_COMMIT = '39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3'
+BOOKS_I_II = (('I', 48), ('II', 14))
+_SHARED = {}
+
+
+def shared():
+    """One full generation at HEAD, the audit and then the calibration from it, shared by every
+    case below; each helper read is checked to be of evidence already verified."""
+    if not _SHARED:
+        start = time.monotonic()
+        generator = questions.Generator(HEAD)
+        helper_reads = set()
+
+        def verified_read(function):
+            def wrapped(path, *args, **kwargs):
+                name = path.relative_to(REPOSITORY).as_posix()
+                if name not in generator.evidence.data:
+                    raise AssertionError(f'helper read before verification: {name}')
+                helper_reads.add(name)
+                return function(path, *args, **kwargs)
+            return wrapped
+
+        with patch.object(Path, 'read_text', verified_read(Path.read_text)), \
+                patch.object(Path, 'read_bytes', verified_read(Path.read_bytes)):
+            rows_bytes, _, manifest = generator.finish()
+            audit_seconds = time.monotonic() - start
+            files, calibration = questions.Calibration(generator).finish()
+        _SHARED.update(generator=generator, rows=[json.loads(line) for line in rows_bytes.splitlines()],
+                       manifest=manifest, helper_reads=helper_reads, files=files,
+                       calibration=calibration, audit_seconds=audit_seconds,
+                       seconds=time.monotonic() - start)
+        print(f'\nShared HEAD generation: audit {audit_seconds:.2f}s; with the calibration '
+              f'{_SHARED["seconds"]:.2f}s.')
+    return _SHARED
+
+
+def calibration_rows(question):
+    data = shared()['files'][f'{questions.CALIBRATION}-{question}.jsonl']
+    return [json.loads(line) for line in data.splitlines()]
+
+
 class Controls(unittest.TestCase):
     def assert_commentary_controls(self, rows):
         originals = {row['id']: row for row in rows if not row['seeded']}
@@ -1136,7 +1187,7 @@ class Controls(unittest.TestCase):
                 'after_sha256': questions.sha(state['commentary']),
             }])
 
-    def generated_rows_at(self, revision):
+    def generated_rows_at(self, revision, books):
         with tempfile.TemporaryDirectory() as directory:
             checkout = Path(directory) / 'checkout'
             subprocess.run(['git', 'clone', '--no-local', '--quiet', str(REPOSITORY), str(checkout)],
@@ -1155,40 +1206,47 @@ class Controls(unittest.TestCase):
             sys.modules[name] = module
             try:
                 spec.loader.exec_module(module)
-                rows_bytes, _, _ = module.Generator(revision).finish()
+                rows_bytes, _, _ = module.Generator(revision, books).finish()
             finally:
                 del sys.modules[name]
             return [json.loads(line) for line in rows_bytes.splitlines()]
 
     def test_commentary_controls_at_evidence_commit_and_head(self):
-        head = subprocess.check_output(
-            ['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, text=True).strip()
-        for revision in ('39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3', head):
-            with self.subTest(revision=revision):
-                self.assert_commentary_controls(self.generated_rows_at(revision))
+        # The evidence commit of the audit of Books I and II holds those two books' records
+        # and Lean, and none of the words Book III's rows need; it is read with its books.
+        with self.subTest(revision=EVIDENCE_COMMIT):
+            self.assert_commentary_controls(self.generated_rows_at(EVIDENCE_COMMIT, BOOKS_I_II))
+        with self.subTest(revision=HEAD):
+            self.assert_commentary_controls(shared()['rows'])
+
+    def test_i40_anchor_is_unique_and_a_missing_anchor_is_told_apart(self):
+        # #350: I.40's anchor went missing when its commentary was rewritten (read-through 02,
+        # #34), and the refusal called it not unique. The new anchor occurs once and plants a
+        # reversed claim; a missing anchor is refused as missing.
+        rows = shared()['rows']
+        commentary = next(r for r in rows if r['id'] == '12-I.40-commentary')['state']['commentary']
+        old, new = COMMENTARY_CHANGES['12-I.40-commentary']
+        self.assertEqual(commentary.count(old), 1)
+        self.assertEqual(commentary.count(new), 0)
+        generator = shared()['generator']
+        again = questions.Generator.__new__(questions.Generator)
+        again.__dict__.update(generator.__dict__)
+        again.rows = [copy.deepcopy(r) for r in generator.rows if not r['seeded']]
+        again.coverage = copy.deepcopy(generator.coverage)
+        stale = next(r for r in again.rows if r['id'] == '12-I.40-commentary')
+        stale['state']['commentary'] = commentary.replace(old, 'with BC and CE at C')
+        with self.assertRaisesRegex(questions.Refusal, 'anchor occurs 0 times, not once'):
+            again.controls()
+        stale['state']['commentary'] = commentary.replace(old, old + ' ' + old)
+        with self.assertRaisesRegex(questions.Refusal, 'anchor occurs 2 times, not once'):
+            again.controls()
 
     def test_full_generation_has_ten_controls_and_exact_commentary_changes(self):
-        commit = subprocess.check_output(
-            ['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, text=True).strip()
-        start = time.monotonic()
-        generator = questions.Generator(commit)
-        helper_reads = set()
-
-        def verified_read(function):
-            def wrapped(path, *args, **kwargs):
-                name = path.relative_to(REPOSITORY).as_posix()
-                self.assertIn(name, generator.evidence.data, f'helper read before verification: {name}')
-                helper_reads.add(name)
-                return function(path, *args, **kwargs)
-            return wrapped
-
-        with patch.object(Path, 'read_text', verified_read(Path.read_text)), \
-                patch.object(Path, 'read_bytes', verified_read(Path.read_bytes)):
-            rows_bytes, _, manifest = generator.finish()
+        found = shared()
         self.assertTrue({'review/terms.toml', 'review/I/01.toml', 'heath/I/01.md',
-                         'Elements/BookI/Prop01.lean'} <= helper_reads)
-        elapsed = time.monotonic() - start
-        rows = [json.loads(line) for line in rows_bytes.splitlines()]
+                         'Elements/BookI/Prop01.lean', 'review/III/01.toml',
+                         'Elements/BookIII/Prop01.lean'} <= found['helper_reads'])
+        rows, manifest = found['rows'], found['manifest']
         seeded = [row for row in rows if row['seeded']]
         self.assertEqual(len(seeded), 10)
         self.assertEqual(manifest['rows'], len(rows))
@@ -1196,9 +1254,9 @@ class Controls(unittest.TestCase):
             self.assertEqual(sum(row['item'] == item for row in seeded), 2)
         originals = {row['id']: row for row in rows if not row['seeded']}
         representations = [row for row in originals.values() if row['item'] == 11]
-        expected_refs = {f'{book}.{n}' for book, count in (('I', 48), ('II', 14))
+        expected_refs = {f'{book}.{n}' for book, count in (('I', 48), ('II', 14), ('III', 37))
                          for n in range(1, count + 1)}
-        self.assertEqual(len(representations), 62)
+        self.assertEqual(len(representations), 99)
         self.assertEqual({row['ref'] for row in representations}, expected_refs)
         first = originals['11-I.1-representation']
         self.assertEqual(first['expected'], 'no bridge required')
@@ -1207,7 +1265,512 @@ class Controls(unittest.TestCase):
         self.assertEqual(first['source']['record'], 'review/I/01.toml')
         self.assertIn('review/I/01.toml', first['source']['files'])
         self.assert_commentary_controls(rows)
-        print(f'\nFull HEAD generation: {len(rows)} rows, {len(seeded)} seeded, {elapsed:.2f}s.')
+        print(f'\nFull HEAD generation: {len(rows)} rows, {len(seeded)} seeded, '
+              f'{found["audit_seconds"]:.2f}s.')
+
+
+class BookThree(unittest.TestCase):
+    def test_every_question_is_asked_of_all_37_propositions(self):
+        rows = [row for row in shared()['rows'] if not row['seeded']]
+        for item, suffix in ((9, 'scope'), (10, 'citations'), (11, 'representation'),
+                             (12, 'commentary'), (13, 'figure')):
+            with self.subTest(item=item):
+                ids = {row['id'] for row in rows if row['item'] == item}
+                for n in range(1, 38):
+                    self.assertIn(f'{item:02d}-III.{n}-{suffix}', ids)
+        self.assertEqual(shared()['manifest']['books'], ['I', 'II', 'III'])
+        self.assertEqual(shared()['manifest']['unresolved_names'], [])
+
+    def test_every_pass_record_gets_bridges_that_exist_and_n_a_none(self):
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        for ref, row in rows.items():
+            book = ref.split('.')[0]
+            with self.subTest(ref=ref):
+                verdict = generator.bundle(book, int(ref.split('.')[1]))
+                bridges = row['state']['bridges']
+                self.assertEqual(row['expected'] == 'bridge stated', bool(bridges))
+                for name in bridges:
+                    self.assertIn(name, generator.index.decls)
+                    path = generator.index.get(name).path
+                    # A later book's bridge never serves an earlier book.
+                    later = {'I': ('/BookII/', '/BookIII/'), 'II': ('/BookIII/',), 'III': ()}[book]
+                    self.assertFalse(any(part in path for part in later), (name, path))
+                for name in row['state']['represented_objects']:
+                    self.assertIn('Elements.' + name, generator.index.decls)
+                self.assertEqual(sorted(bridges), sorted(set(verdict[1])))
+        for n in (14, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
+            self.assertTrue(rows[f'III.{n}']['state']['bridges'], n)
+
+    def test_superposition_records_get_the_bridges_they_checked(self):
+        # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
+        # Derives.sound and Rule.apply; I.8's, the cited law I.7 too.
+        checked = {'Elements.Superposition.Atom.holds_map', 'Elements.Superposition.Lit.holds_map',
+                   'Elements.Superposition.Metric.holds_map', 'Elements.Superposition.Derives.sound',
+                   'Elements.Superposition.Rule.apply'}
+        meanings = {'Superposition.Atom.Holds', 'Superposition.Lit.Holds', 'Superposition.Metric.Holds'}
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        for ref, extra in (('I.4', set()), ('I.8', {'Elements.BookI.Prop8.holds_prop7'})):
+            with self.subTest(ref=ref):
+                state = rows[ref]['state']
+                self.assertEqual(set(state['bridges']), checked | extra)
+                self.assertTrue(meanings <= set(state['definitions']))
+                self.assertTrue(meanings <= set(state['represented_objects']))
+
+
+def recomputed_lists(question):
+    """The entry's hash rule, written again here from the records at HEAD."""
+    key = {'P11': ('statement', 'scope', 'full'), 'P12': ('items', 'passages', 'pass'),
+           'P13': ('items', 'representations', 'pass'), 'P14': ('items', 'commentary', 'pass'),
+           'P15': ('items', 'figures', 'pass')}[question]
+    result = {}
+    for book, count, take in (('I', 48, 4), ('II', 14, 2), ('III', 37, 4)):
+        eligible = []
+        for n in range(1, count + 1):
+            text = subprocess.check_output(['git', 'show', f'{HEAD}:review/{book}/{n:02d}.toml'],
+                                           cwd=REPOSITORY)
+            record = questions.tomllib.loads(text.decode('utf-8'))
+            value = (record['statement'][key[1]] if key[0] == 'statement'
+                     else record['review'].get('items', {}).get(key[1]))
+            if record['review']['stage'] == 'full' and value == key[2]:
+                eligible.append(f'{book}.{n}')
+        eligible.sort(key=lambda ref: hashlib.sha256(
+            ('jev-calibration ' + question + ' ' + ref).encode('utf-8')).hexdigest())
+        result[book] = (eligible[:take], eligible[take:2 * take])
+    return result
+
+
+class Calibration(unittest.TestCase):
+    def test_each_file_has_twenty_rows_ten_and_ten(self):
+        manifest = shared()['calibration']
+        for question in questions.QUESTIONS:
+            with self.subTest(question=question):
+                rows = calibration_rows(question)
+                self.assertEqual(len(rows), 20)
+                self.assertEqual(sum(row['seeded'] for row in rows), 10)
+                self.assertEqual([row['calibration']['role'] for row in rows].count('control'), 10)
+                name = f'{questions.CALIBRATION}-{question}.jsonl'
+                self.assertEqual(manifest['files'][name]['rows'], 20)
+                self.assertEqual(manifest['files'][name]['sha256'],
+                                 questions.sha(shared()['files'][name]))
+
+    def test_the_lists_are_the_hash_rule_and_the_entry_table(self):
+        manifest = shared()['calibration']
+        for question in questions.QUESTIONS:
+            with self.subTest(question=question):
+                lists = recomputed_lists(question)
+                entry = manifest['questions'][question]
+                for book in ('I', 'II', 'III'):
+                    self.assertEqual([c['ref'] for c in entry['controls'] if c['book'] == book],
+                                     lists[book][0])
+                    self.assertEqual([p['ref'] for p in entry['plants'] if p['book'] == book],
+                                     lists[book][1])
+                    self.assertEqual(questions.CALIBRATION_LISTS[question][book],
+                                     (' '.join(lists[book][0]), ' '.join(lists[book][1])))
+                for listed in entry['controls'] + entry['plants']:
+                    self.assertEqual(listed['hash'], hashlib.sha256(
+                        f'jev-calibration {question} {listed["ref"]}'.encode()).hexdigest())
+
+    def test_other_lists_than_the_entry_table_are_refused(self):
+        changed = copy.deepcopy(questions.CALIBRATION_LISTS)
+        changed['P13']['II'] = ('II.1 II.14', 'II.8 II.6')
+        calibration = questions.Calibration.__new__(questions.Calibration)
+        calibration.generator = shared()['generator']
+        calibration.evidence = calibration.generator.evidence
+        with patch.object(questions, 'CALIBRATION_LISTS', changed):
+            with self.assertRaisesRegex(questions.Refusal, 'P13 Book II: .*stops for a ruling'):
+                calibration.lists('P13')
+
+    def test_controls_are_the_audit_rows_and_plants_keep_their_constraints(self):
+        audit = {row['id']: row for row in shared()['rows'] if not row['seeded']}
+        manifest = shared()['calibration']
+        for question, spec in questions.QUESTIONS.items():
+            entry = manifest['questions'][question]
+            rows = {row['id']: row for row in calibration_rows(question)}
+            controls = {c['ref'] for c in entry['controls']}
+            plants = {p['ref'] for p in entry['plants']}
+            with self.subTest(question=question):
+                self.assertFalse(controls & plants)
+                self.assertEqual([p['book'] for p in entry['plants']],
+                                 ['I'] * 4 + ['II'] * 2 + ['III'] * 4)
+                for row in rows.values():
+                    self.assertEqual(row['id'], f'{spec.item:02d}-{row["ref"]}-{spec.suffix}')
+                    base = audit[row['id']]
+                    self.assertEqual(row['question'], base['question'])
+                    if row['calibration']['role'] == 'control':
+                        self.assertFalse(row['seeded'])
+                        self.assertEqual(row['state'], base['state'])
+                        self.assertEqual(row.get('assets'), base.get('assets'))
+                        self.assertEqual(row['expected'], spec.clean)
+                    else:
+                        self.assertTrue(row['seeded'])
+                        self.assertIn(row['expected'], spec.defects)
+                        self.assertEqual(row['mutation']['base_state_sha256'],
+                                         questions.sha(questions.dumps(base['state'])))
+                        self.assertEqual(row['mutation']['state_sha256'],
+                                         questions.sha(questions.dumps(row['state'])))
+                        self.assertNotEqual((row['state'], row.get('assets')),
+                                            (base['state'], base.get('assets')))
+                for k, plant in enumerate(entry['plants']):
+                    kinds = questions.KINDS[question]
+                    self.assertEqual(plant['expected'], kinds[plant['kind'] - 1].expected)
+                    self.assertEqual(questions.PLANTS[(question, plant['ref'])].kind, plant['kind'])
+                    # Counting round from the k-th kind, each kind passed over is recorded.
+                    due = k % len(kinds) + 1
+                    skipped = [(due - 1 + step) % len(kinds) + 1
+                               for step in range((plant['kind'] - due) % len(kinds))]
+                    self.assertEqual([p['kind'] for p in plant['passed_over']], skipped)
+                    self.assertTrue(plant['justification'])
+
+    def test_no_local_label_leaks_and_ids_say_nothing_of_the_role(self):
+        for question in questions.QUESTIONS:
+            rows = calibration_rows(question)
+            with self.subTest(question=question):
+                self.assertEqual(len({row['id'] for row in rows}), 20)
+                for row in rows:
+                    self.assertFalse(set(row['state']) & set(questions.LOCAL_LABELS))
+                    sent = json.dumps([row['state'], row['question'], sorted(row.get('assets', {}))],
+                                      ensure_ascii=False)
+                    self.assertNotRegex(sent, questions.ROLE_WORDS)
+                    self.assertNotRegex(row['id'], '(?i)seeded|control|plant')
+                    self.assertEqual(jev_check(row), [])
+                    # What a change brings into what is sent; an image's local path is not sent.
+                    for change in row.get('mutation', {}).get('changes', []):
+                        if isinstance(change.get('new'), str) and change['field'][0] == 'state':
+                            self.assertNotRegex(change['new'], questions.SIGN_WORDS)
+                        for _, new in change.get('edits', []):
+                            self.assertNotRegex(new, questions.SIGN_WORDS)
+
+    def test_changed_figures_are_copies_never_in_figures(self):
+        manifest = shared()['calibration']
+        self.assertEqual(len(manifest['figures']), 5)
+        for path, figure in manifest['figures'].items():
+            self.assertTrue(path.startswith(
+                'docs/reports/acceptance/jev/calibration-books-I-III-figures/'))
+            self.assertTrue(figure['from'].startswith('figures/'))
+            data = shared()['files'][path.split('/', 4)[-1]]
+            self.assertEqual(questions.sha(data), figure['sha256'])
+            committed = subprocess.check_output(['git', 'show', f'{HEAD}:{figure["from"]}'],
+                                                cwd=REPOSITORY)
+            self.assertEqual(questions.sha(committed), figure['from_sha256'])
+            self.assertNotEqual(data, committed)
+        status = subprocess.check_output(['git', 'status', '--porcelain', '--', 'figures'],
+                                         cwd=REPOSITORY, text=True)
+        self.assertEqual(status, '')
+
+    def test_the_manifest_carries_each_copy_exactly(self):
+        files = shared()['files']
+        # As committed: the manifest's own bytes, read back.
+        carried = json.loads(files[f'{questions.CALIBRATION}-manifest.json'])['figures']
+        self.assertEqual(len(carried), 5)
+        self.assertEqual(sorted(carried), sorted(shared()['calibration']['figures']))
+        for path, figure in carried.items():
+            with self.subTest(path=path):
+                self.assertEqual(set(figure), {'from', 'from_sha256', 'sha256', 'text'})
+                data = figure['text'].encode('utf-8')
+                self.assertEqual('sha256:' + hashlib.sha256(data).hexdigest(), figure['sha256'])
+                self.assertEqual(data, files[path.split('/', 4)[-1]])
+
+    def test_check_passes_and_finds_a_changed_file(self):
+        files, manifest = shared()['files'], shared()['calibration']
+
+        class Stub:
+            def __init__(self, generator):
+                pass
+
+            def finish(self):
+                return files, manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory).resolve() / 'calibration'
+            out.mkdir()
+            args = ['--commit', HEAD, '--calibration', '--out', str(out)]
+            with patch.object(questions, 'Calibration', Stub), \
+                    patch.object(questions, 'Generator', lambda commit: None):
+                stdout = io.StringIO()
+                with redirect_stdout(stdout):
+                    self.assertEqual(questions.main(args), 0)
+                    self.assertEqual(questions.main(args + ['--check']), 0)
+                written = sorted(p.relative_to(out).as_posix() for p in out.rglob('*') if p.is_file())
+                self.assertEqual(written, sorted(files))
+                carried = json.loads((out / f'{questions.CALIBRATION}-manifest.json').read_bytes())
+                for path, figure in carried['figures'].items():
+                    self.assertEqual(figure['text'].encode('utf-8'),
+                                     (out / path.split('/', 4)[-1]).read_bytes())
+                # A copy present is compared; a copy absent is not, as in a committed tree.
+                figures = sorted(out.glob(questions.CALIBRATION_FIGURES + '/*.svg'))
+                before = figures[0].read_bytes()
+                figures[0].write_bytes(before + b'\n')
+                stderr = io.StringIO()
+                with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                    self.assertEqual(questions.main(args + ['--check']), 1)
+                self.assertIn('generated files differ', stderr.getvalue())
+                self.assertIn(figures[0].name, stderr.getvalue())
+                figures[0].write_bytes(before)
+                for figure in figures[1:]:
+                    figure.unlink()
+                stdout = io.StringIO()
+                with redirect_stdout(stdout):
+                    self.assertEqual(questions.main(args + ['--check']), 0)
+                self.assertIn('1 present and compared', stdout.getvalue())
+                figures[0].unlink()
+                stdout = io.StringIO()
+                with redirect_stdout(stdout):
+                    self.assertEqual(questions.main(args + ['--check']), 0)
+                self.assertIn('0 present and compared', stdout.getvalue())
+                # The manifest, which carries the copies' text, is compared always.
+                manifest_path = out / f'{questions.CALIBRATION}-manifest.json'
+                manifest_path.write_bytes(manifest_path.read_bytes().replace(b'<svg', b'<svg ', 1))
+                stderr = io.StringIO()
+                with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                    self.assertEqual(questions.main(args + ['--check']), 1)
+                self.assertIn('manifest.json', stderr.getvalue())
+
+    def test_dry_run_loads_every_request_and_figure(self):
+        if not shutil.which('rsvg-convert'):
+            self.skipTest('rsvg-convert renders the figures, and is not on the PATH')
+        files = shared()['files']
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            # The assets as they stand once written: the committed figures and the copies.
+            shutil.copytree(REPOSITORY / 'figures', root / 'figures')
+            for name, data in files.items():
+                path = root / 'docs/reports/acceptance/jev' / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+            for question in questions.QUESTIONS:
+                with self.subTest(question=question):
+                    name = f'{questions.CALIBRATION}-{question}.jsonl'
+                    path = root / 'docs/reports/acceptance/jev' / name
+                    stdout, stderr = io.StringIO(), io.StringIO()
+                    with redirect_stdout(stdout), redirect_stderr(stderr):
+                        status = questions.jev.main(['run', str(path), '--dry-run',
+                                                     '--assets-root', str(root)])
+                    self.assertEqual(status, 0, stderr.getvalue())
+
+
+class RestoreFigures(TemporaryRepository, unittest.TestCase):
+    """--restore-figures, from the shared generation's manifest, into a temporary repository."""
+
+    def setUp(self):
+        # The shared generation reads the real repository, so it comes before the stubs.
+        files = shared()['files']
+        self.carried = files[f'{questions.CALIBRATION}-manifest.json']
+        self.copies = {name: data for name, data in files.items()
+                       if name.startswith(questions.CALIBRATION_FIGURES + '/')}
+        super().setUp()
+        self.jev = self.root / 'docs/reports/acceptance/jev'
+        self.enterContext(patch.object(questions, 'CALIBRATION_DIR', self.jev))
+        self.figures = self.jev / questions.CALIBRATION_FIGURES
+
+    def restore(self, manifest: bytes):
+        path = self.directory / 'calibration-manifest.json'
+        path.write_bytes(manifest)
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            status = questions.main(['--restore-figures', str(path)])
+        self.assertFalse([call for call in self.git.call_args_list if call.args[0][:2] == ['git', 'show']])
+        return status, stdout.getvalue() + stderr.getvalue()
+
+    def changed(self, change) -> bytes:
+        manifest = json.loads(self.carried)
+        change(manifest['figures'])
+        return json.dumps(manifest).encode('utf-8')
+
+    def written(self):
+        return sorted(p.relative_to(self.root).as_posix() for p in self.root.rglob('*.svg'))
+
+    def test_writes_identical_bytes_into_an_empty_tree(self):
+        self.assertFalse(self.jev.exists())
+        self.assertEqual(self.restore(self.carried)[0], 0)
+        for name, data in self.copies.items():
+            self.assertEqual((self.jev / name).read_bytes(), data)
+        self.assertEqual(self.written(), sorted(f'docs/reports/acceptance/jev/{name}' for name in self.copies))
+        # Again, over identical files: nothing differs, and nothing is replaced.
+        status, output = self.restore(self.carried)
+        self.assertEqual(status, 0, output)
+        self.assertIn('0 written, 5 already there and identical', output)
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            self.assertEqual(questions.main(['--restore-figures', 'x', '--check']), 1)
+        self.assertIn('takes its manifest and nothing else', stderr.getvalue())
+
+    def test_a_tampered_text_is_refused_and_nothing_written(self):
+        def tamper(figures):
+            last = figures[sorted(figures)[-1]]
+            last['text'] = last['text'].replace('<text', '<text ', 1)
+
+        status, output = self.restore(self.changed(tamper))
+        self.assertEqual(status, 1, output)
+        self.assertIn('not its recorded', output)
+        self.assertEqual(self.written(), [])
+        self.assertFalse(self.figures.exists())
+        # A path given twice, of which JSON would keep the second, is refused too.
+        name, figure = next(iter(json.loads(self.carried)['figures'].items()))
+        entry = f'{json.dumps(name)}: {json.dumps(figure)}'
+        status, output = self.restore(f'{{"figures": {{{entry}, {entry}}}, "evidence_files": {{}}}}'.encode())
+        self.assertEqual(status, 1, output)
+        self.assertIn('a key is repeated', output)
+        self.assertEqual(self.written(), [])
+
+    def test_a_path_outside_the_figure_paths_is_refused(self):
+        first = sorted(json.loads(self.carried)['figures'])[0]
+        for outside in ('figures/I/34.svg', 'docs/reports/acceptance/jev/I-34.svg',
+                        f'docs/reports/acceptance/jev/{questions.CALIBRATION_FIGURES}/I-35.svg',
+                        '../outside.svg', str(self.directory / 'outside.svg')):
+            with self.subTest(outside=outside):
+                def move(figures):
+                    figures[outside] = figures.pop(first)
+
+                status, output = self.restore(self.changed(move))
+                self.assertEqual(status, 1, output)
+                self.assertIn("not one of the calibration's figure paths", output)
+                self.assertEqual(self.written(), [])
+                self.assertFalse((self.directory / 'outside.svg').exists())
+
+    def test_a_differing_file_is_not_overwritten(self):
+        self.figures.mkdir(parents=True)
+        name = sorted(self.copies)[0]
+        (self.jev / name).write_bytes(b'<svg/>\n')
+        status, output = self.restore(self.carried)
+        self.assertEqual(status, 1, output)
+        self.assertIn('differ, and are not replaced', output)
+        self.assertEqual((self.jev / name).read_bytes(), b'<svg/>\n')
+        self.assertEqual(self.written(), [f'docs/reports/acceptance/jev/{name}'])
+
+
+def jev_check(row):
+    return questions.jev.check_row(row, row['id'], set())
+
+
+class Tally(unittest.TestCase):
+    """The tally's verdicts on result lines written as `jev.py run` writes them."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        # Resolved, since an output or input path may hold no symlink, as /var is on macOS.
+        self.directory = Path(temporary.name).resolve()
+        self.questions = self.directory / 'questions.jsonl'
+        self.data = shared()['files'][f'{questions.CALIBRATION}-P13.jsonl']
+        self.questions.write_bytes(self.data)
+        self.rows = [json.loads(line) for line in self.data.splitlines()]
+
+    def line(self, row, first, second=None, **changes):
+        line = {key: row[key] for key in ('id', 'item', 'ref', 'seeded', 'expected')}
+        line.update(time='2026-10-26T00:00:00Z', model_requested='jev-1.13.0', order_check=True,
+                    input_sha256=hashlib.sha256(self.data).hexdigest(), input_rows=len(self.rows),
+                    request_sha256='0' * 64, latency_s=1.0, status=200, model='jev-1.13.0',
+                    choice=first, confidence=0.9,
+                    reversed={'choice': second or first, 'confidence': 0.8,
+                              'consistent': (second or first) == first})
+        line['agrees'] = line['choice'] == row['expected']
+        line.update(changes)
+        return line
+
+    def clean_run(self):
+        return [self.line(row, row['expected']) for row in self.rows]
+
+    def tally(self, lines):
+        results = self.directory / 'results.jsonl'
+        results.write_text(''.join(json.dumps(line, ensure_ascii=False) + '\n' for line in lines))
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            status = questions.main(['--tally', str(self.questions), str(results)])
+        return status, stdout.getvalue(), stderr.getvalue()
+
+    def by_role(self, role):
+        return [i for i, row in enumerate(self.rows) if row['calibration']['role'] == role]
+
+    def test_found_in_both_orders_clears_the_bar(self):
+        status, out, _ = self.tally(self.clean_run())
+        self.assertEqual(status, 0, out)
+        self.assertIn('10 of 10 planted faults found', out)
+        self.assertIn('0 of 10 controls false alarms', out)
+        self.assertIn('20 of 20 first answers as expected', out)
+        self.assertIn('P13 clears its bar.', out)
+
+    def test_a_plant_missed_in_one_order(self):
+        lines = self.clean_run()
+        for k in self.by_role('plant')[:2]:
+            lines[k] = self.line(self.rows[k], 'bridge missing or inadequate', 'bridge stated')
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1)
+        self.assertIn('8 of 10 planted faults found', out)
+        self.assertIn('2. 8 of 10 planted faults found in both orders (at least 9): fails', out)
+        self.assertEqual(out.count('; missed'), 2)
+
+    def test_cannot_tell_is_neither_found_nor_a_false_alarm(self):
+        lines = self.clean_run()
+        plant, control = self.by_role('plant')[0], self.by_role('control')[0]
+        lines[plant] = self.line(self.rows[plant], 'cannot tell')
+        lines[control] = self.line(self.rows[control], 'cannot tell', 'no bridge required')
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 0, out)
+        self.assertIn('9 of 10 planted faults found', out)
+        self.assertIn('0 of 10 controls false alarms', out)
+        self.assertIn('18 of 20 first answers as expected', out)
+
+    def test_a_false_alarm_in_the_reversed_order_only(self):
+        lines = self.clean_run()
+        for k in self.by_role('control')[:3]:
+            lines[k] = self.line(self.rows[k], 'bridge stated', 'bridge missing or inadequate')
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1)
+        self.assertIn('3 of 10 controls false alarms (at most 2): fails', out)
+        self.assertIn('20 of 20 first answers as expected', out)
+        k = self.by_role('control')[2]
+        lines[k] = self.line(self.rows[k], 'bridge stated')
+        self.assertEqual(self.tally(lines)[0], 0)
+
+    def test_a_failed_request_fails_condition_one(self):
+        lines = self.clean_run()
+        k = self.by_role('control')[0]
+        failed = self.line(self.rows[k], 'bridge stated')
+        for key in ('model', 'choice', 'confidence', 'reversed', 'agrees'):
+            failed.pop(key)
+        failed.update(status=500, error='HTTP 500')
+        lines[k] = failed
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1)
+        self.assertIn('19 of 20 rows answered; 1 failed requests', out)
+        self.assertIn('failed request: HTTP 500', out)
+
+    def test_another_model_fails_condition_one(self):
+        lines = self.clean_run()
+        lines[0]['model'] = 'jev-1.14.0'
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1)
+        self.assertIn('models jev-1.13.0, jev-1.14.0: fails', out)
+        lines = [dict(line, model_requested='jev-1.14.0', model='jev-1.14.0')
+                 for line in self.clean_run()]
+        self.assertEqual(self.tally(lines)[0], 1)
+
+    def test_a_mismatched_input_or_a_foreign_line_is_refused(self):
+        for change, message in (({'input_sha256': '1' * 64}, 'another input'),
+                                ({'input_rows': 21}, 'another input'),
+                                ({'order_check': False}, 'without the order check'),
+                                ({'expected': 'no bridge required'}, 'not a line that run wrote')):
+            with self.subTest(change=change):
+                lines = self.clean_run()
+                lines[3].update(change)
+                status, out, err = self.tally(lines)
+                self.assertEqual(status, 1)
+                self.assertIn(message, err)
+                self.assertNotIn('clears', out)
+        lines = self.clean_run()
+        del lines[3]['request_sha256']
+        status, _, err = self.tally(lines)
+        self.assertEqual(status, 1)
+        self.assertIn('not a line that jev.py run writes', err)
+        lines = self.clean_run() + [self.clean_run()[0]]
+        self.assertIn('answered twice', self.tally(lines)[2])
+
+    def test_an_unanswered_row_fails_condition_one(self):
+        status, out, _ = self.tally(self.clean_run()[1:])
+        self.assertEqual(status, 1)
+        self.assertIn('19 of 20 rows answered', out)
+        self.assertIn('unanswered', out)
 
 
 if __name__ == '__main__':
