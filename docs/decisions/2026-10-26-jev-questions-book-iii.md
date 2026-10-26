@@ -31,8 +31,8 @@
   segment against two right angles, the angle with a circumference read as a region near its
   vertex, the foot of a perpendicular, and Book II's `rect` and `sq` for III.35 to III.37.
   I.4's and I.8's rows now supply what their records say they checked: the meanings of the
-  rule of superposition's symbols and their bridges, the cited laws with their meanings and
-  proofs, and for I.8 `SameSideOf.of_line`. I.45's and II.14's rows supply the outline of a
+  rule of superposition's symbols and their bridges, the cited laws, their meanings, and the
+  statements of the theorems that establish them, and for I.8 `SameSideOf.of_line`. I.45's and II.14's rows supply the outline of a
   figure, its region and area, and the bridges by which their records connect a figure
   divided into pieces with its area. A later book's bridge never serves an earlier book.
 
@@ -57,12 +57,15 @@
   change to `figures/`; since `docs/` holds no SVG, the copy is not committed as a file, and
   the manifest carries its exact text and hash instead, from which `--restore-figures`
   writes it again. `--tally` reads one calibration file and the output `jev.py run` wrote
-  for it. It refuses a questions file that is not the set the entry fixes, and an output
-  any line of which is not as `jev.py run` writes it for that file: made from other
-  questions, without the order check, with a request other than the one the row builds, or
-  with an `agrees` that does not follow from its choice. It prints each row's finding, and
-  exits 0 only when the entry's four conditions hold, the fourth judged by
-  `jev.py score --bar 0.8` itself.
+  for it. It checks that the questions file has the shape the entry fixes: 20 rows of one
+  question, 10 controls and 10 plants, on the entry's lists, with labels and expected
+  answers that fit each row's role. It does not itself prove that the rows are the ones the
+  generator wrote: that is what `--check` and the manifest's hashes show. It refuses an
+  output any line of which is not consistent with that file as `jev.py run` writes it: made
+  from other questions, without the order check, with a request other than the one the row
+  builds, or with an `agrees` that does not follow from its choice; an unsuccessful request
+  counts as a failed one. It prints each row's finding, and exits 0 only when the entry's
+  four conditions hold, the fourth judged by `jev.py score --bar 0.8` itself.
 
   This entry approves, in `scripts/audit/jev_questions.py`, the changes above: the three
   books, the bundles and their guards, the Lean it reads, I.40's control, the escape, and

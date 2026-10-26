@@ -13,8 +13,9 @@ figure restoring and tally cases, which report its duration; the controls are ge
 again, at the evidence commit of the audit of Books I and II, in a clone. Figures are restored
 from that generation's manifest into a temporary repository. The tally reads result lines built
 here as `jev.py run` builds them for the generated file, with jev.py's own request builder and
-answer reader; P15's images are read from a temporary tree. No case writes to the repository
-or its Git metadata.
+answer reader, and, in one case, the output of jev.py's own run, its key and replies stood in
+for; P15's images are read from a temporary tree. No case writes to the repository or its Git
+metadata.
 """
 
 from __future__ import annotations
@@ -1931,9 +1932,12 @@ class TallyLines:
     def tally(self, lines):
         results = self.directory / 'results.jsonl'
         results.write_text(''.join(json.dumps(line, ensure_ascii=False) + '\n' for line in lines))
+        return self.tally_file(results)
+
+    def tally_file(self, results, *options):
         stdout, stderr = io.StringIO(), io.StringIO()
         with redirect_stdout(stdout), redirect_stderr(stderr):
-            status = questions.main(['--tally', str(self.questions), str(results)])
+            status = questions.main(['--tally', str(self.questions), str(results), *options])
         return status, stdout.getvalue(), stderr.getvalue()
 
     def refused(self, lines, message):
@@ -2164,6 +2168,56 @@ class TallyFigures(TallyLines, unittest.TestCase):
         lines = self.clean_run()
         next(self.root.glob(f'docs/reports/acceptance/jev/{questions.CALIBRATION_FIGURES}/I-13.svg')).unlink()
         self.refused(lines, 'cannot be built again')
+
+    def test_a_run_at_another_svg_width_is_tallied_at_that_width(self):
+        # The review's probe: jev.py's own run, its figures rendered at 701, with its key and
+        # its replies stood in for, so that no key is read and nothing is sent. Its lines are
+        # accepted at the width it was given, and refused at the default.
+        results = self.directory / 'results.jsonl'
+        rows = iter(self.rows)
+
+        def reply(method, url, key, timeout, body=None, images=False):
+            if method == 'GET':
+                return questions.jev.Reply(200, b'{"models": [{"name": "jev-1.13.0"}]}', 0.1)
+            row, asked = next(rows), json.loads(body)['questions']
+            answers = {qid: {'choice': row['expected'], 'confidence': 0.9,
+                             'probabilities': {option: float(option == row['expected'])
+                                               for option in q['criteria']}}
+                       for qid, q in asked.items()}
+            usage = {'input_tokens': 4000, 'output_tokens': 1}
+            return questions.jev.Reply(200, json.dumps({'model': 'jev-1.13.0', 'answers': answers,
+                                                        'usage': usage}).encode(), 1.0)
+
+        stderr = io.StringIO()
+        with patch.object(questions.jev, 'read_key', lambda: 'stand-in'), \
+                patch.object(questions.jev, 'request', reply), \
+                redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+            status = questions.jev.main(['run', str(self.questions), '--out', str(results),
+                                         '--svg-width', '701', '--assets-root', str(self.root),
+                                         '--base-url', 'http://127.0.0.1:9'])
+        self.assertEqual(status, 0, stderr.getvalue())
+        self.assertIsNone(next(rows, None))
+        written = [json.loads(line) for line in results.read_text().splitlines()]
+        self.assertEqual([line['id'] for line in written], [row['id'] for row in self.rows])
+        # The width is in what is sent: no figure's request is the one built at 700.
+        self.assertTrue(all(line['request_sha256'] != self.request(row, 'jev-1.13.0')[1]
+                            for line, row in zip(written, self.rows)))
+        status, out, err = self.tally_file(results, '--svg-width', '701')
+        self.assertEqual(status, 0, out + err)
+        self.assertIn('P15 clears its bar.', out)
+        for options in ((), ('--svg-width', str(questions.SVG_WIDTH))):
+            with self.subTest(options=options):
+                status, out, err = self.tally_file(results, *options)
+                self.assertEqual(status, 1, out + err)
+                self.assertIn('its request_sha256 is not that of the request jev.py run builds', err)
+                self.assertNotIn('clears', out)
+        # The width is the tally's alone.
+        for argv, message in ((['--commit', 'HEAD', '--svg-width', '701'], '--svg-width is for --tally alone'),
+                              (['--restore-figures', 'x', '--svg-width', '701'], 'takes its manifest and nothing else')):
+            stderr = io.StringIO()
+            with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                self.assertEqual(questions.main(argv), 1)
+            self.assertIn(message, stderr.getvalue())
 
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ comment reader the scripts share, heath.py's `comment_end`:
     python3 scripts/audit/jev_questions.py --commit REV --out PATH --manifest PATH
     python3 scripts/audit/jev_questions.py --commit REV --calibration [--out DIR] [--check]
     python3 scripts/audit/jev_questions.py --restore-figures MANIFEST
-    python3 scripts/audit/jev_questions.py --tally QUESTIONS RESULTS
+    python3 scripts/audit/jev_questions.py --tally QUESTIONS RESULTS [--svg-width PIXELS]
 
 Generation reads no credentials and sends nothing. Every evidence file is compared with
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
@@ -72,7 +72,8 @@ whole, and every entry it removes, beside their hashes; `jev.py run` sends none 
 --tally reads one calibration file and the output `jev.py run` wrote for it, and exits 0 only
 when the entry's bar is cleared. It refuses a file not of the calibration's exact shape, and a
 line not as `jev.py run` writes it for that file: its labels, its input's hash and rows, the
-fingerprint of the request built again from the row, and an answer in both orders whose
+fingerprint of the request built again from the row, its figures rendered at the width the run
+was given (--svg-width, 700 by default, as for `jev.py run`), and an answer in both orders whose
 `agrees` is whether the first is the expected one. A line with a status other than 200, or an
 error, records a failed request. The fourth condition is `jev.py score <output> --bar 0.8`
 itself.
@@ -2520,23 +2521,37 @@ PLANTS = {
         'case.',
         (('replace', ['state', 'caption'], 'AD crossing CB', 'AC crossing DB'),)),
     ('P15', 'I.13'): Plant(
-        4, 'B moved off CD, to (200, 160), with AB, BE, its label and every mark at B: the arcs '
-        'of the angles CBA and ABD, drawn again at B between the directions of C, A and D, and '
-        'the mark of the right angle EBD, between the directions of D and E',
-        'AB is to stand on the straight line CD at B, and BE to be drawn from B at right angles '
-        'to CD; with B moved above CD, and everything drawn at B moved with it, B is no longer '
-        'on CD.',
+        4, 'B moved along CD beyond D, to (400, 200), so that the order is C, D, B: the straight '
+        'line CD drawn on through D to B; AB and BE drawn from B, with E above B, so that BE is '
+        "still at right angles to CD; B's label and every mark at B drawn there: the arcs of the "
+        'angles CBA and ABD, from the direction of C, now also that of D, to that of A, and the '
+        "mark of the right angle EBD, between the directions of D and E; D's label set below D, "
+        'off the line now drawn through it; and the figure widened from 400 to 440, a width some '
+        "of the edition's figures have, to hold B",
+        'The proof takes B on CD between C and D (Between C B D, the hypothesis hCBD), so that AB '
+        'makes with CD the two adjacent angles CBA, ABD, and BE, at right angles to CD, stands '
+        'between BC and BD. With B beyond D, BC and BD are one ray: the angles CBA, ABD are one '
+        'angle, together less than two right angles; A falls within the angle DBE, so that the '
+        'angle DBA is not the two angles DBE, EBA together; and C and D are not on opposite sides '
+        'of BE. Only that order fails: C, D and B are on one straight line, A is off it and BE is '
+        'at right angles to it.',
         (('figure', 'I-13.svg', [
+            ('viewBox="0 0 400 250"', 'viewBox="0 0 440 250"'),
+            ('width="400" height="250"', 'width="440" height="250"'),
             ('<path d="M 176 200 A 24 24 0 0 1 184.57 181.61"',
-             '<path d="M 176.81 166.18 A 24 24 0 0 1 181.39 144.84"'),
+             '<path d="M 376 200 A 24 24 0 0 1 377.82 190.84"'),
             ('<path d="M 178.15 173.95 A 34 34 0 0 1 234 200"',
-             '<path d="M 173.64 138.53 A 34 34 0 0 1 232.85 168.76"'),
+             '<path d="M 368.57 187.02 A 34 34 0 0 0 366 200"'),
             ('<polyline points="210,200 210,190 200,190"',
-             '<polyline points="209.66,162.58 209.66,152.58 200,150"'),
-            ('x1="200" y1="200" x2="93.94"', 'x1="200" y1="160" x2="93.94"'),
-            ('x1="200" y1="200" x2="200" y2="45"', 'x1="200" y1="160" x2="200" y2="45"'),
-            ('<circle cx="200" cy="200" r="2.6"/>', '<circle cx="200" cy="160" r="2.6"/>'),
-            ('<text x="194" y="224">B</text>', '<text x="203" y="182">B</text>')]),)),
+             '<polyline points="390,200 390,190 400,190"'),
+            ('x1="50" y1="200" x2="350" y2="200"', 'x1="50" y1="200" x2="400" y2="200"'),
+            ('x1="200" y1="200" x2="93.94"', 'x1="400" y1="200" x2="93.94"'),
+            ('x1="200" y1="200" x2="200" y2="45"', 'x1="400" y1="200" x2="400" y2="45"'),
+            ('<circle cx="200" cy="200" r="2.6"/>', '<circle cx="400" cy="200" r="2.6"/>'),
+            ('<circle cx="200" cy="45" r="2.6"/>', '<circle cx="400" cy="45" r="2.6"/>'),
+            ('<text x="194" y="224">B</text>', '<text x="394" y="224">B</text>'),
+            ('<text x="357" y="206">D</text>', '<text x="344" y="224">D</text>'),
+            ('<text x="194" y="35">E</text>', '<text x="394" y="35">E</text>')]),)),
     ('P15', 'II.5'): Plant(
         1, "I.1's figure sent for II.5",
         "I.1's figure, two circles and an equilateral triangle, has none of II.5's square, "
@@ -2969,7 +2984,8 @@ PARTIAL_FIELDS = frozenset({'model', 'choice', 'probabilities', 'confidence'})
 RUN_TIME = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z')
 FINGERPRINT = re.compile(r'[0-9a-f]{64}')
 SHAPE_ERROR = 'the answer is not the shape TypeSafe documents ('
-# The width `jev.py run` renders an SVG at, unless --svg-width says otherwise.
+# The width `jev.py run` renders an SVG at, unless --svg-width says otherwise; --tally builds
+# each request again at it, unless its own --svg-width says otherwise.
 SVG_WIDTH = 700
 
 
@@ -3007,15 +3023,15 @@ def calibration_file(path: Path) -> tuple[str, list[dict], bytes]:
     return name, rows, data
 
 
-def fingerprints(rows: list[dict]):
+def fingerprints(rows: list[dict], svg_width: int):
     """The SHA-256 of the request `jev.py run` sends for a row, with the order check, by its own
-    `build` and `encode`, its images read from the repository at SVG_WIDTH."""
+    `build` and `encode`, its images read from the repository, an SVG rendered at svg_width."""
     cache: dict[tuple[str, str], str] = {}
 
     def fingerprint(row: dict, model: str) -> str:
         if (row['id'], model) not in cache:
             try:
-                body, _ = jev.build(row, model, True, ROOT, SVG_WIDTH)
+                body, _ = jev.build(row, model, True, ROOT, svg_width)
             except jev.Failure as error:
                 raise Refusal(f'{row["id"]}: its request cannot be built again to check its '
                               f'fingerprint ({error}); a changed figure is written back with '
@@ -3091,15 +3107,16 @@ def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bo
     return True
 
 
-def tally(questions: Path, results: Path) -> int:
+def tally(questions: Path, results: Path, svg_width: int = SVG_WIDTH) -> int:
     """Judge one calibration file's run against the entry's bar; reads no key, sends nothing.
     The question file must be of the calibration's exact shape and every line of the output as
-    `jev.py run` writes it for that file, its request's fingerprint among what is checked; the
-    fourth condition is `jev.py score` itself."""
+    `jev.py run` writes it for that file, its request's fingerprint among what is checked, with
+    its figures rendered at svg_width, the --svg-width the run was given; the fourth condition
+    is `jev.py score` itself."""
     name, rows, data = calibration_file(questions)
     spec = QUESTIONS[name]
     made = {'input_sha256': hashlib.sha256(data).hexdigest(), 'input_rows': len(rows)}
-    fingerprint = fingerprints(rows)
+    fingerprint = fingerprints(rows, svg_width)
     by_id = {row['id']: row for row in rows}
     answers: dict[str, dict] = {}
     answered: set[str] = set()
@@ -3391,6 +3408,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--calibration', action='store_true', help='the calibration set, not the audit')
     parser.add_argument('--tally', nargs=2, type=Path, metavar=('QUESTIONS', 'RESULTS'),
                         help="judge a calibration file's run against the bar; reads no key, sends nothing")
+    parser.add_argument('--svg-width', type=int, metavar='PIXELS',
+                        help=f'with --tally, the --svg-width the run was given, at which each request '
+                             f'is built again (default {SVG_WIDTH}, as for jev.py run)')
     parser.add_argument('--restore-figures', type=Path, metavar='MANIFEST',
                         help='write the changed figures a calibration manifest carries to the paths '
                              'it records; reads no commit or key, sends nothing')
@@ -3398,12 +3418,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.restore_figures:
             require(not (args.commit or args.out or args.manifest or args.check or args.calibration
-                         or args.tally), '--restore-figures takes its manifest and nothing else')
+                         or args.tally or args.svg_width is not None),
+                    '--restore-figures takes its manifest and nothing else')
             return restore_figures(args.restore_figures)
         if args.tally:
             require(not (args.commit or args.out or args.manifest or args.check or args.calibration),
-                    '--tally takes its two files and nothing else')
-            return tally(*args.tally)
+                    '--tally takes its two files, and --svg-width, and nothing else')
+            return tally(*args.tally, SVG_WIDTH if args.svg_width is None else args.svg_width)
+        require(args.svg_width is None, '--svg-width is for --tally alone')
         require(args.commit, '--commit REV is required')
         if args.calibration:
             require(args.manifest is None, '--calibration writes its manifest beside its files in --out')
