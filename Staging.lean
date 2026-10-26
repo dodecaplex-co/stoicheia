@@ -34,8 +34,9 @@ special case, III.21 and III.26 by his arguments, to replace the proofs there (t
 the angle at the centre of any size), and the two drafts the owner approved with #130's,
 which wait for their move into `Elements/`: Definition III.3 read at the point, and the
 angle at the centre of any size with III.20 in general (`Elements.BookIII.Staging.Prop20`).
-The coordinator's orders of 21 October 2026 directed these proofs here; they are not
-the owner's approval of a prototype, and the files stand here as unfinished work while an
+The coordinator's orders of 21 October 2026 directed these proofs here; those orders were
+not themselves the owner's approval, which came for the drafts on 25 October 2026, and the
+files stand here as unfinished work while an
 issue labelled `blocks-release` tracks their move into `Elements/`. The report is
 `docs/reports/routes-book-III.md`.
 -/

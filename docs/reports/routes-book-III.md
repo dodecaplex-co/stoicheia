@@ -1437,7 +1437,10 @@ Their statements are as staged, hypothesis names included. Before the staged cop
 deleted, Lean compared each moved type with the staged one, binder names and universe
 parameters included, and found all seven the same; only the namespace changed. Their
 docstrings and remarks came with them, revised only where a sentence spoke of staging or
-approval. The staged file's module text is now a section after III.18's proof, without the
+approval, save `Prop18.acute`: its independent reader found that its placing of the acute
+angle by I.23 proved again the steps of III.16's companion `Prop16.acute`, so its proof
+now cites `Prop16.acute` and `Prop16.semicircle_wellFormed`, and its docstring gains a
+last sentence saying so; its statement is unchanged. The staged file's module text is now a section after III.18's proof, without the
 issue number, the sentence that `Elements/` had none of these statements, and the status
 line, and it says instead that III.16's companions prove the comparisons in III.16's
 figure and these prove them for every touching straight line; the last sentence of
@@ -1451,7 +1454,8 @@ other statement, changed.
 
 The fifteen copies of III.16's steps left the staged file at 4a6d9a49, as "For the owner"
 says, and the moved Lean proves none of them again: it cites `Prop16.inside_sameSideOf`,
-`Prop16.horn_locallyEqual`, `Prop16.horn_lt` and `Prop16.semicircle_gt`, with
+`Prop16.horn_locallyEqual`, `Prop16.horn_lt`, `Prop16.semicircle_gt`, `Prop16.acute` and
+`Prop16.semicircle_wellFormed`, with
 `NearVertexOpen.mono_near` and `LocallyLess.congr_left` of the mixed angles. A scratch
 Lean file, outside the repository, read the built library: no other declaration of
 `Elements/` has the type of any of the seven. It also walked every constant beneath them,

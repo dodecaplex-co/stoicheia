@@ -2,7 +2,7 @@
   III.18 moved into `Elements/` (Book III, #130).** On 25 October 2026 the owner chose, of
   the options put to them in item 15 of the coordinator's decisions waiting, "A": to
   approve the three drafts of Euclid's routes in Book III, #126, #129 and #130, as they
-  stand. The coordinator's record of that ruling is on #130 and #332. It gives the approval
+  stand. The coordinator's record of that ruling is on #126, #129, #130 and #332. It gives the approval
   that the [routes entry of 21 October 2026](2026-10-21-routes-book-iii.md) left to the
   owner, for the reading of Definition III.3 at the point of contact (#126), for the angle
   at the centre of any size and III.20 for it (#129), and for III.16's comparisons carried
@@ -16,8 +16,12 @@
   `Prop18.acute`. Their statements are as staged, hypothesis names included, which Lean
   confirmed by comparing each moved type with the staged one before the staged copy was
   deleted; only the namespace changes. Their docstrings and remarks come with them, revised
-  only where a sentence spoke of staging or approval. `Prop18.lean` now imports I.23, III.16
-  and the mixed angles' shared module, none later than III.18.
+  only where a sentence spoke of staging or approval, save `Prop18.acute`: its independent
+  reader found that its placing of the acute angle by I.23 proved again the steps of III.16's
+  companion `Prop16.acute`, so its proof now cites `Prop16.acute` and
+  `Prop16.semicircle_wellFormed`, and its docstring gains a last sentence saying so; its
+  statement is unchanged. `Prop18.lean` now imports I.23, III.16 and the mixed angles' shared
+  module, none later than III.18.
 
   The four statements become companions of III.18, listed in `Elements/Companions.lean`
   and certified as "III.18 contact_locallyEqual", "III.18 contact_lt", "III.18
@@ -41,4 +45,6 @@
   note of this date saying why.
   The numerical harness's hash, `tests/model/lock.sha256`, is renewed for it likewise, with
   its own dated note; neither the formal model nor the harness has a law to change, since
-  only a companion's statement uses the word.
+  only a companion's statement uses the word. The model's generator, `Check/Write.lean`,
+  wrote `model/Model/Laws.lean` again from the new lock, and only the line that records the
+  lock's hash changed.
