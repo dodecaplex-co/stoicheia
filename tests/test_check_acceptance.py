@@ -29,7 +29,19 @@ these cases put it to small files of verdicts, each with the outcome it should g
   (#200): in each spelling of an import that scripts/negative_tests.py's Book Zero plants
   use, a file that imports I.1 stages a declaration for it, an import the scan cannot
   read fails E6 on its line, and the same import only in a comment, a remark or a string
-  ties the file to nothing.
+  ties the file to nothing;
+* a checking run asks Lake first whether Elements and Audit are built and current: Lake's
+  `--no-build` exiting 3, a stale build, stops it with exit 2, saying why, before any
+  check runs and with no report or verdicts written; exiting 0 lets it go on; with no
+  `lake` to run it goes on as before, and Lake with no answer stops it; and --compare
+  and --check-current never ask;
+* --check-current, on a repository of its own: a report committed after the commit it
+  names is current, and so it stays when a later commit changes the report alone; a later
+  commit of any other file, a change not committed anywhere (the report's own too, or a
+  file untracked), a `--quick` run, a report of changes not committed, or a revision that
+  is no commit of HEAD's history, is not, exit 1; no git checkout, no report at HEAD, or
+  one without its marker, its Revision line or its Run line, cannot begin, exit 2; and it
+  takes no other option.
 
 CI runs this file before the checker. Python 3.11 or later; standard library, with sh and
 rsync for scripts/copy_acceptance_checks.sh, the helper the workflow runs.
@@ -597,6 +609,284 @@ class StagedImports(unittest.TestCase):
         self.assertEqual(self.verdicts("import Elements.BookI.Prop01\n"
                                        "import  Elements.BookII.Prop01\n"),
                          {("edition", "E6"): [self.no_one()]})
+
+
+class StaleBuild(unittest.TestCase):
+    """A checking run asks Lake, before any check and before it writes anything, whether
+    Elements and Audit are built and current, with a stand-in for subprocess.run that
+    answers for `lake`, as tests/test_screen.py's do: no Lean. Each check is stubbed, and
+    records that it ran."""
+
+    checks = ("check_certificate", "load_records", "check_propositions", "check_review_items",
+              "check_books", "check_style_rules", "check_links", "check_runs")
+    # What Lake printed, and its exit 3, on a tree whose build is older than its sources.
+    stale = ("✖ [2/195] Building Elements.Foundations.Words\n"
+             "error: target is out-of-date and needs to be rebuilt\n"
+             "Some required targets logged failures:\n"
+             "- Elements.Foundations.Words\n")
+
+    def setUp(self):
+        self.dir = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.enterContext(patch.object(ca, "failures", {}))
+        self.enterContext(patch.object(ca, "not_run", {}))
+        self.enterContext(patch.object(ca, "revision", return_value="`0123456789ab`"))
+        self.ran: list[str] = []
+        for name in self.checks:
+            self.enterContext(patch.object(
+                ca, name, side_effect=lambda *_, name=name: self.ran.append(name)))
+        self.asked: list = []
+        self.report, self.verdicts = self.dir / "report.md", self.dir / "verdicts.json"
+
+    def lake(self, answer):
+        """subprocess.run, with `lake` answering `answer`: its exit and what it printed, or
+        an exception to raise (no `lake` to run, or no answer in time)."""
+        real = subprocess.run
+
+        def run(argv, **kw):
+            if argv[:1] != ["lake"]:
+                return real(argv, **kw)
+            self.asked.append((list(argv), kw.get("cwd")))
+            if isinstance(answer, BaseException):
+                raise answer
+            code, said = answer
+            return subprocess.CompletedProcess(argv, code, said, "")
+        return patch.object(ca.subprocess, "run", run)
+
+    def check(self, *extra: str) -> tuple[int, str, str]:
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = ca.main(["--output", str(self.report), "--json", str(self.verdicts), *extra])
+        return code, out.getvalue(), err.getvalue()
+
+    def test_a_stale_build_stops_the_run_before_any_check(self):
+        # Lake decides what is stale by its traces; the checker only asks it.
+        self.assertEqual(ca.CURRENT_BUILD, ["lake", "build", "--no-build", "Elements", "Audit"])
+        for extra in ((), ("--quick",)):
+            with self.subTest(extra=extra), self.lake((3, self.stale)):
+                self.asked.clear()
+                code, out, err = self.check(*extra)
+                self.assertEqual(code, 2, out + err)
+                self.assertEqual(self.asked, [(ca.CURRENT_BUILD, ca.ROOT)])
+                self.assertIn("cannot begin: `lake build --no-build Elements Audit` exits 3", err)
+                self.assertIn("\n  - Elements.Foundations.Words\n", err)
+                self.assertIn("`lake build`, `lake build Audit`, then `lake env lean "
+                              "Certificate/Facts.lean`", err)
+                self.assertEqual(out, "")
+                self.assertEqual(self.ran, [])
+                self.assertFalse(self.report.exists())
+                self.assertFalse(self.verdicts.exists())
+
+    def test_a_current_build_lets_the_run_go_on(self):
+        with self.lake((0, "")):
+            code, out, err = self.check()
+        self.assertEqual(code, 0, out + err)
+        self.assertEqual(self.asked, [(ca.CURRENT_BUILD, ca.ROOT)])
+        self.assertEqual(self.ran, list(self.checks))
+        self.assertTrue(self.report.read_text(encoding="utf-8").startswith(ca.GENERATED))
+        self.assertTrue(self.verdicts.exists())
+
+    def test_no_lake_to_run_keeps_the_path_it_had(self):
+        # With no `lake` at all, the run goes on as it did before Lake was asked, and the
+        # checks that need Lean say that they could not ask it. So too with the real
+        # subprocess.run, on a PATH that has no `lake`.
+        empty = self.dir / "no-lake"
+        empty.mkdir()
+        with patch.dict(os.environ, {"PATH": str(empty)}):
+            self.assertIsNone(ca.build_problem())
+        with self.lake(FileNotFoundError(2, "No such file or directory", "lake")):
+            code, out, err = self.check()
+        self.assertEqual(code, 0, out + err)
+        self.assertNotIn("cannot begin", err)
+        self.assertEqual(self.ran, list(self.checks))
+        self.assertTrue(self.report.exists())
+
+    def test_lake_with_no_answer_stops_the_run(self):
+        with self.lake(subprocess.TimeoutExpired(ca.CURRENT_BUILD, ca.BUILD_TIMEOUT)):
+            code, out, err = self.check()
+        self.assertEqual(code, 2, out + err)
+        self.assertIn(f"did not answer in {ca.BUILD_TIMEOUT} seconds", err)
+        self.assertEqual(self.ran, [])
+        self.assertFalse(self.report.exists())
+
+    def test_compare_and_check_current_do_not_ask_lake(self):
+        good = self.dir / "v.json"
+        good.write_text(json.dumps(run_file({"I.1": {"P1": "pass"}})), encoding="utf-8")
+        with self.lake((3, self.stale)), patch.object(ca, "check_current", return_value=0), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(ca.main(["--compare", str(good), str(good)]), 0)
+            self.assertEqual(ca.main(["--check-current"]), 0)
+        self.assertEqual(self.asked, [])
+
+
+class CheckCurrent(unittest.TestCase):
+    """--check-current on a repository of its own, with git's environment cleared as
+    Report's is: the report as HEAD holds it, read through git, against HEAD and the
+    worktree."""
+
+    def setUp(self):
+        self.where = ca.REPORT.relative_to(ca.ROOT).as_posix()
+        fixture = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        who, when = ("Fixture", "fixture@example.invalid"), "2026-10-25T00:00:00Z"
+        fixture.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
+                       GIT_AUTHOR_NAME=who[0], GIT_AUTHOR_EMAIL=who[1], GIT_AUTHOR_DATE=when,
+                       GIT_COMMITTER_NAME=who[0], GIT_COMMITTER_EMAIL=who[1],
+                       GIT_COMMITTER_DATE=when)
+        self.enterContext(patch.dict(os.environ, fixture, clear=True))
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.enterContext(patch.object(ca, "ROOT", self.root))
+        self.enterContext(patch.object(ca, "REPORT", self.root / self.where))
+        self.enterContext(patch.object(ca, "failures", {}))
+        self.enterContext(patch.object(ca, "not_run", {}))
+        self.git("init", "-q")
+        self.library = self.commit("The library", "Elements.lean", "-- the library\n")
+
+    def git(self, *args: str) -> str:
+        return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True,
+                              check=True).stdout.strip()
+
+    def write(self, name: str, text: str) -> None:
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def commit(self, message: str, name: str, text: str) -> str:
+        """`name` written and committed alone; the commit, in the report's digits."""
+        self.write(name, text)
+        self.git("add", "--", name)
+        self.git("commit", "-q", "-m", message)
+        return self.git("rev-parse", f"--short={ca.REVISION_DIGITS}", "HEAD")
+
+    def regenerate(self, quick: bool = False) -> str:
+        """The report the generator writes now, its revision read from git."""
+        return ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=quick)
+
+    def check(self, *args: str) -> tuple[int, str]:
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = ca.main(["--check-current", *args])
+        return code, out.getvalue()
+
+    def test_a_report_committed_after_the_commit_it_names_is_current(self):
+        text = self.regenerate()
+        self.assertIn(f"- **Revision:** `{self.library}`.", text)
+        self.commit("The report", self.where, text)
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"a run of every item on `{self.library}`", out)
+        # Regenerated, with a failure this time, and committed again: the files read are
+        # still the library's.
+        ca.fail("I.1", "P9", "book/I/01.md is not as render.py writes it: regenerate it")
+        self.commit("The report again", self.where, self.regenerate())
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+
+    def test_a_later_commit_of_any_other_file_is_not_current(self):
+        self.commit("The report", self.where, self.regenerate())
+        self.commit("More library", "Elements.lean", "-- the library, grown\n")
+        self.commit("An audit", "Audit.lean", "-- an audit\n")
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"HEAD differs from its revision `{self.library}` in more than the "
+                      "report: Audit.lean, Elements.lean", out)
+        self.assertIn("Regenerate it on a freshly built tree", out)
+
+    def test_a_change_not_committed_anywhere_is_not_current(self):
+        # The report is read as HEAD holds it: changed or deleted in the working copy, it
+        # is still read, and its change is one more change not committed.
+        self.commit("The report", self.where, self.regenerate())
+        self.assertEqual(self.check()[0], 0)
+        cases = {
+            "a change not staged": lambda: self.write("Elements.lean", "-- changed\n"),
+            "a change staged": lambda: (self.write("Elements.lean", "-- changed\n"),
+                                        self.git("add", "Elements.lean")),
+            "the report's own change": lambda: self.write(self.where, "not a report\n"),
+            "the report deleted": lambda: (self.root / self.where).unlink(),
+            "a file untracked": lambda: self.write("notes/draft.md", "a draft\n"),
+        }
+        for what, change in cases.items():
+            with self.subTest(what=what):
+                change()
+                code, out = self.check()
+                self.assertEqual(code, 1, out)
+                self.assertIn("the worktree has changes not committed", out)
+                self.assertNotIn("HEAD differs", out)
+                if what == "a file untracked":
+                    self.assertIn("notes/draft.md (untracked)", out)
+                self.git("reset", "-q", "--hard")
+                self.git("clean", "-q", "-f", "-d")
+                self.assertEqual(self.check()[0], 0)
+
+    def test_a_quick_run_is_not_current(self):
+        self.commit("The report", self.where, self.regenerate(quick=True))
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("it is a `--quick` run", out)
+        self.assertNotIn("HEAD differs", out)
+
+    def test_a_report_of_changes_not_committed_is_not_current(self):
+        self.write("Elements.lean", "-- changed, not committed\n")
+        text = self.regenerate()
+        self.assertIn(f"`{self.library}`, with changes not yet committed.", text)
+        self.git("checkout", "--", "Elements.lean")
+        self.commit("The report", self.where, text)
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"it is a run on `{self.library}` with changes not yet committed", out)
+        self.assertNotIn("the worktree has", out)
+
+    def test_a_revision_that_is_no_commit_of_the_history_is_not_current(self):
+        text = self.regenerate()
+        self.git("checkout", "-q", "-b", "side")
+        side = self.commit("A side", "Side.lean", "-- aside\n")
+        self.git("checkout", "-q", "-")
+        for digits, why in (("0123456789ab", "is not one commit of this repository"),
+                            (side, "is not in the history of HEAD")):
+            with self.subTest(digits=digits):
+                self.commit(f"A report of {digits}", self.where,
+                            text.replace(f"`{self.library}`", f"`{digits}`"))
+                code, out = self.check()
+                self.assertEqual(code, 1, out)
+                self.assertIn(f"its revision `{digits}` {why}", out)
+
+    def test_what_it_cannot_read_cannot_begin(self):
+        code, out = self.check()
+        self.assertEqual(code, 2, out)
+        self.assertIn(f"cannot begin: HEAD holds no {self.where}", out)
+        text = self.regenerate()
+        broken = {
+            "the generated marker": (text.split("\n", 1)[1],
+                                     "its first line is not the generated marker"),
+            "the Revision line": (re.sub(r"(?m)^- \*\*Revision:\*\*.*\n", "", text),
+                                  "it has no Revision line"),
+            "the Run line": (re.sub(r"(?m)^- \*\*Run:\*\*.*\n", "", text),
+                             "it has no Run line"),
+        }
+        for what, (bad, why) in broken.items():
+            with self.subTest(without=what):
+                self.commit(f"A report without {what}", self.where, bad)
+                code, out = self.check()
+                self.assertEqual(code, 2, out)
+                self.assertIn(f"is not a report this script writes: {why}", out)
+        # No git checkout, then a repository with no commit.
+        elsewhere = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        with patch.object(ca, "ROOT", elsewhere), \
+                patch.object(ca, "REPORT", elsewhere / self.where), \
+                patch.dict(os.environ, {"GIT_CEILING_DIRECTORIES": str(elsewhere.parent)}):
+            for made in (None, ["git", "init", "-q"]):
+                with self.subTest(made=made):
+                    if made:
+                        subprocess.run(made, cwd=elsewhere, check=True)
+                    code, out = self.check()
+                    self.assertEqual(code, 2, out)
+                    self.assertIn("cannot begin: this is not a git checkout with a commit", out)
+
+    def test_check_current_takes_no_other_option(self):
+        for extra in (["--compare", "main.json", "pr.json"], ["--quick"],
+                      ["--json", "verdicts.json"], ["--output", "report.md"]):
+            with self.subTest(extra=extra), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as e:
+                    ca.main(["--check-current", *extra])
+                self.assertEqual(e.exception.code, 2)
 
 
 if __name__ == "__main__":
