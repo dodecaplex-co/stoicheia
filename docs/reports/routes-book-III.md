@@ -1506,3 +1506,9 @@ scripts/check_acceptance.py --quick` passes P10 for III.18 now. Of its 18 failin
 eight are new against the report it last wrote on main, at b46efb93: E2, for
 `LocallyEqual`, and III.18's P2 and P11 to P16, until its record is read again and
 stamped.
+
+**Completion on the delivered revision.** The lock and its two model hashes were renewed,
+and III.18's record was read against `8d1358248` by an independent reader and stamped in
+`f94a335b`. Its six review verdicts now pass, and the page and program status were made
+afresh. The prospective failures in the preceding snapshot therefore belong to
+`bedbba23` with the move's then-uncommitted edits, not to the delivered revision.
