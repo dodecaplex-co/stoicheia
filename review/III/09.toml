@@ -9,13 +9,13 @@ kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The rule supplies a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
+note = "`Tacit.exists_centre`, the rule that every circle has a centre, supplies one, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
 
 [[passage]]
 at = "Let ABC be a circle and D a point within it"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid uses the circle's centre without constructing it; the Lean takes O from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. It also uses `Prop2.triangle` (III.2, for which Heath prints no reference here) to show that A, B and C are not on one straight line."
+note = "Euclid uses the circle's centre without constructing it; the Lean takes O from `Tacit.exists_centre`, the rule that every circle has a centre. It also uses `Prop2.triangle` (III.2, for which Heath prints no reference here) to show that A, B and C are not on one straight line."
 
 [[passage]]
 at = "For let AB, BC be joined and bisected at the points E, F"
@@ -45,11 +45,11 @@ case = "D off both AB and BC, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b2484c70"
+commit = "07416606e"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:005a52c72b917d00"
-run = "brief 0005 stage 5, ship R3 (#29)"
-text = "sha256:b7008683a5de3bfa"
+run = "brief 0005 stage 5, ship R3 (#29); read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x)"
+text = "sha256:05f5af7b5a992bcc"
 
 [review.items]
 statement = "pass"
