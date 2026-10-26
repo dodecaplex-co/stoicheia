@@ -17,8 +17,8 @@ Each item is one of two kinds:
   verdict is right is the reviewer's, and the independent audit's, to answer.
 
 The checklist merges the criteria of brief 0005's stage 6, Astra's measure of 95/100, with
-the release criteria of [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity), section 9,
-and with what has changed since both were written: the kernel replay, the stricter rule for
+the ten release criteria that [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity),
+section 9, once listed, and with what has changed since both were written: the kernel replay, the stricter rule for
 runs of `--` lines, review stamps tied to a commit, companions as certificate entries,
 stage 4b's goal of a full statement for every record, and Staging. [Where the older
 criteria went](#where-the-older-criteria-went) traces each one here.
@@ -59,7 +59,8 @@ different copies of the script by their hashes. CI uses both options.
 
 ## In CI
 
-CI's required `acceptance` job runs on pull request events and is skipped on pushes.
+CI's required `acceptance` job runs on every event CI runs on: each pull request, each
+merge-queue group, and each push to main, through the post-merge workflow, which calls CI.
 Its executable definitions are [the workflow](../.github/workflows/ci.yml),
 [`scripts/check_acceptance.py`](../scripts/check_acceptance.py) and
 [`scripts/copy_acceptance_checks.sh`](../scripts/copy_acceptance_checks.sh). It fetches
@@ -75,8 +76,10 @@ be compared, fail the job. In three steps:
 1. After its comparison tests, the builds of `Elements` and `Audit`, and the computation
    of the certificate, the script checks every item on CI's checked-out revision,
    normally the pull request's test merge commit, and writes its verdicts with `--json`.
-2. It checks main in a worktree beside it: the checkout's first parent if it has two
-   parents, otherwise the pull request's recorded base commit. Main is built and its
+2. It checks main in a worktree beside it. On a pull request, main is the checkout's first
+   parent if it has two parents, otherwise the pull request's recorded base commit; in a
+   merge-queue group, the group's base commit; on a push to main, main as it was before the
+   push. Main is built and its
    certificate computed with the pull request's own checks copied in (`scripts/`, `tests/`,
    `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
    checks judges both. Main keeps its own values pinned to its content:
@@ -227,7 +230,9 @@ evidence = "docs/reports/…"
 
 ## Where the older criteria went
 
-Brief 0005's stage 6, item by item:
+The two older lists of criteria, brief 0005's stage 6 and the ten criteria WORKFLOW's
+section 9 once listed, are retired: this checklist replaces both, and each older criterion
+is met by the items its row names. Brief 0005's stage 6, item by item:
 
 | Brief 0005 | Here |
 |---|---|
