@@ -1,6 +1,6 @@
 # The model behind the axioms
 
-Stoicheia's proofs rest on <!-- count:axioms -->49<!-- /count --> axioms: Postulates 1 to 5, Definition 15, and <!-- count:tacit-rules -->43<!-- /count --> tacit
+Stoicheia's proofs rest on <!-- count:axioms -->48<!-- /count --> axioms: Postulates 1 to 5, Definition 15, and <!-- count:tacit-rules -->42<!-- /count --> tacit
 rules, most of them the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, ["A
 formal system for Euclid's *Elements*"](https://doi.org/10.1017/S1755020309990098), 2009).
 Lean checks that
@@ -9,18 +9,18 @@ at once. If they could not, every certificate would be worthless, because anythi
 from a contradiction.
 
 This page gives the reasons for thinking they can. It reads the words in the ordinary
-plane, goes through the <!-- count:axioms -->49<!-- /count --> axioms one at a time, says why each one holds there, and shows
+plane, goes through the <!-- count:axioms -->48<!-- /count --> axioms one at a time, says why each one holds there, and shows
 the numbers from the programs in this folder that test each one against the plane. It
 does the same in the hyperbolic plane, where Postulate 5 fails and every other axiom
 passes the tests. It ends with [the formal model](#the-formal-model), in which Lean checks
-that the ordinary plane satisfies every one of the <!-- count:axioms -->49<!-- /count -->, and with [what the evidence shows,
+that the ordinary plane satisfies every one of the <!-- count:axioms -->48<!-- /count -->, and with [what the evidence shows,
 and what it does not](#what-this-shows-and-what-it-does-not).
 
 ## The plane
 
 The words Euclid leaves undefined are `opaque` in Lean
 ([Words.lean](../../Elements/Foundations/Words.lean)): Lean knows nothing of them but what
-the axioms say. So any reading of the words that makes all <!-- count:axioms -->49<!-- /count --> axioms true is a model.
+the axioms say. So any reading of the words that makes all <!-- count:axioms -->48<!-- /count --> axioms true is a model.
 Here is ours.
 
 | Word | In the plane |
@@ -70,10 +70,9 @@ depend on the corresponding declarations remaining in the axiom registry.
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
 - **[derived.py](derived.py)** keeps 41 numerical predicates under names beginning
-  `derived.`: one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
-  proved after III.2 since 24 October 2026, among them; and Circle 1's
-  (`between_of_inside_chord`), still an axiom, with preparation for its retirement after
-  III.2 tracked in #477.
+  `derived.`: one for each of the 41 retired rules, among them Circle 3's
+  (`outside_of_between`), proved after III.2 since 24 October 2026, and Circle 1's
+  (`between_of_inside_chord`), proved after III.2 since 26 October 2026 (#477).
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
   predicates in all: 35 axiom laws and the 41 retained derived properties, with degenerate
   configurations included.
@@ -236,7 +235,7 @@ Every other axiom's hypotheses are met, exactly, thousands of times or more.
 
 Names are those in `Elements.Tacit` unless they are postulates or Definition 15.
 
-Forty former axioms are now theorems with the same names and types. Eight were
+Forty-one former axioms are now theorems with the same names and types. Eight were
 retired first: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`, `centre_unique`,
 `inside_of_between`, `exists_point_outside_circle`, `line_meets_circle_of_opposite_sides`,
 `triple_incidence3` and `inside_of_angle_add`. Thirty-one followed on 19 October 2026:
@@ -249,7 +248,8 @@ retired first: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`, `centre_
 `triple_incidence2`, `line_meets_circle_of_inside`, `circles_meet_of_on_inside_outside`,
 `eq_of_len_eq_zero`, `area_swap`, `on_circle_of_len_eq`, `inside_of_len_lt`,
 `len_lt_of_inside` and `between_of_area_add`. Circle 3, `outside_of_between`, followed on
-24 October 2026, proved after III.2. Their numerical configurations remain in
+24 October 2026, proved after III.2, and Circle 1, `between_of_inside_chord`, on 26 October
+2026, proved after III.2 too. Their numerical configurations remain in
 [derived.py](derived.py), reported separately from the locked axioms.
 
 ### The postulates and Definition 15
@@ -338,14 +338,12 @@ All three rules are now theorems, tested as derived properties.
 
 ### Circles
 
-| Axiom | Why it holds |
-|---|---|
-| `between_of_inside_chord` | A line meets a circle at most twice, so `B` and `C` are those two points. The points of the line inside the circle are exactly the open chord between them, and `A` is one. |
-
-Circle 2 and Circle 3 are now theorems, proved after III.2, and tested as derived
-properties. In the plane, Circle 3 (`outside_of_between`) holds because, were `B` inside or
-on the circle, `C`, strictly between `A` and `B`, would be inside by strict convexity of the
-disc.
+Circle 1, Circle 2 and Circle 3 are now theorems, proved after III.2, and tested as derived
+properties. In the plane, Circle 1 (`between_of_inside_chord`) holds because a line meets a
+circle at most twice, so `B` and `C` are those two points; the points of the line inside the
+circle are exactly the open chord between them, and `A` is one. Circle 3
+(`outside_of_between`) holds because, were `B` inside or on the circle, `C`, strictly
+between `A` and `B`, would be inside by strict convexity of the disc.
 
 ### Intersections
 
@@ -426,7 +424,7 @@ fails without that guard.
 ## The hyperbolic plane
 
 The book's certificates say which proofs use Postulate 5. They do not say, by themselves,
-that the other <!-- count:axioms-but-postulate-5 -->48<!-- /count --> axioms could not do its work in disguise: a proof avoiding the named
+that the other <!-- count:axioms-but-postulate-5 -->47<!-- /count --> axioms could not do its work in disguise: a proof avoiding the named
 Postulate 5 might still lean on some other rule just as strong. Astra's review asked for
 the way to settle that, a model of the other axioms in which Postulate 5 fails, and
 [hyperbolic.py](hyperbolic.py) tests such a model numerically, which supports the answer
@@ -470,7 +468,7 @@ there is no Lean proof of the hyperbolic model here. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
-**What it shows.** It supports, numerically, that none of the other <!-- count:axioms-but-postulate-5 -->48<!-- /count --> axioms carries the
+**What it shows.** It supports, numerically, that none of the other <!-- count:axioms-but-postulate-5 -->47<!-- /count --> axioms carries the
 parallel postulate in disguise. If every one of them does hold in the hyperbolic plane,
 as the hand arguments say, then whatever follows from them without Postulate 5 is true
 there, and a statement that fails there, such as I.32's "the three interior angles of the
@@ -500,7 +498,7 @@ as Astra advised, with our thanks. The model has four parts.
    states the same words as the fields of a Lean structure, `Signature`, the carriers of
    the magnitudes with their zero, addition and order among them, and the laws as a
    proposition about any such structure, `Laws`, with Postulate 5 apart from the other
-   <!-- count:axioms-but-postulate-5 -->48<!-- /count -->. A Lean program generates the laws from the elaborated declarations themselves, not
+   <!-- count:axioms-but-postulate-5 -->47<!-- /count -->. A Lean program generates the laws from the elaborated declarations themselves, not
    from their printed text, and every build checks the translation: taken back to the
    library's words, each law is compared with the library's declaration, by the kernel
    and expression by expression. The four pure modules
@@ -516,13 +514,13 @@ as Astra advised, with our thanks. The model has four parts.
    distance, the area by a determinant, and `∟` as π/2. One care: Mathlib's unoriented
    angle is π/2 when a point is repeated, and our reading needs 0 there, so the plane's
    angle is Mathlib's only when both arms are nonzero.
-3. **Every law of the lock proved in the plane**, degenerate cases included: all <!-- count:axioms -->49<!-- /count -->, each
+3. **Every law of the lock proved in the plane**, degenerate cases included: all <!-- count:axioms -->48<!-- /count -->, each
    a theorem of its own. The hardest were taken first, since they might have reshaped the
    representation: where circles meet, and on which side; angle addition, both ways; the
    side on which Postulate 5's lines meet; restricted superposition, from placement by
    isometry and reflection, its kept side by Postulate 1, and `Rule.of_placement`; the area
    rules; and the finite `avoid` lists. `superposition_placement` proves the supporting
-   placement construction; it is not a second locked law. The generator gathers the <!-- count:axioms -->49<!-- /count --> into
+   placement construction; it is not a second locked law. The generator gathers the <!-- count:axioms -->48<!-- /count --> into
    `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
    and `model_exists : ∃ S : Signature, Laws S` follows. Every build checks that nothing
    in the model imports an `Elements` module other than the four pure ones, retains the
@@ -552,7 +550,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   ([#73](https://github.com/jackChallis/stoicheia/issues/73)). So the axioms cannot
   contradict one another unless those foundations do.
 - **The interpretation** is the reading of the words above, with a short argument for
-  each of the <!-- count:axioms -->49<!-- /count --> axioms and many configurations tested against each, exactly wherever
+  each of the <!-- count:axioms -->48<!-- /count --> axioms and many configurations tested against each, exactly wherever
   the coordinates allow. The formal model makes the same reading in Lean and proves each
   law there, so that the axioms can all be true together no longer rests on these
   arguments and tests alone.
@@ -560,7 +558,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   checks, and on the axioms being the ones this page and the formal model were checked
   against, which [lock.sha256](lock.sha256) and
   [model/lock.sha256](../../model/lock.sha256) pin.
-- **Non-derivability is not proved.** That the other <!-- count:axioms-but-postulate-5 -->48<!-- /count --> axioms cannot give Postulate 5,
+- **Non-derivability is not proved.** That the other <!-- count:axioms-but-postulate-5 -->47<!-- /count --> axioms cannot give Postulate 5,
   and that a statement failing in the hyperbolic plane cannot be proved without it, rest
   on the numerical hyperbolic check [above](#the-hyperbolic-plane) until a hyperbolic
   model is built in Lean. A test can find a counterexample but cannot show that there is

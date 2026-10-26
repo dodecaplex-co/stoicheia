@@ -10,7 +10,7 @@ kind = "euclid"
 at = "Let AC, BD be joined"
 kind = "helper"
 helper = "OppositeSides.exists_between"
-note = "Euclid joins the diagonals and reads their crossing from the figure; `OppositeSides.exists_between` finds X between A and C on BD. The Lean puts X within the circle by III.2, for which Heath prints no reference here, then between B and D by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "Euclid joins the diagonals and reads their crossing from the figure; `OppositeSides.exists_between` finds X between A and C on BD. The Lean puts X within the circle by III.2, for which Heath prints no reference here, then between B and D by `Tacit.between_of_inside_chord`, System E's Circle 1, which is also proved from III.2."
 
 [[passage]]
 at = "therefore the whole angle ADC is equal to the angles BAC, ACB"

@@ -23,7 +23,7 @@ note = "Euclid takes the centres G and H without citing III.1. The Lean takes bo
 at = "Let it so fall, as BGHD"
 kind = "helper"
 helper = "Tacit.between_of_inside_chord"
-note = "Euclid places B, G, H and D in that order. The Lean puts G between B and D by `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, and `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and combines this with G, H, D from III.11 by `between_cut`."
+note = "Euclid places B, G, H and D in that order. The Lean puts G between B and D by `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, and `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and combines this with G, H, D from III.11 by `between_cut`."
 
 [[passage]]
 at = "therefore BG is greater than HD"

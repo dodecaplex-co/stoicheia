@@ -13,7 +13,7 @@ note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC b
 at = "For from the centre E let EH, EK be drawn"
 kind = "helper"
 helper = "foot_between"
-note = "The statement supplies EH and EK; `foot_between` supplies the order F, K, G that Euclid reads from the figure. Its proof uses I.17 and I.19, for which Heath prints no reference here, and then `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "The statement supplies EH and EK; `foot_between` supplies the order F, K, G that Euclid reads from the figure. Its proof uses I.17 and I.19, for which Heath prints no reference here, and then `Tacit.between_of_inside_chord`, System E's Circle 1, which is proved from III.2."
 
 [[passage]]
 at = "Then, since BC is nearer to the centre and FG more remote"

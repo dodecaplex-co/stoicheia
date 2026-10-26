@@ -49,7 +49,7 @@ note = "III.10 is not needed: the angles have settled every point of the circumf
 at = "Therefore, if the straight line AB be applied to CD"
 kind = "helper"
 helper = "Prop24.chord_cases"
-note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends (`Prop24.chord_cases`), and the placement keeps both. A point between two points of the circle is within it by III.2, for which Heath prints no reference here, so no third point of AB is on the circle (`Prop2.triangle`); and a point of AB within the circle lies between the ends by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends (`Prop24.chord_cases`), and the placement keeps both. A point between two points of the circle is within it by III.2, for which Heath prints no reference here, so no third point of AB is on the circle (`Prop2.triangle`); and a point of AB within the circle lies between the ends by `Tacit.between_of_inside_chord`, System E's Circle 1, which is also proved from III.2."
 
 [figure]
 case = "segments less than semicircles, as in Heath's figure"

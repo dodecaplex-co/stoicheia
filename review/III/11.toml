@@ -26,7 +26,7 @@ note = "Euclid takes G within ABC before producing FG to H; the Lean places G be
 [[passage]]
 at = "Then, since AG, GF are greater than FA"
 kind = "case"
-note = "A may lie on GF produced beyond F, a case Heath says Euclid would have left to the reader (vol. 2, p. 26). For A on FG, the Lean puts F between A and H by the proved rule `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, then puts F between A and G by `between_cut`, so AG is AF and FG together and AG, GF exceed FA; off FG it uses `BookI.Prop20`, for which Heath prints no reference here, and `Definition15`, the assumed rule for equal radii, replaces FA by FH in both cases."
+note = "A may lie on GF produced beyond F, a case Heath says Euclid would have left to the reader (vol. 2, p. 26). For A on FG, the Lean puts F between A and H by the proved rule `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, then puts F between A and G by `between_cut`, so AG is AF and FG together and AG, GF exceed FA; off FG it uses `BookI.Prop20`, for which Heath prints no reference here, and `Definition15`, the assumed rule for equal radii, replaces FA by FH in both cases."
 
 [[passage]]
 at = "let FG be subtracted from each"

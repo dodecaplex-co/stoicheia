@@ -18,7 +18,7 @@ note = "The centre E and the feet F, G of the perpendiculars are given, since De
 at = "from E let EF, EG be drawn"
 kind = "helper"
 helper = "foot_between"
-note = "Euclid takes the perpendiculars to meet AB and CD between their ends. The statement supplies the perpendiculars, and `foot_between` proves their feet lie between the ends by I.17 and I.19, for which Heath prints no reference here, followed by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "Euclid takes the perpendiculars to meet AB and CD between their ends. The statement supplies the perpendiculars, and `foot_between` proves their feet lie between the ends by I.17 and I.19, for which Heath prints no reference here, followed by `Tacit.between_of_inside_chord`, System E's Circle 1, which is proved from III.2, so that the proof cites III.2 through it."
 
 [[passage]]
 at = "therefore AB is double of AF"

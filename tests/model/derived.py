@@ -4,7 +4,7 @@ These predicates keep the guards and conclusions of their search.py checks: the 
 first, then the 31 prepared for retirement while all 79 axioms remain; and, kept beside
 Circle 2, Circle 3 (`outside_of_between`), prepared in the same way for its retirement after
 III.2; and Circle 1 (`between_of_inside_chord`), prepared in the same way for its retirement
-after III.2 (#477) while it is still an axiom.
+after III.2 (#477), which followed on 26 October 2026.
 The exhaustive and structured harnesses report them with a derived. prefix, even
 while the corresponding declarations are still axioms. Their configurations and
 results therefore survive removal of those laws from search.py and hyperbolic.py.

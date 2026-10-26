@@ -14,9 +14,10 @@ ends, before III.3 bisects it there. That is said once, here (`foot_between`).
 
 It stands after III.2, and not among the shared steps of `Elements/BookIII/Squares.lean`,
 which III.1 and III.2 import. Its last step, that a point within the circle on a straight
-line through two points of the circle lies between them, is System E's Circle 1, a rule we
-assume; by the owner's decision of 25 October 2026 that rule is to be proved after III.2,
-and a step that uses it must then come after III.2 too.
+line through two points of the circle lies between them, is System E's Circle 1, an
+assumption until 26 October 2026 and since then proved after III.2, from it, in
+`Elements/BookIII/Prop02.lean`, by the owner's decision of 25 October 2026; so a step that
+uses it comes after III.2 too, and cites it.
 
 The docstring ends with the propositions the step cites; the certificate walks through it
 and records them.
@@ -32,8 +33,9 @@ A and B. Its foot F is nearer the centre than any other point P of the straight
 line: in the triangle EFP the angle at F is right, so the angle at P is less than a
 right angle [I. 17], and EP, opposite the greater angle, is greater than EF [I. 19].
 So F is nearer than A or than B, which are on the circle; it is within the circle,
-and so between them (System E, Circle 1). Euclid reads it off the figure in III.14,
-III.35 and III.36, before III.3 bisects the straight line there. [I. 17, I. 19] -/
+and so between them (System E, Circle 1, proved from III.2). Euclid reads it off the
+figure in III.14, III.35 and III.36, before III.3 bisects the straight line there.
+[I. 17, I. 19, III. 2] -/
 theorem foot_between {A B E F : Point} {α : Circle} (hE : Centre E α) (hA : OnCircle A α)
     (hB : OnCircle B α) (hE_AB : ¬ Collinear A B E) (hF : Collinear A B F)
     (hEF : ∀ P : Point, Collinear A B P → P ≠ F → ∠ E F P = ∟) : Between A F B := by

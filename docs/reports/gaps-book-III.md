@@ -27,7 +27,9 @@ centre and one radius make one circle (`circle_eq`, Diagram-segment 2) showed it
 straight line through two supposed centres, produced beyond each to the circle, would make
 the radius from one of them less than itself (Definition I.15); until 26 October 2026 the
 proof used Circle 1 (#477). A point within a circle, on a straight line that
-meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
+meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1);
+it is proved after III.2, from it, since 26 October 2026, and where the point within is
+the centre Book Zero proves it without III.2 (`between_of_centre_chord`).
 System E's Circle 2, that between two points on or within a circle every point is within
 it (`inside_of_between`), and its Circle 3 (`outside_of_between`), each of which gives
 III.2 at once, are proved after III.2, from it, since 24 October 2026; our III.1 and III.2
@@ -54,7 +56,7 @@ they share that cite Books I and II live in
 straight lines (`BookI.Prop46.sq`). The perpendicular from the centre to a straight line
 in the circle falls between its ends (`foot_between`) in
 [`Feet.lean`](../../Elements/BookIII/Feet.lean), after III.2, for its last step is Circle
-1, which is to be proved after III.2. Those that cite III.20–III.22
+1, proved after III.2. Those that cite III.20–III.22
 live in [`Circumferences.lean`](../../Elements/BookIII/Circumferences.lean), and are what
 Euclid takes for granted of circumferences, which we measure by twice the angle
 standing on them: a circumference is twice the angle at any point of the other segment
