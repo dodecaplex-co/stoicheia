@@ -54,8 +54,10 @@
   manifest. The generator holds the entry's table of lists, with P13's list for Book III as
   the rulings entry restates it, and writes nothing if the records give other lists. Each
   plant takes the kind the entry's rule gives it, P12's counting round the three kinds the
-  rulings entry keeps, by the kind's test run on the generated row, and the manifest
-  records the kinds passed over and why, the change, the row's whole state before it with
+  rulings entry keeps, by the kind's test run on the generated row, save a kind that
+  [the kind ruling](2026-10-26-jev-kind-not-applying.md) names in the generator's table as
+  making no genuine fault on its base; the manifest records the kinds passed over and why,
+  naming that ruling where it is the reason, the change, the row's whole state before it with
   its hash, the hash of the state after it (the row itself, in its questions file), and why
   the change is the expected defect. Nothing in what a row sends names its role. A P15
   plant that changes a figure sends a copy written beside the calibration set, never a

@@ -1499,10 +1499,14 @@ def entry_lists(path):
 # lists with P13's list for Book III restated.
 RULINGS_COMMIT = '110a01809ed48fc49871137d9a0fb968cad92d11'
 # Each plant's kind, by the entry's rule with the rulings' three kinds of P12, and each kind
-# passed over, with why it did not apply.
+# passed over, with why it did not apply: its test's reason, or the kind ruling's.
 NO_CLAUSE = 'the main conclusion has one clause'
 NO_ATTACHED = 'the row has no attached statement'
 NO_FORM = 'the commentary names the form of the proof only within quotation marks, or not at all'
+KIND_RULING = 'docs/decisions/2026-10-26-jev-kind-not-applying.md'
+NO_GENUINE_FAULT = ('no single supplied bridge carries a needed connection alone: '
+                    '`Rectangle.eq_rect` and `Rectangle.contained` each give `rect`, and '
+                    '`Square.eq_sq` and `Square.described` each give `sq`')
 EXPECTED_KINDS = {
     'P11': [('I.8', 1, []), ('I.19', 4, [(2, NO_CLAUSE), (3, NO_ATTACHED)]), ('I.29', 4, [(3, NO_ATTACHED)]),
             ('I.9', 4, []), ('II.9', 1, []), ('II.8', 4, [(2, NO_CLAUSE), (3, NO_ATTACHED)]),
@@ -1510,7 +1514,8 @@ EXPECTED_KINDS = {
     'P12': [('I.21', 1, []), ('I.45', 2, []), ('I.15', 3, []), ('I.40', 1, []), ('II.5', 2, []),
             ('II.7', 3, []), ('III.37', 1, []), ('III.31', 2, []), ('III.24', 3, []), ('III.36', 1, [])],
     'P13': [('I.37', 1, []), ('I.46', 2, []), ('I.43', 3, []), ('I.36', 4, []), ('II.8', 5, []),
-            ('II.6', 1, []), ('III.37', 2, []), ('III.28', 3, []), ('III.27', 4, []), ('III.36', 5, [])],
+            ('II.6', 1, []), ('III.37', 2, []), ('III.28', 3, []), ('III.27', 4, []),
+            ('III.36', 1, [(5, NO_GENUINE_FAULT)])],
     'P14': [('I.47', 1, []), ('I.38', 2, []), ('I.13', 3, []), ('I.7', 4, []), ('II.1', 1, [(5, NO_FORM)]),
             ('II.10', 1, []), ('III.25', 2, []), ('III.20', 3, []), ('III.4', 4, []),
             ('III.14', 1, [(5, NO_FORM)])],
@@ -1623,6 +1628,86 @@ class Calibration(unittest.TestCase):
                   for _, plants in books.values() for ref in plants.split()}
         self.assertEqual(set(questions.PLANTS), listed)
         self.assertNotIn(('P13', 'III.29'), questions.PLANTS)
+
+    def test_the_kind_ruling_passes_over_p13_s_fifth_kind_on_iii_36_alone(self):
+        self.assertEqual(questions.KIND_RULING, KIND_RULING)
+        self.assertTrue((REPOSITORY / KIND_RULING).is_file())
+        self.assertEqual(questions.NOT_APPLYING, {('P13', 'III.36', 5): NO_GENUINE_FAULT})
+        manifest = shared()['calibration']
+        fifth = questions.KINDS['P13'][4].name
+        # Passed over with the table's reason, recorded as a test's reason is, and the ruling named:
+        # for III.36's P13 plant, and for no other plant of any question.
+        ruled = {(question, plant['ref']): plant['passed_over']
+                 for question, entry in manifest['questions'].items() for plant in entry['plants']
+                 if any('ruling' in passed for passed in plant['passed_over'])}
+        self.assertEqual(ruled, {('P13', 'III.36'): [{'kind': 5, 'name': fifth, 'reason': NO_GENUINE_FAULT,
+                                                       'ruling': KIND_RULING}]})
+        # The kind's test passes on III.36's row: the table, not the test, passes the kind over.
+        calibration = questions.Calibration(shared()['generator'])
+        base = calibration.base('P13', 'III.36')
+        self.assertEqual(len(base['state']['bridges']), 5)
+        self.assertIsNone(questions.KINDS['P13'][4].test(calibration, base))
+        self.assertEqual(calibration.kind('P13', 9, base), (1, ruled[('P13', 'III.36')]))
+        with patch.dict(questions.NOT_APPLYING, clear=True):
+            self.assertEqual(calibration.kind('P13', 9, base), (5, []))
+        # III.36 takes the first kind, every supplied bridge removed, as I.37 and II.6 do.
+        plants = {plant['ref']: plant for plant in manifest['questions']['P13']['plants']}
+        for ref in ('I.37', 'II.6', 'III.36'):
+            with self.subTest(ref=ref):
+                self.assertEqual((plants[ref]['kind'], plants[ref]['what']), (1, 'every supplied bridge removed'))
+                self.assertEqual(questions.PLANTS[('P13', ref)].operations, (('remove', None),))
+        row = next(r for r in calibration_rows('P13') if r['ref'] == 'III.36')
+        self.assertEqual(sorted(row['mutation']['base_state']['bridges']),
+                         ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
+                          'Elements.Rectangle.eq_rect', 'Elements.Square.described', 'Elements.Square.eq_sq'])
+        for table in ('bridges', 'bridge_context', 'bridge_placement', 'bridge_imports'):
+            self.assertEqual(row['state'][table], {})
+        # The fifth kind is still taken by II.8, whose plant is unchanged.
+        self.assertEqual((plants['II.8']['kind'], plants['II.8']['passed_over']), (5, []))
+        self.assertEqual(questions.PLANTS[('P13', 'II.8')],
+                         questions.Plant(5, '`Square.described` removed, the other bridges kept',
+                                         questions.PLANTS[('P13', 'II.8')].justification,
+                                         (('remove', ['Elements.Square.described']),)))
+        self.assertEqual([plant['ref'] for plant in plants.values() if plant['kind'] == 5], ['II.8'])
+
+    def test_a_table_entry_for_an_unlisted_base_or_a_bad_kind_is_refused(self):
+        calibration = questions.Calibration(shared()['generator'])
+        questions.check_not_applying()
+        # III.29 left the set; III.18 is a control; P12 has three kinds and P13 five; P99 is no
+        # question; and an entry gives a reason.
+        for key, reason in ((('P13', 'III.29', 1), 'a reason'), (('P13', 'III.18', 1), 'a reason'),
+                            (('P12', 'III.36', 4), 'a reason'), (('P13', 'III.36', 6), 'a reason'),
+                            (('P13', 'III.36', 0), 'a reason'), (('P13', 'III.36', '5'), 'a reason'),
+                            (('P99', 'III.36', 1), 'a reason'), (('P13', 'III.36', 5), '')):
+            with self.subTest(key=key, reason=reason), \
+                    patch.dict(questions.NOT_APPLYING, {key: reason}, clear=True):
+                with self.assertRaisesRegex(questions.Refusal, 'names no plant') as refused:
+                    calibration.finish()
+                self.assertIn(KIND_RULING, str(refused.exception))
+                self.assertIn('nothing is written', str(refused.exception))
+        # A listed base and a valid kind that no plant reaches: I.8's first kind, due, applies.
+        with patch.dict(questions.NOT_APPLYING, {('P11', 'I.8', 3): 'a reason'}):
+            with self.assertRaisesRegex(questions.Refusal,
+                                        r"P11: the table of .* names \[\('P11', 'I\.8', 3\)\], which no "
+                                        'plant reaches; nothing is written'):
+                calibration.finish()
+
+    def test_when_no_kind_applies_the_refusal_says_the_next_base_replaces_it(self):
+        calibration = questions.Calibration(shared()['generator'])
+        # A P13 row that supplies no bridge: every kind's test fails; for III.36 the table passes
+        # the fifth over first, and the refusal records it with the others.
+        for ref, k, ruled in (('III.18', 0, False), ('III.36', 9, True)):
+            with self.subTest(ref=ref):
+                with self.assertRaisesRegex(questions.Refusal, 'no kind of .* applies') as refused:
+                    calibration.kind('P13', k, {'ref': ref, 'state': {'bridges': {}}})
+                message = str(refused.exception)
+                for words in (questions.ENTRY, questions.RULINGS,
+                              f'nothing is written. By {KIND_RULING} the next base by the hash rule '
+                              'replaces this one, and that replacement is recorded, in a dated entry '
+                              "and the generator's lists, before anything is sent"):
+                    self.assertIn(words, message)
+                self.assertNotIn('stops for a ruling', message)
+                self.assertEqual(NO_GENUINE_FAULT in message, ruled)
 
     def test_p12_plants_make_their_kind_s_fault(self):
         # Kind 1 binds a call of a proposition the row did not cite, and adds its evidence; kind 2

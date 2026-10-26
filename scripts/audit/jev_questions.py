@@ -63,7 +63,9 @@ manifest; and, for each
 figure a plant changes, a copy under calibration-books-I-III-figures/, which the row's asset
 names by its path in the repository (figures/ is never touched). Each plant takes the kind
 the entry's rule gives it, tested on the generated row, and the change this file writes for
-it. The copies are written beside the calibration set, where `jev.py run` loads them, but
+it; a kind that cannot make a genuine fault on its base, named in this file's table by
+docs/decisions/2026-10-26-jev-kind-not-applying.md, is passed over as a kind whose test fails
+is. The copies are written beside the calibration set, where `jev.py run` loads them, but
 are not committed as files, since scripts/check_paths.py admits no .svg under docs/: the
 manifest, which is committed, carries each copy's exact text, and --restore-figures MANIFEST
 writes the copies back to the paths it records. It reads no commit and no key and sends
@@ -2004,12 +2006,14 @@ class Generator:
 # it: each question's clean and defect answers, the order of the propositions, the kinds of
 # fault and the bar; with docs/decisions/2026-10-26-jev-calibration-rulings.md (the rulings),
 # which stands beside it and governs where the two differ: P12 has three kinds of fault, and
-# P13's list for Book III is restated. Every row is an audit row of the same commit: a control
-# unchanged, a plant a copy with one fault planted in the generated row, never in a file of
-# the edition.
+# P13's list for Book III is restated; and with docs/decisions/2026-10-26-jev-kind-not-applying.md
+# (the kind ruling): a kind that cannot make a genuine fault on its base does not apply to it.
+# Every row is an audit row of the same commit: a control unchanged, a plant a copy with one
+# fault planted in the generated row, never in a file of the edition.
 
 ENTRY = 'docs/decisions/2026-10-25-jev-calibration-bar.md'
 RULINGS = 'docs/decisions/2026-10-26-jev-calibration-rulings.md'
+KIND_RULING = 'docs/decisions/2026-10-26-jev-kind-not-applying.md'
 MODEL = 'jev-1.13.0'
 
 
@@ -2216,6 +2220,25 @@ KINDS = {
 for _name, _kinds in KINDS.items():
     require(all(k.expected in QUESTIONS[_name].defects for k in _kinds),
             f'{_name}: a kind expects an answer that is not a defect answer')
+# The kinds that do not apply to a plant's base although their tests pass, by
+# docs/decisions/2026-10-26-jev-kind-not-applying.md (the kind ruling): a kind that cannot make
+# a genuine fault on its base. Each is passed over before its test, with the reason given here.
+NOT_APPLYING = {
+    ('P13', 'III.36', 5): 'no single supplied bridge carries a needed connection alone: '
+                          '`Rectangle.eq_rect` and `Rectangle.contained` each give `rect`, and '
+                          '`Square.eq_sq` and `Square.described` each give `sq`',
+}
+
+
+def check_not_applying() -> None:
+    """Each entry of the kind ruling's table names a plant of its question's lists and a kind
+    of that question, so that no entry stands for a base or a kind the calibration lacks."""
+    for (question, ref, kind), reason in NOT_APPLYING.items():
+        plants = {r for _, listed in CALIBRATION_LISTS.get(question, {}).values() for r in listed.split()}
+        require(ref in plants and type(kind) is int and 1 <= kind <= len(KINDS[question])
+                and isinstance(reason, str) and reason,
+                f'{question} {ref}, kind {kind}: the table of {KIND_RULING} names no plant of '
+                f"{question}'s lists, or no kind of {question}, or no reason; nothing is written")
 
 
 @dataclass(frozen=True)
@@ -2453,14 +2476,14 @@ PLANTS = {
         "Euclid's circumferences stand under.",
         (('premise', ['Elements.BookIII.Circumference.standing'], '(hBC : B = C)'),)),
     ('P13', 'III.36'): Plant(
-        5, '`Square.described` removed, the other bridges kept',
-        '`sq D B`, the square on the tangent DB, is the rectangle contained by DB, DB; a square '
-        'as Definition I.22 has it (`Square`), equilateral and right-angled, is connected with '
-        '`sq` only by `Square.described`, which makes a square on AB, its other corners on one '
-        'side of AB, a parallelogram equal to `sq A B`. `Square.eq_sq` and the rectangle bridges '
-        'need a parallelogram (a rectangle is one) as a premise, which no supplied declaration '
-        "gives for a `Square`, so nothing connects Euclid's square on DB with `sq D B`.",
-        (('remove', ['Elements.Square.described']),)),
+        1, 'every supplied bridge removed', 'With no bridge supplied, nothing connects '
+        "`rect A D D C` and `sq D B` with Euclid's rectangle contained by AD, DC and his square on "
+        'the tangent DB. `rect A D D C` is an area that Lean chooses by `Classical.epsilon` among '
+        'those AD, DC contain (`Contain`), and `sq D B` is `rect D B D B`; no supplied declaration '
+        'now states that a rectangle whose sides about a right angle are equal to AD, DC, or a '
+        'square on DB, is equal to the area chosen, and a choice definition alone does not prove '
+        'that its choice represents a given object: a needed connection has no declaration.',
+        (('remove', None),)),
     # P14: each expects "conflicts".
     ('P14', 'I.47'): Plant(
         1, '"the angles at B and C are less than right" made "greater than right"',
@@ -2719,17 +2742,25 @@ class Calibration:
 
     def kind(self, question: str, k: int, row: dict) -> tuple[int, list[dict]]:
         """The kind the k-th plant takes, counting round from the first, and why each kind
-        passed over did not apply."""
+        passed over did not apply: a kind the kind ruling's table names for the row's
+        proposition is passed over before its test, with the table's reason and the ruling."""
         kinds = KINDS[question]
         passed = []
         for step in range(len(kinds)):
             index = (k + step) % len(kinds)
+            ruled = NOT_APPLYING.get((question, row['ref'], index + 1))
+            if ruled is not None:
+                passed.append({'kind': index + 1, 'name': kinds[index].name, 'reason': ruled,
+                               'ruling': KIND_RULING})
+                continue
             reason = kinds[index].test(self, row) if kinds[index].test else None
             if reason is None:
                 return index + 1, passed
             passed.append({'kind': index + 1, 'name': kinds[index].name, 'reason': reason})
         raise Refusal(f'{question} {row["ref"]}: no kind of {ENTRY}, as {RULINGS} gives the kinds, '
-                      f'applies ({passed}); nothing is written, and the work stops for a ruling')
+                      f'applies ({passed}); nothing is written. By {KIND_RULING} the next base by the '
+                      'hash rule replaces this one, and that replacement is recorded, in a dated entry '
+                      "and the generator's lists, before anything is sent")
 
     def change(self, row: dict, field: list[str], old: str, new: str) -> None:
         value = row
@@ -2915,6 +2946,7 @@ class Calibration:
                      'state_sha256': sha(dumps(row['state']))}
 
     def finish(self) -> tuple[dict[str, bytes], dict]:
+        check_not_applying()
         files: dict[str, bytes] = {}
         questions = {}
         for question, spec in QUESTIONS.items():
@@ -2932,6 +2964,12 @@ class Calibration:
                     rows.append(row)
                     plants.append(summary)
                     k += 1
+            # Every kind the kind ruling's table names for this question is one a plant passed
+            # over by it, so that no entry sits unused.
+            ruled = {(question, p['ref'], x['kind']) for p in plants for x in p['passed_over'] if 'ruling' in x}
+            unused = sorted({key for key in NOT_APPLYING if key[0] == question} - ruled)
+            require(not unused, f'{question}: the table of {KIND_RULING} names {unused}, which no plant '
+                                'reaches; nothing is written')
             # The propositions in the order of the books, controls and plants together.
             rows.sort(key=lambda r: heath.prop_key(r['ref']))
             seen: set[str] = set()
