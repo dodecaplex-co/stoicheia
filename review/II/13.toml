@@ -8,7 +8,7 @@ kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angle at C keeps the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given. The scholiast's wider reading, any triangle acute-angled at B, is not stated: with a right angle at C the foot D is C itself, and with an obtuse angle at C it falls beyond C."
+note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angles at B and C keep the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given. The scholiast's wider reading, any triangle acute-angled at B, is not stated: with a right angle at C the foot D is C itself, and with an obtuse angle at C it falls beyond C."
 
 [[passage]]
 at = "Let ABC be an acute-angled triangle"
@@ -26,11 +26,11 @@ case = "an acute angle at A, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "a91d97b4"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "10c02b989"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:d4220867a6bb2695"
-run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9)"
-text = "sha256:d048bb9c562a21bf"
+run = "card 326, cross-family sign-off: main Prop13 proof by OpenAI Codex (gpt-6-astra, sailor b, highest reasoning), 5031893ce, retaining the line setup, endpoint exclusions, exterior-foot contradiction by I.13 and I.17, and betweenness split from the first mate's T13 at 938b78f9:docs/reports/crew/scratch-II/T12.lean, line 60. The first mate's report identifies T13 at line 273; README identifies the scratch-proof first mates as Claude. Codex extracted the exterior-foot argument as Prop13.not_beyond with a separate right-angle hypothesis, renamed the main line BC, placed the argument under Heath's sentences, made the CommonNotion2 addition and final sum explicit, and restated the two I.47 applications. The statement survives from 2feb68f9f. Later proof-line change 759caa4bf moves the existing hBDA proof beneath Heath's I.47 sentence; f9d97a191 changes only the helper's docstring; no later commit changes proof lines. The original record is 7fabffdec (record: Claude (classifier)); af30f18e3 integrates the classifiers' and verifiers' work, extending the representation note and adding the helper passage (their families unrecorded in that message). The given passage, expanded helper note and figure case are Codex's at 7a7bfaeed, 90aa67b21 and ec528957a. The both-acute-angles correction is 10c02b989, whose message names the finding of the preceding reader XS-r326-II13 (GPT-6 Astra). Surviving mishnah wording comes from 5031893ce, f9d97a191, ebfa16a65, 3ee7996b9 and 9967322a5, with precision wording from 29980bdd2 carried into 1fe066efc, which adds a positive a, then 307eb24fb and c814e8fb2. The reading keeps the works and chapter chosen at 81bbfbd76, the title and presentation from 4396c0cfe (three crews, family unrecorded), and the prose of 9967322a5. Euclid's figure is Codex's at 5031893ce, its right-angle mark recoloured at 759caa4bf. The idea figure starts at 083001dac, is redrawn with exact integer coordinates at 2b7c94217, and takes its letters and current caption at 9c410c02a, whose message names artists, of Claude's crew by README's account. Both figures' letters become upright at 2dee939bf. The modern figure is from 4e776b9a5, its restrictive labels removed at 307eb24fb. The read-through 02 report identifies its menders as Claude Opus 5.5. Commits 2feb68f9f, 759caa4bf, f9d97a191, 7fabffdec, ebfa16a65, 3ee7996b9, 9967322a5, 29980bdd2, 307eb24fb, c814e8fb2, 81bbfbd76, 083001dac, 2b7c94217, 2dee939bf, 4e776b9a5 and 10c02b989 each name no writer beyond its Claude Opus 5.5 co-author line; 1fe066efc names no writer. Earlier full readings were by Claude Opus 5.5, records review, at 7921e32 (d53ad3936), and Claude Opus 5.5, independent readers, at 206e3080 (4a7bc9523) and c814e8fb (44096af62); read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9), recorded in 969d83822; read by GPT-6 Astra (Codex); ship XS, reader XS-r326-II13b, independent re-read at 10c02b989"
+text = "sha256:16dd07432532dfa2"
 
 [review.items]
 statement = "pass"
