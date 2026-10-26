@@ -4,7 +4,7 @@
 # ACE are two triangles.
 [statement]
 scope = "full"
-note = "\"In the same parallels\" is AD parallel to BC, so A and D are apart: on one base, ABC and DBC are two triangles only then."
+note = "Our statement takes A and D apart, so that AD names a straight line, and reads \"in the same parallels\" as AD parallel to BC. When A and D are one point there is no straight line AD, and nothing to prove."
 fingerprint = "sha256:e27bd8d22cd1f209"
 
 [route]

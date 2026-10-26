@@ -28,7 +28,7 @@ unused = ["hAB_FC"]
 [[passage]]
 at = "and the triangle ABE is equal to the triangle CFE"
 kind = "carried"
-note = "The Lean proves that the triangle ABE equals CFE here, as Euclid states it; the argument goes on by the angles, and does not use it again."
+note = "The equal triangles ABE and CFE are proved here too, as Euclid states them, and are not needed after."
 unused = ["this"]
 
 [[passage]]

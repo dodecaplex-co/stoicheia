@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.46 at a glance</title>
-  <desc>Stand AD upright at A, equal to AB (the arc swings it round), then close the figure with parallels: four equal sides (blue) and four right angles make the square ADEB (yellow).</desc>
+  <desc>Stand AD upright at A, equal to AB (a circle about A carries it round), then close the figure with parallels: four equal sides (blue) and four right angles make the square ADEB (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="114.0,236.0 286.0,236.0 286.0,64.0 114.0,64.0" fill="#f2b705" fill-opacity="0.95"/>
   <path d="M286.0,236.0 A172.0,172.0 0 0,0 114.0,64.0" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>

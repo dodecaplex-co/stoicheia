@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.42 at a glance</title>
-  <desc>A parallelogram FECG as big as the triangle ABC (yellow), in any angle D you like (red): stand it on EC, half the base BC (blue), between the same parallels.</desc>
+  <desc>A parallelogram FECG equal to the triangle ABC (yellow), in a given angle D (red): stand it on EC, half the base BC (blue), between the same parallels.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="95.0,125.0 40.0,255.0 200.0,255.0" fill="#f2b705" fill-opacity="0.9"/>
   <polygon points="120.0,255.0 200.0,255.0 252.5,125.0 172.5,125.0" fill="#f2b705" fill-opacity="0.9"/>

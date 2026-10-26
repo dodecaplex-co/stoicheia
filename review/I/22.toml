@@ -17,13 +17,13 @@ note = "Euclid gives three straight lines; `Prop22.ne_zero` uses the strict ineq
 at = "and let DF be made equal to A"
 kind = "helper"
 helper = "Prop22.room"
-note = "Euclid's DE has an end D and extends endlessly towards E; the Lean starts with F and the ray from F through E given by the statement, takes DE through F and E, and finds its end D by cutting off FD equal to A from EF produced beyond F. For each cut, `Prop22.room` uses I.2 and `produce_longer` to find a point far enough along the produced line for I.3 to cut from a longer finite straight line; `between_cut` puts D, F, G and H in order, and the Lean applies `Tacit.not_between_of_between_between` (System E, Between 7), now proved from the three collinear orders and length addition in `Elements/Figure/Incidence.lean`, to the orders D, F, G and D, F, E to show that F is not between G and E, placing G on the ray from F through E as the statement asks."
+note = "Euclid's DE has an end D and extends endlessly towards E; the Lean starts with F and the ray from F through E given by the statement, takes DE through F and E, and finds its end D by cutting off FD equal to A from EF produced beyond F. For each cut, `Prop22.room` uses I.2 and `produce_longer` to find a point far enough along the produced line for I.3 to cut from a longer finite straight line; `between_cut` puts D, F, G and H in order, and the Lean applies `Tacit.not_between_of_between_between` (System E, Between 7), which Book Zero proves, to the orders D, F, G and D, F, E to show that F is not between G and E, placing G on the ray from F through E as the statement asks."
 
 [[passage]]
 at = "again, with centre G and distance GH let the circle KLH be described"
 kind = "helper"
 helper = "Prop22.meet"
-note = "Euclid takes K where the circles meet without proving they meet; `Prop22.meet` finds a point of the circle about G inside the circle about F, including when that point is F itself, and H outside it. The lemma concludes that the circles cut one another by `Tacit.circles_meet_of_on_inside_outside` (System E, Intersection 4, in LeanEuclid's corrected form), now proved from Intersection 5, Circle 1 and `line_circle_between` in `Elements/Figure/Incidence.lean`; the main proof then chooses K on P's side of DE by `Tacit.circles_meet_same_side` (System E, Intersections 8), as the statement asks, a rule we still assume."
+note = "Euclid takes K where the circles meet without proving they meet; `Prop22.meet` finds a point of the circle about G inside the circle about F, including when that point is F itself, and H outside it. The lemma concludes that the circles cut one another by `Tacit.circles_meet_of_on_inside_outside` (System E, Intersection 4, in LeanEuclid's corrected form), which Book Zero proves from Intersection 5, Circle 1 and `line_circle_between`; the main proof then chooses K on P's side of DE, as the statement asks, by `Tacit.circles_meet_same_side` (System E, Intersections 8), a rule we assume."
 
 [[passage]]
 at = "and let KF, KG be joined"

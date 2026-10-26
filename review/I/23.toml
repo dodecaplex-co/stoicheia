@@ -21,7 +21,7 @@ note = "The statement names a point on each arm, D on CD and E on CE, and we tak
 [[passage]]
 at = "let DE be joined"
 kind = "given"
-note = "Our triangle DCE is named by its corners, so no straight line DE is drawn; its three sides are the three straight lines that I.22 takes."
+note = "Our triangle DCE is named by its corners, so the Lean draws no straight line DE; its three sides are the three straight lines that I.22 takes."
 
 [[passage]]
 at = "and out of three straight lines which are equal to the three straight lines CD, DE, CE"
