@@ -338,19 +338,33 @@ def svg_desc(path):
 
 DECLARATION = re.compile(
     r"^(?:theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s({:]+)", re.M)
+# The same, with the keyword: a theorem or lemma is proved, and the rest are definitions.
+DECLARATION_KIND = re.compile(
+    r"^(theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s({:]+)", re.M)
 
 
 class LeanParts:
     """A proposition file cut in three for its page (see `lean_parts`). Each part is
-    Lean text, possibly empty, and each `*_names` lists the declarations in it. The names
-    are read from the corresponding spans of `check_fidelity.without_comments(src)`, with
-    comments, docstrings and literals blanked, so a docstring line that begins "lemma
-    beside III.13" declares nothing."""
+    Lean text, possibly empty, and each `*_names` lists the declarations in it, and
+    `kinds` the keyword that declares each. The names are read from the corresponding
+    spans of `check_fidelity.without_comments(src)`, with comments, docstrings and
+    literals blanked, so a docstring line that begins "lemma beside III.13" declares
+    nothing."""
 
     def __init__(self, before, main, after, before_code, after_code):
         self.before, self.main, self.after = before, main, after
         self.before_names = DECLARATION.findall(before_code)
         self.after_names = DECLARATION.findall(after_code)
+        self.kinds = {name: kind for code in (before_code, after_code)
+                      for kind, name in DECLARATION_KIND.findall(code)}
+
+    def counted(self, names, proved="lemma", more=""):
+        """The declarations `names` counted by kind, definitions apart from what is
+        proved: "two definitions and one lemma", "two more theorems"."""
+        defs = sum(self.kinds.get(x) not in ("theorem", "lemma") for x in names)
+        parts = [(defs, "definition"), (len(names) - defs, proved)]
+        return and_list([f"{number_word(k)} {more}{word}{'' if k == 1 else 's'}"
+                         for k, word in parts if k])
 
 
 def lean_parts(book, n):
@@ -383,7 +397,7 @@ def lean_parts(book, n):
 
 def axiom_kind(path: str) -> str:
     if path.endswith("Tacit/Magnitudes.lean"):
-        return "Laws of magnitude"
+        return "Rules of magnitude"
     if path.endswith(("Tacit/Constructions.lean", "Tacit/Diagram.lean")):
         return "Reading the figure"
     if path.endswith(("Tacit/Metric.lean", "Tacit/Transfer.lean")):
@@ -832,7 +846,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         out += f"\n<details><summary>{summary}</summary>\n\n"
         out += tacit_key(book, up, cited, marked, bool(unmarked)) + "\n\n"
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
-                     "Laws of magnitude", "Other"]:
+                     "Rules of magnitude", "Other"]:
             if kind not in by_kind:
                 continue
             out += f"**{kind}**\n\n"
@@ -987,12 +1001,26 @@ def overlap_word(overlap):
     return f"{number_word(len(rules))} of our {kind} together"
 
 
-def representation_badge(record):
+# The Lean words a badge's reading lives in. A record's tag may cover its companions
+# alone (III.24's and III.25's measure), so a tag named here gives its badge only to a
+# statement that uses one of its words, as the decisions page asked on 19 October 2026
+# ("if the badge is first kept to statements that use the measure"); a tag with a badge
+# and no words here gives it to every statement it is on.
+BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
+                                 "Elements.Arc.measure"}}
+
+
+def representation_badge(record, entry=None):
     """A few words beside the badge for a representation that changes how the whole
-    statement is read (review/terms.toml `badge`): "in our measure of circumferences"."""
+    statement is read (review/terms.toml `badge`): "in our measure of circumferences".
+    `entry` is the statement's facts.json entry, whose words decide a badge that
+    `BADGE_WORDS` keeps to the statements using them; with none, such a badge is not
+    given."""
     terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
-    badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})]
+    used = set(re.findall(r"[\w.']+", (entry or {}).get("statement", "")))
+    badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})
+              and (t not in BADGE_WORDS or BADGE_WORDS[t] & used)]
     return and_list(badges) if badges else ""
 
 
@@ -1010,8 +1038,11 @@ def in_lean_line(p, record, book, n):
     st, route = record["statement"], record["route"]
     short = clause(st.get("short", ""))
     if st["scope"] == "full":
-        badge = representation_badge(record)
-        first = f"{head}, as Euclid states it" + (f", {badge}" if badge else "")
+        badge = representation_badge(record, p)
+        # A proposition Heath prints in brackets (I.40, III.12) may be a later addition,
+        # so its enunciation is the text's, not surely Euclid's.
+        whole = "as the text states it" if heath.bracketed(book, n) else "as Euclid states it"
+        first = f"{head}, {whole}" + (f", {badge}" if badge else "")
     elif st["scope"] == "restricted":
         first = f"{head} for a restricted statement ({short})"
     else:
@@ -1616,8 +1647,7 @@ def lean_listing(book, n, facts):
 
     out = []
     if parts.before:
-        k = len(parts.before_names)
-        what = f"{number_word(k)} lemma" + ("" if k == 1 else "s")
+        what = parts.counted(parts.before_names)
         out += fold(f"Before the theorem, {what}: {names(parts.before_names)} "
                     f"({lines(parts.before)})", parts.before)
     out += ["```lean", parts.main, "```", ""]
@@ -1640,16 +1670,14 @@ def lean_listing(book, n, facts):
         if later:
             k = len(later)
             more = "more " if porism or comp else ""
-            what.append((f"{number_word(k)} {more}theorem{'s' if k > 1 else ''} "
-                         f"later propositions use, {names(later)}", k))
+            what.append((f"{parts.counted(later, 'theorem', more)} later propositions use, "
+                         f"{names(later)}", k))
         if local:
-            k = len(local)
-            what.append((f"{number_word(k)} lemma{'s' if k > 1 else ''} for its own "
-                         f"proofs, {names(local)}", k))
+            what.append((f"{parts.counted(local)} for its own proofs, {names(local)}",
+                         len(local)))
         if beside:
-            k = len(beside)
-            what.append((f"{number_word(k)} lemma{'s' if k > 1 else ''} beside the "
-                         f"proposition, {names(beside)}", k))
+            what.append((f"{parts.counted(beside)} beside the proposition, {names(beside)}",
+                         len(beside)))
         anchors = "".join(f'<a name="{x.split(".", 1)[1]}"></a>' for x in comp)
         if anchors:
             out += [anchors, ""]
@@ -1680,8 +1708,7 @@ def page_nav(book, n, count):
 
 
 # The line under the heading "Mishnah", for a reader who meets the word on this page.
-MISHNAH_LEAD = ("_Our commentary: what Euclid assumes, what Lean made us say out loud, and "
-                "how the result looks by modern means._")
+MISHNAH_LEAD = "_Our commentary: why Euclid's proof, and ours, look as they do._"
 
 JUMP_LINKS = ("[Euclid's proof](#euclids-proof) · [In Lean](#in-lean) · "
               "[What it rests on](#what-it-rests-on) · [Mishnah](#mishnah)")
@@ -1983,14 +2010,21 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
     reviewed = [r for r in proved if records.get(r)]
     scope = {s: [r for r in reviewed if records[r]["statement"]["scope"] == s]
              for s in ("full", "restricted", "partial")}
+    # A whole statement of a proposition Heath prints in brackets (I.40, III.12) is the
+    # text's, as its page says.
+    texts = [r for r in scope["full"] if heath.bracketed(book, int(r.split(".")[1]))]
+    text = (f", or for {links(texts)} as the text states {'it' if len(texts) == 1 else 'them'}"
+            if texts else "")
+
     def states(k):
-        return f"{k} as Euclid states {'it' if k == 1 else 'them'}"
+        return f"{k} as Euclid states {'it' if k == 1 else 'them'}{text}"
 
     out = []
     if not reviewed:
         out.append(head + ".")
     elif not scope["restricted"] and not scope["partial"]:
-        out.append(head + (", every one as Euclid states it." if len(reviewed) == len(proved)
+        out.append(head + (f", every one as Euclid states it{text}."
+                           if len(reviewed) == len(proved)
                            else f": {states(len(scope['full']))}."))
     else:
         parts = [states(len(scope["full"]))] if scope["full"] else []
@@ -2005,11 +2039,23 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
     if unreviewed:
         out.append(f"Not yet reviewed against Euclid's enunciation: {links(unreviewed)}.")
     if reviewed:
-        route = {k: [r for r in reviewed if records[r]["route"]["kind"] == k]
+        # A proposition Heath prints in brackets (I.40, III.12) has no argument of
+        # Euclid's to follow: a proof that follows the text follows the argument Heath
+        # prints, and is named apart, with its steps changed if any.
+        text = [r for r in reviewed if heath.bracketed(book, int(r.split(".")[1]))
+                and records[r]["route"]["kind"] != "alternative"]
+        changed = {r: f", {steps_changed(records[r], 'with ')}"
+                   if records[r]["route"]["kind"] == "modified" else "" for r in text}
+        route = {k: [r for r in reviewed if records[r]["route"]["kind"] == k and r not in text]
                  for k in ("euclid", "modified", "alternative")}
         if len(route["euclid"]) == len(reviewed):
             out.append("Every proof follows Euclid's argument, and each page notes where the "
                        "Lean departs from his sentences.")
+        elif len(route["euclid"]) + len(text) == len(reviewed):
+            save = and_list([f"{links([r])}'s, which follows the argument Heath prints"
+                             f"{changed[r]}" for r in text])
+            out.append(f"Every proof follows Euclid's argument save {save}; each page notes "
+                       "where the Lean departs from the text's sentences.")
         else:
             k = len(route["euclid"])
             parts = [f"{k} proof{'' if k == 1 else 's'} follow{'s' if k == 1 else ''} "
@@ -2028,6 +2074,8 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
                 k = len(route["alternative"])
                 parts.append(f"{k} {'argues' if k == 1 else 'argue'} differently "
                              f"({links(route['alternative'])})")
+            parts += [f"{links([r])}'s follows the argument Heath prints{changed[r]}"
+                      for r in text]
             out.append(and_list(parts) + "; each page says how.")
         overlap = [r for r in reviewed if "overlap" in records[r]]
         if overlap:
@@ -2318,7 +2366,7 @@ def certificate_row(entry, link, refs, record=None):
     Argument) or, indented under it, its porism or a companion."""
     status = STATUS_SHORT[entry["status"]] if entry else "🚧"
     statement = SCOPE_WORD[record["statement"]["scope"]] if record else ""
-    if record and representation_badge(record):
+    if record and representation_badge(record, entry):
         statement += "†"
     r = heath.parse_ref(entry["ref"]) if entry else None
     argument = route_word(record, r.book, r.n) if record and r else ""
