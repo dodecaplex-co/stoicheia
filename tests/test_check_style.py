@@ -33,7 +33,8 @@ it, put to the script's own patterns and functions:
   before the case the record's [figure] names, "Drawn for every case" where the record
   says `every_case`, or "Drawn for some of its cases" where it says `some_cases`, and
   heath.py refuses an `every_case` or a `some_cases` that is not true or false, or that
-  has no `case` for the caption to name, and the two together;
+  has no `case` for the caption to name, a `some_cases` with no `note` naming the cases
+  left undrawn, and the two together;
 * the route cases: render.py counts the steps a modified route changes, one for each
   passage its record argues another way, on the page, in the book's summary and in the
   certificate's key, and where the record counts none says "with a step changed" on the
@@ -2467,7 +2468,7 @@ class FigureCaption(unittest.TestCase):
 
     CASE = "the angle ABD greater than, equal to and less than the angle BAD"
 
-    def test_the_caption_says_one_case_or_every_case(self):
+    def test_the_caption_says_one_case_every_case_or_some_cases(self):
         for figure, want in [
                 ({"case": "A outside the circle."}, "Drawn for one case: A outside the circle."),
                 ({"case": "A outside the circle", "every_case": False},
@@ -2482,6 +2483,8 @@ class FigureCaption(unittest.TestCase):
                  f"Drawn for some of its cases: {self.CASE}. N."),
                 ({"case": self.CASE, "every_case": False, "some_cases": False},
                  f"Drawn for one case: {self.CASE}."),
+                ({"case": self.CASE, "every_case": False, "some_cases": True},
+                 f"Drawn for some of its cases: {self.CASE}."),
                 ({"some_cases": True, "note": "N."}, "N.")]:
             with self.subTest(figure=figure):
                 self.assertEqual(render.figure_note({"figure": figure}), want)
@@ -2503,19 +2506,19 @@ class FigureCaption(unittest.TestCase):
                     patch.object(heath, "REVIEW", root / "review"):
                 return heath.load_review("III", 25, require_stamp=False)
 
-    def test_a_record_reads_every_case_with_its_case(self):
+    def test_a_record_reads_every_case_or_some_cases_with_its_case(self):
         for figure, want in [(f'case = "{self.CASE}"\nevery_case = true',
                               f"Drawn for every case: {self.CASE}."),
                              (f'case = "{self.CASE}"\nevery_case = false',
                               f"Drawn for one case: {self.CASE}."),
-                             (f'case = "{self.CASE}"\nsome_cases = true',
-                              f"Drawn for some of its cases: {self.CASE}."),
+                             (f'case = "{self.CASE}"\nsome_cases = true\nnote = "N."',
+                              f"Drawn for some of its cases: {self.CASE}. N."),
                              (f'case = "{self.CASE}"\nsome_cases = false',
                               f"Drawn for one case: {self.CASE}.")]:
             with self.subTest(figure=figure):
                 self.assertEqual(render.figure_note(self.load(figure)), want)
 
-    def test_a_record_refuses_every_case_without_its_case_or_not_true_or_false(self):
+    def test_a_record_refuses_every_case_or_some_cases_without_its_case_or_not_true_or_false(self):
         for figure, want in [
                 ('every_case = true\nnote = "N."', "`every_case` needs the `case`"),
                 ("every_case = true", "`every_case` needs the `case`"),
@@ -2525,8 +2528,10 @@ class FigureCaption(unittest.TestCase):
                 ('some_cases = true\nnote = "N."', "`some_cases` needs the `case`"),
                 ("some_cases = true", "`some_cases` needs the `case`"),
                 ("some_cases = false", "give its `case`, its `note`, or both"),
+                (f'case = "{self.CASE}"\nsome_cases = true', "`some_cases` needs the `note`"),
                 (f'case = "{self.CASE}"\nsome_cases = "yes"', "`some_cases` must be true or false"),
-                (f'case = "{self.CASE}"\nevery_case = true\nsome_cases = true',
+                (f'case = "{self.CASE}"\nsome_cases = 1', "`some_cases` must be true or false"),
+                (f'case = "{self.CASE}"\nevery_case = true\nsome_cases = true\nnote = "N."',
                  "`every_case` and `some_cases` cannot both be true")]:
             with self.subTest(figure=figure):
                 with self.assertRaises(heath.ReviewError) as caught:

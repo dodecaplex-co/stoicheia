@@ -615,7 +615,8 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
 
     # [figure]: `every_case` and `some_cases` say only which words lead the caption, so the
     # section still needs a `case` or a `note`, and each the `case` that names the cases
-    # drawn; a figure cannot draw every case and only some of them.
+    # drawn; `some_cases` its `note` too, naming the cases left undrawn; and a figure
+    # cannot draw every case and only some of them.
     if "figure" in record:
         fig = record["figure"]
         if "case" not in fig and "note" not in fig:
@@ -626,6 +627,9 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         if fig.get("some_cases") and "case" not in fig:
             bad("[figure]: `some_cases` needs the `case` that names the cases the figure "
                 "draws, for the caption \"Drawn for some of its cases: …\"")
+        if fig.get("some_cases") and "note" not in fig:
+            bad("[figure]: `some_cases` needs the `note` that names the cases the theorem "
+                "covers and the figure does not draw")
         if fig.get("every_case") and fig.get("some_cases"):
             bad("[figure]: `every_case` and `some_cases` cannot both be true")
 
