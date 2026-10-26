@@ -44,20 +44,25 @@
   tacit rules: it loses `circle_eq`, Circle 1 and `exists_point`, and keeps the other four
   that III.5 loses through `centre_inside`, which ends contact without. Each gains `Tacit.radius_ne_zero`.
   The scoping had foreseen 16 and 19, counting the rule and Postulate 3; III.5 comes to one
-  fewer, since `ne_of_centre_of_on` no longer passes through `centre_inside`. Of the 140
-  certificate entries, all 140 rested on `circle_eq` and now 9 do: III.10, which calls it
-  itself; III.23, through III.10; the three companions of III.16; the companions
-  `complete` and `of_circle` of III.25; and the two companions of III.31. Counting only an
-  entry's own proof and the proved rules beneath it, without the propositions it cites,
-  134 rested on it and 7 now do. All 140 rested on Circle 1, and 135 now do: I.1, I.2,
-  I.4, III.5 and III.6 rest on it no longer; by an entry's own proof alone, 133 did and 53
-  do. All 140 rest on the radius rule, 133 by their own proofs.
+  fewer, since `ne_of_centre_of_on` no longer passes through `centre_inside`. At the
+  140-entry comparison revision 121258a, before these Book Zero proofs changed, all 140
+  certificate entries rested on `circle_eq`; 134 did so through an entry's own proof and
+  the proved rules beneath it, without the propositions it cites. Of the 147 entries at
+  this revision, 15 rest on it: III.10, which calls it itself; III.23, through III.10; the
+  companions `circlesTouch_iff` and `touchesInternally_iff` of III.13; the three
+  companions of III.16; the companions `acute`, `contact_locallyEqual`, `contact_lt` and
+  `semicircle_gt` of III.18; the companions `complete` and `of_circle` of III.25; and the
+  two companions of III.31. Counting only an entry's own proof and the proved rules
+  beneath it, without the propositions it cites, 11 now do. At the same 140-entry
+  comparison revision, all 140 rested on Circle 1, 133 by an entry's own proof; now 142
+  of 147 do, 58 by an entry's own proof. I.1, I.2, I.4, III.5 and III.6 rest on it no
+  longer. All 147 rest on the radius rule, 139 by their own proofs.
 
   What it does not prove. Diagram-segment 2 still gives III.5 at once, with Generalities 4,
   and III.6 with Generalities 3 and 4, as `Audit.III_5` and `Audit.III_6` show; so their
   overlaps stay catalogued and their records keep their `[overlap]` tables. The change is
   that neither proposition rests on that rule any more. The radius rule gives neither: it
-  says only that a radius is something. Circle 1 stays an assumption, and 135 entries
+  says only that a radius is something. Circle 1 stays an assumption, and 142 entries
   still rest on it; its retirement after III.2 is #477's. Nothing here is a proof that
   Diagram-segment 2 or Circle 1 is independent of the other rules.
 
