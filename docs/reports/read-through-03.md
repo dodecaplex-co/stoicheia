@@ -161,11 +161,3 @@ None of these is a mend of this read-through's. Before the release, a dated adde
 6. I.4's record, whose history clause waits for C1's heading and a re-read of I.4.
 7. The dated addendum that "Since the read" asks for.
 8. For B3, a [read-through] table in docs/reports/acceptance/book-I.toml, book-II.toml and book-III.toml that cites this report, written once its book's verdicts' conditions are met, and the acceptance report regenerated to show B3 passing for each book ([ACCEPTANCE](../ACCEPTANCE.md)). B4 is the limitations review's ([limitations-01.md](limitations-01.md)): it passes Books I and II, whose [limitations] tables stand in the same commit as this report, and holds Book III on the measure of III.24's and III.25's status lines, the finding on card draft C5.
-
-## Provenance addendum, 26 October 2026
-
-The opening revision anchor is superseded for this report's dispositions. Commit
-26eb5794c withdrew III.28's commentary mend and adjusted the counts; commit
-ef949cd2953c3cbd9d1ed71bc55ac8cd4f06a673 updated the re-readers' counts and the C9
-list. That full revision is the inspected snapshot supporting those updates. This
-addendum records provenance only, not a new reading or approval.
