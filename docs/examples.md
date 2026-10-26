@@ -104,7 +104,7 @@ meeting the drawn figure, and a shared step told on its home page.
 [Page](../book/III/31.md) · [Lean](../Elements/BookIII/Prop31.lean) ·
 [mishnah](../mishnah/III/31.md) · [figure](../figures/III/31.svg)
 
-Read again against the Lean, record and page at commit `c7570f51`, on 19 October 2026.
+Read again against the Lean, record and page at commit `560da15a2`, on 25 October 2026.
 
 **Why this one.** The main theorem and its companions cover the whole enunciation. III.31
 shows how to account for clauses proved after the main theorem, state the limits of a
@@ -128,11 +128,15 @@ representation, and extend Euclid's worked case where a later citer needs it.
   motion of mixed angles is claimed. The page's Representation row and the mishnah explain
   this meaning beside the claim of full coverage.
 - **The record, and what the page makes of it.** The review record,
-  [review/III/31.toml](../review/III/31.toml), declares the statement's scope `full`, lists
-  both companions and keeps the route `euclid`. Its three passages record the further
-  case through III.22 and two `helper` passages naming `Prop31.greater` and `Prop31.less`.
-  The page says the whole enunciation is proved, names both companions in its table,
-  explains where they carry the closing sentences, and gives each its certificate.
+  [review/III/31.toml](../review/III/31.toml), declares the statement's scope `full`,
+  lists both companions and keeps the route `euclid`, its note giving the further step
+  through III.22. Of its nine passages, four are `helper` passages, naming
+  `Prop2.triangle`, `Definition15` twice and `angle_add_of_between`; one, a `case`,
+  finds by III.2 the point of the less segment that the further case needs; and four are
+  `carried` by the companions, two by `Prop31.greater` and two by `Prop31.less`, since a
+  step proved as a companion is declared as carried. The page says the whole enunciation
+  is proved, names both companions in its table, explains where they carry the closing
+  sentences, and gives each its certificate.
 
 III.24 uses its companions another way: its main theorem carries the whole enunciation, and
 one companion keeps an alternative proof. The main theorem keeps Euclid's application of
