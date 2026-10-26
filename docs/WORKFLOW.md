@@ -454,10 +454,10 @@ broken reader can merge.
 **One check needs the YAML parser.** The test that every step after a job's lane step
 carries the lane's condition
 ([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
-`scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned in
-`scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after elan and
-before the run of the checks; to run the sequence yourself, or the pre-flight, which runs
-it for a train of class R3 and above, install it once:
+`scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned by version and
+hash in `scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after
+elan and before the run of the checks; to run the sequence yourself, or the pre-flight,
+which runs it for a train of class R3 and above, install it once:
 
 ```sh
 python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
