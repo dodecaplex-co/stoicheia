@@ -56,15 +56,16 @@ note = "Heath's figure also draws the base bent below EF, for the bracketed scho
 
 [review]
 stage = "full"
-commit = "0328bcb6"
+commit = "793182c7c"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:ef9d655927fc2bb3"
-run = "brief 0009 stage full, ship F2 question-4 re-read; card 312, the symbols given by Symbols.ofList (no numeral in the proof), written by Claude Opus 5.5 at f31cf9cf, read with the whole record by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220); ship F2, reader F2-312cx, independent re-read at f31cf9cf; axiom wave two (card 119) merged with main at 34ac8d88, which brought #406 (card 312): the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2i48cx at 0328bcb6"
-text = "sha256:8aaef0ee1333435c"
+run = "brief 0009 stage full, ship F2 question-4 re-read; card 312, the symbols given by Symbols.ofList (no numeral in the proof), written by Claude Opus 5.5 at f31cf9cf, read with the whole record by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220); ship F2, reader F2-312cx, independent re-read at f31cf9cf; axiom wave two (card 119) merged with main at 34ac8d88, which brought #406 (card 312): the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2i48cx at 0328bcb6; card #30's [figure] line (figures against the scans), read in full with the Lean, by GPT-6 Astra (Codex), the family that did not write the proof, reader G2-figI04cx, at 793182c7c"
+text = "sha256:553bcf411bdce65d"
 
 [review.items]
 statement = "pass"
 passages = "pass"
+# Earlier P13 comment by GPT-6 Astra (Codex), independent reader, ship S2 (0f38e0566).
 # P13 applies to the represented derivation. Checked the six point symbols against A to F,
 # the line symbols against DE and DF, and every given literal and guard against its proof.
 # Checked Atom/Lit/Metric.Holds, their holds_map bridges, Derives.sound and Rule.apply.
