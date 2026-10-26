@@ -1,15 +1,17 @@
 # review/III/13.toml
 [statement]
 scope = "full"
-note = "Circles touching within, either inside the other, or touching without, have no common point but the point of contact."
-fingerprint = "sha256:103b3c1a26cf5fff"
+note = "`Prop13`: touching circles meet only at the point of contact. Its companions prove Heath's reading at that point the same as ours, for any two circles."
+companions = ["III.13 touchesInternally_iff", "III.13 touchesExternally_iff", "III.13 circlesTouch_iff"]
+fingerprint = "sha256:0ca42ca60b0cd210"
 
 [route]
 kind = "euclid"
+note = "`Prop13` follows Euclid. The companions come after it and are not his: they read Definition III.3 at the point of contact, as Heath prefers, and prove it the same as our reading of the whole circles, by Book I, III.2 and the rule that every circle has a centre, citing nothing later than III.13 and neither III.11 nor III.12. On the way, `TouchesInternallyAt.between` and `TouchesExternallyAt.between` reach the conclusions of III.11 and III.12 from contact at the point, by I.24, with I.20 for contact within and III.2 for contact without, a route that is not Euclid's; they are steps of the companions, and replace neither proof."
 
 [representation]
 tags = ["touching-whole-circles"]
-note = "Touching is read of the whole circles: for contact within a point of the inner circle is within the outer and none is outside it. Both clauses carry unchanged from contact at D to a supposed second common point B, so the circles touch within at B too; III.13 applies III.11 at both points to show that they cannot meet again. For contact without no point is within both circles, so the point of AC that III.2 puts within both is at once absurd."
+note = "Touching is read of the whole circles: for contact within a point of the inner circle is within the outer and none is outside it. Both clauses carry unchanged from contact at D to a supposed second common point B, so the circles touch within at B too; III.13 applies III.11 at both points to show that they cannot meet again. For contact without no point is within both circles, so the point of AC that III.2 puts within both is at once absurd. The companions read contact at the point as well (`TouchesInternallyAt`, `TouchesExternallyAt`, `CirclesTouchAt`): the circles meet at C, and within some circle about C no point of the inner circle falls outside the outer, the circles being two, or, for contact without, no point is within both. They prove that reading the same as the whole-circle one for any two circles, so III.13's statement may be read either way."
 
 [[passage]]
 at = "Let the centre G of the circle ABDC"
@@ -52,16 +54,16 @@ note = "Like Heath's, this figure draws both impossible suppositions: EBFD touch
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:ae577fbed3d18152"
-run = "brief 0005 stage 5, ship R3 (#29); read again at e572d5c0 only where train C6c changed it (its representation note and a docstring); full read at 9eae4df1; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 9eae4df1"
-text = "sha256:5abf2f10a8fcaa1f"
+commit = "d87e0632f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:cf2efd52c3c89363"
+run = "brief 0005 stage 5, ship R3 (#29); read again at e572d5c0 only where train C6c changed it (its representation note and a docstring); full read at 9eae4df1; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 9eae4df1; card #126, ship ER: read in full after Definition III.3 read at the point of contact moved in, with III.13's three companions, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:2fe866927ebf31f1"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
