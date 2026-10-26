@@ -6,7 +6,7 @@
   finished here, and the last paragraph names what is left of each. The kept side itself,
   the side AC laid down as a straight line through D and C′, was approved as prototyped
   under question 5 on 20 October 2026, as [brief 0009](../briefs/0009-superposition.md)
-  records; this entry records no decision on it, and the change adds only a theorem that
+  records; this entry records no decision on it, and, on the side itself, the change adds only a theorem that
   states its cost and two sentences that name the side and that cost. No axiom, no
   statement, no definition and no `--` line changes, and no entry of
   `Certificate/axioms.lock`.
@@ -34,7 +34,7 @@
   names a line through d and c′. The paper's text does not settle whether a derivation
   inside the branch may draw one, and nothing here claims that it may or may not. The
   module docstring of `Elements/Foundations/Tacit/Superposition.lean` now says that our
-  placement also keeps the side AC, which neither set lists, and what that side costs, by
+  placement also keeps the side AC, which neither set lists, and a bound on what that side costs, by
   the new theorem; no declaration there changes, and no other sentence's claim.
 
   No protected path changes. What is left of the two items goes to trains of their own:
