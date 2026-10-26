@@ -807,8 +807,8 @@ rule.
   `Audit.III_30_measure` proves III.30 so, with its own statement and its axioms pinned; it
   cites III.21, through which every point of the circle measures a circumference alike, so
   it is a near miss of the measure, not of a rule. Our III.30 follows Euclid, by III.28, as
-  [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement keeps the
-  measure when arcs get a meaning of their own ([brief 0006](../briefs/0006-statements.md),
+  [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement kept the
+  measure when arcs got a meaning of their own ([brief 0006](../briefs/0006-statements.md),
   stage 3), so this near miss stays.
 
 ### A separate piece of work

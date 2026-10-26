@@ -50,17 +50,20 @@ order, and the first that fails stops it with a message saying why:
    holds, since a push sends the originals (#256); its `git status` check is one of them.
    The programs it runs as checks are not: they keep the environment tool_env() copies,
    which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
-   otherwise only if the caller set it, and no other variable of git's, so that a check
-   finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
-   does any command safe_push.py runs itself, git's or another's, get a variable that
-   ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
-   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
-   the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
-   working directory too, the hand-over's included (#357), but main()'s one git
-   rev-parse before any step, which is given the caller's GIT_DIR and GIT_WORK_TREE on
-   its command line, as --git-dir= and --work-tree=, to see the repository they name
-   (#186). The harness sets one itself, on purpose: base_tree's temporary
-   GIT_INDEX_FILE, named to run() in `keep`.
+   otherwise only if the caller set it, and of git's other variables only the four that
+   name its global and system configuration files or shut them, or the system attributes
+   file, out (CONFIG_FILE_VARIABLES), which tie git to no repository: so a check finds
+   its repository by its working directory, never by a hook's GIT_DIR (#355), and reads
+   the configuration files that safe_push.py's own git reads, save one named by a
+   relative path, which tool_env() drops (#430). Nor does any command safe_push.py runs
+   itself, git's or another's, get a variable that ties git to one repository
+   (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE and their kin, as `git
+   rev-parse --local-env-vars` lists them) from the caller, but GIT_NO_REPLACE_OBJECTS
+   as above: each finds its repository by its working directory too, the hand-over's
+   included (#357), but main()'s one git rev-parse before any step, which is given the
+   caller's GIT_DIR and GIT_WORK_TREE on its command line, as --git-dir= and
+   --work-tree=, to see the repository they name (#186). The harness sets one itself,
+   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main. First, before the commit is checked out, the
    paths guards. They read the tree of each commit the push brings (origin/main..the
    commit), each tree once, and a finding names, for each tree that holds it, the first
@@ -742,19 +745,52 @@ def rev_parse(repo, rev: str) -> str | None:
     return r.stdout.strip() if r.returncode == 0 else None
 
 
-# Of git's own variables, the one the checks keep: safe_push sets it on purpose (under the
-# launcher and after a hand-over). Every other GIT_* is dropped, since a hook sets
-# GIT_DIR, GIT_INDEX_FILE and their kin for the repository it runs in, and a check that
-# builds a repository of its own (git init, add, commit) would act on that one (#355).
+# Of the variables that tie git to one repository, the one the checks keep: safe_push sets
+# it on purpose (under the launcher and after a hand-over). Every other GIT_* is dropped
+# but CONFIG_FILE_VARIABLES, since a hook sets GIT_DIR, GIT_INDEX_FILE and their kin for
+# the repository it runs in, and a check that builds a repository of its own (git init,
+# add, commit) would act on that one (#355).
 KEPT_GIT_VARIABLES = frozenset({"GIT_NO_REPLACE_OBJECTS"})
+
+# The variables that name git's global and system configuration files, or shut them, or
+# the system attributes file, out: the checks keep them too (#430). None ties git to a
+# repository, and none is in REPOSITORY_VARIABLES: safe_push's own git already keeps all
+# four, and a check reads the same configuration files as that git, but for a relative
+# path (below). Dropped, they let a check read ~/.gitconfig and the system's files where
+# the caller had shut them out, as the test module's hermetic_git() does. Kept,
+# GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM may name a file that sets core.hooksPath,
+# safe.directory, a url rewrite or an includeIf; but so may the files git reads in their
+# place: the global files that HOME and XDG_CONFIG_HOME locate, ~/.gitconfig and
+# $XDG_CONFIG_HOME/git/config (the checks keep both variables from the same caller), and
+# the system file of the git that the caller's PATH finds. A relative GIT_CONFIG_GLOBAL or
+# GIT_CONFIG_SYSTEM is dropped, though: git would read it from the directory it is in,
+# for most settings the top of the commit's worktree, so the commit under check could
+# supply the file. Without it, git reads the files it reads when the variable is unset,
+# as before #430. An empty one, which shuts its file out, is kept, as an absolute one is.
+# GIT_CONFIG_NOSYSTEM and GIT_ATTR_NOSYSTEM only take a file away. GIT_CONFIG_COUNT and
+# GIT_CONFIG_PARAMETERS, which carry settings themselves, stay dropped with the
+# repository variables. Still open, as on main: a relative HOME or XDG_CONFIG_HOME
+# reaches the checks, and safe_push's own git keeps a relative GIT_CONFIG_GLOBAL or
+# GIT_CONFIG_SYSTEM (its git status in the commit's worktree among them); #442 is to
+# have step 1 refuse all four.
+CONFIG_FILE_VARIABLES = frozenset({"GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",
+                                   "GIT_CONFIG_NOSYSTEM", "GIT_ATTR_NOSYSTEM"})
 
 
 def tool_env() -> dict:
     """The environment for the checks: elan's lake on the PATH, as CI and AGENTS.md set it,
-    and no variable of git's but those KEPT_GIT_VARIABLES names, so that each check finds
-    its repository by its working directory, never by what a hook left set (#355)."""
+    and no variable of git's but those KEPT_GIT_VARIABLES and CONFIG_FILE_VARIABLES name,
+    so that each check finds its repository by its working directory, never by what a hook
+    left set (#355), and reads no global or system configuration, and no system
+    attributes file, that the caller shut out (#430), but where a relative
+    GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM shut them out: that it drops, as
+    CONFIG_FILE_VARIABLES says."""
     env = {name: value for name, value in os.environ.items()
-           if not name.startswith("GIT_") or name in KEPT_GIT_VARIABLES}
+           if not name.startswith("GIT_") or name in KEPT_GIT_VARIABLES
+           or name in CONFIG_FILE_VARIABLES}
+    for name in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+        if env.get(name) and not os.path.isabs(env[name]):
+            del env[name]       # a relative path, which the commit could supply
     elan = str(Path.home() / ".elan" / "bin")
     env["PATH"] = elan + os.pathsep + env.get("PATH", "")
     return env
