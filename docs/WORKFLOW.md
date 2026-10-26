@@ -657,24 +657,31 @@ not name, one added or renamed since, weighs their median, and each shard's log 
 The proof is built from what the shards ran, not from the dealing. Each shard writes the
 tests it ran, each with its outcome, to the file `--ran` names, and keeps it as an
 artifact, a test having failed or not, for 35 days; and it keeps its log, from which the
-report takes the tests that failed. Whether a later attempt of the run can fetch a list an
-earlier attempt kept is GitHub's to say, and nothing relies on it: a run re-run with
-"re-run all jobs" is judged afresh, and one re-run with "re-run failed jobs", whose proof
-may not see the other shards' earlier lists, then stays red, for the proof never passes on
-lists it cannot see. Then the `safe-push-tests` job, which needs the shards and runs
-whatever they did, checks out the commit they ran, as they did, fetches every list and
-runs `python3 scripts/test_safe_push.py --cover DIR`, which lists the tests with
-unittest's loader at that commit, reads N from the matrix, and fails, naming each, on a
-test no shard ran, a test run twice, a shard that left no list (as one that stops before
-its end leaves none), a test the loader does not list, and a test that did not pass. Its
-verdict is green only when two things hold, each judged on its own: GitHub's result for
-the matrix is success, which it is only when every shard succeeded; and the proof passed.
-A shard that failed, was cancelled, stopped at its time limit or was skipped, or a list
-missing, makes the job red, never skipped, and the run red with it. Both are needed:
-should a later attempt see a list an earlier one kept, that list stays when, in a rerun of
-all the jobs, its shard is cancelled before it keeps a new one, so the proof alone could
-pass; and the matrix's result says nothing of which tests ran. To run one shard as the
-cadence does, give its number and the count, as in
+report takes the tests that failed. A run re-run either way is judged on every shard's
+list ([#411](https://github.com/jackChallis/stoicheia/issues/411),
+[the decision](decisions/2026-10-25-rerun-failed-jobs.md)). A run re-run with "re-run all
+jobs" is judged afresh. A run re-run in part, as with "re-run failed jobs", is judged on
+the lists of the shards it runs again and on those the others kept in an earlier attempt,
+which the verdict's fetch finds. #411 saw it on GitHub: one shard of run 40122901299, a
+green run no job of which had failed, was run again alone, and the verdict's fetch, which
+names no `run-id`, found all 16 artifacts, every shard's list and log, the first attempt's
+among them, and fetched the eight lists by its pattern; the proof passed on all 466 tests.
+A re-run of the failed jobs makes a later attempt of the same kind and fetches the same
+way. The proof never passes on lists it cannot see, should GitHub ever withhold one. Then
+the `safe-push-tests` job,
+which needs the shards and runs whatever they did, checks out the commit they ran, as they
+did, fetches every list and runs `python3 scripts/test_safe_push.py --cover DIR`, which
+lists the tests with unittest's loader at that commit, reads N from the matrix, and fails,
+naming each, on a test no shard ran, a test run twice, a shard that left no list (as one
+that stops before its end leaves none), a test the loader does not list, and a test that
+did not pass. Its verdict is green only when two things hold, each judged on its own:
+GitHub's result for the matrix is success, which it is only when every shard succeeded;
+and the proof passed. A shard that failed, was cancelled, stopped at its time limit or was
+skipped, or a list missing, makes the job red, never skipped, and the run red with it.
+Both are needed: a later attempt can see a list an earlier one kept, as #411 showed, and
+that list stays when, in a rerun of all the jobs, its shard is cancelled before it keeps a
+new one, so the proof alone could pass; and the matrix's result says nothing of which
+tests ran. To run one shard as the cadence does, give its number and the count, as in
 `python3 scripts/test_safe_push.py --shard 3/8`; without `--shard` the whole suite runs.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
