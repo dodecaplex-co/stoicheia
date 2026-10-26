@@ -115,7 +115,7 @@ declaration, record or lock changes.
 
 *Status, 26 October 2026, for #473:* the notes above and the frozen text below are kept as
 written, and this note corrects one claim of the note of 19 October 2026 at the head of the
-brief. No statement, declaration, record or lock changes.
+brief and brings one claim of section 7 up to date. No statement, declaration, record or lock changes.
 
 - **III.5's and III.6's pins.** That note says that the axioms pinned for the restated III.5
   and III.6 in [`Audit/Crossing.lean`](../../Audit/Crossing.lean) include `circle_eq` and

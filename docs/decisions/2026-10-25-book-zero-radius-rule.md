@@ -9,10 +9,10 @@
   made true, and with no statement, porism or definition changed. The axiom came first, in
   the change that [the radius rule's entry](2026-10-25-radius-rule.md) records; this entry
   records the second step. On 26 October 2026 the coordinator added to it, from an analysis
-  of the shape of the axioms, the one proof of Book Zero that still called `circle_eq`, in
-  `Elements/Figure/Regions.lean`. No proposition's or porism's statement, no definition, no
-  `--` line and no proposition's Lean changes here, and no axiom comes or goes: the lock
-  keeps its 49.
+  of the shape of the axioms, the rewriting of the one proof of Book Zero that still called
+  `circle_eq`, in `Elements/Figure/Regions.lean`. No proposition's or porism's statement,
+  no definition, no `--` line and no proposition's Lean changes here, and no axiom comes or
+  goes: the lock keeps its 49.
 
   What changes in Book Zero. Every lemma keeps its name and exact type; only proofs change.
   In `Elements/Figure/RuleBase.lean`,
@@ -59,7 +59,8 @@
   loses `circle_eq`, Circle 1, `exists_point`, `exists_point_inside_circle`, `len_symm`,
   `line_circle_between` and `lt_trans`. III.6 rested on 21 and now rests on 19, with 16
   tacit rules: it loses `circle_eq`, Circle 1 and `exists_point`, and keeps the other four
-  that III.5 loses through `centre_inside`, which ends contact without. Each gains `Tacit.radius_ne_zero`.
+  that III.5 loses through `centre_inside`, which ends contact without. Each gains
+  `Tacit.radius_ne_zero`.
   The scoping had foreseen 16 and 19, counting the rule and Postulate 3; III.5 comes to one
   fewer, since `ne_of_centre_of_on` no longer passes through `centre_inside`.
 
@@ -138,8 +139,8 @@
   `acute`, `remaining` and `semicircle`, III.18's `contact_locallyEqual`, `contact_lt` and
   `semicircle_gt`, and III.31's `greater` and `less`, by their own proofs, and III.18's
   `acute` through III.16's `acute`, which it cites. Each loses `Tacit.circle_eq` from its
-  `axioms`, and all but III.18's `acute` from its `direct_axioms`; nothing else in
-  `facts.json` changes but the line numbers of the later lemmas of `Regions.lean` in
+  `axioms`, and all but III.18's `acute` from its `direct_axioms` and `inherited`; nothing
+  else in `facts.json` changes but the line numbers of the later lemmas of `Regions.lean` in
   `inherited`. Their pages, and their rows in `CERTIFICATE.md`, are generated, and now
   count 39 tacit rules where they counted 40. No `PropNN.lean` changes, so no record's
   Lean stamp is stale, and `check_fidelity.py` finds none. The records of III.16, III.18
@@ -166,7 +167,8 @@
 
   This entry approves the change to `Audit/Overlaps.lean`, whose pins of `III_5_crossing`
   and `III_5_radius` lose `circle_eq` and gain the radius rule, `III_5_radius` with
-  `between_symm`, `line_circle_between`, `lt_irrefl` and `lt_trans` besides; whose pins of I.7's, III.2's two, III.24's, III.26's,
+  `between_symm`, `line_circle_between`, `lt_irrefl` and `lt_trans` besides; whose pins of
+  I.7's, III.2's two, III.24's, III.26's,
   III.27's, III.30's, Diagram-angle 3's and Circle 2's and Circle 3's derivations have the
   rule beside or in place of `circle_eq`; whose pin of `III_6` gains the rule; whose pin
   of `III_5` does not move; and whose module text and four docstrings now say which of
@@ -205,9 +207,10 @@
   new note adds that the step of the mixed-angle prototype that its section 7 says used
   Diagram-segment 2, now the equal-radius case of `exists_inside_both`, uses it no longer.
   The pages of III.5 and III.6 (`mishnah/III/05.md`, `mishnah/III/06.md`) and Book III's
-  introduction were read for the same claims and make none, so they do not change; nor do
-  the catalogue of overlaps, the Book III brief or the audit files, read for claims that
-  Book Zero, the mixed angles or their companions rest on `circle_eq`, and making none. The
-  records of II.14, III.5 and III.6 were subsequently read in full and stamped after their
-  notes changed. Book Zero has no records, and no `PropNN.lean` changes, so no record is
-  stale for its Lean.
+  introduction were read for the same claims and make none, so they do not change. For the
+  second step, the catalogue of overlaps, the Book III brief and the audit files, changed in
+  the first as above, were read again for claims that Book Zero, the mixed angles or their
+  companions rest on `circle_eq`; they make none, so the second step changes none of them.
+  The records of II.14, III.5 and III.6 were subsequently read in full and stamped after
+  their notes changed. Book Zero has no records, and no `PropNN.lean` changes, so no record
+  is stale for its Lean.
