@@ -29,8 +29,8 @@ functions to small inputs, each with the answer the screen should give.
   trains C6a and C6b and of the outlines are listed, and each, left unlisted, stops it, as
   a new word does; the recursors Lean makes, as `MixedAngle.casesOn`, are followed, not
   listed.
-* The known rows: III.2, III.5 and III.6 must close by a rule; closed only by the bare try,
-  a row is lost.
+* The known rows: each row of KNOWN (III.5 alone, since III.2 and III.6 left it) must close
+  by a rule; closed only by the bare try, a row is lost.
 * The lists: the definitions unfolded, chosen and left as they are do not overlap; every
   file of tries proves the controls, and unfolds every definition listed.
 * The record of a run (--write) and its check (--check-current), with a stand-in for git:
