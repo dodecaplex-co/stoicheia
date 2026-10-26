@@ -80,7 +80,7 @@ Declined, each with its reason:
 - **RT-b2a 11.** II.8's commentary and II.12's note repeat what stands beside them, but say nothing false, and the reader counted the finding among the polish that does not stand in B3's way.
 - **RT-b1f 2, in part.** I.4's and I.8's history clause is gone (34f15131a); their inventories stay, since they say what the proofs of the laws cited in the placement draw.
 
-Of the re-readers' 29 editorial findings, 6 are mended (e9d3b1f20, 9353bbe7a), 1 in part (RT-s2x 5: II.9's reading line mended, II.3's on card draft C9), 20 are on card drafts (C1 1, C2 4, and 15 on C6, for the owner of the Book III records and pages it names), and 2 are on card draft C9: RT-s1x 6, "the retained axiom" and "now proved" in I.27's record, and RT-s2x 2, "The final step returns this conclusion" in I.39's.
+Of the re-readers' 29 editorial findings, 8 are mended (e9d3b1f20, 9353bbe7a, and RT-s3y A1 and A2 in 3918ef06d), 1 in part (RT-s2x 5: II.9's reading line mended, II.3's on card draft C9), 18 are on card drafts (C1 1, C2 4, and 13 on C6, for the owner of the Book III records and pages it names), and 2 are on card draft C9: RT-s1x 6, "the retained axiom" and "now proved" in I.27's record, and RT-s2x 2, "The final step returns this conclusion" in I.39's.
 
 ## The pilot editor
 
@@ -155,7 +155,7 @@ None of these is a mend of this read-through's. Before the release, a dated adde
 
 1. This branch on main: #34 asks each material finding to name the commit on main that resolves it, and the commits named here are on text/read-through-03.
 2. The five open material findings, on card drafts C1 and C5, filed and their fixes landed on main.
-3. The verdicts' other open conditions, on C1 (among them the line over every commentary, which Book II's reader names), C2 and C5, and on card draft C9: RT-b3c 3, which its reader's verdict names, RT-b1b 16, RT-b3f 11, RT-b3f 16, the pilot editor's note 2, RT-s1x 6, RT-s2x 2 and RT-s2x 5.
+3. The verdicts' other open conditions, on C1 (among them the line over every commentary, which Book II's reader names), C2 and C5, and on card draft C9: RT-b3c 3, which its reader's verdict names, RT-b1b 16, RT-b1d 9, RT-b3d 19, RT-b3f 11, RT-b3f 16, the pilot editor's note 2, RT-s1x 6, RT-s2x 2 and RT-s2x 5.
 4. A re-reader for 079318c04, the mends to II.14's and III.24's commentaries.
 5. The pilot editor's notes 4, 6 and 8, and note 1's rule: #34 asks for each the commit that fixed it or the change it made to docs/STYLE.md or docs/examples.md, and none is made.
 6. I.4's record, whose history clause waits for C1's heading and a re-read of I.4.
