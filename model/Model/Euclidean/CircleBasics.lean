@@ -11,7 +11,8 @@ The hypothesis that A and B differ makes the radius positive. Definition 15 then
 says that two points at that radius have equal distances from A.
 
 A centre is the sphere's centre, so it is unique. Its distance from itself is zero,
-strictly less than the positive radius. An interior point cannot also be on the
+strictly less than the positive radius; so no point of the circle is its centre, and a radius
+is not nothing, our own rule `radius_ne_zero`. An interior point cannot also be on the
 circumference: its distance cannot be both less than and equal to the radius.
 Two circles with the same centre and equal radii are equal as spheres and as circles.
 This includes coincident circles and repeated points wherever the hypotheses allow them.
@@ -56,6 +57,17 @@ theorem centre_inside_circles : Hand.centre_inside_circles plane := by
   intro A α hA
   rw [insideCircle_iff, centre_iff.mp hA, dist_self]
   exact α.2
+
+/-- **`radius_ne_zero` holds in the plane:** a radius is not nothing. A circle's radius is
+positive by the type of circles, and a point on the circle is at that distance from the
+centre, so it is not the centre. -/
+theorem radius_ne_zero : Hand.radius_ne_zero plane := by
+  intro A B α hA hB h
+  have hAB : A = B := nndist_eq_zero.1 h
+  subst hAB
+  rw [centre_iff] at hA
+  rw [onCircle_iff, hA, dist_self] at hB
+  exact α.2.ne hB
 
 /-- **An interior point is not on the circumference.** A strict inequality excludes
 equality with the radius. -/

@@ -22,9 +22,9 @@ keep their statements under distinct names.
 The laws here are those about a single circle, or about where a circle and its points lie:
 
 * Postulate 3, which draws a circle, and Definition 15, which makes its radii equal;
-* the generalities about a centre (`centre_unique`, `centre_inside`, `circle_eq`) and about
-  the inside of a circle (`inside_not_on`, `inside_of_len_lt`, `len_lt_of_inside`,
-  `on_circle_of_len_eq`);
+* the generalities about a centre (`centre_unique`, `centre_inside`, `circle_eq`), with our
+  own rule that a radius is not nothing (`radius_ne_zero`), and about the inside of a
+  circle (`inside_not_on`, `inside_of_len_lt`, `len_lt_of_inside`, `on_circle_of_len_eq`);
 * System E's Circle 1 to 4 (`between_of_inside_chord`, `inside_of_between`,
   `outside_of_between`, `not_same_side_of_circles_meet`), which the library owes to Jeremy
   Avigad, Edward Dean and John Mumma, with our thanks;
@@ -111,6 +111,13 @@ Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCirc
 def on_circle_of_len_eq_circles : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
     S.len A C = S.len A B → S.OnCircle C α
+
+/-- `Elements.Tacit.radius_ne_zero`, hand-translated: a rule of our own, not System E's, that
+a radius is not nothing. The lock prints it as `∀ {A B : Elements.Point} {α :
+Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Ne (Elements.len A B) 0`. -/
+def radius_ne_zero : Prop :=
+  ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
+    S.len A B ≠ (0 : S.Length)
 
 /-! ## System E's Circle 1 to 4 -/
 
