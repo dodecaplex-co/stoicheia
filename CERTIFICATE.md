@@ -161,7 +161,7 @@ What the proofs show:
 | ✅ | [III.17](book/III/17.md) | whole | Euclid's, one step changed | I.4, III.1, III.16 Por. | I.4, I.11, I.13, III.16 Por. | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 9 | 22 |
 | ✅ | &emsp;[III.17 general](book/III/17.md#general) |  |  |  | I.11, III.16 Por., III.17 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 27 |
 | ✅ | [III.18](book/III/18.md) | whole | Euclid's | I.17, I.19 | I.12, I.17, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 6 | 16 |
-| ✅ | &emsp;[III.18 acute](book/III/18.md#acute) |  |  |  | I.23, III.18, III.18 contact_lt, III.18 semicircle_gt | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 25 |
+| ✅ | &emsp;[III.18 acute](book/III/18.md#acute) |  |  |  | III.16 acute, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 25 |
 | ✅ | &emsp;[III.18 contact_locallyEqual](book/III/18.md#contact_locallyEqual) |  |  |  | I.12, I.17, I.19, III.2, III.16, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 32 |
 | ✅ | &emsp;[III.18 contact_lt](book/III/18.md#contact_lt) |  |  |  | I.12, I.17, I.19, I.20, III.2, III.16, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 34 |
 | ✅ | &emsp;[III.18 semicircle_gt](book/III/18.md#semicircle_gt) |  |  |  | I.12, I.17, I.19, I.20, III.2, III.16, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 34 |

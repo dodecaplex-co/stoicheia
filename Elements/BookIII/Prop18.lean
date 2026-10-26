@@ -239,7 +239,9 @@ circle ABC, about D, at A, and AB be the diameter through A; for the angle of th
 AE only names the side of AB (`Prop18.semicircle_gt`). The angle of the semicircle and
 the angle of contact are angles as Euclid draws them, and every acute rectilineal angle XYZ
 can be placed at A [I. 23]: along AB on E's side, where the angle of the semicircle exceeds
-it, and along AE on the circle's side, where the angle of contact falls short of it. -/
+it, and along AE on the circle's side, where the angle of contact falls short of it. Once
+III.18 makes AE III.16's straight line (`Prop18.diameter`), the placing and the comparisons
+are III.16's own, cited from its companion `Prop16.acute`. -/
 theorem Prop18.acute {A B D E X Y Z : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hAE : Touches A E ABC) (hADB : Between A D B)
     (hXYZ : Triangle X Y Z) (hacute : ∠ X Y Z < ∟) :
@@ -249,20 +251,11 @@ theorem Prop18.acute {A B D E X Y Z : Point} {ABC : Circle} (hD : Centre D ABC)
         (MixedAngle.ofSegment A B ABC E).Exceeds B F) ∧
       ∃ F : Point, SameSideOf F B A E ∧ ∠ E A F = ∠ X Y Z ∧
         (MixedAngle.ofContact A E ABC B).FallsShort E F := by
-  have hE := (Prop18.diameter hD hA hAE hADB).1
+  obtain ⟨hE, hBAE⟩ := Prop18.diameter hD hA hAE hADB
   have hABE : Triangle A B E := hE
   have hm : (MixedAngle.ofContact A E ABC B).WellFormed :=
     ⟨hA, hAE, ⟨D, OnRay.of_between hADB, centre_inside hD⟩, hABE.acb⟩
-  refine ⟨⟨hA, ⟨D, OnRay.of_between hADB, centre_inside hD⟩, hE⟩, hm, ?_, ?_⟩
-  · obtain ⟨F, G, hG, hF, hFAG⟩ := BookI.Prop23 hABE.ne₁₂ hXYZ hE
-    have hFA : F ≠ A := hF.triangle.ne₁₃.symm
-    have hBAF : ∠ B A F = ∠ X Y Z := by
-      rw [angle_symm hABE.ne₁₂.symm hFA, ← angle_onRay_right hG hFA, hFAG]
-    exact ⟨F, hF, hBAF, Prop18.semicircle_gt hD hA hAE hADB hF (hBAF ▸ hacute)⟩
-  · obtain ⟨F, G, hG, hF, hFAG⟩ := BookI.Prop23 hABE.ne₁₃ hXYZ hABE.acb
-    have hFA : F ≠ A := hF.triangle.ne₁₃.symm
-    have hEAF : ∠ E A F = ∠ X Y Z := by
-      rw [angle_symm hABE.ne₁₃.symm hFA, ← angle_onRay_right hG hFA, hFAG]
-    exact ⟨F, hF, hEAF, Prop18.contact_lt hm hF (hEAF ▸ hacute)⟩
+  exact ⟨Prop16.semicircle_wellFormed hD hA hADB hE, hm,
+    Prop16.acute hD hA hADB hE hBAE hXYZ hacute⟩
 
 end Elements.BookIII

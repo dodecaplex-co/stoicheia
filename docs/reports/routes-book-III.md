@@ -89,7 +89,7 @@ with its issue"), while an issue labelled `blocks-release` tracks their move int
 | #127 | [`Prop27.lean`](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/Prop27.lean) | III.27 by Euclid's reductio and halving, the obtuse case by the remainders, the right read off the measure | as in `Elements/` |
 | #126 | [`Touching.lean`](../../Staging/Routes/Touching.lean) | Definition III.3 read at the point of contact, and its agreement with our reading of the whole circles | new, a draft |
 | #129 | [`Prop20.lean`](../../Staging/Routes/Prop20.lean), [`Prop21.lean`](../../Staging/Routes/Prop21.lean), [`Prop26.lean`](../../Staging/Routes/Prop26.lean) | the angle at the centre of any size; III.20 for it; III.21 and III.26 by Euclid's one argument | III.20 in general new, a draft; III.20's special case, III.21 and III.26 as in `Elements/` |
-| #130 | [`AngleOfContact.lean`](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
+| #130 | [AngleOfContact.lean](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
 | #131 | none | which calls of III.1 do work | analysis only |
 
 "As in `Elements/`" in the last column means that the staged theorem has exactly the type
@@ -169,7 +169,7 @@ the whole-circle reading of `Elements/`.
 Every other draft has the text it had on main's statements as at 2e8aecf, and so have the
 five definitions: the reading near a point, the three contacts at a point, and the angle at
 the centre. Copies of facts that are now in `Elements/`, four in `Touching.lean` and fifteen
-steps of III.16's comparisons in `AngleOfContact.lean`, are deleted, and those facts are
+steps of III.16's comparisons in AngleOfContact.lean, are deleted, and those facts are
 cited from `Elements/`.
 
 ## III.8: Euclid's own last step (#125)
@@ -558,7 +558,7 @@ as its companions `Prop16.semicircle`, `Prop16.remaining` and `Prop16.acute`
 straight line given only as touching the circle, that the angle of contact does not depend
 on the straight line naming its branch is not proved, since the route would need III.18.
 
-**What the staged file does.** `AngleOfContact.lean` cites the steps of III.16's
+**What the staged file does.** AngleOfContact.lean cites the steps of III.16's
 comparisons from `Elements/` (`Prop16.inside_sameSideOf`, `Prop16.horn_locallyEqual`,
 `Prop16.horn_lt` and `Prop16.semicircle_gt`, in `Elements/BookIII/Prop16.lean`, with facts
 of `Elements/BookIII/MixedAngles.lean` and `Elements/Figure/Regions.lean`), and proves none
@@ -864,7 +864,7 @@ proved from Circle 3) or Circle 3 if either is reached. It finds any of the five
 staged theorems, for III.8, III.20's special case, III.21, III.26 and III.27, whose type is
 not identical to that of the theorem in `Elements/`, binder names and binder kinds
 included, with the same universe parameters: a stricter test than the `rfl` that closes
-each file. And it walks every constant beneath the seven theorems of `AngleOfContact.lean`,
+each file. And it walks every constant beneath the seven theorems of AngleOfContact.lean,
 finding any of a proposition of Book III later than III.18 (in its module, or under its
 name) or staged in another file, and lists the modules of Book III reached. So, at
 e09f40f6 as at bd69bb9b (below), none of the 38 theorems uses `sorry`, none of the seven
@@ -875,7 +875,7 @@ III.18: the modules of Book III reached are those of III.1, III.2, III.16, III.1
 mixed angles.
 
 Cutoff.lean, the cutoff walk of the run at 9a0f8ba1 below, walks every constant beneath
-the seven theorems of `AngleOfContact.lean`, statements and proofs, and finds any in the
+the seven theorems of AngleOfContact.lean, statements and proofs, and finds any in the
 module of a proposition of Book III later than III.18, or in
 `Elements/BookIII/Circumferences.lean`, whose steps cite III.20 to III.22. It walks as
 RoutesCheck.lean does, but for the constructors of each inductive type it meets, which
@@ -1060,7 +1060,7 @@ with the same two warnings of `Elements/Figure/Circles.lean` and no other. Then,
 module, run on the same build after it and then deleted, showed what it finds. The first
 printed the names of the 38 theorems: one each in `Prop08.lean` and `Prop21.lean`, two each
 in `Prop26.lean` and `Prop27.lean`, eleven in `Prop20.lean`, four of them in the namespace
-of a changed main theorem, fourteen in `Touching.lean` and seven in `AngleOfContact.lean`.
+of a changed main theorem, fourteen in `Touching.lean` and seven in AngleOfContact.lean.
 The second added Circle 2 to the theorems walked and III.20 of `Elements/` to the roots of
 the angle of contact, Circle 2 and Circle 3 to the declarations put to collectAxioms, and
 paired the staged III.8 with III.8's general companion. It gave the seven findings those
@@ -1225,7 +1225,7 @@ with the five calls dropped.
   at 4cd7c77d.
 - **The port.** Three independent readers, who wrote none of it, read it against Heath's
   text where a file has his sentences and against train C6c's tree: one `Prop08.lean` and
-  `Prop27.lean`, and another `Touching.lean` and `AngleOfContact.lean`, at 4a6d9a49; the
+  `Prop27.lean`, and another `Touching.lean` and AngleOfContact.lean, at 4a6d9a49; the
   third `Prop20.lean`, `Prop21.lean` and `Prop26.lean`, at 9f8c8adb. Each passed it with
   minor findings. 86c5748d answers the first two (a remark wanted under III.26's step in
   III.27, the unused hypothesis that the circles are two in the step from the straight line
@@ -1419,7 +1419,7 @@ with this move. The section "For the owner: the drafts as they now stand", the w
 approved" in the section on #130, and the row for #130 in the opening's table, "new, a
 draft", are of this report's date.
 
-Under that approval, as part of #332, the seven theorems of `AngleOfContact.lean` moved
+Under that approval, as part of #332, the seven theorems of AngleOfContact.lean moved
 into [Elements/BookIII/Prop18.lean](../../Elements/BookIII/Prop18.lean), after III.18's
 proof, and from the namespace of the routes into III.18's own:
 
@@ -1476,7 +1476,7 @@ names the word.
 `Staging/Routes/AngleOfContact.lean` is deleted, and `Staging.lean` no longer imports it.
 Its module text now says that the angle of contact has moved home, and that `Routes/`
 holds the files of #126 and #129, approved with it, which wait for a move of their own.
-The opening's table links `AngleOfContact.lean` to commit
+The opening's table links AngleOfContact.lean to commit
 fc3dffa892a32be571c28b208dfb40189226db93, where it remains as it was staged, as its rows for
 #125 and #127 do. The commands of "Checks" above that name the staged file or its module
 reproduce at the revisions they give only.
