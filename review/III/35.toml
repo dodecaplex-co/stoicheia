@@ -66,11 +66,11 @@ note = "The theorem also covers the cases the figure does not draw: Robert Simso
 
 [review]
 stage = "full"
-commit = "c4bb94e9a"
+commit = "e4335b4cb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:98c7b45c9b798d58"
-run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; card #251's [figure] (some_cases), read in full, by Claude Opus 5.5, reader G2-iii35read, at c4bb94e9a"
-text = "sha256:c414d0cfe7d56f06"
+run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; card #251's [figure] (some_cases), read in full, by Claude Opus 5.5, reader G2-iii35read, at c4bb94e9a; card #251's [figure] (some_cases), read in full, by Claude Opus 5.5, reader G2-iii35read2, at e4335b4cb"
+text = "sha256:6f445318ce5768d5"
 
 [review.items]
 statement = "pass"
