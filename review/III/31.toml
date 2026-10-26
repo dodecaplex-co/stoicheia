@@ -71,10 +71,10 @@ note = "The figure at a glance finishes by adding the triangle's three angles. E
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:9a929ce14445d973"
-run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f"
+commit = "003a92058"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:9bc76ab4d216634c"
+run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058"
 text = "sha256:56ac99f58cf457f9"
 
 [review.items]
