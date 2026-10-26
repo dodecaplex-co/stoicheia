@@ -45,9 +45,11 @@ namespace Elements
 /-- **Point.** "A point is that which has no part." (Def. 1) -/
 opaque Point : Type
 
-/-- **Straight line.** (Defs. 2–4) A `Line` is a whole straight line, extending
+/-- **Straight line.** (Def. 4) A `Line` is a whole straight line, extending
 without end. Euclid's "finite straight line AB" is the pair of points `A`, `B`,
-lying on such a line. -/
+lying on such a line. Definitions 2 and 3, of a line in general and of its ends,
+have no Lean word: the curved lines of Books I to III are the circumferences of
+circles, given by `Circle` and `OnCircle`. -/
 opaque Line : Type
 
 /-- **Circle.** (Def. 15) -/
