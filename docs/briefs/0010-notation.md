@@ -264,6 +264,15 @@ leave `standing` in III.27 alone. Book IV will write arcs too: its regular figur
 inscribed by the equal circumferences their sides cut off (brief 0012, Book IV's draft
 brief for [#97], not yet on main).
 
+*25 October 2026: stage 3 has since moved into `Elements/`, with train C6a ([#240], 21
+October). The III.24 called staged above is now `Prop24` in
+[`Elements/BookIII/Prop24.lean`](../../Elements/BookIII/Prop24.lean), which writes the
+segments as above; `circumference AEB A E B` is written by its companion
+`Prop24.equalCircles`, in the same file. `Staging/` holds no part of stage 3. [#67] gave
+III.30 a companion in arcs, `Prop30.halves`, and III.30's statement keeps `standing`. The
+move landed before the arc's field order was decided, so question 3's later limit, the
+consolidation release, is the one that stands. The paragraph above is left as drafted.*
+
 **Options.**
 
 - *Keep both words, and explain* the middle letter, in their docstrings, the vocabulary and
@@ -649,3 +658,4 @@ correction. Each finding, and what was done:
 [#76]: https://github.com/jackChallis/stoicheia/issues/76
 [#89]: https://github.com/jackChallis/stoicheia/pull/89
 [#97]: https://github.com/jackChallis/stoicheia/issues/97
+[#240]: https://github.com/jackChallis/stoicheia/pull/240

@@ -256,12 +256,13 @@ since moved into `Elements`. `foot_nearest` takes the foot of the perpendicular 
 gives it, which for A off BC is `Foot A B C N`, the approved definition in
 `Elements/Foundations/DefinitionsIII.lean`; its existence and uniqueness, `Foot.exists` and
 `Foot.unique`, are proved in `Elements/BookIII/Squares.lean`. `foot_nearest` was written
-while `Foot` was staged, and is not stated through it: it keeps its current interface, and
-adapting it to take `Foot` as its hypothesis is future work. `len_lt_of_add_lt` is I.20 with
-its degenerate case, which `Prop20.collinear_iff` states as an equality, now proved in
-`Elements/BookI/HelpersTriangles.lean`; `len_lt_of_add_lt` keeps its own proof from
-`between_cases`, and deriving it from that fact is future work too. Condition 3 gives their
-homes.
+while `Foot` was staged, and is not stated through it: it keeps its current interface.
+`len_lt_of_add_lt` is I.20 with its degenerate case, which `Prop20.collinear_iff` states as
+an equality, now proved in `Elements/BookI/HelpersTriangles.lean`; `len_lt_of_add_lt` keeps
+its own proof from `between_cases`. Both stay in `Elements/BookIII/MixedAngles.lean`, as
+brief 0011 allows, by the
+[decision of 25 October 2026](../decisions/2026-10-25-mixed-angles-homes.md); condition 3
+gives the homes first planned.
 
 ### The routes
 
@@ -393,15 +394,16 @@ What is not proved is named in section 3, and neither proposition needs it. The 
    the placement theorems are companions.
 3. **The shared steps.** Each goes after the propositions it rests on, so nothing that
    cites Book I goes into the foundations.
-   - `len_lt_of_add_lt` (I.20) goes beside `Prop20.collinear_iff` in
+   - The plan put `len_lt_of_add_lt` (I.20) beside `Prop20.collinear_iff` in
      `Elements/BookI/HelpersTriangles.lean`, where brief 0006's stage 3 put it.
+     `len_lt_of_add_lt` stays in `Elements/BookIII/MixedAngles.lean`, with its own proof,
+     by the [decision of 25 October 2026](../decisions/2026-10-25-mixed-angles-homes.md).
    - The original plan put what rests on I.12, I.17, I.19 or I.20 in
      `Elements/BookIII/Squares.lean`, with Book III's other steps that cite Book I. It put
      `foot_nearest` beside `Foot.exists` and `Foot.unique`, adapted to take `Foot` as its
-     hypothesis. The landed theorem remains in `Elements/BookIII/MixedAngles.lean` with
-     its point-and-right-angle interface; moving it beside `Foot` and adapting it are
-     still pending. The plan put `near_inside_of_angle`, `near_across`, the `surrounds_`
-     facts, `WithinAngle.surrounds`
+     hypothesis. The landed theorem stays in `Elements/BookIII/MixedAngles.lean` with its
+     point-and-right-angle interface, by the same decision. The plan put
+     `near_inside_of_angle`, `near_across`, the `surrounds_` facts, `WithinAngle.surrounds`
      and `WithinAngle.nearVertexOpen`, `NearVertexOpen.mono_near`, and the checks and order
      laws that use them: `WithinAngle.locallyLess_of_lt`, `.locallyLess_iff`,
      `.locallyEqual_iff`, `LocallyLess.trans`, `.congr_left` and `.congr_right`.
