@@ -1,11 +1,13 @@
 - **The side laid down: its cost made a theorem, and named beside System E (foundations,
-  [#150](https://github.com/jackChallis/stoicheia/issues/150), question 5).** The
-  coordinator's orders of 25 October 2026 finish two of the optional items of question 5
-  of #150, "Pin the side's cost" and "The side in the System E comparison". The kept side
-  itself, the side AC laid down as a straight line through D and C′, was approved as
-  prototyped under question 5 on 20 October 2026, as
-  [brief 0009](../briefs/0009-superposition.md) records; this entry adds no decision on
-  it, only a theorem that states its cost and a sentence that names it. No axiom, no
+  [#150](https://github.com/jackChallis/stoicheia/issues/150), question 5).** Under the
+  coordinator's orders of 25 October 2026, this change takes up two of the optional items
+  of question 5 of #150, "Pin the side's cost" and "The side in the System E comparison",
+  and does the part of each that touches neither the audit nor the brief; neither item is
+  finished here, and the last paragraph names what is left of each. The kept side itself,
+  the side AC laid down as a straight line through D and C′, was approved as prototyped
+  under question 5 on 20 October 2026, as [brief 0009](../briefs/0009-superposition.md)
+  records; this entry records no decision on it, and the change adds only a theorem that
+  states its cost and two sentences that name the side and that cost. No axiom, no
   statement, no definition and no `--` line changes, and no entry of
   `Certificate/axioms.lock`.
 
@@ -35,5 +37,9 @@
   placement also keeps the side AC, which neither set lists, and what that side costs, by
   the new theorem; no declaration there changes, and no other sentence's claim.
 
-  No protected path changes. A pin of the new theorem in the audit, and brief 0009's
-  passages on the side's cost and on System E, are left to trains of their own.
+  No protected path changes. What is left of the two items goes to trains of their own:
+  the pin of `Rule.of_placement_of_join` in `Audit/Superposition.lean`, a protected path,
+  at `[propext, Quot.sound]`; and, in brief 0009, a citation of the theorem where the brief
+  still says that the side's cost is checked by reading the model's proof (its round-4
+  correction, its account of what the placement keeps, and its answer to question 5), and
+  the kept side, with its cost and a p. 725 citation, in its comparison "Against System E".

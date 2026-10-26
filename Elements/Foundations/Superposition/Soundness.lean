@@ -157,10 +157,10 @@ theorem Rule.of_placement
 /-- **What the side laid down costs.** If every triangle can be laid down on every ray, on
 either side, with its sides and angles kept but no side drawn, then `Rule` holds once a point
 on one side of a straight line is off it and a straight line passes through any two distinct
-points. C′ is on H's side of L, so it is off L, while D is on L: so D is not C′, and the
+points. C′ is on H's side of L, so it is off L, while D is on L: so D is not C′, and a
 straight line through them is the side AC laid down. `Rule.of_placement` does the rest. This
-is the kept side's cost made a theorem: the side AC laid down costs exactly a strict
-same-side fact and a straight line through two distinct points, Postulate 1's shape. -/
+is the kept side's cost made a theorem: beyond the placement, the side AC laid down costs no
+more than Same side 3's form and Postulate 1's. -/
 theorem Rule.of_placement_of_join
     (hplace : ∀ {A B C D G H : I.Point} {L : I.Line}, Triangle I A B C → I.OnLine D L → I.OnLine G L →
       D ≠ G → ¬ I.OnLine H L → ∃ B' C' : I.Point, Placed I A B C D G H L B' C')
