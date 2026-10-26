@@ -31,7 +31,7 @@ note = "The triangles ABD and FBC, which I.4 takes below, are named by their cor
 at = "let the angle ABC be added to each"
 kind = "helper"
 helper = "Prop47.within"
-note = "Euclid reads off his figure that C lies within the angle DBA and A within FBC; the Lean finds the reason in I.17 and I.13, with the squares standing outward."
+note = "Euclid reads off his figure that C lies within the angle DBA and A within FBC; the Lean finds the reason in I.17 and I.13, with the squares standing outward. One case also rests on Metric 5 (`Tacit.angle_le_two_right`), that no angle exceeds two right angles: it rules out AD crossing BC beyond B, which would make the angle ABD greater than two right angles. The rule is a consequence of I.13, which Euclid could have used for the step, and the overlap catalogue lists it as supplying this step of I.47's proof."
 
 [[passage]]
 at = "therefore the base AD is equal to the base FC"
@@ -53,18 +53,18 @@ note = "Euclid reads from the figure that BL and CL make up the square BDEC. The
 [[passage]]
 at = "And the square BDEC is described on BC"
 kind = "given"
-note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II states I.47 again for the square on a straight line, as `BookI.Prop47.sq`, the form later proofs cite (II.9 among them)."
+note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II separately restates I.47 using its areas of squares on straight lines for later citations."
 
 [figure]
 case = "the three squares standing outward from the right-angled triangle, as in the main theorem; its companion also covers squares on either side of each base"
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
-reviewer = "Claude Opus 5.5, independent reader"
-run = "card 220, cross-family sign-off: original Prop47 by OpenAI Codex at 0c244bc0, begun from the voyage 4 challenger's X47 (54a08e61; family unrecorded) and keeping many lines; Prop47.within by the Claude first mate from X47.within; Prop47.general added at 16875e3b, its proof author's family unrecorded; current file read by GPT-6 Astra (Codex) at adbf6993 and Claude Opus 5.5; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
+commit = "7103f442a"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "card 220, cross-family sign-off: original Prop47 by OpenAI Codex at 0c244bc0, begun from the voyage 4 challenger's X47 (54a08e61; family unrecorded) and keeping many lines; Prop47.within by the Claude first mate from X47.within; Prop47.general added at 16875e3b, its proof author's family unrecorded; current file read by GPT-6 Astra (Codex) at adbf6993 and Claude Opus 5.5; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a"
 lean = "sha256:0120b11abdd14b1b"
-text = "sha256:0553d5109198a629"
+text = "sha256:7a4496abf287e92f"
 
 [review.items]
 statement = "pass"

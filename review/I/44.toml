@@ -11,7 +11,7 @@ kind = "euclid"
 at = "let it be placed so that BE is in a straight line with AB"
 kind = "helper"
 helper = "Prop44.place"
-note = "Euclid places I.42's parallelogram at B without a construction. `Prop44.place` builds an equal one there, with I.2, I.23, I.31, I.4 and I.34; its construction finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, for which Heath gives no reference here."
+note = "A construction stands here in place of Euclid's motion, the placing of a figure. Euclid moves I.42's parallelogram to B as if picking it up; our superposition rule lays a triangle down only in thought and hands back no point, so `Prop44.place` builds an equal parallelogram there, with I.2, I.23, I.31, I.4 and I.34. Its construction finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, for which Heath gives no reference here."
 
 [[passage]]
 at = "let FG be drawn through to H"
@@ -54,11 +54,11 @@ note = "Euclid concludes that LB, equal to C, has been applied to AB in the angl
 
 [review]
 stage = "full"
-commit = "b7b41f51"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "7103f442a"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:85b0745263c930f7"
-run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, begun from the Claude first mate's scratch proof T44 (54a08e61) and keeping many of its lines, and incorporating the Claude Lean bosun's two Prop31.line substitutions at ab0c30c5; GPT-6 Astra (Codex) read the retained T44 lines, the two substitutions and the Claude first mate's Prop44.place at bd86a7b6, and Claude Opus 5.5 read the final proof; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4)"
-text = "sha256:1fafa4e9e37ab2fc"
+run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, begun from the Claude first mate's scratch proof T44 (54a08e61) and keeping many of its lines, and incorporating the Claude Lean bosun's two Prop31.line substitutions at ab0c30c5; GPT-6 Astra (Codex) read the retained T44 lines, the two substitutions and the Claude first mate's Prop44.place at bd86a7b6, and Claude Opus 5.5 read the final proof; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a"
+text = "sha256:2c4b01c897fa1ba0"
 
 [review.items]
 statement = "pass"
