@@ -73,7 +73,7 @@ depend on the corresponding declarations remaining in the axiom registry.
   `derived.`: one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
   proved after III.2 since 24 October 2026, among them; and Circle 1's
   (`between_of_inside_chord`), still an axiom, prepared for its retirement after III.2,
-  which the owner approved on 25 October 2026 (#477).
+  as preparation P1 tracked in #477.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
   predicates in all: 35 axiom laws and the 41 retained derived properties, with degenerate
   configurations included.
