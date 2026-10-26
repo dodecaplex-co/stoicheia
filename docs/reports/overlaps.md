@@ -37,8 +37,9 @@ current table for the former overlaps.
 | [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`), former assumptions now proved (below) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | I.1, through proved rules including `centre_inside` | `Audit.III_6` |
 
 "First enters" here includes the axioms of proved rules. I.1 reaches `circle_eq`
-through `centre_inside` and `len_ne_zero`; III.10 is the first proposition whose own
-Lean names the axiom. III.5 and III.6 reach it, and Postulate 3, through Book Zero's
+through `centre_inside` and `len_ne_zero`; since 26 October 2026 no proposition's own
+Lean names the axiom: III.10 reaches it through `CirclesCut.of_meet`, and the first entry
+whose own Lean names it is III.25's companion `BookIII.Prop25.complete`. III.5 and III.6 reach it, and Postulate 3, through Book Zero's
 `ne_of_centre_of_on` and `len_lt_of_between`, and III.6 through `centre_inside` as well,
 though neither names it. Generalities 3 and 4 are proved rules, so they enter no
 certificate as assumptions.
@@ -76,9 +77,11 @@ other short proofs were rows of their own until the second axiom retirement prov
 rules (below, among the former overlaps): one compares the distance to a point within with
 the radius, which Definition I.15 makes equal to it; the other uses Definition I.15 to make
 EF equal to EC, then Diagram-segment 3's second half to put F on CDG, though F is within it.
-Each audit lemma has the restated III.5's type. III.10 is the first proposition to call
-Diagram-segment 2 itself, to identify circles with a common centre and point; III.23
-reaches it through III.10. The first propositions to call Generalities 4 and
+Each audit lemma has the restated III.5's type. III.10 called Diagram-segment 2 itself
+until 26 October 2026, to identify circles with a common centre and point; it now ends by
+III.5 and reaches the rule through `CirclesCut.of_meet`, which tells the two centres apart
+by it, and III.23 reaches it through III.10. The first entry whose own Lean calls it is
+III.25's companion `BookIII.Prop25.complete`. The first propositions to call Generalities 4 and
 Diagram-segment 4 themselves are III.7 and III.17, and Diagram-segment 3's second half is
 first called by II.14; all three are theorems now, and enter no certificate as
 assumptions. The magnitude law `lt_irrefl` first enters at I.1 through
@@ -92,11 +95,12 @@ and points. Every other axiom still holds, but the two copies meet and share the
 centre. This is a model argument checked by hand, not by Lean. It does not apply to the
 restated III.5, since neither copy has a point within the other.
 
-The bridge `Audit.CirclesCut.of_meet` shows that two different circles meeting at
-two points do cross. It takes their centres from `exists_centre` and uses III.7 and
-III.8, with `circle_eq`. Consequently the earlier statement of III.5 follows from the
-restated one with no centre given. This comparison of readings is separate
-from III.5's proof and cites later propositions. Heath's combined enunciation for III.5
+The bridge `CirclesCut.of_meet`, proved in `Elements/BookIII/Cutting.lean` after III.8
+since 26 October 2026, shows that two different circles meeting at two points do cross.
+It takes their centres from `exists_centre` and uses III.7 and III.8, with `circle_eq`.
+Consequently the earlier statement of III.5 follows from the restated one with no centre
+given (`Audit.III_5_today`). The bridge is separate from III.5's proof and cites later
+propositions; III.10's last step cites it with III.5. Heath's combined enunciation for III.5
 and III.6 concerns two different circles merely meeting (vol. 2, p. 12); Diagram-segment 2
 gives that assertion at once. It is not a proposition of ours, so it has no separate row.
 
@@ -591,8 +595,8 @@ and no run of the screen yet includes it.
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
 gave Generalities 2 as the corollary Heath would add to III.1. III.2's commentary explains
 how Circle 2 and Circle 3 give III.2; III.5's and III.6's explain how the point within
-supplies the straight line and the order of its points; and III.10's names `circle_eq` as
-its changed final step. The axiom docstrings name one
+supplies the straight line and the order of its points; and III.10's tells how its last step
+reaches III.5 through `CirclesCut.of_meet`, which tells the two centres apart by `circle_eq`. The axiom docstrings name one
 more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
 is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
 belongs to the [gap catalogue for Book I](gaps-book-I.md).
