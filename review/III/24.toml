@@ -5,8 +5,8 @@ companions = ["III.24 equalCircles", "III.24 equalMeasure"]
 fingerprint = "sha256:f026c2536b478ed3"
 
 [route]
-kind = "modified"
-note = "Euclid's application of one segment to the other is kept (`placement`: A on C, AB on CD, B on D); the coincidence of the circumferences is argued directly, point by point, by the angles (I.8 at each point and its image, then III.23's companion `Prop23.point`), in place of his reductio, and III.10 is not needed. The companion `Prop24.equalCircles` keeps the proof by the radii (III.20, III.22, `Prop24.isosceles`), shown on the page as the alternative."
+kind = "euclid"
+note = "Euclid's application of one segment to the other is kept (`placement`: A on C, AB on CD, B on D), and so is his reductio. The applied segment is a segment of a circle through C and D, the moved circle (`Prop24.moved`); supposing it is not CFD, the image of E is neither within CFD nor outside it, by III.23's companion `Prop23.point`, so it is a third point common to the two circles, and III.10 makes them one. Euclid divides the cases by how the whole segment falls; the Lean takes them at the image of E. The companion `Prop24.equalCircles` keeps the proof by the radii (III.20, III.22, `Prop24.isosceles`), shown on the page as the alternative."
 
 [representation]
 tags = ["segment-with-circle", "angle-measure", "redundant-hypothesis"]
@@ -22,34 +22,19 @@ note = "The application is `placement`: on the equal straight lines AB, CD, the 
 at = "the point B will also coincide with the point D"
 kind = "grouped"
 helper = "placement"
-note = "Carried by the placement under the sentence before, which puts B on D because AB is equal to CD; under the next sentence the points of AB go to points of CD, an end to an end and a point between to a point between."
+note = "Carried by the placement under the sentence before, which puts B on D because AB is equal to CD, and every point of AB on the point of CD as far from C and from D as it was from A and from B: AB coincides with CD."
 
 [[passage]]
 at = "the segment AEB will also coincide with CFD"
 kind = "helper"
-helper = "BookI.Prop8"
-note = "The sentences after it show the coincidence; the Lean begins that argument here with a step Euclid takes for granted, that the application keeps angles: a point on E's side of AB goes to a point on F's side of CD, and the angle AB subtends there is the angle CD subtends at its image, by I.8 (`BookI.Prop8`), for which Heath prints no reference here."
-
-[[passage]]
-at = "For, if the straight line AB coincide with CD but the segment AEB do not coincide"
-kind = "different"
-note = "Euclid supposes that AB coincides with CD and the segment AEB does not coincide with CFD, so as to refute each way it could fall. The Lean makes no such supposition, and argues directly beneath the next sentence."
+helper = "Prop24.moved"
+note = "The sentences after it show the coincidence; the Lean begins with a step Euclid takes for granted in them, that the applied segment is a segment of a circle on CD. `Prop24.moved` draws that circle, the moved circle, about the place of the centre of AEB, which it takes from `Tacit.exists_centre`, through C [Post. 3], and shows that the application carries the circle AEB onto it: each point of E's side of AB, or of AB, is as far from the centre's place as it was from the centre, and so on the one circle or within it as it was on the other or within it (Definition I.15, with System E's Diagram-segments 3 and 4, proved in `Elements/Figure/RuleBase.lean` and `Elements/Figure/Incidence.lean`). A centre across AB from E is placed by applying its own side of AB to the other side of CD (`Prop24.across`), by I.8, I.13 and I.14; Heath prints no reference here for any of them."
 
 [[passage]]
 at = "it will either fall within it, or outside it"
-kind = "different"
-note = "Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54), to be refuted. The Lean settles every point directly by III.23's companion `Prop23.point`, which uses I.21, III.2 and III.21, with no reference from Heath here to any of these: on F's side of CD a point is on the circle CFD exactly when CD subtends at it the angle at F, and within it exactly when the angle is greater; so each point of the first circumference maps to the second circumference, and points within the first segment map to points within the second, in both directions."
-
-[[passage]]
-at = "or it will fall awry"
-kind = "different"
-note = "III.10 is not needed: the angles have settled every point of the circumference, so the segment cannot fall awry, and no third case is left to refute."
-
-[[passage]]
-at = "Therefore, if the straight line AB be applied to CD"
 kind = "helper"
-helper = "Prop24.chord_cases"
-note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends (`Prop24.chord_cases`), and the placement keeps both. A point between two points of the circle is within it by III.2, for which Heath prints no reference here, so no third point of AB is on the circle (`Prop2.triangle`); and a point of AB within the circle lies between the ends by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+helper = "Prop23.point"
+note = "Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54). The Lean takes them at one point of the applied circumference, the image of E: CD subtends there the angle that AB subtends at E, by I.8, for which Heath prints no reference here, and so the angle at F. By III.23's companion `Prop23.point`, which uses I.21, III.2 and III.21, a point on F's side of CD is within the circle CFD exactly when CD subtends a greater angle there than at F, and on it exactly when the angle is the same; so the image of E is neither within CFD nor outside it, and under the next sentence it is the third common point that III.10 forbids."
 
 [figure]
 case = "segments less than semicircles, as in Heath's figure"
@@ -62,11 +47,3 @@ reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:e3aeae8aa5850aae"
 run = "brief 0005 stage 5, ship R3 (#29); the companions and helpers half_lt, angle_type, isosceles, equalCircles, image and equalMeasure, written by Codex, read also by Claude Opus 5.5; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card 478, ship XS, from git and record evidence, added without a restamp: the main theorem's restated proof is Claude's (3c414208f calls Claude the family that wrote it); half_lt, angle_type, isosceles and equalCircles are Codex's (8c47d9d0c), and image and equalMeasure (cbf2dd775, which names no writer) are among the companions and helpers that 3c414208f and the clause above give as Codex's; so GPT-6 Astra (Codex), reader C7-bind423-read, who read it in full at 95b0f2c5c (66e7fb506, 24 October 2026), with the Lean and record as they now stand, is the other family's reader of the main theorem; card #129, ship ER: read again after its call of III.20 became Prop20.special, by GPT-6 Astra (Codex)"
 text = "sha256:079e00fa3a158af9"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "pass"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"

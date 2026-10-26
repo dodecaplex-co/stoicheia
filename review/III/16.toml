@@ -6,8 +6,8 @@ companions = ["III.16 semicircle", "III.16 remaining", "III.16 acute"]
 fingerprint = "sha256:bbe980064221ec4c"
 
 [route]
-kind = "modified"
-note = "Euclid proves the angle clauses by reductio from the second part, since a straight line would be interposed; the companions argue directly from it. The straight line of an acute angle falls within the circle, so near A the acute angle lies within the angle of the semicircle, and the remaining angle within the acute angle, each with whole small circles to spare (`Prop16.semicircle_gt`, `Prop16.horn_lt`). How near A is said by the perpendicular from A, by I.12, I.17 and I.19, which Euclid leaves unsaid."
+kind = "euclid"
+note = "The angle clauses follow Euclid's reductio from the second part, in the companions' steps `Prop16.semicircle_gt` and `Prop16.horn_lt`: an acute angle BAF that the angle of the semicircle did not exceed, or an acute angle EAF that the remaining angle did not fall short of, would leave the straight line AF with no point within the circle, interposed between AE and the circumference; and the second part, used there once, says that it cannot be. How near A the comparisons hold is said by the perpendicular from A, by I.12, I.17 and I.19, which Euclid leaves unsaid."
 
 [representation]
 tags = ["mixed-angles-local"]
@@ -68,24 +68,25 @@ note = "Proved as its own companion, III.16 semicircle."
 at = "and the remaining angle contained by the circumference CHA"
 kind = "carried"
 helper = "Prop16.remaining"
-note = "For the remaining angle, `Prop16.horn_within` excludes points on AF and on its far side, which would be within the circle near A. It uses `Tacit.same_side_or` (System E, Same side 5), proved in `Elements/Figure/Incidence.lean`, to put every point of the horn on E's side of AF."
+note = "For the remaining angle, `Prop16.horn_within_of` excludes points on AF and on its far side, which would be within the circle near A. It uses `Tacit.same_side_or` (System E, Same side 5), proved in `Elements/Figure/Incidence.lean`, to put every point of the horn on E's side of AF."
 
 [[passage]]
 at = "For, if there is any rectilineal angle greater than the angle contained"
-kind = "different"
-helper = "Prop16.near_inside"
-note = "Euclid infers an interposed straight line from the supposed angle comparisons; the Lean instead uses `Prop16.near_inside` for containment and `near_across` for whole small circles of excess, through I.12, I.17, I.19, I.20 and III.2, for which Heath prints no references here. To put the interior point on the required ray, `Prop16.sameSideOf_of_inside` uses III.2 with `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`; `near_across` takes a crossing of the circumference by `Tacit.line_circle_between` (System E, Intersections 4), the two intersection rules being assumed."
+kind = "helper"
+helper = "Prop16.semicircle_gt_of_inside"
+note = "Euclid asserts without argument that such angles would put a straight line between AE and the circumference. The companions' steps prove it turned about: a point G of AF within the circle puts the acute angle BAF within the angle of the semicircle near A, and the remaining angle within the acute angle EAF, each with whole small circles to spare (`Prop16.semicircle_gt_of_inside`, `Prop16.horn_lt_of_inside`). Euclid takes the two angles in one reductio, and the Lean in two, one in each companion; each supposes the comparison false, where Euclid supposes the rectilineal angle the greater, since two angles compared near A need not compare either way. Containment comes by `Prop16.near_inside_of`, and the whole small circles by `near_across`, through I.12, I.17, I.19, I.20 and III.2, for which Heath prints no references here. To put G on the ray AF, `Prop16.sameSideOf_of_inside` uses III.2 with `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`; `near_across` takes a crossing of the circumference by `Tacit.line_circle_between` (System E, Intersections 4), the two intersection rules being assumed."
 
 [[passage]]
 at = "But such a straight line cannot be interposed"
-kind = "different"
-note = "Euclid invokes the second part to rule out the supposed interposition. The companions use it directly through `Prop16.near_inside` to find a point of the acute angle's straight line within the circle, as the route note explains."
+kind = "carried"
+helper = "Prop16.semicircle"
+note = "In each companion's reductio (`Prop16.semicircle_gt`, `Prop16.horn_lt`), the second part of III.16, which the companion takes from the theorem, is used here and only here: it gives the supposed AF a point within the circle."
 
 [[passage]]
 at = "therefore there will not be any acute angle contained by straight lines"
 kind = "carried"
 helper = "Prop16.acute"
-note = "Euclid concludes for any acute rectilineal angle. `Prop16.acute` places it at A along AB and along AE by I.23, for which Heath prints no reference here, and applies the two comparisons."
+note = "The conclusion of the reductio, in each companion. Euclid concludes for any acute rectilineal angle; `Prop16.acute` places it at A along AB and along AE by I.23, for which Heath prints no reference here, and applies the two comparisons."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
@@ -104,11 +105,3 @@ reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dd281e3d8032ec91"
 run = "brief 0005 stage 5, ship R3 (#29); the mixed-angle companions and their steps, written by Claude, read also by GPT-6 Astra (Codex); lines 105, 119 and 241 of Prop16.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 23ac78ba; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x)"
 text = "sha256:159f05efa6522fdc"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "pass"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
