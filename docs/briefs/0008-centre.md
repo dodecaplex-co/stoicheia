@@ -84,6 +84,35 @@ proof takes a centre from the rule wherever a call of III.1 would do no work, an
 their centres from `exists_centre`, and III.14, whose statement names E, takes none and no
 longer rests on the rule. No statement changes. The frozen text below is kept as history.
 
+*Status, 25 October 2026, at main bedbba23e, for #252:* the notes above and the frozen
+text below are kept as written, and this note corrects two of their claims. No statement,
+declaration, record or lock changes.
+
+- **Heath's statement under III.5.** Section 7's paragraph on III.10 calls the sentence it
+  quotes from Heath (vol. 2, p. 12) "the converse Heath gives under III.5". It is not
+  III.5's converse. III.5 reads "If two circles cut one another, they will not have the
+  same centre" ([heath/III/05.md](../../heath/III/05.md)), and its converse, that circles
+  with different centres cut one another, is false. Heath gives the statement under III.5,
+  beside the enunciation that joins III.5 and III.6: two circles with the same centre and
+  one point of their circumferences in common coincide altogether. It is what `circle_eq`
+  gives in III.10's last step, from the common centre P and the common point B, as
+  [III.10's record](../../review/III/10.toml) and the
+  [gap catalogue](../reports/gaps-book-III.md#iii10) say.
+- **III.1 and `adjacent_eq_of_right`.** The status of 21 October after trains C6a and C6b
+  says that III.1 reaches `adjacent_eq_of_right`. Train C6c changed that the same day
+  (#168, commit b796d53a): `Prop1.perpendicular` takes Euclid's step by I.13 in place, the
+  two angles at A with AD making two right angles, so that taking the given right angle
+  away leaves the other right (C.N. 3). A walk of the proof terms of `Prop1`,
+  `Prop1.porism`, `Prop1.construction` and `Prop1.perpendicular` on 25 October, at main
+  bedbba23e, reaches I.13 and not `adjacent_eq_of_right`, and in facts.json III.1 and its
+  porism both cite I.13. The counts of 21 October no longer hold, since more rules have
+  become theorems. The status gives 56 tacit rules for III.1 and 51 for its porism, and the
+  correction 64 names for `Prop1.construction`, 56 of them tacit rules; at main bedbba23e
+  [CERTIFICATE.md](../../CERTIFICATE.md)'s Book III rows give 39 tacit rules for III.1 and
+  38 for its porism, and [`Audit/Centre.lean`](../../Audit/Centre.lean) pins 47 names for
+  the construction, 39 of them tacit rules. The certificate is where the current counts are
+  read.
+
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
 while the frozen text is retained as history.*
