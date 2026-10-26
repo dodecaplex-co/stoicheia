@@ -355,13 +355,15 @@ class LeanParts:
         self.before, self.main, self.after = before, main, after
         self.before_names = DECLARATION.findall(before_code)
         self.after_names = DECLARATION.findall(after_code)
-        self.kinds = {name: kind for code in (before_code, after_code)
-                      for kind, name in DECLARATION_KIND.findall(code)}
+        # Each part apart, so that a name declared on both sides keeps each its kind.
+        self.before_kinds = {name: kind for kind, name in DECLARATION_KIND.findall(before_code)}
+        self.after_kinds = {name: kind for kind, name in DECLARATION_KIND.findall(after_code)}
 
-    def counted(self, names, proved="lemma", more=""):
-        """The declarations `names` counted by kind, definitions apart from what is
-        proved: "two definitions and one lemma", "two more theorems"."""
-        defs = sum(self.kinds.get(x) not in ("theorem", "lemma") for x in names)
+    def counted(self, names, kinds, proved="lemma", more=""):
+        """The declarations `names` of one part, whose keywords are `kinds`, counted by
+        kind, definitions apart from what is proved: "two definitions and one lemma",
+        "two more theorems"."""
+        defs = sum(kinds.get(x) not in ("theorem", "lemma") for x in names)
         parts = [(defs, "definition"), (len(names) - defs, proved)]
         return and_list([f"{number_word(k)} {more}{word}{'' if k == 1 else 's'}"
                          for k, word in parts if k])
@@ -1010,6 +1012,17 @@ BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
                                  "Elements.Arc.measure"}}
 
 
+def whole_gloss(books):
+    """The keys' gloss of *whole*: "as Euclid states it", and for a proposition of
+    `books` that Heath prints in brackets (I.40, III.12), as the text states it."""
+    refs = [f"{b}.{n}" for b in books for n in range(1, BOOKS[b][0] + 1)
+            if heath.bracketed(b, n)]
+    if not refs:
+        return "as Euclid states it"
+    return (f"as Euclid states it, or for {and_list(refs)}, which Heath prints in brackets, "
+            f"as the text states {'it' if len(refs) == 1 else 'them'}")
+
+
 def representation_badge(record, entry=None):
     """A few words beside the badge for a representation that changes how the whole
     statement is read (review/terms.toml `badge`): "in our measure of circumferences".
@@ -1018,7 +1031,10 @@ def representation_badge(record, entry=None):
     given."""
     terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
-    used = set(re.findall(r"[\w.']+", (entry or {}).get("statement", "")))
+    # Whole names only, string literals blanked: `circumference!` or a quoted
+    # "Elements.circumference" does not use the measure.
+    used = set(re.findall(r"[\w.'!?]+",
+                          check_fidelity.without_comments((entry or {}).get("statement", ""))))
     badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})
               and (t not in BADGE_WORDS or BADGE_WORDS[t] & used)]
     return and_list(badges) if badges else ""
@@ -1647,7 +1663,7 @@ def lean_listing(book, n, facts):
 
     out = []
     if parts.before:
-        what = parts.counted(parts.before_names)
+        what = parts.counted(parts.before_names, parts.before_kinds)
         out += fold(f"Before the theorem, {what}: {names(parts.before_names)} "
                     f"({lines(parts.before)})", parts.before)
     out += ["```lean", parts.main, "```", ""]
@@ -1670,13 +1686,13 @@ def lean_listing(book, n, facts):
         if later:
             k = len(later)
             more = "more " if porism or comp else ""
-            what.append((f"{parts.counted(later, 'theorem', more)} later propositions use, "
+            what.append((f"{parts.counted(later, parts.after_kinds, 'theorem', more)} later propositions use, "
                          f"{names(later)}", k))
         if local:
-            what.append((f"{parts.counted(local)} for its own proofs, {names(local)}",
+            what.append((f"{parts.counted(local, parts.after_kinds)} for its own proofs, {names(local)}",
                          len(local)))
         if beside:
-            what.append((f"{parts.counted(beside)} beside the proposition, {names(beside)}",
+            what.append((f"{parts.counted(beside, parts.after_kinds)} beside the proposition, {names(beside)}",
                          len(beside)))
         anchors = "".join(f'<a name="{x.split(".", 1)[1]}"></a>' for x in comp)
         if anchors:
@@ -2099,7 +2115,7 @@ def index(book, count, titles, facts, records):
     summary = book_summary(book, facts, records, lambda r: f"{int(r.split('.')[1]):02d}.md",
                            up="../../")
     out = [GENERATED, f"# Book {book}", "", summary, "",
-           f"Key to the table: {legend}. The Lean statement is *whole*, as Euclid states it; "
+           f"Key to the table: {legend}. The Lean statement is *whole*, {whole_gloss([book])}; "
            "*restricted*, with hypotheses that leave out cases his words admit; or *in "
            "part*, leaving a clause to his words. Each page says how.", ""]
     intro = book_intro(book)
@@ -2341,7 +2357,7 @@ def certificate_intro(facts, records):
         "",
         "**How to read the table.** ✅: proved in Lean, and nothing it rests on contains "
         "`sorryAx`, Lean's mark of a step left unproved. In \"Statement\", *whole* is the "
-        "whole enunciation, as Euclid states it; *restricted* adds hypotheses that exclude "
+        f"whole enunciation, {whole_gloss(BOOKS)}; *restricted* adds hypotheses that exclude "
         "cases Euclid's words admit; *in part* leaves some clause to Euclid's words." + dagger
         + " In \"Argument\", *Euclid's* is his argument, with the lemmas, groupings and "
         "further cases each page notes; *Euclid's, one step changed* is his argument with "
@@ -3247,8 +3263,8 @@ def names_page(facts, records):
            "its statements. "
            "The definitions, postulates and common notions, with their Lean, are on each "
            f"book's front page: {fronts}.", "",
-           f"Key to the tables: {legend}. The Lean statement is *whole*, as Euclid states "
-           "it; *restricted*, with hypotheses that leave out cases his words admit; or *in "
+           f"Key to the tables: {legend}. The Lean statement is *whole*, {whole_gloss(BOOKS)}; "
+           "*restricted*, with hypotheses that leave out cases his words admit; or *in "
            "part*, leaving a clause to his words. A porism or a companion stands under its "
            "proposition, in the same module.", ""]
     return "\n".join(out + sections)

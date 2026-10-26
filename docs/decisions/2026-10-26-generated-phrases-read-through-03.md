@@ -10,7 +10,8 @@
   a later addition; it now says "as the text states it", as the certificate's Argument
   column already says "the text's". Each book's summary, which heads its index, its
   section of `CERTIFICATE.md` and its row of `README.md`, names the bracketed proposition
-  in the same words, and counts its proof apart: Book III's said that 25 proofs follow
+  in the same words, as do the keys that gloss *whole* (each book's index,
+  `CERTIFICATE.md` and `book/names.md`), and the summary counts its proof apart: Book III's said that 25 proofs follow
   Euclid's argument, counting III.12's, which follows the argument Heath prints, and Book
   I's said that every proof does, I.40's among them.
 
@@ -42,12 +43,14 @@
   a step, have no audit lemma, and the row now says so, as the limitations review
   proposed.
 
-  The change is to what `render.py` writes and to one meaning's list, and to nothing they
-  accept or check: no check, test, expected value or lock changes, and no record, Lean
-  file, mishnah or figure.
+  The change is to what `render.py` writes and to one meaning's list: no check, test,
+  expected value or lock changes, and no record, Lean file, mishnah or figure. P4 of
+  `scripts/check_acceptance.py` still asks each page's line under the enunciation to be
+  the one `in_lean_line` gives, so the lines it expects of I.40, III.12, III.24 and III.25
+  change with the pages, and its requirement does not.
 
   This entry approves the change to `scripts/render.py`: `in_lean_line`, `book_summary`,
-  `representation_badge` with `BADGE_WORDS`, `certificate_row`, `LeanParts` with
+  `whole_gloss` and the three keys that use it, `representation_badge` with `BADGE_WORDS`, `certificate_row`, `LeanParts` with
   `DECLARATION_KIND`, `lean_listing`, `axiom_kind`, the list of kinds in the page's rules
   and `MISHNAH_LEAD`.
 
