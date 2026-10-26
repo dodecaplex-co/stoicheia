@@ -11,15 +11,16 @@
   second step. No proposition's or porism's statement, no definition, no `--` line and no
   proposition's Lean changes here, and no axiom comes or goes: the lock keeps its 49.
 
-  What changes in Book Zero. Every lemma keeps its name and exact type; only proofs change,
-  and two helpers with no caller left are removed. In `Elements/Figure/RuleBase.lean`,
+  What changes in Book Zero. Every lemma keeps its name and exact type; only proofs change.
+  In `Elements/Figure/RuleBase.lean`,
   `RuleProofs.Circle.radius_ne_zero` is now the rule itself, `Tacit.radius_ne_zero`, where
   it was proved by Circle 1 (`Tacit.between_of_inside_chord`) and, through
-  `RuleProofs.Circle.on_circle_of_len_eq_of_ne`, by Diagram-segment 2. That helper, whose
-  only callers were this proof and `Tacit.on_circle_of_len_eq`, and
-  `RuleProofs.Circle.right_eq_zero_of_add_eq_zero`, whose only caller was this proof, are
-  removed; no other Lean file names either. `RuleProofs.Circle.length_pos`
-  keeps its proof, over the lemma. Diagram-segment 3's half, `Tacit.on_circle_of_len_eq`,
+  `RuleProofs.Circle.on_circle_of_len_eq_of_ne`, by Diagram-segment 2.
+  `RuleProofs.Circle.right_eq_zero_of_add_eq_zero` is retained unchanged.
+  `RuleProofs.Circle.on_circle_of_len_eq_of_ne` retains its name and type below
+  `Tacit.on_circle_of_len_eq`, and its new proof delegates to that theorem; no other Lean
+  file names either helper. `RuleProofs.Circle.length_pos` keeps its proof, over the lemma.
+  Diagram-segment 3's half, `Tacit.on_circle_of_len_eq`,
   moves below Generalities 3 (`Tacit.centre_inside`), which its new proof uses: the centre
   is excluded by the rule; a point within would be nearer the centre than the place where
   the straight line from the centre through it, produced, meets the circle (Intersections
