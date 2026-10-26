@@ -3,11 +3,10 @@
   coordinator's orders of 25 October 2026, this change takes up two of the optional items
   of question 5 of #150, "Pin the side's cost" and "The side in the System E comparison",
   and does the part of each that touches neither the audit nor the brief; neither item is
-  finished here, and the last paragraph names what is left of each. The kept side itself,
-  the side AC laid down as a straight line through D and C′, was approved as prototyped
-  under question 5 on 20 October 2026, as [brief 0009](../briefs/0009-superposition.md)
-  records; this entry records no decision on it, and, on the side itself, the change adds only a theorem that
-  states its cost and two sentences that name the side and that cost. No axiom, no
+  finished here, and the last paragraph names what is left of each. The kept side is AC,
+  laid down as a straight line through D and C′. This entry records no decision on it,
+  and, on the side itself, the change adds only a theorem that states its cost and two
+  sentences that name the side and that cost. No axiom, no
   statement, no definition and no `--` line changes, and no entry of
   `Certificate/axioms.lock`.
 
