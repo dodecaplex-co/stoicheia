@@ -5,10 +5,8 @@
   theorems: `Tacit.adjacent_eq_of_right`, `Tacit.not_same_side_of_circles_meet`,
   `Tacit.centre_unique`, `Tacit.inside_of_between`, `Tacit.exists_point_outside_circle`,
   `Tacit.line_meets_circle_of_opposite_sides`, `Tacit.triple_incidence3` and
-  `Tacit.inside_of_angle_add`. By the coordinator's record on #168, the owner approved
-  the first pin change of that retirement on 19 October 2026 on the understanding that
-  stronger pins would follow, saying that no one of the eight lies beneath III.1, III.1
-  Por., III.2 or II.14.
+  `Tacit.inside_of_angle_add`. #168 calls for stronger pins excluding the eight retired
+  rules beneath III.1, III.1 Por., III.2 and II.14.
   Those pins were written as `excludes` lists on the four entries' `axioms`; a theorem's
   name never appears in an axiom list, so none of them can fail now. So the certificate
   gives every entry a list a pin can read instead, `proved_rules`: each theorem of
