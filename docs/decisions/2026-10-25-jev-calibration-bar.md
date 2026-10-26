@@ -44,7 +44,8 @@
     representations item is `pass`, so that no plant lands on a record marked `n/a`.
   - *Controls* are the first four eligible propositions of Book I, the first two of
     Book II and the first four of Book III. A control's row is the audit's own row,
-    unchanged; for P12 it is the main theorem's row.
+    unchanged. For P12, a control's row and a plant's row are each the main theorem's
+    row, never a companion's or a porism's.
   - *Planted faults* are on the next four of Book I, the next two of Book II and the next
     four of Book III: copies of their audit rows, with one fault planted in the generated
     row, never in a file of the edition, as the seeded rows of the audit of Books I and II
@@ -68,54 +69,70 @@
   **The kinds of fault.** The ten plants of a question take its kinds in turn: the plants
   in the order of the table above, Book I's four, then Book II's two, then Book III's
   four, and the k-th plant takes the k-th kind in the question's list below, counting round
-  from the first. A kind applies to a plant's row when the row holds what the kind
-  changes, as a porism to remove or a proposition call to bind; when the kind due does not
-  apply, the plant takes the next kind in the list that does, and the generator records
-  why. Within its kind, the change is the simplest one that makes the fault: it is written
+  from the first. A kind applies to a plant's row when the row passes the kind's test,
+  given with the kinds below; a kind with no test always applies. When the kind due does
+  not apply, the plant takes the next kind that does, counting round the list in the same
+  way, and the generator records why each kind passed over did not apply; if no kind
+  applies, nothing is sent and the work stops for a ruling. Within its kind, the change is the simplest one that makes the fault: it is written
   into the generator, and reviewed with it, before any request is sent. No change may be
   found by a surface sign, such as a hypothesis named for what it does or a word in the
   state that marks it as planted. The kinds:
 
   - P11: a hypothesis added that leaves out a configuration Euclid's words admit; a clause
-    of the conclusion removed; a porism or companion removed whose clause the main
-    statement does not carry; an object Euclid leaves general fixed or narrowed. Each
-    expects "restricted beyond what the note says".
+    of the conclusion removed (its test: the main statement's conclusion has two clauses
+    or more); a porism or companion removed whose clause the main statement does not
+    carry (its test: the row's `attached_statements` is not empty); an object Euclid
+    leaves general fixed or narrowed. Each expects "restricted beyond what the note
+    says".
   - P12: a call of an unrelated proposition whose result is not used (expects "a dummy
     citation"); a call whose result is bound while the step it is for is done another way
-    (expects "a dummy citation"); a hypothesis added and used only in a binding nothing
+    (expects "a dummy citation"; its test: the unit's body calls a proposition); a
+    hypothesis added and used only in a binding nothing
     uses (expects "an artificial hypothesis use"); an existing hypothesis mentioned in a
     step that does no work (expects "an artificial hypothesis use").
   - P13: every supplied bridge removed; an impossible premise added to each bridge; a
     bridge's conclusion changed so that it no longer connects the represented object with
     Euclid's; a premise added that the represented objects cannot meet; the one bridge
-    that a needed connection rests on removed, the others kept. Each expects "bridge
-    missing or inadequate".
+    that a needed connection rests on removed, the others kept. The first four kinds'
+    test: the row's `bridges` is not empty; the fifth's: it holds two bridges or more.
+    Each expects "bridge missing or inadequate".
   - P14: a comparison in the commentary reversed; the proposition that a step of the route
     cites changed to another; the scope misstated, as a case said to be covered that the
     statement leaves out; a named declaration's hypotheses or conclusion misstated; the
-    kind of route misstated, as direct for a reductio. Each expects "conflicts".
+    kind of route misstated, as direct for a reductio. Each test reads the commentary
+    outside quotation marks, since P14 leaves quotation out: the first kind needs a
+    comparison of magnitudes there; the second, a proposition named for a step; the
+    third, a claim about what the statement covers; the fourth, a declaration in the row's
+    `named_declarations`; the fifth, the form of the proof named. Each expects
+    "conflicts".
   - P15: another proposition's figure sent; two letters of the figure exchanged; a
-    caption's claim made false of the figure; a point moved so that an incidence or an
+    caption's claim made false of the figure (its test: the caption is not empty); a point
+    moved so that an incidence or an
     order the proof needs fails. Each expects "disagrees". A changed figure is a copy that
     the generator makes from the committed figure and writes beside the calibration set,
     recording both files' hashes; `figures/` is not touched.
 
-  A row's expected answer stays on this machine, as `jev.py` keeps it, and is never sent.
+  Before any request is sent, the generator's review confirms that each control's and each
+  plant's row supplies what its record's verdict rests on: for P13, the bridges the record
+  checked. A row that does not stops the work for a ruling. A row's expected answer stays
+  on this machine, as `jev.py` keeps it, and is never sent.
 
   **The run.** The calibration is run on the evidence of one commit of main, the commit
   the audit's own questions are then generated from, with `jev.py run` asking the pinned
   model `jev-1.13.0`, its order check on, so that each question is asked in both orders of
-  its options. What `jev.py preflight` prints is committed with the outputs. Each file is
-  run once: a run stopped by the service, or one with failed requests, may be continued
-  with `--resume` on the same input, model and order check, which sends only the rows not
-  yet answered, and the output as it stood before each continuation is committed too. No
+  its options. What `jev.py preflight` prints before each file's run, and before each
+  continuation, is committed with the outputs. Each file is run once: a run that ends with
+  rows unanswered, for whatever cause, may be continued with `--resume` on the same input,
+  model and order check, which sends only the rows not yet answered, and the output as it
+  stood before each continuation is kept under a name of its own and committed too. No
   answered row is sent again. Every raw output is committed under
   `docs/reports/acceptance/jev/`, with no key and no path to one, whatever it shows.
 
   **The bar.** A question clears its bar when all four of these hold on the final output
   of its file's run:
 
-  1. every row is answered, by `jev-1.13.0`, and no request failed;
+  1. every row is answered, by `jev-1.13.0`, and no line of the final output records a
+     failed request;
   2. at least 9 of the 10 planted faults are *found*: Jev chose a defect answer in both
      orders;
   3. at most 2 of the 10 controls are *false alarms*: a control on which Jev chose a
@@ -132,13 +149,14 @@
   **What clearing it means.** For a question that clears its bar, an audit answer given by
   `jev-1.13.0` that agrees with its record in both orders, with confidence 0.5 or more in
   both, counts as an independent confirmation of what that question asks of the item,
-  within the limits the generator's manifest lists: P13 asks what the bridges state, not
+  within the limits the generator's manifest lists, among them: P13 asks what the bridges state, not
   where they stand in the order of dependencies; P14 leaves out quotation, attribution and
   voice; P15 looks at Heath's figure only. Every other answer goes to a Claude adjudicator,
   as the brief says, whose own output is committed beside Jev's. Two kinds of answer are
   adjudicated whatever the calibration shows: every P11 answer, as in the audit of Books I
   and II, since scope answers changed with the order of the options there; and every P13
-  answer on a record marked `n/a`, which this calibration does not test.
+  answer on a record marked `n/a`, which this calibration does not test. Neither counts as
+  an independent confirmation on Jev's answer alone.
 
   **What missing it means.** A question under its bar is reported as under it, with its
   outputs committed; for that question Jev's answers are a secondary signal only. The work
