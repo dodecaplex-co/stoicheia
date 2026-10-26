@@ -5,8 +5,7 @@ note = "Stated positively: two circles with three points in common are one circl
 fingerprint = "sha256:83db90002176516a"
 
 [route]
-kind = "modified"
-note = "The construction and the argument locating both centres at P follow Euclid. The last step uses `circle_eq` directly: one centre and the common point B make the circles one, whereas the restated III.5 requires crossing and this statement covers circles that only meet."
+kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
@@ -55,8 +54,9 @@ note = "Euclid invokes the same argument for DEF without writing it out. The Lea
 
 [[passage]]
 at = "therefore the two circles ABC, DEF which cut one another"
-kind = "different"
-note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre P and the common point B, instead of III.5: `Prop5` asks that the circles cut one another, and this statement gives only common points. Heath states this under III.5, beside the enunciation that joins III.5 and III.6: two circles with the same centre and one point of their circumferences in common coincide altogether (vol. 2, p. 12). It applies also to circles that only meet."
+kind = "helper"
+helper = "CirclesCut.of_meet"
+note = "Euclid's circles cut one another by his supposition; ours, as Heath reads the proof (vol. 2, p. 23), are given only common points, and `Prop5` asks that circles cut, each passing within the other. `CirclesCut.of_meet`, proved after III.8 from III.7 and III.8, with `circle_eq` to tell the two centres apart, shows that two different circles meeting at two points, here B and G, cut one another, and III.5 then forbids their one centre P."
 
 [figure]
 note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no second circle can."
@@ -68,11 +68,3 @@ reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:2ef88dfd3914c849"
 run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card #423, ship C7: re-read in full after N was added to the note at 'and from K, L', by GPT-6 Astra (Codex), reader C7-bind423-read2, at a3fbf343e; card #476, ship PF: read in full after the perpendiculars were produced by Postulate 2 in place of III.2 and Intersections 5 (written by Claude), by GPT-6 Astra (Codex), reader PF-r2, at 0dddd7220; card 478, ship XS, from git and record evidence, added without a restamp: main Prop10 proof by OpenAI Codex (5f15f82d4); cross-family reading: XS-r478-III10, Claude Opus 5.5, independent reader, read the whole proposition in full at cf1591f14 (3c433c196, 26 October 2026), which does not contain the produce change of 0dddd7220 (written by Claude, as the clause above says); GPT-6 Astra (Codex), reader PF-r2, read the record in full with that change at 0dddd7220 (e88fa2be5, 25 October 2026)"
 text = "sha256:22400ffefc059302"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
