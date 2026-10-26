@@ -1,5 +1,11 @@
 # Brief 0010: the notation of the Lean statements
 
+*Status, 21 October 2026: approved, and from that day frozen. [The decisions entry of that
+day](../decisions/2026-10-21-briefs-0010-and-0012.md) records the owner's ruling and the
+coordinator's reading of it, by which each question of section 8 takes this brief's
+recommendation. Question 3, on which the brief makes no choice, stays open until it is
+settled, before the consolidation release.*
+
 *Drafted 18 October 2026 and brought up to main on 19 October. **A draft, for the owner's
 approval: nothing changes until it is approved.** The owner decided on 18 October
 ([issue #69]) that the notation of the Lean statements is settled once, in a short brief,
