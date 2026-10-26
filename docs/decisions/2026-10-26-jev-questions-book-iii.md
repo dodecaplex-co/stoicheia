@@ -29,7 +29,9 @@
   that tie each represented object to Euclid's: the segment given by its circle, base and a point on its side (III.21), the
   measure of a circumference by the angle standing on it and its congruence, the kind of a
   segment against two right angles, the angle with a circumference read as a region near its
-  vertex, the foot of a perpendicular, and Book II's `rect` and `sq` for III.35 to III.37.
+  vertex (for III.18 also that every straight line from the point of contact into the
+  circle names the same angle of contact near that point), the foot of a perpendicular, and
+  Book II's `rect` and `sq` for III.35 to III.37.
   I.4's and I.8's rows now supply what their records say they checked: the meanings of the
   rule of superposition's symbols and their bridges, the cited laws, their meanings, and the
   statements of the theorems that establish them, and for I.8 `SameSideOf.of_line`. I.45's and II.14's rows supply the outline of a
@@ -45,11 +47,14 @@
   many times the anchor occurs.
 
   **The calibration set.** `--calibration` writes the set that
-  [the bar's entry](2026-10-25-jev-calibration-bar.md) specifies: for each of P11 to P15 a
-  file of 20 rows, 10 controls and 10 planted faults, on the propositions the entry's hash
-  rule gives at the commit named, with a manifest. The generator holds the entry's table of
-  lists and writes nothing if the records give other lists. Each plant takes the kind the
-  entry's rule gives it, by the kind's test run on the generated row, and the manifest
+  [the bar's entry](2026-10-25-jev-calibration-bar.md) specifies, with
+  [the rulings entry](2026-10-26-jev-calibration-rulings.md) beside it, which governs where
+  the two differ: for each of P11 to P15 a file of 20 rows, 10 controls and 10 planted
+  faults, on the propositions the entry's hash rule gives at the commit named, with a
+  manifest. The generator holds the entry's table of lists, with P13's list for Book III as
+  the rulings entry restates it, and writes nothing if the records give other lists. Each
+  plant takes the kind the entry's rule gives it, P12's counting round the three kinds the
+  rulings entry keeps, by the kind's test run on the generated row, and the manifest
   records the kinds passed over and why, the change, the row's whole state before it with
   its hash, the hash of the state after it (the row itself, in its questions file), and why
   the change is the expected defect. Nothing in what a row sends names its role. A P15
@@ -58,7 +63,8 @@
   the manifest carries its exact text and hash instead, from which `--restore-figures`
   writes it again. `--tally` reads one calibration file and the output `jev.py run` wrote
   for it. It checks that the questions file has the shape the entry fixes: 20 rows of one
-  question, 10 controls and 10 plants, on the entry's lists, with labels and expected
+  question, 10 controls and 10 plants, on the entry's lists as the rulings entry restates
+  them, with labels and expected
   answers that fit each row's role. It does not itself prove that the rows are the ones the
   generator wrote: that is what `--check` and the manifest's hashes show. It refuses an
   output any line of which is not consistent with that file as `jev.py run` writes it: made

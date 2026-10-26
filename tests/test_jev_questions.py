@@ -27,6 +27,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1337,11 +1338,34 @@ class BookThree(unittest.TestCase):
                 for name in row['state']['represented_objects']:
                     self.assertIn('Elements.' + name, generator.index.decls)
                 self.assertEqual(sorted(bridges), sorted(set(verdict[1])))
-        for n in (14, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
+        for n in (14, 16, 18, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
             self.assertTrue(rows[f'III.{n}']['state']['bridges'], n)
         state = rows['III.35']['state']
         self.assertTrue({'sq', 'Square'} <= set(state['definitions']))
         self.assertTrue(set(questions.SQUARE_BRIDGES) <= set(state['bridges']))
+
+    def test_iii_18_gets_the_mixed_angle_bundle_and_its_own_two_bridges(self):
+        # III.18's record passes its representations on the angle of contact (#130), as III.16's
+        # and III.31's on mixed angles; its row adds Prop18.branch and Prop18.contact_locallyEqual.
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        record = questions.tomllib.loads(generator.evidence.read('review/III/18.toml'))
+        self.assertEqual(record['review']['items']['representations'], 'pass')
+        self.assertEqual(questions.CONTACT_BRIDGES, ['Elements.BookIII.Prop18.branch',
+                                                     'Elements.BookIII.Prop18.contact_locallyEqual'])
+        for n, extra in ((16, []), (18, questions.CONTACT_BRIDGES), (31, [])):
+            with self.subTest(ref=f'III.{n}'):
+                state = rows[f'III.{n}']['state']
+                self.assertEqual(rows[f'III.{n}']['expected'], 'bridge stated')
+                self.assertEqual(sorted(state['bridges']), sorted(questions.MIXED_BRIDGES + extra))
+                self.assertEqual(state['represented_objects'], questions.MIXED_DEFINITIONS)
+                self.assertTrue(set(questions.MIXED_DEFINITIONS) <= set(state['definitions']))
+        # No other proposition of Book III gets the mixed angles or the angle of contact.
+        for n in range(1, 38):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(n=n):
+                self.assertEqual(bool(set(questions.MIXED_BRIDGES) & set(bridges)), n in (16, 18, 31))
+                self.assertEqual(bool(set(questions.CONTACT_BRIDGES) & set(bridges)), n == 18)
 
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
@@ -1390,7 +1414,8 @@ class BookThree(unittest.TestCase):
             f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')) for ref in rows}
         passed = [ref for ref, record in records.items()
                   if record['review'].get('items', {}).get('representations') == 'pass']
-        self.assertEqual(len(passed), 45)
+        self.assertEqual(len(passed), 46)
+        self.assertIn('III.18', passed)
         for ref in passed:
             with self.subTest(ref=ref):
                 self.assertEqual(generator.checked(ref, records[ref], rows[ref]['state']), [])
@@ -1413,16 +1438,28 @@ class BookThree(unittest.TestCase):
                 with self.subTest(ref=ref, missing=name):
                     self.assertIn(name, generator.checked(ref, records[ref], state))
         for ref, table, name in (('III.16', 'definitions', 'MixedAngle.WellFormed'),
-                                 ('II.1', 'definitions', 'InOrder')):
+                                 ('II.1', 'definitions', 'InOrder'),
+                                 ('III.18', 'definitions', 'MixedAngle'),
+                                 ('III.18', 'definitions', 'MixedAngle.WellFormed'),
+                                 ('III.18', 'bridges', 'Elements.BookIII.Prop18.branch')):
             with self.subTest(ref=ref, missing=name):
                 state = copy.deepcopy(rows[ref]['state'])
                 del state[table][name]
                 full = name if name.startswith('Elements.') else 'Elements.' + name
                 self.assertEqual(generator.checked(ref, records[ref], state), [full])
+        # III.18's note names its companion Prop18.contact_locallyEqual, which its row supplies
+        # both as a bridge and as an attached statement: it is missing only without either.
+        name = 'Elements.BookIII.Prop18.contact_locallyEqual'
+        state = copy.deepcopy(rows['III.18']['state'])
+        self.assertIn('III.18 contact_locallyEqual', state['attached_statements'])
+        del state['bridges'][name]
+        self.assertEqual(generator.checked('III.18', records['III.18'], state), [])
+        del state['attached_statements']['III.18 contact_locallyEqual']
+        self.assertEqual(generator.checked('III.18', records['III.18'], state), [name])
 
 
-def recomputed_lists(question):
-    """The entry's hash rule, written again here from the records at HEAD."""
+def recomputed_lists(question, revision=HEAD):
+    """The entry's hash rule, written again here from the records at the revision."""
     key = {'P11': ('statement', 'scope', 'full'), 'P12': ('items', 'passages', 'pass'),
            'P13': ('items', 'representations', 'pass'), 'P14': ('items', 'commentary', 'pass'),
            'P15': ('items', 'figures', 'pass')}[question]
@@ -1430,7 +1467,7 @@ def recomputed_lists(question):
     for book, count, take in (('I', 48, 4), ('II', 14, 2), ('III', 37, 4)):
         eligible = []
         for n in range(1, count + 1):
-            text = subprocess.check_output(['git', 'show', f'{HEAD}:review/{book}/{n:02d}.toml'],
+            text = subprocess.check_output(['git', 'show', f'{revision}:review/{book}/{n:02d}.toml'],
                                            cwd=REPOSITORY)
             record = questions.tomllib.loads(text.decode('utf-8'))
             value = (record['statement'][key[1]] if key[0] == 'statement'
@@ -1441,6 +1478,51 @@ def recomputed_lists(question):
             ('jev-calibration ' + question + ' ' + ref).encode('utf-8')).hexdigest())
         result[book] = (eligible[:take], eligible[take:2 * take])
     return result
+
+
+def entry_lists(path):
+    """The lists an entry's table gives, read from the entry at HEAD: for each question, the
+    cells of its row that read 'controls; then plants', by the table's own book headings."""
+    text = subprocess.check_output(['git', 'show', f'{HEAD}:{path}'], cwd=REPOSITORY, text=True)
+    lists, books = {}, None
+    for line in text.splitlines():
+        cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
+        if cells[0] == 'Question' and all(cell.startswith('Book ') for cell in cells[1:]):
+            books = [cell.removeprefix('Book ') for cell in cells[1:]]
+        elif books and cells[0] in questions.QUESTIONS and all('; then ' in c for c in cells[1:]):
+            lists[cells[0]] = {book: tuple(part.replace(',', '') for part in cell.split('; then '))
+                               for book, cell in zip(books, cells[1:])}
+    return lists
+
+
+# The commit of main the rulings entry names: its records give, by the hash rule, the bar's
+# lists with P13's list for Book III restated.
+RULINGS_COMMIT = '110a01809ed48fc49871137d9a0fb968cad92d11'
+# Each plant's kind, by the entry's rule with the rulings' three kinds of P12, and each kind
+# passed over, with why it did not apply.
+NO_CLAUSE = 'the main conclusion has one clause'
+NO_ATTACHED = 'the row has no attached statement'
+NO_FORM = 'the commentary names the form of the proof only within quotation marks, or not at all'
+EXPECTED_KINDS = {
+    'P11': [('I.8', 1, []), ('I.19', 4, [(2, NO_CLAUSE), (3, NO_ATTACHED)]), ('I.29', 4, [(3, NO_ATTACHED)]),
+            ('I.9', 4, []), ('II.9', 1, []), ('II.8', 4, [(2, NO_CLAUSE), (3, NO_ATTACHED)]),
+            ('III.37', 4, [(3, NO_ATTACHED)]), ('III.11', 4, []), ('III.36', 1, []), ('III.28', 2, [])],
+    'P12': [('I.21', 1, []), ('I.45', 2, []), ('I.15', 3, []), ('I.40', 1, []), ('II.5', 2, []),
+            ('II.7', 3, []), ('III.37', 1, []), ('III.31', 2, []), ('III.24', 3, []), ('III.36', 1, [])],
+    'P13': [('I.37', 1, []), ('I.46', 2, []), ('I.43', 3, []), ('I.36', 4, []), ('II.8', 5, []),
+            ('II.6', 1, []), ('III.37', 2, []), ('III.28', 3, []), ('III.27', 4, []), ('III.36', 5, [])],
+    'P14': [('I.47', 1, []), ('I.38', 2, []), ('I.13', 3, []), ('I.7', 4, []), ('II.1', 1, [(5, NO_FORM)]),
+            ('II.10', 1, []), ('III.25', 2, []), ('III.20', 3, []), ('III.4', 4, []),
+            ('III.14', 1, [(5, NO_FORM)])],
+    'P15': [('I.22', 1, []), ('I.34', 2, []), ('I.7', 3, []), ('I.13', 4, []), ('II.5', 1, []),
+            ('II.10', 2, []), ('III.1', 3, []), ('III.22', 4, []), ('III.19', 1, []), ('III.15', 2, [])],
+}
+# The rulings entry's three kinds of P12, and the bar's fourth, which it drops.
+P12_KINDS = (('a call of an unrelated proposition whose result is not used', 'a dummy citation'),
+             ('a call whose result is bound while the step it is for is done another way',
+              'a dummy citation'),
+             ('a hypothesis added and used only in a binding nothing uses', 'an artificial hypothesis use'))
+DROPPED_KIND = 'an existing hypothesis mentioned in a step that does no work'
 
 
 class Calibration(unittest.TestCase):
@@ -1474,15 +1556,158 @@ class Calibration(unittest.TestCase):
                     self.assertEqual(listed['hash'], hashlib.sha256(
                         f'jev-calibration {question} {listed["ref"]}'.encode()).hexdigest())
 
+    def test_the_lists_are_the_bar_s_with_p13_book_iii_as_the_rulings_restate_it(self):
+        bar, rulings = entry_lists(questions.ENTRY), entry_lists(questions.RULINGS)
+        self.assertEqual(set(bar), set(questions.QUESTIONS))
+        self.assertEqual(rulings, {'P13': {'III': ('III.18 III.33 III.24 III.26',
+                                                   'III.37 III.28 III.27 III.36')}})
+        expected = copy.deepcopy(bar)
+        expected['P13']['III'] = rulings['P13']['III']
+        self.assertEqual(questions.CALIBRATION_LISTS, expected)
+        # The rulings change P13's list for Book III alone: III.18 a control, III.37 a plant,
+        # and III.29 out of the set.
+        self.assertEqual(bar['P13']['III'], ('III.33 III.24 III.26 III.37', 'III.28 III.27 III.36 III.29'))
+        self.assertEqual({(question, book) for question, books in bar.items() for book in books
+                          if books[book] != questions.CALIBRATION_LISTS[question][book]},
+                         {('P13', 'III')})
+
+    def test_the_lists_are_the_hash_rule_at_the_commit_the_rulings_name(self):
+        for question in questions.QUESTIONS:
+            with self.subTest(question=question):
+                lists = recomputed_lists(question, RULINGS_COMMIT)
+                for book in ('I', 'II', 'III'):
+                    self.assertEqual(questions.CALIBRATION_LISTS[question][book],
+                                     (' '.join(lists[book][0]), ' '.join(lists[book][1])))
+
     def test_other_lists_than_the_entry_table_are_refused(self):
-        changed = copy.deepcopy(questions.CALIBRATION_LISTS)
-        changed['P13']['II'] = ('II.1 II.14', 'II.8 II.6')
         calibration = questions.Calibration.__new__(questions.Calibration)
         calibration.generator = shared()['generator']
         calibration.evidence = calibration.generator.evidence
-        with patch.object(questions, 'CALIBRATION_LISTS', changed):
-            with self.assertRaisesRegex(questions.Refusal, 'P13 Book II: .*stops for a ruling'):
-                calibration.lists('P13')
+        # Another list for Book II, and the bar's own list for Book III, which the rulings restate.
+        for book, lists in (('II', ('II.1 II.14', 'II.8 II.6')),
+                            ('III', ('III.33 III.24 III.26 III.37', 'III.28 III.27 III.36 III.29'))):
+            changed = copy.deepcopy(questions.CALIBRATION_LISTS)
+            changed['P13'][book] = lists
+            with self.subTest(book=book), patch.object(questions, 'CALIBRATION_LISTS', changed):
+                with self.assertRaisesRegex(questions.Refusal,
+                                            f'P13 Book {book}: .*stops for a ruling') as refused:
+                    calibration.lists('P13')
+                self.assertIn(f'{questions.ENTRY} as {questions.RULINGS}', str(refused.exception))
+
+    def test_p12_has_the_rulings_three_kinds_and_not_the_fourth(self):
+        kinds = questions.KINDS['P12']
+        self.assertEqual([(kind.name, kind.expected) for kind in kinds], list(P12_KINDS))
+        self.assertNotIn(DROPPED_KIND, [kind.name for kind in kinds])
+        self.assertEqual([kind.test for kind in kinds], [None, questions.body_calls_a_proposition, None])
+        self.assertEqual(shared()['calibration']['questions']['P12']['kinds'],
+                         [name for name, _ in P12_KINDS])
+        self.assertEqual({plant.kind for (question, _), plant in questions.PLANTS.items()
+                          if question == 'P12'}, {1, 2, 3})
+        # Every other question keeps the bar's kinds.
+        self.assertEqual({question: len(kinds) for question, kinds in questions.KINDS.items()},
+                         {'P11': 4, 'P12': 3, 'P13': 5, 'P14': 5, 'P15': 4})
+
+    def test_each_plant_takes_the_kind_the_rule_gives(self):
+        manifest = shared()['calibration']
+        for question, expected in EXPECTED_KINDS.items():
+            with self.subTest(question=question):
+                plants = manifest['questions'][question]['plants']
+                self.assertEqual([(plant['ref'], plant['kind'],
+                                   [(passed['kind'], passed['reason']) for passed in plant['passed_over']])
+                                  for plant in plants], expected)
+                for plant in plants:
+                    self.assertEqual(questions.PLANTS[(question, plant['ref'])].kind, plant['kind'])
+        # A change for each plant of the lists, and for no other proposition: none for III.29,
+        # which the rulings take out of the set.
+        listed = {(question, ref) for question, books in questions.CALIBRATION_LISTS.items()
+                  for _, plants in books.values() for ref in plants.split()}
+        self.assertEqual(set(questions.PLANTS), listed)
+        self.assertNotIn(('P13', 'III.29'), questions.PLANTS)
+
+    def test_p12_plants_make_their_kind_s_fault(self):
+        # Kind 1 binds a call of a proposition the row did not cite, and adds its evidence; kind 2
+        # a call of one the body already calls; each binding is used nowhere else. Kind 3 adds a
+        # hypothesis used only in a binding nothing uses.
+        name = r"[^\W\d][\w'!?]*"
+
+        def occurrences(word, text):
+            return len(re.findall(r"(?<![\w.'])" + re.escape(word) + r"(?![\w'])", text))
+
+        def added(pattern, change):
+            return set(re.findall(pattern, change['new'])) - set(re.findall(pattern, change['old']))
+
+        for row in calibration_rows('P12'):
+            if row['calibration']['role'] != 'plant':
+                continue
+            with self.subTest(ref=row['ref']):
+                base, kind, proof = row['mutation']['base_state'], row['calibration']['kind'], row['state']['lean_proof']
+                changes = [c for c in row['mutation']['changes'] if c.get('field') == ['state', 'lean_proof']]
+                bound = set().union(*(added(r'have (' + name + ')', c) for c in changes))
+                hypotheses = set().union(*(added(r'\((' + name + ') :', c) for c in changes))
+                cited = [c['ref'] for c in row['mutation']['changes'] if c['operation'] == 'add evidence'
+                         and 'ref' in c]
+                self.assertEqual(len(bound), 1)
+                self.assertEqual(occurrences(next(iter(bound)), proof), 1)
+                if kind == 3:
+                    self.assertEqual((len(changes), len(hypotheses), cited), (2, 1, []))
+                    hypothesis = next(iter(hypotheses))
+                    self.assertEqual(occurrences(hypothesis, base['lean_proof']), 0)
+                    # In the statement, and in the binding nothing uses.
+                    self.assertEqual(occurrences(hypothesis, proof), 2)
+                    binding = next(c for c in changes if bound & added(r'have (' + name + ')', c))
+                    self.assertEqual(occurrences(hypothesis, binding['new']), 1)
+                    continue
+                self.assertEqual((len(changes), hypotheses), (1, set()))
+                call = re.search(r'(?:Book([IVX]+)\.)?Prop(\d+)', changes[0]['new'].replace(changes[0]['old'], '', 1))
+                ref = f'{call.group(1) or row["ref"].split(".")[0]}.{int(call.group(2))}'
+                if kind == 1:
+                    self.assertEqual(cited, [ref])
+                    self.assertNotIn(ref, base['citation_origins']['source'])
+                    self.assertIn(ref, row['state']['citation_origins']['source'])
+                else:
+                    self.assertEqual(cited, [])
+                    self.assertIn(ref, base['citation_origins']['source'])
+
+    def test_every_p13_control_and_plant_base_supplies_what_its_record_checked(self):
+        generator = shared()['generator']
+        entry = shared()['calibration']['questions']['P13']
+        self.assertEqual([control['ref'] for control in entry['controls'] if control['book'] == 'III'],
+                         ['III.18', 'III.33', 'III.24', 'III.26'])
+        for row in calibration_rows('P13'):
+            p = questions.heath.parse_ref(row['ref'])
+            record = questions.tomllib.loads(generator.evidence.read(f'review/{p.book}/{p.n:02d}.toml'))
+            plant = row['calibration']['role'] == 'plant'
+            state = row['mutation']['base_state'] if plant else row['state']
+            with self.subTest(ref=row['ref']):
+                self.assertEqual(record['review']['items']['representations'], 'pass')
+                self.assertTrue(state['bridges'])
+                self.assertEqual(generator.checked(row['ref'], record, state), [])
+                if plant and row['calibration']['kind'] == 5:
+                    # The one bridge removed; the others kept.
+                    removed = set(state['bridges']) - set(row['state']['bridges'])
+                    self.assertEqual(len(removed), 1)
+                    self.assertEqual(set(row['state']['bridges']), set(state['bridges']) - removed)
+                    self.assertTrue(row['state']['bridges'])
+
+    def test_the_manifest_the_bar_and_the_refusals_name_both_entries(self):
+        manifest = shared()['calibration']
+        for record in (manifest, manifest['bar'], questions.BAR):
+            self.assertEqual((record['entry'], record['rulings']), (questions.ENTRY, questions.RULINGS))
+        for path in (questions.ENTRY, questions.RULINGS):
+            subprocess.run(['git', 'cat-file', '-e', f'{HEAD}:{path}'], cwd=REPOSITORY, check=True)
+        calibration = questions.Calibration(shared()['generator'])
+        # No kind applies to a P13 row that supplies no bridge.
+        with self.assertRaisesRegex(questions.Refusal, 'no kind of .* applies') as unplanted:
+            calibration.kind('P13', 0, {'ref': 'III.18', 'state': {'bridges': {}}})
+        # A change of another kind than the rule gives.
+        entry = next(p for p in manifest['questions']['P12']['plants'] if p['ref'] == 'I.40')
+        with patch.dict(questions.PLANTS, {('P12', 'I.40'): questions.Plant(3, 'another kind', 'none', ())}):
+            with self.assertRaisesRegex(questions.Refusal,
+                                        'gives kind 1, and the generator holds a change of kind 3') as mismatched:
+                calibration.plant('P12', 3, entry)
+        for refused in (unplanted, mismatched):
+            self.assertIn(questions.ENTRY, str(refused.exception))
+            self.assertIn(questions.RULINGS, str(refused.exception))
 
     def test_controls_are_the_audit_rows_and_plants_keep_their_constraints(self):
         audit = {row['id']: row for row in shared()['rows'] if not row['seeded']}
@@ -2158,7 +2383,7 @@ class Tally(TallyLines, unittest.TestCase):
         cases = (
             # The review's counterexample: nine plants and one control.
             (plants[:9] + controls[:1], '10 rows, 1 controls and 9 plants'),
-            (rows[:19], '19 rows, 9 controls and 10 plants'),
+            ([r for r in rows if r is not controls[-1]], '19 rows, 9 controls and 10 plants'),
             ([dict(r, calibration=dict(r['calibration'], role='plant')) if r is controls[0] else r
               for r in rows], '20 rows, 9 controls and 11 plants'),
             # A proposition in two rows, under two ids.
@@ -2168,6 +2393,10 @@ class Tally(TallyLines, unittest.TestCase):
               for r in rows], 'is not a control row of P13'),
             ([dict(r, calibration=dict(r['calibration'], hash='0' * 64)) if r is plants[0] else r
               for r in rows], 'is not a plant row of P13'),
+            # III.29, which the rulings take out of the set, in place of the control III.18.
+            ([dict(r, ref='III.29', id='11-III.29-representation') if r['ref'] == 'III.18' else r
+              for r in rows], 'not III.18 III.33 III.24 III.26, the list of '
+             f'{questions.ENTRY} as {questions.RULINGS}'),
         )
         for changed, message in cases:
             with self.subTest(message=message):

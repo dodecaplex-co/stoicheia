@@ -55,9 +55,11 @@ copy these local provenance fields into its results. An em dash, which Heath pri
 III.16, is written as its JSON escape, so that no output holds the character.
 
 --calibration writes the calibration set that docs/decisions/2026-10-25-jev-calibration-bar.md
-specifies, in --out (a directory, by default beside the audit): for each of P11 to P15 a file
-of 20 rows, 10 controls and 10 planted faults on the propositions the entry's hash rule
-gives, refused unless the records give the entry's own table; a manifest; and, for each
+specifies, with docs/decisions/2026-10-26-jev-calibration-rulings.md beside it, governing where
+the two differ, in --out (a directory, by default beside the audit): for each of P11 to P15 a
+file of 20 rows, 10 controls and 10 planted faults on the propositions the entry's hash rule
+gives, refused unless the records give the entry's own table, as the rulings restate it; a
+manifest; and, for each
 figure a plant changes, a copy under calibration-books-I-III-figures/, which the row's asset
 names by its path in the repository (figures/ is never touched). Each plant takes the kind
 the entry's rule gives it, tested on the generated row, and the change this file writes for
@@ -880,12 +882,15 @@ CONGRUENCE_BRIDGES = ['Elements.BookIII.Arc.congruent_iff']
 KIND_BRIDGES = ['Elements.BookIII.Circumference.semicircle',
                 'Elements.BookIII.Circumference.lt_semicircle',
                 'Elements.BookIII.Circumference.gt_semicircle']
-# An angle with a circumference is the region it opens near its vertex (III.16, III.31).
+# An angle with a circumference is the region it opens near its vertex (III.16, III.18, III.31).
 MIXED_DEFINITIONS = ['MixedAngle', 'MixedAngle.vertex', 'MixedAngle.region', 'MixedAngle.WellFormed',
                      'MixedAngle.Exceeds', 'MixedAngle.FallsShort', 'WithinAngle', 'LocallyWithin',
                      'LocallyLess', 'LocallyEqual', 'NearVertexOpen', 'Surrounds']
 MIXED_BRIDGES = ['Elements.WithinAngle.locallyLess_iff', 'Elements.WithinAngle.locallyEqual_iff',
                  'Elements.MixedAngle.wellFormed_ofSegment']
+# III.18's angle of contact, named by any straight line from the point of contact into the
+# circle, is near that point the one the diameter names, as its record's note says.
+CONTACT_BRIDGES = ['Elements.BookIII.Prop18.branch', 'Elements.BookIII.Prop18.contact_locallyEqual']
 # A straight line's distance from the centre is the perpendicular to its foot (Definition III.4).
 FOOT_BRIDGES = ['Elements.Foot.exists', 'Elements.Foot.unique']
 RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
@@ -924,9 +929,11 @@ def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[st
         if n == 14:
             definitions += ['Foot']
             bridges += FOOT_BRIDGES
-        if n in (16, 31):
+        if n in (16, 18, 31):
             definitions += MIXED_DEFINITIONS
             bridges += MIXED_BRIDGES
+        if n == 18:
+            bridges += CONTACT_BRIDGES
         if n in (23, 24, 25, 30, 33, 34):
             definitions += SEGMENT_DEFINITIONS
             bridges += SEGMENT_BRIDGES
@@ -1995,10 +2002,14 @@ class Generator:
 # ---------------------------------------------------------------------------------------
 # The calibration set, as docs/decisions/2026-10-25-jev-calibration-bar.md (the entry) fixes
 # it: each question's clean and defect answers, the order of the propositions, the kinds of
-# fault and the bar. Every row is an audit row of the same commit: a control unchanged, a
-# plant a copy with one fault planted in the generated row, never in a file of the edition.
+# fault and the bar; with docs/decisions/2026-10-26-jev-calibration-rulings.md (the rulings),
+# which stands beside it and governs where the two differ: P12 has three kinds of fault, and
+# P13's list for Book III is restated. Every row is an audit row of the same commit: a control
+# unchanged, a plant a copy with one fault planted in the generated row, never in a file of
+# the edition.
 
 ENTRY = 'docs/decisions/2026-10-25-jev-calibration-bar.md'
+RULINGS = 'docs/decisions/2026-10-26-jev-calibration-rulings.md'
 MODEL = 'jev-1.13.0'
 
 
@@ -2030,21 +2041,22 @@ for _name, _question in QUESTIONS.items():
             f'{_name}: an answer the entry names is not an option of the question')
 # For each book, how many controls, and then how many plants.
 SPLIT = (('I', 4), ('II', 2), ('III', 4))
-# The entry's table: for each question and book, the controls, then the plants.
+# The entry's table, with P13's list for Book III as the rulings restate it: for each question
+# and book, the controls, then the plants.
 CALIBRATION_LISTS = {
     'P11': {'I': ('I.23 I.2 I.10 I.34', 'I.8 I.19 I.29 I.9'), 'II': ('II.5 II.4', 'II.9 II.8'),
             'III': ('III.9 III.31 III.16 III.34', 'III.37 III.11 III.36 III.28')},
     'P12': {'I': ('I.27 I.12 I.16 I.33', 'I.21 I.45 I.15 I.40'), 'II': ('II.14 II.1', 'II.5 II.7'),
             'III': ('III.4 III.22 III.7 III.6', 'III.37 III.31 III.24 III.36')},
     'P13': {'I': ('I.42 I.8 I.41 I.38', 'I.37 I.46 I.43 I.36'), 'II': ('II.14 II.1', 'II.8 II.6'),
-            'III': ('III.33 III.24 III.26 III.37', 'III.28 III.27 III.36 III.29')},
+            'III': ('III.18 III.33 III.24 III.26', 'III.37 III.28 III.27 III.36')},
     'P14': {'I': ('I.37 I.43 I.4 I.21', 'I.47 I.38 I.13 I.7'), 'II': ('II.8 II.11', 'II.1 II.10'),
             'III': ('III.31 III.22 III.29 III.28', 'III.25 III.20 III.4 III.14')},
     'P15': {'I': ('I.44 I.8 I.24 I.43', 'I.22 I.34 I.7 I.13'), 'II': ('II.2 II.14', 'II.5 II.10'),
             'III': ('III.17 III.21 III.6 III.33', 'III.1 III.22 III.19 III.15')},
 }
 BAR = {
-    'entry': ENTRY, 'model': MODEL, 'order_check': True,
+    'entry': ENTRY, 'rulings': RULINGS, 'model': MODEL, 'order_check': True,
     'conditions': [
         'every row is answered, by jev-1.13.0, and no line of the final output records a failed request',
         'at least 9 of the 10 planted faults are found: Jev chose a defect answer in both orders',
@@ -2161,13 +2173,13 @@ KINDS = {
              else 'the row has no attached statement'),
         Kind('an object Euclid leaves general fixed or narrowed', 'restricted beyond what the note says'),
     ),
+    # The rulings drop the entry's fourth kind, an existing hypothesis mentioned in a step that
+    # does no work: such a hypothesis may do substantive work elsewhere in its proof.
     'P12': (
         Kind('a call of an unrelated proposition whose result is not used', 'a dummy citation'),
         Kind('a call whose result is bound while the step it is for is done another way',
              'a dummy citation', body_calls_a_proposition),
         Kind('a hypothesis added and used only in a binding nothing uses',
-             'an artificial hypothesis use'),
-        Kind('an existing hypothesis mentioned in a step that does no work',
              'an artificial hypothesis use'),
     ),
     'P13': (
@@ -2324,55 +2336,61 @@ PLANTS = {
           '  have hD_E : D ≠ E := ne_of_between (between_symm hCED)\n',
           '  have hD_E : D ≠ E := ne_of_between (between_symm hCED)\n  have hB_A : B ≠ A := hAB.symm\n'))),
     ('P12', 'I.40'): Plant(
-        4, 'the step `have hDA : D ≠ A := hAD.symm`, which nothing uses, added',
-        'The added step mentions the hypothesis hAD and does no work, since nothing uses hDA: a '
-        'hypothesis mentioned in a step only so that it looks used, an artificial hypothesis use.',
+        1, 'a call of I.15, `have h15 := @Prop15`, whose result nothing uses',
+        "I.15, on vertical angles, has no part in I.40's argument, and its result h15 is never "
+        'used: a call that only supplies a citation, a dummy citation.',
         (('replace', ['state', 'lean_proof'], '  have hBE : B ≠ E := ne_of_between_ends hBCE\n',
-          '  have hBE : B ≠ E := ne_of_between_ends hBCE\n  have hDA : D ≠ A := hAD.symm\n'),)),
-    ('P12', 'II.5'): Plant(
-        1, 'a call of I.18, `have h18 := @BookI.Prop18`, whose result nothing uses',
-        "I.18, on the greater side and the greater angle, has no part in II.5's argument, and "
-        'its result h18 is never used: a dummy citation.',
-        (('replace', ['state', 'lean_proof'],
-          '    obtain ⟨hp, hCEFB⟩ := Square.described hsq hE hF\n',
-          '    obtain ⟨hp, hCEFB⟩ := Square.described hsq hE hF\n    have h18 := @BookI.Prop18\n'),
-         ('cite', 'I.18'))),
-    ('P12', 'II.7'): Plant(
-        2, 'a call of I.34 on the parallelogram AF, `have h34 := BookI.Prop34 hBAHF`, bound and unused',
-        'The step that AF is the rectangle AB, BC is done by `Rectangle.of_right` and `eq_rect`; '
-        "the added call of I.34 on AF's sides and angles is bound to h34 and never used, so it "
-        'supplies a citation while the step is done another way: a dummy citation.',
-        (('replace', ['state', 'lean_proof'], '  have hAF : quadArea A H F B = rect A B B C := by\n',
-          '  have h34 := BookI.Prop34 hBAHF\n  have hAF : quadArea A H F B = rect A B B C := by\n'),)),
-    ('P12', 'III.37'): Plant(
-        3, 'the hypothesis (hAC : A ≠ C) added, used only in `have hCA : C ≠ A := hAC.symm`',
-        'The added hypothesis does no work: it is used only to make hCA, which nothing uses, so it '
-        'is mentioned only so that it looks used: an artificial hypothesis use.',
-        (('replace', ['state', 'lean_proof'], '(h : rect A D D C = sq D B) :',
-          '(h : rect A D D C = sq D B) (hAC : A ≠ C) :'),
-         ('replace', ['state', 'lean_proof'], '  -- I say that DB touches the circle ABC.\n',
-          '  -- I say that DB touches the circle ABC.\n  have hCA : C ≠ A := hAC.symm\n'))),
-    ('P12', 'III.31'): Plant(
-        4, 'the step `have hCA : C ≠ A := hAC.symm`, which nothing uses, added',
-        'The added step mentions the hypothesis hAC and does no work, since nothing uses hCA: a '
-        'hypothesis mentioned in a step only so that it looks used, an artificial hypothesis use.',
-        (('replace', ['state', 'lean_proof'], '  obtain ⟨F, hBAF⟩ := produce hAB.symm\n',
-          '  obtain ⟨F, hBAF⟩ := produce hAB.symm\n  have hCA : C ≠ A := hAC.symm\n'),)),
-    ('P12', 'III.24'): Plant(
-        1, 'a call of I.15, `have h15 := @BookI.Prop15`, whose result nothing uses',
-        "I.15, on vertical angles, has no part in III.24's argument, and its result h15 is never "
-        'used: a dummy citation.',
-        (('replace', ['state', 'lean_proof'],
-          '  have hC_D : C ≠ D := (show Triangle C D F from hF_CD).ne₁₂\n',
-          '  have hC_D : C ≠ D := (show Triangle C D F from hF_CD).ne₁₂\n  have h15 := @BookI.Prop15\n'),
+          '  have hBE : B ≠ E := ne_of_between_ends hBCE\n  have h15 := @Prop15\n'),
          ('cite', 'I.15'))),
+    ('P12', 'II.5'): Plant(
+        2, 'a call of I.34 on the parallelogram AH, `have h34 := BookI.Prop34 hDAKH`, bound and unused',
+        'The step "AH is the rectangle AD, DB, for DH is equal to DB" is done by '
+        '`Rectangle.of_right` and `eq_rect`, from the right angle HDA and DH equal to DB; the '
+        "added call of I.34 on AH's sides and angles is bound to h34 and never used, so it "
+        'supplies a citation while the step is done another way: a dummy citation.',
+        (('replace', ['state', 'lean_proof'], '    have hAHrect : quadArea D A K H = rect A D D B :=\n',
+          '    have h34 := BookI.Prop34 hDAKH\n    have hAHrect : quadArea D A K H = rect A D D B :=\n'),)),
+    ('P12', 'II.7'): Plant(
+        3, 'the hypothesis (hAC : A ≠ C) added, used only in `have hC_A : C ≠ A := hAC.symm`',
+        'The added hypothesis does no work: it is used only to make hC_A, which nothing uses, so '
+        'it is mentioned only so that it looks used: an artificial hypothesis use.',
+        (('replace', ['state', 'lean_proof'], '(hACB : Between A C B) :',
+          '(hACB : Between A C B) (hAC : A ≠ C) :'),
+         ('replace', ['state', 'lean_proof'], '  have hAB : A ≠ B := ne_of_between_ends hACB\n',
+          '  have hAB : A ≠ B := ne_of_between_ends hACB\n  have hC_A : C ≠ A := hAC.symm\n'))),
+    ('P12', 'III.37'): Plant(
+        1, 'a call of I.15, `have h15 := @BookI.Prop15`, whose result nothing uses',
+        "I.15, on vertical angles, has no part in III.37's argument, and its result h15 is never "
+        'used: a dummy citation.',
+        (('replace', ['state', 'lean_proof'], '  -- I say that DB touches the circle ABC.\n',
+          '  -- I say that DB touches the circle ABC.\n  have h15 := @BookI.Prop15\n'),
+         ('cite', 'I.15'))),
+    ('P12', 'III.31'): Plant(
+        2, "a call of I.32 on the triangle ABC, with BA produced to F, `have h32' := @BookI.Prop32 C B "
+        "A F`, bound and unused",
+        'The step "the angle ABC is less than a right angle" is done by I.17 (`BookI.Prop17`), the '
+        'angles ABC, BAC being less than two right angles and BAC right; the added call of I.32, '
+        'which makes the three angles of the triangle ABC equal to two right angles and could give '
+        "the step too, is bound to h32' and never used, so it supplies a citation while the step "
+        'is done another way: a dummy citation.',
+        (('replace', ['state', 'lean_proof'], '  -- the angle ABC is less than a right angle;\n',
+          "  -- the angle ABC is less than a right angle;\n  have h32' := @BookI.Prop32 C B A F\n"),)),
+    ('P12', 'III.24'): Plant(
+        3, 'the hypothesis (hB_E : B ≠ E) added, used only in `have hE_B : E ≠ B := hB_E.symm`',
+        'The added hypothesis does no work: it is used only to make hE_B, which nothing uses, so '
+        'it is mentioned only so that it looks used: an artificial hypothesis use.',
+        (('replace', ['state', 'lean_proof'], '(hsim : ∠ A E B = ∠ C F D) :',
+          '(hsim : ∠ A E B = ∠ C F D) (hB_E : B ≠ E) :'),
+         ('replace', ['state', 'lean_proof'],
+          '  have hC_D : C ≠ D := (show Triangle C D F from hF_CD).ne₁₂\n',
+          '  have hC_D : C ≠ D := (show Triangle C D F from hF_CD).ne₁₂\n  have hE_B : E ≠ B := hB_E.symm\n'))),
     ('P12', 'III.36'): Plant(
-        2, 'a call of III.3 for the bisection of AC through the centre, bound to h3 and unused',
-        'Where DCA passes through the centre, "AC has been bisected at F" is done by the radii '
-        '(`Definition15`); the added call of III.3 for that step is bound to h3 and never used, '
-        'so it supplies a citation while the step is done another way: a dummy citation.',
-        (('replace', ['state', 'lean_proof'], '      have hAF : ‖A F‖ = ‖F C‖ := by\n',
-          '      have h3 := Prop3 hF hA hC hAFC\n      have hAF : ‖A F‖ = ‖F C‖ := by\n'),)),
+        1, 'a call of I.15, `have h15 := @BookI.Prop15`, whose result nothing uses',
+        "I.15, on vertical angles, has no part in III.36's argument, and its result h15 is never "
+        'used: a dummy citation.',
+        (('replace', ['state', 'lean_proof'], "  have hDB' : D ≠ B := fun e => hD.2 (e ▸ hB)\n",
+          "  have hDB' : D ≠ B := fun e => hD.2 (e ▸ hB)\n  have h15 := @BookI.Prop15\n"),
+         ('cite', 'I.15'))),
     # P13: each expects "bridge missing or inadequate".
     ('P13', 'I.37'): Plant(
         1, 'every supplied bridge removed', 'With no bridge supplied, nothing states that '
@@ -2408,31 +2426,41 @@ PLANTS = {
         'rectangle or square with `rect` or `sq`, which Lean chooses by `Classical.epsilon`: a '
         'choice definition alone does not prove that its choice represents a given object.',
         (('remove', None),)),
-    ('P13', 'III.28'): Plant(
+    ('P13', 'III.37'): Plant(
         2, f'the premise ({AREA_PREMISE_NAME} : False) added to each bridge',
-        'Each bridge now needs a proof of False, so none can be used of any circumference or arc: '
-        'the measure and the congruence are connected with nothing of Euclid\'s.',
+        'Each bridge now needs a proof of False, so none can be used of any rectangle or square: '
+        '`rect A D D C` and `sq D B`, which Lean chooses by `Classical.epsilon`, are connected '
+        'with nothing drawn.',
         (('premise', None, f'({AREA_PREMISE_NAME} : False)'),)),
+    ('P13', 'III.28'): Plant(
+        3, "`Circumference.eq`'s conclusion made `circumference α B K C = circumference α B K C`",
+        '`circumference` is a choice (`Classical.epsilon`), twice the angle at some point of the '
+        'circle on the other side of BC; the one bridge that said it is twice the angle at every '
+        'such point now concludes a triviality. `Circumference.centre` measures only a '
+        'circumference beyond which the centre lies, which the greater circumferences ACB, DFE '
+        'are not, and `Arc.measure_eq_iff` and `Arc.congruent_iff` say only when two measures '
+        'are equal; so nothing but the choice says what the greater circumferences measure, and '
+        'the comparisons that say which circumference of each circle is the greater are '
+        "connected with nothing of Euclid's.",
+        (('replace', ['state', 'bridges', 'Elements.BookIII.Circumference.eq'],
+          'circumference α B K C = ∠ B A C + ∠ B A C', 'circumference α B K C = circumference α B K C'),)),
     ('P13', 'III.27'): Plant(
-        3, "`Circumference.standing`'s conclusion made `standing α B A C = standing α B A C`",
-        '`standing` is a choice (`Classical.epsilon`); the one bridge that said the circumference '
-        'on which BAC stands is twice that angle now concludes a triviality, so nothing connects '
-        "III.27's `standing` with the angles Euclid's circumferences stand under.",
-        (('replace', ['state', 'bridges', 'Elements.BookIII.Circumference.standing'],
-          'standing α B A C = ∠ B A C + ∠ B A C', 'standing α B A C = standing α B A C'),)),
+        4, '`Circumference.standing` given the premise (hBC : B = C)',
+        'The arms of an angle BAC at the circumference meet the circle at two distinct points B '
+        'and C, so no angle of III.27 meets the premise; the one bridge that says the '
+        'circumference on which BAC stands is twice that angle is unavailable for every angle, '
+        'and `standing`, a choice (`Classical.epsilon`), is connected with no angle that '
+        "Euclid's circumferences stand under.",
+        (('premise', ['Elements.BookIII.Circumference.standing'], '(hBC : B = C)'),)),
     ('P13', 'III.36'): Plant(
-        4, '`Rectangle.contained` and `Rectangle.eq_rect` given the premise (hPQ : P = Q)',
-        "A rectangle's corners P and Q are distinct, so no rectangle meets the premise; the two "
-        'bridges that connect a drawn rectangle with `rect` are unavailable for every rectangle, '
-        'and `rect A D D C` is connected with nothing drawn.',
-        (('premise', ['Elements.Rectangle.contained', 'Elements.Rectangle.eq_rect'], '(hPQ : P = Q)'),)),
-    ('P13', 'III.29'): Plant(
-        5, '`Arc.measure_eq_iff` removed, the other bridges kept',
-        'The measure carries no radius, and only `Arc.measure_eq_iff` says that in equal circles '
-        'equal measures are circumferences cut off by equal straight lines and of one kind; the '
-        'others relate the measure to angles only, so nothing states when equal measures are '
-        "Euclid's equal circumferences.",
-        (('remove', ['Elements.BookIII.Arc.measure_eq_iff']),)),
+        5, '`Square.described` removed, the other bridges kept',
+        '`sq D B`, the square on the tangent DB, is the rectangle contained by DB, DB; a square '
+        'as Definition I.22 has it (`Square`), equilateral and right-angled, is connected with '
+        '`sq` only by `Square.described`, which makes a square on AB, its other corners on one '
+        'side of AB, a parallelogram equal to `sq A B`. `Square.eq_sq` and the rectangle bridges '
+        'need a parallelogram (a rectangle is one) as a premise, which no supplied declaration '
+        "gives for a `Square`, so nothing connects Euclid's square on DB with `sq D B`.",
+        (('remove', ['Elements.Square.described']),)),
     # P14: each expects "conflicts".
     ('P14', 'I.47'): Plant(
         1, '"the angles at B and C are less than right" made "greater than right"',
@@ -2651,7 +2679,7 @@ class Calibration:
 
     def lists(self, question: str) -> dict[str, tuple[list[dict], list[dict]]]:
         """The entry's hash rule, from the records at the commit; refused if it gives other
-        lists than the entry's table."""
+        lists than the entry's table, with P13's list for Book III as the rulings restate it."""
         spec = QUESTIONS[question]
         result = {}
         for book, controls in SPLIT:
@@ -2673,9 +2701,9 @@ class Calibration:
                         ' '.join(e['ref'] for e in result[book][1]))
             require(computed == CALIBRATION_LISTS[question][book],
                     f"{question} Book {book}: the records give {computed[0]}; then {computed[1]}, "
-                    f"not the entry's {CALIBRATION_LISTS[question][book][0]}; then "
-                    f"{CALIBRATION_LISTS[question][book][1]}; nothing is written, and the work "
-                    'stops for a ruling')
+                    f"not {CALIBRATION_LISTS[question][book][0]}; then "
+                    f"{CALIBRATION_LISTS[question][book][1]}, the list of {ENTRY} as {RULINGS} "
+                    'restates the lists; nothing is written, and the work stops for a ruling')
         return result
 
     def base(self, question: str, ref: str) -> dict:
@@ -2700,8 +2728,8 @@ class Calibration:
             if reason is None:
                 return index + 1, passed
             passed.append({'kind': index + 1, 'name': kinds[index].name, 'reason': reason})
-        raise Refusal(f'{question} {row["ref"]}: no kind applies ({passed}); nothing is written, '
-                      'and the work stops for a ruling')
+        raise Refusal(f'{question} {row["ref"]}: no kind of {ENTRY}, as {RULINGS} gives the kinds, '
+                      f'applies ({passed}); nothing is written, and the work stops for a ruling')
 
     def change(self, row: dict, field: list[str], old: str, new: str) -> None:
         value = row
@@ -2794,7 +2822,8 @@ class Calibration:
         kind, passed = self.kind(question, k, row)
         spec = PLANTS.get((question, entry['ref']))
         require(spec is not None and spec.kind == kind,
-                f'{question} {entry["ref"]}: the rule gives kind {kind}, and the generator holds '
+                f'{question} {entry["ref"]}: the rule of {ENTRY}, with the kinds {RULINGS} gives, '
+                f'gives kind {kind}, and the generator holds '
                 f'{"no change" if spec is None else "a change of kind " + str(spec.kind)} for it')
         kind_spec = KINDS[question][kind - 1]
         row['seeded'] = True
@@ -2951,7 +2980,7 @@ class Calibration:
         unresolved = sorted({token for names in self.generator.calls.unresolved.values() for token in names})
         require(not unresolved, f'unresolved names: {unresolved}')
         manifest = {
-            'commit': self.evidence.commit, 'entry': ENTRY, 'bar': BAR,
+            'commit': self.evidence.commit, 'entry': ENTRY, 'rulings': RULINGS, 'bar': BAR,
             'calibration_directory': self.directory.relative_to(ROOT).as_posix(),
             'evidence_verification': 'all evidence bytes equal git show',
             'hash_rule': 'SHA-256, lower-case hexadecimal, of the UTF-8 text "jev-calibration <Pnn> <ref>" '
@@ -3048,7 +3077,8 @@ def calibration_file(path: Path) -> tuple[str, list[dict], bytes]:
         for role, listed in zip(('control', 'plant'), CALIBRATION_LISTS[name][book]):
             got = {ref for ref, r in zip(refs, roles) if r == role and heath.parse_ref(ref).book == book}
             require(got == set(listed.split()),
-                    f'{path.name}: Book {book} {role}s {sorted(got)}, not the entry\'s {listed}')
+                    f'{path.name}: Book {book} {role}s {sorted(got)}, not {listed}, the list of '
+                    f'{ENTRY} as {RULINGS} restates the lists')
     for row, role in zip(rows, roles):
         require(row['item'] == spec.item and row['id'] == f'{spec.item:02d}-{row["ref"]}-{spec.suffix}'
                 and row.get('seeded') is (role == 'plant')
