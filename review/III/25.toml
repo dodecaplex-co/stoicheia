@@ -84,10 +84,10 @@ every_case = true
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:239c66918e1815cb"
-run = "brief 0005 stage 5, ship R3 (#29); lines 92, 174 and 194 of Prop25.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4063cad6"
+commit = "8a2784a25"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:b46dcbfc22a2ad9e"
+run = "brief 0005 stage 5, ship R3 (#29); lines 92, 174 and 194 of Prop25.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4063cad6; card #153, ship C7: re-read in full after a check of of_circle's earlier statement was added (written by Claude), by GPT-6 Astra (Codex), reader C7-t153-rev, at 8a2784a25"
 text = "sha256:fea6a4327f6ad99c"
 
 [review.items]
