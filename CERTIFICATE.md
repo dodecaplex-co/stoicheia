@@ -144,7 +144,7 @@ What the proofs show:
 | ✅ | [III.8](book/III/08.md) | whole | Euclid's, two steps changed | I.4, I.20, I.21, I.24, III.1 | I.4, I.20, I.21, I.23, I.24, III.2 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 12 | 24 |
 | ✅ | &emsp;[III.8 general](book/III/08.md#general) |  |  |  | I.4, I.23, III.8 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 31 |
 | ✅ | [III.9](book/III/09.md) | whole | Euclid's | I.8, III.1 Por. | I.8, I.10, I.13, I.17, III.1 Por., III.2 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 9 | 22 |
-| ✅ | [III.10](book/III/10.md) | whole | Euclid's, one step changed | III.1 Por., III.5 | I.10, I.11, I.13, I.17, III.1 Por., III.2 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 23 |
+| ✅ | [III.10](book/III/10.md) | whole | Euclid's, one step changed | III.1 Por., III.5 | I.10, I.11, I.13, I.17, III.1 Por., III.2 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 7 | 24 |
 | ✅ | [III.11](book/III/11.md) | whole | Euclid's |  | I.20, III.2, III.6 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 10 | 20 |
 | ✅ | [III.12](book/III/12.md) | whole | the text's | I.20 | I.20, III.6 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 8 | 21 |
 | ✅ | [III.13](book/III/13.md) | whole | Euclid's | III.2, III.11 | III.2, III.11 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 22 |
@@ -161,6 +161,10 @@ What the proofs show:
 | ✅ | [III.17](book/III/17.md) | whole | Euclid's, one step changed | I.4, III.1, III.16 Por. | I.4, I.11, I.13, III.16 Por. | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 9 | 22 |
 | ✅ | &emsp;[III.17 general](book/III/17.md#general) |  |  |  | I.11, III.16 Por., III.17 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 27 |
 | ✅ | [III.18](book/III/18.md) | whole | Euclid's | I.17, I.19 | I.12, I.17, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 6 | 16 |
+| ✅ | &emsp;[III.18 acute](book/III/18.md#acute) |  |  |  | III.16 acute, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 25 |
+| ✅ | &emsp;[III.18 contact_locallyEqual](book/III/18.md#contact_locallyEqual) |  |  |  | I.12, I.17, I.19, III.2, III.16, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 32 |
+| ✅ | &emsp;[III.18 contact_lt](book/III/18.md#contact_lt) |  |  |  | I.12, I.17, I.19, I.20, III.2, III.16, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 34 |
+| ✅ | &emsp;[III.18 semicircle_gt](book/III/18.md#semicircle_gt) |  |  |  | I.12, I.17, I.19, I.20, III.2, III.16, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 34 |
 | ✅ | [III.19](book/III/19.md) | whole | Euclid's | III.18 | I.13, III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 30 |
 | ✅ | [III.20](book/III/20.md) | whole | Euclid's | I.5, I.32 | I.5, I.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 11 | 24 |
 | ✅ | [III.21](book/III/21.md) | whole | Euclid's, one step changed | III.20 | III.2, III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 10 | 26 |
