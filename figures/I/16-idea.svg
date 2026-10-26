@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.16 at a glance</title>
-  <desc>Extend one side of a triangle past a corner: the outside angle there (red) is greater than either of the two inside angles across from it (yellow and blue).</desc>
+  <desc>Produce one side of a triangle: the exterior angle (red) is greater than either of the interior and opposite angles (yellow and blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M245.0,223.1 L277.0,223.1 A32,32 0 0,0 239.4,191.6 Z" fill="#d0312d"/>
   <path d="M219.2,76.9 L194.7,97.5 A32,32 0 0,0 224.8,108.4 Z" fill="#f2b705"/>
