@@ -45,8 +45,9 @@ not a pass); and 2 when it cannot begin. It needs Python 3.11 or later, `lake` o
 PATH, and the commits the records name, so a full clone rather than a shallow one. Before
 any check runs it asks Lake, with `lake build --no-build Elements Audit`, whether the
 build is current, since the Lean the checks ask is the build and not the sources; when
-Lake says it is not, the script says why and what to build, and exits 2 with nothing
-written.
+Lake says it is not, by its exit 3, the script says why and what to build, and exits 2
+with nothing written; and when Lake cannot answer (any other exit, a toolchain or
+lakefile problem, say), it says so, and exits 2 as well.
 
 The script stands on the checks already in place rather than restating them:
 `check_fidelity.py`'s functions, `check_style.py`, `check_links.py`, `check_kernel.py`,
@@ -63,9 +64,10 @@ listing each; and 2 when a file cannot be read in the verdict format, or the two
 different copies of the script by their hashes. CI uses both options.
 
 `--check-current` runs no check and needs no Lean: it reads the report as HEAD holds it,
-and exits 0 when that report is a run of every item on a commit from which HEAD differs in
-nothing but the report, with no change of any kind left in the worktree; 1, giving each
-reason, when it is not; and 2 when it cannot begin. It is a release step, not one of CI's
+and exits 0 when that report is a run of every item on a commit that HEAD descends from
+and differs from in nothing but the report, with no change of any kind left in the
+worktree; 1, giving each reason, when it is not; and 2 when it cannot begin. It reads the
+report, not the run that wrote it. It is a release step, not one of CI's
 ([In CI](#in-ci)).
 
 ## In CI
@@ -123,9 +125,10 @@ of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10: the c
 passes in CI with no failures. Any other value fails the job before the checklist runs,
 so that no misspelling turns the gate off. At the release candidate the report is
 regenerated on a freshly built tree and committed, and `--check-current` passes, as step
-10 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, says; an
-ordinary pull request is not held to it, for only the release candidate's head has the
-full build and run the report needs.
+10 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, says.
+Every pull request's job has the build and the run, but only the release candidate is
+held to committing the regenerated report, so an ordinary pull request is not held to
+`--check-current`.
 
 The distinction between GitHub's five required checks and the merge gate's local presence
 test, including what a skipped job means, is in

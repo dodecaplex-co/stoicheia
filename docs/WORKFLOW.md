@@ -1077,14 +1077,13 @@ looked into.
     `python3 scripts/check_acceptance.py --check-current` all pass: CI runs the first on
     every pull request, and the coordinator runs the other two on the head that `--merge`
     merges and again just before the tag, and the pull request quotes the screen's closing
-    lines. The
-    screen's check needs no Lean, but any change to the library makes it fail, and only a
-    run, with Lean and about an hour and a half of processor time, may make it pass again;
-    so it is a release step, not one of CI's. The check reads the record, not the run, so
-    it cannot tell a record written by hand from a run's, and the security review reads the
-    run's closing lines, which the pull request quotes. `Audit/` and `tests/` are
-    protected, so the release's decisions entry names each file the runs and their records
-    change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
+    lines. The screen's check needs no Lean, but any change to the library makes it fail,
+    and only a run, with Lean and about an hour and a half of processor time, may make it
+    pass again; so it is a release step, not one of CI's. The check reads the record, not
+    the run, so it cannot tell a record written by hand from a run's, and the security
+    review reads the run's closing lines, which the pull request quotes. `Audit/` and
+    `tests/` are protected, so the release's decisions entry names each file the runs and
+    their records change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
     `Audit/screen-run.toml` and `Audit/screen.py`. Then the notes are drafted from the
     generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
     made.

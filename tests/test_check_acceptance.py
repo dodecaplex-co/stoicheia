@@ -31,17 +31,23 @@ these cases put it to small files of verdicts, each with the outcome it should g
   read fails E6 on its line, and the same import only in a comment, a remark or a string
   ties the file to nothing;
 * a checking run asks Lake first whether Elements and Audit are built and current: Lake's
-  `--no-build` exiting 3, a stale build, stops it with exit 2, saying why, before any
-  check runs and with no report or verdicts written; exiting 0 lets it go on; with no
-  `lake` to run it goes on as before, and Lake with no answer stops it; and --compare
-  and --check-current never ask;
+  `--no-build` exiting 3, a stale Audit build, stops it with exit 2, saying why on
+  stdout, before any check runs and with no report or verdicts written; so do Lake's exit
+  1, said to be Lake unable to answer and not a stale build, a `lake` that cannot be
+  started, and Lake with no answer; exiting 0 lets it go on; with no `lake` to run it goes
+  on as before; and --compare and --check-current never ask;
 * --check-current, on a repository of its own: a report committed after the commit it
-  names is current, and so it stays when a later commit changes the report alone; a later
-  commit of any other file, a change not committed anywhere (the report's own too, or a
-  file untracked), a `--quick` run, a report of changes not committed, or a revision that
-  is no commit of HEAD's history, is not, exit 1; no git checkout, no report at HEAD, or
-  one without its marker, its Revision line or its Run line, cannot begin, exit 2; and it
-  takes no other option.
+  names is current, and so it stays when a later commit changes the report alone, and
+  when main, unmoved, merges the candidate with `--no-ff`; a later commit of any other
+  file, or a merge after main moved, a rename onto the report's path or off it, a change
+  not committed anywhere (the report's own too, or a file untracked), a file the index
+  marks assume-unchanged or skip-worktree, a `--quick` run or a Run line of neither kind,
+  a report of changes not committed, a revision that names no commit, or is no commit of
+  HEAD's history, a branch or tag named as its digits included, or a revision that a
+  `git replace` stands in for, is not, exit 1; and revision(), the generator's own walk,
+  takes a rename onto the report as a change to another file; no git checkout, no report
+  at HEAD, or one not UTF-8, or without its marker, its Revision line or its Run line,
+  cannot begin, exit 2; and it takes no other option.
 
 CI runs this file before the checker. Python 3.11 or later; standard library, with sh and
 rsync for scripts/copy_acceptance_checks.sh, the helper the workflow runs.
@@ -619,11 +625,20 @@ class StaleBuild(unittest.TestCase):
 
     checks = ("check_certificate", "load_records", "check_propositions", "check_review_items",
               "check_books", "check_style_rules", "check_links", "check_runs")
-    # What Lake printed, and its exit 3, on a tree whose build is older than its sources.
-    stale = ("✖ [2/195] Building Elements.Foundations.Words\n"
+    # Lake's exit 3, and lines in the form it prints them, on a tree whose Audit build is
+    # older than its sources: it names the first modules it would build.
+    stale = ("✖ [178/195] Building Audit.Overlaps\n"
+             "error: target is out-of-date and needs to be rebuilt\n"
+             "✖ [183/195] Building Audit.Crossing\n"
+             "error: target is out-of-date and needs to be rebuilt\n"
+             "✖ [190/195] Building Audit.Centre\n"
              "error: target is out-of-date and needs to be rebuilt\n"
              "Some required targets logged failures:\n"
-             "- Elements.Foundations.Words\n")
+             "- Audit.Overlaps\n"
+             "- Audit.Crossing\n"
+             "- Audit.Centre\n")
+    # Lake's exit 1, and what it printed, with a lakefile it cannot read.
+    unread = "error: lakefile.toml:3:0: error: unexpected end of input; expected ']'\n"
 
     def setUp(self):
         self.dir = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
@@ -639,7 +654,8 @@ class StaleBuild(unittest.TestCase):
 
     def lake(self, answer):
         """subprocess.run, with `lake` answering `answer`: its exit and what it printed, or
-        an exception to raise (no `lake` to run, or no answer in time)."""
+        an exception to raise (no `lake` to run, one that cannot be started, or no answer
+        in time)."""
         real = subprocess.run
 
         def run(argv, **kw):
@@ -667,14 +683,40 @@ class StaleBuild(unittest.TestCase):
                 code, out, err = self.check(*extra)
                 self.assertEqual(code, 2, out + err)
                 self.assertEqual(self.asked, [(ca.CURRENT_BUILD, ca.ROOT)])
-                self.assertIn("cannot begin: `lake build --no-build Elements Audit` exits 3", err)
-                self.assertIn("\n  - Elements.Foundations.Words\n", err)
+                self.assertIn("cannot begin: `lake build --no-build Elements Audit` exits 3: "
+                              "Lake does not find Elements and Audit built and current", out)
+                for module in ("Audit.Overlaps", "Audit.Crossing", "Audit.Centre"):
+                    self.assertIn(f"\n  - {module}\n", out)
                 self.assertIn("`lake build`, `lake build Audit`, then `lake env lean "
-                              "Certificate/Facts.lean`", err)
-                self.assertEqual(out, "")
+                              "Certificate/Facts.lean`", out)
+                self.assertEqual(err, "")
                 self.assertEqual(self.ran, [])
                 self.assertFalse(self.report.exists())
                 self.assertFalse(self.verdicts.exists())
+
+    def test_lake_unable_to_answer_stops_the_run(self):
+        # An exit but 0 or 3 is Lake unable to answer, and not a stale build; a `lake`
+        # that exists but cannot be started is no answer either, and not "no `lake`".
+        cases = {
+            "exit 1": ((1, self.unread),
+                       "`lake build --no-build Elements Audit` exits 1: Lake could not answer "
+                       "whether the build is current (a toolchain or lakefile problem, say)"),
+            "cannot start": (PermissionError(13, "Permission denied", "lake"),
+                             "`lake build --no-build Elements Audit` could not be started "
+                             "([Errno 13] Permission denied: 'lake')"),
+        }
+        for what, (answer, said) in cases.items():
+            with self.subTest(what=what), self.lake(answer):
+                code, out, err = self.check()
+                self.assertEqual(code, 2, out + err)
+                self.assertIn(f"cannot begin: {said}", out)
+                self.assertNotIn("does not find Elements and Audit built", out)
+                self.assertEqual(err, "")
+                self.assertEqual(self.ran, [])
+                self.assertFalse(self.report.exists())
+                self.assertFalse(self.verdicts.exists())
+                if what == "exit 1":
+                    self.assertIn(f"Lake printed:\n  {self.unread}", out)
 
     def test_a_current_build_lets_the_run_go_on(self):
         with self.lake((0, "")):
@@ -696,7 +738,7 @@ class StaleBuild(unittest.TestCase):
         with self.lake(FileNotFoundError(2, "No such file or directory", "lake")):
             code, out, err = self.check()
         self.assertEqual(code, 0, out + err)
-        self.assertNotIn("cannot begin", err)
+        self.assertNotIn("cannot begin", out + err)
         self.assertEqual(self.ran, list(self.checks))
         self.assertTrue(self.report.exists())
 
@@ -704,7 +746,7 @@ class StaleBuild(unittest.TestCase):
         with self.lake(subprocess.TimeoutExpired(ca.CURRENT_BUILD, ca.BUILD_TIMEOUT)):
             code, out, err = self.check()
         self.assertEqual(code, 2, out + err)
-        self.assertIn(f"did not answer in {ca.BUILD_TIMEOUT} seconds", err)
+        self.assertIn(f"did not answer in {ca.BUILD_TIMEOUT} seconds", out)
         self.assertEqual(self.ran, [])
         self.assertFalse(self.report.exists())
 
@@ -790,6 +832,70 @@ class CheckCurrent(unittest.TestCase):
                       "report: Audit.lean, Elements.lean", out)
         self.assertIn("Regenerate it on a freshly built tree", out)
 
+    def release(self) -> tuple[str, str]:
+        """Main's branch, and the candidate: a branch `release` from it, with a change to
+        the library and then its report, committed by itself."""
+        main = self.git("branch", "--show-current")
+        self.git("checkout", "-q", "-b", "release")
+        candidate = self.commit("The release", "Elements.lean", "-- the library, released\n")
+        self.commit("The report", self.where, self.regenerate())
+        return main, candidate
+
+    def test_a_merge_of_the_candidate_into_an_unmoved_main_is_current(self):
+        # HEAD is compared with the report's revision tree to tree. revision()'s walk of
+        # first parents names main's merge commit itself, for it differs from its first
+        # parent in all that the release changed.
+        main, candidate = self.release()
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+        self.git("checkout", "-q", main)
+        self.git("merge", "-q", "--no-ff", "-m", "Merge the release", "release")
+        merged = self.git("rev-parse", f"--short={ca.REVISION_DIGITS}", "HEAD")
+        self.assertEqual(ca.revision(ca.REPORT), f"`{merged}`")
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"a run of every item on `{candidate}`", out)
+
+    def test_a_merge_after_main_moved_first_is_not_current(self):
+        main, candidate = self.release()
+        self.git("checkout", "-q", main)
+        self.commit("Main moves first", "Other.lean", "-- another file\n")
+        self.git("merge", "-q", "--no-ff", "-m", "Merge the release", "release")
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"HEAD differs from its revision `{candidate}` in more than the "
+                      "report: Other.lean\n", out)
+
+    def test_a_rename_onto_the_report_or_off_it_is_seen(self):
+        # Git's rename detection shows a file moved onto the report's path as the report
+        # alone; with --no-renames the file it left is seen too, here and in revision()'s
+        # walk. A rename off the path, with a new report written there, adds a file.
+        draft = self.commit("A draft of the report", "draft.md", self.regenerate())
+        self.write(self.where, self.regenerate())
+        self.git("rm", "-q", "draft.md")
+        self.git("add", "--", self.where)
+        self.git("commit", "-q", "-m", "The draft becomes the report")
+        self.assertRegex(self.git("diff", "--name-status", "HEAD^", "HEAD"),
+                         rf"^R\d+\tdraft\.md\t{re.escape(self.where)}$")
+        moved = self.git("rev-parse", f"--short={ca.REVISION_DIGITS}", "HEAD")
+        self.assertEqual(ca.revision(ca.REPORT), f"`{moved}`")
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"HEAD differs from its revision `{draft}` in more than the report: "
+                      "draft.md\n", out)
+        self.git("reset", "-q", "--hard", self.library)
+        self.commit("The report", self.where, self.regenerate())
+        grown = self.commit("More library", "Elements.lean", "-- the library, grown\n")
+        text = self.regenerate()
+        self.git("mv", self.where, "docs/reports/old.md")
+        self.write(self.where, text)
+        self.git("add", "--", self.where)
+        self.git("commit", "-q", "-m", "The report moved off, and a new one")
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"HEAD differs from its revision `{grown}` in more than the report: "
+                      "docs/reports/old.md\n", out)
+
     def test_a_change_not_committed_anywhere_is_not_current(self):
         # The report is read as HEAD holds it: changed or deleted in the working copy, it
         # is still read, and its change is one more change not committed.
@@ -814,6 +920,25 @@ class CheckCurrent(unittest.TestCase):
                     self.assertIn("notes/draft.md (untracked)", out)
                 self.git("reset", "-q", "--hard")
                 self.git("clean", "-q", "-f", "-d")
+                self.assertEqual(self.check()[0], 0)
+
+    def test_a_file_the_index_marks_is_not_current(self):
+        # A file marked assume-unchanged or skip-worktree is not compared with the
+        # worktree, so `git status` shows no change in it, changed or not.
+        self.commit("The report", self.where, self.regenerate())
+        for mark in ("assume-unchanged", "skip-worktree"):
+            with self.subTest(mark=mark):
+                self.write("Elements.lean", "-- changed, and hidden\n")
+                self.git("update-index", f"--{mark}", "--", "Elements.lean")
+                self.assertEqual(self.git("status", "--porcelain"), "")
+                code, out = self.check()
+                self.assertEqual(code, 1, out)
+                self.assertIn("the index marks files that git does not compare with the "
+                              "worktree", out)
+                self.assertIn("cannot be shown to have no change: Elements.lean;", out)
+                self.assertNotIn("the worktree has changes", out)
+                self.git("update-index", f"--no-{mark}", "--", "Elements.lean")
+                self.git("checkout", "--", "Elements.lean")
                 self.assertEqual(self.check()[0], 0)
 
     def test_a_quick_run_is_not_current(self):
@@ -848,6 +973,56 @@ class CheckCurrent(unittest.TestCase):
                 self.assertEqual(code, 1, out)
                 self.assertIn(f"its revision `{digits}` {why}", out)
 
+    def test_a_branch_or_tag_named_as_the_revision_is_not_its_commit(self):
+        # Git reads a name as a branch or a tag before it reads it as a short hash: one
+        # named as the report's digits, at a commit with the same files, is not the commit
+        # the report names.
+        digits = "a" * ca.REVISION_DIGITS
+        self.commit("A report of no commit", self.where,
+                    self.regenerate().replace(f"`{self.library}`", f"`{digits}`"))
+        for kind in ("branch", "tag"):
+            with self.subTest(kind=kind):
+                self.git(kind, digits, self.library)
+                self.assertEqual(self.git("rev-parse", f"{digits}^{{commit}}"),
+                                 self.git("rev-parse", self.library))
+                code, out = self.check()
+                self.assertEqual(code, 1, out)
+                self.assertIn(f"its revision `{digits}` is not one commit of this repository",
+                              out)
+                self.git(kind, "-d", digits)
+
+    def test_a_replacement_of_the_revision_is_not_read(self):
+        # `git replace` can make the revision read as a commit carrying HEAD's files; the
+        # check runs git with GIT_NO_REPLACE_OBJECTS=1.
+        self.commit("The report", self.where, self.regenerate())
+        self.commit("More library", "Elements.lean", "-- the library, grown\n")
+        self.assertEqual(self.check()[0], 1)
+        stand_in = self.git("commit-tree", "HEAD^{tree}", "-m", "A stand-in")
+        self.git("replace", self.git("rev-parse", self.library), stand_in)
+        self.assertEqual(self.git("diff", "--name-only", self.library, "HEAD"), "")
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"HEAD differs from its revision `{self.library}` in more than the "
+                      "report: Elements.lean\n", out)
+
+    def test_a_revision_or_a_run_line_it_cannot_take_is_not_current(self):
+        text = self.regenerate()
+        cases = {
+            "no commit": (text.replace(f"`{self.library}`", "not a git checkout"),
+                          "it names no commit: its revision is \"not a git checkout\""),
+            "a run of neither kind": (text.replace("- **Run:** every item.",
+                                                   "- **Run:** some of the items."),
+                                      "it is not a run of every item: its Run line says "
+                                      "\"some of the items.\""),
+        }
+        for what, (bad, why) in cases.items():
+            with self.subTest(what=what):
+                self.commit(f"A report of {what}", self.where, bad)
+                code, out = self.check()
+                self.assertEqual(code, 1, out)
+                self.assertIn(why, out)
+                self.assertNotIn("`--quick`", out)
+
     def test_what_it_cannot_read_cannot_begin(self):
         code, out = self.check()
         self.assertEqual(code, 2, out)
@@ -867,6 +1042,13 @@ class CheckCurrent(unittest.TestCase):
                 code, out = self.check()
                 self.assertEqual(code, 2, out)
                 self.assertIn(f"is not a report this script writes: {why}", out)
+        with self.subTest(without="UTF-8"):
+            (self.root / self.where).write_bytes(ca.GENERATED.encode() + b"\n\xff\xfe\n")
+            self.git("add", "--", self.where)
+            self.git("commit", "-q", "-m", "A report not UTF-8")
+            code, out = self.check()
+            self.assertEqual(code, 2, out)
+            self.assertIn(f"cannot begin: HEAD's {self.where} is not UTF-8", out)
         # No git checkout, then a repository with no commit.
         elsewhere = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
         with patch.object(ca, "ROOT", elsewhere), \
