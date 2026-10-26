@@ -2075,11 +2075,12 @@ def index(book, count, titles, facts, records):
 FRONT_LEAN_I = {
     "Definitions": {
         1: "`Point`",
-        2: "none: `Line` is the straight line of Def. I.4, and no Lean word is a line in "
-           "general, curved or straight; the curved lines it has are circles and their arcs "
-           "(`Arc`, Def. III.6)",
-        3: "none: `Line` is the straight line of Def. I.4, whole and without ends; a finite "
-           "straight line AB is given by its ends, the points A and B",
+        2: "none for a line in general, curved or straight: `Line` is the straight line of "
+           "Def. I.4, and the curved lines are the circumference of a `Circle` (`OnCircle`) "
+           "and its arcs (`Arc`, Def. III.6)",
+        3: "none for a line in general: `Line`, the straight line of Def. I.4, is whole and "
+           "without ends, and a finite straight line AB is given by its ends, the points A "
+           "and B",
         4: "`Line`", 5: "none", 6: "none", 7: "none",
         8: "`∠ A B C`, the rectilineal angle of Def. I.9, and `MixedAngle`, an angle contained "
            "by a straight line and a circumference (Def. III.7; III.16, III.31); no Lean word "
@@ -2118,8 +2119,8 @@ FRONT_LEAN_I = {
             "of the two angles at the ends of the side on which the perpendicular falls",
         22: "`Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus, "
             "none; rhomboid, `Parallelogram` (I.34), which counts the others too; a trapezium, "
-            "by its area alone (I.35): `quadArea A B C D`, the two triangles its diameter AC "
-            "cuts it into",
+            "by its area alone (I.35): `quadArea A B C D`, the areas together of the two "
+            "triangles its diameter AC cuts it into",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
@@ -2156,8 +2157,8 @@ FRONT_LEAN_III = {
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
 # Euclid's definitions include words with no Lean partner, such as Definition III.10's
 # sector, so every front page says only that the Lean proofs never use those words.
-# Helpers such as `Prop1.figure` are named for the diagram: Definition I.14's figure has
-# no Lean partner either.
+# Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14's
+# figure.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
