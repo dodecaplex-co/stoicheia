@@ -23,9 +23,10 @@
   page changes; III.35's record sets it in a train of its own, after this check lands, as
   WORKFLOW section 10 asks.
 
-  This entry approves `scripts/heath.py` with the new key `some_cases` and its three new
-  refusals: a `some_cases = true` with no `case`, one with no `note`, and the key beside
-  `every_case`. This entry approves `scripts/render.py` with the caption's third
+  This entry approves `scripts/heath.py` with the new key `some_cases` and its four new
+  refusals: a value that is not true or false, a `some_cases = true` with no `case`, one
+  with no `note`, and the key beside `every_case`. This entry approves
+  `scripts/render.py` with the caption's third
   lead, "Drawn for some of its cases". This entry approves `tests/test_check_style.py`
   with its new cases in `FigureCaption`: the caption with `some_cases`, a record read with
   it, and the records refused. Each of the fourteen new cases passes with this change.
