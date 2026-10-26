@@ -20,9 +20,11 @@
   The folded heading over the Lean before a main theorem counted every declaration as a
   lemma: I.4's "14 lemmas" are two inductive types and twelve abbreviations. The headings
   before and after the theorem now count each declaration by its own keyword, definitions
-  apart from what is proved ("14 definitions"; "12 definitions and one lemma"). They count
-  the named declarations they list; an anonymous instance is in the listing but not in the
-  count, as before.
+  apart from what is proved ("14 definitions"; "12 definitions and one lemma"), and a
+  `private` declaration is read as any other, where it was left out before (I.13's three
+  lemmas beside the proposition, not one; III.2's six, not four). They count the named
+  declarations they list; an anonymous instance is in the listing but not in the count,
+  as before.
 
   The line over every commentary echoed the refrain that [STYLE](../STYLE.md), section 3,
   retires ("what Lean made us say out loud") and promised a modern way on pages that have
@@ -56,9 +58,11 @@
 
   This entry approves the change to `scripts/render.py`: `in_lean_line`, `book_summary`,
   `bracketed_key` and the three keys that use it, `representation_badge` with
-  `BADGE_WORDS` and `statement_names`, `counted`, `certificate_row`, `LeanParts` with
+  `BADGE_WORDS` and `statement_names`, `counted`, `certificate_row`, `DECLARATION` and
+  `DECLARATION_KEYWORDS`, `use_self_check` with `DECLARATION_CASES`, `LeanParts` with
   `DECLARATION_KIND`, `lean_listing`, `axiom_kind`, the list of kinds in the page's rules
   and `MISHNAH_LEAD`.
 
   This entry approves the change to `review/terms.toml`: the list in the meaning of
-  `angle-measure`.
+  `angle-measure`, and the comment at its head, which now says that the renderer may keep
+  a badge to the statements that use its representation.
