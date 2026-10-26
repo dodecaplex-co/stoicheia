@@ -172,9 +172,9 @@ and for `axiom_types["Postulate1"]`,
 ∀ (A B : Elements.Point), Ne A B → Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (Elements.OnLine B L)
 ```
 
-`heath.fingerprint` of III.16's statement followed by III.16 Por.'s is
-`sha256:9fd59073303dbcdc`, and of I.40's `sha256:5ea666d96871b7f8`; an implementation
-can be checked against these.
+The [worked examples](../review/SCHEMA.md#worked-examples) give
+`heath.review_fingerprint` test values for III.16 and I.40; an implementation can be
+checked against them.
 
 ## The vocabulary
 
