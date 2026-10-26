@@ -57,6 +57,7 @@
 "Tacit.not_on_line_of_same_side" = "not_on_line_of_same_side"
 "Tacit.on_line_of_area_eq_zero" = "on_line_of_area_eq_zero"
 "Tacit.pasch2" = "pasch2"
+"Tacit.radius_ne_zero" = "radius_ne_zero"
 "Tacit.same_ray_of_angle_eq_zero" = "same_ray_of_angle_eq_zero"
 "Tacit.same_side_trans" = "same_side_trans"
 # The restricted rule follows from the tested placement with its kept side.

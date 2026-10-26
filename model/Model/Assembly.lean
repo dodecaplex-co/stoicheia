@@ -34,7 +34,7 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-All 48 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
+All 49 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
 `model_exists` follows from it.
 -/
 
@@ -89,6 +89,7 @@ theorem euclidean_laws : Laws Euclidean.plane where
   not_on_line_of_same_side := Euclidean.not_on_line_of_same_side
   on_line_of_area_eq_zero := Euclidean.on_line_of_area_eq_zero
   pasch2 := Euclidean.pasch2
+  radius_ne_zero := Euclidean.radius_ne_zero
   same_ray_of_angle_eq_zero := Euclidean.same_ray_of_angle_eq_zero
   same_side_trans := Euclidean.same_side_trans
   superposition := Euclidean.superposition

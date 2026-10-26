@@ -155,4 +155,10 @@
 # less that one line, with 262 words of vocabulary; every other axiom and every word is
 # unchanged, byte for byte. Its law leaves laws.toml, search.py and hyperbolic.py, and
 # derived.py keeps checking it as derived.outside_of_between.
-4a48491e378586c3439dfc41c10890517643bc3c0985a20178e397e6328c11c1  Certificate/axioms.lock
+#
+# Renewed on 26 October 2026, when the rule that a radius is not nothing,
+# Tacit.radius_ne_zero, joined the axioms by the owner's decision of 25 October 2026 (#473):
+# 49 axioms, the other 48 and the 262 words of the vocabulary unchanged, byte for byte. Its
+# law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
+# counts, in the same change; run.py --full --write rewrites the results.
+5570bfb411ea8f03e33d8a0305ff81415408a8e893ce0979b35b2e7a214efd08  Certificate/axioms.lock

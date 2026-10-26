@@ -207,6 +207,8 @@ example : Law.Tacit.on_line_of_area_eq_zero original =
 
 example : Law.Tacit.pasch2 original = type_of% @Elements.Tacit.pasch2 := rfl
 
+example : Law.Tacit.radius_ne_zero original = type_of% @Elements.Tacit.radius_ne_zero := rfl
+
 example : Law.Tacit.same_ray_of_angle_eq_zero original =
     type_of% @Elements.Tacit.same_ray_of_angle_eq_zero := rfl
 

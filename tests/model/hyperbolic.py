@@ -1070,6 +1070,14 @@ def _(c):
     return ch2(c['A'], c['B']) == ch2(c['B'], c['A'])
 
 
+@axiom('radius_ne_zero', dict(A=P, B=P, al=C_), gs_circ_pts)
+def _(c):
+    A, B, al = c['A'], c['B'], c['al']
+    if not (is_centre(A, al) and on_circle(B, al)):
+        return None
+    return ch2(A, B) != 1
+
+
 @axiom('angle_symm', dict(A=P, B=P, C=P))
 def _(c):
     A, B, C = c['A'], c['B'], c['C']

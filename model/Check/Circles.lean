@@ -6,6 +6,7 @@ import Elements.Foundations.Postulates
 import Elements.Foundations.Definitions
 import Elements.Foundations.Tacit.Constructions
 import Elements.Foundations.Tacit.Diagram
+import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Transfer
 import Check.Hand
 import Check.Generator
@@ -46,6 +47,7 @@ example : circle_eq_circles original = type_of% @Elements.Tacit.circle_eq := rfl
 example : inside_of_len_lt_circles original = type_of% @Elements.Tacit.inside_of_len_lt := rfl
 example : len_lt_of_inside_circles original = type_of% @Elements.Tacit.len_lt_of_inside := rfl
 example : on_circle_of_len_eq_circles original = type_of% @Elements.Tacit.on_circle_of_len_eq := rfl
+example : radius_ne_zero original = type_of% @Elements.Tacit.radius_ne_zero := rfl
 
 /-! ## System E's Circle 1 to 4 -/
 
@@ -90,6 +92,8 @@ run_cmd (Check.Generator.comparePlanted ``Model.Hand.len_lt_of_inside_circles
   ``Elements.Tacit.len_lt_of_inside)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.on_circle_of_len_eq_circles
   ``Elements.Tacit.on_circle_of_len_eq)
+example (S : Model.Signature) : Model.Hand.radius_ne_zero S =
+    Model.Law.Tacit.radius_ne_zero S := rfl
 example (S : Model.Signature) : Model.Hand.between_of_inside_chord S =
     Model.Law.Tacit.between_of_inside_chord S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_between
