@@ -86,10 +86,12 @@ import argparse
 import ast
 import contextlib
 import copy
+import datetime as dt
 import hashlib
 import importlib.util
 import io
 import json
+import math
 import os
 import re
 import stat
@@ -3009,6 +3011,16 @@ SHAPE_ERROR = 'the answer is not the shape TypeSafe documents ('
 SVG_WIDTH = 700
 
 
+def valid_run_time(value: Any) -> bool:
+    if not isinstance(value, str) or not RUN_TIME.fullmatch(value):
+        return False
+    try:
+        dt.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+    except ValueError:
+        return False
+    return True
+
+
 def calibration_file(path: Path) -> tuple[str, list[dict], bytes]:
     """A calibration question file, as --calibration writes it, of exactly its shape: 20 rows of
     one question, 10 controls and 10 plants, each proposition once, on the entry's lists, each
@@ -3079,9 +3091,10 @@ def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bo
             f'input_rows {line["input_rows"]!r})')
     require(line['order_check'] is True, f'{where}: asked without the order check')
     status = line['status']
-    require(isinstance(line['time'], str) and RUN_TIME.fullmatch(line['time'])
+    latency = line['latency_s']
+    require(valid_run_time(line['time'])
             and isinstance(line['model_requested'], str) and line['model_requested'].strip()
-            and jev._number(line['latency_s']) and line['latency_s'] >= 0
+            and type(latency) is float and math.isfinite(latency) and latency >= 0
             and (status is None or type(status) is int and 100 <= status <= 599),
             f'{where}: its time, model asked for, latency or status is not as jev.py run writes it')
     require(isinstance(line['request_sha256'], str) and FINGERPRINT.fullmatch(line['request_sha256'])
@@ -3094,6 +3107,24 @@ def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bo
         require('error' in line, f'{where}: a failed request without an error; not a line that jev.py run writes')
         error = line['error']
         if status == 200:
+            partial = set(line) & PARTIAL_FIELDS
+            require(partial in (set(), {'model'}, set(PARTIAL_FIELDS)),
+                    f'{where}: its partial answer fields are not a stage jev.py run writes')
+            if partial == {'model'}:
+                require(not jev._model_id(line['model']),
+                        f'{where}: its partial answer is not as jev.py run writes it')
+            elif partial:
+                require(jev._model_id(line['model']),
+                        f'{where}: its partial answer is not as jev.py run writes it')
+                reply = {'answers': {'q': {key: line[key]
+                                           for key in ('choice', 'probabilities', 'confidence')}}}
+                try:
+                    first = jev.answer_of(reply, 'q', row['question'])
+                except (ValueError, KeyError, TypeError, AttributeError, ArithmeticError,
+                        RecursionError):
+                    raise Refusal(f'{where}: its partial answer is not as jev.py run writes it') from None
+                require(first == {key: line[key] for key in first},
+                        f'{where}: its partial answer is not as jev.py run writes it')
             written = isinstance(error, str) and error.startswith(SHAPE_ERROR) and 'body' in line
         elif status:
             written = error == f'HTTP {status}'

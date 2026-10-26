@@ -2075,6 +2075,60 @@ class Tally(TallyLines, unittest.TestCase):
                 lines[k] = self.failed(self.rows[k], request_status)
                 self.refused(lines, 'latency or status is not as jev.py run writes it')
 
+    def test_impossible_times_and_latencies_are_refused(self):
+        changes = ({'time': '2026-99-99T99:99:99Z'},
+                   {'time': '2026-02-29T00:00:00Z'},
+                   {'time': '2026-10-26T24:00:00Z'},
+                   {'time': '2026-10-26T23:60:00Z'},
+                   {'time': '2026-10-26T23:59:60Z'},
+                   {'latency_s': 0}, {'latency_s': -0.001})
+        for change in changes:
+            with self.subTest(change=change):
+                lines = self.clean_run()
+                lines[self.by_role('plant')[0]].update(change)
+                self.refused(lines, 'time, model asked for, latency or status')
+
+    def test_only_reachable_partial_answer_stages_are_accepted(self):
+        k = self.by_role('control')[0]
+        row = self.rows[k]
+        answered = self.line(row, row['expected'])
+        error = questions.SHAPE_ERROR + 'reversed answer)'
+        shapes = ({}, {'model': None},
+                  {key: answered[key] for key in ('model', 'choice', 'probabilities', 'confidence')})
+        for partial in shapes:
+            with self.subTest(fields=sorted(partial)):
+                lines = self.clean_run()
+                lines[k] = dict(self.made(row), **partial, error=error, body='malformed reply')
+                status, out, err = self.tally(lines)
+                self.assertEqual(status, 1, out + err)
+                self.assertEqual(err, '')
+                self.assertIn('19 of 20 rows answered; 1 failed requests', out)
+
+    def test_unreachable_partial_answer_stages_are_refused(self):
+        k = self.by_role('plant')[0]
+        row = self.rows[k]
+        answered = self.line(row, row['expected'])
+        fields = ('model', 'choice', 'probabilities', 'confidence')
+        allowed = (set(), {'model'}, set(fields))
+        for mask in range(1 << len(fields)):
+            selected = {field for bit, field in enumerate(fields) if mask & (1 << bit)}
+            if selected in allowed:
+                continue
+            with self.subTest(fields=sorted(selected)):
+                partial = {field: answered[field] for field in selected}
+                lines = self.clean_run()
+                lines[k] = dict(self.made(row), **partial,
+                                error=questions.SHAPE_ERROR + 'partial answer)', body='malformed reply')
+                self.refused(lines, 'partial answer fields are not a stage')
+        for partial in ({'model': answered['model']},
+                        {**{key: answered[key] for key in fields}, 'model': None},
+                        {**{key: answered[key] for key in fields}, 'choice': 'not an option'}):
+            with self.subTest(partial=partial):
+                lines = self.clean_run()
+                lines[k] = dict(self.made(row), **partial,
+                                error=questions.SHAPE_ERROR + 'partial answer)', body='malformed reply')
+                self.refused(lines, 'partial answer is not as jev.py run writes it')
+
     def test_another_model_fails_condition_one(self):
         lines = self.clean_run()
         lines[0] = self.line(self.rows[0], self.rows[0]['expected'], answered_by='jev-1.14.0')
