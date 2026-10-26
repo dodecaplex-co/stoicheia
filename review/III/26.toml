@@ -9,7 +9,7 @@ note = "Euclid's one argument for angles of every size: equal angles at the circ
 
 [representation]
 tags = ["angle-measure"]
-note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc.Congruent`), the congruence through Common Notion 4, as circumferences that coincide. So \"in equal circles\" does real work: in unequal circles equal angles give equal measures, but no congruence. The centres G and H are given, as the enunciation speaks of angles at the centres. The clause given at the centres speaks of the angles BGC, EHF themselves, less than two right angles, as Euclid's are; within the proof the angles at the centres standing on BKC and ELF are of any size (`angleAtCentre`)."
+note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc.Congruent`), the congruence through Common Notion 4, as circumferences that coincide. So \"in equal circles\" does real work: in unequal circles equal angles give equal measures, but no congruence. The centres G and H are given, as the enunciation speaks of angles at the centres. The clause given at the centres speaks of the angles BGC, EHF themselves, less than two right angles, as Euclid's are, and so asks that G lie across BC from K, and H across EF from L, where those angles stand on BKC and ELF; within the proof the angles at the centres standing on BKC and ELF are of any size (`angleAtCentre`)."
 
 [[passage]]
 at = "and the angle at G is equal to the angle at H"
