@@ -1833,3 +1833,10 @@ outside the repository, passes P10 for III.20, III.21 and III.26, and E6, now. O
 failing items, 42 are new against the last run of the #126 branch, a full run at 3a76a448,
 which merges main into it after a245221b: III.20's, III.21's, III.24's, III.26's, III.27's
 and III.28's P2 and P11 to P16, until their records are read again and stamped.
+
+**Completion on the delivered revision.** The records of I.13, III.20, III.21, III.24,
+III.26 and III.27 were read in full against `d2e249c39` by an independent reader who wrote
+none of them, and stamped in `4aad4576`; III.28's record was read against `4aad4576` and
+stamped in `e684a64a`. All applicable verdicts pass. The stale stamps and acceptance
+failures in the snapshot above belong to the move's then-uncommitted edits, not to the
+delivered revision.
