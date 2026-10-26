@@ -53,16 +53,16 @@
   Generalities 4 (`Tacit.inside_not_on`) and the second `ne_of_centre_of_on`, in
   `Elements/Figure/Incidence.lean`, are untouched: they are #477's.
 
-  What it proves, read from `facts.json` after `lake build` and
-  `lake env lean Certificate/Facts.lean`. III.5 rested on 21 axioms and now rests on 15:
-  Definition I.15, Postulates 1 and 3, and 12 tacit rules, among them the radius rule. It
-  loses `circle_eq`, Circle 1, `exists_point`, `exists_point_inside_circle`, `len_symm`,
+  What it proves, read from `facts.json` after `lake build` and `lake env lean
+  Certificate/Facts.lean`. III.5 rested on 21 axioms and now rests on 15: Definition I.15,
+  Postulates 1 and 3, and 12 tacit rules, among them the radius rule. It loses
+  `circle_eq`, Circle 1, `exists_point`, `exists_point_inside_circle`, `len_symm`,
   `line_circle_between` and `lt_trans`. III.6 rested on 21 and now rests on 19, with 16
   tacit rules: it loses `circle_eq`, Circle 1 and `exists_point`, and keeps the other four
   that III.5 loses through `centre_inside`, which ends contact without. Each gains
-  `Tacit.radius_ne_zero`.
-  The scoping had foreseen 16 and 19, counting the rule and Postulate 3; III.5 comes to one
-  fewer, since `ne_of_centre_of_on` no longer passes through `centre_inside`.
+  `Tacit.radius_ne_zero`. The scoping had foreseen 16 and 19, counting the rule and
+  Postulate 3; III.5 comes to one fewer, since `ne_of_centre_of_on` no longer passes
+  through `centre_inside`.
 
   How many entries rest on each rule, read from two fields of each entry of `facts.json`.
   An entry rests on a rule in total when its `axioms` hold it, counting the entries it
@@ -168,12 +168,12 @@
   This entry approves the change to `Audit/Overlaps.lean`, whose pins of `III_5_crossing`
   and `III_5_radius` lose `circle_eq` and gain the radius rule, `III_5_radius` with
   `between_symm`, `line_circle_between`, `lt_irrefl` and `lt_trans` besides; whose pins of
-  I.7's, III.2's two, III.24's, III.26's,
-  III.27's, III.30's, Diagram-angle 3's and Circle 2's and Circle 3's derivations have the
-  rule beside or in place of `circle_eq`; whose pin of `III_6` gains the rule; whose pin
-  of `III_5` does not move; and whose module text and four docstrings now say which of
-  these proofs rest on Diagram-segment 2, `III_5`'s that Book Zero's lemmas beneath our
-  III.5 rest on the radius rule, which gives neither III.5 nor III.6.
+  I.7's, III.2's two, III.24's, III.26's, III.27's, III.30's, Diagram-angle 3's and Circle
+  2's and Circle 3's derivations have the rule beside or in place of `circle_eq`; whose
+  pin of `III_6` gains the rule; whose pin of `III_5` does not move; and whose module text
+  and four docstrings now say which of these proofs rest on Diagram-segment 2, `III_5`'s
+  that Book Zero's lemmas beneath our III.5 rest on the radius rule, which gives neither
+  III.5 nor III.6.
 
   This entry approves the change to `Audit/Superposition.lean`, whose pins of I.4, I.8,
   `onLine_of_angle_eq_named`, I.8's adapter of I.7, `Cited.holds_all` and the four laws
@@ -208,9 +208,10 @@
   Diagram-segment 2, now the equal-radius case of `exists_inside_both`, uses it no longer.
   The pages of III.5 and III.6 (`mishnah/III/05.md`, `mishnah/III/06.md`) and Book III's
   introduction were read for the same claims and make none, so they do not change. For the
-  second step, the catalogue of overlaps, the Book III brief and the audit files, changed in
-  the first as above, were read again for claims that Book Zero, the mixed angles or their
-  companions rest on `circle_eq`; they make none, so the second step changes none of them.
+  change to `exists_inside_both`, the catalogue of overlaps, the Book III brief and the
+  audit files, changed as above, were read again for claims that Book Zero, the mixed
+  angles or their companions rest on `circle_eq`; they make none, so that change alters
+  none of them.
   The records of II.14, III.5 and III.6 were subsequently read in full and stamped after
   their notes changed. Book Zero has no records, and no `PropNN.lean` changes, so no record
   is stale for its Lean.
