@@ -15,17 +15,16 @@
   `Tacit.inside_of_between`, `Tacit.line_meets_circle_of_opposite_sides`,
   `Tacit.not_same_side_of_circles_meet` and `Tacit.triple_incidence3`.
 
-  Why: these four entries are the ones the owner protected on 19 October 2026, as the
-  coordinator records it on #168, when the retirement's first pin change was approved on
-  the understanding that stronger pins would follow. The pins written then put the eight
-  names in `excludes` on each entry's `axioms`, where a theorem's name never appears, so
-  they could not fail. A proved rule leaves only its own axioms in an axiom list, but its
-  name in `proved_rules`; a pin there fails when an entry comes to rest on one. On 21
-  October 2026 the owner chose, of the options the coordinator put to them, "Remove the
-  uses first", and #168 holds the coordinator's record of it. With those uses gone, none
-  of the eight lies beneath the four entries today, so each new pin excludes all eight,
-  where their first draft, written before the removal, excluded seven of them and held
-  the porism to exactly two.
+  Why: #168 calls for stronger pins excluding the eight beneath these four entries, to
+  follow the retirement's first pin change. The pins written then put the eight names in
+  `excludes` on each entry's `axioms`, where a theorem's name never appears, so they could
+  not fail. A proved rule leaves only its own axioms in an axiom list, but its name in
+  `proved_rules`; a pin there fails when an entry comes to rest on one. On 21 October 2026
+  the owner chose, of the options the coordinator put to them, "Remove the uses first",
+  and #168 holds the coordinator's record of it. With those uses gone, none of the eight
+  lies beneath the four entries today, so each new pin excludes all eight, where their
+  first draft, written before the removal, excluded seven of them (the porism's six) and
+  held the porism's list to exactly two.
 
   The card also asks that III.1 Por.'s pin be restored to full strength, in the `equals`
   form planned for train C6. The first expectation of the file already has that form: it
@@ -51,10 +50,11 @@
   Our warm thanks to ship TS, whose branch `tooling/proved-rules-per-entry` held the
   plant, its tests on a stand-in tree and the first form of the four pins, all written on
   21 October, while the uses were still there. This train carries them over: the plant
-  into a file of its own, as plants are written now, finding the pin it names by `ref`
-  and field even past expectations that have no `ref`; the tests to that form, with cases for a refusal by another
-  entry's pin, for a changed `cites`, for a build or certificate that fails or is
-  interrupted, and for a file without the pin; and the pins brought up to all eight.
+  into a file of its own, as plants are written now, finding the pin it names by `ref` and
+  field even past expectations that have no `ref`; the tests to that form, with cases for
+  a refusal by another entry's pin, for a changed `cites`, for a build or certificate that
+  fails or is interrupted, and for a file without the pin; and the pins brought up to all
+  eight.
 
   Small fixes left by the first train's reviews come with it. The test of the
   certificate now runs a copy whose walk for proved rules stops at each rule, and sees
@@ -77,7 +77,8 @@
   tree back.
 
   The protected `tests/test_certificate.py` gains the self-check case and the route
-  through a Common Notion, its fixture declaring stand-ins for all seven Common Notions.
+  through a Common Notion, its fixture declaring stand-ins for the seven declarations by
+  which the certificate knows the five Common Notions.
 
   The protected `Certificate/FIELDS.md` names, in its row for the entry field
   `proved_rules`, the four pins that read it and the plant, lists them among what the

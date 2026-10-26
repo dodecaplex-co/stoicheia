@@ -1281,7 +1281,9 @@ class RetiredRulePlantTests(unittest.TestCase):
                 ("fails silently", (1, ""), "missing"),
                 ("names III.1's pin alone", (1, self.other_pin), "missing"),
                 ("names the pin on its axioms alone", (1, self.axioms_pin), "missing"),
-                ("names both pins", (1, self.pin + self.axioms_pin), "wrongly says")):
+                ("names both pins", (1, self.pin + self.axioms_pin), "wrongly says"),
+                ("names the rule under another expectation",
+                 (1, self.pin.replace("expectation 4:", "expectation 5:")), "missing")):
             with self.subTest(case):
                 negative.failures.clear()
                 negative.refusals.clear()
