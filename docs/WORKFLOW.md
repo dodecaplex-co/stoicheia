@@ -876,9 +876,10 @@ train and group as unreadable.
   itself on review records varied in memory. The Jev question generator's tests,
   `python3 -I tests/test_jev_questions.py`, are not in the sequence, for one of them
   checks out a commit of 19 October, `39ae65c2`, which the `check` job's checkout, one
-  commit deep, does not hold. Two more of them now fail at any depth, on main too, at the
-  I.40 mutation anchor; their repair is card #350. The file can join a job with the whole
-  history once those failures are repaired.
+  commit deep, does not hold. That case and one other also failed at any depth from
+  21 October, when a read-through removed from I.40's commentary the sentence that a
+  commentary control changed; the control now changes a sentence present at both commits
+  (card #350). The file can join a job with the whole history.
 - **The restriction's theorems are pinned by their statements.**
   `python3 -I scripts/check_superposition_pins.py` checks that every theorem and definition
   brief 0009's section "The restriction theorem" names has a statement pin in

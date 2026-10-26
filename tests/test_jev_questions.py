@@ -11,8 +11,10 @@ One full generation against the real HEAD, the audit of Books I to III and then 
 calibration set, is made in memory once and shared by the control, Book III, calibration,
 figure restoring and tally cases, which report its duration; the controls are generated
 again, at the evidence commit of the audit of Books I and II, in a clone. Figures are restored
-from that generation's manifest into a temporary repository. The tally reads result lines
-written here as `jev.py run` writes them. No case writes to the repository or its Git metadata.
+from that generation's manifest into a temporary repository. The tally reads result lines built
+here as `jev.py run` builds them for the generated file, with jev.py's own request builder and
+answer reader; P15's images are read from a temporary tree. No case writes to the repository
+or its Git metadata.
 """
 
 from __future__ import annotations
@@ -1061,6 +1063,41 @@ class CallReconciler(LeanFiles):
                 self.assert_refused(self.known(text), f'unsupported {refused} in Elements.P')
 
 
+class CoreNames(LeanFiles):
+    """Lean's own names the reader exempts, each read whole (`Calls.CORE_NAMES`, and a
+    structure's or a class's `mk` and `mk.injEq`), and names ending in their words that it
+    reports unresolved; Lean would refuse the second kind too, as names of nothing."""
+
+    CORE = ('namespace Elements\n\nstructure Pair where\n  a : Nat\n  b : Nat\n\n'
+            'class Named (α : Type) where\n  name : α → Nat\n\ndef count : Nat := 0\n\n'
+            'theorem uses : True := by\n{}  trivial\n\nend Elements\n')
+
+    def test_lean_s_own_names_are_recognised_whole(self):
+        # And.intro, Iff.rfl and List's lemmas as Book III and Book Zero write them; a
+        # structure's or a class's constructor, and the equation Lean generates for it.
+        calls = self.calls(self.CORE.format(
+            '  have h := And.intro trivial trivial\n  have k := @Iff.rfl True\n'
+            '  have m := @List.mem_map\n  have n := (@List.mem_map).1\n'
+            '  have o := @List.map_congr_left\n  have p := @List.Pairwise.sublist\n'
+            '  have q := Pair.mk 1 2\n  have r := @Pair.mk.injEq\n  have s := @Named.mk\n'))
+        calls.direct('Elements.uses')
+        self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_an_unknown_name_ending_in_a_word_of_lean_s_own_is_unresolved(self):
+        # Each of the five words the core names end in, after a first word that names nothing,
+        # another of Lean's types, a local, a def, or in the wrong place after a structure.
+        for written in ('Missing.intro', 'Missing.rfl', 'Missing.mem_map', 'Missing.mk',
+                        'Missing.injEq', 'Missing.mk.injEq', 'And.rfl', 'Iff.intro', 'Array.mem_map',
+                        'h.rfl', 'count.mk', 'count.mk.injEq', 'Pair.intro', 'Pair.injEq',
+                        'Pair.mk.rfl', 'Named.rfl'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
+
 class HelperModules(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -1129,6 +1166,35 @@ HEAD = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, tex
 EVIDENCE_COMMIT = '39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3'
 BOOKS_I_II = (('I', 48), ('II', 14))
 _SHARED = {}
+# The words of each record, its comments read as prose, that name an entry of the guard's
+# tables: RECORD_CHECKED's from I.4's and I.8's comments, OUTLINE_CHECKED's from I.45's and
+# II.14's notes.
+_LAWS = ('lenSymm', 'angleSymm', 'areaCongruent', 'neOfLen', 'rayUnique', 'rayOfAngle',
+         'rayOfAngleSide')
+RECORD_WORDS = {
+    **{f'Elements.Superposition.{name}.Holds': 'Checked Atom/Lit/Metric.Holds'
+       for name in ('Atom', 'Lit', 'Metric')},
+    **{f'Elements.Superposition.{name}.holds_map': 'their holds_map bridges'
+       for name in ('Atom', 'Lit', 'Metric')},
+    'Elements.Superposition.Derives.sound': 'Derives.sound',
+    'Elements.Superposition.Rule.apply': 'Rule.apply',
+    **{name: 'the cited laws' for name in ('Elements.Superposition.Cited.Holds',
+                                           'Elements.Superposition.Law.Holds',
+                                           'Elements.Superposition.Cited.law')},
+    **{f'Elements.Superposition.Cited.holds_{law}': 'the cited laws' for law in _LAWS},
+    'Elements.BookI.Prop8.holds_prop7': 'holds_prop7',
+    'Elements.SameSideOf.of_line': 'SameSideOf.of_line',
+    'Elements.Figures.Outline': '`Figures.Outline`',
+    'Elements.Figures.Outline.Region': 'by its outline alone',
+    'Elements.Figures.Outline.area': "the figure's area",
+    'Elements.Figures.division_exists': '`Figures.division_exists`',
+    'Elements.Figures.Apart.area_eq_of_same_region': '`Figures.Apart.area_eq_of_same_region`',
+    'Elements.Figures.area_eq': '`Figures.area_eq`',
+    'Elements.BookI.Prop45.fan_boundary': '`Prop45.fan_boundary`',
+    'Elements.BookI.Prop45.outline': '`Prop45.outline`',
+    'Elements.BookII.Prop14.outline': '`Prop14.outline`',
+    'Elements.BookII.Prop14.outline_side': '`Prop14.outline_side`',
+}
 
 
 def shared():
@@ -1304,18 +1370,82 @@ class BookThree(unittest.TestCase):
 
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
-        # Derives.sound and Rule.apply; I.8's, the cited law I.7 too.
+        # Derives.sound and Rule.apply, and the laws each cites, with their meaning; I.8's,
+        # holds_prop7 and SameSideOf.of_line, which give I.7's law, too.
         checked = {'Elements.Superposition.Atom.holds_map', 'Elements.Superposition.Lit.holds_map',
                    'Elements.Superposition.Metric.holds_map', 'Elements.Superposition.Derives.sound',
                    'Elements.Superposition.Rule.apply'}
-        meanings = {'Superposition.Atom.Holds', 'Superposition.Lit.Holds', 'Superposition.Metric.Holds'}
+        laws = {'Elements.Superposition.Cited.holds_' + law for law in ('lenSymm', 'neOfLen', 'rayUnique')}
+        meanings = {'Superposition.Atom.Holds', 'Superposition.Lit.Holds', 'Superposition.Metric.Holds',
+                    'Superposition.Cited.Holds', 'Superposition.Law.Holds', 'Superposition.Cited.law'}
         rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
-        for ref, extra in (('I.4', set()), ('I.8', {'Elements.BookI.Prop8.holds_prop7'})):
+        for ref, extra in (('I.4', {'Elements.Superposition.Cited.holds_' + law for law in
+                                    ('angleSymm', 'areaCongruent', 'rayOfAngle', 'rayOfAngleSide')}),
+                           ('I.8', {'Elements.BookI.Prop8.holds_prop7', 'Elements.SameSideOf.of_line'})):
             with self.subTest(ref=ref):
                 state = rows[ref]['state']
-                self.assertEqual(set(state['bridges']), checked | extra)
+                self.assertEqual(set(state['bridges']), checked | laws | extra)
                 self.assertTrue(meanings <= set(state['definitions']))
                 self.assertTrue(meanings <= set(state['represented_objects']))
+                # Each law, as data, is what the bridges' `c.Holds` speaks of.
+                self.assertIn('| prop7 =>', state['definitions']['Superposition.Cited.law'])
+        self.assertIn('Cited.prop7.Holds primitives',
+                      rows['I.8']['state']['bridges']['Elements.BookI.Prop8.holds_prop7'])
+
+    def test_figures_taken_by_their_outline_get_book_zero_s_bridges(self):
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        words = {'Figures.Outline', 'Figures.Outline.Region', 'Figures.Outline.area', 'Figures.Divides',
+                 'Figures.Covers', 'Apart', 'Fitted', 'Rectilineal'}
+        bridges = {'Elements.Figures.division_exists', 'Elements.Figures.Apart.area_eq_of_same_region',
+                   'Elements.Figures.area_eq', 'Elements.Fitted.fan'}
+        for ref, extra in (('I.45', {'Elements.BookI.Prop45.fan_boundary'}), ('II.14', set())):
+            with self.subTest(ref=ref):
+                state = rows[ref]['state']
+                self.assertTrue(words <= set(state['definitions']), words - set(state['definitions']))
+                self.assertTrue(bridges | extra <= set(state['bridges']))
+                self.assertIn(f'{ref} outline', state['attached_statements'])
+        # II.14's square, a control of P13, is read through I.45's figures and Book Zero.
+        control = next(row for row in calibration_rows('P13') if row['ref'] == 'II.14')
+        self.assertEqual(control['state'], rows['II.14']['state'])
+
+    def test_every_pass_record_s_row_supplies_what_its_record_names(self):
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        records = {ref: questions.tomllib.loads(generator.evidence.read(
+            f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')) for ref in rows}
+        passed = [ref for ref, record in records.items()
+                  if record['review'].get('items', {}).get('representations') == 'pass']
+        self.assertEqual(len(passed), 45)
+        for ref in passed:
+            with self.subTest(ref=ref):
+                self.assertEqual(generator.checked(ref, records[ref], rows[ref]['state']), [])
+        # Each entry of the guard's tables is the record's own: its words name it.
+        for table in (questions.RECORD_CHECKED, questions.OUTLINE_CHECKED):
+            for ref, names in table.items():
+                raw = generator.evidence.read(f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')
+                text = ' '.join(line.lstrip('# ') if line.startswith('#') else line
+                                for line in raw.splitlines())
+                for name in names:
+                    with self.subTest(ref=ref, name=name):
+                        self.assertIn(RECORD_WORDS[name], text)
+        # The guard finds each of them missing, and a name of a [representation] note too.
+        for ref, table, name in (('I.8', 'bridges', 'Elements.SameSideOf.of_line'),
+                                 ('I.8', 'bridges', 'Elements.BookI.Prop8.holds_prop7'),
+                                 ('I.8', 'definitions', 'Superposition.Cited.Holds'),
+                                 ('I.4', 'bridges', 'Elements.Superposition.Cited.holds_rayOfAngle'),
+                                 ('I.45', 'bridges', 'Elements.Figures.area_eq'),
+                                 ('I.45', 'bridges', 'Elements.BookI.Prop45.fan_boundary'),
+                                 ('I.45', 'definitions', 'Figures.Outline'),
+                                 ('II.14', 'bridges', 'Elements.Figures.division_exists'),
+                                 ('II.14', 'bridges', 'Elements.Figures.Apart.area_eq_of_same_region'),
+                                 ('II.14', 'definitions', 'Figures.Outline.area'),
+                                 ('III.16', 'definitions', 'MixedAngle.WellFormed'),
+                                 ('II.1', 'definitions', 'InOrder')):
+            with self.subTest(ref=ref, missing=name):
+                state = copy.deepcopy(rows[ref]['state'])
+                del state[table][name]
+                full = name if name.startswith('Elements.') else 'Elements.' + name
+                self.assertEqual(generator.checked(ref, records[ref], state), [full])
 
 
 def recomputed_lists(question):
@@ -1421,6 +1551,89 @@ class Calibration(unittest.TestCase):
                                for step in range((plant['kind'] - due) % len(kinds))]
                     self.assertEqual([p['kind'] for p in plant['passed_over']], skipped)
                     self.assertTrue(plant['justification'])
+
+    def test_plants_keep_their_state_before_whole_and_what_they_remove(self):
+        # Beside the hashes, locally and in the manifest: never in what run sends.
+        audit = {row['id']: row for row in shared()['rows'] if not row['seeded']}
+        manifest = shared()['calibration']
+        carried = json.loads(shared()['files'][f'{questions.CALIBRATION}-manifest.json'])
+        removed = 0
+        for question in questions.QUESTIONS:
+            listed = {p['id']: p for p in manifest['questions'][question]['plants']}
+            committed = {p['id']: p for p in carried['questions'][question]['plants']}
+            for row in calibration_rows(question):
+                if row['calibration']['role'] != 'plant':
+                    continue
+                with self.subTest(question=question, id=row['id']):
+                    base = audit[row['id']]
+                    self.assertEqual(row['mutation']['base_state'], base['state'])
+                    self.assertEqual(committed[row['id']]['state_before'], base['state'])
+                    self.assertEqual(committed[row['id']]['state_sha256_before'],
+                                     questions.sha(questions.dumps(base['state'])))
+                    self.assertEqual(committed[row['id']]['assets_before'], base.get('assets', {}))
+                    self.assertEqual(committed[row['id']]['changes'], row['mutation']['changes'])
+                    self.assertEqual(listed[row['id']]['state_sha256_before'],
+                                     row['mutation']['base_state_sha256'])
+                    for change in row['mutation']['changes']:
+                        if change['operation'] == 'remove':
+                            value = base
+                            for part in change['field']:
+                                value = value[part]
+                            self.assertEqual(change['old'], value)
+                            removed += 1
+                    # What run sends is built from the state, the question and the images
+                    # alone: the same with every local field taken away.
+                    bare = {key: row[key] for key in ('id', 'state', 'question', 'assets') if key in row}
+                    with patch.object(questions.jev, 'load_asset',
+                                      lambda root, rel, width: ('png', rel.encode(), 300, 300)):
+                        self.assertEqual(questions.jev.build(row, 'jev-1.13.0', True, REPOSITORY, 700),
+                                         questions.jev.build(bare, 'jev-1.13.0', True, REPOSITORY, 700))
+                        body = questions.jev.build(row, 'jev-1.13.0', True, REPOSITORY, 700)[0]
+                    self.assertEqual(set(body), {'model', 'state', 'questions', *(['assets'] if 'assets' in row else [])})
+        self.assertTrue(removed)
+
+    def test_kind_four_needs_a_declaration_named_outside_quotation(self):
+        calibration = questions.Calibration.__new__(questions.Calibration)
+        calibration.index = shared()['generator'].index
+        row = copy.deepcopy(next(r for r in shared()['rows'] if r['id'] == '12-III.4-commentary'))
+        test = questions.KINDS['P14'][3].test
+        self.assertIsNone(test(calibration, row))
+        commentary = row['state']['commentary']
+        self.assertEqual(commentary.count('(`onRay_of_angle_eq`)'), 1)
+        # The same declaration, named only within a quotation, does not make kind 4 apply.
+        row['state']['commentary'] = commentary.replace('(`onRay_of_angle_eq`)', '"`onRay_of_angle_eq`"')
+        self.assertIn('outside quotation marks', test(calibration, row))
+        # A name of no declaration of the row, outside quotation, does not either.
+        row['state']['commentary'] = commentary.replace('`onRay_of_angle_eq`', '`circles_meet`')
+        self.assertIn('outside quotation marks', test(calibration, row))
+        # The other four kinds read the commentary outside quotation too.
+        for k, words in ((0, 'less'), (1, 'I.17'), (2, 'statement'), (4, 'reductio')):
+            with self.subTest(kind=k + 1):
+                quoted = {**row, 'state': {**row['state'], 'commentary': f'"{words}" and nothing else.'}}
+                self.assertIsNotNone(questions.KINDS['P14'][k].test(calibration, quoted))
+                plain = {**row, 'state': {**row['state'], 'commentary': f'{words} and nothing else.'}}
+                self.assertIsNone(questions.KINDS['P14'][k].test(calibration, plain))
+
+    def test_every_commentary_plant_changes_text_outside_quotation(self):
+        for plant in calibration_rows('P14'):
+            if plant['calibration']['role'] != 'plant':
+                continue
+            with self.subTest(id=plant['id']):
+                before = plant['mutation']['base_state']['commentary']
+                for change in plant['mutation']['changes']:
+                    at = before.index(change['old'])
+                    self.assertEqual(questions.outside_quotes(before)[at:at + len(change['old'])],
+                                     change['old'])
+                    self.assertNotIn('"', change['new'])
+        # A change within a quotation is refused.
+        calibration = questions.Calibration(shared()['generator'])
+        entry = next(p for p in shared()['calibration']['questions']['P14']['plants'] if p['ref'] == 'I.13')
+        inside = questions.Plant(3, 'within a quotation', 'none', (
+            ('replace', ['state', 'commentary'], 'or angles equal to two right angles',
+             'or angles less than two right angles'),))
+        with patch.dict(questions.PLANTS, {('P14', 'I.13'): inside}):
+            with self.assertRaisesRegex(questions.Refusal, 'outside quotation marks'):
+                calibration.plant('P14', 2, entry)
 
     def test_no_local_label_leaks_and_ids_say_nothing_of_the_role(self):
         for question in questions.QUESTIONS:
@@ -1643,8 +1856,12 @@ def jev_check(row):
     return questions.jev.check_row(row, row['id'], set())
 
 
-class Tally(unittest.TestCase):
-    """The tally's verdicts on result lines written as `jev.py run` writes them."""
+class TallyLines:
+    """Result lines built as `jev.py run` builds them for the actual calibration file: the
+    row's labels, what the run records, the fingerprint of the request jev.py's own `build` and
+    `encode` make, and answers jev.py's own `answer_of` accepts."""
+
+    QUESTION = 'P13'
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -1652,20 +1869,60 @@ class Tally(unittest.TestCase):
         # Resolved, since an output or input path may hold no symlink, as /var is on macOS.
         self.directory = Path(temporary.name).resolve()
         self.questions = self.directory / 'questions.jsonl'
-        self.data = shared()['files'][f'{questions.CALIBRATION}-P13.jsonl']
-        self.questions.write_bytes(self.data)
-        self.rows = [json.loads(line) for line in self.data.splitlines()]
+        self.use(shared()['files'][f'{questions.CALIBRATION}-{self.QUESTION}.jsonl'])
+        self.requests = {}
 
-    def line(self, row, first, second=None, **changes):
-        line = {key: row[key] for key in ('id', 'item', 'ref', 'seeded', 'expected')}
-        line.update(time='2026-10-26T00:00:00Z', model_requested='jev-1.13.0', order_check=True,
+    def use(self, data):
+        """Ask the questions of this file."""
+        self.data = data
+        self.questions.write_bytes(data)
+        self.rows = [json.loads(line) for line in data.splitlines()]
+
+    def request(self, row, model):
+        """The request `jev.py run` sends for the row, with the order check, and its SHA-256."""
+        if (row['id'], model) not in self.requests:
+            body, _ = questions.jev.build(row, model, True, questions.ROOT, 700)
+            self.requests[row['id'], model] = (
+                body, hashlib.sha256(questions.jev.encode(body)).hexdigest())
+        return self.requests[row['id'], model]
+
+    def made(self, row, model='jev-1.13.0'):
+        """What cmd_run writes on every line: the row's labels and the run's record."""
+        line = {key: row[key] for key in questions.jev.LABELS if key in row}
+        line.update(time='2026-10-26T00:00:00Z', model_requested=model, order_check=True,
                     input_sha256=hashlib.sha256(self.data).hexdigest(), input_rows=len(self.rows),
-                    request_sha256='0' * 64, latency_s=1.0, status=200, model='jev-1.13.0',
-                    choice=first, confidence=0.9,
-                    reversed={'choice': second or first, 'confidence': 0.8,
-                              'consistent': (second or first) == first})
+                    request_sha256=self.request(row, model)[1], latency_s=1.234, status=200)
+        return line
+
+    def line(self, row, first, second=None, *, model='jev-1.13.0', answered_by=None):
+        """A line for an answer, as cmd_run makes it from a reply that gives it."""
+        body, _ = self.request(row, model)
+        backwards = body['questions']['q' + questions.jev.REVERSED]
+
+        def answer(choice, criteria, confidence):
+            return {'choice': choice, 'confidence': confidence,
+                    'probabilities': {option: float(option == choice) for option in criteria}}
+
+        reply = {'model': answered_by or model, 'usage': {'input_tokens': 4000, 'output_tokens': 1},
+                 'answers': {'q': answer(first, row['question']['criteria'], 0.9),
+                             'q' + questions.jev.REVERSED: answer(second or first,
+                                                                  backwards['criteria'], 0.8)}}
+        line = self.made(row, model)
+        line['model'] = reply['model']
+        line.update(questions.jev.answer_of(reply, 'q', row['question']))
+        again = questions.jev.answer_of(reply, 'q' + questions.jev.REVERSED, backwards)
+        again['consistent'] = again['choice'] == line['choice']
+        line['reversed'] = again
+        line['usage'] = reply['usage']
         line['agrees'] = line['choice'] == row['expected']
-        line.update(changes)
+        if line['model'] != model:
+            line['model_differs'] = True
+        return line
+
+    def failed(self, row, status=500):
+        """A line for a request that failed, as cmd_run makes it."""
+        line = self.made(row)
+        line.update(status=status, error=f'HTTP {status}')
         return line
 
     def clean_run(self):
@@ -1679,16 +1936,26 @@ class Tally(unittest.TestCase):
             status = questions.main(['--tally', str(self.questions), str(results)])
         return status, stdout.getvalue(), stderr.getvalue()
 
+    def refused(self, lines, message):
+        status, out, err = self.tally(lines)
+        self.assertEqual(status, 1, out + err)
+        self.assertIn(message, err)
+        self.assertNotIn('clears', out)
+
     def by_role(self, role):
         return [i for i, row in enumerate(self.rows) if row['calibration']['role'] == role]
+
+
+class Tally(TallyLines, unittest.TestCase):
+    """The tally's verdicts on P13's file, and its refusals."""
 
     def test_found_in_both_orders_clears_the_bar(self):
         status, out, _ = self.tally(self.clean_run())
         self.assertEqual(status, 0, out)
         self.assertIn('10 of 10 planted faults found', out)
         self.assertIn('0 of 10 controls false alarms', out)
-        self.assertIn('20 of 20 first answers as expected', out)
-        self.assertIn('P13 clears its bar.', out)
+        self.assertIn('exits 0; 20 of 20 first answers as expected', out)
+        self.assertIn(f'{self.QUESTION} clears its bar.', out)
 
     def test_a_plant_missed_in_one_order(self):
         lines = self.clean_run()
@@ -1723,54 +1990,180 @@ class Tally(unittest.TestCase):
         lines[k] = self.line(self.rows[k], 'bridge stated')
         self.assertEqual(self.tally(lines)[0], 0)
 
+    def test_condition_four_is_jev_score_itself(self):
+        # Five controls answered "cannot tell": no false alarm, every plant found, and 15 of 20
+        # first answers as expected, under the bar `jev.py score --bar 0.8` holds to.
+        lines = self.clean_run()
+        for k in self.by_role('control')[:5]:
+            lines[k] = self.line(self.rows[k], 'cannot tell')
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1, out)
+        self.assertIn('3. 0 of 10 controls false alarms (at most 2): holds', out)
+        self.assertIn('exits 1; 15 of 20 first answers as expected (at least 80%): fails', out)
+        # Whatever the tally counts, the fourth condition is what score returns.
+        score = questions.jev.main
+        with patch.object(questions.jev, 'main', side_effect=lambda argv: 1 if argv[0] == 'score'
+                          else score(argv)) as called:
+            status, out, _ = self.tally(self.clean_run())
+        self.assertEqual(status, 1, out)
+        self.assertEqual(called.call_args.args[0][0::2], ['score', '--bar'])
+        self.assertEqual(called.call_args.args[0][3], '0.8')
+        self.assertIn('exits 1; 20 of 20 first answers as expected (at least 80%): fails', out)
+
     def test_a_failed_request_fails_condition_one(self):
         lines = self.clean_run()
-        k = self.by_role('control')[0]
-        failed = self.line(self.rows[k], 'bridge stated')
-        for key in ('model', 'choice', 'confidence', 'reversed', 'agrees'):
-            failed.pop(key)
-        failed.update(status=500, error='HTTP 500')
-        lines[k] = failed
+        lines[self.by_role('control')[0]] = self.failed(self.rows[self.by_role('control')[0]])
         status, out, _ = self.tally(lines)
         self.assertEqual(status, 1)
         self.assertIn('19 of 20 rows answered; 1 failed requests', out)
         self.assertIn('failed request: HTTP 500', out)
 
+    def test_a_status_other_than_200_is_a_failed_request_with_or_without_an_error(self):
+        lines = self.clean_run()
+        k = self.by_role('plant')[0]
+        lines[k] = self.made(self.rows[k])
+        lines[k]['status'] = 500
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1, out)
+        self.assertIn('19 of 20 rows answered; 1 failed requests', out)
+        self.assertIn('failed request: status 500, with no error', out)
+        # Correct choices on a line of status 500 with no error: not a line run writes.
+        lines[k] = self.line(self.rows[k], self.rows[k]['expected'])
+        lines[k]['status'] = 500
+        self.refused(lines, 'a failed request with')
+
     def test_another_model_fails_condition_one(self):
         lines = self.clean_run()
-        lines[0]['model'] = 'jev-1.14.0'
+        lines[0] = self.line(self.rows[0], self.rows[0]['expected'], answered_by='jev-1.14.0')
+        self.assertIs(lines[0]['model_differs'], True)
         status, out, _ = self.tally(lines)
         self.assertEqual(status, 1)
         self.assertIn('models jev-1.13.0, jev-1.14.0: fails', out)
-        lines = [dict(line, model_requested='jev-1.14.0', model='jev-1.14.0')
-                 for line in self.clean_run()]
-        self.assertEqual(self.tally(lines)[0], 1)
+        lines = [self.line(row, row['expected'], model='jev-1.14.0') for row in self.rows]
+        status, out, _ = self.tally(lines)
+        self.assertEqual(status, 1, out)
+        self.assertIn('20 of 20 rows answered; 0 failed requests; models jev-1.14.0: fails', out)
+
+    def test_agrees_is_required_and_says_whether_the_first_answer_is_expected(self):
+        # The review's counterexamples: correct choices with every `agrees` false, or with none.
+        self.refused([dict(line, agrees=False) for line in self.clean_run()],
+                     'its agrees is not whether its first answer is the expected one')
+        self.refused([{k: v for k, v in line.items() if k != 'agrees'} for line in self.clean_run()],
+                     "an answer without ['agrees']")
+        lines = self.clean_run()
+        lines[5]['agrees'] = 1
+        self.refused(lines, 'its agrees is not whether')
+
+    def test_the_calibration_file_must_have_its_exact_shape(self):
+        rows = [json.loads(line) for line in self.data.splitlines()]
+        plants = [r for r in rows if r['calibration']['role'] == 'plant']
+        controls = [r for r in rows if r['calibration']['role'] == 'control']
+        cases = (
+            # The review's counterexample: nine plants and one control.
+            (plants[:9] + controls[:1], '10 rows, 1 controls and 9 plants'),
+            (rows[:19], '19 rows, 9 controls and 10 plants'),
+            ([dict(r, calibration=dict(r['calibration'], role='plant')) if r is controls[0] else r
+              for r in rows], '20 rows, 9 controls and 11 plants'),
+            # A proposition in two rows, under two ids.
+            ([dict(controls[0], id=controls[1]['id'] + '-again') if r is controls[1] else r
+              for r in rows], 'a proposition is in two rows'),
+            ([dict(r, expected='bridge missing or inadequate') if r is controls[0] else r
+              for r in rows], 'is not a control row of P13'),
+            ([dict(r, calibration=dict(r['calibration'], hash='0' * 64)) if r is plants[0] else r
+              for r in rows], 'is not a plant row of P13'),
+        )
+        for changed, message in cases:
+            with self.subTest(message=message):
+                self.use(b''.join(json.dumps(r, ensure_ascii=False).encode() + b'\n' for r in changed))
+                self.refused(self.clean_run(), message)
+        # A label repeated: two rows with one id, which jev.py's reader refuses.
+        self.use(b''.join(json.dumps(dict(r, id=rows[0]['id']) if r is rows[1] else r,
+                                     ensure_ascii=False).encode() + b'\n' for r in rows))
+        status, _, err = self.tally([])
+        self.assertEqual(status, 1)
+        self.assertIn('is used twice', err)
+
+    def test_a_label_or_line_repeated_or_not_the_row_s_is_refused(self):
+        self.refused(self.clean_run() + [self.clean_run()[0]], 'answered twice')
+        for key, value in (('ref', 'I.1'), ('item', 9), ('seeded', 1), ('id', 'nowhere')):
+            with self.subTest(key=key):
+                lines = self.clean_run()
+                lines[3][key] = value
+                self.refused(lines, 'is no row of' if key == 'id' else f"its {key} is not the row's")
+        lines = self.clean_run()
+        del lines[3]['seeded']
+        self.refused(lines, 'not a line that jev.py run writes')
+
+    def test_request_fingerprints_are_those_of_the_requests_run_builds(self):
+        # The review's counterexample, an all-zero fingerprint; another row's; another model's.
+        for name, fingerprint in (('zero', '0' * 64), ('another row', self.request(self.rows[4], 'jev-1.13.0')[1]),
+                                  ('another model', self.request(self.rows[3], 'jev-1.14.0')[1]),
+                                  ('upper case', self.request(self.rows[3], 'jev-1.13.0')[1].upper())):
+            with self.subTest(fingerprint=name):
+                lines = self.clean_run()
+                lines[3]['request_sha256'] = fingerprint
+                self.refused(lines, 'its request_sha256 is not that of the request jev.py run builds')
 
     def test_a_mismatched_input_or_a_foreign_line_is_refused(self):
         for change, message in (({'input_sha256': '1' * 64}, 'another input'),
                                 ({'input_rows': 21}, 'another input'),
+                                ({'input_rows': 20.0}, 'another input'),
                                 ({'order_check': False}, 'without the order check'),
-                                ({'expected': 'no bridge required'}, 'not a line that run wrote')):
+                                ({'expected': 'no bridge required'}, "its expected is not the row's"),
+                                ({'time': 'yesterday'}, 'its time'),
+                                ({'latency_s': True}, 'its time'),
+                                ({'reversed': None}, 'its reversed asking'),
+                                ({'choice': 'cannot tell'}, 'its answer is not as jev.py run writes it'),
+                                ({'model_differs': False}, 'model_differs')):
             with self.subTest(change=change):
                 lines = self.clean_run()
                 lines[3].update(change)
-                status, out, err = self.tally(lines)
-                self.assertEqual(status, 1)
-                self.assertIn(message, err)
-                self.assertNotIn('clears', out)
+                self.refused(lines, message)
         lines = self.clean_run()
         del lines[3]['request_sha256']
-        status, _, err = self.tally(lines)
-        self.assertEqual(status, 1)
-        self.assertIn('not a line that jev.py run writes', err)
-        lines = self.clean_run() + [self.clean_run()[0]]
-        self.assertIn('answered twice', self.tally(lines)[2])
+        self.refused(lines, 'not a line that jev.py run writes')
 
     def test_an_unanswered_row_fails_condition_one(self):
         status, out, _ = self.tally(self.clean_run()[1:])
         self.assertEqual(status, 1)
         self.assertIn('19 of 20 rows answered', out)
         self.assertIn('unanswered', out)
+
+
+@unittest.skipUnless(shutil.which('rsvg-convert'), 'rsvg-convert renders the figures, and is not on the PATH')
+class TallyFigures(TallyLines, unittest.TestCase):
+    """The tally of P15, whose requests carry images: each request is built again, its images
+    read from a tree holding the committed figures and the restored copies."""
+
+    QUESTION = 'P15'
+
+    def setUp(self):
+        super().setUp()
+        self.root = self.directory / 'repository'
+        shutil.copytree(REPOSITORY / 'figures', self.root / 'figures')
+        for name, data in shared()['files'].items():
+            if name.startswith(questions.CALIBRATION_FIGURES + '/'):
+                path = self.root / 'docs/reports/acceptance/jev' / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+        self.enterContext(patch.object(questions, 'ROOT', self.root))
+
+    def test_found_in_both_orders_clears_the_bar(self):
+        self.assertTrue(all(row.get('assets') for row in self.rows))
+        status, out, _ = self.tally(self.clean_run())
+        self.assertEqual(status, 0, out)
+        self.assertIn('P15 clears its bar.', out)
+
+    def test_an_image_row_s_fingerprint_is_checked(self):
+        lines = self.clean_run()
+        k = next(i for i, row in enumerate(self.rows) if row['ref'] == 'I.13')
+        lines[k]['request_sha256'] = '0' * 64
+        self.refused(lines, 'its request_sha256 is not that of the request jev.py run builds')
+
+    def test_a_changed_figure_not_restored_is_refused(self):
+        lines = self.clean_run()
+        next(self.root.glob(f'docs/reports/acceptance/jev/{questions.CALIBRATION_FIGURES}/I-13.svg')).unlink()
+        self.refused(lines, 'cannot be built again')
 
 
 if __name__ == '__main__':

@@ -16,19 +16,25 @@
   the files of the audit of Books I and II stay as they are, as the evidence of that audit,
   and the generator refuses to write over them. For that it learned four things of the
   Lean it reads: a `class` is a declaration, as a `structure` is; a `private` declaration
-  is seen only in its own file, as Lean sees it; five core names that Book III's proofs
-  use (`intro`, `rfl`, `mem_map`, `mk`, `injEq`) are fields of Lean's own types; and
-  Heath's one em dash, in III.16, is written as its JSON escape, so that no output holds
-  the character while the decoded text stays Heath's. A record whose representations item
-  is `pass` now gets the definitions and bridges its connection rests on, and one marked
-  `n/a` none. For Book III these are the bridges that tie each represented object to
-  Euclid's: the segment given by its circle, base and a point on its side (III.21), the
+  is seen only in its own file, as Lean sees it; five names of Lean's own library that the
+  rows now quote (`And.intro`, `Iff.rfl`, `List.mem_map`, `List.map_congr_left`,
+  `List.Pairwise.sublist`) are known by their whole names, as are the constructor `X.mk`
+  and its lemma `X.mk.injEq` of a structure or class `X` that the generator has read, and
+  any other name ending as these do is still reported unresolved; and Heath's one em dash,
+  in III.16, is written as its JSON escape, so that no output holds the character while the
+  decoded text stays Heath's. A record whose representations item is `pass` now gets the
+  definitions and bridges its connection rests on, and one marked `n/a` none; a guard
+  refuses a row that leaves out a declaration its record's representation note names, or
+  one the generator's tables say the record checked. For Book III these are the bridges
+  that tie each represented object to Euclid's: the segment given by its circle, base and a point on its side (III.21), the
   measure of a circumference by the angle standing on it and its congruence, the kind of a
   segment against two right angles, the angle with a circumference read as a region near its
   vertex, the foot of a perpendicular, and Book II's `rect` and `sq` for III.35 to III.37.
-  I.4's and I.8's rows now supply what their records say they checked, the meanings of the
-  rule of superposition's symbols and their bridges. A later book's bridge never serves an
-  earlier book.
+  I.4's and I.8's rows now supply what their records say they checked: the meanings of the
+  rule of superposition's symbols and their bridges, the cited laws with their meanings and
+  proofs, and for I.8 `SameSideOf.of_line`. I.45's and II.14's rows supply the outline of a
+  figure, its region and area, and the bridges by which their records connect a figure
+  divided into pieces with its area. A later book's bridge never serves an earlier book.
 
   **I.40's control.** A commentary control planted its fault at a sentence of I.40's
   commentary that a read-through removed on 21 October (7d4e6866c), so the generator
@@ -44,14 +50,19 @@
   rule gives at the commit named, with a manifest. The generator holds the entry's table of
   lists and writes nothing if the records give other lists. Each plant takes the kind the
   entry's rule gives it, by the kind's test run on the generated row, and the manifest
-  records the kinds passed over and why, the change, the row's state before and after, and
-  why the change is the expected defect. Nothing in what a row sends names its role. A P15
+  records the kinds passed over and why, the change, the row's whole state before it with
+  its hash, the hash of the state after it (the row itself, in its questions file), and why
+  the change is the expected defect. Nothing in what a row sends names its role. A P15
   plant that changes a figure sends a copy written beside the calibration set, never a
   change to `figures/`; since `docs/` holds no SVG, the copy is not committed as a file, and
   the manifest carries its exact text and hash instead, from which `--restore-figures`
   writes it again. `--tally` reads one calibration file and the output `jev.py run` wrote
-  for it, refuses an output made from other questions or without the order check, prints
-  each row's finding, and exits 0 only when the entry's four conditions hold.
+  for it. It refuses a questions file that is not the set the entry fixes, and an output
+  any line of which is not as `jev.py run` writes it for that file: made from other
+  questions, without the order check, with a request other than the one the row builds, or
+  with an `agrees` that does not follow from its choice. It prints each row's finding, and
+  exits 0 only when the entry's four conditions hold, the fourth judged by
+  `jev.py score --bar 0.8` itself.
 
   This entry approves, in `scripts/audit/jev_questions.py`, the changes above: the three
   books, the bundles and their guards, the Lean it reads, I.40's control, the escape, and

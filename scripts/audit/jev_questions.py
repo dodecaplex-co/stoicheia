@@ -67,17 +67,26 @@ writes the copies back to the paths it records. It reads no commit and no key an
 nothing, and before writing any copy it refuses a text that does not hash to its recorded
 hash, a path that is not one of the calibration's figure paths, and a different file already
 there. --check compares every file byte for byte: the question files and the manifest always,
-a copy whenever it is present. --tally reads one calibration file and the output `jev.py run`
-wrote for it, and exits 0 only when the entry's bar is cleared.
+a copy whenever it is present. A plant's row and the manifest keep its state before the change
+whole, and every entry it removes, beside their hashes; `jev.py run` sends none of them.
+--tally reads one calibration file and the output `jev.py run` wrote for it, and exits 0 only
+when the entry's bar is cleared. It refuses a file not of the calibration's exact shape, and a
+line not as `jev.py run` writes it for that file: its labels, its input's hash and rows, the
+fingerprint of the request built again from the row, and an answer in both orders whose
+`agrees` is whether the first is the expected one. A line with a status other than 200, or an
+error, records a failed request. The fourth condition is `jev.py score <output> --bar 0.8`
+itself.
 """
 
 from __future__ import annotations
 
 import argparse
 import ast
+import contextlib
 import copy
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import re
@@ -757,16 +766,28 @@ REGISTRY = {
                       'circumference standing Arc Arc.Drawn OnSideOrLine OnArc InSegment Arc.Less '
                       'Arc.Semicircle Arc.Greater Arc.SameKind Arc.measure Places Arc.Congruent Foot',
     'Magnitudes': 'Kind MagnitudeImpl Magnitude Length Angle Area len ang area rightAngle Magnitude.sum',
-    # The restricted rule of superposition's meanings, which I.4's and I.8's records check.
+    # The restricted rule of superposition's meanings, which I.4's and I.8's records check: the
+    # laws a derivation cites, as data, and what a law, and so a cited law, asserts.
+    'Superposition/Syntax': 'Superposition.Letter Superposition.LineLetter Superposition.Law '
+                            'Superposition.Cited Superposition.Cited.law',
     'Superposition/Semantics': 'Superposition.Val Superposition.Atom.Holds Superposition.Lit.Holds '
-                               'Superposition.Metric.Holds',
+                               'Superposition.Metric.Holds Superposition.Law.Holds '
+                               'Superposition.Cited.Holds',
     'Tacit/Superposition': 'primitives',
+    # A rectilineal figure given by its outline (I.45, II.14): its contours, its region and the
+    # area its divisions give.
+    'Figures': 'Figures.sides Figures.Covers Figures.LoopBoundary Figures.SimpleLoop '
+               'Figures.GoodRay Figures.RayCrosses Figures.crossingCount Figures.LoopInside '
+               'Figures.LoopRegion Figures.CompatibleLoops Figures.Outline Figures.Outline.Boundary '
+               'Figures.Outline.depth Figures.Outline.Inside Figures.Outline.Region Figures.Divides '
+               'Figures.Outline.area',
 }
 # A group a run needs only when its book is audited, or when a bundle it supplies names one
-# of its words; every group a run uses is checked whole. A commit before Book III's words, or
-# before the rule of superposition's meanings, is read with the groups it has.
+# of its words; every group a run uses is checked whole. A commit before Book III's words, the
+# rule of superposition's meanings or the outlines of figures is read with the groups it has.
 REGISTRY_BOOK = {'DefinitionsIII': 'III'}
-REGISTRY_BUNDLED = ('Superposition/Semantics', 'Tacit/Superposition')
+REGISTRY_BUNDLED = ('Superposition/Syntax', 'Superposition/Semantics', 'Tacit/Superposition',
+                    'Figures')
 
 
 def registry_for(books: tuple[tuple[str, int], ...], bundled: set[str]) -> dict[str, str]:
@@ -785,20 +806,59 @@ FIGURE_BRIDGES = ['Elements.Fitted.triangle', 'Elements.Fitted.inside_pairwise',
                   'Elements.Rectilineal.toApart', 'Elements.Rectilineal.area_toApart',
                   'Elements.Fitted.fan']
 # I.4's and I.8's records check the symbols' meanings, their renaming, soundness and the rule
-# with named symbols; I.8's, the cited law I.7 too.
+# with named symbols, and the laws each cites, each law's meaning and its proof; I.8's, I.7's
+# law with the bridge it is proved through, from SameSide to SameSideOf, too.
 SUPERPOSITION_DEFINITIONS = ['Superposition.Val', 'Superposition.Atom.Holds',
-                             'Superposition.Lit.Holds', 'Superposition.Metric.Holds', 'primitives']
+                             'Superposition.Lit.Holds', 'Superposition.Metric.Holds', 'primitives',
+                             'Superposition.Letter', 'Superposition.LineLetter', 'Superposition.Law',
+                             'Superposition.Cited', 'Superposition.Cited.law',
+                             'Superposition.Law.Holds', 'Superposition.Cited.Holds']
 SUPERPOSITION_BRIDGES = ['Elements.Superposition.Atom.holds_map',
                          'Elements.Superposition.Lit.holds_map',
                          'Elements.Superposition.Metric.holds_map',
                          'Elements.Superposition.Derives.sound', 'Elements.Superposition.Rule.apply']
-# What a record's comments say its representations verdict checked, which its row must supply
-# (review/I/04.toml and review/I/08.toml, [review.items]).
+CITED_LAWS = {
+    4: ['Elements.Superposition.Cited.holds_lenSymm', 'Elements.Superposition.Cited.holds_angleSymm',
+        'Elements.Superposition.Cited.holds_areaCongruent',
+        'Elements.Superposition.Cited.holds_neOfLen', 'Elements.Superposition.Cited.holds_rayUnique',
+        'Elements.Superposition.Cited.holds_rayOfAngle',
+        'Elements.Superposition.Cited.holds_rayOfAngleSide'],
+    8: ['Elements.Superposition.Cited.holds_lenSymm', 'Elements.Superposition.Cited.holds_neOfLen',
+        'Elements.Superposition.Cited.holds_rayUnique', 'Elements.BookI.Prop8.holds_prop7',
+        'Elements.SameSideOf.of_line'],
+}
+# I.45 and II.14 take a figure by its outline too (`Prop45.outline`, `Prop14.outline`): the
+# outline's words, and Book Zero's bridges, that it has a division into triangles that lie
+# apart, that every such division has one sum, the content theorem, and that this sum is the
+# outline's area. I.45's record adds that the checked fan's figure is the one its corners
+# bound (`Prop45.fan_boundary`).
+OUTLINE_DEFINITIONS = REGISTRY['Figures'].split()
+OUTLINE_BRIDGES = ['Elements.Figures.division_exists', 'Elements.Figures.Apart.area_eq_of_same_region',
+                   'Elements.Figures.area_eq']
+# What a record says its representations verdict rests on, which its row must supply as a
+# bridge, a definition or one of the statements the row judges (`Generator.checked`). Every
+# name a [representation] note gives in backticks is read from the record itself. These are
+# the others: what the comment on I.4's and I.8's representations item says it checked, each
+# law cited with its meaning and its proof; and, where the row's statements take a figure by
+# its outline, the bridges I.45's and II.14's notes on the route and the passages give for it,
+# with the region and the area of an outline they speak of.
 RECORD_CHECKED = {
-    'I.4': ('Superposition.Atom.Holds', 'Superposition.Lit.Holds', 'Superposition.Metric.Holds',
-            *SUPERPOSITION_BRIDGES),
-    'I.8': ('Superposition.Atom.Holds', 'Superposition.Lit.Holds', 'Superposition.Metric.Holds',
-            *SUPERPOSITION_BRIDGES, 'Elements.BookI.Prop8.holds_prop7'),
+    'I.4': ('Elements.Superposition.Atom.Holds', 'Elements.Superposition.Lit.Holds',
+            'Elements.Superposition.Metric.Holds', *SUPERPOSITION_BRIDGES,
+            'Elements.Superposition.Cited.Holds', 'Elements.Superposition.Law.Holds',
+            'Elements.Superposition.Cited.law', *CITED_LAWS[4]),
+    'I.8': ('Elements.Superposition.Atom.Holds', 'Elements.Superposition.Lit.Holds',
+            'Elements.Superposition.Metric.Holds', *SUPERPOSITION_BRIDGES,
+            'Elements.Superposition.Cited.Holds', 'Elements.Superposition.Law.Holds',
+            'Elements.Superposition.Cited.law', *CITED_LAWS[8]),
+}
+OUTLINE_CHECKED = {
+    'I.45': ('Elements.Figures.Outline', 'Elements.Figures.Outline.Region',
+             'Elements.Figures.Outline.area', *OUTLINE_BRIDGES, 'Elements.BookI.Prop45.fan_boundary',
+             'Elements.BookI.Prop45.outline'),
+    'II.14': ('Elements.Figures.Outline', 'Elements.Figures.Outline.Region',
+              'Elements.Figures.Outline.area', *OUTLINE_BRIDGES, 'Elements.BookII.Prop14.outline',
+              'Elements.BookII.Prop14.outline_side'),
 }
 # Book III. A segment is its circle, the ends of its base and a point naming its side (`Arc`);
 # the angle in it is the same at every point of its arc [III. 21].
@@ -829,16 +889,14 @@ RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
 SQUARE_BRIDGES = ['Elements.Square.eq_sq', 'Elements.Square.described']
 
 
-def bundle(book: str, n: int) -> tuple[list[str], list[str]]:
+def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[str]]:
     """The definitions and bridges that connect the objects a record's representation item
-    judges with Euclid's. `Generator.bundle` supplies none where the record marks the item
-    `n/a`."""
+    judges with Euclid's; `outline` when the statements take a figure by its outline.
+    `Generator.bundle` supplies none where the record marks the item `n/a`."""
     definitions, bridges = [], []
     if (book, n) in [('I', 4), ('I', 8)]:
         definitions += SUPERPOSITION_DEFINITIONS
-        bridges += SUPERPOSITION_BRIDGES
-        if n == 8:
-            bridges += ['Elements.BookI.Prop8.holds_prop7']
+        bridges += SUPERPOSITION_BRIDGES + CITED_LAWS[n]
     if book == 'I' and (34 <= n <= 38 or 41 <= n <= 48):
         definitions += ['Parallelogram', 'quadArea']
         bridges += AREA_BRIDGES
@@ -851,6 +909,9 @@ def bundle(book: str, n: int) -> tuple[list[str], list[str]]:
     if (book, n) in [('I', 45), ('II', 14)]:
         definitions += ['Apart', 'Fitted', 'Rectilineal']
         bridges += FIGURE_BRIDGES
+        if outline:
+            definitions += OUTLINE_DEFINITIONS
+            bridges += OUTLINE_BRIDGES + (['Elements.BookI.Prop45.fan_boundary'] if n == 45 else [])
     if (book, n) == ('II', 1):
         definitions += ['InOrder', 'segments', 'endOf', 'Magnitude.sum']
         bridges += ['Elements.InOrder.between_end', 'Elements.rect_self_left',
@@ -936,27 +997,34 @@ class Calls:
     glossary's supplied definitions also expose their underlying types, including
     AreParallel within Parallelogram.
 
-    The fixed core/projection allowlist is: 1, 2, symm, trans, refl, rfl, intro, mp, mpr,
-    elim, left, right, ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise,
-    mem_append, mem_cons, mem_cons_of_mem, mem_cons_self, mem_singleton, mem_singleton_self,
-    not_mem_nil, mem_nil_iff, forall_mem_cons, cons_ne_nil, append_ne_nil_of_right_ne_nil,
-    append_assoc, append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton,
-    byContradiction, epsilon_spec, and, for Book III and the rule of superposition's
-    soundness, `And.intro`'s intro, `Iff.rfl`'s rfl, `List.mem_map`'s mem_map and a
-    structure's own mk and injEq. These names exempt only fields with no project candidate;
-    symm, for example, still collects every eligible geometric signature. Any remaining field
-    is unresolved.
+    The fixed core/projection allowlist is: 1, 2, symm, trans, refl, mp, mpr, elim, left,
+    right, ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append,
+    mem_cons, mem_cons_of_mem, mem_cons_self, mem_singleton, mem_singleton_self, not_mem_nil,
+    mem_nil_iff, forall_mem_cons, cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc,
+    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton, byContradiction
+    and epsilon_spec. These names exempt only fields with no project candidate; symm, for
+    example, still collects every eligible geometric signature. Book III, the rule of
+    superposition's soundness and Book Zero's area of an outline use some more of Lean's own
+    names, each recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
+    List.mem_map, List.map_congr_left and List.Pairwise.sublist, written so, with a first word
+    that names no declaration of the project; and the constructor of a structure or class the
+    index holds, X.mk, with the equation Lean generates for it, X.mk.injEq, where X names that
+    structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
+    remaining field is unresolved.
     """
 
     CORE_FIELDS = frozenset({
-        '1', '2', 'symm', 'trans', 'refl', 'rfl', 'intro', 'mp', 'mpr', 'elim', 'left', 'right',
-        'ne', 'imp', 'inl', 'inr', 'resolve_left', 'resolve_right', 'map', 'Pairwise', 'mem_append',
+        '1', '2', 'symm', 'trans', 'refl', 'mp', 'mpr', 'elim', 'left', 'right', 'ne', 'imp',
+        'inl', 'inr', 'resolve_left', 'resolve_right', 'map', 'Pairwise', 'mem_append',
         'mem_cons', 'mem_cons_of_mem', 'mem_cons_self', 'mem_singleton', 'mem_singleton_self',
         'not_mem_nil', 'mem_nil_iff', 'forall_mem_cons', 'cons_ne_nil',
         'append_ne_nil_of_right_ne_nil', 'append_assoc', 'append_nil', 'nil_append',
         'cons_append', 'pairwise_append', 'pairwise_singleton', 'byContradiction', 'epsilon_spec',
-        'mem_map', 'mk', 'injEq',
     })
+    # Lean's own names, each exempt only when written whole, from a first word that names no
+    # declaration of the project.
+    CORE_NAMES = frozenset({'And.intro', 'Iff.rfl', 'List.mem_map', 'List.map_congr_left',
+                            'List.Pairwise.sublist'})
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
@@ -1159,6 +1227,19 @@ class Calls:
                     found.add(name.rsplit('.', 1)[-1])
         return found
 
+    def core(self, parts: list[str], k: int, target: str | None, consumed: int,
+             after_expression: bool) -> bool:
+        """Whether the k-th word of a reference is one of Lean's own: a word of CORE_FIELDS; the
+        last word of a name of CORE_NAMES written whole, from a first word that names no
+        declaration of the project; or `mk`, and `mk.injEq`, straight after the name of a
+        structure or class the index holds."""
+        if parts[k] in self.CORE_FIELDS:
+            return True
+        if target is None:
+            return not after_expression and '.'.join(parts[:k + 1]) in self.CORE_NAMES
+        indexed = self.index.decls[target].kind in ('structure', 'class')
+        return indexed and (parts[consumed:k + 1] == ['mk'] or parts[consumed:k + 1] == ['mk', 'injEq'])
+
     def direct(self, name: str, signatures: tuple[str, ...] = ()) -> list[dict]:
         key = (name, signatures)
         if key in self.cache:
@@ -1202,7 +1283,8 @@ class Calls:
             elif re.search(r'(?:^|\.)Prop\d+', token):
                 raise Refusal(f'{d.path}: unresolved proposition call {token} in {name}')
             start = consumed if target else (0 if after_expression else 1)
-            fields.extend((part, match) for part in parts[start:])
+            fields.extend((parts[k], match, self.core(parts, k, target, consumed, after_expression))
+                          for k in range(start, len(parts)))
 
         type_names = self.type_names(clean[d.name_end:d.end], d)
         collected = set(signatures) | {name} | {c['name'] for c in calls}
@@ -1220,7 +1302,7 @@ class Calls:
                         td = self.index.get('Elements.' + word)
                         type_names |= self.type_names(self.index.clean[td.path][td.name_end:td.end], td)
             added = set()
-            for field, _ in fields:
+            for field, _, _ in fields:
                 matches = {n for n in self.index.by_tail.get(field, [])
                            if n.rsplit('.', 2)[-2] in type_names}
                 matches |= {n for n in self.members.get(field, set())
@@ -1231,10 +1313,10 @@ class Calls:
                 break
             collected |= added
         unresolved = set()
-        for field, match in fields:
+        for field, match, core in fields:
             for target in sorted(candidates[field]):
                 record(target, match, 'field candidates via signature closure')
-            if not candidates[field] and field not in self.CORE_FIELDS:
+            if not candidates[field] and not core:
                 unresolved.add(f'{name}:{clean.count(chr(10), 0, match.start()) + 1}: {match.group()} ({field})')
         calls = list({(c['start'], c['end'], c['name']): c for c in calls}.values())
         calls.sort(key=lambda c: (c['start'], c['name']))
@@ -1467,11 +1549,31 @@ class Generator:
         self.registry = registry_for(books, bundled)
 
     def bundle(self, book: str, n: int) -> tuple[list[str], list[str]]:
-        """The proposition's bundle, unless its record marks the representations item `n/a`."""
+        """The proposition's bundle, unless its record marks the representations item `n/a`;
+        with the outline's, where a companion takes the figure by its outline."""
         record = tomllib.loads(self.evidence.read(f'review/{book}/{n:02d}.toml'))
         if record['review'].get('items', {}).get('representations') == 'n/a':
             return [], []
-        return bundle(book, n)
+        return bundle(book, n, f'{book}.{n} outline' in self.facts[f'{book}.{n}']['attached'])
+
+    def checked(self, ref: str, record: dict, state: dict) -> list[str]:
+        """What the record says its representations verdict rests on that the row does not
+        supply, as a bridge, a definition or one of the statements it judges: each name its
+        [representation] note gives in backticks, and its entries of RECORD_CHECKED and, where
+        the row's statements take a figure by its outline, OUTLINE_CHECKED."""
+        consumer = self.index.get(heath.parse_ref(ref).lean)
+        names = []
+        for token in re.findall(r'`([^`]+)`', record.get('representation', {}).get('note', '')):
+            if re.fullmatch(NAME, token):
+                name = self.index.resolve(token, consumer, commentary=True)
+                require(name, f'{ref}: its record names {token}, which is no declaration')
+                names.append(name)
+        names += RECORD_CHECKED.get(ref, ())
+        if f'{ref} outline' in self.facts[ref]['attached']:
+            names += OUTLINE_CHECKED.get(ref, ())
+        supplied = set(state['bridges']) | {'Elements.' + name for name in state['definitions']}
+        supplied |= {heath.parse_ref(a).lean for a in [ref, *state['attached_statements']]}
+        return [name for name in dict.fromkeys(names) if name not in supplied]
 
     def source(self, book: str, n: int) -> dict:
         return {'commit': self.evidence.commit, 'heath': f'heath/{book}/{n:02d}.md',
@@ -1503,9 +1605,12 @@ class Generator:
                   for name in sorted(set(names))}
         main = self.index.get(heath.parse_ref(f'{book}.{n}').lean)
         placement = {}
+        # A bridge's body is read with the definitions the row supplies beside it, whose types
+        # name its fields, as `v.pt` and `.A` in `Cited.holds_lenSymm` (`Calls.direct`).
+        supplied = tuple(sorted('Elements.' + name for name in objects))
         for name in names:
             d = self.index.get(name)
-            calls = self.calls.direct(name)
+            calls = self.calls.direct(name, supplied)
             prop_calls = [c for c in calls if re.search(r'\.Book[IVX]+\.Prop\d+', c['name'])]
             available = (d.path in self.index.visible(main.path) and
                          (d.path != main.path or d.keyword < main.keyword))
@@ -1647,8 +1752,7 @@ class Generator:
                 f'{ref}: representations {verdicts.get("representations")!r} with '
                 f'{len(bridges)} bridges supplied')
         if verdicts.get('representations') == 'pass':
-            missing = [name for name in RECORD_CHECKED.get(ref, ())
-                       if name not in bridges and name not in state['definitions']]
+            missing = self.checked(ref, record, state)
             require(not missing, f'{ref}: the row does not supply what its record checked: {missing}')
         self.row(ref, 11, 'representation', source, state, REPRESENTATION, verdicts.get('representations'),
                  {'pass': 'bridge stated', 'fail': 'bridge missing or inadequate', 'n/a': 'no bridge required'},
@@ -1861,6 +1965,9 @@ class Generator:
                     'largest_state': {'id': largest['id'], 'characters': largest['state_characters']},
                     'unresolved_names': unresolved,
                     'core_projection_allowlist': sorted(Calls.CORE_FIELDS),
+                    'core_names': sorted(Calls.CORE_NAMES),
+                    'core_constructors': 'X.mk and X.mk.injEq, where X names a structure or class '
+                                         'the index holds',
                     'coverage_limits': [
                         'Citation questions inspect one unit body and helper signatures, not helper bodies.',
                         'Reachable helper calls are reconciled locally; their bodies receive no independent question.',
@@ -2000,12 +2107,28 @@ def body_calls_a_proposition(calibration: 'Calibration', row: dict) -> str | Non
     return None if calls else "the unit's body calls no proposition"
 
 
+def outside_quotes(text: str) -> str:
+    """The commentary with every quotation blanked, its other characters where they stand."""
+    return OUTSIDE_QUOTES.sub(lambda found: ' ' * len(found.group()), text)
+
+
 def commentary_test(pattern: re.Pattern, what: str):
     def test(calibration: 'Calibration', row: dict) -> str | None:
-        found = [m for m in pattern.findall(OUTSIDE_QUOTES.sub(' ', row['state']['commentary']))
+        found = [m for m in pattern.findall(outside_quotes(row['state']['commentary']))
                  if m != row['ref']]
         return None if found else f'the commentary names {what} only within quotation marks, or not at all'
     return test
+
+
+def names_a_declaration(calibration: 'Calibration', row: dict) -> str | None:
+    """Kind 4's test: a declaration of the row's `named_declarations` named in the commentary
+    outside quotation marks, as the row's own reading of the commentary resolves it."""
+    consumer = calibration.index.get(heath.parse_ref(row['ref']).lean)
+    for token in re.findall(r'`([^`]+)`', outside_quotes(row['state']['commentary'])):
+        if (re.fullmatch(NAME, token) and calibration.index.resolve(token, consumer, commentary=True)
+                in row['state']['named_declarations']):
+            return None
+    return 'the commentary names no declaration of the row outside quotation marks'
 
 
 @dataclass(frozen=True)
@@ -2063,8 +2186,7 @@ KINDS = {
         Kind('the scope misstated, as a case said to be covered that the statement leaves out',
              'conflicts', commentary_test(COVERS, 'what the statement covers')),
         Kind("a named declaration's hypotheses or conclusion misstated", 'conflicts',
-             lambda c, row: None if row['state']['named_declarations']
-             else 'the row names no declaration'),
+             names_a_declaration),
         Kind('the kind of route misstated, as direct for a reductio', 'conflicts',
              commentary_test(FORM, 'the form of the proof')),
     ),
@@ -2322,11 +2444,14 @@ PLANTS = {
         (('replace', ['state', 'commentary'], 'which I.36 now makes equal',
           'which I.35 now makes equal'),)),
     ('P14', 'I.13'): Plant(
-        3, '"so our statement keeps only the second form" made "so our statement keeps both forms"',
-        "The statement concludes only that the two angles together are two right angles; the "
-        'commentary now says it states Euclid\'s first form, each angle right, as well.',
-        (('replace', ['state', 'commentary'], 'so our statement keeps only the second form',
-          'so our statement keeps both forms'),)),
+        3, 'the sentence "Our statement covers A on the straight line CD too, where AB lies along '
+        'CD." added after "his one argument serves again."',
+        'The statement takes A off the straight line CD (`hA : ¬ Collinear C D A`), as Euclid\'s '
+        'straight line set up on CD makes angles with it; the commentary now says that the '
+        'statement covers A on CD too, a case the statement leaves out.',
+        (('replace', ['state', 'commentary'], 'and his one argument serves again.',
+          'and his one argument serves again. Our statement covers A on the straight line CD too, '
+          'where AB lies along CD.'),)),
     ('P14', 'I.7'): Plant(
         4, '"where neither does, D lies within the triangle ABC" made "lies outside"',
         "`Prop7.cases` concludes, among its four places, that D lies within the triangle ABC; the "
@@ -2340,10 +2465,17 @@ PLANTS = {
         (('replace', ['state', 'commentary'], 'or by straight lines equal to them',
           'or by straight lines unequal to them'),)),
     ('P14', 'II.10'): Plant(
-        1, '"so FEB is less than CEF" made "greater than CEF"',
-        'EB falls within the angle CEF, so FEB is the part, less than the whole (Common Notion 5), '
-        'as the same sentence says; the commentary now says greater.',
-        (('replace', ['state', 'commentary'], 'so FEB is less than CEF', 'so FEB is greater than CEF'),)),
+        1, 'the sentence on FEB and CEF reversed: CE within the angle FEB, so FEB greater than CEF, '
+        'the whole greater than the part, and with EFD more than two right angles',
+        'EB falls within the angle CEF, so FEB is less than CEF, the part less than the whole '
+        '(Common Notion 5), and FEB, EFD are less than two right angles, as Heath\'s proof says '
+        'and Postulate 5 needs; the commentary now says, consistently with itself, that CE falls '
+        'within FEB, FEB is greater than CEF and FEB, EFD make more than two right angles.',
+        (('replace', ['state', 'commentary'],
+          'EB falls within the angle CEF, so FEB is less than CEF, the part less than the whole '
+          '(Common Notion 5), and with EFD it makes less than the two right angles of I.29.',
+          'CE falls within the angle FEB, so FEB is greater than CEF, the whole greater than the part '
+          '(Common Notion 5), and with EFD it makes more than the two right angles of I.29.'),)),
     ('P14', 'III.25'): Plant(
         2, '"(I.17)" for the angle ABD made "(I.5)"',
         'The proof cites I.17 (`BookI.Prop17`) for the angle ABD less than a right angle; the '
@@ -2357,11 +2489,15 @@ PLANTS = {
         (('replace', ['state', 'commentary'], "So our statement keeps E on A's side of BC.",
           'So our statement takes E on either side of BC.'),)),
     ('P14', 'III.4'): Plant(
-        4, '"on one side of FE" made "on either side of FE" for `onRay_of_angle_eq`',
-        "`onRay_of_angle_eq` needs P and F on the same side of DE; the commentary now says equal "
-        'angles on either side of FE have their arms along one ray, which mirror images refute.',
-        (('replace', ['state', 'commentary'], 'for on one side of FE equal angles at E',
-          'for on either side of FE equal angles at E'),)),
+        4, '`onRay_of_angle_eq` said to hold whether the other arms lie on one side of FE or on '
+        'opposite sides of it',
+        "`onRay_of_angle_eq` needs P and F on the same side of DE (`SameSideOf P F D E`); the "
+        'commentary now says that it puts equal angles\' other arms along one ray even when they '
+        'lie on opposite sides, where the arms are mirror images and lie along two rays.',
+        (('replace', ['state', 'commentary'],
+          'for on one side of FE equal angles at E have their other arms along one ray',
+          'for equal angles at E have their other arms along one ray, whether those arms lie on '
+          'one side of FE or on opposite sides of it'),)),
     ('P14', 'III.14'): Plant(
         1, '"is greater by I.20" made "is less by I.20"',
         'A diameter, two radii together, is greater than a straight line not through the centre '
@@ -2384,14 +2520,23 @@ PLANTS = {
         'case.',
         (('replace', ['state', 'caption'], 'AD crossing CB', 'AC crossing DB'),)),
     ('P15', 'I.13'): Plant(
-        4, 'B moved off CD, to (200, 160)',
+        4, 'B moved off CD, to (200, 160), with AB, BE, its label and every mark at B: the arcs '
+        'of the angles CBA and ABD, drawn again at B between the directions of C, A and D, and '
+        'the mark of the right angle EBD, between the directions of D and E',
         'AB is to stand on the straight line CD at B, and BE to be drawn from B at right angles '
-        'to CD; with B moved above CD, B is no longer on CD.',
+        'to CD; with B moved above CD, and everything drawn at B moved with it, B is no longer '
+        'on CD.',
         (('figure', 'I-13.svg', [
+            ('<path d="M 176 200 A 24 24 0 0 1 184.57 181.61"',
+             '<path d="M 176.81 166.18 A 24 24 0 0 1 181.39 144.84"'),
+            ('<path d="M 178.15 173.95 A 34 34 0 0 1 234 200"',
+             '<path d="M 173.64 138.53 A 34 34 0 0 1 232.85 168.76"'),
+            ('<polyline points="210,200 210,190 200,190"',
+             '<polyline points="209.66,162.58 209.66,152.58 200,150"'),
             ('x1="200" y1="200" x2="93.94"', 'x1="200" y1="160" x2="93.94"'),
             ('x1="200" y1="200" x2="200" y2="45"', 'x1="200" y1="160" x2="200" y2="45"'),
             ('<circle cx="200" cy="200" r="2.6"/>', '<circle cx="200" cy="160" r="2.6"/>'),
-            ('<text x="194" y="224">B</text>', '<text x="207" y="172">B</text>')]),)),
+            ('<text x="194" y="224">B</text>', '<text x="203" y="182">B</text>')]),)),
     ('P15', 'II.5'): Plant(
         1, "I.1's figure sent for II.5",
         "I.1's figure, two circles and an equilateral triangle, has none of II.5's square, "
@@ -2540,7 +2685,7 @@ class Calibration:
         for part in field[:-1]:
             value = value[part]
         old = value.pop(field[-1])
-        row['mutation']['changes'].append({'operation': 'remove', 'field': field,
+        row['mutation']['changes'].append({'operation': 'remove', 'field': field, 'old': old,
                                            'before_sha256': sha(old if isinstance(old, str) else dumps(old))})
 
     def cite(self, row: dict, ref: str) -> None:
@@ -2620,10 +2765,19 @@ class Calibration:
         row['expected'] = kind_spec.expected
         row['why'] = (f'A planted fault of kind {kind}, {kind_spec.name}; the change, not the '
                       'record, determines the expectation, and the manifest gives the reason.')
+        # The row's state before the change, whole, beside its hash; local, as `mutation` is.
         row['mutation'] = {'base_id': row['id'], 'base_state_sha256': sha(dumps(row['state'])),
+                           'base_state': copy.deepcopy(row['state']),
                            'kind': kind, 'kind_name': kind_spec.name, 'what': spec.what, 'changes': []}
         inserted = []
         for op in spec.operations:
+            if op[0] == 'replace' and question == 'P14':
+                # P14 leaves quotation out, so its fault stands outside quotation marks.
+                text = row['state']['commentary']
+                at = text.find(op[2])
+                require(op[1] == ['state', 'commentary'] and '"' not in op[3]
+                        and outside_quotes(text)[at:at + len(op[2])] == op[2],
+                        f'{row["id"]}: the change is not to the commentary outside quotation marks')
             if op[0] == 'replace':
                 self.change(row, op[1], op[2], op[3])
                 inserted.append(op[3])
@@ -2683,7 +2837,9 @@ class Calibration:
                      'justification': spec.justification,
                      'state_sha256_before': row['mutation']['base_state_sha256'],
                      'state_sha256_after': row['mutation']['state_sha256'],
-                     'assets': row.get('assets', {})}
+                     'state_before': row['mutation']['base_state'],
+                     'changes': row['mutation']['changes'],
+                     'assets_before': before.get('assets', {}), 'assets': row.get('assets', {})}
 
     def control(self, question: str, entry: dict) -> tuple[dict, dict]:
         row = self.base(question, entry['ref'])
@@ -2799,63 +2955,186 @@ class Calibration:
         return files, manifest
 
 
-RUN_FIELDS = frozenset({'id', 'time', 'model_requested', 'order_check', 'input_sha256', 'input_rows',
-                        'request_sha256', 'latency_s', 'status'})
+# A line of `jev.py run`'s output (cmd_run): the row's labels, what it records of the run, the
+# request's fingerprint, its latency and status; then, for an answer, the answering model, the
+# answer in each order, the usage and whether the first answer is the expected one, with
+# `model_differs` where the model is not the one asked for; or, for a failed request, its
+# error, with the body of the reply where there is one.
+RUN_FIELDS = frozenset({*jev.LABELS, 'time', 'model_requested', 'order_check', 'input_sha256',
+                        'input_rows', 'request_sha256', 'latency_s', 'status'})
+ANSWER_FIELDS = frozenset({'model', 'choice', 'probabilities', 'confidence', 'reversed', 'usage',
+                           'agrees'})
+# What a reply of status 200 whose answer is malformed may leave on its line before the error.
+PARTIAL_FIELDS = frozenset({'model', 'choice', 'probabilities', 'confidence'})
+RUN_TIME = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z')
+FINGERPRINT = re.compile(r'[0-9a-f]{64}')
+SHAPE_ERROR = 'the answer is not the shape TypeSafe documents ('
+# The width `jev.py run` renders an SVG at, unless --svg-width says otherwise.
+SVG_WIDTH = 700
+
+
+def calibration_file(path: Path) -> tuple[str, list[dict], bytes]:
+    """A calibration question file, as --calibration writes it, of exactly its shape: 20 rows of
+    one question, 10 controls and 10 plants, each proposition once, on the entry's lists, each
+    with its id, its rank's hash and an expected answer of its role."""
+    data = read_no_follow(checked_path(path))
+    rows = jev.read_rows(path)
+    calibration = [row.get('calibration') for row in rows]
+    require(all(isinstance(c, dict) for c in calibration), f'{path.name}: not a calibration question file')
+    names = {c.get('question') for c in calibration}
+    require(len(names) == 1 and next(iter(names)) in QUESTIONS,
+            f'{path.name}: rows of no question, or of more than one')
+    name = next(iter(names))
+    spec = QUESTIONS[name]
+    roles = [c.get('role') for c in calibration]
+    refs = [row.get('ref') for row in rows]
+    require(len(rows) == 20 and roles.count('control') == 10 and roles.count('plant') == 10,
+            f'{path.name}: {len(rows)} rows, {roles.count("control")} controls and '
+            f'{roles.count("plant")} plants, not the 20 rows, 10 and 10, the entry fixes')
+    require(len(set(refs)) == len(refs), f'{path.name}: a proposition is in two rows')
+    for book, _ in SPLIT:
+        for role, listed in zip(('control', 'plant'), CALIBRATION_LISTS[name][book]):
+            got = {ref for ref, r in zip(refs, roles) if r == role and heath.parse_ref(ref).book == book}
+            require(got == set(listed.split()),
+                    f'{path.name}: Book {book} {role}s {sorted(got)}, not the entry\'s {listed}')
+    for row, role in zip(rows, roles):
+        require(row['item'] == spec.item and row['id'] == f'{spec.item:02d}-{row["ref"]}-{spec.suffix}'
+                and row.get('seeded') is (role == 'plant')
+                and row['calibration'].get('hash') == ranking(name, row['ref'])
+                and (row.get('expected') == spec.clean if role == 'control'
+                     else row.get('expected') in spec.defects),
+                f'{path.name}: {row["id"]} is not a {role} row of {name}')
+    return name, rows, data
+
+
+def fingerprints(rows: list[dict]):
+    """The SHA-256 of the request `jev.py run` sends for a row, with the order check, by its own
+    `build` and `encode`, its images read from the repository at SVG_WIDTH."""
+    cache: dict[tuple[str, str], str] = {}
+
+    def fingerprint(row: dict, model: str) -> str:
+        if (row['id'], model) not in cache:
+            try:
+                body, _ = jev.build(row, model, True, ROOT, SVG_WIDTH)
+            except jev.Failure as error:
+                raise Refusal(f'{row["id"]}: its request cannot be built again to check its '
+                              f'fingerprint ({error}); a changed figure is written back with '
+                              '--restore-figures') from None
+            cache[row['id'], model] = hashlib.sha256(jev.encode(body)).hexdigest()
+        return cache[row['id'], model]
+    return fingerprint
+
+
+def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bool:
+    """Check one line of the output against what `jev.py run` writes for this row of this
+    input, and return whether it records an answer; a request that failed, with a status other
+    than 200 or an error, records none."""
+    require(isinstance(line, dict) and RUN_FIELDS <= line.keys(), f'{where}: not a line that jev.py run writes')
+    for key in jev.LABELS:
+        require(line[key] == row[key] and type(line[key]) is type(row[key]),
+                f'{where}: its {key} is not the row\'s; not a line that jev.py run wrote of this input')
+    require(line['input_sha256'] == made['input_sha256'] and line['input_rows'] == made['input_rows']
+            and type(line['input_rows']) is int,
+            f'{where}: written for another input (input_sha256 {line["input_sha256"]!r}, '
+            f'input_rows {line["input_rows"]!r})')
+    require(line['order_check'] is True, f'{where}: asked without the order check')
+    require(isinstance(line['time'], str) and RUN_TIME.fullmatch(line['time'])
+            and isinstance(line['model_requested'], str) and line['model_requested'].strip()
+            and jev._number(line['latency_s']) and line['latency_s'] >= 0
+            and (line['status'] is None or type(line['status']) is int),
+            f'{where}: its time, model asked for, latency or status is not as jev.py run writes it')
+    require(isinstance(line['request_sha256'], str) and FINGERPRINT.fullmatch(line['request_sha256'])
+            and line['request_sha256'] == fingerprint(row, line['model_requested']),
+            f'{where}: its request_sha256 is not that of the request jev.py run builds for this row '
+            f'of this input with {line["model_requested"]!r}')
+    if line['status'] != 200 or 'error' in line:
+        extra = set(line) - RUN_FIELDS - {'error', 'body'} - (PARTIAL_FIELDS if line['status'] == 200 else set())
+        require(not extra, f'{where}: a failed request with {sorted(extra)}; not a line that jev.py run writes')
+        if 'error' in line:
+            error, status = line['error'], line['status']
+            if status == 200:
+                written = isinstance(error, str) and error.startswith(SHAPE_ERROR) and 'body' in line
+            elif status:
+                written = error == f'HTTP {status}'
+            else:
+                written = isinstance(error, str) and bool(error.strip())
+            require(written and isinstance(line.get('body', ''), str),
+                    f'{where}: its error is not one jev.py run writes')
+        return False
+    extra = set(line) - RUN_FIELDS - ANSWER_FIELDS - {'model_differs'}
+    require(ANSWER_FIELDS <= line.keys() and not extra,
+            f'{where}: an answer without {sorted(ANSWER_FIELDS - line.keys())} or with {sorted(extra)}; '
+            'not a line that jev.py run writes')
+    question = row['question']
+    backwards = {**question, 'criteria': dict(reversed(list(question['criteria'].items())))}
+    reversed_ = line['reversed']
+    require(isinstance(reversed_, dict) and set(reversed_) == {'choice', 'probabilities', 'confidence',
+                                                                 'consistent'},
+            f'{where}: its reversed asking is not one jev.py run writes')
+    reply = {'answers': {'q': {k: line[k] for k in ('choice', 'probabilities', 'confidence')},
+                         'q' + jev.REVERSED: {k: reversed_[k] for k in ('choice', 'probabilities',
+                                                                       'confidence')}}}
+    try:
+        first = jev.answer_of(reply, 'q', question)
+        second = jev.answer_of(reply, 'q' + jev.REVERSED, backwards)
+    except ValueError as error:
+        raise Refusal(f'{where}: its answer is not one jev.py run accepts ({error})') from None
+    require(jev._model_id(line['model']) and first == {k: line[k] for k in first}
+            and second == {k: reversed_[k] for k in second}
+            and reversed_['consistent'] is (second['choice'] == first['choice']),
+            f'{where}: its answer is not as jev.py run writes it')
+    require(line['agrees'] is (line['choice'] == row['expected']),
+            f'{where}: its agrees is not whether its first answer is the expected one')
+    require(('model_differs' in line) is (line['model'] != line['model_requested'])
+            and line.get('model_differs', True) is True,
+            f'{where}: its model_differs is not as jev.py run writes it')
+    return True
 
 
 def tally(questions: Path, results: Path) -> int:
-    """Judge one calibration file's run against the entry's bar; reads no key, sends nothing."""
-    data = read_no_follow(checked_path(questions))
-    rows = jev.read_rows(questions)
-    roles = [row.get('calibration', {}).get('role') for row in rows]
-    require(set(roles) == {'control', 'plant'}, f'{questions.name}: not a calibration question file')
-    items = {row['item'] for row in rows}
-    require(len(items) == 1, f'{questions.name}: rows of more than one question')
-    name, spec = next((n, s) for n, s in QUESTIONS.items() if s.item in items)
-    digest = hashlib.sha256(data).hexdigest()
+    """Judge one calibration file's run against the entry's bar; reads no key, sends nothing.
+    The question file must be of the calibration's exact shape and every line of the output as
+    `jev.py run` writes it for that file, its request's fingerprint among what is checked; the
+    fourth condition is `jev.py score` itself."""
+    name, rows, data = calibration_file(questions)
+    spec = QUESTIONS[name]
+    made = {'input_sha256': hashlib.sha256(data).hexdigest(), 'input_rows': len(rows)}
+    fingerprint = fingerprints(rows)
     by_id = {row['id']: row for row in rows}
     answers: dict[str, dict] = {}
+    answered: set[str] = set()
     for n, text in enumerate(read_no_follow(checked_path(results)).decode('utf-8').splitlines(), 1):
         if not text.strip():
             continue
         where = f'{results.name}:{n}'
         try:
-            line = json.loads(text)
+            line = json.loads(text, parse_constant=jev._no_constant)
         except ValueError:
             raise Refusal(f'{where}: not JSON') from None
-        require(isinstance(line, dict) and RUN_FIELDS <= line.keys(),
+        require(isinstance(line, dict) and isinstance(line.get('id'), str),
                 f'{where}: not a line that jev.py run writes')
-        require(line['input_sha256'] == digest and line['input_rows'] == len(rows),
-                f'{where}: written for another input than {questions.name} '
-                f'(input_sha256 {line["input_sha256"]!r}, input_rows {line["input_rows"]!r})')
-        require(line['order_check'] is True, f'{where}: asked without the order check')
         require(line['id'] in by_id, f'{where}: {line["id"]!r} is no row of {questions.name}')
         require(line['id'] not in answers, f'{where}: {line["id"]} is answered twice')
-        row = by_id[line['id']]
-        for key in ('item', 'ref', 'seeded', 'expected'):
-            require(key not in line or line[key] == row.get(key),
-                    f'{where}: its {key} is not the row\'s; not a line that run wrote of this input')
-        if 'error' not in line:
-            require(line.get('choice') in row['question']['criteria']
-                    and isinstance(line.get('reversed'), dict)
-                    and line['reversed'].get('choice') in row['question']['criteria'],
-                    f'{where}: an answer without both orders; not a line that run wrote')
+        if result_line(line, by_id[line['id']], where, made, fingerprint):
+            answered.add(line['id'])
         answers[line['id']] = line
-    print(f'{name} calibration: {questions.name}, {len(rows)} rows, input sha256 {digest}')
-    print(f'results: {results.name}, {len(answers)} lines')
+    print(f'{name} calibration: {questions.name}, {len(rows)} rows, input sha256 {made["input_sha256"]}')
+    print(f'results: {results.name}, {len(answers)} lines, each as jev.py run writes it for this '
+          'input, its request fingerprint included')
     found = alarms = agree = 0
     defect = set(spec.defects).__contains__
     for row in rows:
         role, line = row['calibration']['role'], answers.get(row['id'])
         if line is None:
             verdict, first, second = 'unanswered', '-', '-'
-        elif 'error' in line:
-            verdict, first, second = 'failed request: ' + str(line['error']), '-', '-'
+        elif row['id'] not in answered:
+            verdict = 'failed request: ' + str(line.get('error', f'status {line["status"]}, with no error'))
+            first = second = '-'
         else:
             a, b = line['choice'], line['reversed']['choice']
-            first = f'{a} ({line.get("confidence")})'
-            second = f'{b} ({line["reversed"].get("confidence")})'
-            agree += a == row['expected']
+            first = f'{a} ({line["confidence"]})'
+            second = f'{b} ({line["reversed"]["confidence"]})'
+            agree += line['agrees']
             if role == 'plant':
                 verdict = 'found' if defect(a) and defect(b) else 'missed'
                 found += verdict == 'found'
@@ -2864,22 +3143,25 @@ def tally(questions: Path, results: Path) -> int:
                 alarms += verdict == 'false alarm'
         print(f'  {row["id"]}: {role}; expected {row["expected"]!r}; first {first}; '
               f'reversed {second}; {verdict}')
-    failed = [line for line in answers.values() if 'error' in line]
-    answered = [line for line in answers.values() if 'error' not in line]
-    models = sorted({str(line.get('model')) for line in answered})
-    plants = roles.count('plant')
-    controls = roles.count('control')
+    failed = len(answers) - len(answered)
+    lines = [answers[rid] for rid in answered]
+    models = sorted({str(line['model']) for line in lines})
+    # The fourth condition is the client's own: `jev.py score <output> --bar 0.8`.
+    score_output = io.StringIO()
+    with contextlib.redirect_stdout(score_output), contextlib.redirect_stderr(score_output):
+        scored = jev.main(['score', str(results), '--bar', str(BAR['agreement_at_least'])])
     conditions = [
         (len(answered) == len(rows) and not failed
-         and all(line.get('model') == MODEL and line['model_requested'] == MODEL for line in answered),
-         f'{len(answered)} of {len(rows)} rows answered; {len(failed)} failed requests; '
+         and all(line['model'] == MODEL and line['model_requested'] == MODEL for line in lines),
+         f'{len(answered)} of {len(rows)} rows answered; {failed} failed requests; '
          f'models {", ".join(models) or "none"}'),
-        (found >= BAR['found_at_least'], f'{found} of {plants} planted faults found in both orders '
+        (found >= BAR['found_at_least'], f'{found} of 10 planted faults found in both orders '
                                          f'(at least {BAR["found_at_least"]})'),
-        (alarms <= BAR['false_alarms_at_most'], f'{alarms} of {controls} controls false alarms '
+        (alarms <= BAR['false_alarms_at_most'], f'{alarms} of 10 controls false alarms '
                                                 f'(at most {BAR["false_alarms_at_most"]})'),
-        (agree / len(rows) >= BAR['agreement_at_least'],
-         f'{agree} of {len(rows)} first answers as expected (at least {BAR["agreement_at_least"]:.0%})'),
+        (scored == 0, f'jev.py score {results.name} --bar {BAR["agreement_at_least"]} exits {scored}; '
+                      f'{agree} of {len(rows)} first answers as expected '
+                      f'(at least {BAR["agreement_at_least"]:.0%})'),
     ]
     for n, (held, text) in enumerate(conditions, 1):
         print(f'{n}. {text}: {"holds" if held else "fails"}')
