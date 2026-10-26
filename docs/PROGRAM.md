@@ -71,7 +71,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 25 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 27 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -213,7 +213,7 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 - **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition,
   and on 22 Oct for the figures given by their outlines).
   The lock holds every word that the axioms' statements or the entries' statements
-  reach: <!-- count:vocabulary -->267<!-- /count -->, including the restricted calculus and its interpretation,
+  reach: <!-- count:vocabulary -->268<!-- /count -->, including the restricted calculus and its interpretation,
   as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
   A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
