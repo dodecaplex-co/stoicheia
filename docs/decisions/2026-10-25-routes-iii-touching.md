@@ -10,13 +10,17 @@
   `Staging/Routes/Touching.lean` go into the foundations' definitions of Book III, beside
   the whole-circle contact, in the namespace `Elements`: `Touching.Near`,
   `TouchesInternallyAt`, `TouchesExternallyAt` and `CirclesTouchAt`, their bodies, binder
-  names and docstrings as staged, while the module text of that file gains a clause naming
+  names and docstrings as staged, save one sentence added in review to the docstring of
+  `Touching.Near`, which says that it is `Surrounds p C`, its arguments in the other order
+  (Lean accepts the two as equal by `rfl`), and which now points to `LocallyWithin` as
+  below in the same file; the module text of that file gains a clause naming
   the reading at the point among its words. The fourteen theorems go into
   [Elements/BookIII/Prop13.lean](../../Elements/BookIII/Prop13.lean), after III.13's proof,
   in the namespace `Elements.BookIII`, their statements as staged. Before the staged copy
   was deleted, Lean compared every moved type, and every moved definition's value, with
   the staged one, the staged names read as the moved ones, binder names and universe
-  parameters included, and found all eighteen the same, and their docstrings too. The three
+  parameters included, and found all eighteen the same, and their docstrings too, before
+  that one sentence was added. The three
   agreements become companions of III.13, named by FORMALIZATION's rule for companions
   `Prop13.touchesInternally_iff`, `Prop13.touchesExternally_iff` and
   `Prop13.circlesTouch_iff`, listed in `Elements/Companions.lean` and certified as "III.13
@@ -35,7 +39,10 @@
   [docs/reports/overlaps.md](../reports/overlaps.md), gains a dated entry among its near
   misses that says so. Two of that report's sentences which this move makes untrue are
   corrected with it: the number of files left in `Staging/Routes/`, and the remark under
-  III.6 that agreement with Heath's reading at the contact is not established.
+  III.6 that agreement with Heath's reading at the contact is not established. Book III's
+  brief, [docs/briefs/0004-book-III.md](../briefs/0004-book-III.md), keeps its dated
+  sentence of 19 October that contact read at the point has not been formalised, and gains
+  a dated note below it saying that the sentence is overtaken.
 
   No staged theorem's statement is a fact already in `Elements/`, as Lean confirmed: the
   four copies the staged file once held left it at 4a6d9a49, and the five facts it shares
@@ -46,9 +53,10 @@
   imports it, so `Staging/Routes/` holds #129's files alone. III.13's review record names
   the three companions, with notes on its statement, its route and its representation, and
   its mishnah gains a paragraph on them. III.11's mishnah now says that the reading at the
-  point is formalised, and III.11's record gives up its verdicts on commentary and sign-off
-  with that sentence. Both records are to be read again by a reader who wrote neither, and
-  stamped then. The report,
+  point is formalised, and III.11's record gave up its verdicts on commentary and sign-off
+  with that sentence until it was read again. GPT-6 Astra (Codex), an independent reader
+  who wrote neither, then read both records in full against `d87e0632f`, and both were
+  stamped in this train, every verdict passing. The report,
   [docs/reports/routes-book-III.md](../reports/routes-book-III.md), records the move in an
   addendum of this date.
 

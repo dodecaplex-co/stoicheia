@@ -90,6 +90,14 @@ superseded: predicates for regions near a vertex now serve the mixed-angle compa
 Contact read locally, at the point of contact, and its equivalence to the whole-circle
 reading have not been formalised.
 
+**25 October 2026, local contact formalised (#126).** The sentence above is overtaken:
+contact at the point of contact is now defined beside the whole-circle reading
+(`TouchesInternallyAt`, `TouchesExternallyAt` and `CirclesTouchAt`, with `Touching.Near`,
+in `Elements/Foundations/DefinitionsIII.lean`), and III.13's companions prove the two
+readings the same for any two circles (`Prop13.circlesTouch_iff`;
+[decision entry](../decisions/2026-10-25-routes-iii-touching.md)). Book III's statements
+keep the whole-circle reading.
+
 **19 October 2026, contact within.** The whole-circle reading remains ours. The point
 of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
 passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through

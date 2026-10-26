@@ -163,8 +163,8 @@ def CirclesTouch (α β : Circle) (C : Point) : Prop :=
 
 /-- **Near C, every point has the property `p`.** Every point within some circle about C
 has it. This says "near the point" with a circle about it, as Euclid would draw one (Post.
-3), and with no numbers, as `LocallyWithin` in `Elements/Foundations/DefinitionsIII.lean`
-says "near the vertex". -/
+3), and with no numbers, as `LocallyWithin`, below, says "near the vertex". It is
+`Surrounds p C`, its arguments in the other order. -/
 def Touching.Near (C : Point) (p : Point → Prop) : Prop :=
   ∃ γ : Circle, Centre C γ ∧ ∀ P : Point, InsideCircle P γ → p P
 

@@ -1568,7 +1568,10 @@ each moved type with the staged one, the staged names read as the moved ones, bi
 binder kinds and universe parameters included, and each definition's value too, and found
 all eighteen the same, with their docstrings, which came unchanged. A second comparison,
 after the change to the agreements' proofs below, against the staged file as committed,
-found the same.
+found the same. Review then added one sentence to the docstring of `Touching.Near`: it is
+`Surrounds p C`, its arguments in the other order, as Lean accepts by `rfl`, and the
+docstring now points to `LocallyWithin` as below in the same file. The lock records no
+docstring, so it is unchanged by that sentence.
 
 The proofs changed in two places. The definitions are no longer in the steps' namespace,
 so `TouchesInternallyAt.between hF hG h`, and its kin for contact without, stand where the
@@ -1646,6 +1649,8 @@ last reading's, so `scripts/check_fidelity.py` reports that III.13's statement, 
 and record have changed since it was reviewed. A reader who did not write them reads both
 records, the two mishnah paragraphs and the moved Lean again, and stamps III.13's record.
 III.12's record and mishnah, and III.11's record, say nothing that this move makes untrue.
+Book III's brief said, on 19 October, that contact read at the point had not been
+formalised; that sentence stays, with a dated note below it saying that it is overtaken.
 The [overlap catalogue](overlaps.md) gains, among its near misses, a dated entry on the two
 steps that reach III.11's and III.12's conclusions by another route.
 
@@ -1668,7 +1673,9 @@ outside the repository, passes E6 now. Of its 18 failing items, nine are new aga
 stamped, and III.11's P14 and P16, until its mishnah's changed sentence is read and those
 verdicts are recorded again.
 
-**Completion on the delivered revision.** Commit `3621cd0e` records both reviews against
-`d87e0632f`: III.13's six verdicts pass; III.11's applicable verdicts pass, with
-representations `n/a`. The preceding pending-review account describes the earlier
-snapshot, not the delivered revision.
+**Completion on the delivered revision.** III.11's and III.13's records were read in full
+against `d87e0632f` by GPT-6 Astra (Codex), an independent reader who wrote neither, and
+stamped in `3621cd0ef`: III.13's six verdicts pass, and III.11's applicable verdicts pass,
+with representations `n/a`; the pages and the program's status were made afresh. The
+verdicts taken out, the stale stamps and the failures in the snapshot above belong to
+`68a110e6` with the move's then-uncommitted edits, not to the delivered revision.
