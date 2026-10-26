@@ -109,8 +109,9 @@
   joined the model, and the counts that `render.py` moved.
 
   The numerical model's results are written again by
-  `python3 -I tests/model/run.py --full --write`, run at this train's commit once it is
-  made, which also rewrites the counts between MODEL.md's own markers.
+  `python3 -I tests/model/run.py --full --write`, run at commit `3a2ba2364a3a`, this
+  train's merge of main, where every check passed; it also rewrote the counts between
+  MODEL.md's own markers.
 
   Each result file that run rewrites is approved in a sentence of its own. The angle and
   area check's output, `tests/model/results/angle_check.txt`, is approved. The full grid
