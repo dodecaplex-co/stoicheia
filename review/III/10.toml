@@ -10,7 +10,7 @@ note = "The construction and the argument locating both centres at P follow Eucl
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names."
+note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names. C and O are points of the perpendiculars produced beyond K and L, not their meetings with the circle: the straight lines AC and NO they name are Euclid's."
 
 [[passage]]
 at = "For, if possible, let the circle ABC cut the circle DEF"
@@ -26,10 +26,9 @@ note = "Euclid bisects BH and BG without a reference from Heath here. The Lean j
 
 [[passage]]
 at = "and from K, L let KC, LM be drawn at right angles"
-unused = ["hA", "hC"]
 kind = "helper"
 helper = "BookI.Prop11"
-note = "Euclid draws the perpendiculars and carries them through the circle; the Lean uses I.11, puts K and L within ABC by III.2 and obtains A, C and O from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, with no reference from Heath for these constructions. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and N, M and E need no further construction."
+note = "Euclid draws the perpendiculars and carries them through the circle; the Lean draws them by I.11 and produces each beyond its foot by Postulate 2 (`produce`), to C and to O, with no reference from Heath for these constructions. The argument needs only a second point of each perpendicular, never where it meets the circle, so A and E are not named. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and N and M need no further construction."
 
 [[passage]]
 at = "Then, since in the circle ABC a straight line AC"
@@ -57,18 +56,18 @@ note = "Euclid invokes the same argument for DEF without writing it out. The Lea
 [[passage]]
 at = "therefore the two circles ABC, DEF which cut one another"
 kind = "different"
-note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre P and the common point B, instead of III.5. Heath states this under III.5, beside the enunciation that joins III.5 and III.6: two circles with the same centre and one point of their circumferences in common coincide altogether (vol. 2, p. 12). It applies also to circles that only meet."
+note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre P and the common point B, instead of III.5: `Prop5` asks that the circles cut one another, and this statement gives only common points. Heath states this under III.5, beside the enunciation that joins III.5 and III.6: two circles with the same centre and one point of their circumferences in common coincide altogether (vol. 2, p. 12). It applies also to circles that only meet."
 
 [figure]
 note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no second circle can."
 
 [review]
 stage = "full"
-commit = "a3fbf343e"
+commit = "0dddd7220"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:612b3b8ec5e0a3d9"
-run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card #423, ship C7: re-read in full after N was added to the note at 'and from K, L', by GPT-6 Astra (Codex), reader C7-bind423-read2, at a3fbf343e"
-text = "sha256:aec7d38497dfaf5a"
+lean = "sha256:2ef88dfd3914c849"
+run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card #423, ship C7: re-read in full after N was added to the note at 'and from K, L', by GPT-6 Astra (Codex), reader C7-bind423-read2, at a3fbf343e; card #476, ship PF: read in full after the perpendiculars were produced by Postulate 2 in place of III.2 and Intersections 5 (written by Claude), by GPT-6 Astra (Codex), reader PF-r2, at 0dddd7220; card 478, ship XS, from git and record evidence, added without a restamp: main Prop10 proof by OpenAI Codex (5f15f82d4); cross-family reading: XS-r478-III10, Claude Opus 5.5, independent reader, read the whole proposition in full at cf1591f14 (3c433c196, 26 October 2026), which does not contain the produce change of 0dddd7220 (written by Claude, as the clause above says); GPT-6 Astra (Codex), reader PF-r2, read the record in full with that change at 0dddd7220 (e88fa2be5, 25 October 2026)"
+text = "sha256:22400ffefc059302"
 
 [review.items]
 statement = "pass"

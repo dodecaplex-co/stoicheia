@@ -109,6 +109,7 @@ BOOK_REVIEW_ITEMS = {key: item for item, key, kind, _ in BOOK_ITEMS if kind == "
 # P3. The deliberate limitations of Books I-III (docs/ACCEPTANCE.md, "The limitations
 # allowed"): each proposition, the scope it may keep and the tag that must say why. Every
 # other statement is full (stage 4b's goal, brief 0007), and no route is "alternative".
+# A row goes when its record becomes full: P3 refuses an allowance for a full statement.
 ALLOWED_LIMITS = {}
 
 # P4. A sentence of a mishnah that says our statement or the Lean leaves something of
@@ -621,6 +622,10 @@ def check_propositions(facts: dict, records: dict) -> None:
             elif allowed[1] not in tags:
                 fail(ref, "P3", f"a {allowed[0]} statement allowed only as `{allowed[1]}`, "
                      "and the record does not carry that tag")
+        elif allowed:
+            fail(ref, "P3", f"the statement is full, so its allowance as a {allowed[0]} "
+                 f"statement with `{allowed[1]}` is stale: its row in ALLOWED_LIMITS and in "
+                 "docs/ACCEPTANCE.md's table is to go")
         if route["kind"] == "alternative":
             fail(ref, "P3", "the route is an alternative argument, which is no deliberate "
                  "limitation of Books I-III: Euclid's own argument is due")

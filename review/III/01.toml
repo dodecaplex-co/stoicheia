@@ -34,7 +34,7 @@ note = "Euclid bisects AB and CE and draws DC at right angles without references
 at = "For suppose it is not, but, if possible, let G be the centre"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid supposes a centre G other than F. The Lean takes G from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and supposes G off CE to reach the contradiction."
+note = "Euclid supposes a centre G other than F. The Lean takes G from `Tacit.exists_centre`, the rule that every circle has a centre, and supposes G off CE to reach the contradiction."
 
 [[passage]]
 at = "and let GA, GD, GB be joined"

@@ -54,7 +54,7 @@ theorem Prop10.meet_once {B G H K L C O P Q : Point} (hBHG : Triangle B H G)
   obtain rfl := line_unique hKC hK₁ hC₁ hK₂ hC₂
   obtain rfl := line_unique hLO hL₃ hO₃ hL₄ hO₄
   obtain rfl := line_unique hPQ hP₁ hQ₂ hP₃ hQ₄
-  /- Now one straight line, `M₁`, passes through K, C, L and O. -/
+  /- Now one straight line, M₁, passes through K, C, L and O. -/
   have hKL : K ≠ L := by
     rintro rfl
     have hBK : B ≠ K := ne_of_between hBKH
@@ -94,18 +94,19 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle}
   have hY_BG : ¬ OnLine Y BG := hYH.triangle.off_line hB_BG hG_BG
   have hKX_ne : K ≠ X := fun e => hX_BH (e ▸ hK_BH)
   have hLY_ne : L ≠ Y := fun e => hY_BG (e ▸ hL_BG)
-  have hK_in : InsideCircle K ABC := Prop2 hB₁ hH₁ K hBKH
-  have hL_in : InsideCircle L ABC := Prop2 hB₁ hG₁ L hBLG
+  /- The argument needs only a point of each perpendicular besides K and L, never where
+     the perpendicular meets the circle; so KX is produced to C and YL to O [Post. 2], and
+     A and E are not named. O is on the other side of BG from H, as in the figure. -/
   obtain ⟨AC, hK_AC, hX_AC⟩ := Postulate1 K X hKX_ne
-  obtain ⟨A, hA, hA_AC, hAKX⟩ := line_circle_beyond hK_in hK_AC hX_AC hKX_ne.symm
-  obtain ⟨C, hC, hC_AC, hCKA⟩ := line_circle_beyond hK_in hK_AC hA_AC (ne_of_between hAKX)
+  obtain ⟨C, hKXC⟩ := produce hKX_ne
+  have hC_AC := on_line_of_between hKXC hK_AC hX_AC
   obtain ⟨NO, hL_NO, hY_NO⟩ := Postulate1 L Y hLY_ne
-  /- O is on the other side of BG from H, as in the figure. -/
-  obtain ⟨O, -, hO_NO, hOLY⟩ := line_circle_beyond hL_in hL_NO hY_NO hLY_ne.symm
+  obtain ⟨O, hYLO⟩ := produce hLY_ne.symm
+  have hO_NO := on_line_of_between hYLO hY_NO hL_NO
   have hBK_ne : B ≠ K := ne_of_between hBKH
   have hBL_ne : B ≠ L := ne_of_between hBLG
   have hBKC : ∠ B K C = ∟ := by
-    rw [angle_onRay_right (OnRay.of_between_between hAKX (between_symm hCKA)) hBK_ne]
+    rw [angle_onRay_right (OnRay.of_beyond hKXC) hBK_ne]
     exact hKX B ⟨BH, hB_BH, hH_BH, hB_BH⟩ hBK_ne
   have hB_NO : ¬ OnLine B NO := fun h =>
     hY_BG ((line_unique hBL_ne h hL_NO hB_BG hL_BG) ▸ hY_NO)
@@ -113,9 +114,9 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle}
     rw [angle_symm hLY_ne.symm hBL_ne]
     exact hLY B ⟨BG, hB_BG, hG_BG, hB_BG⟩ hBL_ne
   have hBLO : ∠ B L O = ∟ :=
-    (adjacent_eq_of_right hY_NO hO_NO (between_symm hOLY) hB_NO hYLB).symm.trans hYLB
-  have hKC : K ≠ C := (ne_of_between hCKA).symm
-  have hLO : L ≠ O := (ne_of_between hOLY).symm
+    (adjacent_eq_of_right hY_NO hO_NO hYLO hB_NO hYLB).symm.trans hYLB
+  have hKC : K ≠ C := ne_of_between_ends hKXC
+  have hLO : L ≠ O := (ne_of_between (between_symm hYLO)).symm
   have hC_off : ¬ Collinear B H C := fun ⟨M, h1, h2, h3⟩ => hX_BH (by
     have e₁ := line_unique hBH h1 h2 hB_BH hH_BH
     have hK_M : OnLine K M := e₁ ▸ hK_BH
@@ -151,8 +152,10 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle}
   obtain rfl : P' = P := hmeet P' hP'_AC hP'_NO
   -- therefore the two circles ABC, DEF which cut one another have the same centre P: which is
   -- impossible. [III. 5]
-  /- The common centre P and common point B identify the circles by `circle_eq`.
-     The restated III.5 requires crossing, while this statement allows circles that only meet. -/
+  /- Heath's bracket gives III.5. `Prop5` asks that the circles cut one another, each
+     passing within the other, and this statement gives only three common points, so it
+     cannot serve. Heath states under III.5 what does: circles with one centre and one
+     common point coincide altogether, here P and B (`circle_eq`). -/
   exact hne (circle_eq hP hP' hB₁ hB₂ rfl)
   -- Therefore etc.
   -- Q. E. D.

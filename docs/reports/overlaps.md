@@ -38,11 +38,15 @@ gives each at once, so their rows stay; their notes below say what changed.
 is still an assumption (#477). Generalities 2 and 4 and Intersection 4 are proved again, from
 the circle's centre and our radius rule, and a new lemma, `between_of_centre_chord`, gives
 Circle 1 where the point within is the centre; III.1, its porism and III.2 use it, and rest
-on Circle 1 no longer. Of the 140 entries, 135 rested on Circle 1 and 35 now do, the first
-III.7. Intersection 4 takes the first circle's centre from `exists_centre`, but I.22, which
+on Circle 1 no longer. Of the 149 entries, 144 rested on Circle 1 and 37 now do, the first
+III.7: 23 propositions, no porism and 14 companions. Through their own proofs and the
+proved rules beneath them, without the entries they cite, 59 rested on it and 23 do.
+Intersection 4 takes the first circle's centre from `exists_centre`, but I.22, which
 used it, has that centre already and now gives it to the lemma that carries the proof
 (`circles_meet_of_centre`), so I.22 rests on neither Circle 1 nor our rule, and no entry
-rests on `exists_centre` that did not: 43 do, as before, the first III.1. No row leaves or
+rests on `exists_centre` that did not: 53 do, as before, the first III.1: 28 propositions,
+no porism and 25 companions. Through their own proofs and the proved rules beneath them 46
+do, where 31 did, since Generalities 4 now takes its centre from the rule. No row leaves or
 joins the table; the notes on Generalities 2, 3 and 4 below say what moved.
 
 ## Current axiom overlaps
@@ -149,8 +153,9 @@ recovers that point from the earlier conditions, with no centre given. It recove
 earlier statements of III.6 and III.11 with no extra hypothesis: III.6 supposes a common
 centre, and III.11 keeps the named centres that its conclusion orders.
 `Audit.III_13_today` asks for no centres, and so gives the earlier III.13, which was
-given them. This keeps the whole-circle reading of touching; it does not establish
-agreement with Heath's preferred local reading at the contact.
+given them. This keeps the whole-circle reading of touching; it does not itself establish
+agreement with Heath's preferred local reading at the contact, which III.13's companions
+prove, for any two circles (`Prop13.circlesTouch_iff`, 25 October 2026, #126).
 
 ## Former axiom overlaps
 
@@ -512,7 +517,7 @@ between the centre and F, and Book Zero's `InsideCircle.of_between_centre` puts 
 by Definition I.15 and the rules that relate "within" to the radius, with no proposition.
 
 The later proofs that called Circle 2 take the step in one of three ways. Where both ends
-are on the circle, III.2's own case, they cite III.2: III.10, III.15, III.21, III.22,
+are on the circle, III.2's own case, they cite III.2: III.15, III.21, III.22,
 III.23 and its companion `Prop23.point`, III.25's companion `Prop25.of_circle` in the
 meeting fact `Prop25.meets`, III.30, and III.32 in its helper `Prop32.sameSide`. Where one end is the centre and the other is on the circle, they use
 `InsideCircle.of_between_centre`: III.7, III.8, III.12, III.15, III.17, III.20, III.34 and
@@ -522,7 +527,8 @@ within. Where an end is within the circle and is not its centre, they cite III.2
 corollary `Prop2.within`, III.2 for ends on or within the circle, whose proof produces the
 straight line to meet the circle and finds the point between the two points where it meets
 it: III.7, III.11, III.15 and III.23. III.13 cites III.2, where Heath's reference is
-III.2.
+III.2. III.10 once cited III.2 too, to put K and L within the circle before carrying its
+perpendiculars through it; it now produces them by Postulate 2 and needs no point within.
 
 Three more corollaries after III.2 take the place of Book Zero lemmas that rested on
 Circle 2: `Prop2.triangle`, that three points of a circle are not on one straight line,
@@ -539,9 +545,11 @@ construction is given the fact, and never sees a circle. Book Zero kept its own 
 Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf,
 stated for a circle with no centre given, which nothing used, until they were taken
 out on 24 October 2026 (#294; [below](#a-separate-piece-of-work)). `Staging/Routes/`
-contains five Lean files; their theorems rest on neither Circle 2 nor Circle 3
+is gone, for the last of its theorems, #129's, have left it for `Elements/`; they rest on
+neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
-those three Book Zero lemmas. The staged III.1's construction called Circle 2 to put D
+those three Book Zero lemmas, as the theorems that left it before do not. The staged
+III.1's construction called Circle 2 to put D
 within the circle until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean`
 as `Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which
 held it, was retired later that day. Since `Prop2.within` is Circle 2 with no supplied
@@ -835,6 +843,19 @@ rule.
   [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement kept the
   measure when arcs got a meaning of their own ([brief 0006](../briefs/0006-statements.md),
   stage 3), so this near miss stays.
+
+- **III.11 and III.12, from contact at the point** (25 October 2026, #126). Two steps of
+  III.13's companions prove the conclusions of III.11 and III.12 for circles that touch
+  at a point, Definition III.3 read there as Heath prefers (`TouchesInternallyAt`,
+  `TouchesExternallyAt`): within, the inner centre lies between the outer centre and the
+  point of contact (`TouchesInternallyAt.between`); without, the point of contact lies
+  between the centres (`TouchesExternallyAt.between`). No rule gives either. Each is a
+  proof by I.24 at a centre, with I.20 within and III.2 without, and nothing beneath it
+  rests on Circle 2 or Circle 3; from there the companions prove the reading at the point
+  the same as the whole-circle reading, for any two circles. So this is another route to
+  two conclusions, not an overlap with a rule. Our III.11 and III.12 follow Euclid on the
+  whole-circle reading and do not cite the two steps, which come after III.13, in
+  `Elements/BookIII/Prop13.lean`.
 
 ### A separate piece of work
 

@@ -77,6 +77,25 @@ class AllowedLimits(unittest.TestCase):
             self.assertEqual(self.p3_failures("III.31", "partial", ["mixed-angles-omitted"]),
                              self.unlisted("partial"))
 
+    def test_a_row_for_a_full_record_fails(self):
+        # An allowance that outlives its need is stale (#162, item 3): with made-up rows for
+        # III.16 and I.45, each full record fails P3 with its own row's scope and tag,
+        # whether it carries III.16's row tag, none, or the tag III.16's record carries; and
+        # III.31, a full record no row names, still passes.
+        def stale(scope, tag):
+            return [f"the statement is full, so its allowance as a {scope} statement with "
+                    f"`{tag}` is stale: its row in ALLOWED_LIMITS and in "
+                    "docs/ACCEPTANCE.md's table is to go"]
+        with patch.object(acceptance, "ALLOWED_LIMITS",
+                          {"III.16": ("partial", "mixed-angles-omitted"),
+                           "I.45": ("restricted", "figure-with-dissection")}):
+            for ref, expected in (("III.16", stale("partial", "mixed-angles-omitted")),
+                                  ("I.45", stale("restricted", "figure-with-dissection")),
+                                  ("III.31", [])):
+                for tags in ([], ["mixed-angles-omitted"], ["mixed-angles-local"]):
+                    with self.subTest(ref=ref, tags=tags):
+                        self.assertEqual(self.p3_failures(ref, "full", tags), expected)
+
     def test_figures_short_of_full_fail_whatever_tags(self):
         # #116: the allowance for I.45 and II.14 is withdrawn, so a restricted or partial
         # statement of either fails as any limitation the table does not name.
@@ -89,6 +108,8 @@ class AllowedLimits(unittest.TestCase):
                                          self.unlisted(scope))
 
     def test_full_statements_pass_with_or_without_tag(self):
+        # The list as it is, empty, names no proposition, so a full statement passes whatever
+        # its tags; one that a row names fails, as stale (test_a_row_for_a_full_record_fails).
         for ref in ("I.45", "II.14", "III.16", "III.31"):
             for tags in ([], ["figure-with-dissection"], ["mixed-angles-omitted"]):
                 with self.subTest(ref=ref, tags=tags):

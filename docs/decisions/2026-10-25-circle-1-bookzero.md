@@ -35,8 +35,9 @@
   as its twin in `Circles.lean` already was. Once Generalities 4 no longer used Circle 1
   this lemma did not reach it, but it would have reached `exists_centre` through
   Generalities 4's new proof, and Diagram-segment 4 (`Tacit.len_lt_of_inside`), beneath much
-  of Book I, uses it: proved through Generalities 4, it would leave 92 entries newly resting
-  on that rule, from I.3 on; proved by the radius rule, and with I.22's change below, none.
+  of Book I, uses it: proved through Generalities 4, it would leave 91 of the 149 entries
+  newly resting on that rule, from I.3 on, all of them among the 140 of d0eb44ca, the
+  comparison revision below; proved by the radius rule, and with I.22's change below, none.
 
   What changes in Book I. One line of a proof. `Prop22.meet`, the step of I.22 that makes its
   two circles meet, has the centre G of the first among its hypotheses, and in
@@ -60,22 +61,51 @@
   `lake env lean Certificate/Facts.lean`. III.1 rested on 44 axioms and now rests on 43, with
   38 tacit rules where it had 39; III.1's porism on 43 and now 42, with 37; III.2 on 44 and now
   43, with 38. Each loses Circle 1 and gains nothing, and none rests on Diagram-segment 2
-  (`Tacit.circle_eq`). Of the 140 certificate entries, 135 rested on Circle 1 and 35 now
-  do, the first of them III.7; counting only an entry's own proof and the proved rules
-  beneath it, 53 did and 23 do, and 21 proofs named it themselves and 18 do. No
-  proposition of Books I and II rests on it now, nor do III.1 to III.6, III.9, III.10,
-  III.12, III.16 to III.19 and III.25. I.22 rested on 31 axioms and now rests on 30, with 26
-  tacit rules where it had 27: it loses Circle 1 and gains nothing, and rests on neither
-  Circle 1 nor `exists_centre`.
+  (`Tacit.circle_eq`). I.22 rested on 31 axioms and now rests on 30, with 26 tacit rules
+  where it had 27: it loses Circle 1 and gains nothing, and rests on neither Circle 1 nor
+  `exists_centre`.
 
-  What else moves. No entry rests on `exists_centre` that did not: the same 43 entries rest
-  on it as before, the first of them III.1, and III.1's porism is not among them. Had I.22
-  kept calling Intersection 4, 55 would rest on the rule that do not: I.22 and the 54
-  entries that cite it, directly or not, and do not rest on the rule otherwise. Generalities
-  4 now takes its centre from the rule, so 13 entries of Book III, from III.7, three of them
-  companions, rest on it through their own proofs and the proved rules beneath them, where
-  before they rested on it only through a proposition they cite: counted so, 38 entries rest
-  on it where 25 did, and 18 proofs name it themselves, as before.
+  How many entries rest on a rule is read, as in
+  [the entry for Book Zero on the radius rule](2026-10-25-book-zero-radius-rule.md), from
+  two fields of each entry of `facts.json`: an entry rests on a rule in total when its
+  `axioms` hold it, counting the entries it cites, and directly when its `direct_axioms`
+  hold it, through its own proof and the lemmas and proved rules beneath it; a proof names
+  the rule itself when the entry's `own_axioms` hold it. The comparison revision, d0eb44ca,
+  before these proofs changed, has 140 entries: 99 propositions, 3 porisms and 38
+  companions. This revision has 149: 99 propositions, 3 porisms and 47 companions, the nine
+  added since being three companions of III.13, four of III.18 and two of III.20. So each
+  count is given of all the entries at its revision, and, to compare like with like, of the
+  140 entries of d0eb44ca; the three figures after a count are its propositions, porisms
+  and companions.
+
+  Circle 1. At d0eb44ca 135 of the 140 entries rested on it in total (94, 3, 38), 53
+  directly (35, 1, 17), and 21 proofs named it themselves (14, 1, 6). Now 37 of the 149 rest
+  on it in total (23, 0, 14), the first of them III.7, 23 directly (16, 0, 7), and 17 proofs
+  name it (11, 0, 6); of the 140 entries of d0eb44ca, 35 in total (23, 0, 12), 22 directly
+  (16, 0, 6) and 17 by name (11, 0, 6). One of these moves is not this change's: III.21's
+  proof, by Euclid's argument since
+  [the entry on the angle at the centre](2026-10-25-routes-iii-centre.md), neither names
+  Circle 1 nor rests on it directly, though III.21 still rests on it through III.20, which
+  it cites. Just before this change 144 of the 149 rested on it in total and 59
+  directly, as the radius rule's entry counts, and 20 proofs named it. No entry of Books I
+  and II rests on it now, proposition, porism or companion, nor do III.1 to III.6, III.9,
+  III.10, III.12, III.16 to III.19 and III.25, nor the porisms of III.1 and III.16.
+
+  What else moves. No entry rests on `exists_centre` that did not before this change: 53 of
+  the 149 rest on it in total (28, 0, 25), as just before it, the first of them III.1, and
+  III.1's porism is not among them. At d0eb44ca 43 of the 140 did (27, 0, 16), and of those
+  140, 44 do now (28, 0, 16): the one more is III.20, whose proof takes a centre from the
+  rule itself since the entry on the angle at the centre. Had I.22 kept calling
+  Intersection 4, 54 would rest on the rule that do not: I.22 and the 53 entries that cite
+  it, directly or not, and do not rest on the rule otherwise. Generalities 4 now takes its
+  centre from the rule, so 15 entries of Book III, from III.7, five of them companions, rest
+  on it directly, through their own proofs and the proved rules beneath them, where before
+  they rested on it only through a proposition they cite: counted so, 46 of the 149 rest on
+  it (26, 0, 20) where 31 did just before this change (16, 0, 15); at d0eb44ca 25 of the 140
+  did (15, 0, 10), and of those 140, 39 do now (26, 0, 13): 13 more by this change, and
+  III.20 by its own proof. 23 proofs name it themselves
+  (15, 0, 8), as just before this change; at d0eb44ca 18 did (14, 0, 4), and of those 140,
+  19 do now (15, 0, 4), III.20 again the one more.
 
   No proof of Intersection 4 that uses neither Circle 1 nor a centre can be had. The review
   of this change argued it informally, in the manner of `tests/model/MODEL.md`; the argument
@@ -95,7 +125,8 @@
   library first has from III.2.
 
   What it does not prove. Circle 1 stays an assumption: III.7 and the later propositions of
-  Book III that use it, and `foot_between`, still call it, and 35 entries rest on it. Its
+  Book III that use it, and `foot_between`, still call it, and 37 of the 149 entries rest on
+  it. Its
   retirement after III.2 is the next step of #477's plan.
 
   Pinned values that move with the proofs, each read from the run named above.

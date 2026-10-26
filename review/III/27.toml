@@ -5,7 +5,7 @@ fingerprint = "sha256:76827ffe8edda107"
 
 [route]
 kind = "modified"
-note = "Euclid's reductio for the angles at the centres, and his halving by III.20 where the angles at the circumferences are acute; where they are obtuse, his argument runs on the circumferences that remain, as in III.26, and III.22 gives back the angles at A and D; where they are right, each is an angle in a semicircle, read off the measure of the circumference (`Prop24.angle_type`)."
+note = "Euclid's reductio for the angles at the centres, and his halving by III.20 where the angles at the circumferences are acute, which the Lean cites as III.20's companion `Prop20.special`, III.20 with the centre on A's side of BC, where the angle at the centre is the angle BGC, the statement III.20 had before; where they are obtuse, his argument runs on the circumferences that remain, as III.26 does for the congruence of the remaining segments, and III.22 gives back the angles at A and D; where they are right, each is an angle in a semicircle, read off the measure of the circumference (`Prop24.angle_type`)."
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]
@@ -27,7 +27,7 @@ note = "Euclid applies III.26 to the equal central angles. The Lean first takes 
 at = "therefore BK is also equal to BC"
 kind = "helper"
 helper = "Circumference.centre"
-note = "Euclid reads BK as less than BC and rules out their equality. `Circumference.centre` turns that equality into equality of BGK and BGC, contradicting BGK equal to the smaller angle EHF; the lemma uses III.2, III.20 and III.21, for which Heath gives no references here."
+note = "Euclid reads BK as less than BC and rules out their equality. `Circumference.centre` turns that equality into equality of BGK and BGC, contradicting BGK equal to the smaller angle EHF; the lemma uses III.2, III.20 (by its companion `Prop20.special`) and III.21, for which Heath gives no references here."
 
 [[passage]]
 at = "Therefore the angle BGC is not unequal to the angle EHF"
@@ -37,7 +37,7 @@ note = "Euclid supposes BGC greater than EHF; the Lean proves the reductio once 
 [[passage]]
 at = "therefore the angle at A is also equal to the angle at D"
 kind = "different"
-note = "Euclid infers that the angles at A and D are equal because they are halves of equal angles, which holds where they are acute, as in his figure; the Lean writes his reductio and halving once, for any points of the circles on the centres' sides, and `Magnitude.eq_of_add_self_eq` proves that equal doubles have equal halves by ruling out either strict inequality. `Prop27.sides` puts the centres alike in both circles; where the angles at A and D are obtuse, the Lean takes points X, Y on the centres' sides by `Prop2.sameSide`, makes the circumferences that remain equal by `Circumference.whole` and Common Notion 3, makes the angles at X and Y equal by Euclid's argument, and by III.22 leaves those at A and D as what remains of two right angles; where they are right, the centres lie on BC and EF, with no angle at the centre to halve, and `Prop24.angle_type` reads each angle off the measure as an angle in a semicircle; Heath prints no reference here for I.5, I.32, III.2, III.21 or III.22, which these use."
+note = "Euclid infers that the angles at A and D are equal because they are halves of equal angles, which holds where they are acute, as in his figure; the Lean writes his reductio and halving once, for any points of the circles on the centres' sides, and `Magnitude.eq_of_add_self_eq` proves that equal doubles have equal halves by ruling out either strict inequality. `Prop27.sides` puts the centres alike in both circles; where the angles at A and D are obtuse, the Lean takes points X, Y on the centres' sides by `Prop2.sameSide`, makes the circumferences that remain equal by `Circumference.whole` and Common Notion 3, makes the angles at X and Y equal by Euclid's argument, and by III.22 leaves those at A and D as what remains of two right angles; where they are right, the centres lie on BC and EF, with no angles BGC, EHF of ours, our angles never being straight, and the angle at the centre, two right angles (`angleAtCentre.semicircle`), is not halved; `Prop24.angle_type` reads each angle off the measure as an angle in a semicircle; Heath prints no reference here for I.5, I.32, III.2, III.21 or III.22, which these use."
 
 [figure]
 case = "acute angles at the circumferences"
@@ -45,11 +45,11 @@ note = "Euclid's figure draws the impossible supposition that BGC is greater tha
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:8d4e1b287f2e5c91"
-run = "card #332, ship ER (#127): re-read after Euclid's route moved into Elements/; the added lines of the move (Prop27.sides and the three cases), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the mishnah's clause of wave two, by Claude Opus 5.5, reader R3-337-r5, at e00da4b4"
-text = "sha256:54649db23e860831"
+commit = "5afb1d6a4"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:f0a645fc460a5249"
+run = "card #332, ship ER (#127): re-read after Euclid's route moved into Elements/; the added lines of the move (Prop27.sides and the three cases), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the mishnah's clause of wave two, by Claude Opus 5.5, reader R3-337-r5, at e00da4b4; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex)"
+text = "sha256:a6a9dbc072503771"
 
 [review.items]
 statement = "pass"

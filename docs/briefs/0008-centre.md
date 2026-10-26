@@ -113,6 +113,28 @@ declaration, record or lock changes.
   the construction, 39 of them tacit rules. The certificate is where the current counts are
   read.
 
+*Status, 26 October 2026, for #473:* the notes above and the frozen text below are kept as
+written, and this note corrects one claim of the note of 19 October 2026 at the head of the
+brief and brings one claim of section 7 up to date. No statement, declaration, record or
+lock changes.
+
+- **III.5's and III.6's pins.** That note says that the axioms pinned for the restated III.5
+  and III.6 in [`Audit/Crossing.lean`](../../Audit/Crossing.lean) include `circle_eq` and
+  Postulate 3, through proved rules such as `centre_inside`. Since Book Zero's lemma that a
+  radius is not nothing came to rest on our radius rule (`Tacit.radius_ne_zero`,
+  [the entry for that move](../decisions/2026-10-25-book-zero-radius-rule.md)), the pins
+  hold Postulate 3 and the radius rule, and neither `circle_eq` nor Circle 1
+  (`between_of_inside_chord`). So what the frozen text below says of the two proofs at the
+  freeze, that they rest on neither `circle_eq` nor Circle 4, holds again.
+- **The mixed-angle step.** Section 7's certificates say that the staged work used
+  Diagram-segment 2 in one step of the mixed-angle prototype. That step, the case of equal
+  radii in `exists_inside_both`, now in
+  [`Elements/Figure/Regions.lean`](../../Elements/Figure/Regions.lean), compares lengths
+  instead, and no proof of Book Zero calls the rule. In `Elements` it is called by III.10,
+  by III.13's `TouchesInternallyAt.between`, by III.25's `Prop25.complete`, by
+  `Arc.eq_of_aligned` and by the proof of Circle 4 after I.7, each to conclude that two
+  circles with one centre and a common point are one.
+
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
 while the frozen text is retained as history.*

@@ -1,39 +1,18 @@
-import Staging.Routes.Prop21
-import Staging.Routes.Prop26
-import Staging.Routes.Touching
-import Staging.Routes.AngleOfContact
-
 /-!
 # Staging: statements on their way to `Elements/`
 
-The statements that a stage of brief 0005, or of a later brief, adds or changes, each with
-`sorry` where its proof is due, until it moves to `Elements/`. The rules for them, and for
-the few proofs this library may hold, are in `docs/WORKFLOW.md`, section 2. Brief 0006 names
-the home and owner of each statement of brief 0005's stages; a later brief names those of
-its own.
+Nothing is staged now. This library holds the statements that a stage of brief 0005, or of
+a later brief, adds or changes, each with `sorry` where its proof is due, until it moves to
+`Elements/`. The rules for them, and for the few proofs this library may hold, are in
+`docs/WORKFLOW.md`, section 2. A later brief stages a statement in a file of its own under
+`Staging/`, which `lake build Staging` builds whether or not this root imports it, and names
+its home and owner; a changed main theorem is staged as `Elements.Book<B>.Staging.PropN`
+(`docs/FORMALIZATION.md`, section 6).
 
-The folders followed the briefs' stages; the one left, `Routes/`, follows issues instead
-(#126, #129 and #130). The statements of brief 0006's stages 2, 3 and 4,
-all proved, have moved to their homes in `Elements/`, and their folders with them; so have
-stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
-the mixed-angle prototype for III.16 and III.31 (brief 0011). Brief 0008's centre
-restatements have also moved home, and so has III.30's halves (brief 0006), proved on
-21 October 2026 as the companion "III.30 halves". So have brief 0013's rectilineal figures
-given by their outlines, all proved, and their folder `Figures/` with them: the words to
-`Elements/Foundations/Figures.lean`, the facts to Book Zero (`Elements/Figure/`),
-`outline_bounded` to Book I after I.29, and the companions to I.45 and II.14. The prototype
-of a restricted superposition rule (brief 0009) has its production home in
-`Elements/Foundations/Superposition/`, where the rule now in the foundations is stated.
-Euclid's own routes for III.8 and III.27 (#125 and #127), proved on the statements in
-`Elements/`, have moved home too: on 22 October 2026, under #332, each proof went into its
-proposition's file, and its staged copy was deleted. The remaining work is in `Routes/`:
-Euclid's own routes in Book III, proved on the statements now in `Elements/`: III.20's
-special case, III.21 and III.26 by his arguments, to replace the proofs there (they rest on
-the draft angle at the centre, and wait for its approval), and drafts for the owner's
-approval of Definition III.3 read at the point, the angle at the centre of any size with
-III.20 in general (`Elements.BookIII.Staging.Prop20`), and the angle of contact after
-III.18. The coordinator's orders of 21 October 2026 directed these proofs here; they are not
-the owner's approval of a prototype, and the files stand here as unfinished work while an
-issue labelled `blocks-release` tracks their move into `Elements/`. The report is
-`docs/reports/routes-book-III.md`.
+Everything staged so far has moved home: the statements of brief 0006's stages, of brief
+0007's stage 4b, of brief 0008 and of brief 0013, the prototypes of the mixed angles (brief
+0011) and of a restricted rule of superposition (brief 0009), and Euclid's routes in Book
+III (#125, #126, #127, #129 and #130, moved under #332), the last of them the angle at the
+centre of any size, with III.20, III.21 and III.26 by Euclid's argument. The routes report
+is `docs/reports/routes-book-III.md`.
 -/

@@ -90,6 +90,14 @@ superseded: predicates for regions near a vertex now serve the mixed-angle compa
 Contact read locally, at the point of contact, and its equivalence to the whole-circle
 reading have not been formalised.
 
+**25 October 2026, local contact formalised (#126).** The sentence above is overtaken:
+contact at the point of contact is now defined beside the whole-circle reading
+(`TouchesInternallyAt`, `TouchesExternallyAt` and `CirclesTouchAt`, with `Touching.Near`,
+in `Elements/Foundations/DefinitionsIII.lean`), and III.13's companions prove the two
+readings the same for any two circles (`Prop13.circlesTouch_iff`;
+[decision entry](../decisions/2026-10-25-routes-iii-touching.md)). Book III's statements
+keep the whole-circle reading.
+
 **19 October 2026, contact within.** The whole-circle reading remains ours. The point
 of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
 passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through
@@ -398,9 +406,19 @@ worth naming. The first mate's report has a note on every statement.
   statement covers both of Euclid's cases, drawn in his one figure, the centre within the
   angle `BAC` and outside the angle `BDC`, and the case he leaves out, the centre on one
   of the arms.
+
+  **26 October 2026, the angle at the centre of any size (#129).** The bullet above is
+  overtaken: III.20 now speaks of the angle at the centre standing on the circumference,
+  of any size (`angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`), which may
+  be two right angles or more, our reading after Heath's notes, not Euclid's; the statement
+  described above is its companion `Prop20.special`
+  ([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 - **III.21** is said of any segment. Euclid's proof covers the segment greater than a
   semicircle; Heath gives Simson's for the rest (vol. 2, pp. 49–50), and III.22 and Book IV
   need every segment.
+
+  **26 October 2026 (#129).** Our proof of III.21 now follows Euclid's argument in every
+  segment, by III.20 of any size; Simson's proof is no longer used.
 - **III.22** takes a quadrilateral in the circle as four points of it with the straight line
   `BD` (joining opposite corners) separating `A` from `C`; that `AC` separates `B` from `D`
   follows.
