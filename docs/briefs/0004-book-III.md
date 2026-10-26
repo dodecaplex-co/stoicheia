@@ -305,12 +305,12 @@ bridge theorems before III.20 in `Elements/BookIII/Prop20.lean`: `angleAtCentre.
 right angles when E is on it), `angleAtCentre.reflex` (with the angle BEC, four right
 angles when E is on the circumference's side), `angleAtCentre.reflex_gt` (then greater
 than two right angles) and `angleAtCentre.size` (less, two right angles or greater, as E
-lies). III.20's companion `Prop20.circumference` proves from III.20, with III.2 and without III.21, that every
-circumference is its angle at the centre, whatever its size. `Circumference.centre` keeps
-its statement, the case where the centre lies beyond the circumference and its angle at
-the centre is the rectilineal angle BGC; it is proved from `Circumference.eq` (III.21) and
-III.20's companion `Prop20.special`, the statement III.20 had before #129, so its row
-still adds III.20 and III.21
+lies). III.20's companion `Prop20.circumference` proves from III.20, with III.2 and
+without III.21, that every circumference is its angle at the centre, whatever its size.
+`Circumference.centre` keeps its statement, the case where the centre lies beyond the
+circumference and its angle at the centre is the rectilineal angle BGC; it is proved from
+`Circumference.eq` (III.21) and III.20's companion `Prop20.special`, the statement III.20
+had before #129, so its row still adds III.20 and III.21
 ([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 
 **Porisms.** Two porisms are cited by later propositions, and are theorems of their
