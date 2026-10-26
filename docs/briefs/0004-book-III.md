@@ -303,6 +303,24 @@ III.23–III.37:
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
 
+**26 October 2026, the angle at the centre (#129).** The table stands, and beside it now
+stand the word `angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`, the angle at
+the centre standing on a circumference, which may be two right angles or more, and its
+bridge theorems before III.20 in `Elements/BookIII/Prop20.lean`: `angleAtCentre.diameter`
+(every diameter with its ends on opposite sides of the base gives the same angle),
+`angleAtCentre.congr` (the same for every point naming the side), `angleAtCentre.within`
+(the angle BEC when the centre E lies beyond the base), `angleAtCentre.semicircle` (two
+right angles when E is on it), `angleAtCentre.reflex` (with the angle BEC, four right
+angles when E is on the circumference's side), `angleAtCentre.reflex_gt` (then greater
+than two right angles) and `angleAtCentre.size` (less, two right angles or greater, as E
+lies). III.20's companion `Prop20.circumference` proves from III.20, with III.2 and
+without III.21, that every circumference is its angle at the centre, whatever its size.
+`Circumference.centre` keeps its statement, the case where the centre lies beyond the
+circumference and its angle at the centre is the rectilineal angle BGC; it is proved from
+`Circumference.eq` (III.21) and III.20's companion `Prop20.special`, the statement III.20
+had before #129, so its row still adds III.20 and III.21
+([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
+
 **Porisms.** Two porisms are cited by later propositions, and are theorems of their
 own, after their propositions: `Prop1.porism` (the centre lies on a straight line
 bisecting a straight line in the circle at right angles; III.9, III.10) and
