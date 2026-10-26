@@ -137,10 +137,19 @@
 # already locked are unchanged, byte for byte, and the vocabulary grows from 262 to 263 words.
 # Check/Write.lean wrote Model/Laws.lean again, and only its line naming the lock's hash changed.
 #
+# Renewed on 25 October 2026, when Touching.Near, TouchesInternallyAt, TouchesExternallyAt
+# and CirclesTouchAt, Definition III.3 read at the point of contact, joined the vocabulary
+# (#126): the statements of III.13's three companions, touchesInternally_iff,
+# touchesExternally_iff and circlesTouch_iff, are the first to reach them, and no law of the
+# model uses them, so none changes: the 48 axioms and every word already locked are
+# unchanged, byte for byte, and the vocabulary grows from 263 to 267 words.
+# Check/Write.lean wrote Model/Laws.lean again; the line naming the lock's hash is the only
+# one that changed.
+#
 # Renewed on 26 October 2026, when the rule that a radius is not nothing,
 # Tacit.radius_ne_zero, joined the axioms by the owner's decision of 25 October 2026 (#473):
-# 49 axioms, the other 48 and the 263 words of the vocabulary unchanged, byte for byte. The
+# 49 axioms, the other 48 and the 267 words of the vocabulary unchanged, byte for byte. The
 # generator writes its law, Model/Laws/circles.lean translates it by hand, Check/Circles.lean
 # compares that translation with the library's declaration and with the generated law, and
 # Model/Assembly.lean gathers Euclidean.radius_ne_zero, proved in Model/Euclidean/CircleBasics.lean.
-3e93a25dc4485c8d2df6a4bf0910dbae15a1c14bc7050bb1153edd18bebef456  Certificate/axioms.lock
+153057640d2bb4a6ff9645e91950e4c2cb10503a7f5a0cb9978dd56bfa7d86c8  Certificate/axioms.lock
