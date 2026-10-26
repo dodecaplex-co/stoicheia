@@ -114,10 +114,10 @@ That run is no longer a true account of this screen. Axiom wave one (19 October 
 had not reached that branch: it made eight rules theorems, five of them rules about
 circles, the second axiom retirement made 31 more, nine of them rules about circles, and
 the third (24 October 2026) made Circle 3 (Tacit.outside_of_between) a theorem, proved
-after III.2; all fifteen have left CIRCLE. The screen tries the axioms of the current
-certificate and the rules named in CIRCLE below, and it unfolds, budgets and leaves out
-rules as described above. III.2 closed by Circle 2 in the runs on 89c5da4 and on 19
-October, and Circle 2 is one of wave one's eight.
+after III.2; all fifteen have left CIRCLE. The screen tries the 48 axioms of the
+certificate, 10 of them in CIRCLE with Tacit.exists_centre, and it unfolds, budgets and
+leaves out rules as described above. III.2 closed by Circle 2 in the runs on 89c5da4 and
+on 19 October, and Circle 2 is one of wave one's eight.
 
 Run on the statements of 58018a3 (21 October 2026), the second axiom retirement's before
 train C6a was merged into it, the 15,860 attempts over the 122 statements made 28,060 tries
