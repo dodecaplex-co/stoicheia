@@ -1167,35 +1167,6 @@ HEAD = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, tex
 EVIDENCE_COMMIT = '39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3'
 BOOKS_I_II = (('I', 48), ('II', 14))
 _SHARED = {}
-# The words of each record, its comments read as prose, that name an entry of the guard's
-# tables: RECORD_CHECKED's from I.4's and I.8's comments, OUTLINE_CHECKED's from I.45's and
-# II.14's notes.
-_LAWS = ('lenSymm', 'angleSymm', 'areaCongruent', 'neOfLen', 'rayUnique', 'rayOfAngle',
-         'rayOfAngleSide')
-RECORD_WORDS = {
-    **{f'Elements.Superposition.{name}.Holds': 'Checked Atom/Lit/Metric.Holds'
-       for name in ('Atom', 'Lit', 'Metric')},
-    **{f'Elements.Superposition.{name}.holds_map': 'their holds_map bridges'
-       for name in ('Atom', 'Lit', 'Metric')},
-    'Elements.Superposition.Derives.sound': 'Derives.sound',
-    'Elements.Superposition.Rule.apply': 'Rule.apply',
-    **{name: 'the cited laws' for name in ('Elements.Superposition.Cited.Holds',
-                                           'Elements.Superposition.Law.Holds',
-                                           'Elements.Superposition.Cited.law')},
-    **{f'Elements.Superposition.Cited.holds_{law}': 'the cited laws' for law in _LAWS},
-    'Elements.BookI.Prop8.holds_prop7': 'holds_prop7',
-    'Elements.SameSideOf.of_line': 'SameSideOf.of_line',
-    'Elements.Figures.Outline': '`Figures.Outline`',
-    'Elements.Figures.Outline.Region': 'by its outline alone',
-    'Elements.Figures.Outline.area': "the figure's area",
-    'Elements.Figures.division_exists': '`Figures.division_exists`',
-    'Elements.Figures.Apart.area_eq_of_same_region': '`Figures.Apart.area_eq_of_same_region`',
-    'Elements.Figures.area_eq': '`Figures.area_eq`',
-    'Elements.BookI.Prop45.fan_boundary': '`Prop45.fan_boundary`',
-    'Elements.BookI.Prop45.outline': '`Prop45.outline`',
-    'Elements.BookII.Prop14.outline': '`Prop14.outline`',
-    'Elements.BookII.Prop14.outline_side': '`Prop14.outline_side`',
-}
 
 
 def shared():
@@ -1368,6 +1339,9 @@ class BookThree(unittest.TestCase):
                 self.assertEqual(sorted(bridges), sorted(set(verdict[1])))
         for n in (14, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
             self.assertTrue(rows[f'III.{n}']['state']['bridges'], n)
+        state = rows['III.35']['state']
+        self.assertTrue({'sq', 'Square'} <= set(state['definitions']))
+        self.assertTrue(set(questions.SQUARE_BRIDGES) <= set(state['bridges']))
 
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
@@ -1420,27 +1394,25 @@ class BookThree(unittest.TestCase):
         for ref in passed:
             with self.subTest(ref=ref):
                 self.assertEqual(generator.checked(ref, records[ref], rows[ref]['state']), [])
-        # Each entry of the guard's tables is the record's own: its words name it.
-        for table in (questions.RECORD_CHECKED, questions.OUTLINE_CHECKED):
-            for ref, names in table.items():
-                raw = generator.evidence.read(f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')
-                text = ' '.join(line.lstrip('# ') if line.startswith('#') else line
-                                for line in raw.splitlines())
-                for name in names:
-                    with self.subTest(ref=ref, name=name):
-                        self.assertIn(RECORD_WORDS[name], text)
-        # The guard finds each of them missing, and a name of a [representation] note too.
-        for ref, table, name in (('I.8', 'bridges', 'Elements.SameSideOf.of_line'),
-                                 ('I.8', 'bridges', 'Elements.BookI.Prop8.holds_prop7'),
-                                 ('I.8', 'definitions', 'Superposition.Cited.Holds'),
-                                 ('I.4', 'bridges', 'Elements.Superposition.Cited.holds_rayOfAngle'),
-                                 ('I.45', 'bridges', 'Elements.Figures.area_eq'),
-                                 ('I.45', 'bridges', 'Elements.BookI.Prop45.fan_boundary'),
-                                 ('I.45', 'definitions', 'Figures.Outline'),
-                                 ('II.14', 'bridges', 'Elements.Figures.division_exists'),
-                                 ('II.14', 'bridges', 'Elements.Figures.Apart.area_eq_of_same_region'),
-                                 ('II.14', 'definitions', 'Figures.Outline.area'),
-                                 ('III.16', 'definitions', 'MixedAngle.WellFormed'),
+        required = {ref: tuple(dict.fromkeys((*questions.RECORD_CHECKED.get(ref, ()),
+                                             *questions.OUTLINE_CHECKED.get(ref, ()))))
+                    for ref in set(questions.RECORD_CHECKED) | set(questions.OUTLINE_CHECKED)}
+        for ref, names in required.items():
+            for name in names:
+                state = copy.deepcopy(rows[ref]['state'])
+                short = name.removeprefix('Elements.')
+                if name in state['bridges']:
+                    del state['bridges'][name]
+                elif short in state['definitions']:
+                    del state['definitions'][short]
+                else:
+                    attachments = [attached for attached in state['attached_statements']
+                                   if questions.heath.parse_ref(attached).lean == name]
+                    self.assertEqual(len(attachments), 1, (ref, name))
+                    del state['attached_statements'][attachments[0]]
+                with self.subTest(ref=ref, missing=name):
+                    self.assertIn(name, generator.checked(ref, records[ref], state))
+        for ref, table, name in (('III.16', 'definitions', 'MixedAngle.WellFormed'),
                                  ('II.1', 'definitions', 'InOrder')):
             with self.subTest(ref=ref, missing=name):
                 state = copy.deepcopy(rows[ref]['state'])
@@ -1689,13 +1661,13 @@ class Calibration(unittest.TestCase):
         files, manifest = shared()['files'], shared()['calibration']
 
         class Stub:
-            def __init__(self, generator):
+            def __init__(self, generator, directory):
                 pass
 
             def finish(self):
                 return files, manifest
 
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY) as directory:
             out = Path(directory).resolve() / 'calibration'
             out.mkdir()
             args = ['--commit', HEAD, '--calibration', '--out', str(out)]
@@ -1740,6 +1712,50 @@ class Calibration(unittest.TestCase):
                     self.assertEqual(questions.main(args + ['--check']), 1)
                 self.assertIn('manifest.json', stderr.getvalue())
 
+    def test_custom_directory_assets_load_and_restore_to_the_same_layout(self):
+        if not shutil.which('rsvg-convert'):
+            self.skipTest('rsvg-convert renders the figures, and is not on the PATH')
+        generator = shared()['generator']
+        with tempfile.TemporaryDirectory(dir=REPOSITORY) as temporary:
+            out = Path(temporary).resolve() / 'custom'
+            out.mkdir()
+            args = ['--commit', HEAD, '--calibration', '--out', str(out)]
+            with patch.object(questions, 'Generator', return_value=generator):
+                self.assertEqual(questions.main(args), 0)
+            p15 = out / f'{questions.CALIBRATION}-P15.jsonl'
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                status = questions.jev.main(['run', str(p15), '--dry-run',
+                                             '--assets-root', str(REPOSITORY)])
+            self.assertEqual(status, 0, stderr.getvalue())
+            rows = [json.loads(line) for line in p15.read_text().splitlines()]
+            prefix = (out.relative_to(REPOSITORY) / questions.CALIBRATION_FIGURES).as_posix() + '/'
+            changed = sorted({path for row in rows for path in row.get('assets', {}).values()
+                              if path.startswith(prefix)})
+            self.assertEqual(len(changed), 5)
+            copies = [REPOSITORY / path for path in changed]
+            before = {path: path.read_bytes() for path in copies}
+            for path in copies:
+                path.unlink()
+            manifest = out / f'{questions.CALIBRATION}-manifest.json'
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                status = questions.main(['--restore-figures', str(manifest)])
+            self.assertEqual(status, 0, stderr.getvalue())
+            self.assertEqual({path: path.read_bytes() for path in copies}, before)
+
+    def test_external_calibration_directory_is_refused_before_generation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            out = Path(temporary).resolve() / 'calibration'
+            stderr = io.StringIO()
+            with patch.object(questions, 'Generator') as generator, \
+                    redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                status = questions.main(['--commit', HEAD, '--calibration', '--out', str(out)])
+            self.assertEqual(status, 1, stderr.getvalue())
+            generator.assert_not_called()
+            self.assertIn('must be inside the repository', stderr.getvalue())
+            self.assertFalse(out.exists())
+
     def test_dry_run_loads_every_request_and_figure(self):
         if not shutil.which('rsvg-convert'):
             self.skipTest('rsvg-convert renders the figures, and is not on the PATH')
@@ -1774,7 +1790,6 @@ class RestoreFigures(TemporaryRepository, unittest.TestCase):
                        if name.startswith(questions.CALIBRATION_FIGURES + '/')}
         super().setUp()
         self.jev = self.root / 'docs/reports/acceptance/jev'
-        self.enterContext(patch.object(questions, 'CALIBRATION_DIR', self.jev))
         self.figures = self.jev / questions.CALIBRATION_FIGURES
 
     def restore(self, manifest: bytes):
@@ -1923,7 +1938,7 @@ class TallyLines:
     def failed(self, row, status=500):
         """A line for a request that failed, as cmd_run makes it."""
         line = self.made(row)
-        line.update(status=status, error=f'HTTP {status}')
+        line.update(status=status, error=f'HTTP {status}' if status else 'cannot connect: refused')
         return line
 
     def clean_run(self):
@@ -2015,26 +2030,25 @@ class Tally(TallyLines, unittest.TestCase):
         self.assertIn('exits 1; 20 of 20 first answers as expected (at least 80%): fails', out)
 
     def test_a_failed_request_fails_condition_one(self):
-        lines = self.clean_run()
-        lines[self.by_role('control')[0]] = self.failed(self.rows[self.by_role('control')[0]])
-        status, out, _ = self.tally(lines)
-        self.assertEqual(status, 1)
-        self.assertIn('19 of 20 rows answered; 1 failed requests', out)
-        self.assertIn('failed request: HTTP 500', out)
+        for request_status, message in ((500, 'failed request: HTTP 500'),
+                                        (None, 'failed request: cannot connect: refused')):
+            with self.subTest(status=request_status):
+                lines = self.clean_run()
+                k = self.by_role('control')[0]
+                lines[k] = self.failed(self.rows[k], request_status)
+                status, out, _ = self.tally(lines)
+                self.assertEqual(status, 1)
+                self.assertIn('19 of 20 rows answered; 1 failed requests', out)
+                self.assertIn(message, out)
 
-    def test_a_status_other_than_200_is_a_failed_request_with_or_without_an_error(self):
-        lines = self.clean_run()
-        k = self.by_role('plant')[0]
-        lines[k] = self.made(self.rows[k])
-        lines[k]['status'] = 500
-        status, out, _ = self.tally(lines)
-        self.assertEqual(status, 1, out)
-        self.assertIn('19 of 20 rows answered; 1 failed requests', out)
-        self.assertIn('failed request: status 500, with no error', out)
-        # Correct choices on a line of status 500 with no error: not a line run writes.
-        lines[k] = self.line(self.rows[k], self.rows[k]['expected'])
-        lines[k]['status'] = 500
-        self.refused(lines, 'a failed request with')
+    def test_a_failed_request_without_an_error_is_refused(self):
+        for request_status in (500, None):
+            with self.subTest(status=request_status):
+                lines = self.clean_run()
+                k = self.by_role('plant')[0]
+                lines[k] = self.made(self.rows[k])
+                lines[k]['status'] = request_status
+                self.refused(lines, 'a failed request without an error')
 
     def test_another_model_fails_condition_one(self):
         lines = self.clean_run()

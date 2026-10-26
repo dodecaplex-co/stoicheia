@@ -40,7 +40,8 @@ running on from an import's line, and any `import` after the header outside a «
 refused. A private declaration is seen only in its own file. Every output path rejects
 symlinks, evidence files, tracked files other than the default outputs, Git metadata,
 protected paths independently of the index, and collisions with the others; an output may be
-outside the repository.
+outside the repository, except that a calibration directory must be representable as an asset
+path relative to the repository.
 The outputs are assembled and validated before any is written, using temporary
 files and replacement without following a final symlink.
 The checks cover links and aliases present when it runs, not a concurrent writer racing
@@ -940,9 +941,8 @@ def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[st
         if 35 <= n <= 37:
             definitions += ['Rectangle', 'Contain', 'rect', 'Parallelogram', 'quadArea']
             bridges += RECTANGLE_BRIDGES
-            if n >= 36:
-                definitions += ['sq', 'Square']
-                bridges += SQUARE_BRIDGES
+            definitions += ['sq', 'Square']
+            bridges += SQUARE_BRIDGES
     return list(dict.fromkeys(definitions)), list(dict.fromkeys(bridges))
 
 
@@ -2610,14 +2610,26 @@ def calibration_outputs(directory: Path) -> list[Path]:
 DEFAULT_OUTPUTS = (OUTPUT, MANIFEST, *calibration_outputs(CALIBRATION_DIR))
 
 
+def calibration_layout(directory: Path) -> tuple[Path, str]:
+    """A calibration directory and its figure folder under the repository asset root."""
+    resolved = checked_path(directory)
+    require(resolved.is_relative_to(ROOT),
+            f'{resolved}: calibration output directory must be inside the repository so its '
+            'figures have repository-relative asset paths')
+    figures = (resolved.relative_to(ROOT) / CALIBRATION_FIGURES).as_posix()
+    return resolved, figures
+
+
 class Calibration:
     """The calibration set of one commit, from the audit's own rows of it."""
 
-    def __init__(self, generator: Generator):
+    def __init__(self, generator: Generator, directory: Path | None = None):
         require(generator.books == BOOKS, 'the calibration takes all three books')
         self.generator = generator
         self.evidence = generator.evidence
         self.index = generator.index
+        self.directory, self.figure_directory = calibration_layout(
+            CALIBRATION_DIR if directory is None else directory)
         # A generator whose audit is done, as finish() leaves it, is read as it is.
         if not generator.rows:
             generator.audit()
@@ -2733,7 +2745,7 @@ class Calibration:
             text = text.replace(old, new)
         require(FIGURE_SWAP not in text, f'{row["id"]}: an exchange left its placeholder')
         data = text.encode('utf-8')
-        path = f'{relative(CALIBRATION_DIR)}/{CALIBRATION_FIGURES}/{name}'
+        path = f'{self.figure_directory}/{name}'
         require(path not in self.figures, f'{path}: written twice')
         self.figures[path] = {'from': original, 'from_sha256': sha(self.evidence.read(original)),
                               'sha256': sha(data), 'text': text, 'bytes': data}
@@ -2931,6 +2943,7 @@ class Calibration:
         require(not unresolved, f'unresolved names: {unresolved}')
         manifest = {
             'commit': self.evidence.commit, 'entry': ENTRY, 'bar': BAR,
+            'calibration_directory': self.directory.relative_to(ROOT).as_posix(),
             'evidence_verification': 'all evidence bytes equal git show',
             'hash_rule': 'SHA-256, lower-case hexadecimal, of the UTF-8 text "jev-calibration <Pnn> <ref>" '
                          'with no line feed, least first, among the propositions whose record is at '
@@ -2938,7 +2951,7 @@ class Calibration:
             'option_rotation': "each row keeps its audit row's rotation of the options",
             'ids': "each row keeps its audit row's id; the role is the local field `calibration`",
             'asset_paths': 'paths in the repository; a changed figure is a copy under '
-                           f'{relative(CALIBRATION_DIR)}/{CALIBRATION_FIGURES}/, never figures/. '
+                           f'{self.figure_directory}/, never figures/. '
                            'The copies are not committed as files, since scripts/check_paths.py '
                            'admits no .svg under docs/: `figures` carries each copy\'s exact text, '
                            'and python3 scripts/audit/jev_questions.py --restore-figures with this '
@@ -3066,16 +3079,16 @@ def result_line(line: Any, row: dict, where: str, made: dict, fingerprint) -> bo
     if line['status'] != 200 or 'error' in line:
         extra = set(line) - RUN_FIELDS - {'error', 'body'} - (PARTIAL_FIELDS if line['status'] == 200 else set())
         require(not extra, f'{where}: a failed request with {sorted(extra)}; not a line that jev.py run writes')
-        if 'error' in line:
-            error, status = line['error'], line['status']
-            if status == 200:
-                written = isinstance(error, str) and error.startswith(SHAPE_ERROR) and 'body' in line
-            elif status:
-                written = error == f'HTTP {status}'
-            else:
-                written = isinstance(error, str) and bool(error.strip())
-            require(written and isinstance(line.get('body', ''), str),
-                    f'{where}: its error is not one jev.py run writes')
+        require('error' in line, f'{where}: a failed request without an error; not a line that jev.py run writes')
+        error, status = line['error'], line['status']
+        if status == 200:
+            written = isinstance(error, str) and error.startswith(SHAPE_ERROR) and 'body' in line
+        elif status:
+            written = error == f'HTTP {status}'
+        else:
+            written = isinstance(error, str) and bool(error.strip())
+        require(written and isinstance(line.get('body', ''), str),
+                f'{where}: its error is not one jev.py run writes')
         return False
     extra = set(line) - RUN_FIELDS - ANSWER_FIELDS - {'model_differs'}
     require(ANSWER_FIELDS <= line.keys() and not extra,
@@ -3145,7 +3158,7 @@ def tally(questions: Path, results: Path, svg_width: int = SVG_WIDTH) -> int:
         if line is None:
             verdict, first, second = 'unanswered', '-', '-'
         elif row['id'] not in answered:
-            verdict = 'failed request: ' + str(line.get('error', f'status {line["status"]}, with no error'))
+            verdict = 'failed request: ' + str(line['error'])
             first = second = '-'
         else:
             a, b = line['choice'], line['reversed']['choice']
@@ -3320,11 +3333,11 @@ def calibrate(args: argparse.Namespace) -> int:
     manifest and its changed figures, in --out, a directory (by default beside the audit).
     --check compares a changed figure only when it is present: the copies are not committed,
     and the manifest, compared always, carries their text."""
-    first = Calibration(Generator(args.commit)).finish()
-    second = Calibration(Generator(args.commit)).finish()
+    directory, _ = calibration_layout(CALIBRATION_DIR if args.out is None else args.out)
+    first = Calibration(Generator(args.commit), directory).finish()
+    second = Calibration(Generator(args.commit), directory).finish()
     require(first[0] == second[0], 'two generations differ')
     files, manifest = first
-    directory = CALIBRATION_DIR if args.out is None else args.out
     # The figures first, the manifest last.
     names = sorted(files, key=lambda name: (not name.startswith(CALIBRATION_FIGURES),
                                             name.endswith('manifest.json'), name))
@@ -3368,9 +3381,15 @@ def restore_figures(path: Path) -> int:
 
     manifest = json.loads(read_no_follow(checked_path(path)).decode('utf-8'), object_pairs_hook=unique)
     figures = manifest.get('figures') if isinstance(manifest, dict) else None
-    require(isinstance(figures, dict) and figures and isinstance(manifest.get('evidence_files'), dict),
+    layout = manifest.get('calibration_directory') if isinstance(manifest, dict) else None
+    require(isinstance(figures, dict) and figures and isinstance(manifest.get('evidence_files'), dict)
+            and isinstance(layout, str),
             f'{path.name}: not a calibration manifest with figures')
-    allowed = {relative(p): p for p in figure_copies(CALIBRATION_DIR)}
+    local = Path(layout)
+    require(not local.is_absolute() and '..' not in local.parts and local.as_posix() == layout,
+            f'{layout}: calibration directory is not a repository-relative asset path')
+    directory, _ = calibration_layout(ROOT / local)
+    allowed = {relative(p): p for p in figure_copies(directory)}
     copies = []
     for name, figure in figures.items():
         require(name in allowed, f"{name}: not one of the calibration's figure paths")
