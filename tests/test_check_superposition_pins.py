@@ -47,16 +47,21 @@ short, is refused with no option in the file, as if set outside it, and so is a 
 printed as `⋯`. What shows a definition in Lean's print of a type is tested on the five
 definitions' prints, on propositions that only look like definitions' types, and on types
 that show neither sign, definitions' among them; every `#check` pin in the real file shows
-nothing. A `#print` whose docstring opens with `theorem`, including after attributes or
-declaration modifiers, is refused and excluded from the valid pins even beside a valid
-`#check`; an unrecognized printer header is refused too. Every docstring below said to be
-what Lean prints was printed by Lean 4.35.
+nothing. Those pins are exactly the names the section writes, less its two definitions,
+with the three theorems pinned outside it (`Cited.holds_all`, `Derives.sound` and
+`Rule.apply`), each pinned once: in copies of the real file, a pin removed, one of an
+invented name, one renamed, one commented out and one repeated each fail that comparison,
+by the names concerned. A `#print` whose docstring opens with `theorem`, including after
+attributes or declaration modifiers, is refused and excluded from the valid pins even
+beside a valid `#check`; an unrecognized printer header is refused too. Every docstring
+below said to be what Lean prints was printed by Lean 4.35.
 """
 
 import io
 import sys
 import tempfile
 import unittest
+from collections import Counter
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
@@ -146,6 +151,23 @@ def numbered(text: str, snippet: str) -> list[tuple[int, str]]:
     first = text[:text.index(snippet)].count("\n") + 1
     return [(first + k, line.strip()) for k, line in enumerate(snippet.split("\n"))
             if line.strip()]
+
+
+# The two definitions the section names, pinned by `#print` and not `#check`; and the three
+# theorems pinned by `#check` though the section does not name them.
+PRINT_PINNED = {f"{S}.Rule.Figure", f"{S}.Interpretation.Embedding"}
+OUTSIDE = {f"{S}.Cited.holds_all", f"{S}.Derives.sound", f"{S}.Rule.apply"}
+
+
+def check_pins(brief: str, audit: str) -> tuple[list[str], list[str]]:
+    """The full names of the `#check` pins Lean runs in `audit`, sorted, each as often as
+    it is pinned; and the names they must be, sorted: those `brief`'s restriction section
+    writes, less the two definitions pinned by `#print`, with the three theorems pinned
+    outside it. A pin repeated, as well as one missing, extra or renamed, sets the two
+    apart."""
+    listed = {pins.full_name(span) for _, span in pins.names(pins.section(brief))}
+    found = [pin.name for pin in pins.read_pins(audit) if pin.command == "check"]
+    return sorted(found), sorted((listed - PRINT_PINNED) | OUTSIDE)
 
 
 class PinTests(unittest.TestCase):
@@ -692,11 +714,59 @@ class PinTests(unittest.TestCase):
                 else:
                     self.assertIsNotNone(found)
                     self.assertTrue(found.startswith(sign), found)
-        # Every `#check` pin in the real file pins a theorem, and shows nothing.
-        found = [pin for pin in pins.read_pins((REPO / pins.AUDIT).read_text())
-                 if pin.command == "check"]
-        self.assertEqual(len(found), 17)
+        # Every `#check` pin in the real file pins a theorem, and shows nothing; and they
+        # are the pins `check_pins` asks for, each once.
+        audit = (REPO / pins.AUDIT).read_text()
+        found = [pin for pin in pins.read_pins(audit) if pin.command == "check"]
+        pinned, expected = check_pins((REPO / pins.BRIEF).read_text(), audit)
+        self.assertEqual(pinned, expected)
         self.assertEqual([pin.name for pin in found if pin.sign or pin.shortened], [])
+
+    def test_the_check_pins_are_exactly_those_the_brief_lists(self):
+        real = (REPO / pins.AUDIT).read_text()
+        brief = (REPO / pins.BRIEF).read_text()
+        pinned, expected = check_pins(brief, real)
+        self.assertEqual(pinned, expected)
+        self.assertEqual(set(pins.DEFINITIONS), PRINT_PINNED)
+
+        def replaced(command: str, pin: str) -> str:
+            """The real file with the pin whose command is `command` replaced by `pin`."""
+            start, end = pin_span(real, command)
+            return real[:start] + pin + real[end:]
+
+        def block(command: str) -> str:
+            start, end = pin_span(real, command)
+            return real[start:end]
+
+        figure, renamed = f"{S}.Rule.iff_figure", f"{S}.Rule.figure_iff"
+        invented = f"{S}.Derives.invented_theorem"
+        exportable = f"#check @{S}.exportable_iff"
+        # The pin's name is in its docstring's first line and its `#check` line, and nowhere
+        # else in it.
+        self.assertEqual(block(f"#check @{figure}").count(f"@{figure}"), 2)
+        # In copies of the real file, with the names left unpinned and those pinned beyond
+        # the list or more than once: a pin removed, one of an invented name, one renamed,
+        # one commented out line by line, and one repeated.
+        cases = {
+            "removed": (replaced(f"#check @{RESTRICT}", ""), [RESTRICT], []),
+            "an invented name": (real + "\n" + PIN.format(name="Derives.invented_theorem"),
+                                 [], [invented]),
+            "renamed": (replaced(f"#check @{figure}", block(f"#check @{figure}").replace(
+                f"@{figure}", f"@{renamed}")), [figure], [renamed]),
+            "commented out": (replaced(f"#check @{SOUND}", "".join(
+                f"-- {line}\n" for line in block(f"#check @{SOUND}").splitlines())),
+                [SOUND], []),
+            "repeated": (replaced(exportable, block(exportable) + "\n" + block(exportable)),
+                         [], [f"{S}.exportable_iff"]),
+        }
+        for label, (planted, unpinned, unlisted) in cases.items():
+            with self.subTest(label):
+                pinned, expected = check_pins(brief, planted)
+                self.assertNotEqual(pinned, expected)
+                self.assertEqual(sorted((Counter(expected) - Counter(pinned)).elements()),
+                                 unpinned)
+                self.assertEqual(sorted((Counter(pinned) - Counter(expected)).elements()),
+                                 unlisted)
 
     def test_any_other_command_after_a_pin_is_refused(self):
         pin = PIN.format(name="Derives.sound")
