@@ -263,7 +263,7 @@ WORKFLOW, section 9, criterion by criterion:
 | 5. Route accurate; every exception visible | P4, P12 |
 | 6. Dependency closure, axiom boundaries and certificate cover every claim | P1, P5, E1, E2 |
 | 7. Quotations, attributions and commentary checked | P7, P14 |
-| 8. Figures and page inspected | P8, P15 for the figures; for the page, P4 (the committed page is what `render.py` makes from the record) and B3 (the book read straight through) |
+| 8. Figures and page inspected | P8, P15 for the figures; for the page, P9 (the committed page is exactly what `render.py` makes), P4 (its top line, field table and clause map disclose the record) and B3 (the book read straight through) |
 | 9. The required checks pass on the integrated revision | E1 to E5, with the rest of the [machine] items |
 | 10. A reviewer other than the author, named with the commit | P2, P16 |
 
