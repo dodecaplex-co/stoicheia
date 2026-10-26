@@ -124,7 +124,7 @@ references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call bes
 ## III.10
 - "Euclid's proof contains an unproved assumption, namely that the lines bisecting BG, BH at right angles *will* meet in a point P" (vol. 2, p. 24). The proof obtains a centre of each circle through `Tacit.exists_centre`; the porism to III.1 puts each centre on both straight lines (`Prop1.porism`), and they meet there.
 - "Meet at no point except at P" takes AC and NO to be two straight lines. Were they one, the triangle BKL would have a right angle at K and another at L, against I.17 (`Prop10.meet_once`).
-- KC, drawn at right angles to BH and carried through to A, is at right angles on both sides of K (`Prop10.right_on_line`, by `adjacent_eq_of_right`), as the porism asks.
+- The porism to III.1 asks for a right angle at the foot of each perpendicular. At K, C lies on the side of the point I.11 gives there, so the angle BKC is right as I.11 gives it; at L the porism is applied to O, which lies across L from the point I.11 gives, so the angle BLO is right by `adjacent_eq_of_right`. `Prop10.right_on_line` gives a right angle on either side of K or L, for the angles BKL and BLK in `Prop10.meet_once`.
 - Heath gives no bracket for the bisections or the right angles: they are I.10 and I.11.
 - Euclid names four common points and uses three; F never enters the argument. Heath observes that the proof covers circles that merely meet (vol. 2, p. 23). Our statement asks for three distinct common points, without centre inputs.
 - The last step changes: after locating both centres at P, the Lean calls `circle_eq` directly with the common point B. The restated III.5 asks for crossing, which III.10 does not assume. Heath states what `circle_eq` gives here under III.5, beside the enunciation that joins III.5 and III.6: two circles with the same centre and one point of their circumferences in common coincide altogether (vol. 2, p. 12); the record gives its route the kind "modified".
@@ -312,8 +312,10 @@ use one.
   III.32, `Prop24.isosceles`, `Circumference.semicircle`); the radius AD beyond the
   centre D, to the diameter III.16 asks for, in its porism (`Prop16.porism`); DA beyond
   A in III.33; and FB beyond B in III.34, so that the touching line EF runs on through
-  B to either side. Where Euclid draws a straight line through to the circle (III.1,
-  III.10, III.20, III.23), Intersections 5 does the producing, as in I.2.
+  B to either side; and in III.10 the two perpendiculars beyond their feet, since the
+  argument needs a second point of each and never where it meets the circle. Where
+  Euclid draws a straight line through to the circle (III.1, III.20, III.23),
+  Intersections 5 does the producing, as in I.2.
 - **Postulate 3 and Definition I.15**: circles Euclid does not draw. The two of I.1
   find a point off a straight line (`exists_off_line`), in III.1, III.17, III.33 and
   III.34, and inside `BookI.Prop46.sq`, which brings them to III.14 and III.37. A

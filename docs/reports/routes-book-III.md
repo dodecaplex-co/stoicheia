@@ -89,7 +89,7 @@ with its issue"), while an issue labelled `blocks-release` tracks their move int
 | #127 | [`Prop27.lean`](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/Prop27.lean) | III.27 by Euclid's reductio and halving, the obtuse case by the remainders, the right read off the measure | as in `Elements/` |
 | #126 | [`Touching.lean`](../../Staging/Routes/Touching.lean) | Definition III.3 read at the point of contact, and its agreement with our reading of the whole circles | new, a draft |
 | #129 | [`Prop20.lean`](../../Staging/Routes/Prop20.lean), [`Prop21.lean`](../../Staging/Routes/Prop21.lean), [`Prop26.lean`](../../Staging/Routes/Prop26.lean) | the angle at the centre of any size; III.20 for it; III.21 and III.26 by Euclid's one argument | III.20 in general new, a draft; III.20's special case, III.21 and III.26 as in `Elements/` |
-| #130 | [`AngleOfContact.lean`](../../Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
+| #130 | [AngleOfContact.lean](https://github.com/jackChallis/stoicheia/blob/fc3dffa892a32be571c28b208dfb40189226db93/Staging/Routes/AngleOfContact.lean) | III.16's comparisons for every straight line touching a circle, after III.18 | new, a draft |
 | #131 | none | which calls of III.1 do work | analysis only |
 
 "As in `Elements/`" in the last column means that the staged theorem has exactly the type
@@ -169,7 +169,7 @@ the whole-circle reading of `Elements/`.
 Every other draft has the text it had on main's statements as at 2e8aecf, and so have the
 five definitions: the reading near a point, the three contacts at a point, and the angle at
 the centre. Copies of facts that are now in `Elements/`, four in `Touching.lean` and fifteen
-steps of III.16's comparisons in `AngleOfContact.lean`, are deleted, and those facts are
+steps of III.16's comparisons in AngleOfContact.lean, are deleted, and those facts are
 cited from `Elements/`.
 
 ## III.8: Euclid's own last step (#125)
@@ -558,7 +558,7 @@ as its companions `Prop16.semicircle`, `Prop16.remaining` and `Prop16.acute`
 straight line given only as touching the circle, that the angle of contact does not depend
 on the straight line naming its branch is not proved, since the route would need III.18.
 
-**What the staged file does.** `AngleOfContact.lean` cites the steps of III.16's
+**What the staged file does.** AngleOfContact.lean cites the steps of III.16's
 comparisons from `Elements/` (`Prop16.inside_sameSideOf`, `Prop16.horn_locallyEqual`,
 `Prop16.horn_lt` and `Prop16.semicircle_gt`, in `Elements/BookIII/Prop16.lean`, with facts
 of `Elements/BookIII/MixedAngles.lean` and `Elements/Figure/Regions.lean`), and proves none
@@ -864,7 +864,7 @@ proved from Circle 3) or Circle 3 if either is reached. It finds any of the five
 staged theorems, for III.8, III.20's special case, III.21, III.26 and III.27, whose type is
 not identical to that of the theorem in `Elements/`, binder names and binder kinds
 included, with the same universe parameters: a stricter test than the `rfl` that closes
-each file. And it walks every constant beneath the seven theorems of `AngleOfContact.lean`,
+each file. And it walks every constant beneath the seven theorems of AngleOfContact.lean,
 finding any of a proposition of Book III later than III.18 (in its module, or under its
 name) or staged in another file, and lists the modules of Book III reached. So, at
 e09f40f6 as at bd69bb9b (below), none of the 38 theorems uses `sorry`, none of the seven
@@ -875,7 +875,7 @@ III.18: the modules of Book III reached are those of III.1, III.2, III.16, III.1
 mixed angles.
 
 Cutoff.lean, the cutoff walk of the run at 9a0f8ba1 below, walks every constant beneath
-the seven theorems of `AngleOfContact.lean`, statements and proofs, and finds any in the
+the seven theorems of AngleOfContact.lean, statements and proofs, and finds any in the
 module of a proposition of Book III later than III.18, or in
 `Elements/BookIII/Circumferences.lean`, whose steps cite III.20 to III.22. It walks as
 RoutesCheck.lean does, but for the constructors of each inductive type it meets, which
@@ -1060,7 +1060,7 @@ with the same two warnings of `Elements/Figure/Circles.lean` and no other. Then,
 module, run on the same build after it and then deleted, showed what it finds. The first
 printed the names of the 38 theorems: one each in `Prop08.lean` and `Prop21.lean`, two each
 in `Prop26.lean` and `Prop27.lean`, eleven in `Prop20.lean`, four of them in the namespace
-of a changed main theorem, fourteen in `Touching.lean` and seven in `AngleOfContact.lean`.
+of a changed main theorem, fourteen in `Touching.lean` and seven in AngleOfContact.lean.
 The second added Circle 2 to the theorems walked and III.20 of `Elements/` to the roots of
 the angle of contact, Circle 2 and Circle 3 to the declarations put to collectAxioms, and
 paired the staged III.8 with III.8's general companion. It gave the seven findings those
@@ -1225,7 +1225,7 @@ with the five calls dropped.
   at 4cd7c77d.
 - **The port.** Three independent readers, who wrote none of it, read it against Heath's
   text where a file has his sentences and against train C6c's tree: one `Prop08.lean` and
-  `Prop27.lean`, and another `Touching.lean` and `AngleOfContact.lean`, at 4a6d9a49; the
+  `Prop27.lean`, and another `Touching.lean` and AngleOfContact.lean, at 4a6d9a49; the
   third `Prop20.lean`, `Prop21.lean` and `Prop26.lean`, at 9f8c8adb. Each passed it with
   minor findings. 86c5748d answers the first two (a remark wanted under III.26's step in
   III.27, the unused hypothesis that the circles are two in the step from the straight line
@@ -1405,3 +1405,114 @@ The #131 addendum's phrase "Euclid's route" for III.8 is too broad. III.8 remain
 modified: it uses Euclid's orders where they apply and I.24 where neither order reaches,
 including points on different circumferences and points of contact. Its centre M now
 comes from `Tacit.exists_centre` under Heath's "[III. 1]".
+
+## Addendum: the angle of contact after III.18 moved into `Elements/` (#130)
+
+*25 October 2026.*
+
+On 25 October 2026 the owner chose, of the options put to them in item 15 of the
+coordinator's decisions waiting, "A": to approve the three drafts of this report, #126,
+#129 and #130, as they stand. The coordinator's record of that ruling is on #126, #129,
+#130 and #332, and the
+[decision entry of that day](../decisions/2026-10-25-routes-iii-contact.md) records it
+with this move. The section "For the owner: the drafts as they now stand", the words "not
+approved" in the section on #130, and the row for #130 in the opening's table, "new, a
+draft", are of this report's date.
+
+Under that approval, as part of #332, the seven theorems of AngleOfContact.lean moved
+into [Elements/BookIII/Prop18.lean](../../Elements/BookIII/Prop18.lean), after III.18's
+proof, and from the namespace of the routes into III.18's own:
+
+```text
+Elements.BookIII.Prop18.diameter              a step: AE at right angles to AB [III. 18]
+Elements.BookIII.Prop18.parts                 a step: III.16's two parts for AE
+Elements.BookIII.Prop18.branch                a step: each branch on the diameter's side
+Elements.BookIII.Prop18.contact_locallyEqual  the companion III.18 contact_locallyEqual
+Elements.BookIII.Prop18.contact_lt            the companion III.18 contact_lt
+Elements.BookIII.Prop18.semicircle_gt         the companion III.18 semicircle_gt
+Elements.BookIII.Prop18.acute                 the companion III.18 acute
+```
+
+Their statements are as staged, hypothesis names included. Before the staged copy was
+deleted, Lean compared each moved type with the staged one, binder names and universe
+parameters included, and found all seven the same; only the namespace changed. Their
+docstrings and remarks came with them, revised only where a sentence spoke of staging or
+approval, save `Prop18.acute`: its independent reader found that its placing of the acute
+angle by I.23 proved again the steps of III.16's companion `Prop16.acute`, so its proof
+now cites `Prop16.acute` and `Prop16.semicircle_wellFormed`, and its docstring gains a
+last sentence saying so; its statement is unchanged. The staged file's module text is now a section after III.18's proof, without the
+issue number, the sentence that `Elements/` had none of these statements, and the status
+line, and it says instead that III.16's companions prove the comparisons in III.16's
+figure and these prove them for every touching straight line; the last sentence of
+`Prop18.semicircle_gt`'s docstring names III.16's companion `Prop16.semicircle` where it
+named `Elements/`. The module text of `Prop18.lean` gains a paragraph on the companions,
+and the file three imports, none later than III.18:
+[Elements/BookI/Prop23.lean](../../Elements/BookI/Prop23.lean),
+[Elements/BookIII/MixedAngles.lean](../../Elements/BookIII/MixedAngles.lean) and
+[Elements/BookIII/Prop16.lean](../../Elements/BookIII/Prop16.lean). No `--` line, and no
+other statement, changed.
+
+The fifteen copies of III.16's steps left the staged file at 4a6d9a49, as "For the owner"
+says, and the moved Lean proves none of them again: it cites `Prop16.inside_sameSideOf`,
+`Prop16.horn_locallyEqual`, `Prop16.horn_lt`, `Prop16.semicircle_gt`, `Prop16.acute` and
+`Prop16.semicircle_wellFormed`, with
+`NearVertexOpen.mono_near` and `LocallyLess.congr_left` of the mixed angles. A scratch
+Lean file, outside the repository, read the built library: no other declaration of
+`Elements/` has the type of any of the seven. It also walked every constant beneath them,
+statements and proofs, through every declaration it met: none reaches Circle 2, Circle 3,
+Points 9 or Intersection 2, all four now theorems proved after III.2, nor any module of
+Book III after III.18; no `sorry` is beneath them, and every axiom is Lean's own or one of the
+foundations. `Prop18.diameter` and `Prop18.parts` do not rest on `Tacit.exists_centre`;
+the other five do.
+
+The four statements are companions of III.18, listed in
+[Elements/Companions.lean](../../Elements/Companions.lean) after III.17's, so the
+certificate has 42 companions where it had 38. Each is proved, with 44 of our axioms
+beneath it, `Tacit.exists_centre` among them. No other entry changed, but for III.18's
+list of what is attached to it. `Prop18.contact_locallyEqual` is the first entry stated
+with `LocallyEqual`, a word of the foundations, in
+[Elements/Foundations/DefinitionsIII.lean](../../Elements/Foundations/DefinitionsIII.lean),
+so the vocabulary that `facts.json` gives grows from 262 words to 263.
+`Certificate/axioms.lock` holds the same words, so it changes with it, and the two hashes
+of the lock with it, by a decision of their own; until then `scripts/check_fidelity.py`
+names the word.
+
+`Staging/Routes/AngleOfContact.lean` is deleted, and `Staging.lean` no longer imports it.
+Its module text now says that the angle of contact has moved home, and that `Routes/`
+holds the files of #126 and #129, approved with it, which wait for a move of their own.
+The opening's table links AngleOfContact.lean to commit
+fc3dffa892a32be571c28b208dfb40189226db93, where it remains as it was staged, as its rows for
+#125 and #127 do. The commands of "Checks" above that name the staged file or its module
+reproduce at the revisions they give only.
+
+III.18's review record names the four companions in its statement, says in a route note
+how they follow Euclid's order, and carries the tag `mixed-angles-local`, with a note on
+the angle of contact as Euclid draws it. The verdicts of its last reading are taken out,
+and its stamps are that reading's, so `scripts/check_fidelity.py` reports that its
+statement and its Lean file have changed since it was reviewed. A reader who did not
+write them reads the record, the new paragraph of III.18's mishnah and the moved Lean
+again, and stamps the record. III.16's record and mishnah say nothing that this move makes
+untrue.
+
+**On branch lean/iii-contact-after18 at bedbba23 with this train's edits** (25 October
+2026, card #332, the move of #130). `lake build` completed (189 jobs), as did
+`lake build Staging` (106 jobs) and `lake build Audit` (194 jobs, every pin holding).
+`Prop18.lean`, elaborated alone, gave no message, and the build's only warnings were the
+four unused variables of `Elements/Figure/Circles.lean` and
+`Elements/BookIII/Prop31.lean`, which it does not touch. `lake env lean
+Certificate/Facts.lean` wrote 99 propositions, 3 porisms and 42 companions.
+`python3 scripts/check_style.py` and `python3 scripts/check_links.py` passed
+(`✓ style: the hard rules hold (S1–S26)`; `✓ links: all 16150 relative links and anchors
+in 556 Markdown files resolve`), and `python3 scripts/sweep_citations.py` found no hit in
+`Prop18.lean`. `python3 scripts/check_fidelity.py` found four problems: `LocallyEqual`,
+not yet in the lock, and the three stale stamps of III.18's record. `python3
+scripts/check_acceptance.py --quick` passes P10 for III.18 now. Of its 18 failing items,
+eight are new against the report it last wrote on main, at b46efb93: E2, for
+`LocallyEqual`, and III.18's P2 and P11 to P16, until its record is read again and
+stamped.
+
+**Completion on the delivered revision.** The lock and its two model hashes were renewed,
+and III.18's record was read against `8d1358248` by an independent reader and stamped in
+`f94a335b`. Its six review verdicts now pass, and the page and program status were made
+afresh. The prospective failures in the preceding snapshot therefore belong to
+`bedbba23` with the move's then-uncommitted edits, not to the delivered revision.
