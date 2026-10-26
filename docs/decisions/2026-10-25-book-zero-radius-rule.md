@@ -125,6 +125,6 @@
   alone, and one ray's straight line seven other construction rules, not eight. The pages
   of III.5 and III.6 (`mishnah/III/05.md`, `mishnah/III/06.md`) and Book III's
   introduction were read for the same claims and make none, so they do not change. The
-  records of II.14, III.5 and III.6 are stale for their text until a reader of the other
-  family reads and stamps them; Book Zero has no records, and no `PropNN.lean` changes, so
-  no record is stale for its Lean.
+  records of II.14, III.5 and III.6 were subsequently read in full and stamped after their
+  notes changed. Book Zero has no records, and no `PropNN.lean` changes, so no record is
+  stale for its Lean.
