@@ -788,7 +788,7 @@ issue #160; until then the run on the restated readings, above, cannot be made. 
 outline companions of I.45 and II.14 also reach definitions in none of the screen's lists,
 such as `Figures.Outline.area`, which their statements name; the screen stops on these too
 until they are listed. The screen now tries the <!-- count:axioms -->48<!-- /count -->
-axioms of the certificate, 10 of them
+axioms of the certificate, 9 of them
 in its list of rules about circles, `Tacit.exists_centre` among them (the radius rule of 25
 October 2026 is not in that list), and unfolds, budgets and leaves out rules as the
 revised screen does. No run of it on the restated statements is recorded yet.
