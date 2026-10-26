@@ -10,17 +10,18 @@
   `Staging/Routes/Touching.lean` go into the foundations' definitions of Book III, beside
   the whole-circle contact, in the namespace `Elements`: `Touching.Near`,
   `TouchesInternallyAt`, `TouchesExternallyAt` and `CirclesTouchAt`, their bodies, binder
-  names and docstrings as staged, save one sentence added in review to the docstring of
-  `Touching.Near`, which says that it is `Surrounds p C`, its arguments in the other order
-  (Lean accepts the two as equal by `rfl`), and which now points to `LocallyWithin` as
-  below in the same file; the module text of that file gains a clause naming
+  names and docstrings as staged, save two changes made in review to the docstring of
+  `Touching.Near`: an added sentence, saying that it is `Surrounds p C`, its arguments in
+  the other order (Lean accepts the two as equal by `rfl`), and its pointer to
+  `LocallyWithin`, which now says "below" where it named the file; the module text of
+  that file gains a clause naming
   the reading at the point among its words. The fourteen theorems go into
   [Elements/BookIII/Prop13.lean](../../Elements/BookIII/Prop13.lean), after III.13's proof,
   in the namespace `Elements.BookIII`, their statements as staged. Before the staged copy
   was deleted, Lean compared every moved type, and every moved definition's value, with
   the staged one, the staged names read as the moved ones, binder names and universe
   parameters included, and found all eighteen the same, and their docstrings too, before
-  that one sentence was added. The three
+  those two changes. The three
   agreements become companions of III.13, named by FORMALIZATION's rule for companions
   `Prop13.touchesInternally_iff`, `Prop13.touchesExternally_iff` and
   `Prop13.circlesTouch_iff`, listed in `Elements/Companions.lean` and certified as "III.13
@@ -56,7 +57,8 @@
   point is formalised, and III.11's record gave up its verdicts on commentary and sign-off
   with that sentence until it was read again. An independent reader who wrote neither
   then read both records in full against `d87e0632f`, and both were
-  stamped in this train, every verdict passing. The report,
+  stamped in this train, every applicable verdict passing, III.11's on representations
+  being `n/a`. The report,
   [docs/reports/routes-book-III.md](../reports/routes-book-III.md), records the move in an
   addendum of this date.
 
