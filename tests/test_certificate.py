@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Focused cases for Certificate/Facts.lean's restricted-calculus C.N. 4 detection, its
-module boundary, its construction rules and cited laws, and its shared steps; and for
-check_fidelity.py's reading of the expectations on them.
+module boundary, its construction rules and cited laws, its shared steps and each entry's
+proved rules; and for check_fidelity.py's reading of the expectations on them.
 
     export PATH=$HOME/.elan/bin:$PATH
     lake build
@@ -45,13 +45,20 @@ and a law named with no proof found fails the run (I.5).
 
 A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
-construction rules, a field of facts.json's top level and a field of every entry are read,
-and an expectation that is malformed, unmet or asks nothing fails.
+construction rules, a field of facts.json's top level, a field of every entry and an
+entry's proved rules, apart from the top level's, are read, and an expectation that is
+malformed, unmet or asks nothing fails.
 
 A fifth class compiles a fixture written in the test, over the foundations' Common
 Notions: a tacit rule proved from III.2, which III.3 calls itself and III.4 only through a
 lemma outside its namespace. III.3's shared steps list the rule, bringing in III.2;
 III.4's list the lemma and not the rule.
+
+A sixth class checks each entry's proved rules against two stand-ins declared as theorems
+in Elements.Tacit, the second proved from the first, on a fixture written in the test. An
+entry must list those its proof reaches directly, through its own helper, through a lemma
+or an entry it cites, or its statement alone; both when it reaches the second; and none
+when it reaches neither.
 
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
@@ -456,7 +463,8 @@ class ExpectationTests(unittest.TestCase):
     """check_fidelity.py's reading of tests/certificate_expectations.json, on small facts,
     without Lean (#150, question 4): a cited law's construction rules, read by its `law`; a
     field of facts.json's top level, read with no `ref`; a field of every entry, read with
-    `"every": "entry"`, a shared step by its `name` (#429); and each expectation that is
+    `"every": "entry"`, a shared step by its `name` (#429); an entry's `proved_rules`, read
+    by its `ref` apart from the top level's (#168); and each expectation that is
     malformed, unmet or asks nothing, failing with its own message."""
 
     def facts(self, **i4):
@@ -697,6 +705,31 @@ class ExpectationTests(unittest.TestCase):
         self.assertFailsOnce(dict(self.PIN, excludes=[]), "and an effective predicate")
         self.assertFailsOnce(dict(self.PIN, law="lenSymm"), "needs `field` and `why`")
 
+    def test_an_entrys_proved_rules_are_read_apart_from_the_top_levels(self):
+        # #168: an entry's proved_rules, a list of names, is read by its `ref` or over
+        # every entry; the top level's, an object, by its keys, the rules themselves.
+        facts = self.facts(proved_rules=["Tacit.adjacent_eq_of_right"])
+        facts["propositions"][1]["proved_rules"] = []
+        facts["proved_rules"] = {"Tacit.adjacent_eq_of_right": ["Postulate1"],
+                                 "Tacit.centre_unique": ["Postulate3"]}
+        used = ["Tacit.adjacent_eq_of_right"]
+        for expectation in ({"ref": "I.4", "field": "proved_rules", "excludes": used},
+                            {"every": "entry", "field": "proved_rules", "excludes": used}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "I.4: its proved_rules should not include "
+                                                  "Tacit.adjacent_eq_of_right", facts=facts)
+        self.assertEqual(self.problems(
+            {"ref": "I.4", "field": "proved_rules", "excludes": ["Tacit.centre_unique"],
+             "equals": used},
+            {"ref": "I.8", "field": "proved_rules", "excludes": used,
+             "count": {"prefix": "Tacit.", "is": 0}},
+            {"field": "proved_rules", "includes": ["Tacit.centre_unique"]},
+            {"every": "entry", "field": "proved_rules", "excludes": ["Tacit.centre_unique"]},
+            facts=facts), [])
+        # Read as empty, an entry without the field would let every `excludes` pass.
+        self.assertFailsOnce({"ref": "I.4", "field": "proved_rules", "excludes": used},
+                             "but its entry has no field `proved_rules`")
+
 
 class SharedStepTests(unittest.TestCase):
     """A proved tacit rule among an entry's shared steps, on a fixture written here
@@ -743,6 +776,87 @@ class SharedStepTests(unittest.TestCase):
 
     def test_a_rule_called_through_a_lemma_is_not(self):
         self.assertEqual(self.steps["III.4"], {"CertificateFixture.via": ["III.2"]})
+
+
+PROVED_RULES_FIXTURE = """\
+import Elements.Foundations.CommonNotions
+
+namespace Elements
+
+def companions : List (Lean.Name × String) := []
+
+/- Stand-ins for retired rules: theorems in `Elements.Tacit`, the second proved from the
+first. No axiom is declared here. -/
+theorem Tacit.first_proved (a b : Length) : a + b = b + a := Tacit.add_comm a b
+theorem Tacit.second_proved (a b : Length) : a + b = b + a := Tacit.first_proved a b
+
+theorem CertificateFixture.swap (a b : Length) : a + b = b + a := Tacit.first_proved a b
+
+namespace BookI
+
+variable (a b : Length)
+
+theorem Prop1 : a + b = b + a := Tacit.add_comm a b
+theorem Prop2 : a + b = b + a := Tacit.first_proved a b
+theorem Prop3.step : a + b = b + a := Tacit.first_proved a b
+theorem Prop3 : a + b = b + a := Prop3.step a b
+theorem Prop4 : a + b = b + a := CertificateFixture.swap a b
+theorem Prop5 : a + b = b + a := Prop2 a b
+theorem Prop6 : (fun _ => True) @Tacit.first_proved := True.intro
+theorem Prop7 : a + b = b + a := Tacit.second_proved a b
+
+end BookI
+end Elements
+"""
+
+
+class ProvedRulesTests(unittest.TestCase):
+    """Each entry's `proved_rules`, on a fixture written here (#168): two stand-in proved
+    rules, the second proved from the first, reached in every way the walk must follow."""
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.TemporaryDirectory(prefix="stoicheia-proved-") as tmp:
+            work = Path(tmp)
+            env, fixture_modules = prepare_package(work)
+            (work / "Elements.lean").write_text(PROVED_RULES_FIXTURE)
+            compile_module(work, env, fixture_modules, "Elements")
+            result = subprocess.run(
+                ["lake", "env", "lean", "Facts.lean"],
+                cwd=work, env=env, capture_output=True, text=True, timeout=120,
+            )
+            if result.returncode:
+                raise AssertionError(
+                    f"certificate: lake env lean exited {result.returncode}\n"
+                    + result.stdout + result.stderr
+                )
+            cls.facts = json.loads((work / "facts.json").read_text())
+        cls.entries = {entry["ref"]: entry for entry in cls.facts["propositions"]}
+        if set(cls.entries) != {f"I.{i}" for i in range(1, 8)}:
+            raise AssertionError(f"unexpected fixture subjects: {sorted(cls.entries)}")
+
+    def test_the_rules_are_listed_with_their_axioms(self):
+        self.assertEqual(self.facts["proved_rules"], {
+            "Tacit.first_proved": ["Tacit.add_comm"],
+            "Tacit.second_proved": ["Tacit.add_comm"],
+        })
+
+    def test_an_entry_reaching_no_rule_lists_none(self):
+        self.assertEqual(self.entries["I.1"]["proved_rules"], [])
+        self.assertEqual(self.entries["I.1"]["axioms"], ["Tacit.add_comm"])
+
+    def test_every_way_to_a_rule_counts(self):
+        for ref, way in (("I.2", "directly"), ("I.3", "through its own helper"),
+                         ("I.4", "through a lemma"), ("I.5", "through I.2, which it cites"),
+                         ("I.6", "through its statement alone")):
+            with self.subTest(ref=ref, way=way):
+                self.assertEqual(self.entries[ref]["proved_rules"], ["Tacit.first_proved"])
+                self.assertEqual(self.entries[ref]["axioms"], ["Tacit.add_comm"])
+        self.assertEqual(self.entries["I.5"]["cites"], ["I.2"])
+
+    def test_a_rule_proved_from_another_brings_in_both(self):
+        self.assertEqual(self.entries["I.7"]["proved_rules"],
+                         ["Tacit.first_proved", "Tacit.second_proved"])
 
 
 if __name__ == "__main__":
