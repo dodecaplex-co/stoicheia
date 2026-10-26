@@ -1,6 +1,6 @@
 # Read-through 03: Books I to III
 
-*26 October 2026. Books I and II were read at main bedbba23e, on 25 October, and Book III at main cf1591f14, on 26 October. The mends, and the state of every finding given here, stand on the branch text/read-through-03 at e7decb6ee, which has merged main at 41dc2a0ae; they are not yet on main. The changes main has had since the commits read are listed under "Since the read".*
+*26 October 2026. Books I and II were read at main bedbba23e, on 25 October, and Book III at main cf1591f14, on 26 October. The mends, and the state of every finding given here, stand on the branch text/read-through-03 at 4acc5ff2a, which has merged main at 110a01809, with the code review's fixes in the commit after it; they are not yet on main. The changes main had had by 41dc2a0ae since the commits read are listed under "Since the read"; the later ones are for the dated addendum.*
 
 ## Who read what
 
@@ -21,13 +21,13 @@
 | Writer of Books I and II's mends | Claude Opus 5.5, the instance that directs this read-through | 34f15131a, 983b5fc35, 427854aef, 8bbeee79d and 2d2c6ab4f, from the readers' proposed wording, with 54df72583; e9d3b1f20 and 9353bbe7a, from the re-readers' findings; and 079318c04, from the pilot editor's | 560da15a2, the branch's base |
 | Writer of Book III's mends (RT-w3) | GPT-6 Astra (Codex) | 07416606e, from the five Book III readers' findings, in the files no other work then held | 01ee9cc91 |
 | Re-reader (RT-s1x) | GPT-6 Astra (Codex) | The records of I.4, I.16, I.20, I.22, I.23, I.27, I.45 and II.14, whole, stamping all but I.4's; seventeen other mends to Books I and II's commentary, captions, reading lines and figures | ece9c2d71 |
-| Re-reader (RT-s2x) | Claude Opus 5.5 | The records of I.39, I.40, I.47, II.1, II.6, II.7 and II.10, whole, stamping all seven; twenty-one other mends to Books I and II | 3caa7a252 |
+| Re-reader (RT-s2x) | Claude Opus 5.5 | The records of I.39, I.40, I.47, II.1, II.6, II.7 and II.10, whole, stamping all seven, though I.47's mend and stamp were withdrawn at the merge of main that brought #295, which rewrote and restamped that record; twenty-one other mends to Books I and II | 3caa7a252 |
 | Re-reader (RT-s3x) | Claude Opus 5.5 | The records of III.1, III.4, III.8, III.9, III.12, III.16 and III.17, whole, stamping all seven; the mends to III.2 to III.17, the introduction and the two idea figures, and e9d3b1f20's | 07416606e |
 | Re-reader (RT-s3y) | Claude Opus 5.5 | The records of III.23, III.29, III.30, III.32, III.34, III.36 and III.37, whole, stamping all seven; the mends to the commentary of III.22 to III.37 and the reading lines of III.19 to III.35, and 9353bbe7a's | 7b71d1782 |
 | Pilot editor (RT-p3) | GPT-6 Astra (Codex) | book/II/01.md, book/I/45.md, book/II/14.md and book/III/24.md, one after another | 52767c483 |
 | Writer of this report (RT-rep) | Claude Opus 5.5 | This report, from the outputs above and the branch's commits; it read no page as a reader and wrote no mend | e7decb6ee |
 
-None of the readers wrote, prompted or edited the pages they judged. The two families alternate: the range readers of Books I and III take turns, GPT-6 Astra (Codex) first; Books I and II's flow readers are GPT-6 Astra (Codex), and Book II's reader and Book III's flow reader Claude Opus 5.5. The branch changes 26 records, and each was re-read whole and stamped by a reader of the family that did not write its proof, as its run line says (#220). II.6's and II.7's mended records were stamped too, then withdrawn in 9303e9e15 for the cross-family train of #326, which held them; I.4's record mend was withdrawn in 3caa7a252, since its re-reader would not sign I.4 off (below). No Lean file changed.
+None of the readers wrote, prompted or edited the pages they judged. The two families alternate: the range readers of Books I and III take turns, GPT-6 Astra (Codex) first; Books I and II's flow readers are GPT-6 Astra (Codex), and Book II's reader and Book III's flow reader Claude Opus 5.5. The branch changes 25 records; each was re-read whole and stamped by one of the four re-readers listed above, of the family that did not write its proof, as its run line says (#220), save I.45 and II.14: their original proofs are Codex's, and their Codex re-reader is of the family that did not write their outline companions, which Claude's writers added. II.6's and II.7's mended records were stamped too, then withdrawn in 9303e9e15 for the cross-family train of #326, which held them; I.4's record mend was withdrawn in 3caa7a252, since its re-reader would not sign I.4 off (below). No Lean file changed.
 
 The readers' outputs, the Book III writer's handback and the ledger of findings kept by the instance that directs this read-through are kept outside the repository, under the identifiers above. Each fate below was read from the diff of the commit named.
 
@@ -67,12 +67,12 @@ Of the twelve, seven are mended on this branch and five are open: four on card d
 
 | Book | Editorial | Mended | In part | To card drafts | Declined | On card draft C9 |
 |---|---|---|---|---|---|---|
-| I | 44 | 30 | 6 | 7 | 1 | 0 |
+| I | 44 | 29 | 6 | 7 | 1 | 1 |
 | II | 20 | 14 | 0 | 5 | 1 | 0 |
 | III | 64 | 37 | 9 | 17 | 0 | 1 |
-| All three | 128 | 81 | 15 | 29 | 2 | 1 |
+| All three | 128 | 80 | 15 | 29 | 2 | 2 |
 
-The 81 are mended in 34f15131a (27), 427854aef (2) and 983b5fc35 (1) for Book I, in 8bbeee79d (12) and 2d2c6ab4f (2) for Book II, and in 07416606e (37) for Book III; 54df72583 brought four of the mended statement notes within the 160-character limit. Of the 15 mended in part, 11 have the rest on card drafts (C1 2, C2 2, C5 7), 3 have it on card draft C9 (RT-b1b 16, RT-b3f 11, RT-b3f 16), and 1 has it declined. The 29 sent whole to card drafts are in files this read-through did not own, or that other work held while it ran: 9 to C1, for the owner of scripts/render.py, six of them the line over every commentary; 6 to C2, for the owner of the Lean notes of Books I and II (Elements/BookI, Elements/BookII); 1 to C4, for the owner of II.6's and II.7's records, a mend made in 8bbeee79d and withdrawn in 9303e9e15; and 13 to C5, for the owners of Book III's held records, commentary and Lean notes. Every card draft is open. The one open on card draft C9 alone is RT-b3c 3, III.21's record note, in a file held at the time, whose passage the move of #129 is to replace.
+The 80 are mended in 34f15131a (26), 427854aef (2) and 983b5fc35 (1) for Book I, in 8bbeee79d (12) and 2d2c6ab4f (2) for Book II, and in 07416606e (37) for Book III; 54df72583 brought four of the mended statement notes within the 160-character limit. Of the 15 mended in part, 11 have the rest on card drafts (C1 2, C2 2, C5 7), 3 have it on card draft C9 (RT-b1b 16, RT-b3f 11, RT-b3f 16), and 1 has it declined. The 29 sent whole to card drafts are in files this read-through did not own, or that other work held while it ran: 9 to C1, for the owner of scripts/render.py, six of them the line over every commentary; 6 to C2, for the owner of the Lean notes of Books I and II (Elements/BookI, Elements/BookII); 1 to C4, for the owner of II.6's and II.7's records, a mend made in 8bbeee79d and withdrawn in 9303e9e15; and 13 to C5, for the owners of Book III's held records, commentary and Lean notes. Every card draft is open. The two open on card draft C9 alone are RT-b1d 9, I.47's record note, mended in 34f15131a and withdrawn when main's #295 rewrote that record, and RT-b3c 3, III.21's record note, in a file held at the time, whose passage the move of #129 is to replace.
 
 Declined, each with its reason:
 
@@ -99,11 +99,11 @@ The pilot editor (RT-p3), which wrote, prompted and edited none of the four page
 
 Of read-through 02's 19 pilot notes, it found 14 resolved, 2 holding in part and 3 holding still; its notes 4 to 8 carry those five on. No re-reader has read 079318c04.
 
-Its verdict: "Verdict: yes, once notes 1–3 are mended." At e7decb6ee, note 3 is mended, note 2 is mended in part, and note 1 is open.
+Its verdict: "Verdict: yes, once notes 1–3 are mended." At 4acc5ff2a, note 3 is mended, note 2 is mended in part, and note 1 is open.
 
 ## The books read straight through
 
-Each verdict is quoted from the reader's output, with the state at e7decb6ee of each finding it names.
+Each verdict is quoted from the reader's output, with the state at 4acc5ff2a of each finding it names.
 
 ### Book I
 
@@ -111,7 +111,7 @@ Each verdict is quoted from the reader's output, with the state at e7decb6ee of 
 - **I.1 to I.12 (RT-b1a):** "B3 verdict for this range: pass once the named findings are mended." Finding 3 is mended in 983b5fc35. Findings 4 and 7 are mended in part (34f15131a, 983b5fc35): I.4's record waits on C1, and the notes of Prop06.lean and Prop07.lean are on C2. Findings 1, 2, 5 and 6 are open on C1.
 - **I.13 to I.24 (RT-b1b):** "Verdict on B3: pass once the named findings are mended." Findings 1 to 9, 11, 12 and 17 are mended in 34f15131a. Findings 14 and 18 are mended in part, with the rest on C2 and C1, and 16 in part, with I.23's route note on card draft C9. Findings 10, 13, 15 and 19 are open on C2, and 20 on C1.
 - **I.25 to I.36 (RT-b1c):** "B3 verdict for I.25–I.36: pass once the named findings are mended." All four are mended in 34f15131a.
-- **I.37 to I.48 (RT-b1d):** "Verdict on B3: pass once the named findings are mended." Findings 2 to 14 are mended in 34f15131a. Findings 1, I.40's status line, and 15 are open on C1.
+- **I.37 to I.48 (RT-b1d):** "Verdict on B3: pass once the named findings are mended." Findings 2 to 8 and 10 to 14 are mended in 34f15131a, and 9, I.47's record note, is on card draft C9 since #295 rewrote that record. Findings 1, I.40's status line, and 15 are open on C1.
 
 ### Book II
 
