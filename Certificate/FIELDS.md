@@ -71,7 +71,7 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `statement` | string | **New.** The declaration's type, printed as below. Review records are fingerprinted from it (`heath.review_fingerprint`). |
 | `cited_laws` | list of objects | **New** (21 October 2026, #150), only on an entry whose own declarations, as `own_axioms` reads them, name a law of `Elements.Superposition.Cited`: today I.4 and I.8. One object for each law they name, in the order of the `Cited` type: `law`, the constructor's name (`"lenSymm"`); `proofs`, the theorems that prove it, each stating exactly `Cited.Holds primitives` of that law (below): `name`, `file`, `line`, as in `shared_steps`, sorted by name; and `construction_rules`, every [construction rule](../docs/FORMALIZATION.md#construction-rules) that `collectAxioms` finds beneath any proof of that law the entry reaches (below), sorted by string. The laws are read from the constants the entry's own Lean names, not through `Derives.map`. A law named with no proof reached fails the run, since an empty list would read as a law proved with no construction rule. |
 
-Every walk reads a declaration through `mentions` (stage 1b), and the walks give `cites`,
+Every walk of a proof reads a declaration through `mentions` (stage 1b), and these walks give `cites`,
 `direct_axioms`, `own_axioms`, `inherited`, `common_notions`, `shared_steps` and
 `proved_rules`: `mentions` reads each declaration's type and value, opaque values
 included, and an inductive type's constructors. For

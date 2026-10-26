@@ -17,25 +17,26 @@
   is generated, never written by hand. No pin reads the field yet: the second train of
   #168 adds the pins on it, and the planted use that only it can catch.
 
-  When ship TS first built the field, on 21 October, it showed all four entries resting
-  on `Tacit.adjacent_eq_of_right`, and the porism on `Tacit.centre_unique` as well. On 21
+  When ship TS first built the field, on 21 October, it showed all four entries resting on
+  `Tacit.adjacent_eq_of_right`, and the porism on `Tacit.centre_unique` as well. On 21
   October 2026 the owner chose, of the options the coordinator put to them, "Remove the
   uses first"; #168 holds the coordinator's record of that choice. Those uses are gone.
   Generated today, the field shows none of the eight beneath III.1, III.1 Por., III.2 or
-  II.14, whose lists hold 24, 23, 24 and 27 proved rules respectively. Elsewhere the eight
-  are still in use. Of the 144 entries, 37 rest on `Tacit.adjacent_eq_of_right`, I.13's
-  corollary, III.3, III.14 and III.25 among them; 8 on `Tacit.centre_unique`, from III.26
-  to III.30, III.36, III.37 and the companion III.30 halves; and 6 on
+  II.14, whose lists hold 24, 23, 24 and 27 proved rules respectively. Elsewhere three of
+  the eight are still in use. Of the 144 entries, 37 rest on `Tacit.adjacent_eq_of_right`,
+  I.13's corollary, III.3, III.14 and III.25 among them; 8 on `Tacit.centre_unique`, from
+  III.26 to III.30, III.36, III.37 and the companion III.30 halves; and 6 on
   `Tacit.triple_incidence3`, all companions of III.16 and III.18. No entry rests on any of
   the other five.
 
-  The new walk, `beneath`, reads each declaration through `mentions`, as every walk of
-  the certificate does, and follows `collectAxioms` everywhere it goes: into the entries
-  cited and those they cite, the Common Notions, the shared steps and the proved rules
-  themselves, so that a rule proved from another brings in the pair. It notes each axiom
-  and each proved rule it passes. Then, for every entry, the run stops with an error
-  unless the axioms the walk noted are exactly the ones `collectAxioms` reports, Lean's
-  own foundations aside; so the rules listed come from a walk held to Lean's own answer.
+  The new walk, `beneath`, reads each declaration through `mentions`, as the certificate's
+  other walks of a proof do, and goes wherever `collectAxioms` goes short of Lean's own
+  modules, which cannot reach this project's: into the entries cited and those they cite,
+  the Common Notions, the shared steps and the proved rules themselves, so that a rule
+  proved from another brings in the pair. It notes each axiom and each proved rule it
+  passes. Then, for every entry, the run fails unless the axioms the walk noted are
+  exactly the ones `collectAxioms` reports, Lean's own foundations aside; so the rules
+  listed come from a walk held to Lean's own answer.
   The listing of the proved rules, `proved_rule_cites` with it, now happens before the
   entries are walked, so that each walk knows which theorems are rules; both top-level
   tables come out as before. Timed the same way on one machine, `time lake env lean
