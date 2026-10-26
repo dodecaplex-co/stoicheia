@@ -1,7 +1,7 @@
 # review/I/45.toml
 [statement]
 scope = "full"
-note = "`Prop45` takes two triangles unchecked; `Prop45.outline` covers any outline; other companions handle checked divisions, sums and adding a triangle."
+note = "`Prop45` takes two triangles unchecked; `Prop45.outline` covers any rectilineal figure by its boundary; others take checked divisions, sums or a triangle more."
 companions = ["I.45 outline", "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:4bc8a67608702506"
 
@@ -11,7 +11,7 @@ note = "Euclid shows two triangles. The companions repeat his second step for ea
 
 [representation]
 tags = ["figure-with-dissection"]
-note = "`Prop45.outline` takes the figure by its outline alone (`Figures.Outline`), with no division supplied. The older companions take a figure given with a checked division into triangles, and make the parallelogram equal to those triangles together, which is the figure's area, the same for every division: triangles that lie apart, no point inside two of them (`Prop45.apart`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or Euclid's and Byrne's, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, which `Fitted.fan` shows fit together (`Prop45.fan`); their figure is the one bounded by the closed line through the corners in order (`Prop45.fan_boundary`). The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C."
+note = "The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C. `Prop45.outline` takes the figure by its outline alone (`Figures.Outline`), with no division supplied. The older companions take a figure given with a checked division into triangles, and make the parallelogram equal to those triangles together, which is the figure's area, the same for every division: triangles that lie apart, no point inside two of them (`Prop45.apart`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or Euclid's and Byrne's, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, which `Fitted.fan` shows fit together (`Prop45.fan`); their figure is the one bounded by the closed line through the corners in order (`Prop45.fan_boundary`)."
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
@@ -36,11 +36,11 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "5176f894"
+commit = "a973c8726"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:df27ec018e27a2ab"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5"
-text = "sha256:45eb3307eb88e9dd"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x)"
+text = "sha256:c84dca7ade7fb67a"
 
 [review.items]
 statement = "pass"

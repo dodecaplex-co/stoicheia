@@ -24,15 +24,15 @@ kind = "grouped"
 note = "Euclid leaves the second direction to the same reasoning. The Lean proves the argument once over any letters and applies it again with D, C, B, A in place of A, B, C, D and F, E in place of E, F."
 
 [figure]
-note = "Heath bends BG and DG to reach G; our drawing keeps them straight, so the alternate angles supposed equal appear unequal."
+note = "This draws the impossible supposition, that AB and CD, produced, meet at G in the direction of B and D although the alternate angles AEF and EFD are equal. Heath bends BG and DG to reach G; our drawing keeps them straight, so those angles appear unequal."
 
 [review]
 stage = "full"
-commit = "b58079e0"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "ece9c2d71"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:4cf303fe995ab67d"
-run = "brief 0005 stage 5, ship F2 wave-two re-read; card 478, ship XS, from git and record evidence, added without a restamp: Claude's proof (a5cbf0efa; docs/reports/crew/voyage-03.md gives I.27 to Crew A, Claude); cross-family reading: Aw2-reader-f, an independent Codex reader, read the record in full at 251129b (2341e5835, 19 October 2026), with the Lean and record as they now stand; ship T's Codex readers also read it in full, R2 at 0e133256 (b62518e5d) and R4, GPT-6 Astra (Codex), at b62518e5 (84a106830), both on 19 October 2026, before the note at 'For, if not' took the wording of 812af95a5"
-text = "sha256:f9cebf591dfc5851"
+run = "brief 0005 stage 5, ship F2 wave-two re-read; card 478, ship XS, from git and record evidence, added without a restamp: Claude's proof (a5cbf0efa; docs/reports/crew/voyage-03.md gives I.27 to Crew A, Claude); cross-family reading: Aw2-reader-f, an independent Codex reader, read the record in full at 251129b (2341e5835, 19 October 2026), with the Lean and record as they now stand; ship T's Codex readers also read it in full, R2 at 0e133256 (b62518e5d) and R4, GPT-6 Astra (Codex), at b62518e5 (84a106830), both on 19 October 2026, before the note at 'For, if not' took the wording of 812af95a5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
+text = "sha256:ee5d23b20485c79e"
 
 [review.items]
 statement = "pass"

@@ -63,10 +63,10 @@ note = "Like Heath's, this figure draws the impossible supposition: FG produced 
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "d87e0632f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:a8ffa21d69bc457f"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0; card #126, ship ER: read in full after Definition III.3 read at the point of contact moved in, with III.13's three companions, written by Claude, read by GPT-6 Astra (Codex)"
 text = "sha256:0a64e32c2f3ae9ce"
 
 [review.items]
