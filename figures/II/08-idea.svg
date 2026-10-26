@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.8 at a glance</title>
-  <desc>Cut AB anywhere, at C, and add BD equal to CB (blue): four rectangles contained by AB, BC (red), set round the square on AC (yellow) as in the last proof Heath gives, fill the square on AD.</desc>
+  <desc>Cut AB anywhere, at C, and add BD equal to CB (blue): four rectangles contained by AB, BC (red), set round the square on AC (yellow), fill the square on AD, as in Heath's second alternative proof, not Euclid's nine cells.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="95.0,50.0 245.0,50.0 245.0,110.0 95.0,110.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <g data-unlettered="the corners where the rectangles meet round the square, as in the last proof Heath gives; Euclid's figure has no points there">
