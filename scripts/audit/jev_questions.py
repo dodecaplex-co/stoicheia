@@ -2223,10 +2223,13 @@ for _name, _kinds in KINDS.items():
 # The kinds that do not apply to a plant's base although their tests pass, by
 # docs/decisions/2026-10-26-jev-kind-not-applying.md (the kind ruling): a kind that cannot make
 # a genuine fault on its base. Each is passed over before its test, with the reason given here.
+# II.8's and III.36's rows supply the same five bridges, of Elements/BookII/Rectangles.lean.
+OVERLAPPING_BRIDGES = ('no single supplied bridge carries a needed connection alone: '
+                       '`Rectangle.eq_rect` and `Rectangle.contained` each give `rect`, and '
+                       '`Square.eq_sq` and `Square.described` each give `sq`')
 NOT_APPLYING = {
-    ('P13', 'III.36', 5): 'no single supplied bridge carries a needed connection alone: '
-                          '`Rectangle.eq_rect` and `Rectangle.contained` each give `rect`, and '
-                          '`Square.eq_sq` and `Square.described` each give `sq`',
+    ('P13', 'II.8', 5): OVERLAPPING_BRIDGES,
+    ('P13', 'III.36', 5): OVERLAPPING_BRIDGES,
 }
 
 
@@ -2439,11 +2442,15 @@ PLANTS = {
         'for every parallelogram.',
         (('premise', ['Elements.Parallelogram.quadArea_rotate'], '(hAC : A = C)'),)),
     ('P13', 'II.8'): Plant(
-        5, '`Square.described` removed, the other bridges kept',
-        "II.8's square on AD is described by I.46; only `Square.described` says that such a square "
-        'is a parallelogram and equal to `sq`, and `Square.eq_sq` needs a parallelogram as a '
-        'premise, which no supplied declaration gives for the described square.',
-        (('remove', ['Elements.Square.described']),)),
+        1, 'every supplied bridge removed', 'With no bridge supplied, nothing connects '
+        "`rect A B B C`, `sq A C` and `sq A D` with Euclid's rectangle contained by AB, BC, his "
+        'square on AC and the square AEFD that II.8 describes on AD by I.46. `rect A B B C` is an '
+        'area that Lean chooses by `Classical.epsilon` among those AB, BC contain (`Contain`), and '
+        '`sq A C` and `sq A D` are `rect A C A C` and `rect A D A D`; no supplied declaration now '
+        'states that a rectangle whose sides about a right angle are equal to AB, BC, or a square '
+        'on AC or on AD, is equal to the area chosen, and a choice definition alone does not prove '
+        'that its choice represents a given object: a needed connection has no declaration.',
+        (('remove', None),)),
     ('P13', 'II.6'): Plant(
         1, 'every supplied bridge removed', 'With no bridge supplied, nothing connects a drawn '
         'rectangle or square with `rect` or `sq`, which Lean chooses by `Classical.epsilon`: a '

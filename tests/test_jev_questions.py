@@ -1513,9 +1513,9 @@ EXPECTED_KINDS = {
             ('III.37', 4, [(3, NO_ATTACHED)]), ('III.11', 4, []), ('III.36', 1, []), ('III.28', 2, [])],
     'P12': [('I.21', 1, []), ('I.45', 2, []), ('I.15', 3, []), ('I.40', 1, []), ('II.5', 2, []),
             ('II.7', 3, []), ('III.37', 1, []), ('III.31', 2, []), ('III.24', 3, []), ('III.36', 1, [])],
-    'P13': [('I.37', 1, []), ('I.46', 2, []), ('I.43', 3, []), ('I.36', 4, []), ('II.8', 5, []),
-            ('II.6', 1, []), ('III.37', 2, []), ('III.28', 3, []), ('III.27', 4, []),
-            ('III.36', 1, [(5, NO_GENUINE_FAULT)])],
+    'P13': [('I.37', 1, []), ('I.46', 2, []), ('I.43', 3, []), ('I.36', 4, []),
+            ('II.8', 1, [(5, NO_GENUINE_FAULT)]), ('II.6', 1, []), ('III.37', 2, []), ('III.28', 3, []),
+            ('III.27', 4, []), ('III.36', 1, [(5, NO_GENUINE_FAULT)])],
     'P14': [('I.47', 1, []), ('I.38', 2, []), ('I.13', 3, []), ('I.7', 4, []), ('II.1', 1, [(5, NO_FORM)]),
             ('II.10', 1, []), ('III.25', 2, []), ('III.20', 3, []), ('III.4', 4, []),
             ('III.14', 1, [(5, NO_FORM)])],
@@ -1629,46 +1629,47 @@ class Calibration(unittest.TestCase):
         self.assertEqual(set(questions.PLANTS), listed)
         self.assertNotIn(('P13', 'III.29'), questions.PLANTS)
 
-    def test_the_kind_ruling_passes_over_p13_s_fifth_kind_on_iii_36_alone(self):
+    def test_the_kind_ruling_passes_over_p13_s_fifth_kind_on_ii_8_and_iii_36_alone(self):
         self.assertEqual(questions.KIND_RULING, KIND_RULING)
         self.assertTrue((REPOSITORY / KIND_RULING).is_file())
-        self.assertEqual(questions.NOT_APPLYING, {('P13', 'III.36', 5): NO_GENUINE_FAULT})
+        self.assertEqual(questions.NOT_APPLYING, {('P13', 'II.8', 5): NO_GENUINE_FAULT,
+                                                  ('P13', 'III.36', 5): NO_GENUINE_FAULT})
         manifest = shared()['calibration']
         fifth = questions.KINDS['P13'][4].name
         # Passed over with the table's reason, recorded as a test's reason is, and the ruling named:
-        # for III.36's P13 plant, and for no other plant of any question.
+        # for II.8's and III.36's P13 plants, and for no other plant of any question.
         ruled = {(question, plant['ref']): plant['passed_over']
                  for question, entry in manifest['questions'].items() for plant in entry['plants']
                  if any('ruling' in passed for passed in plant['passed_over'])}
-        self.assertEqual(ruled, {('P13', 'III.36'): [{'kind': 5, 'name': fifth, 'reason': NO_GENUINE_FAULT,
-                                                       'ruling': KIND_RULING}]})
-        # The kind's test passes on III.36's row: the table, not the test, passes the kind over.
+        passed = [{'kind': 5, 'name': fifth, 'reason': NO_GENUINE_FAULT, 'ruling': KIND_RULING}]
+        self.assertEqual(ruled, {('P13', 'II.8'): passed, ('P13', 'III.36'): passed})
+        # The kind's test passes on each row: the table, not the test, passes the kind over.
         calibration = questions.Calibration(shared()['generator'])
-        base = calibration.base('P13', 'III.36')
-        self.assertEqual(len(base['state']['bridges']), 5)
-        self.assertIsNone(questions.KINDS['P13'][4].test(calibration, base))
-        self.assertEqual(calibration.kind('P13', 9, base), (1, ruled[('P13', 'III.36')]))
-        with patch.dict(questions.NOT_APPLYING, clear=True):
-            self.assertEqual(calibration.kind('P13', 9, base), (5, []))
-        # III.36 takes the first kind, every supplied bridge removed, as I.37 and II.6 do.
+        for ref, k in (('II.8', 4), ('III.36', 9)):
+            with self.subTest(ref=ref):
+                base = calibration.base('P13', ref)
+                self.assertEqual(len(base['state']['bridges']), 5)
+                self.assertIsNone(questions.KINDS['P13'][4].test(calibration, base))
+                self.assertEqual(calibration.kind('P13', k, base), (1, ruled[('P13', ref)]))
+                with patch.dict(questions.NOT_APPLYING, clear=True):
+                    self.assertEqual(calibration.kind('P13', k, base), (5, []))
+        # II.8 and III.36 take the first kind, every supplied bridge removed, as I.37 and II.6 do.
         plants = {plant['ref']: plant for plant in manifest['questions']['P13']['plants']}
-        for ref in ('I.37', 'II.6', 'III.36'):
+        for ref in ('I.37', 'II.8', 'II.6', 'III.36'):
             with self.subTest(ref=ref):
                 self.assertEqual((plants[ref]['kind'], plants[ref]['what']), (1, 'every supplied bridge removed'))
                 self.assertEqual(questions.PLANTS[('P13', ref)].operations, (('remove', None),))
-        row = next(r for r in calibration_rows('P13') if r['ref'] == 'III.36')
-        self.assertEqual(sorted(row['mutation']['base_state']['bridges']),
-                         ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
-                          'Elements.Rectangle.eq_rect', 'Elements.Square.described', 'Elements.Square.eq_sq'])
-        for table in ('bridges', 'bridge_context', 'bridge_placement', 'bridge_imports'):
-            self.assertEqual(row['state'][table], {})
-        # The fifth kind is still taken by II.8, whose plant is unchanged.
-        self.assertEqual((plants['II.8']['kind'], plants['II.8']['passed_over']), (5, []))
-        self.assertEqual(questions.PLANTS[('P13', 'II.8')],
-                         questions.Plant(5, '`Square.described` removed, the other bridges kept',
-                                         questions.PLANTS[('P13', 'II.8')].justification,
-                                         (('remove', ['Elements.Square.described']),)))
-        self.assertEqual([plant['ref'] for plant in plants.values() if plant['kind'] == 5], ['II.8'])
+        for ref in ('II.8', 'III.36'):
+            with self.subTest(ref=ref):
+                row = next(r for r in calibration_rows('P13') if r['ref'] == ref)
+                self.assertEqual(sorted(row['mutation']['base_state']['bridges']),
+                                 ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
+                                  'Elements.Rectangle.eq_rect', 'Elements.Square.described',
+                                  'Elements.Square.eq_sq'])
+                for table in ('bridges', 'bridge_context', 'bridge_placement', 'bridge_imports'):
+                    self.assertEqual(row['state'][table], {})
+        # No plant of P13 takes the fifth kind.
+        self.assertEqual([plant['ref'] for plant in plants.values() if plant['kind'] == 5], [])
 
     def test_a_table_entry_for_an_unlisted_base_or_a_bad_kind_is_refused(self):
         calibration = questions.Calibration(shared()['generator'])
@@ -1694,9 +1695,9 @@ class Calibration(unittest.TestCase):
 
     def test_when_no_kind_applies_the_refusal_says_the_next_base_replaces_it(self):
         calibration = questions.Calibration(shared()['generator'])
-        # A P13 row that supplies no bridge: every kind's test fails; for III.36 the table passes
-        # the fifth over first, and the refusal records it with the others.
-        for ref, k, ruled in (('III.18', 0, False), ('III.36', 9, True)):
+        # A P13 row that supplies no bridge: every kind's test fails; for II.8 and III.36 the table
+        # passes the fifth over first, and the refusal records it with the others.
+        for ref, k, ruled in (('III.18', 0, False), ('II.8', 4, True), ('III.36', 9, True)):
             with self.subTest(ref=ref):
                 with self.assertRaisesRegex(questions.Refusal, 'no kind of .* applies') as refused:
                     calibration.kind('P13', k, {'ref': ref, 'state': {'bridges': {}}})

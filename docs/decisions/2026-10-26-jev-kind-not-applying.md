@@ -24,7 +24,17 @@
 
   So III.36's plant for P13 passes over the fifth kind, with the reason above recorded in
   the manifest beside the kinds a test passes over, and takes the first, every supplied
-  bridge removed, the change of I.37's and II.6's plants. A kind passed over by this
+  bridge removed, the change of I.37's and II.6's plants.
+
+  The ruling applies as well to II.8, P13's other plant of the fifth kind, as the
+  independent re-check of this change found. II.8's row supplies the same five bridges as
+  III.36's, and its plant removed `Square.described`. II.8 does draw its square by I.46 and
+  takes the square's parallelogram from `Square.described`, but P13 does not ask whether a
+  bridge's premises are met where it is used, and `Square.eq_sq`, which the plant kept,
+  still states the connection of a square that is a parallelogram with `sq`; so a careful
+  reader could fairly answer "bridge stated" there too. II.8's plant passes over the fifth
+  kind for the same reason and takes the first, every supplied bridge removed. No plant of
+  P13 now has the fifth kind. A kind passed over by this
   ruling is named, with its reason, in the generator's own table, read with it; the kinds'
   tests are unchanged. When no kind applies to a base, the generator still writes nothing:
   the replacing base, and the lists it changes, are recorded in a dated entry and in the
@@ -33,6 +43,6 @@
 
   This entry approves, in `scripts/audit/jev_questions.py`, the table of kinds that do not
   apply by this ruling, its guards, the words of the refusal when no kind applies, and
-  III.36's plant for P13.
+  III.36's and II.8's plants for P13.
 
   This entry approves, in `tests/test_jev_questions.py`, the cases for those changes.
