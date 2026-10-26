@@ -2,9 +2,9 @@
   `gs_chord`, before Circle 1's retirement (tooling,
   [#477](https://github.com/jackChallis/stoicheia/issues/477)).** On 25 October 2026 the
   owner's answer "yes to all three." approved, among the coordinator's recommendations,
-  retiring Circle 1 (`Tacit.between_of_inside_chord`) into a theorem after III.2, with
-  preparation trains first so that no check fails on main at any commit; #477 is the
-  coordinator's record. At that retirement Circle 1's law leaves both model harnesses.
+  retiring Circle 1 (`Tacit.between_of_inside_chord`) into a theorem after III.2, once
+  trains that prepare for it have landed, so that no commit on main fails a check; #477 is
+  the coordinator's record. At that retirement Circle 1's law leaves both model harnesses.
   In `tests/model/hyperbolic.py` the law was the only user of the generator `gs_chord`,
   whose name `scripts/safe_push.py` lists in `LAW_GLOBALS`, and the test that every
   name there is needed by some law would then fail on main until a second change took
@@ -20,8 +20,8 @@
   there moves. When the law leaves at the retirement, the kind is left unused inside a
   maker other laws still need, and no name in the allow-list goes unused.
 
-  The model's run, `python3 -I tests/model/run.py --full --write`, was made at commit
-  `c6515f8dacfc`, this change on Circle 1's derived preparation, and passed every check.
+  `python3 -I tests/model/run.py --full --write` ran at commit `c6515f8dacfc`, this
+  change on Circle 1's derived preparation, and passed every check.
   Every file it wrote holds, below the lines of its header that name the commit, the
   harness's hash and the date, and apart from the time each run took, exactly what the
   run at `242da9a7f107`, before this change, wrote: the law met the same configurations
