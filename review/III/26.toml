@@ -50,8 +50,16 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:a4c608069879bee5"
-run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18"
-text = "sha256:26b3ad77532ec820"
+commit = "d2e249c39"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:67e7ae1bfa109a7f"
+run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:4e6ed2d383196dd3"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

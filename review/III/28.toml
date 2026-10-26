@@ -36,7 +36,7 @@ note = "Euclid subtracts the equal lesser circumferences from the equal whole ci
 [[passage]]
 at = "therefore the circumference ACB which remains"
 kind = "different"
-note = "The greater circumferences are equal in measure as the remainders [C.N. 3]; their congruence comes from III.24, the angles AXB, DYE at points of the greater circumferences being the halves of the equal angles AKB, DLE at the centres [III. 20], so that the greater segments are similar; Heath prints no reference here for III.20 or III.24, called as `Prop20` and `Prop24`, and `Magnitude.eq_of_add_self_eq` supplies the equality of the halves."
+note = "The greater circumferences are equal in measure as the remainders [C.N. 3]; their congruence comes from III.24, the angles AXB, DYE at points of the greater circumferences being the halves of the equal angles AKB, DLE at the centres [III. 20], so that the greater segments are similar; Heath prints no reference here for III.20 or III.24, called as `Prop20.special` and `Prop24`, and `Magnitude.eq_of_add_self_eq` supplies the equality of the halves."
 
 [figure]
 case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
@@ -44,9 +44,9 @@ case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
 [review]
 stage = "full"
 commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c973f49aeb59b649"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; card #129, ship ER: read again after one citation (for I.13, the word private) changed, by GPT-6 Astra (Codex)"
 text = "sha256:8777d0d91f4d3944"
 
 [review.items]

@@ -45,8 +45,16 @@ note = "Euclid's figure draws the impossible supposition that BGC is greater tha
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:8d4e1b287f2e5c91"
-run = "card #332, ship ER (#127): re-read after Euclid's route moved into Elements/; the added lines of the move (Prop27.sides and the three cases), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the mishnah's clause of wave two, by Claude Opus 5.5, reader R3-337-r5, at e00da4b4"
-text = "sha256:54649db23e860831"
+commit = "d2e249c39"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:a0691a095e6891e8"
+run = "card #332, ship ER (#127): re-read after Euclid's route moved into Elements/; the added lines of the move (Prop27.sides and the three cases), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the mishnah's clause of wave two, by Claude Opus 5.5, reader R3-337-r5, at e00da4b4; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:d13786dfe6c733b5"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

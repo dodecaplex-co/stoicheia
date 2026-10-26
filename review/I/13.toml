@@ -35,10 +35,10 @@ case = "AB leaning towards C, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b7b41f51"
+commit = "d2e249c39"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:02663ef3706debd0"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1)"
+lean = "sha256:bbe3db57fed905f6"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); card #129, ship ER: read again after one citation (for I.13, the word private) changed, by GPT-6 Astra (Codex)"
 text = "sha256:0939550989bebeef"
 
 [review.items]

@@ -2,7 +2,7 @@
 scope = "full"
 note = "The angle at the centre on BC, of any size, our reading after Heath; III.20 special has E on A's side and the angle BEC, as III.20 had before."
 companions = ["III.20 special", "III.20 circumference"]
-fingerprint = "sha256:fb6f51cf124385c5"
+fingerprint = "sha256:5c9c150cc4d1d5a6"
 
 [route]
 kind = "euclid"
@@ -68,8 +68,16 @@ case = "E within the angle BAC and outside the angle BDC"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:ccd8afe1c9a04254"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0"
-text = "sha256:c6867555489fe8c7"
+commit = "d2e249c39"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:1f94d569d65378b4"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:068c2e13f9e6dca1"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

@@ -36,8 +36,16 @@ case = "the segment BAED greater than a semicircle, with F on A's and E's side o
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:54a61ea628e84e01"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb"
-text = "sha256:d126818faf44e78d"
+commit = "d2e249c39"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:c023135d2332c0dc"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex)"
+text = "sha256:24928072bfff51f0"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
