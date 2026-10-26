@@ -6,8 +6,11 @@ entry of that day](../decisions/2026-10-21-briefs-0010-and-0012.md) records. It 
 draft described below, not approved, and its scratch,
 [`docs/reports/crew/scratch-IV/`](../reports/crew/scratch-IV/), stays on main as committed,
 built by nothing; its order of work (section 11) begins only after the owner's gate. Brief
-0010, whose approval the opening below awaits, was approved that day; its question 3, on
-which question 8 below waits, is still open.*
+0010, whose approval the opening below awaits, was approved that day. Update, 25 October
+2026: Card #165 records the later decision to retain `Arc`'s existing field order,
+`circle`, `B`, `C`, `K`. Question 3 is therefore settled, including the dependency
+identified by question 8 below; that decision is later than, and distinct from, the 21
+October record.*
 
 *19 October 2026. **A draft, for challenge and for the owner's and the coordinator's
 approval: nothing in it is frozen, and nothing changes with it.** Book IV is the first new
