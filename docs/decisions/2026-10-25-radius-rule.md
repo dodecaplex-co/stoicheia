@@ -43,7 +43,7 @@
   What moves now. Nothing cites the rule yet, so no certificate changes: `facts.json`
   gains the rule's statement and module in its registry of axioms, and no entry's axioms
   or citations move. The lock goes from 48 axioms to 49, and its tacit rules from 42 to
-  43; its vocabulary keeps its 262 words, byte for byte. When Circle 1 is retired after
+  43; its vocabulary is unchanged, byte for byte. When Circle 1 is retired after
   III.2 (#477), the lock comes back down to 48. The generated pages move only in their
   counts and in the line numbers of their links into the foundations file, which grew
   above `len_self`. Six sentences that said the foundations have one rule of our own, or
