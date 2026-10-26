@@ -1674,8 +1674,8 @@ stamped, and III.11's P14 and P16, until its mishnah's changed sentence is read 
 verdicts are recorded again.
 
 **Completion on the delivered revision.** III.11's and III.13's records were read in full
-against `d87e0632f` by GPT-6 Astra (Codex), an independent reader who wrote neither, and
-stamped in `3621cd0ef`: III.13's six verdicts pass, and III.11's applicable verdicts pass,
+against `d87e0632f` by an independent reader who wrote neither, and stamped in
+`3621cd0ef`: III.13's six verdicts pass, and III.11's applicable verdicts pass,
 with representations `n/a`; the pages and the program's status were made afresh. The
 verdicts taken out, the stale stamps and the failures in the snapshot above belong to
 `68a110e6` with the move's then-uncommitted edits, not to the delivered revision.

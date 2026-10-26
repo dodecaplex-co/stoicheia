@@ -54,8 +54,8 @@
   the three companions, with notes on its statement, its route and its representation, and
   its mishnah gains a paragraph on them. III.11's mishnah now says that the reading at the
   point is formalised, and III.11's record gave up its verdicts on commentary and sign-off
-  with that sentence until it was read again. GPT-6 Astra (Codex), an independent reader
-  who wrote neither, then read both records in full against `d87e0632f`, and both were
+  with that sentence until it was read again. An independent reader who wrote neither
+  then read both records in full against `d87e0632f`, and both were
   stamped in this train, every verdict passing. The report,
   [docs/reports/routes-book-III.md](../reports/routes-book-III.md), records the move in an
   addendum of this date.
