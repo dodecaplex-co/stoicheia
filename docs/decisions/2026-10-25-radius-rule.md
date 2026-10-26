@@ -1,12 +1,14 @@
 - **The radius rule: a radius is not nothing, and the lock up to 49 axioms (foundations, #473).**
   On 25 October 2026, at about 22:45 Pacific time, the owner answered "yes to all three."
-  to the coordinator's recommendation, which the coordinator records on #473 and on #477.
-  The first of the three is what this entry records: one new tacit rule, of our own,
+  to three recommendations the coordinator had put to them. Those words are the owner's.
+  The one this entry carries out, recorded by the coordinator on #473 and #477, was to add
+  one axiom, as the scoping of those cards found necessary, and then to carry out the
+  scoping's plan. This entry records the axiom: one new tacit rule, of our own,
   `Elements.Tacit.radius_ne_zero`, which says `Centre A α → OnCircle B α → ‖A B‖ ≠ 0`,
   with `A`, `B` and `α` implicit. The straight line from a circle's centre to a point on
-  the circle has some length; the rule says nothing of how much. The other two come in
-  later changes: Book Zero's proofs are moved onto the rule, so that Book Zero no longer
-  uses `Tacit.circle_eq`, and Circle 1 is retired after III.2, under #477. No
+  the circle has some length; the rule says nothing of how much. The plan's later steps
+  come in later changes: Book Zero's proofs are moved onto the rule, so that Book Zero no
+  longer uses `Tacit.circle_eq`, and Circle 1 is retired after III.2, under #477. No
   proposition's or porism's statement, no definition and no `--` line changes, in this
   change or in those.
 
@@ -42,7 +44,12 @@
   43; its vocabulary keeps its 262 words, byte for byte. When Circle 1 is retired after
   III.2 (#477), the lock comes back down to 48. The generated pages move only in their
   counts and in the line numbers of their links into the foundations file, which grew
-  above `len_self`.
+  above `len_self`. Five sentences that said the foundations have one rule of our own, or
+  that the overlap screen's ten circle rules are all the circle rules, would be false the
+  moment the rule lands, so they change with it: the tacit rules' line of `README.md`,
+  the first item of section 7 of `docs/FORMALIZATION.md`, two places in
+  `docs/briefs/book-I.md`, and the account of the screen in `docs/reports/overlaps.md`,
+  which now says the radius rule is not yet in the screen's list.
 
   Approved for the foundations: `Elements/Foundations/Tacit/Metric.lean`, which declares
   the rule under a heading of its own and names it in the module's opening note, and

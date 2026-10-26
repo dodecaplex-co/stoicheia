@@ -733,7 +733,8 @@ outline companions of I.45 and II.14 also reach definitions in none of the scree
 such as `Figures.Outline.area`, which their statements name; the screen stops on these too
 until they are listed. The screen now tries the <!-- count:axioms -->49<!-- /count -->
 axioms of the certificate, 10 of them
-about circles with `Tacit.exists_centre`, and unfolds, budgets and leaves out rules as the
+in its list of rules about circles, `Tacit.exists_centre` among them (the radius rule of 25
+October 2026 is not yet in that list), and unfolds, budgets and leaves out rules as the
 revised screen does. No run of it on the restated statements is recorded yet.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a

@@ -423,10 +423,13 @@ dependencies.
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
   Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
-  LeanEuclid's corrections of it) with its citation, save one of our own, added by the
-  owner's decision of 18 October 2026: every circle has a centre (`exists_centre`), whose
+  LeanEuclid's corrections of it) with its citation, save two of our own: every circle has
+  a centre (`exists_centre`), added by the owner's decision of 18 October 2026, whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
-  section 2). A new rule, or a change to one, is a foundation decision (section 1);
+  section 2); and a circle's radius is not nothing (`radius_ne_zero`), added by the
+  owner's decision of 25 October 2026
+  ([its decisions entry](decisions/2026-10-25-radius-rule.md)), since Euclid draws every
+  circle with a distance (Postulate 3). A new rule, or a change to one, is a foundation decision (section 1);
   `Certificate/axioms.lock` holds every axiom's exact statement, with every definition that
   the axioms' statements or the propositions', porisms' and companions' statements reach
   (`Touches`, `rect`, `Parallel`), so that no word can change what an axiom or a claim
