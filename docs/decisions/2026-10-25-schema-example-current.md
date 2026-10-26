@@ -12,8 +12,8 @@
   The first worked example is now III.16's record whole, copied from `review/III/16.toml`
   as it stands at commit 560da15a2: full, with its three companions, its modified route,
   `mixed-angles-local`, fourteen passages of five kinds, its figure and its review. Its
-  stamps are the record's own, since comments do not count towards `heath.text_hash`; the
-  prose before it gives the fingerprint `heath.review_fingerprint` computes for III.16 at
+  stamps are the record's own, since the block is the record byte for byte, its first line,
+  `# review/III/16.toml`, included; the prose before it gives the fingerprint `heath.review_fingerprint` computes for III.16 at
   that commit, `sha256:bbe980064221ec4c`, of its statement, its porism's and its three
   companions'. The paragraph after it, which told how III.16 had changed since d040117, goes,
   since the example is now the record as it stands. The example of I.40 stays as it was,
@@ -22,13 +22,14 @@
   The tag `mixed-angles-omitted` leaves `review/terms.toml`. The
   [decisions record](../briefs/0002-decisions.md) kept it "while a record uses it", and none
   does. `docs/FORMALIZATION.md` no longer names it, so it does not change. The cases in
-  `tests/test_acceptance_limits.py` that give a record the tag in memory, to show that P3
-  refuses III.16 and III.31 short of full whatever their tags and fails a stale allowance,
-  pass unchanged: P3 compares a record's tags with an allowance's, and never looks a tag up
+  `tests/test_acceptance_limits.py` that give a record the tag in memory, to show what P3
+  does with a made-up allowance, that it refuses III.16 and III.31 short of full whatever
+  their tags, and that it fails a stale allowance, pass unchanged: P3 compares a record's tags with an allowance's, and never looks a tag up
   in the terms.
 
-  Nothing is loosened: no check, test, expected value or lock changes, and no record,
-  Lean file, mishnah, figure or generated page.
+  Nothing is loosened: no check, test or lock changes, and no record, Lean file, mishnah,
+  figure or generated page. The example's stamps, which the self-test reads as test values
+  of `heath.text_hash`, change with it, to the record's own.
 
   This entry approves the first worked example in `review/SCHEMA.md`, III.16's record at
   commit 560da15a2, with the prose before it and without the paragraph that followed it.

@@ -296,18 +296,18 @@ about names in backticks, except the non-declarations listed in `NOT_DECLARED`.
 
 ## Worked examples
 
-These two show the shape of a record; they are not the records themselves, which live in
-`review/III/16.toml` and `review/I/40.toml`. The first is III.16's record whole, as it
-stands at commit 560da15a2; the second is I.40's as it stood at commit d040117. Their
-stamps serve as test values: at commit 560da15a2, `heath.review_fingerprint` gives
-`sha256:bbe980064221ec4c` for III.16 (its statement, then those of III.16 Por. and its
-three companions), and at d040117 it gives `sha256:5ea666d96871b7f8` for I.40. Their
-`text` is `heath.text_hash` of each example as printed here, which
-`python3 scripts/heath.py` checks.
+These two show the shape of a record. The records themselves live in `review/III/16.toml`
+and `review/I/40.toml`, and may change after the commits named here: the first example is
+III.16's record whole, as it stood at commit 560da15a2; the second is I.40's as it stood
+at commit d040117. Their stamps serve as test values: at commit 560da15a2,
+`heath.review_fingerprint` gives `sha256:bbe980064221ec4c` for III.16 (its statement, then
+those of III.16 Por. and its three companions), and at d040117 it gives
+`sha256:5ea666d96871b7f8` for I.40. Their `text` is `heath.text_hash` of each example as
+printed here, which `python3 scripts/heath.py` checks.
 
-III.16 is full: its three companions state the clauses about the angle of the semicircle
-and the remaining angle, and its porism is proved on its own. Its route is modified, and
-its passages show five of the kinds above.
+At 560da15a2, III.16 was full: its three companions stated the clauses about the angle of
+the semicircle and the remaining angle, and its porism was proved on its own. Its route
+was modified, and its passages show five of the kinds above.
 
 ```toml
 # review/III/16.toml
