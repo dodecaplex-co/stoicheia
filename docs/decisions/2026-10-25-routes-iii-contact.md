@@ -29,3 +29,15 @@
   write it, and stamped then. The report,
   [docs/reports/routes-book-III.md](../reports/routes-book-III.md), records the move in an
   addendum of this date.
+
+  The statement of the companion `Prop18.contact_locallyEqual` is the first entry's to
+  reach `LocallyEqual`, a definition of `Elements/Foundations/DefinitionsIII.lean` that does
+  not change, so the lock's vocabulary gains that one word, by the coordinator's approval,
+  as owner of the lock, of 25 October 2026. This entry approves the change to
+  `Certificate/axioms.lock`, written by `python3 scripts/check_fidelity.py --write-lock`:
+  its vocabulary grows from 262 words to 263, and no axiom is added, removed or restated.
+  This entry approves the change to `Certificate/FIELDS.md`, where `scripts/render.py`
+  fills the vocabulary's count with the new number, 263, and nothing else changes. This
+  entry approves the renewed hash in `model/lock.sha256`, with its dated note. This entry
+  approves the renewed hash in `tests/model/lock.sha256`, with its dated note. No law of the
+  model changes, since only a companion's statement reaches the word.
