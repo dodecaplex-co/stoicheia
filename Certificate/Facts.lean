@@ -31,8 +31,8 @@ straight from Lean's own proof terms:
   their own Lean names, the theorems that prove it, and the construction rules beneath
   those proofs (`cited_laws`).
 
-Every walk reads a declaration in the same way, through `mentions`: its type, its value
-and an inductive type's constructors, as `collectAxioms` reads them. The walks reject a
+Every walk of a proof reads a declaration in the same way, through `mentions`: its type, its
+value and an inductive type's constructors, as `collectAxioms` reads them. The walks reject a
 constant from any imported module outside `Elements`, `Init`, `Std` and `Lean`, naming
 the declaration and its module. Only Lean's own modules may end a walk at this boundary:
 those under `Init`, `Std` and `Lean` whose `.olean`, as the search path finds it, lies in
@@ -126,7 +126,7 @@ def isLocal (env : Environment) (toolchain : NameSet) (n : Name) : m Bool := do
 
 /-- Everything the declaration `ci` mentions: the constants of its type, of its value (a
 theorem's proof and an opaque's hidden value included), and an inductive type's
-constructors. These are the places `collectAxioms` looks. Every walk below reads a
+constructors. These are the places `collectAxioms` looks. Every walk of a proof reads a
 declaration through this one function, so what one of them sees, the others see too. -/
 def mentions (ci : ConstantInfo) : Array Name := Id.run do
   let mut used := ci.type.getUsedConstants
