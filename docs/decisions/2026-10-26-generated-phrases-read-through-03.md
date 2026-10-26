@@ -10,15 +10,19 @@
   a later addition; it now says "as the text states it", as the certificate's Argument
   column already says "the text's". Each book's summary, which heads its index, its
   section of `CERTIFICATE.md` and its row of `README.md`, names the bracketed proposition
-  in the same words, as do the keys that gloss *whole* (each book's index,
-  `CERTIFICATE.md` and `book/names.md`), and the summary counts its proof apart: Book III's said that 25 proofs follow
-  Euclid's argument, counting III.12's, which follows the argument Heath prints, and Book
-  I's said that every proof does, I.40's among them.
+  in the same words, and counts its proof apart; and the keys that gloss the scope words,
+  *whole*, *restricted* and *in part*, by Euclid's words (each book's index,
+  `CERTIFICATE.md` and `book/names.md`) say that for I.40 and III.12 they are said of the
+  text's enunciation, which may not be Euclid's. Book III's summary said that 25 proofs
+  follow Euclid's argument, counting III.12's, which follows the argument Heath prints,
+  and Book I's that every proof does, I.40's among them.
 
   The folded heading over the Lean before a main theorem counted every declaration as a
   lemma: I.4's "14 lemmas" are two inductive types and twelve abbreviations. The headings
-  before and after the theorem now count definitions apart from what is proved ("14
-  definitions"; "12 definitions and one lemma").
+  before and after the theorem now count each declaration by its own keyword, definitions
+  apart from what is proved ("14 definitions"; "12 definitions and one lemma"). They count
+  the named declarations they list; an anonymous instance is in the listing but not in the
+  count, as before.
 
   The line over every commentary echoed the refrain that [STYLE](../STYLE.md), section 3,
   retires ("what Lean made us say out loud") and promised a modern way on pages that have
@@ -33,7 +37,8 @@
   that tag back on III.24 only "if the badge is first kept to statements that use the
   measure". `BADGE_WORDS` in `scripts/render.py` now keeps it so: the badge, on the line
   under the enunciation and as the certificate's dagger, goes only to a statement that
-  names `circumference`, `standing` or `Arc.measure`. III.26 to III.30 keep it; III.24 and
+  names `Elements.circumference`, `Elements.standing` or `Elements.Arc.measure`, each a
+  whole name of the statement as `statement_names` reads it. III.26 to III.30 keep it; III.24 and
   III.25 do not. The tag's meaning in `review/terms.toml` listed III.24 and III.26 to
   III.29; it now lists the records that carry it, III.26 to III.30, and the companions of
   III.24 and III.25.
@@ -50,7 +55,8 @@
   change with the pages, and its requirement does not.
 
   This entry approves the change to `scripts/render.py`: `in_lean_line`, `book_summary`,
-  `whole_gloss` and the three keys that use it, `representation_badge` with `BADGE_WORDS`, `certificate_row`, `LeanParts` with
+  `bracketed_key` and the three keys that use it, `representation_badge` with
+  `BADGE_WORDS` and `statement_names`, `counted`, `certificate_row`, `LeanParts` with
   `DECLARATION_KIND`, `lean_listing`, `axiom_kind`, the list of kinds in the page's rules
   and `MISHNAH_LEAD`.
 
