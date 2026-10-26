@@ -40,8 +40,8 @@ running on from an import's line, and any `import` after the header outside a «
 refused. A private declaration is seen only in its own file. Every output path rejects
 symlinks, evidence files, tracked files other than the default outputs, Git metadata,
 protected paths independently of the index, and collisions with the others; an output may be
-outside the repository, except that a calibration directory must be representable as an asset
-path relative to the repository.
+outside the repository, except that a calibration directory must be inside the repository and
+outside its figures/ tree.
 The outputs are assembled and validated before any is written, using temporary
 files and replacement without following a final symlink.
 The checks cover links and aliases present when it runs, not a concurrent writer racing
