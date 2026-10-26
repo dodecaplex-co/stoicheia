@@ -106419,6 +106419,8 @@
   "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Elements.SameSide A C L → Elements.SameSide B C L",
   "Tacit.same_ray_of_angle_eq_zero":
   "∀ {A B C : Elements.Point} {L : Elements.Line}, Ne A B → Ne A C → Elements.OnLine A L → Elements.OnLine B L → Eq (Elements.ang B A C) 0 → And (Elements.OnLine C L) (Not (Elements.Between B A C))",
+  "Tacit.radius_ne_zero":
+  "∀ {A B : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Ne (Elements.len A B) 0",
   "Tacit.pasch2":
   "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C → Elements.OnLine A L → Not (Elements.OnLine B L) → Elements.SameSide B C L",
   "Tacit.on_line_of_area_eq_zero":
@@ -106512,6 +106514,7 @@
  {"Tacit.superposition": "Elements.Foundations.Tacit.Superposition",
   "Tacit.same_side_trans": "Elements.Foundations.Tacit.Diagram",
   "Tacit.same_ray_of_angle_eq_zero": "Elements.Foundations.Tacit.Transfer",
+  "Tacit.radius_ne_zero": "Elements.Foundations.Tacit.Metric",
   "Tacit.pasch2": "Elements.Foundations.Tacit.Diagram",
   "Tacit.on_line_of_area_eq_zero": "Elements.Foundations.Tacit.Transfer",
   "Tacit.not_on_line_of_same_side": "Elements.Foundations.Tacit.Diagram",
