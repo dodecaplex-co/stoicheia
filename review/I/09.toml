@@ -37,6 +37,7 @@ commit = "01e0fe54"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x1)"
 lean = "sha256:d385f2716fd5a8ad"
+text = "sha256:bf1f977d05d87e9d"
 
 [review.items]
 statement = "pass"
