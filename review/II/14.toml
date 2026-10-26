@@ -64,11 +64,11 @@ case = "BE greater than ED, and A four-sided with no diagonal drawn, as in Heath
 
 [review]
 stage = "full"
-commit = "a973c8726"
+commit = "3a355341b"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:be972fd23a351f2e"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, readers F2-w2m1cx at 84a78856 and F2-w2m1cx2 at 0ea9ae62, after its findings were applied; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x)"
-text = "sha256:408bacaa276c8ed6"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, readers F2-w2m1cx at 84a78856 and F2-w2m1cx2 at 0ea9ae62, after its findings were applied; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x); card #473, ship C7: re-read in full after its note changed for the radius rule, by GPT-6 Astra (Codex), reader C7-t473b-read2, at 3a355341b"
+text = "sha256:001f8ffac7f0177d"
 
 [review.items]
 statement = "pass"
