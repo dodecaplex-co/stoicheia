@@ -51,6 +51,9 @@ at = "And the remaining angles will also coincide with the remaining angles"
 kind = "grouped"
 note = "The two remaining angle equalities follow inside the placement from the kept angles and the corner coincidences, with Metric 4 reversing the arms where needed. The restricted rule then exports these two equalities together with the base and area equalities, one application for each."
 
+[figure]
+note = "Heath's figure also draws the base bent below EF, for the bracketed scholium's impossible case of two straight lines enclosing a space; ours leaves it out, as the Lean has no second base once B is on E and C on F."
+
 [review]
 stage = "full"
 commit = "0328bcb6"
