@@ -29,10 +29,11 @@
   `render.record_current`, by which the status table counts a record as current, no
   longer counts one with no `text` as current.
 
-  `scripts/check_acceptance.py` and its tests are not changed; it reads both. Its P2
-  takes each failure that the review checks of `check_fidelity.py` report of a record,
-  save those of its passages, which go to P6, and its P11 to P16 are
-  assessed only for a record that `render.record_current` counts as current. So a record
+  `scripts/check_acceptance.py` and its tests are not changed. Its P2 takes each failure
+  that the review checks of `check_fidelity.py` report of a record, save the three that
+  P6 takes (a passage's `at` that begins no sentence, its `helper` not declared, and a run
+  of `--` lines that no passage declares), and its P11 to P16 are assessed only for a
+  record that `render.record_current` counts as current. So a record
   with no `text` now fails P2, with the message above, and each of its six items reads
   "not yet assessed: the record's stamps are not current (P2)". That was seen in a scratch
   copy of this tree, outside the repository, by calling the checklist's
@@ -79,8 +80,9 @@
   are: a record on an older branch may still gain only its `text` stamp from
   `--migrate-text`, so they stay true, and `scripts/safe_push.py` holds an open pull
   request's body to the box's words. PROGRAM.md's "where a record carries a `text` stamp"
-  is the coordinator's to change. Whether a stamp should cover `[review]`'s `stage` and
-  `items` is a card of its own.
+  is the coordinator's to change. This change leaves open whether a stamp should also
+  cover `[review]`'s `stage` and `items`, which the plan asks it to consider: that would
+  be a check change of its own, with a migration.
 
   This entry approves the change to `scripts/heath.py`: `text` a stamp in `FIELDS`, a
   message for a missing stamp that says what a reader does, and the comment above
