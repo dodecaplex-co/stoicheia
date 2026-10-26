@@ -93560,7 +93560,7 @@
       "line": 38,
       "file": "Elements/Figure/Lines.lean"}]},
    "enunciation":
-   "The centre's position in III.25 determines whether the segment is less than a\nsemicircle, a semicircle or greater, and compares its circumference with two right angles.\nB is on P's side of AC, and D lies between A and C. The construction's three conclusions\nplace E across AC from B, at D, or on B's side. `Prop25.complete` identifies the constructed\ncircle with the given segment's circle, carrying these conclusions to that segment.\n[I. 5, I. 32, III. 2, III. 20, III. 21, III. 22] ",
+   "The centre's position in III.25 determines whether the segment is less than a\nsemicircle, a semicircle or greater, and how its circumference compares with two right angles.\nB is on P's side of AC, and D lies between A and C. The construction's three conclusions\nplace E across AC from B, at D, or on B's side. `Prop25.complete` identifies the constructed\ncircle with the given segment's circle, carrying these conclusions to that segment.\n[I. 5, I. 32, III. 2, III. 20, III. 21, III. 22] ",
    "direct_axioms":
    ["Definition15",
     "Postulate1",
