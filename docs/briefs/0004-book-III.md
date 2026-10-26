@@ -554,6 +554,31 @@ with their mixed-angle companions both now cover the whole enunciation, and carr
 `mixed-angles-local` instead of `mixed-angles-omitted`. III.16's route is `modified` for
 the companions' direct argument; III.31's remains `euclid`.
 
+**25 October 2026, the table and the records (#462).** The table above is the snapshot of
+its date. The records in `review/III/` are the authority, as its opening line says, and
+each page's "In Lean" line and "Argument" row, with the generated
+[Book III index](../../book/III/index.md), show each record's route now. At main
+bedbba23e these rows differ from their records, some as the notes above already say; a
+step changed is a `different` passage of the record:
+
+- III.2: `modified`, one step changed, the centre D, from `exists_centre` (#131); no
+  `[overlap]`, Circles 2 and 3 being proved rules.
+- III.5: `euclid`; its overlap, `Tacit.circle_eq`, agrees.
+- III.6: `euclid`; its overlap is `Tacit.circle_eq` alone; tag `touching-whole-circles`.
+- III.8: `modified`, two steps changed.
+- III.10: `modified`, one step changed.
+- III.16: statement `full`, with its companions; `modified`, two steps changed; tag
+  `mixed-angles-local`.
+- III.17: `modified`, one step changed, the centre E, from `exists_centre` (#131).
+- III.24: three steps changed; tags `segment-with-circle`, `angle-measure` and
+  `redundant-hypothesis`.
+- III.25: tags `segment-with-circle` and `angle-measure`.
+- III.26, III.28 and III.29: two steps changed each.
+- III.31: statement `full`, with its companions; `euclid`; tag `mixed-angles-local`.
+- With no row: III.1, its overlap `Tacit.exists_centre`; III.4, `modified`, one step
+  changed, the centre F, from `exists_centre` (#131); and III.11, III.12 and III.13, tag
+  `touching-whole-circles`.
+
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,
 and the mixed-angle comparisons have the scope described above.
