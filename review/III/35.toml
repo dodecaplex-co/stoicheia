@@ -62,7 +62,7 @@ note = "Euclid leaves DB to the same argument without writing it out; the Lean a
 [figure]
 case = "Euclid's two, both straight lines through the centre E (left) and neither through the centre F, with E distinct from G and H (right)"
 some_cases = true
-note = "The theorem also covers the cases the figure does not draw: Simson's, one straight line through the centre and the other not, and E at G or H, the foot of a perpendicular from the centre F."
+note = "The theorem also covers the cases the figure does not draw: Robert Simson's two, where one straight line passes through the centre and the other does not, and those where neither does and E is at G or H, the foot of a perpendicular from the centre F."
 
 [review]
 stage = "full"
