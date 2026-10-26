@@ -17,7 +17,9 @@ Pythons too. `python3 scripts/heath.py` checks the contracts against themselves:
 examples in review/SCHEMA.md, review/terms.toml and every review record present; and that
 the reader of Lean reads deep and long runs of string holes in under half a second each
 (`READER_PLANTS`, #390), and refuses as quickly strings nested past their budget
-(`READER_REFUSED`).
+(`READER_REFUSED`); and that it reads a name on through a `.` after its «…» part as Lean
+does, and marks a raw string after `℃.` as one it cannot read for certain
+(`READER_NAMES`, #430).
 """
 
 from __future__ import annotations
@@ -708,9 +710,13 @@ def _schema_examples():
 # strings it cannot read for certain (`unsure`), the offsets of its strings, in order, and
 # the first one's text. That reader does not finish the first plant in READER_TIMEOUT
 # seconds and takes seconds over the next two; the next two, deeper than its recursion
-# limit, it cannot read at all; and the last, where each hole walked the comment it opens
-# to the end of the text, takes it more than a second. READER_REFUSED, strings nested
-# past their budget (STRINGS_PER_CHARACTER), the reader must refuse as quickly.
+# limit, it cannot read at all; and the sixth, where each hole walked the comment it opens
+# to the end of the text, takes it more than a second. The seventh, a quote and then a
+# name of 2500 «…» parts, each holding a brace and a quote, reads as the reader before
+# #430 read it; a reader that read a name whole, as #430's does, but walked the rest of
+# the name afresh in each hole that begins within one of its parts, took 1.19 to 1.38
+# seconds over it (#430). READER_REFUSED, strings nested past their budget
+# (STRINGS_PER_CHARACTER), the reader must refuse as quickly.
 READER_TIMEOUT, READER_SECONDS = 20, 0.5
 READER_PLANTS = [
     ("holes nested 200 deep", '"{' * 200, range(0, 400, 4), range(0, 400, 4), "{"),
@@ -723,9 +729,34 @@ READER_PLANTS = [
      range(7998, 0, -4), "{}"),
     ("a run of 2400 strings whose holes open a block comment", '"{/-"' * 2400,
      range(0, 12000, 5), range(0, 12000, 5), "{/-"),
+    ("a name of 2500 parts, each holding a hole's brace and a quote, after a quote",
+     '"' + ".".join(['«{"»'] * 2500), [0], [0], "«{"),
 ]
 READER_REFUSED = ("interpolated strings nested 10,000 deep, all closed",
                   's!"{' * 10000 + '}"' * 10000)
+# A name read whole (#430). Each plant is a declaration's last binder and the rest of it,
+# which Lean 4.35 refuses after `theorem planted (s : String) `, with "unexpected token"
+# at the quote after the name, since an argument needs a space before it; through a
+# command that takes a name and then a string with no space between them, it reads the
+# name and a plain string. Each is (that text, the offsets of the literals the reader
+# cannot read for certain, and each string it reads, as its offset and its text).
+# After `«a».` and `x.«b».`, Lean reads `r` or `s!` on into the name, `«a».r`,
+# `x.«b».r` or `«a».s!`, before a plain string, and so now does the reader, which read a
+# raw string or an interpolated one there until #430. After `℃.`, Lean reads the name
+# `℃.r` or `℃.s!` too, but after a token `+℃` it reads `+℃`, `.` and a raw string or its
+# own `s!`; so there the reader reads the raw string but marks it as one it cannot read
+# for certain, and reads the string after `s!` as a plain one, marked where its braces
+# could be holes, as after `℃s!` (`closed_up`). Lean reads `"{"a"}"` after a name as the
+# string `{`, the name `a` and the string `}`.
+READER_NAMES = [
+    ('(h : «a».r"\\") := " = s := rfl) : True := trivial', [], [(10, '") := ')]),
+    ('(h : x.«b».r"\\") := " = s := rfl) : True := trivial', [], [(12, '") := ')]),
+    ('(h : ℃.r"\\") := " = s := rfl) : True := trivial', [7],
+     [(9, "\\"), (16, " = s := rfl) : True := trivial")]),
+    ('(h : «a».s!"{"a"}" = s) : True := trivial', [11], [(11, "{"), (15, "}")]),
+    ('(h : x.«b».s!"{"a"}" = s) : True := trivial', [13], [(13, "{"), (17, "}")]),
+    ('(h : ℃.s!"{"a"}" = s) : True := trivial', [9], [(9, "{"), (13, "}")]),
+]
 _READER_CHILD = """\
 import importlib.util, json, sys, time
 spec = importlib.util.spec_from_file_location("heath", sys.argv[1])
@@ -775,6 +806,18 @@ def _reader_time() -> list[str]:
             faults.append(f"read_lean on {name}: reads it otherwise than the plant expects "
                           "(its unsure strings, where its strings begin, or its first "
                           "string's text)")
+    return faults
+
+
+def _reader_names() -> list[str]:
+    """The faults of the reader's reading of READER_NAMES."""
+    faults = []
+    for src, unsure, strings in READER_NAMES:
+        got: list = []
+        read = read_lean(src, got)[1], got
+        if read != (unsure, strings):
+            faults.append(f"read_lean({src!r}) gives the unsure offsets and strings {read}, "
+                          f"not {(unsure, strings)}, as Lean 4.35 reads it (#430)")
     return faults
 
 
@@ -869,6 +912,7 @@ def _self_test() -> int:
                 except ReviewError as e:
                     faults.append(str(e))
     faults += _reader_time()
+    faults += _reader_names()
     for f in faults:
         print("  ✗ " + f)
     if not faults:
@@ -877,6 +921,9 @@ def _self_test() -> int:
         print(f"✓ the reader of Lean reads its {len(READER_PLANTS)} plants of deep and long "
               f"runs of string holes in under {READER_SECONDS} seconds each, and refuses "
               "strings nested past their budget as quickly")
+        print(f"✓ the reader of Lean reads its {len(READER_NAMES)} plants of a raw or an "
+              "interpolated string after a name's `.` as Lean 4.35 reads them, or marks "
+              "what it cannot read for certain")
     return len(faults)
 
 
@@ -890,7 +937,12 @@ def _self_test() -> int:
 # a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
 # digit, so that the `'` after one begins a character literal. A string just after one of
 # INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-# An identifier's parts are joined by a `.` before a word character other than a digit.
+# A name's parts, each a run of FIRST and REST or a «…» part, are joined by a `.` before
+# FIRST or `«` (NAME_GOES_ON), as Lean 4.35's `identFnAux` joins them: IDENT reads plain
+# parts so joined, and a «…» name is read on through the parts after it (`_name`). Lean
+# reads `«a».r"\") := "`, `x.«b».r"…"` and `«a».s!"{"` as the names `«a».r`, `x.«b».r`
+# and `«a».s!`, each before a plain string, not as a raw string or an interpolated one
+# after a `.` (#430).
 # After a term, an adjacent `.` can begin a projection field: Lean reads `p.1` as `p` and
 # the field `.1`, its digits alone (FIELD). It can also be a declared notation token. When
 # the number after it runs past FIELD through `_` or an exponent, keep NUMBER's longer
@@ -941,11 +993,18 @@ ID_REST = ID_FIRST + "0-9'!?" + SUBSCRIPT_ALNUM             # isIdRest
 # with holes is a plain one (`a℃s!"{"`). Such a place is known by the run of name
 # characters just before it, which holds a character outside ASCII (`closed_up`): there
 # the scan refuses the literal or the raw string, and reads the string after such a word
-# as a plain one, refused if Lean could read its braces as holes (#234).
+# as a plain one, refused if Lean could read its braces as holes (#234). The run is read
+# on through each `.` before a character that may begin a name (DOTTED_RUN), as Lean
+# reads on through it: Lean reads `℃.r"\") := "` as the name `℃.r` and a plain string,
+# but `+℃.r"\"` as `+℃`, `.` and a raw string where the file declares the token `+℃`,
+# so the scan refuses the raw string after `℃.`, and takes no `s!` there to begin an
+# interpolated string (#430).
 FIRST, REST = f"(?=\\w)[{ID_FIRST}]", f"(?:(?=[\\w'!?])[{ID_REST}])"
 IDENT = re.compile(f"{FIRST}{REST}*(?:\\.{FIRST}{REST}*)*")
+NAME_GOES_ON = re.compile(f"\\.(?:{FIRST}|«)")
 NAME_CHAR = re.compile(f"[\\w{ID_REST}]")
 NAME_RUN = re.compile(f"[\\w{ID_REST}]+")
+DOTTED_RUN = re.compile(f"{NAME_RUN.pattern}(?:\\.(?=[{ID_FIRST}]){NAME_RUN.pattern})*")
 NON_ASCII = re.compile(r"[^\x00-\x7f]")
 NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
@@ -1079,13 +1138,14 @@ def _find(src: str, s: str, i: int) -> int:
 @functools.lru_cache(maxsize=8)
 def closed_up(src: str) -> bytes:
     """For each offset of `src`, and its end, 1 where the run of name characters just
-    before it (NAME_CHAR) holds a character outside ASCII: one the reader blanks, as `¹`,
+    before it (NAME_CHAR), read on through each `.` before a character that may begin a
+    name (DOTTED_RUN), holds a character outside ASCII: one the reader blanks, as `¹`,
     one of the 96 before which it ends a name, as `℃`, or a letter of a name it may have
     ended there. Lean may read on through what begins at such an offset, as part of the
     name or of a token, where the scan begins something new; ASCII alone, a name is read
     whole and a number ends where Lean ends it. In one pass, however long the runs."""
     out = bytearray(len(src) + 1)
-    for run in NAME_RUN.finditer(src):
+    for run in DOTTED_RUN.finditer(src):
         if odd := NON_ASCII.search(src, run.start(), run.end()):
             out[odd.end():run.end() + 1] = b"\x01" * (run.end() - odd.start())
     return bytes(out)
@@ -1094,7 +1154,7 @@ def closed_up(src: str) -> bytes:
 def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
     that offset. `marks` gains the text of each comment and literal ("text"), each
-    comment again ("comment", `comment_end`), each «…» name ("name"), each string,
+    comment again ("comment", `comment_end`), each «…» part of a name ("name"), each string,
     character literal or raw string the scan cannot read for certain ("unsure"), and each
     string literal, from its opening quote past its closing one ("string"), and raw
     string's text ("raw"). Each string is read once, the one way `_Ends` finds it is
@@ -1163,7 +1223,7 @@ def _token(src: str, i: int, closed: bytes, can_project: bool, field_dot: bool,
     hole is the caller's to say. A blank, which begins no other token, is tried first.
     Where a comment, a raw string or a «…» name ends comes from `ends` if given, as the
     scan of holes (`_Ends.hole`) gives it, since other holes may begin within one; else
-    from `comment_end` and `_find`, as the reading that writes the marks, which passes
+    from `comment_end`, `_name` and `_find`, as the reading that writes the marks, which passes
     each place once, gives it."""
     c, j = src[i], i + 1
     if c.isspace():
@@ -1183,9 +1243,8 @@ def _token(src: str, i: int, closed: bytes, can_project: bool, field_dot: bool,
         marks.append(("raw", m.end(), k))
         return min(k + len(close), len(src)), c, True, False
     if c == "«":
-        j = min((_find(src, "»", i) if ends is None else ends.find("»", i)) + 1, len(src))
-        marks.append(("name", i, j))
-        return j, c, True, False
+        # A «…» part, and the parts of the name after it (#430).
+        return _name(src, i, marks) if ends is None else ends.name(i), c, True, False
     if m := IDENT.match(src, i):
         # An `s!` or its kin where Lean may read on through it begins no interpolated
         # string for certain (`closed_up`).
@@ -1211,6 +1270,31 @@ def _token(src: str, i: int, closed: bytes, can_project: bool, field_dot: bool,
     if c == ".":
         return j, c, False, can_project
     return j, c, c in ")]}·⟩›", False
+
+
+def _name(src: str, i: int, marks: list) -> int:
+    """The offset past the «…» name at `i`, read on as Lean 4.35's `identFnAux` reads a
+    name: its parts (`_part`) joined by a `.` before FIRST or `«` (NAME_GOES_ON), so that
+    `«a».r` is one name. `marks` gains each «…» part ("name"). A name that begins with
+    plain parts IDENT reads, and the scan reads the `.` and the «…» name after them as
+    tokens of their own, which give the same marks and leave the scan as one token
+    would."""
+    while True:
+        j = _part(src, i)
+        if src[i] == "«":
+            marks.append(("name", i, j))
+        if not NAME_GOES_ON.match(src, j):
+            return j
+        i = j + 1
+
+
+def _part(src: str, i: int, ends: _Ends | None = None) -> int:
+    """The offset past the part of a name that begins at `i`: a «…» part just past the
+    `»` that ends it, found by `ends` if given, or the end of `src`; else a run of FIRST
+    and REST, or of such runs joined by a `.` (IDENT)."""
+    if src[i] == "«":
+        return min((_find(src, "»", i) if ends is None else ends.find("»", i)) + 1, len(src))
+    return IDENT.match(src, i).end()
 
 
 def _string(src: str, i: int, marks: list, interpolated: bool, ends: _Ends):
@@ -1263,18 +1347,21 @@ class _Ends:
     the code of a hole passes through (`hole`): the scan's tokens from a place rest only
     on that place, on whether the token before it is one of INTERPOLATED, and on
     `can_project` and `field_dot`, never on how deep in braces the scan is, so scans that
-    meet go on as one. A hole may also begin within a comment, a raw string or a «…» name
-    that an earlier hole reads whole, as each hole of `"{/-"` written 2400 times begins
-    within the block that the hole before it opens; so where such a token ends comes from
-    `comment_end` and `find`, which walk no place of a block twice and list the offsets
-    of each line feed, `»` or raw string's closer once. The methods that rest on others
-    are generators, for `_run`."""
+    meet go on as one. A hole may also begin within a comment, a raw string or a name's
+    «…» part that an earlier hole reads whole, as each hole of `"{/-"` written 2400 times
+    begins within the block that the hole before it opens, and each hole after a quote
+    and a name of 2500 parts `«{"»` within a part of that name, which a hole before it
+    reads to the name's end (#430); so where such a token ends comes from
+    `comment_end`, `name` and `find`, which walk no place of a block or part of a name
+    twice and list the offsets of each line feed, `»` or raw string's closer once. The
+    methods that rest on others are generators, for `_run`."""
 
     def __init__(self, src: str):
         self.src, self.closed = src, closed_up(src)
         self.texts: dict[int, int | None] = {}
         self.closes: dict[tuple[int, bool, bool, bool], int] = {}
         self.blocks: dict[int, int | None] = {}
+        self.names: dict[int, int] = {}
         self.found: dict[str, list[int]] = {}
 
     @functools.cached_property
@@ -1337,8 +1424,8 @@ class _Ends:
         known already, the scan goes straight to it. So no place and state is passed
         twice, whatever the holes that pass it. That bounds the places passed, not the
         time: a token is read to its end at each place and state that begins it, and other
-        holes may begin within a long comment, raw string or «…» name, so where one of
-        those ends comes from `comment_end` and `find`, not from a walk to it afresh."""
+        holes may begin within a long comment, raw string or name, so where one of those
+        ends comes from `comment_end`, `name` and `find`, not from a walk to it afresh."""
         src, closes, ignored = self.src, self.closes, []
         i, interpolated, can_project, field_dot = h, False, False, False
         waiting: list[list] = [[]]
@@ -1407,6 +1494,24 @@ class _Ends:
                 return m
             waiting.pop()
             p = m
+
+    def name(self, i: int) -> int:
+        """`_name(src, i, marks)`: the offset past the «…» name at `i`, each of the parts
+        it walks remembered with that offset, so that a walk from a part already walked
+        goes straight to it, and no part is walked twice, however many holes begin within
+        the name's «…» parts."""
+        passed = []
+        while i not in self.names:
+            passed.append(i)
+            j = _part(self.src, i, self)
+            if not NAME_GOES_ON.match(self.src, j):
+                break
+            i = j + 1
+        else:
+            j = self.names[i]
+        for p in passed:
+            self.names[p] = j
+        return j
 
     def find(self, s: str, i: int) -> int:
         """`_find(src, s, i)`, from the offsets of `s` in `src`, listed in one pass over
