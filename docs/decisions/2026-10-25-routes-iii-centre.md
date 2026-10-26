@@ -48,11 +48,11 @@
   the new Lean, with their verdicts taken out, and then read in full by an independent
   reader who wrote none of them, who stamped them at `d2e249c39`; the records of III.24 and
   III.28, whose Lean changes by the one citation, and of I.13, whose lemma loses the word
-  `private` and is renamed, were read again for that change, and stamped at `d2e249c39`
+  `private`, were read again for that change, and stamped at `d2e249c39`
   (III.28's, after one note was corrected, at `4aad4576`). Review then corrected III.21's
-  passage note on the joins and III.27's commentary on the right angles, and gave I.13's
-  lemma its name; those two records, with I.13's and III.20's for the name, were read and
-  stamped again. III.21's route becomes `euclid`; III.26's
+  passage note on the joins, III.27's commentary on the right angles and III.28's Lean
+  comments on the diameters, and gave I.13's lemma its name; those three records, with
+  I.13's and III.20's for the name, were read and stamped again. III.21's route becomes `euclid`; III.26's
   stays `modified`, because the congruence of the circumferences that remain is still
   argued by III.22 and III.24 rather than by Euclid's subtraction. The mishnah of the four,
   the gap catalogue's entries for III.20, III.21, III.26 and III.27, the overlap catalogue's

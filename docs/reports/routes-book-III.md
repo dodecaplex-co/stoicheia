@@ -1740,7 +1740,8 @@ Notion 5. That lemma is now the one home of the fact: it loses the word `private
 name `Prop13.angle_lt_two_right`, by FORMALIZATION's rule for a proposition's helpers, its
 statement and proof unchanged; the staged step is not kept, `angleAtCentre.reflex_gt` and
 `angleAtCentre.size` cite it, and the docstring of `angleAtCentre.reflex_gt` gains a clause
-naming it. I.13's review record is read again for that one word. `Elements/` also has the
+naming it. I.13's review record is read again for the removal of `private` and the rename to
+`Prop13.angle_lt_two_right`. `Elements/` also has the
 fact in public, in Book I after I.29, as `Figures.OutlineBound.angle_lt_two_right`, which
 `exact?` found for the staged statement; it rests on Metric 5
 (`Tacit.angle_le_two_right`, no angle exceeds two right angles), and citing it would have
@@ -1843,8 +1844,8 @@ alone gains one, `Tacit.exists_centre`. The gap catalogue's entry for III.27 was
 as well. An independent reader who wrote none of them read the records of III.20, III.21,
 III.26 and III.27 in full, and those of I.13, III.24 and III.28 for their one change, and
 stamped them at `d2e249c39` (III.28's at `4aad4576`, after one note was corrected). Review
-then found III.21's passage note on the joins and III.27's commentary on the right angles
-untrue of the new Lean, and asked that I.13's lemma, now public, take a name by
-FORMALIZATION's rule; all three were corrected, and the records of I.13, III.20, III.21 and
-III.27 read and stamped again. The stale stamps and failures of the snapshot above belong
+then found III.21's passage note on the joins, III.27's commentary on the right angles and
+III.28's Lean comments on the diameters untrue of the new Lean, and asked that I.13's lemma,
+now public, take a name by FORMALIZATION's rule; all four were corrected, and the records
+of I.13, III.20, III.21, III.27 and III.28 read and stamped again. The stale stamps and failures of the snapshot above belong
 to its revision, not to the delivered one.
