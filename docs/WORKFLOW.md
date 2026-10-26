@@ -324,8 +324,8 @@ reviewer from the authors of the proof.
   history and run it again; for an ambiguous id, a reader identifies the intended commit
   without guessing, reads the record and stamps it as above with enough of the id to name
   that commit alone; then run it again. The migration may be run again at any time, as at
-  landing, after the branches that change records. Until every record carries `text`,
-  `check_fidelity.py` names those without it in a note.
+  landing, after the branches that change records. `check_fidelity.py` fails a record
+  without `text`, as it fails one without any other stamp.
 
 **What a reviewer of the Lean looks for:**
 

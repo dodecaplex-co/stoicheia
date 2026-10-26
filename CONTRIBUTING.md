@@ -78,8 +78,8 @@ section 4, "File names"; it reads what you have staged, so `git add` a new file 
 you run it.
 
 If you change a Lean file, its review record goes stale, even for a comment, and so does
-an edit to the record itself, once it carries its `text` stamp: say so in the pull
-request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).
+an edit to the record itself: say so in the pull request, and leave the stamp to a
+reviewer (WORKFLOW.md, section 6).
 
 If you fix a check, add a test that shows the fault would now be caught. A negative test,
 which plants the fault in the real files or a copy of them and requires the check to

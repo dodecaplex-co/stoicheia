@@ -21,9 +21,9 @@ def naming_i1(out: str) -> list[str]:
 
 
 def plant() -> None:
-    """An edited note under a current `text` stamp. I.1's record is given its `text` stamp
-    first if it has none yet (docs/WORKFLOW.md, section 6), so the test holds before and
-    after the records are migrated; then the first letter of its first note changes case,
+    """An edited note under a current `text` stamp. I.1's record is first given a current
+    `text` stamp, written over the one it carries, so the test holds on a branch that has
+    edited the record too; then the first letter of its first note changes case,
     and the check must say the record changed. With a comment added and its stamp moved,
     and its words as they were, the check must say what it says of the record unchanged:
     the same outcome, the same lines naming I.1 or its record, and no traceback."""
