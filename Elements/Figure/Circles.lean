@@ -103,8 +103,8 @@ point B and its side relation are retained in the statement, although the proof 
 not need them. -/
 theorem Tacit.triple_incidence3 {A B C D E : Point} {L M N : Line}
     (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
-    (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
-    (hBC : SameSide B C N) (hDE : SameSide D E M) (hCE : SameSide C E N) : SameSide C E L := by
+    (_hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
+    (_hBC : SameSide B C N) (hDE : SameSide D E M) (hCE : SameSide C E N) : SameSide C E L := by
   have hAC : A ≠ C := fun e => not_on_line_of_same_side hCD (e ▸ hAL)
   have hEM := not_on_line_of_same_side (same_side_symm hDE)
   have hEN := not_on_line_of_same_side (same_side_symm hCE)
