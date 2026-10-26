@@ -23,7 +23,7 @@ unused = ["F", "hF"]
 [[passage]]
 at = "let BF, FD be joined"
 kind = "given"
-note = "The angle BFD is named by its three points, so joining BF and FD needs no further construction in the Lean."
+note = "The angle at the centre is the circle's, standing on the circumference BCD (`angleAtCentre`), and III.20 makes it up from angles at the centre itself, so the joins BF, FD need no construction in the Lean."
 
 [[passage]]
 at = "therefore the angle BAD is equal to the angle BED"
@@ -36,11 +36,11 @@ case = "the segment BAED greater than a semicircle, with F on A's and E's side o
 
 [review]
 stage = "full"
-commit = "d2e249c39"
+commit = "5afb1d6a4"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c023135d2332c0dc"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex)"
-text = "sha256:24928072bfff51f0"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex)"
+text = "sha256:46661cf244fedf67"
 
 [review.items]
 statement = "pass"

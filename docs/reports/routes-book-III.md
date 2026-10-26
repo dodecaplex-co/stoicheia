@@ -1735,11 +1735,13 @@ statements written out. The checks are not kept in the repository: each moved pr
 the theorem it was checked against, and III.20 special keeps III.20's former statement.
 
 The staged step that an angle of a triangle is less than two right angles repeated a lemma
-private to I.13's file, `triangle_angle_lt_two_right`, proved there by I.13 and Common
-Notion 5. That lemma is now the one home of the fact: it loses the word `private`, with no
-other change, the staged step is not kept, `angleAtCentre.reflex_gt` and
+private to I.13's file, triangle_angle_lt_two_right, proved there by I.13 and Common
+Notion 5. That lemma is now the one home of the fact: it loses the word `private` and takes the
+name `Prop13.angle_lt_two_right`, by FORMALIZATION's rule for a proposition's helpers, its
+statement and proof unchanged; the staged step is not kept, `angleAtCentre.reflex_gt` and
 `angleAtCentre.size` cite it, and the docstring of `angleAtCentre.reflex_gt` gains a clause
-naming it. I.13's review record is read again for that one word. `Elements/` also has the
+naming it. I.13's review record is read again for the removal of `private` and the rename to
+`Prop13.angle_lt_two_right`. `Elements/` also has the
 fact in public, in Book I after I.29, as `Figures.OutlineBound.angle_lt_two_right`, which
 `exact?` found for the staged statement; it rests on Metric 5
 (`Tacit.angle_le_two_right`, no angle exceeds two right angles), and citing it would have
@@ -1834,9 +1836,16 @@ failing items, 42 are new against the last run of the #126 branch, a full run at
 which merges main into it after a245221b: III.20's, III.21's, III.24's, III.26's, III.27's
 and III.28's P2 and P11 to P16, until their records are read again and stamped.
 
-**Completion on the delivered revision.** The records of I.13, III.20, III.21, III.24,
-III.26 and III.27 were read in full against `d2e249c39` by an independent reader who wrote
-none of them, and stamped in `4aad4576`; III.28's record was read against `4aad4576` and
-stamped in `e684a64a`. All applicable verdicts pass. The stale stamps and acceptance
-failures in the snapshot above belong to the move's then-uncommitted edits, not to the
-delivered revision.
+**Completion on the delivered revision.** After that snapshot, I.13's lemma became the one
+home of the fact that an angle of a triangle is less than two right angles, in place of
+Book I's `Figures.OutlineBound.angle_lt_two_right`, as said above, so I.13's record was
+stale too; III.26 to III.30 then rest on the axioms they rested on before, and III.20
+alone gains one, `Tacit.exists_centre`. The gap catalogue's entry for III.27 was made true
+as well. An independent reader who wrote none of them read the records of III.20, III.21,
+III.26 and III.27 in full, and those of I.13, III.24 and III.28 for their one change, and
+stamped them at `d2e249c39` (III.28's at `4aad4576`, after one note was corrected). Review
+then found III.21's passage note on the joins, III.27's commentary on the right angles and
+III.28's Lean comments on the diameters untrue of the new Lean, and asked that I.13's lemma,
+now public, take a name by FORMALIZATION's rule; all four were corrected, and the records
+of I.13, III.20, III.21, III.27 and III.28 read and stamped again. The stale stamps and failures of the snapshot above belong
+to its revision, not to the delivered one.
