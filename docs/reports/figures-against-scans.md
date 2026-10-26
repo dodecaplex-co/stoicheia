@@ -6,7 +6,7 @@ Each of Euclid's figures, `figures/<book>/NN.svg`, was set beside Heath's printe
 
 *26 October 2026:* I.4's record now carries its line, as written ([#295](https://github.com/jackChallis/stoicheia/issues/295)); of Book I's lines, only I.27's is still carried in part.
 
-*26 October 2026, later:* I.27's record now carries the rest of its line, that the figure draws Euclid's impossible supposition and the case it draws, in words of its own, as the note at the head of the Book I table says; so each of Book I's lines is carried. The paragraph below on I.6 and I.26 misread both figures, as the notes after it say. Book III's moves into the edition have landed; its rows say how its records stood at `b9245195` until the Book III part of [#30](https://github.com/jackChallis/stoicheia/issues/30) reads them again.
+*26 October 2026, later:* I.27's record now carries the rest of its line, that the figure draws Euclid's impossible supposition and the case it draws, in words of its own, as the note at the head of the Book I table says; so each of Book I's lines is carried. The paragraph below on I.6 and I.26 misread both figures, as the notes after it say. Book III's moves into the edition have landed; its rows say how its records stood at the commit the opening paragraph names, until the Book III part of [#30](https://github.com/jackChallis/stoicheia/issues/30) reads them again.
 
 ## How each figure was read
 
