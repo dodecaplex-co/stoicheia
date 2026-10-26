@@ -30,7 +30,7 @@
 
   This entry approves the change to `tests/test_check_superposition_pins.py`, where the
   count of the audit file's `#check` pins becomes an exact comparison with the names brief
-  0009's restriction section lists, less the two definitions pinned by `#print`, and the
+  0009's restriction section lists, less the two definitions pinned by `#print`, plus the
   three theorems pinned outside it.
 
   No Lean file, statement, definition, lock, record, check script or `--` line changes.
