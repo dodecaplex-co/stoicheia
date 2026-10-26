@@ -9,13 +9,13 @@ kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The rule supplies a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
+note = "`Tacit.exists_centre`, the rule that every circle has a centre, supplies one, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
 
 [[passage]]
 at = "Let ABC be a circle and D a point within it"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid uses the circle's centre without constructing it; the Lean takes O from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. It also uses `Prop2.triangle` (III.2, for which Heath prints no reference here) to show that A, B and C are not on one straight line."
+note = "Euclid uses the circle's centre without constructing it; the Lean takes O from `Tacit.exists_centre`, the rule that every circle has a centre. It also uses `Prop2.triangle` (III.2, for which Heath prints no reference here) to show that A, B and C are not on one straight line."
 
 [[passage]]
 at = "For let AB, BC be joined and bisected at the points E, F"

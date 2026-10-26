@@ -5,13 +5,13 @@ fingerprint = "sha256:7af5806c7b62458d"
 
 [route]
 kind = "euclid"
-note = "In each case the proof takes the centre from the rule where Euclid takes it without a bracket for III.1; the perpendiculars and the argument with squares remain his. Where Heath cites I.47, `BookI.Prop47.sq` describes the squares by I.46 and identifies their areas through `Square.described` (I.4, I.28 and I.34); Heath prints no references to these four propositions there."
+note = "In each case the proof takes the centre from `exists_centre` where Euclid takes it with no reference from Heath to III.1; the perpendiculars and the argument with squares remain his. Where Heath cites I.47, `BookI.Prop47.sq` describes the squares by I.46 and identifies their areas through `Square.described` (I.4, I.28 and I.34); Heath prints no references to these four propositions there."
 
 [[passage]]
 at = "First let it be through the centre, and let F be the centre of the circle ABC"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "The rule supplying Euclid's centre F is `Tacit.exists_centre`, an assumption with no System E number."
+note = "The Lean takes F from `Tacit.exists_centre`, as the [introduction](index.md) explains."
 
 [[passage]]
 at = "let FB be joined"
@@ -22,25 +22,25 @@ note = "FB is named by its ends, the centre F just obtained and the given point 
 at = "And, since AC has been bisected at F"
 kind = "helper"
 helper = "Tacit.between_of_inside_chord"
-note = "Euclid takes F to bisect AC. The Lean places F between A and C by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, and obtains the equal halves from `Definition15`, Euclid's definition of a circle, also assumed as a rule."
+note = "Euclid takes F to bisect AC. Since the centre is within the circle (`Tacit.centre_inside`), `Tacit.between_of_inside_chord` puts F between A and C. `Definition15`, a rule we assume, makes the two radii equal."
 
 [[passage]]
 at = "But FC is equal to FB"
 kind = "helper"
 helper = "Definition15"
-note = "Euclid uses the equality of the radii FC and FB without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+note = "`Definition15` again gives the equal radii FC and FB."
 
 [[passage]]
 at = "And the squares on FB, BD are equal to the square on FD"
 kind = "helper"
 helper = "Touches.not_inside"
-note = "Euclid applies I.47 with F off the tangent DB, as the figure shows. The Lean proves F off DB by `Touches.not_inside` and the proved rule `Tacit.centre_inside` (System E, Generalities 3); the former uses `Tacit.line_meets_circle_of_inside` (System E, Intersection 3), proved in `Elements/Figure/Incidence.lean`."
+note = "For I.47, F must be off DB. The centre is within the circle (`Tacit.centre_inside`), and `Touches.not_inside` excludes every point within it from DB."
 
 [[passage]]
 at = "let the centre E be taken, and from E let EF be drawn perpendicular to AC"
 kind = "helper"
 helper = "BookI.Prop12"
-note = "Euclid draws EF perpendicular to AC without a reference in Heath. After taking E by the same assumed rule `Tacit.exists_centre`, the Lean uses the proved `Tacit.centre_unique` to show E is off AC in this branch and draws EF by I.12."
+note = "The Lean takes E from `Tacit.exists_centre` as above. `Tacit.centre_unique` puts it off AC in this branch, and I.12 draws EF, with no reference from Heath for that construction."
 
 [[passage]]
 at = "let EB, EC, ED be joined"
@@ -51,19 +51,19 @@ note = "EB, EC and ED are named by their ends, so the Lean needs no separate con
 at = "And, since a straight line EF through the centre"
 kind = "helper"
 helper = "foot_between"
-note = "Euclid reads F between A and C from the figure. The Lean uses `foot_between`: I.17 and I.19, for which Heath prints no reference here, make EF shorter than a radius, and `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), proved in `Elements/Figure/Incidence.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, put F within the circle and between the ends."
+note = "Euclid reads F between A and C from the figure. `foot_between` proves it: I.17 and I.19 make EF shorter than a radius, so F is within the circle and between the ends. Heath gives no reference to I.17 or I.19 here."
 
 [[passage]]
 at = "And EC is equal to EB"
 kind = "helper"
 helper = "Definition15"
-note = "Euclid uses the equality of the radii EC and EB without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+note = "`Definition15` gives the equal radii EC and EB, as it gave FC and FB above."
 
 [[passage]]
 at = "But the squares on EB, BD are equal to the square on ED"
 kind = "helper"
 helper = "Touches.not_inside"
-note = "Euclid applies I.47 with E off the tangent DB. The Lean proves this by `Touches.not_inside` and `Tacit.centre_inside`, using the same proved rules as for F in the diameter case."
+note = "For I.47, `Touches.not_inside` puts E off DB, since E is within the circle (`Tacit.centre_inside`), as for F in the diameter case."
 
 [figure]
 case = "DCA through the centre F (left), and DCA off the centre E with EF perpendicular to AC (right)"

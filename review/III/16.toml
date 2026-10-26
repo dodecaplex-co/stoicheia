@@ -11,7 +11,7 @@ note = "Euclid proves the angle clauses by reductio from the second part, since 
 
 [representation]
 tags = ["mixed-angles-local"]
-note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of the semicircle is the points within the circle on E's side of AB, and the remaining angle the points without it, between AE and the circumference. A mixed angle is greater than a rectilineal angle placed at A along its straight arm, on its side, when near A the rectilineal angle lies within it with whole small circles to spare, and less the other way about. The companions place every acute rectilineal angle so, and prove that the named points give the angles Euclid draws (`MixedAngle.WellFormed`); no addition, ratio or motion of mixed angles is claimed. The centre D is given, as Euclid's setting-out names it."
+note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of the semicircle is the points within the circle on E's side of AB, and the remaining angle the points without it, between AE and the circumference. A mixed angle is greater than a rectilineal angle placed at A along its straight arm, on its side, when near A the rectilineal angle lies within it with whole small circles to spare, and less the other way about. The companions place every acute rectilineal angle so, and prove that A, B and E make each a mixed angle as Euclid draws one (`MixedAngle.WellFormed`): A on the circle, the ray AB passing within it, E off AB, and AE touching it; no addition, ratio or motion of mixed angles is claimed. The centre D is given, as Euclid's setting-out names it."
 
 [[passage]]
 at = "Since DA is equal to DC"
@@ -95,7 +95,7 @@ note = "Proved as its own theorem, III.16 Por., from the first part of the state
 
 [figure]
 case = "FA off the centre, with G distinct from A and between D and H; the mixed angles are on E's side of AB"
-note = "G is drawn within the circle and H beyond G, on the circumference, as the proof finds them; Heath's figure draws the supposition, with H between D and G. CA shows the first reductio's supposed perpendicular to AB; the perpendicular in the drawn geometry is AE."
+note = "G is drawn within the circle, where the proof puts it, and H, where DG produced meets the circumference, beyond it; Heath's figure draws the supposition, with H between D and G. CA is drawn as the first reductio supposes it, within the circle; the true perpendicular to AB is AE."
 
 [review]
 stage = "full"

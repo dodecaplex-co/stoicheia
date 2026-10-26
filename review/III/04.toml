@@ -6,13 +6,13 @@ fingerprint = "sha256:fed861dbbfcf4968"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but for the centre F: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, a rule we assume, for the proof needs the centre alone."
+note = "Euclid's argument, but for the centre F: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, the rule that every circle has a centre, for the proof needs the centre alone."
 
 [[passage]]
 at = "let the centre of the circle ABCD be taken"
 kind = "different"
 helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and \"not through the centre\", said of every centre, puts F off AC and BD, so that FE can be joined."
+note = "Euclid takes the centre F by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes F from `Tacit.exists_centre`, the rule that every circle has a centre, and \"not through the centre\", said of every centre, puts F off AC and BD, so that FE can be joined."
 
 [[passage]]
 at = "therefore the angle FEA is equal to the angle FEB"
