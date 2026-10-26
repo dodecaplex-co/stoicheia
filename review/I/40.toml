@@ -1,13 +1,13 @@
 # review/I/40.toml
 [statement]
 scope = "full"
-note = "With its companions: `Prop40.general` takes equal bases anywhere on one straight line, `Prop40.join` gives AD parallel; `Prop40` keeps BC, CE end to end."
+note = "`Prop40.general` takes equal bases anywhere on one straight line, `Prop40.join` gives AD parallel to the bases' line; `Prop40` keeps BC, CE end to end."
 companions = ["I.40 general", "I.40 join", "I.40 special"]
 fingerprint = "sha256:52e7cf8ad9eff8f3"
 
 [route]
 kind = "euclid"
-note = "Heath prints the whole proposition in brackets, as an interpolation (vol. 1, p. 338). The proof follows I.39's reductio with I.38 for I.37: assuming AD is not parallel to BE makes F distinct from D, and either order on CD contradicts equal areas. Prop40.general follows the same reductio for equal bases anywhere on one straight line, including coincident vertices."
+note = "Heath prints the whole proposition in brackets, as an interpolation (vol. 1, p. 338). The proof follows I.39's reductio with I.38 for I.37: assuming AD is not parallel to BE makes F distinct from D, and either order on CD contradicts equal areas. `Prop40.general` follows the same reductio for equal bases anywhere on one straight line, including coincident vertices."
 
 [[passage]]
 at = "I say that they are also in the same parallels"
@@ -34,7 +34,7 @@ note = "The preceding contradiction rules out the supposed parallel through A me
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "grouped"
-note = "The same reductio excludes any proposed parallel through A meeting CD away from D, in either order. The local conclusion is used beneath the closing sentences."
+note = "The same reductio excludes any proposed parallel through A meeting CD away from D, in either order, so AD is parallel to BE; the closing sentences need no Lean of their own."
 
 [figure]
 case = "the bases BC and CE meeting at C, with F on CD between C and D, as in Heath's figure"
@@ -42,11 +42,11 @@ note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the p
 
 [review]
 stage = "full"
-commit = "1e482112"
+commit = "ece9c2d71"
 reviewer = "Claude Opus 5.5, independent reader"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex at a5c335ca; closing reductio rewritten at 2a80d18a; Prop40.general and Prop40.join proved at 3ab01e89, Prop40.special already proved at 17fddffc, and all three moved at 100528e2; the author families of these later proofs are unrecorded; current file read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I40-I43, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex at a5c335ca; closing reductio rewritten at 2a80d18a; Prop40.general and Prop40.join proved at 3ab01e89, Prop40.special already proved at 17fddffc, and all three moved at 100528e2; the author families of these later proofs are unrecorded; current file read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I40-I43, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
 lean = "sha256:42c6b5725278f449"
-text = "sha256:07c4c72c4caed049"
+text = "sha256:58ce73d29cf681ec"
 
 [review.items]
 statement = "pass"

@@ -10,7 +10,7 @@ note = "Euclid draws every parallel in one figure. The companions draw one at a 
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The straight line A is named by its two ends, A₁ and A₂, and the main theorem asks them to differ. The companions do not: A₁A₂ may be nothing, and then every rectangle is nothing, so they claim a little more than Euclid's two straight lines. `Prop1.general` takes the straight line from B cut at points given in order along it (`InOrder`), and adds the rectangles on its segments as a sum over the list; with no point of section the one segment is the whole, and with no point at all the straight line and each rectangle are nothing."
+note = "The straight line A is named by its two ends, A₁ and A₂, and the main theorem asks them to differ. The companions do not: A₁A₂ may be nothing, and then every rectangle is nothing, so they claim a little more than Euclid's two straight lines. `Prop1.general` takes the straight line from B cut at points given in order along it (`InOrder`), and adds the rectangles on its segments as a sum over the list; with no point of section the one segment is the whole, and with no point at all the straight line is nothing, and so is each side of the equation."
 
 [[passage]]
 at = "let BG be made equal to A"
@@ -59,11 +59,11 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "09b32b47"
+commit = "ece9c2d71"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dca5badf15c0dfbd"
-run = "card 220, cross-family sign-off: original Prop1 proof by OpenAI Codex (8ad3abd5, which says so). Prop1.two and Prop1.general were proved at 4f1e5018, whose message calls the work best of two and has a Claude Opus 5.5 co-author trailer but does not identify either individual writer. The closing check was introduced at 17fddffc, with its explanatory wording revised at f4b8bfbb; those messages name no writer beyond the Claude Opus 5.5 co-author trailers they carry. The original proof, companions and closing check were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 554dfb0f, with the same Lean hash; ship XS, reader XS-r-II01-II02, independent re-read at 554dfb0f; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c4)"
-text = "sha256:e2296fdfb36e9baf"
+run = "card 220, cross-family sign-off: original Prop1 proof by OpenAI Codex (8ad3abd5, which says so). Prop1.two and Prop1.general were proved at 4f1e5018, whose message calls the work best of two and has a Claude Opus 5.5 co-author trailer but does not identify either individual writer. The closing check was introduced at 17fddffc, with its explanatory wording revised at f4b8bfbb; those messages name no writer beyond the Claude Opus 5.5 co-author trailers they carry. The original proof, companions and closing check were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 554dfb0f, with the same Lean hash; ship XS, reader XS-r-II01-II02, independent re-read at 554dfb0f; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c4); read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
+text = "sha256:c8360efd8089d6d5"
 
 [review.items]
 statement = "pass"
