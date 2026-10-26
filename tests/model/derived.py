@@ -3,7 +3,8 @@
 These predicates keep the guards and conclusions of their search.py checks: the eight retired
 first, then the 31 prepared for retirement while all 79 axioms remain; and, kept beside
 Circle 2, Circle 3 (`outside_of_between`), prepared in the same way for its retirement after
-III.2.
+III.2; and Circle 1 (`between_of_inside_chord`), prepared in the same way for its retirement
+after III.2 (#477) while it is still an axiom.
 The exhaustive and structured harnesses report them with a derived. prefix, even
 while the corresponding declarations are still axioms. Their configurations and
 results therefore survive removal of those laws from search.py and hyperbolic.py.
@@ -55,6 +56,14 @@ def outside_of_between(c):
     if not (in_or_on(A, al) and not inside(Cc, al) and between(A, Cc, B)):
         return None
     return (not inside(B, al)) and (not on_circle(B, al))
+
+
+def between_of_inside_chord(c):
+    A, B, Cc, L, al = (c[k] for k in ('A', 'B', 'C', 'L', 'al'))
+    if not (on_line(A, L) and on_line(B, L) and on_line(Cc, L) and inside(A, al) and on_circle(B, al)
+            and on_circle(Cc, al) and B != Cc):
+        return None
+    return between(B, A, Cc)
 
 
 def exists_point_outside_circle(c):
@@ -390,6 +399,7 @@ PROPERTIES = {
     'derived.centre_unique': centre_unique,
     'derived.inside_of_between': inside_of_between,
     'derived.outside_of_between': outside_of_between,
+    'derived.between_of_inside_chord': between_of_inside_chord,
     'derived.exists_point_outside_circle': exists_point_outside_circle,
     'derived.line_meets_circle_of_opposite_sides': line_meets_circle_of_opposite_sides,
     'derived.triple_incidence3': triple_incidence3,

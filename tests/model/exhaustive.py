@@ -314,7 +314,7 @@ def gen_chord():
                     yield dict(A=A, B=B, C=C, L=L, al=c)
 
 
-run('between_of_inside_chord', gen_chord())
+run('derived.between_of_inside_chord', gen_chord())
 
 
 def gen_convex():
