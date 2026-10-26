@@ -48,7 +48,10 @@
   ([#350](https://github.com/jackChallis/stoicheia/issues/350)). The control's anchor is now
   a sentence present both at main and at the evidence commit of the audit of Books I and
   II, and the control still reverses a claim the commentary makes; the refusal now says how
-  many times the anchor occurs.
+  many times the anchor occurs. I.39's commentary control met the same fault when a later
+  read-through (34f15131a, #34) removed the sentence it changed, "EBC is a part of DBC and
+  the less"; it now reverses "equal triangles on opposite sides of BC need not make AD
+  parallel to BC", likewise present at both commits.
 
   **The calibration set.** `--calibration` writes the set that
   [the bar's entry](2026-10-25-jev-calibration-bar.md) specifies, with
@@ -80,7 +83,7 @@
   four conditions hold, the fourth judged by `jev.py score --bar 0.8` itself.
 
   This entry approves, in `scripts/audit/jev_questions.py`, the changes above: the three
-  books, the bundles and their guards, the Lean it reads, I.40's control, the escape, and
+  books, the bundles and their guards, the Lean it reads, I.39's and I.40's controls, the escape, and
   the modes `--calibration`, `--restore-figures`, `--tally` and `--manifest`.
 
   This entry approves, in `tests/test_jev_questions.py`, the cases for those changes. The
