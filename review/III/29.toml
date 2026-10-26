@@ -20,23 +20,23 @@ note = "Euclid's figure puts A and D on the circles beyond BC and EF from G and 
 [[passage]]
 at = "For let the centres of the circles be taken"
 kind = "different"
-note = "When K lies on BC, BGC is a semicircle and `Prop29.size` makes EHF one too. BC and EF are diameters, each twice the equal radius, so the Lean adds the equal radii instead of applying III.27 and I.4; `EqualCircles` supplies K and L, `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1) place each between the diameter's ends, and `Tacit.len_add_of_between` (System E, Diagram-segment 1) adds the radii, the latter two rules assumed; `Circumference.semicircle` and the size comparisons in `Prop29.size` use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here."
+note = "The given equal circles supply K and L, as the [introduction](index.md) explains. When K lies on BC, `Circumference.semicircle` makes BGC a semicircle and `Prop29.size` makes EHF one too. BC and EF are diameters, each twice the equal radius, so the Lean adds the radii by `Tacit.len_add_of_between` instead of applying III.27 and I.4."
 
 [[passage]]
 at = "Now, since the circumference BGC is equal to the circumference EHF"
 kind = "different"
-note = "`Prop29.size` puts both circumferences in the same size case. For circumferences greater than semicircles, the Lean subtracts them from the whole circles and applies III.27 to the equal remaining circumferences BAC and EDF; the size comparisons use I.5, I.32, III.2, III.20, III.21 and III.22 as above, while `Prop2.sameSide` (III.2) takes the points at the circumferences and `Circumference.whole` (III.2, III.21 and III.22) supplies the equal wholes for Common Notion 3, none referenced by Heath here."
+note = "`Prop29.size` puts both circumferences in the same size case. For circumferences greater than semicircles, `Circumference.whole` gives equal wholes, so Common Notion 3 leaves equal remainders BAC and EDF. `Prop2.sameSide` supplies the points at the circumferences needed to apply III.27 to those remainders."
 
 [figure]
 case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC and EF from G and H"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
+commit = "7b71d1782"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c6ea841e06026dc5"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897"
-text = "sha256:7b66b5a45ca3dd80"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
+text = "sha256:1f804b9f70dfcc9a"
 
 [review.items]
 statement = "pass"

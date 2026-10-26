@@ -29,7 +29,7 @@ note = "Euclid reads off his figure that the angle ACD is part of BCD; the Lean 
 at = "But DA is equal to AC"
 kind = "helper"
 helper = "Tacit.len_add_of_between"
-note = "Euclid replaces DA by AC in the whole DB, which consists of BA and AD. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1), then substitutes the equal length AC."
+note = "Euclid replaces DA by AC in the whole DB, which consists of BA and AD. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), then substitutes the equal length AC."
 
 [[passage]]
 at = "Similarly we can prove that AB, BC are also greater than CA"
@@ -37,15 +37,15 @@ kind = "grouped"
 note = "Euclid leaves the other two pairs to the same argument. The Lean proves once, for any triangle ABC, that BA and AC together are greater than BC, then applies this step to BAC and CBA as well."
 
 [figure]
-case = "BA and AC together greater than BC, with D on BA produced beyond A in Euclid's figure"
+case = "BA and AC together greater than BC, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "86e935fe"
+commit = "ece9c2d71"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:143bf867e071afbd"
-run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4"
-text = "sha256:9f906041f4cf17b6"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
+text = "sha256:56f1d3359dda046b"
 
 [review.items]
 statement = "pass"

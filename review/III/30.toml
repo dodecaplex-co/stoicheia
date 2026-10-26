@@ -6,11 +6,11 @@ fingerprint = "sha256:d3f25afc0f876290"
 
 [route]
 kind = "euclid"
-note = "`Prop30` follows Euclid. The companion `Prop30.halves` is handed D with III.30's conclusions alone, which keep inside the proof the equal straight lines AD, DB that I.4 gives; so it recovers them, a step Euclid does not take: the equal measures are twice the angles ABD, DAB, which are therefore equal, and DA is equal to DB [I. 6]. The halves are then III.28's less circumferences, each less than a semicircle [I. 17], and so congruent; they add to the given circumference (`Circumference.add`), and divide it point by point, ends included, by III.2."
+note = "`Prop30` follows Euclid. The companion `Prop30.halves` is handed D with III.30's conclusions alone, which keep inside the proof the equal straight lines AD, DB that I.4 gives; so it recovers them, a step Euclid does not take: the equal measures are twice the angles ABD, DAB, which are therefore equal, and DA is equal to DB (I.6). The halves are then III.28's less circumferences, each less than a semicircle (I.17), and so congruent; they add to the given circumference (`Circumference.add`), and divide it point by point, ends included, by III.2."
 
 [representation]
 tags = ["segment-with-circle", "angle-measure"]
-note = "The given circumference is put as a given segment is: its circle, the straight line AB and a point P on its side. Its halves are equal measures in one circle, by III.28. The companion takes them as arcs of that circle, named by points Q and R on their sides."
+note = "The given circumference is put as a given segment is: its circle, the straight line AB and a point P on its side. Its halves are equal measures in one circle, by III.28. The companion takes each half as a circumference of that circle (`Arc`), named by points Q and R on their sides."
 
 [[passage]]
 at = "Let AB be joined and bisected at C"
@@ -22,7 +22,7 @@ note = "Euclid bisects AB without a printed reference here. The Lean obtains C a
 at = "from the point C let CD be drawn at right angles"
 kind = "helper"
 helper = "BookI.Prop11"
-note = "Euclid draws CD perpendicular to AB and reads its meeting with the given circumference from the figure; the Lean erects the perpendicular by I.11 and puts C within the circle by III.2, neither referenced by Heath here. It finds D beyond C on the required side by `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, and `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`."
+note = "Euclid draws CD perpendicular to AB and reads its meeting with the given circumference from the figure. The Lean draws the perpendicular by I.11 and puts C within the circle by III.2, neither referenced by Heath here. `Tacit.line_circle_beyond`, a rule we assume, finds D beyond C, and `Tacit.pasch3` puts it on the required side."
 
 [[passage]]
 at = "and each of the circumferences AD, DB is less than a semicircle"
@@ -34,18 +34,18 @@ note = "Euclid takes both circumferences to be less than semicircles; the Lean u
 at = "Therefore the given circumference has been bisected at the point D"
 kind = "carried"
 helper = "Prop30.halves"
-note = "Euclid concludes that D bisects the circumference; `Prop30.halves` supplies congruence, addition and division point by point, using I.6, I.17, I.32, III.2, III.21, III.22 and III.28, none referenced by Heath at this sentence, with I.32 entering through `Circumference.add`. To exclude a point within triangle ADB or in an angle vertical to one of its angles, `Prop30.not_within` and `Prop30.not_vertical` use `Tacit.triple_incidence1` (System E, Triple incidence 1), proved in `Elements/Figure/RuleBase.lean`, `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1), `Tacit.pasch4` (System E, Pasch 4), also proved there, `Tacit.between_cases` (System E, Between 6), the proved rule `Tacit.pasch3` (System E, Pasch 3) and `Tacit.pasch2` (System E, Pasch 2), Intersection 1, Between 6 and Pasch 2 being assumed, with III.2 putting the crossing points within the circle; `Prop30.on_chord` accounts for the ends by III.2."
+note = "`Prop30.halves` supplies congruence by III.28 and addition by `Circumference.add`. For the division point by point, `Prop30.not_within` and `Prop30.not_vertical` exclude a point of the circle within triangle ADB or in an angle vertical to one of its angles: III.2 would put a point of the circumference within the circle. `Prop30.on_chord` accounts for the ends, also by III.2. Thus the halves cover the given circumference and share only D, ends included."
 
 [figure]
 case = "the given circumference ADB less than a semicircle"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
+commit = "7b71d1782"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:284aea10fd6a6062"
-run = "brief 0005 stage 5, ship R3 (#29); Prop30.halves and its helpers, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r5, at e00da4b4"
-text = "sha256:bc96573f34ae475d"
+run = "brief 0005 stage 5, ship R3 (#29); Prop30.halves and its helpers, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r5, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
+text = "sha256:c1353da66d3bf844"
 
 [review.items]
 statement = "pass"

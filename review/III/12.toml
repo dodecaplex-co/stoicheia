@@ -20,7 +20,7 @@ note = "Euclid takes F and G as the centres and treats them as different points,
 [[passage]]
 at = "For suppose it does not, but, if possible, let it pass as FCDG"
 kind = "case"
-note = "Euclid's figure has A off FG; the Lean uses `Tacit.between_cases` (System E, Between 6) to split the three orders of F, A and G on FG and excludes A on FG produced either way, the case Heath says Euclid would have left to the reader (vol. 2, p. 29), because `InsideCircle.of_between_centre` would put one centre within the other circle. Each centre is within its own circle by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Prop12.centre_outside` proves it outside the other, so `Tacit.line_circle_between` (System E, Intersections 4) supplies C and D between F and G; the other two named tacit rules are assumptions."
+note = "Euclid's figure has A off FG; the Lean uses `Tacit.between_cases` (System E, Between 6) to split the three orders of F, A and G on FG and excludes A on FG produced either way, the case Heath says Euclid would have left to the reader (vol. 2, p. 29), because `InsideCircle.of_between_centre` would put one centre within the other circle. Each centre is within its own circle by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Prop12.centre_outside` proves it outside the other, so `Tacit.line_circle_between` (System E, Intersections 4) supplies C and D between F and G. `Tacit.between_cases` and `Tacit.line_circle_between` are rules we assume."
 
 [[passage]]
 at = "so that the whole FG is greater than FA, AG"
@@ -39,11 +39,11 @@ note = "Like Heath's, this figure draws the impossible supposition: FG passing a
 
 [review]
 stage = "full"
-commit = "e00da4b4"
+commit = "07416606e"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:8420eb7838a02329"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0"
-text = "sha256:8a2d4c58bcb695c7"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x)"
+text = "sha256:3fcc9f86867492e8"
 
 [review.items]
 statement = "pass"

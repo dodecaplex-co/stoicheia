@@ -9,19 +9,19 @@ note = "Euclid reads C off his figure. The Lean finds it: by III.16 the straight
 
 [representation]
 tags = ["segment-with-circle"]
-note = "The segment cut off from the given circle is named by its points B, A and C. The proof obtains a centre from the rule to draw EF touching the circle by III.16's porism."
+note = "The segment cut off from the given circle is named by its points B, A and C. To draw EF touching the circle by III.16's porism, the proof takes a centre from `exists_centre`."
 
 [[passage]]
 at = "Let EF be drawn touching ABC at the point B"
 kind = "helper"
 helper = "Prop16.porism"
-note = "Euclid draws EF touching at B; the Lean uses I.11 for the perpendicular and III.16's porism for contact, neither with a printed reference from Heath here. The centre rule mentioned above, applied beneath the setting-out, is `Tacit.exists_centre`, which we assume from Definitions I.15 and I.16 with no System E counterpart; `Tacit.exists_point_on_circle` (System E, Points 7), proved in `Elements/Figure/CirclePoints.lean`, supplies B."
+note = "The Lean takes the centre from `Tacit.exists_centre`, as the [introduction](index.md) explains, and B from `Tacit.exists_point_on_circle`. I.11 draws the perpendicular at B and III.16's porism makes EF touch, neither with a reference from Heath here."
 
 [[passage]]
 at = "and on the straight line FB"
 kind = "helper"
 helper = "Prop16"
-note = "Heath prints I.23 for copying the angle, but no reference to III.16 for the interior point used here. The Lean takes the other end of the diameter through B and then C by `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, with the centre within by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`."
+note = "Heath gives I.23 for copying the angle, but no reference to III.16, which supplies a point of BC within the circle. `Tacit.line_circle_beyond`, a rule we assume, finds the other end of the diameter needed for III.16, then C beyond the interior point."
 
 [[passage]]
 at = "the angle FBC is equal to the angle constructed in the alternate segment BAC"
@@ -33,18 +33,18 @@ note = "Euclid takes an angle in the alternate segment BAC. The Lean first choos
 at = "But the angle FBC is equal to the angle at D"
 kind = "helper"
 helper = "OnRay.of_sameSideOf"
-note = "Euclid identifies BC with the ray on which he copied the angle; beneath the copying sentence the Lean puts C on the centre's side of EF, since otherwise `OppositeSides.exists_between` would give a crossing of OC with EF within the circle by `InsideCircle.of_between_centre`, contrary to `Touches.not_inside`. The crossing uses `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1), a rule we assume, and `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`; `OnRay.of_sameSideOf` then identifies the ray, so `angle_onRay_right` gives the copied angle."
+note = "The Lean puts C on the centre's side of EF: otherwise `OppositeSides.exists_between` would give a crossing of OC with EF within the circle by `InsideCircle.of_between_centre`, contrary to `Touches.not_inside`. `OnRay.of_sameSideOf` then puts C on the ray where the angle was copied, so `angle_onRay_right` gives the copied angle."
 
 [figure]
 case = "an acute given angle, with BAC the greater segment"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
+commit = "7b71d1782"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:be9733ec86b02a9d"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4"
-text = "sha256:ac8c012c0594aa2f"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
+text = "sha256:542a52413e5a68b9"
 
 [review.items]
 statement = "pass"
