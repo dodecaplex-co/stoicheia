@@ -10,11 +10,12 @@
   The tag. `[tag.centre-given]` said that a statement gave the circle its centre, named or
   as `∃ G, Centre G α`, as a hypothesis. Where the hypothesis asked only that some centre
   exist, the centre rule, once locked, gives it for every circle, and those statements now
-  take a centre inside their proofs (step 6). A statement that names its centre keeps that
-  hypothesis, since the existence of some centre does not identify the point named, as
-  the decision says. Since step 6 no record carries the tag: before this change
-  `grep -rl centre-given review` found only `review/terms.toml`, and after it finds
-  nothing. No script or test names it. Brief 0008's step 7 takes it out of
+  take a centre inside their proofs (step 6). By brief 0008's rule for each statement, a
+  named centre that appears elsewhere in the statement is kept, since the existence of
+  some centre does not identify it, and one that appears nowhere else is dropped, as an
+  existence hypothesis in substance. Since step 6 no record carries the tag: before this
+  change `grep -rl centre-given review` found only `review/terms.toml`, and after it
+  finds nothing. No script or test names it. Brief 0008's step 7 takes it out of
   `review/terms.toml` in a pull request of its own, since that file is protected; this is
   that pull request. The record schema now refuses the tag, as it refuses any tag that
   `review/terms.toml` does not define.
