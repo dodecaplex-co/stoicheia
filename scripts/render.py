@@ -2075,17 +2075,24 @@ def index(book, count, titles, facts, records):
 FRONT_LEAN_I = {
     "Definitions": {
         1: "`Point`",
-        2: "none: `Line` is the straight line of Def. I.4, and no Lean word is a line that may "
-           "curve",
+        2: "none: `Line` is the straight line of Def. I.4, and no Lean word is a line in "
+           "general, curved or straight; the curved lines it has are circles and their arcs "
+           "(`Arc`, Def. III.6)",
         3: "none: `Line` is the straight line of Def. I.4, whole and without ends; a finite "
            "straight line AB is given by its ends, the points A and B",
         4: "`Line`", 5: "none", 6: "none", 7: "none",
-        8: "`∠ A B C`", 9: "`∠ A B C`",
+        8: "`∠ A B C`, the rectilineal angle of Def. I.9, and `MixedAngle`, an angle contained "
+           "by a straight line and a circumference (Def. III.7; III.16, III.31); no Lean word "
+           "is every plane angle",
+        9: "`∠ A B C`",
         10: "`IsRightAngle`, with Postulate 4", 11: "`IsObtuse`", 12: "`IsAcute`",
-        13: "none",
-        14: "`Figures.Outline`, a figure contained by straight lines, with one boundary or more "
-            "(I.45, II.14); of figures with a curved boundary, `Circle`, and a segment by its "
-            "arc (`Arc`, Def. III.6); no Lean word is every figure",
+        13: "`Figures.Outline.Boundary`, the boundary of a figure given by its outline, its "
+            "contours outer and inner, in the proofs for I.45 and II.14; no Lean word is the "
+            "boundary of anything",
+        14: "`Figures.Outline`, a figure contained by straight lines, with one boundary or "
+            "more, and `Apart`, one given with triangles that lie apart (I.45, II.14); of "
+            "figures with a curved boundary, `Circle`, and a segment by its arc (`Arc`, Def. "
+            "III.6); no Lean word is every figure",
         15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`",
         17: "a straight line AD with the centre E between its ends on the circle: "
             "`Between A E D`, with `Centre E ABCD`, `OnCircle A ABCD`, `OnCircle D ABCD` (III.15); "
@@ -2093,14 +2100,16 @@ FRONT_LEAN_I = {
             "angles (`BookIII.Circumference.semicircle`). Book I uses the word of a "
             "parallelogram (I.34): its diameter AC cuts the parallelogram ABCD into two "
             "triangles, whose areas together are `quadArea A B C D`",
-        18: "a segment (Def. III.6) on a diameter: in III.31 the base BC passes through E "
-            "(`Between B E C`), the circle's centre, which Euclid calls the semicircle's too; "
-            "the semicircle's circumference is two right angles "
+        18: "a segment (Def. III.6) on a diameter, `Arc.Semicircle`: its centre on the "
+            "straight line of its base (\"III.25 kind\"); in III.31 the base BC passes "
+            "through E (`Between B E C`), the circle's centre, which Euclid calls the "
+            "semicircle's too; the semicircle's circumference is two right angles "
             "(`BookIII.Circumference.semicircle`)",
-        19: "`Figures.Outline`, a figure given by its straight sides, and `Rectilineal` and `Apart`, "
-            "one given with the triangles it is cut into (I.45, II.14); trilateral, "
-            "`Triangle`; quadrilateral and multilateral, no word of their own "
-            "(`quadArea A B C D` is the area of a four-sided figure, not the figure)",
+        19: "`Figures.Outline`, a figure given by its straight sides, and `Rectilineal` and "
+            "`Apart`, one given with the triangles it is cut into (I.45, II.14); trilateral, "
+            "`Triangle`; quadrilateral and multilateral, no word of their own: each is a "
+            "`Figures.Outline`, and `quadArea A B C D` measures a four-sided figure by its "
+            "two triangles",
         20: "`Equilateral`; `Isosceles` is defined, but no statement or proof uses it: I.5 and "
             "I.6 say that the two sides are equal; scalene, none",
         21: "`RightAngledTriangle` is defined, but no statement or proof uses it: I.47 says "
@@ -2109,7 +2118,8 @@ FRONT_LEAN_I = {
             "of the two angles at the ends of the side on which the perpendicular falls",
         22: "`Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus, "
             "none; rhomboid, `Parallelogram` (I.34), which counts the others too; a trapezium, "
-            "none (I.35 measures one by `quadArea`, the area of a four-sided figure)",
+            "by its area alone (I.35): `quadArea A B C D`, the two triangles its diameter AC "
+            "cuts it into",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
