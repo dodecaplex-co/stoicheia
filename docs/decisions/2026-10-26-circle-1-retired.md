@@ -156,3 +156,25 @@
   This entry approves the change to `Audit/screen.py`, whose `CIRCLE` list drops Circle 1,
   leaving nine names, so that the screen does not stop on a name that is no longer an axiom,
   and whose account of its runs names this retirement and the counts of the lock it leaves.
+
+  The numerical model's results were written again on this harness:
+  `python3 -I tests/model/run.py --full --write` ran at commit `5ef38f3f2a55`, this train's
+  head with the law removed, where every check passed: no counterexample in the plane, 15
+  mutations of 15 caught, and in the hyperbolic plane only Postulate 5 failing, as it must.
+  Configurations meeting an axiom's hypotheses in the plane come to 4,063,299, where they
+  came to 4,063,054 at P2's run; the three random searches draw again without the law and
+  give 408,083, 408,046 and 407,697 where they gave 407,895, 408,049 and 407,637. The derived
+  properties, Circle 1 among them since P1, keep their 9,895,990. The run also rewrote the
+  counts between MODEL.md's own markers.
+
+  Each result file that run rewrites is approved in a sentence of its own. The angle and
+  area check's output, `tests/model/results/angle_check.txt`, is approved. The full grid
+  enumeration's output, `tests/model/results/exhaustive.txt`, is approved. The second exact
+  grid check's output, `tests/model/results/grid_check.txt`, is approved. The hyperbolic
+  run's output, `tests/model/results/hyperbolic.txt`, is approved. The weakened statements'
+  output, `tests/model/results/mutations.txt`, is approved. The random search's first seed,
+  `tests/model/results/search-seed1.txt`, is approved. Its second seed,
+  `tests/model/results/search-seed2.txt`, is approved. Its third seed,
+  `tests/model/results/search-seed3.txt`, is approved. The structured search's output,
+  `tests/model/results/structured.txt`, is approved. The table drawn from them all,
+  `tests/model/results/summary.txt`, is approved.

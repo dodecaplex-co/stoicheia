@@ -108,9 +108,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `c6515f8dacfc`, 2026-10-26, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `5ef38f3f2a55`, 2026-10-26, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,063,054** configurations met an axiom's hypotheses (1,223,581 in the search, 2,243,944 exhaustive, 595,529 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 511,547 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,063,299** configurations met an axiom's hypotheses (1,223,826 in the search, 2,243,944 exhaustive, 595,529 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 503,267 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -142,27 +142,26 @@ In the plane: **4,063,054** configurations met an axiom's hypotheses (1,223,581 
 | `Tacit.not_on_line_of_same_side` | 315 | 45,192 | · | 4,389 |
 | `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
 | `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
-| `Tacit.between_of_inside_chord` | 239 | · | · | 8,315 |
-| `Tacit.lines_meet_of_opposite_sides` | 14 | 26,248 | 39,362 | 4,460 |
-| `Tacit.circles_meet` | 1,313 | 10,668 | 1,587 | 2,555 |
+| `Tacit.lines_meet_of_opposite_sides` | 16 | 26,248 | 39,362 | 4,505 |
+| `Tacit.circles_meet` | 1,377 | 10,668 | 1,587 | 2,528 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
 | `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
-| `Tacit.radius_ne_zero` | 6,375 | · | · | 11,393 |
-| `Tacit.angle_symm` | 15,398 | 14,400 | · | 6,991 |
+| `Tacit.radius_ne_zero` | 6,413 | · | · | 11,369 |
+| `Tacit.angle_symm` | 15,578 | 14,400 | · | 6,967 |
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_congruent` | 54,707 | 375,479 | 94,050 | 10,822 |
-| `Tacit.len_add_of_between` | 4,768 | 304 | · | 9,863 |
-| `Tacit.circle_eq` | 822 | 2,448 | 27,089 | 4,354 |
-| `Tacit.angle_eq_zero_of_same_ray` | 15,210 | 1,208 | · | 2,725 |
-| `Tacit.same_ray_of_angle_eq_zero` | 15,092 | 1,208 | · | 2,729 |
-| `Tacit.angle_add_of_inside` | 3 | 77,960 | 24,987 | 3,756 |
-| `Tacit.angle_eq_of_same_rays` | 6,916 | 60,032 | 8,676 | 4,197 |
-| `Tacit.area_eq_zero_of_on_line` | 24,858 | 2,112 | · | 4,713 |
-| `Tacit.on_line_of_area_eq_zero` | 24,602 | 2,112 | · | 4,658 |
-| `Tacit.area_add_of_between` | 19 | 6,176 | 55,499 | 8,450 |
-| `Tacit.superposition` | 100 | 363,888 | 71,970 | 8,755 |
+| `Tacit.area_congruent` | 54,696 | 375,479 | 94,050 | 10,711 |
+| `Tacit.len_add_of_between` | 4,707 | 304 | · | 9,920 |
+| `Tacit.circle_eq` | 791 | 2,448 | 27,089 | 4,410 |
+| `Tacit.angle_eq_zero_of_same_ray` | 14,978 | 1,208 | · | 2,790 |
+| `Tacit.same_ray_of_angle_eq_zero` | 15,256 | 1,208 | · | 2,734 |
+| `Tacit.angle_add_of_inside` | 4 | 77,960 | 24,987 | 3,814 |
+| `Tacit.angle_eq_of_same_rays` | 6,985 | 60,032 | 8,676 | 4,145 |
+| `Tacit.area_eq_zero_of_on_line` | 24,842 | 2,112 | · | 4,672 |
+| `Tacit.on_line_of_area_eq_zero` | 24,904 | 2,112 | · | 4,702 |
+| `Tacit.area_add_of_between` | 25 | 6,176 | 55,499 | 8,532 |
+| `Tacit.superposition` | 109 | 363,888 | 71,970 | 8,657 |
 
 Separately, **9,895,990** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
