@@ -320,6 +320,9 @@ RULES_DELIMITER = "|---|---|---|"
 RULE_CELL = r"(?:\\.|[^|\\])*"
 RULE_ROW = re.compile(rf"\|\s*`({IDENTIFIER.pattern})`\s*\|{RULE_CELL}\|{RULE_CELL}\|")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+LIST_MUTATORS = frozenset({"__delattr__", "__delitem__", "__iadd__", "__imul__", "__init__",
+                           "__setattr__", "__setitem__", "append", "clear", "extend", "insert",
+                           "pop", "remove", "reverse", "sort"})
 
 
 def source(root, path, read=Path.read_bytes):
@@ -342,9 +345,10 @@ def python_module(root, path):
         raise ValueError(f"{path}: cannot parse the file") from error
 
 
-def refuse_other_bindings(tree, path, name, kept, start, outside):
+def refuse_other_bindings(tree, path, name, kept, start, outside, mutating_methods=None):
     """Refuse, with its line, each node of `tree` but those `kept` that binds `name`, or
-    stores or calls through it; a star import is refused after tree.body[start], the
+    stores through it; direct attributes are all refused unless `mutating_methods` limits
+    refusal to the methods it names. A star import is refused after tree.body[start], the
     statement that binds the name, since one before it is overridden by that binding."""
     alias_names = {}
     for node in ast.walk(tree):
@@ -368,7 +372,10 @@ def refuse_other_bindings(tree, path, name, kept, start, outside):
             elif isinstance(node, ast.Name):
                 changed = node.id == name and not isinstance(node.ctx, ast.Load)
             elif isinstance(through, ast.Name) and through.id == name:
-                changed = isinstance(node, ast.Attribute) or not isinstance(node.ctx, ast.Load)
+                changed = (not isinstance(node.ctx, ast.Load)
+                           or (isinstance(node, ast.Attribute)
+                               and (mutating_methods is None
+                                    or node.attr in mutating_methods)))
             elif isinstance(node, ast.keyword):
                 changed = False
             else:
@@ -395,12 +402,13 @@ def screen_circle_rules(root):
         raise ValueError(f"{SCREEN}: CIRCLE is not a string literal split with no arguments")
     # That assignment must be the file's only binding of the name: another, at any depth
     # (augmented, annotated, in a loop, a def, a parameter, an import, a
-    # `global`, a pattern's capture or **rest, or a star import after it), an attribute of
-    # it, as CIRCLE.append, or a store or deletion through it is refused, rather than
+    # `global`, a pattern's capture or **rest, or a star import after it), a mutating method
+    # of it, as CIRCLE.append, or a store or deletion through it is refused, rather than
     # counted as if the literal were the list the screen uses. What reaches the list by
     # another name (globals(), an alias, exec) is left to the review of Audit/, a protected
     # path.
-    refuse_other_bindings(tree, SCREEN, "CIRCLE", {target}, assigned[0], "its one assignment")
+    refuse_other_bindings(tree, SCREEN, "CIRCLE", {target}, assigned[0], "its one assignment",
+                          LIST_MUTATORS)
     names = value.func.value.value.split()
     if len(names) != len(set(names)):
         raise ValueError(f"{SCREEN}: CIRCLE names a rule twice")
@@ -523,10 +531,15 @@ def rules_now_proved(root):
         raise ValueError(f"{FORMALIZATION}: expected one heading {RULES_PROVED!r}")
     names, table = {}, None
     for number, line in enumerate(lines[starts[0] + 1:], starts[0] + 2):
+        where = f"{FORMALIZATION}:{number}"
+        if table == "header":
+            if line.rstrip() != RULES_DELIMITER:
+                raise ValueError(f"{where}: expected the delimiter row {RULES_DELIMITER!r}")
+            table = "rows"
+            continue
         heading = HEADING_LINE.match(line)
         if heading and len(heading.group(1)) <= 3:
             break
-        where = f"{FORMALIZATION}:{number}"
         if FENCE.match(line) or "<!--" in without_markers(line) or UNDERLINE.fullmatch(line):
             raise ValueError(f"{where}: fenced code, a comment or an underline, which may hide "
                              "or end a table, in the section of rules now proved")
@@ -540,10 +553,6 @@ def rules_now_proved(root):
             if line.rstrip() != RULES_HEADER:
                 raise ValueError(f"{where}: a table that is not a table of rules now proved")
             table = "header"
-        elif table == "header":
-            if line.rstrip() != RULES_DELIMITER:
-                raise ValueError(f"{where}: expected the delimiter row {RULES_DELIMITER!r}")
-            table = "rows"
         else:
             row = RULE_ROW.fullmatch(line.rstrip())
             if row is None:
@@ -553,6 +562,9 @@ def rules_now_proved(root):
                 raise ValueError(f"{where}: `{row[1]}` is named twice, first at line "
                                  f"{names[row[1]]}")
             names[row[1]] = number
+    if table == "header":
+        raise ValueError(f"{FORMALIZATION}:{len(lines) + 1}: expected the delimiter row "
+                         f"{RULES_DELIMITER!r}")
     return len(names)
 
 

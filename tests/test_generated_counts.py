@@ -206,6 +206,8 @@ def note : String := "#print axioms Elements.inString"
                 (original + "match RULES:\n    case [*CIRCLE]:\n        pass\n", bound),
                 (original + "try:\n    pass\nexcept ValueError as CIRCLE:\n    pass\n", bound),
                 (original + 'CIRCLE.append("Postulate1")\n', bound),
+                (original + "CIRCLE.sort()\n", bound),
+                (original + "CIRCLE.__setitem__(0, 'Postulate1')\n", bound),
                 (original + "del CIRCLE[0]\n", bound),
                 (original + "from rules import CIRCLE\n", bound),
                 (original + "import CIRCLE.rules\n", bound),
@@ -223,6 +225,8 @@ def note : String := "#print axioms Elements.inString"
         for suffix in ("from rules import CIRCLE as shadow\n",
                        "import CIRCLE.rules as shadow\n",
                        "report(CIRCLE=len(CIRCLE))\n",
+                       "seen = CIRCLE.count('Postulate3')\n",
+                       "count = CIRCLE.count\n",
                        "globals().update(CIRCLE=RULES)\n"):
             with self.subTest(reader="screen", suffix=suffix):
                 screen.write_text(original_screen + suffix)
@@ -375,6 +379,17 @@ def note : String := "#print axioms Elements.inString"
             with self.subTest(prefix=prefix):
                 path.write_text(prefix + original)
                 self.assertEqual(counts.rules_now_proved(self.root), 3)
+
+    def test_rules_now_proved_requires_a_delimiter_immediately_after_a_header(self):
+        path = self.root / counts.FORMALIZATION
+        prefix = f"{counts.RULES_PROVED}\n\n{counts.RULES_HEADER}"
+        for label, suffix in (("EOF", ""), ("trailing newline", "\n"),
+                              ("following heading", "\n## Next section\n"),
+                              ("blank line", "\n\n")):
+            with self.subTest(label=label):
+                path.write_text(prefix + suffix)
+                self.assertRefused(counts.rules_now_proved, counts.FORMALIZATION,
+                                   f"expected the delimiter row {counts.RULES_DELIMITER!r}")
 
     def test_rules_now_proved_never_rest_on_a_marker_value(self):
         path = self.root / counts.FORMALIZATION
