@@ -269,6 +269,10 @@ point of the straight line through two points of a circle is on the circle exact
 is one of them, and within it exactly when between them), before III.24, which uses it;
 and the meeting fact for an arc, `Prop25.meets`, beside III.25, whose companion uses it.
 
+**27 October 2026, correction.** III.24 no longer uses `Prop24.chord_cases` in its main
+proof. The lemma remains before it and is used by `Prop24.image`, after the theorem, for
+`Prop24.equalMeasure` and `Arc.congruent_iff`.
+
 **Book III's ground, before III.1, `Elements/BookIII/Squares.lean`**: `sq_pos` (the square
 on a straight line is something) and `BookI.Prop46.sq` (equal squares are on equal
 straight lines), for III.14 and III.37, which add I.3, I.4, I.28, I.34, I.46; and
