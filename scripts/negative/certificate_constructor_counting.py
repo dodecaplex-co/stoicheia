@@ -1,9 +1,9 @@
 """Counting congruence constructors instead of `Coincidence.step` in the certificate,
 `Certificate/Facts.lean`: `tests/test_certificate.py` must fail on transformers with no
 step. The restored certificate must pass the same regression, including its real-step
-cases. Both runs are of `CommonNotion4Tests`, the class that compiles the C.N. 4 fixture
-and holds the transformer cases, no step and real steps alike; the file's other classes
-run in the check registry, on the certificate as committed.
+cases. Both runs are of `CommonNotion4Tests`, the class that runs the certificate on the
+C.N. 4 fixture alone and holds the transformer cases, no step and real steps alike; the
+file's other classes run in the check registry, on the certificate as committed.
 """
 
 import sys

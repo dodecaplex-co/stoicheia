@@ -202,7 +202,7 @@ def plant() -> None:
     planted: list[Path] = []          # files, then the folders made for them
     roots: dict[Path, str] = {}
     proposition, end, theorem = PROPOSITION
-    kept: str | None = None           # the proposition's file as it was
+    kept: bytes | None = None         # the proposition's file as it was
     try:
         for tree, rel in PLANTED_FILES:
             path = nt.ROOT / rel
@@ -244,7 +244,8 @@ def plant() -> None:
         assert not (nt.ROOT / figure).exists(), f"{figure} exists; update this test"
         (nt.ROOT / figure).write_text(text)
         planted.insert(0, nt.ROOT / figure)
-        kept = nt.replace_once(proposition, end, theorem + end)
+        kept = (nt.ROOT / proposition).read_bytes()
+        nt.replace_once(proposition, end, theorem + end)
         changed = (nt.ROOT / proposition).read_text()
         native = changed[:changed.index("by native_decide")].count("\n") + 1
         result = nt.fidelity()
@@ -257,7 +258,7 @@ def plant() -> None:
                           caught(proposition, native, "native_decide"))
     finally:
         if kept is not None:
-            (nt.ROOT / proposition).write_text(kept)
+            (nt.ROOT / proposition).write_bytes(kept)
         for root, saved in roots.items():
             root.write_text(saved)
         for path in planted:

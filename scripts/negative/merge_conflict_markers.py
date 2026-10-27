@@ -6,7 +6,8 @@ file, comment, fence or after a completed heading, indented code or link referen
 definition (on one line or two) each fail S23 of `check_style.py --no-lean` with their
 file, line and kind. Setext headings, including several lines and one after a comment
 containing a fence, leave the unplanted copy's result unchanged, and that result is a pass,
-so a check that cannot run on the copy is not taken for a refusal. Symlinks are not copied.
+so a check unable to run on the copy, failing alike with a heading and without, is not
+taken for one that accepts the headings. Symlinks are not copied.
 This runs before the plants that build. The style check on the whole tree, S23 among its
 rules, runs in the check registry.
 """
@@ -22,7 +23,8 @@ import negative_tests as nt
 BUILDS = False
 
 # The copy: the two files planted, the two texts the style check reads whatever the tree
-# holds, and the scripts it runs, check_style.py and the modules it imports.
+# holds, and the scripts at the top of scripts/, check_style.py and the modules it imports
+# among them.
 PLANTED = ("CONTRIBUTING.md", "NOTICE")
 READ_ALWAYS = ("README.md", "docs/reading.md")
 SCRIPT = re.compile(r"scripts/[^/]+\.py")
@@ -52,8 +54,7 @@ def plant() -> None:
         baseline = check()
         if not nt.expect_success("the style check on the unplanted copy", baseline):
             return
-        markdown = "CONTRIBUTING.md"
-        non_markdown = "NOTICE"
+        markdown, non_markdown = PLANTED
         cases = [
             ("opening", markdown, ["<" * 7 + " ours"], [(0, "opening")]),
             ("base", markdown, ["|" * 7 + " base"], [(0, "base")]),
