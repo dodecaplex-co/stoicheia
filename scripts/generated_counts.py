@@ -306,8 +306,9 @@ SUPERPOSITION = "Audit/Superposition.lean"
 PRINT_AXIOMS = re.compile(r"#print[ \t\r\n]+axioms\s+(?=[^\W\d])")
 ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 SYNTAX_QUOTATION = re.compile(r"`[ \t\r\n]*\(")
-REFLECTIVE_NAMES = {"__builtins__", "__getattribute__", "attrgetter", "delattr", "eval",
-                    "exec", "getattr", "globals", "locals", "setattr", "vars"}
+REFLECTIVE_NAMES = {"__builtins__", "__getattribute__", "__setattr__", "attrgetter",
+                    "delattr", "eval", "exec", "getattr", "globals", "locals",
+                    "methodcaller", "modules", "setattr", "vars"}
 
 
 def source_text(root, path):

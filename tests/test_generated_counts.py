@@ -196,6 +196,25 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_module_attribute_mutation(self):
+        path = self.root / counts.SCREEN
+        original = path.read_text()
+        call = "pairs = list(itertools.combinations(CIRCLE, 2))"
+        mutator = 'lambda xs, n: (xs.append("Postulate1") or ())'
+        mutations = (
+            'import operator\nimport sys\n'
+            'operator.methodcaller("__setattr__", "combinations", '
+            f'{mutator})(sys.modules["itertools"])\n',
+            'import sys\n'
+            'sys.modules["itertools"].__setattr__("combinations", '
+            f'{mutator})\n',
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                path.write_text(original.replace(call, mutation + call))
+                with self.assertRaisesRegex(ValueError, counts.SCREEN):
+                    counts.screen_circle_rules(self.root)
+
     def test_screen_circle_rules_refuse_wildcard_imports(self):
         path = self.root / counts.SCREEN
         path.write_text(path.read_text() + "\nfrom shadow import *\n")
