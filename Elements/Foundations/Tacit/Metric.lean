@@ -11,6 +11,9 @@ area. System E, §3.5 (Avigad, Dean and Mumma, 2009).
 The following former assumptions are proved in Book Zero:
 * `Elements.Figure.RuleBase`: `eq_of_len_eq_zero`.
 * `Elements.Figure.AreaRules`: `area_swap`.
+
+One rule here is ours, not System E's: that a circle's radius is not nothing
+(`radius_ne_zero`), since every circle is drawn with a distance (Postulate 3).
 -/
 
 namespace Elements.Tacit
@@ -41,5 +44,21 @@ uses this without comment once he has shown two triangles congruent.
 axiom area_congruent (h₁ : ‖A B‖ = ‖D E‖) (h₂ : ‖B C‖ = ‖E F‖) (h₃ : ‖C A‖ = ‖F D‖)
     (h₄ : ∠ A B C = ∠ D E F) (h₅ : ∠ B C A = ∠ E F D) (h₆ : ∠ C A B = ∠ F D E) :
     △ A B C = △ D E F
+
+/-! ## A radius is not nothing (ours)
+
+Euclid draws every circle "with any centre and distance" (Postulate 3), and the plane that
+models our words reads a `Circle` as "a circle of positive radius"
+(`Elements/Foundations/Words.lean`). System E has no rule of this form: there it follows from
+Metric 1, that a length is nothing exactly when its ends are one point, with Generalities 3
+and 4, that a centre is inside its circle and an inside point is not on it. Here the half of
+Metric 1 that this needs (`eq_of_len_eq_zero`) and Generalities 3 and 4 are theorems of Book
+Zero (`Elements.Figure.RuleBase`), so this rule is ours. It says only that a radius is
+something, and nothing of how long. -/
+
+/-- A circle's radius is not nothing: the straight line from the centre to a point on the
+circle has some length. A rule of our own, not one of System E's: every circle is drawn with
+a centre and a distance (Postulate 3). -/
+axiom radius_ne_zero {α : Circle} (hA : Centre A α) (hB : OnCircle B α) : ‖A B‖ ≠ 0
 
 end Elements.Tacit
