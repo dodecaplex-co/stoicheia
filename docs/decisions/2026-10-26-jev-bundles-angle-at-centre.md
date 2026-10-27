@@ -10,7 +10,8 @@
   definitions, and gives three records the declarations their representation verdicts rest
   on. III.20 and III.21 get the angle at the centre; that it is the angle BEC where
   Euclid's angles at the centre are (`angleAtCentre.within`); that it is the angles BEF and
-  FEC of any diameter AEF with its ends on opposite sides of BC, wherever the centre lies,
+  FEC of any diameter AEF with A across BC from the named circumference and F on its side,
+  wherever the centre lies,
   on BC or beyond it too, as for the semicircle and the less segment
   (`angleAtCentre.diameter`); and that it reads only the side of BC that the point naming
   the circumference lies on (`angleAtCentre.congr`). III.20's representation note names
