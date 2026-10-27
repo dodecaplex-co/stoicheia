@@ -60,13 +60,14 @@ semicircle, less or greater, as the centre lies on its straight line, beyond it 
 its side (`Circumference.semicircle`, `Circumference.lt_semicircle`,
 `Circumference.gt_semicircle`). A lemma named after a proposition, such as
 `Prop8.within`, lives in its file. Our foundations give every circle a centre
-(`exists_centre`); proofs take a centre from the rule wherever none is supplied and a
-call of III.1 would do no work, Heath's "[III. 1]" among such steps, or from geometric
-data such as equal circles, as [Book III's introduction](../../book/III/index.md)
-tells. These steps, with those below that Euclid takes with no bracket in Heath or without a
+(`exists_centre`); proofs find a centre by III.1's construction where none is supplied
+and Heath's reference is III.1 (`Prop1.of_circle`), III.2 aside, which takes it from the
+rule; they take it from the rule where he gives no reference, and from geometric data
+such as equal circles, as [Book III's introduction](../../book/III/index.md) tells.
+These steps, with those below that Euclid takes with no bracket in Heath or without a
 word, are why [CERTIFICATE.md](../../CERTIFICATE.md) shows the Lean citing more than
-Heath's brackets give in most of the propositions of Book III; and five of Heath's
-references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call beside them.
+Heath's brackets give in most of the propositions of Book III; and two of Heath's
+references to III.1, in III.2 and III.14, have no call beside them.
 
 ## III.1
 - "Let it be bisected at the point D; from D let DC be drawn at right angles to AB": Heath gives no bracket for either step. They are I.10 and I.11 (`BookI.Prop10`, `BookI.Prop11`).
@@ -169,7 +170,7 @@ references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call bes
 - Heiberg drops, as Theon's addition, the words "and that a straight line touches a circle at one point only" (Heath, vol. 2, p. 43); our `Touches` (Definition III.2) says it. Simson's remark that "there can be but one straight line which touches the circle at the same point" (vol. 2, p. 43) follows from our second clause.
 
 ## III.17
-- "Let the centre E of the circle be taken; [III. 1]": the proof takes E from the rule (`exists_centre`), for it needs the centre alone, and a call of III.1 would do no work. Since A is outside, `line_circle_between` then finds Euclid's D between E and A.
+- "Let the centre E of the circle be taken; [III. 1]": the proof finds E by III.1's construction, on a straight line drawn through the circle at random (`Prop1.of_circle`), as Euclid does. Since A is outside, `line_circle_between` then finds Euclid's D between E and A.
 - "From D let DF be drawn at right angles to EA": Heath gives no bracket for it: it is I.11. I.11's straight line need not end on the circle AFG; F is where it, produced beyond D, meets that circle, and the angle there is right too (`adjacent_eq_of_right`).
 - B, where EF meets the circle BCD, is read off the figure. F is farther from E than D, so outside BCD, and EF meets the circle between E and F (`line_circle_between`).
 - A point on the circumference Euclid leaves out, Heath explains, as "so directly indicated by III. 16, Por. as to be scarcely worth a separate statement" (vol. 2, p. 44). The companion `Prop17.general` takes it: the straight line at right angles to the radius EA at A (I.11) touches by III.16's porism, and the point of contact is A itself. From a point within, no straight line touches (`Prop17.inside`, by `Touches.not_inside`).

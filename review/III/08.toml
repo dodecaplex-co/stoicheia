@@ -7,7 +7,7 @@ fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the centre M, which Euclid takes by III.1 (Heath's reference), comes from `Tacit.exists_centre`, the rule that every circle has a centre, as in the companion's step `Prop8.partner`; and the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where N or the point it is compared with is a point of contact, which neither the convex order nor the concave reaches; two points on different circumferences, like two on one, are compared by the orders. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
+note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where N or the point it is compared with is a point of contact, which neither the convex order nor the concave reaches; two points on different circumferences, like two on one, are compared by the orders. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"
@@ -16,9 +16,9 @@ note = "\"Nearer\" is the less angle at D with the ray DA, unsigned. The convex 
 
 [[passage]]
 at = "For let the centre of the circle ABC be taken"
-kind = "different"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre M by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes M from `Tacit.exists_centre`, the rule that every circle has a centre, and the statement, which asks of every centre that it lie between G and A, puts M there."
+kind = "helper"
+helper = "Prop1.of_circle"
+note = "Euclid takes the centre M by III.1 (Heath's reference), and so does the Lean: `Prop1.of_circle` takes two points of the circle, the ends of a straight line drawn through it at random, and runs III.1 on them, its construction and its proof that the point found is the centre; the proof keeps the centre alone, as Euclid does. The statement, which asks of every centre that it lie between G and A, puts M there. The companion's step `Prop8.partner` takes its centre in the same way."
 
 [[passage]]
 at = "let ME, MF, MC, MK, ML, MH be joined"
@@ -134,11 +134,3 @@ reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:db251b6dc594ff8e"
 run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex)"
 text = "sha256:7d4ebb976462f95e"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "pass"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
