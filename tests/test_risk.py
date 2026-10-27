@@ -55,6 +55,7 @@ class Table(unittest.TestCase):
             ("scripts/risk.py", "R5"),               # it decides which checks run
             ("scripts/registry.py", "R5"),           # main's copy: the pre-flight's checks
             ("scripts/run_checks.py", "R5"),         # CI's `check` job
+            ("scripts/shadow_policy.py", "R5"),      # CI's shadow of the pre-flight
             ("scripts/hooks/pre-push", "R5"),
             ("tests/test_safe_push.py", "R5"),       # though tests/* is R3
             (".github/workflows/ci.yml", "R5"),
