@@ -2,7 +2,7 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--commit <sha>] [--dry-run] [--main-checks-cache]
+                  [--land] [--commit <sha>] [--dry-run] [--main-checks-cache]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>] [--main-checks-cache]  # the checks alone
 
@@ -256,6 +256,26 @@ or GitHub not to be asked, or answering with no state of its own, is "merge stat
 unknown", with no revert advised. Afterwards that merge commit is checked to join the
 base and the head checked, with the head's tree.
 
+--land, with --branch and --ready (the body final at the push, since nothing comes
+between), goes on, once CI is green and nothing failed, to the merge of that pull request
+in the same process, as --merge does it (#557,
+docs/decisions/2026-10-26-one-run-landing.md). It refuses, merging nothing: a head GitHub
+has for the pull request that is not the commit pushed (the run merges only what it
+pushed); an origin whose URL, as git gives it, is not the one git gave the pre-flight
+before any of the commit's code ran; origin/main moved during CI, before anything is
+judged against the new main; and a copy of the harness on disk that no longer matches
+origin/main's (the merge hands over to no other copy). It holds the merge for the
+security review, merging nothing, when the pre-flight noted origin/main's checks failing
+on the commit (a failure keep_apart reads, or its "pinned values"): that review reads the
+note, and a separate --merge follows it. Otherwise the pre-flight's record, kept in
+memory from the push and never read from a file, stands in for step 4 even for a head
+that changes the checks or a protected path, which a separate --merge never lets a record
+do, only while no main-checks cache hit served origin/main's pass and checks_record
+accepts it (of step 4 in full, every step passed; or, for a change still of R0 to R2, of
+a pre-flight that left it to CI); else step 4 runs by the class, as for a separate
+--merge. The disk is never read on that path: the record saved there is not loaded,
+whatever it holds. A separate --merge keeps the rule above unchanged.
+
 When main's rules require a merge queue, --merge keeps these gates, checks the head
 against the newest commit of origin/main's first-parent chain that it contains, as the
 queue's judge does, and enqueues it with expectedHeadOid pinned.
@@ -276,7 +296,8 @@ Exit status: 0 when done (a pull request opened or updated with CI green, a merg
 run passed, or nothing to do); 1 when refused before any push or merge; 2 for a usage
 error; 3 when pushed but CI failed or was not followed, merged but main is not the tree
 checked or could not be read, or when the merge state is unknown (it may have happened,
-or may happen yet).
+or may happen yet); with --land, 3 also when pushed with CI green and the merge refused,
+interrupted or stopped by an error, or held for the security review.
 Standard library, git and gh; Python 3.11 or later.
 """
 
@@ -287,6 +308,7 @@ import ast
 import base64
 import binascii
 import contextlib
+import copy
 import datetime
 import hashlib
 import html
@@ -612,6 +634,7 @@ DENIED = "Operation not permitted"      # what a write the sandbox refuses says 
 ENTRY_BYTES = 16 * 2 ** 20      # the largest entry read: 16 MiB (one measured 156,119 bytes)
 CACHE: Path | None = None
 SANDBOX: str | None = None
+CACHE_HIT = False       # origin/main's pass was taken from the cache in this run (main_checks)
 
 
 class Refusal(Exception):
@@ -3311,6 +3334,25 @@ PATH_CHECKS = ("python3 -I tests/test_check_paths.py",
                "python3 scripts/check_paths.py --self-test")
 
 
+def base_pass_failures(rep: Report, stage: str) -> list[str]:
+    """The checks noted at `stage` as failing with origin/main's copies, less the two that
+    show only stale pages (FRESHNESS): the failures keep_apart judges."""
+    return [name for s in rep.steps
+            if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
+            and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
+
+
+def review_notes(rep: Report) -> list[str]:
+    """The pre-flight's notes that origin/main's checks fail on the commit, which WORKFLOW
+    sends to the security review: a failure keep_apart judges, at step 3 or 4, and the
+    "pinned values" note it writes when it lets one pass."""
+    names = [name + BASE_PASS for stage in ("3", "4")
+             for name in base_pass_failures(rep, stage)]
+    names += [s.name for s in rep.steps if s.stage in ("3", "4") and s.outcome == "note"
+              and s.name == "pinned values"]
+    return list(dict.fromkeys(names))
+
+
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     """A check change is a pull request of its own, landed before the code it checks
     (docs/WORKFLOW.md, "Landing work: pull requests"). So when a check fails with
@@ -3336,9 +3378,7 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     holds it. Check code changed with judged content is kept apart, pinned values or
     not; and so is a law of the model changed while its axiom stands, for the commit's own
     pass could not catch that either. True when it refuses."""
-    failed = [name for s in rep.steps
-              if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
-              and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
+    failed = base_pass_failures(rep, stage)
     paths = [name for name in failed if name in PATH_CHECKS]
     if paths:       # #186, a looser path check: no judged file needed, no pinned value excuses it
         rep.add(stage, "check change kept apart", "FAIL",
@@ -4283,6 +4323,7 @@ def main_checks(ctx, wt: Path, inputs, rep: Report,
                 sequence: list[tuple[str, list[str] | None]]) -> MainChecks | None:
     """The cache's answer for origin/main's pass on this commit, reported in one line, for
     the pull request's record: a hit; a miss, and why; or why the cache does not serve."""
+    global CACHE_HIT
     if not inputs:
         rep.add("4", "main-checks cache", "skip", "the commit changes no check input: there "
                 "is no pass with origin/main's copies to reuse")
@@ -4295,6 +4336,7 @@ def main_checks(ctx, wt: Path, inputs, rep: Report,
     key = sha256_of(fields)
     entry, why = read_entry(CACHE, key, fields)
     if entry is not None:
+        CACHE_HIT = True
         rep.add("4", "main-checks cache", "note", f"hit: origin/main's checks of these trees "
                 f"reused from entry {key[:12]}, written {entry['written']} by this harness; "
                 "the commit's own checks run in full")
@@ -4485,7 +4527,7 @@ def harness_copy(theirs: bytes, theirs_heath: bytes,
     return path
 
 
-def harness(repo, base: str, rep: Report) -> None:
+def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
     """origin/main's safe_push.py, heath.py and optional check_train.py judge the commit.
     When this copy differs from them, origin/main's replaces this process (os.execve),
     with the same arguments:
@@ -4493,7 +4535,9 @@ def harness(repo, base: str, rep: Report) -> None:
     after its push is still "pushed; CI not followed". A copy of origin/main's that
     predates the marker is not run: this copy runs, once, while the harness that runs
     from origin/main lands. STOICHEIA_HARNESS, which the hand-over sets, is believed only
-    when this file's bytes are origin/main's."""
+    when this file's bytes are origin/main's. Without `hand_over` (the merge of --land,
+    whose arguments are the push's), a copy that differs is refused, never replaced, in a
+    run handed over too."""
     global HARNESS, HARNESS_BLOB
     here = Path(__file__).resolve().parent
     own, own_heath = (here / "safe_push.py").read_bytes(), (here / "heath.py").read_bytes()
@@ -4506,6 +4550,16 @@ def harness(repo, base: str, rep: Report) -> None:
     # module afresh before importing it, so an absent local copy needs no hand-over.
     same = (theirs, theirs_heath) == (own, own_heath) and \
         (own_train is None or own_train == theirs_train)
+    if not hand_over and not same:
+        # Run again with the push's arguments, origin/main's harness would push again. The
+        # merge has refused a moved main already, so the copy on disk was rewritten since
+        # the run started, or origin/main's predates running from origin/main; a handed-over
+        # run is refused here too, before STOICHEIA_HARNESS is read.
+        raise Refusal("this copy of safe_push.py, heath.py or check_train.py on disk no "
+                      "longer matches origin/main's: it was rewritten since the run "
+                      "started, or origin/main's predates running from origin/main; the "
+                      "merge of --land runs no other copy, so nothing is merged: run "
+                      "--merge")
     if os.environ.get("STOICHEIA_HARNESS"):
         if not same:
             raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
@@ -5352,6 +5406,38 @@ def load_record(sha: str, base: str) -> dict | None:
         and record.get("base") == base else None
 
 
+class Held(NamedTuple):
+    """What this run's pre-flight left in memory for its merge (--land), never read back
+    from a file: the commit pushed, origin/main then, a copy of the record taken as it was
+    made, before it was saved, whether origin/main's pass of step 4 was taken from the
+    main-checks cache in this run (a hit), and origin's URL as git gave it before any of
+    the commit's code ran. The merge refuses an origin with another URL before it fetches,
+    and an origin/main other than this one once it has (merge_preconditions)."""
+    sha: str
+    base: str
+    record: dict
+    cached: bool
+    origin: str
+
+
+def held_record(held: Held, ctx: Context, risk: Risk) -> tuple[dict | None, str]:
+    """The earlier record for --land's merge, from memory alone: the disk is never read
+    here, whatever it holds. None, and why, when origin/main's pass of step 4 was taken
+    from the main-checks cache, a file, or when the record is not of the head and the base
+    the merge checks (ctx.sha and ctx.base), which backs up the merge's refusal of a head
+    that is not the commit pushed. checks_record then judges it, as it judges a file's."""
+    again = "the full checks run now" if risk.cls not in LOW_CLASSES else \
+        f"step 4 runs again now, and leaves the full checks to CI for the class {risk.cls}"
+    if held.cached:
+        return None, ("origin/main's pass of step 4 was taken from the main-checks cache, a "
+                      "file, so the record kept in memory does not stand in for it: "
+                      f"{again}")
+    if held.record.get("sha") != ctx.sha or held.record.get("base") != ctx.base:
+        return None, (f"the record kept in memory is not of {ctx.sha[:12]} against "
+                      f"origin/main {ctx.base[:12]}, so it stands in for nothing: {again}")
+    return held.record, ""
+
+
 # --------------------------------------------------------------------------------------
 # --merge: the gates, then a merge commit
 
@@ -6024,13 +6110,38 @@ def protected_files(repo, base, sha) -> list[str]:
     return sorted({p for _, p in changed_files(repo, base, sha) if is_protected(p)})
 
 
-def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
+def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
+                        held: Held | None = None):
+    """`held`, for the merge of --land: origin and origin/main as the push left them, each
+    refused at once when it is not, and a harness that never hands over."""
     rep.heading("1. Preconditions")
     origin = git(repo, "remote", "get-url", "origin", check=False).strip()
     if not origin:
         raise Refusal("this repository has no remote called origin")
+    # Before the fetch: the commit's code could have pointed the clone's origin at a copy
+    # where main is never seen to move. Only the URL is compared, as git gives it
+    # (insteadOf expanded); settings that redirect a fetch with the URL unchanged
+    # (core.sshCommand, http.proxy, include.path and the like) are no more checked here
+    # than for a separate --merge.
+    if held is not None and origin != held.origin:
+        raise Refusal(f"origin's URL changed during the run, from {held.origin} to "
+                      f"{origin}; nothing is merged: set it back, then --merge")
     base = fetch_base(repo, origin, test_mode, rep)
-    harness(repo, base, rep)
+    # Before the harness is compared or anything judged against the new main. Run on, the
+    # full checks would take about 36 minutes, and then the body's summary, of the old
+    # main, refuses the merge, or these preconditions refuse it for a main the head lacks.
+    # And harness() compares the new main's harness with the copy on disk, which code left
+    # running by the commit could have rewritten to match, so a superseded harness, in
+    # memory, would run the merge. In queue mode `base` is the tip too (ctx.harness_sha),
+    # so the same refusal holds; there a queued head is checked against the base it holds,
+    # so a moved main a separate --merge would check in full and enqueue waits for it.
+    if held is not None and base != held.base:
+        raise Refusal(f"origin/main moved from {held.base[:12]} to {base[:12]} during CI; "
+                      "nothing is merged, nor judged against the new main: run the "
+                      "pre-flight again against it (`git safe-push --branch <name>`, merging "
+                      "origin/main in first if the head lacks it), then --merge; in a merge "
+                      "queue, --merge alone")
+    harness(repo, base, rep, hand_over=held is None)
     slug = "test/stoicheia" if test_mode else github_slug(origin)
     if not slug:
         raise Refusal(f"origin ({origin}) is not on GitHub: there is no pull request to merge")
@@ -6723,6 +6834,7 @@ def logs_dir(sha: str) -> Path:
 
 
 def preflight_main(repo: Path, args) -> int:
+    global CACHE, SANDBOX
     mode = "dry run" if args.dry_run else "push"
     print(f"safe_push: {mode} of {args.commit} from {repo}"
           + (f", for the branch {args.branch}" if args.branch else ""), flush=True)
@@ -6730,6 +6842,8 @@ def preflight_main(repo: Path, args) -> int:
     sha = base = ""
     result, ci, code = "refused", "", 1
     pushed, pr = False, None
+    held = None         # --land: what the merge takes from this run, once CI is green
+    noted: list[str] = []   # --land: notes for the security review, which hold the merge
     try:
         ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
                             title=args.title)
@@ -6747,6 +6861,9 @@ def preflight_main(repo: Path, args) -> int:
         pre = check_commit(ctx, rep, logs, args.test_mode, risk,
                            train_body=train_input(ctx, body_text))
         record = make_record(ctx, pre, rep, full=not args.test_mode, risk=risk)
+        # For --land, the record as made, before it is saved: nothing done to the saved
+        # one, or to its file, reaches this copy.
+        kept = copy.deepcopy(record) if args.land else None
         save_record(record)
         if args.dry_run:
             rep.heading("5. Push")
@@ -6774,6 +6891,12 @@ def preflight_main(repo: Path, args) -> int:
             ci = watch_checks(ctx, pr, rep)
             if ci == "success" and not rep.failed():
                 code = 0
+                # The body is final at the push, and the merge would follow at once: a note
+                # that origin/main's checks fail on the head, which WORKFLOW sends to the
+                # security review, would be read by no one first. So it holds the merge.
+                noted = review_notes(rep) if args.land else []
+                if args.land and not noted:
+                    held = Held(ctx.sha, ctx.base, kept, CACHE_HIT, ctx.origin)
             else:
                 code = 3
                 print("\nCI did not pass for the pull request. Nothing is merged, and main is "
@@ -6804,11 +6927,46 @@ def preflight_main(repo: Path, args) -> int:
             raise
         result, code = f"pushed; CI not followed ({type(e).__name__}: {e})", 3
         print(f"\nPushed; CI not followed: {type(e).__name__}: {e}")
-    summary(rep, mode, sha, base, result, ci)
-    return code
+    if held is None and not noted:
+        summary(rep, mode, sha, base, result, ci)
+        return code
+    # --land, CI green: from the push's summary on, an interruption or a crash is exit 3,
+    # never 1, "refused", nor a signal's death; once the merge has started, it may have
+    # merged.
+    started = False
+    try:
+        summary(rep, mode, sha, base, result, ci)
+        if noted:
+            print(f"\nCI is green, but the pre-flight noted origin/main's checks failing "
+                  f"on the head ({', '.join(noted)}), for the security review, which must "
+                  "read the notes before a separate merge: nothing is merged. Record that "
+                  f"review in #{pr.number}, then run `git safe-push --merge {pr.number}`.")
+            return 3
+        # The merge runs as a separate --merge runs, which takes no --main-checks-cache: so
+        # its checks, when they run, run uncached and without the cache's sandbox.
+        CACHE = SANDBOX = None
+        started = True
+        code = merge_main(repo, pr.number, False, args.test_mode, held=held)
+    except (Exception, KeyboardInterrupt) as e:
+        why = f"interrupted ({e or 'Ctrl-C'})" if isinstance(e, KeyboardInterrupt) \
+            else f"{type(e).__name__}: {e}"
+        if started:
+            print(f"\nPushed; the merge stopped: {why}. It may have merged: look with "
+                  f"`gh pr view {pr.number}` before anything else.")
+        else:
+            then = f"the security review reads {', '.join(noted)} first, then" if noted \
+                else "run"
+            print(f"\nPushed, CI green; stopped before the merge: {why}. Nothing is "
+                  f"merged: {then} `git safe-push --merge {pr.number}`.")
+        return 3
+    return 3 if code == 1 else code     # refused, nothing merged; but the branch was pushed
 
 
-def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
+def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
+               held: Held | None = None) -> int:
+    """--merge <number>; or, with `held`, the merge --land goes on to in the same process,
+    which takes the pre-flight's record from memory (held_record), never from a file, and
+    merges only the commit it pushed (never a dry run)."""
     mode = "merge dry run" if dry_run else "merge"
     print(f"safe_push: {mode} of pull request #{number} from {repo}", flush=True)
     rep = Report()
@@ -6819,9 +6977,18 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
     # merged only when GitHub says so (NotMerged), and success only once origin/main holds
     # the merge commit GitHub names (MergeUnknown, when it does not).
     merging = ""
+    kept = held.record if held is not None else None
     try:
-        ctx, view = merge_preconditions(repo, number, test_mode, rep)
+        # --land's merge refuses a changed origin or a moved main, and never hands over:
+        # re-run with the push's arguments, origin/main's harness would run the whole push
+        # again.
+        ctx, view = merge_preconditions(repo, number, test_mode, rep, held=held)
         sha, base = ctx.sha, ctx.base
+        # --land merges only the commit it pushed: never re-run on another.
+        if held is not None and ctx.sha != held.sha:
+            raise Refusal(f"the head of #{number} moved from {held.sha[:12]} to "
+                          f"{ctx.sha[:12]} during CI; nothing is merged: run the pre-flight "
+                          "on the new head")
         try:
             labels = pr_labels(view.get("labels"))
         except ValueError:
@@ -6830,7 +6997,11 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         # base: a record that left step 4 to CI stands in for it only while that is still
         # R0 to R2 (checks_record).
         risk = risk_class(ctx.repo, ctx.base, ctx.sha, labels)
-        earlier = load_record(ctx.sha, ctx.base)
+        dropped = ""
+        if held is None:
+            earlier = load_record(ctx.sha, ctx.base)
+        else:
+            earlier, dropped = held_record(held, ctx, risk)
         checked = checks_record(earlier, test_mode, risk)
         release_needs_full_record(ctx, number, labels, checked, earlier, test_mode, rep)
         # The record is a file the checks it ran could have written. When the head
@@ -6839,8 +7010,11 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         # checks run again here rather than trust the record.
         # So too for a head that changes any protected path: CI runs the head's own
         # workflow (.github/) as well as its own checks.
-        if checked is not None and any(under(p, CHECK_INPUTS) or is_protected(p)
-                                       for _, p in changed_files(repo, ctx.base, ctx.sha)):
+        # A record kept in memory by this same run (--land) was never a file, so nothing
+        # the head's code ran could have written it: the reason does not hold for it.
+        if checked is not None and checked is not kept \
+                and any(under(p, CHECK_INPUTS) or is_protected(p)
+                        for _, p in changed_files(repo, ctx.base, ctx.sha)):
             rep.add("3", "full checks record", "note", "the head changes the checks or a "
                     "protected path, so the full checks run again, not the record of the "
                     "pre-flight")
@@ -6852,7 +7026,20 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         # local file, and the pre-flight ran the commit's own code (its checks, and Lean
         # at elaboration), which could have written it. Only the full checks, which CI
         # runs as well, may be taken from it.
-        if earlier is None:
+        if dropped:
+            rep.add("3", "pre-flight", "note", dropped)
+        elif checked is not None and checked is kept and checked.get("short"):
+            rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
+                    f"{ctx.base[:12]} in this run's pre-flight, its record kept in memory, "
+                    f"never read from a file, its class {checked.get('class')} then and "
+                    f"{risk.cls} now: the secret scan and the guards run again; the full "
+                    "checks stay with CI, as for any change of R0 to R2")
+        elif checked is not None and checked is kept:
+            rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
+                    f"{ctx.base[:12]} in this run's pre-flight, its record kept in memory, "
+                    "never read from a file: the secret scan and the guards run again; the "
+                    "full checks are not repeated")
+        elif earlier is None:
             rep.add("3", "pre-flight", "note", f"none of {ctx.sha[:12]} against origin/main "
                     f"{ctx.base[:12]}: it runs now")
         elif checked is None:
@@ -6972,8 +7159,26 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
             done = merging == "merged"
             result = f"interrupted ({e or 'Ctrl-C'})" + ("; merged" if done else "")
             code = 3 if done else 1
-            print(f"\nInterrupted: {result}.")
-    summary(rep, mode, sha, base, result, "")
+            if held is not None and not done:
+                print(f"\nInterrupted: {result}. Nothing is merged: run "
+                      f"`git safe-push --merge {number}`.")
+            else:
+                print(f"\nInterrupted: {result}.")
+    if held is None:
+        summary(rep, mode, sha, base, result, "")
+    else:
+        try:
+            summary(rep, mode, sha, base, result, "")
+        except (Exception, KeyboardInterrupt) as e:
+            why = f"interrupted ({e or 'Ctrl-C'})" if isinstance(e, KeyboardInterrupt) \
+                else f"{type(e).__name__}: {e}"
+            if merging:
+                print(f"\nPushed; the merge stopped: {why}. It may have merged: look with "
+                      f"`gh pr view {number}` before anything else.")
+            else:
+                print(f"\nPushed, CI green; stopped before the merge: {why}. Nothing is "
+                      f"merged: run `git safe-push --merge {number}`.")
+            return 3
     return code
 
 
@@ -7027,6 +7232,7 @@ request's merge commit (docs/WORKFLOW.md, "Landing work: pull requests"). Open o
 the pre-flight, and merge it when its gates pass:
 
     git safe-push --branch <name> --label <kind> [--title T] [--body-file F] [--ready]
+                  [--land]
     git safe-push --merge <pr-number>
 
 or check the commit alone, pushing nothing: git safe-push --dry-run
@@ -7058,6 +7264,16 @@ def main(argv=None) -> int:
                         f"{TEMPLATE})")
     parser.add_argument("--ready", action="store_true", help="open the pull request ready for "
                         "review, or mark the open one ready (a new one is otherwise a draft)")
+    parser.add_argument("--land", action="store_true", help="with --branch and --ready, the "
+                        "body final at the push: once CI is green, merge the pull request in "
+                        "the same run, as --merge would. Refused: a head that is not the "
+                        "commit pushed, origin's URL changed or origin/main moved during "
+                        "CI, a copy of the harness on disk that no longer matches "
+                        "origin/main's. Held for the security review when the pre-flight "
+                        "noted origin/main's checks failing. Else the pre-flight's record, "
+                        "kept in memory (never read from a file), stands in for step 4 "
+                        "while no main-checks cache hit served origin/main's pass and "
+                        "checks_record accepts it")
     parser.add_argument("--label", action="append", default=[], choices=sorted(LABELS),
                         help="a label for the pull request (repeatable); one names its kind, "
                         f"{', '.join(KIND_LABELS)}, unless the open one has it")
@@ -7093,6 +7309,12 @@ def main(argv=None) -> int:
         parser.error("--merge takes only --dry-run")
     if not args.branch and (args.title or args.body_file or args.ready or args.label):
         parser.error("--title, --body-file, --ready and --label go with --branch")
+    if args.land and (args.merge is not None or args.dry_run):
+        parser.error("--land pushes and merges in one run: it takes neither --merge nor "
+                     "--dry-run")
+    if args.land and not (args.branch and args.ready):
+        parser.error("--land needs --branch and --ready: nothing comes between the push and "
+                     "the merge, so the pull request must be ready")
     if args.body_file and not Path(args.body_file).is_file():
         parser.error(f"--body-file {args.body_file}: no such file")
     if args.test_mode:
