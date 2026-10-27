@@ -31,22 +31,29 @@
   integration failed, and exactly one of the two steps runs. It then runs each step's
   `run` text as Actions runs it, in bash, with the job's environment and the step's,
   their expressions given fake values, stand-ins for `python3` and `gh` on the path that
-  record their arguments and environment, and bash's trace (`set -x`) of each command
-  the step runs. The record step must run two commands alone, `cat` to read the failed
-  jobs and then the trusted script, and perhaps `exit`; it must call the script in
-  Python's isolated mode with the push's own arguments, give it the job's token and the
-  App's secrets, which the job has only through its `auto-revert` environment, hold the
-  job's token in `GH_TOKEN` and `GITHUB_TOKEN` alone and the App's key in its own
-  `STOICHEIA_REVERT_APP_KEY` alone, and fail the job whenever the script exits with
-  anything but 0. The fallback must run exactly the commands of its text, in order, on
-  the path the test gives it, call GitHub with `gh` alone, the job's token in `GH_TOKEN`
-  and no other credential in any variable, and fail the job. Each of the two earlier
-  steps has its run text run, traced in the same way, by tests of its own (one of them
-  new, since no test ran the step that reads the failed jobs): each must run exactly the
-  commands of its text on each path those tests take, and neither may write to
-  `GITHUB_ENV` or `GITHUB_PATH`, through which it could change what the record step runs
-  with. So a command added to a step's text, on a path a test takes, fails it even when
-  it finds in the test's checkout no file of the failed push to run. Of 55 changes to the
+  record their arguments and environment, and a trace of each command the step runs. The
+  trace is a `DEBUG` trap, which `set -T` carries into functions and subshells: it writes
+  each command, before it runs, to a descriptor of the test's own, so that, unlike
+  `set -x`, it is not silenced when a group, subshell or function sends its standard
+  error elsewhere. As traced, the record step must run two commands alone, the trusted
+  script and, in its arguments, `cat` to read the failed jobs, and perhaps `exit`; it
+  must call the script in Python's isolated mode with the push's own arguments, give it
+  the job's token and the App's secrets, which the job has only through its
+  `auto-revert` environment, hold the job's token in `GH_TOKEN` and `GITHUB_TOKEN` alone
+  and the App's key in its own `STOICHEIA_REVERT_APP_KEY` alone, and fail the job
+  whenever the script exits with anything but 0. The fallback must run, as traced,
+  exactly the commands of its text, in order, on the path the test gives it, call GitHub
+  with `gh` alone, the job's token in `GH_TOKEN` and no other credential in any variable,
+  and fail the job. Each of the two earlier steps has its run text run, traced in the
+  same way, by tests of its own (one of them new, since no test ran the step that reads
+  the failed jobs): each must run, as traced, exactly the commands of its text on each
+  path those tests take, and neither may write to `GITHUB_ENV` or `GITHUB_PATH`, through
+  which it could change what the record step runs with. So a command added to a step's
+  text on a path a test takes fails it, wherever the command's standard error goes and
+  even when it finds in the test's checkout no file of the failed push to run. The trace
+  does not see a command on a branch no test takes, nor the commands of a step written
+  against the test itself, which turns the trace off with the test's descriptor sent
+  elsewhere (`{ trap - DEBUG; } 37>/dev/null`). Of 55 changes to the
   workflow's text, main's tests catch 5, four in the fallback's shell and one in the step
   that takes the trusted script, and the new tests catch 54: the one they miss changes
   the workflow's trigger, `on:`, which no test reads and which is outside #259. Of eight
@@ -55,8 +62,10 @@
   further changes, among them a line in each of the four steps that runs a file of the
   failed push only when the checkout holds one, the new tests catch 12: the one they miss
   stops the integration job, whose failure starts the revert job, from running at all,
-  which is outside #259. They pass both of two further changes that keep what the job
-  does.
+  which is outside #259; and they catch each of seven more, which hide such a line from
+  `set -x` in a group, subshell, function, alias or exit trap whose standard error goes
+  to `/dev/null`, or behind a `set +x` so hidden. They pass both of two further changes
+  that keep what the job does.
 
   *link-policy-test-compares-regex-source-shape.* The test of the link reading compared
   the patterns `auto_revert.py` copies from `check_links.py` by their text and flags. It

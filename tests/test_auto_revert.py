@@ -273,19 +273,31 @@ def expressions(text: str, values: dict) -> str:
     return result
 
 
-# Put before a step's run text, this has bash print to stderr each command the step runs,
-# before running it, as bash 3.2 and bash 5 both print it: a + for each level of command
-# substitution, XTRACE, and the command with its words expanded.
-TRACE = "PS4='+XTRACE '; set -x\n"
+# Put before a step's run text, this has bash write, before each command the step runs, a
+# line to descriptor 37, a copy of stderr: the number of subshells the command runs in,
+# XTRACE, and the command as written. Bash 3.2 and bash 5.2 write it alike. It is a DEBUG
+# trap, which set -T carries into functions, subshells and command substitutions, and not
+# set -x, which a group, subshell or function whose stderr goes elsewhere silences.
+TRACE = ("exec 37>&2; set -T; "
+         "trap 'printf \"%sXTRACE %s\\n\" \"$BASH_SUBSHELL\" \"$BASH_COMMAND\" >&37' DEBUG\n")
 
 
 def commands(stderr: str) -> list[str]:
     """The commands a step run after TRACE ran, in order, from its stderr: each one's
-    name, or the variable it sets and `=`, after a + for each level of command
-    substitution it ran in. So each command the step runs is seen, whether or not it
-    finds, in the test's checkout, a file it would run."""
-    return [depth[1:] + re.match(r"[A-Za-z_][A-Za-z0-9_]*=|\S*", text)[0]
-            for depth, text in re.findall(r"^(\++)XTRACE (.*)$", stderr, re.M)]
+    name, or the variable it sets and `=`, after a + for each subshell it ran in; a plain
+    assignment before a name, as in `IFS= read`, is read with it. So each command the
+    step runs on the path the test takes is seen, wherever its stderr goes, and whether
+    or not it finds, in the test's checkout, a file it would run. Not seen: a command on
+    a branch no test takes, and the commands of a step written against this test, which
+    turns the trace off with descriptor 37 sent elsewhere, as
+    `{ trap - DEBUG; } 37>/dev/null` does."""
+    found = []
+    for depth, text in re.findall(r"^(\d+)XTRACE (.*)$", stderr, re.M):
+        plain = re.match(r"(?:[A-Za-z_][A-Za-z0-9_]*=[^\s'\"$`\\]*\s+)*", text)
+        names = re.findall(r"([A-Za-z_][A-Za-z0-9_]*=)[^\s'\"$`\\]*\s+", plain[0])
+        names.append(re.match(r"[A-Za-z_][A-Za-z0-9_]*=|\S*", text[plain.end():])[0])
+        found += ["+" * int(depth) + name for name in names]
+    return found
 
 
 def run_step(job: dict, step: dict, values: dict, runner: Path, cwd: Path, path: str):
@@ -1371,6 +1383,7 @@ class AutoRevert(unittest.TestCase):
                                              else prefix))
                 self.assertFalse(ar.protected("unprotected/" + prefix))
                 self.assertFalse(ar.protected(prefix.rstrip("/") + "-lookalike/x.py"))
+                self.assertFalse(ar.protected(prefix.rstrip("/") + ".notes"))
         # And, read from the real tree, each entry that names a folder of the repository
         # ends in "/" and protects a file under it in both: an entry that lost its slash in
         # both lists would protect only a file of the folder's bare name.
@@ -1866,21 +1879,21 @@ class AutoRevert(unittest.TestCase):
     # through its text, by the reason it gives ("" when it takes the script): it reads the
     # runs only for a previous commit of 40 hex digits, not all zeros, judges them only when
     # GitHub answers, and reads the script only from a previous main whose run passed.
-    READ_RUNS = "set +mktemp script= reason= [[ [[ +mktemp response= +mktemp verdict= reason= gh"
+    READ_RUNS = "set script= +mktemp reason= [[ [[ response= +mktemp verdict= +mktemp reason= gh"
     TRUSTED_PATHS = {
         "The previous main commit is invalid.": (
-            "set +mktemp script= reason= [[ rm echo printf",
-            "set +mktemp script= reason= [[ [[ rm echo printf"),
+            "set script= +mktemp reason= [[ rm echo printf",
+            "set script= +mktemp reason= [[ [[ rm echo printf"),
         "The previous main's post-merge runs could not be read.": (
             READ_RUNS + " rm echo printf", READ_RUNS + " jq rm echo printf"),
         "No post-merge run was found for the previous main.": (
-            READ_RUNS + " jq +cat reason= [[ rm echo printf",),
+            READ_RUNS + " jq reason= +cat [[ rm echo printf",),
         "The latest post-merge run for the previous main did not conclude success.": (
-            READ_RUNS + " jq +cat reason= [[ rm echo printf",),
+            READ_RUNS + " jq reason= +cat [[ rm echo printf",),
         "The successful previous main has no readable revert script.": (
-            READ_RUNS + " jq +cat reason= [[ reason= git rm echo printf",
-            READ_RUNS + " jq +cat reason= [[ reason= git test rm echo printf"),
-        "": (READ_RUNS + " jq +cat reason= [[ reason= git test echo echo exit",),
+            READ_RUNS + " jq reason= +cat [[ reason= git rm echo printf",
+            READ_RUNS + " jq reason= +cat [[ reason= git test rm echo printf"),
+        "": (READ_RUNS + " jq reason= +cat [[ reason= git test echo echo exit",),
     }
 
     def run_trusted_extraction(self, before, pages=None, *, unreadable=False):
@@ -2035,7 +2048,7 @@ class AutoRevert(unittest.TestCase):
                                         check=False)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(commands(result.stderr),
-                                 ("set +mktemp jobs= +mktemp response= " + ran).split(),
+                                 ("set jobs= +mktemp response= +mktemp " + ran).split(),
                                  result.stderr)
                 outputs = dict(line.split("=", 1) for line in Path(
                     env["GITHUB_OUTPUT"]).read_text(encoding="utf-8").splitlines())
@@ -2153,11 +2166,12 @@ class AutoRevert(unittest.TestCase):
                 self.assertEqual(holding(env), {"GH_TOKEN": "the job's token",
                                                 "GITHUB_TOKEN": "the job's token",
                                                 "STOICHEIA_REVERT_APP_KEY": "the App's key"})
-                # The step runs the read of the failed jobs and the trusted script alone, and
-                # may exit: any other command fails, even one that finds in the test's
-                # checkout no file of the failed push to run.
+                # The step runs the trusted script and, in its arguments, the read of the
+                # failed jobs alone, and may exit: any other command it runs here fails, as
+                # commands() reads them, even one that finds in the test's checkout no file
+                # of the failed push to run.
                 self.assertEqual([name for name in commands(result.stderr) if name != "exit"],
-                                 ["+cat", "python3"], result.stderr)
+                                 ["python3", "+cat"], result.stderr)
                 # The script's exit is the step's, and any but 0 fails the job.
                 self.assertEqual(result.returncode, code, result.stderr)
                 self.assertEqual(fails, code != 0)
@@ -2172,9 +2186,9 @@ class AutoRevert(unittest.TestCase):
         # These commands alone, in this order: gh reads the labels and the train's title and
         # opens the issue, and exit fails the job.
         self.assertEqual(commands(result.stderr), (
-            "set +mktemp labels= gh for grep for grep +mktemp body= printf printf [[ [[ +mktemp"
-            " history= git IFS= read commit= subject= [[ number= +gh title= printf IFS= read"
-            " printf test test cat printf printf printf +mktemp payload= jq gh exit").split(),
+            "set labels= +mktemp gh for grep for grep body= +mktemp printf printf [[ [[ history="
+            " +mktemp git IFS= read commit= subject= [[ number= title= +gh printf IFS= read"
+            " printf test test cat printf printf printf payload= +mktemp jq gh exit").split(),
             result.stderr)
         self.assertEqual([call[0] for call in made()], ["gh"] * 3)
         self.assertEqual([holding(call[2]) for call in made()],
