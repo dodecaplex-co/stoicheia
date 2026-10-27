@@ -55,9 +55,10 @@
     {
       "ref": "III.1",
       "field": "axioms",
+      "includes": ["Tacit.exists_centre"],
       "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 38},
-      "why": "III.1's certificate now also carries exists_centre through its construction, for D within by III.2's argument, and is counted separately from its porism: 39 tacit rules after the second retirement, and 38 since Book Zero and III.1's own proof stopped using Circle 1 (#477), between_of_inside_chord gone and nothing gained. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review."
+      "why": "III.1's certificate now also carries exists_centre, for D within by III.2's argument inside its construction and for the supposed centre G of its reductio, and the entry pins it by name, so that the count alone cannot hide it giving way to another rule. It is counted separately from its porism: 39 tacit rules after the second retirement, and 38 since Book Zero and III.1's own proof stopped using Circle 1 (#477), between_of_inside_chord gone and nothing gained. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review."
     },
     {
       "ref": "III.1 Por.",
@@ -214,6 +215,12 @@
       "field": "axioms",
       "excludes": ["Tacit.superposition"],
       "why": "III.6 does not rest on superposition (#75)."
+    },
+    {
+      "ref": "III.10",
+      "field": "own_axioms",
+      "excludes": ["Tacit.line_circle_beyond"],
+      "why": "III.10's own Lean does not call Intersections 5 (#476). The argument needs only a second point of each perpendicular, never where it meets the circle, so Postulate 2 produces them. Intersections 5 stays among III.10's inherited axioms, through Prop2.triangle and Book Zero lemmas, so this pin reads own_axioms only."
     },
     {
       "ref": "I.4",

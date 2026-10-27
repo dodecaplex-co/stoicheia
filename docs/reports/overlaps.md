@@ -71,7 +71,7 @@ centre from the rule.
 | Proposition | Assumption | Kind | First enters | Audit lemma |
 |---|---|---|---|---|
 | I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
-| [III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step: a centre for the proof that D is within the circle, by III.2's argument | III.1 | None |
+| [III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step, in two places: inside the construction, a centre for the proof that D is within the circle, by III.2's argument; and, in the reductio, the supposed centre G | III.1 | None |
 | [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`), a former assumption now proved (below) | Gives it at once: circles about one centre through one point coincide, and the point of one within the other would be within that circle and on it | III.10, which names it in its own Lean | `Audit.III_5` |
 | [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`), former assumptions now proved (below) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | III.10, which names it in its own Lean | `Audit.III_6` |
 
