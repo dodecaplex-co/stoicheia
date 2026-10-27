@@ -212,9 +212,10 @@ for one sends it to that owner through the coordinator.
 | `docs/reports/overlaps.md` and the gap catalogues, `docs/reports/gaps-book-*.md` | the ship doing Book III's circle-rules work |
 | `tests/certificate_expectations.json` | the ship whose train changes the certificate |
 
-The landing lane refuses a train whose change to a hand-written file conflicts with an
-unlanded train's change to it: such a train is built on the other's posted head and lands
-after it, or waits until it lands.
+The landing lane's intake, the coordinator's tooling outside this repository, refuses a
+train whose change to a hand-written file conflicts with an unlanded train's change to it;
+no check in this repository makes that refusal. Such a train is built on the other's posted
+head, or waits until it lands.
 
 ### File names
 
@@ -955,9 +956,9 @@ train and group as unreadable.
   the tests before planting; its `--counts-only` option runs the count plant,
   `scripts/negative/count_markers.py`, and the file-only regressions without a build.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
-  file in `docs/decisions/`, a bad header line in an entry, and a bad notes marker in a
-  brief or in PROGRAM.md (section 10, "Decision entries") before it writes, so CI's
-  `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
+  file in `docs/decisions/`, a bad header line in an entry, a bad notes marker in a brief
+  or in PROGRAM.md, and a notes region holding a line it does not write (section 10,
+  "Decision entries") before it writes, so CI's `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
   refusals, and the notes `render.py` fills, without Lean, and `negative_tests.py` runs it
   after the count regressions, before planting, with `--counts-only` too.
 - **The risk classes are tested without Lean.** `tests/test_risk.py` checks the table of
@@ -1699,7 +1700,8 @@ The header line says what the entry is news for:
 ```
 
 Its keys stand in that order, each once at most, separated by single spaces; `id`,
-`cards` and `line` are required, and no list names an item twice:
+`cards` and `line` are required, no list names an item twice, and the header is 2,000
+characters at most:
 
 - `id`, the entry's name for itself, lower-case letters and digits joined by hyphens,
   which no other entry's header bears;
@@ -1709,14 +1711,19 @@ Its keys stand in that order, each once at most, separated by single spaces; `id
   history;
 - `program`, the sections of PROGRAM.md it is news for, from a fixed list,
   `PROGRAM_NOTES`, which `render.py` and the regions' reader in
-  `scripts/generated_counts.py` share: `open-items` and `landed`, rather than PROGRAM's
-  headings, so that a heading may be renamed;
+  `scripts/generated_counts.py` share, rather than PROGRAM's headings, so that a heading
+  may be renamed. The list is `landed` alone: entries are only ever added, so a region of
+  them only grows, as a record of what landed does. A section whose items leave it, as
+  PROGRAM's open items do, needs a way for an entry to close an earlier entry's item,
+  which the header does not have;
 - `corrects` and `reverts`, the file names of the entries it corrects or reverts, as
   `2026-10-26-routes-iii-centre.md`, each earlier in name order, an entry without a
   header among them;
 - `line`, its news, in double quotes: one line of 1 to 300 characters, with no space at
-  either end, holding no `"`, no `<!--` or `-->` and no Markdown link, since it is copied
-  into pages in other folders, where a relative link would break.
+  either end, holding no `"`, no `<!--` or `-->`, no Markdown link and no `<`, `[` or `]`,
+  since it is copied into pages in other folders, where a relative link would break, raw
+  HTML could hide text or link to a file, and a bracket could bind to a link the page
+  defines.
 
 `render.py` cannot tell a new entry from an old one, so it checks a header where one
 stands and requires none: the entries written before headers began have none, and keep
@@ -1726,10 +1733,19 @@ none. A brief holds one notes region at most, between `<!-- notes -->` and
 own; the decisions page holds none, and a marker malformed, unpaired, nested, repeated or
 out of its place stops the render. Between a region's markers `render.py` writes a line
 for each entry whose header names the brief, or the section, in name order: the date, the
-cards, the news, a sentence for the entries it corrects or reverts and one for the entries
-of the same region that correct or revert it, each linked, and a link to the entry. Where
-no markers stand, it writes nothing. Since an entry is never edited, a brief or a section
-of the list that an entry names is never renamed or removed while an entry names it.
+cards, the news, a sentence for the entries it corrects or reverts and one for every entry
+whose header corrects or reverts it, whatever that entry names, each linked, and a link to
+the entry. A region holds those lines and nothing else: a line of any other form between
+its markers, text written by hand or a blank line, stops the render, naming the file and
+the line, so that a misplaced marker never swallows text; a new region's two markers stand
+on consecutive lines. Where no markers stand, it writes nothing. Since an entry is never
+edited, a brief or a section of the list that an entry names is never renamed or removed
+while an entry names it.
+
+A brief or PROGRAM.md cannot quote a notes marker as it is: inline it is refused, and on a
+line of its own, even in a code fence, it is a live marker. To show one there, write
+`&lt;!-- notes -->` in running text, which reads as the marker; in code it would show as
+written.
 
 An entry is dated history, never edited: the pre-flight refuses a push that modifies,
 deletes or renames an entry origin/main holds (step 3, below), and a correction is a new

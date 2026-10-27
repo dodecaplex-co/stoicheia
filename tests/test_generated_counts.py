@@ -281,31 +281,45 @@ def note : String := "#print axioms Elements.inString"
 
     def test_markers_in_notes_regions_are_refused(self):
         # render.py replaces a notes region's text, so a count marker there is refused, in
-        # a brief and in each of PROGRAM.md's regions; one outside them is filled.
+        # a brief and in each of PROGRAM.md's regions; one outside them is filled. PROGRAM's
+        # sections are `landed` alone; a second, `later`, stands in for one a later card
+        # adds, so that a marker in the second of two regions is found too.
+        self.assertEqual(counts.PROGRAM_NOTES, ("landed",))
         marker = "<!-- count:vocabulary -->3<!-- /count -->"
         status = "<!-- status -->\nGenerated status.\n<!-- /status -->\n"
         cases = (
             ("docs/briefs/0008-centre.md",
              f"# Brief\n\n<!-- notes -->\n- {marker} words.\n<!-- /notes -->\n",
-             "docs/briefs/0008-centre.md notes region"),
+             "docs/briefs/0008-centre.md notes region", ("landed",)),
             ("docs/PROGRAM.md",
              f"# Programme\n{status}<!-- notes:landed -->\n{marker}\n<!-- /notes:landed -->\n",
-             "docs/PROGRAM.md notes:landed region"),
+             "docs/PROGRAM.md notes:landed region", ("landed",)),
             ("docs/PROGRAM.md",
-             f"# Programme\n{status}<!-- notes:open-items -->\n<!-- /notes:open-items -->\n"
+             f"# Programme\n{status}<!-- notes:later -->\n<!-- /notes:later -->\n"
              f"<!-- notes:landed -->\n- {marker}\n<!-- /notes:landed -->\n",
-             "docs/PROGRAM.md notes:landed region"),
+             "docs/PROGRAM.md notes:landed region", ("landed", "later")),
         )
-        for path, text, region in cases:
+        for path, text, region, sections in cases:
             source = self.write(path, text)
             line = text.count("\n", 0, counts.START.search(text).start()) + 1
             for check in (False, True):
-                with self.subTest(path=path, text=text, check=check):
+                with (self.subTest(path=path, text=text, check=check),
+                      patch.object(counts, "PROGRAM_NOTES", sections)):
                     changes, errors = self.scan([path], check=check)
                     self.assertEqual(changes, {})
                     self.assertEqual(errors, [f"{path}:{line}: count marker 'vocabulary' is "
                                               f"forbidden in {region}"])
                     self.assertEqual(source.read_text(), text)
+        # A section not in the list is refused: `open-items` among them, whose items leave
+        # it, which entries that are only ever added cannot do.
+        path = "docs/PROGRAM.md"
+        self.write(path, f"# Programme\n{marker}\n<!-- notes:open-items -->\n"
+                         "<!-- /notes:open-items -->\n")
+        for check in (False, True):
+            with self.subTest(section="open-items", check=check):
+                self.assertEqual(self.scan([path], check=check), ({}, [
+                    f"{path}:3: unknown notes section 'open-items'; docs/PROGRAM.md's are "
+                    "landed"]))
         path = "docs/briefs/0008-centre.md"
         text = f"# Brief\n\n{marker} words.\n\n<!-- notes -->\n- Notes.\n<!-- /notes -->\n"
         source = self.write(path, text)

@@ -3011,6 +3011,8 @@ ENTRY_KEY = re.compile(r"([^= ]+)=")
 ENTRY_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 ENTRY_CARD = re.compile(r"[1-9][0-9]*")
 ENTRY_LINE_LIMIT = 300
+# The longest header read: a longer line 1 is refused before it is parsed.
+ENTRY_HEADER_LIMIT = 2000
 # The sections of PROGRAM.md that may hold notes (generated_counts.py, beside the reader
 # of the regions, which every tool that reads them shares).
 PROGRAM_NOTES = generated_counts.PROGRAM_NOTES
@@ -3035,14 +3037,13 @@ def entry_header(name, text, stems, earlier):
     ENTRY_KEYS (each list split at its commas, the cards as numbers), or None where it
     has none. `stems` are the briefs' (brief_stems), `earlier` the names of the entries
     that sort before it. Anything but the exact form is refused, naming the file and the
-    line: a `<!-- entry` comment anywhere but at the start of line 1; an unknown key, a
-    key out of order or twice, extra spaces, a missing `-->` or text after it; an id that
-    is not lower-case letters and digits joined by hyphens; a card that is not an issue
-    number; a brief not in docs/briefs/, or the decisions page, which is dated history; a
-    section not in PROGRAM_NOTES; a correction or revert of an entry that is not earlier;
-    an item repeated or empty; and a line empty, longer than ENTRY_LINE_LIMIT, with a
-    space at either end, or holding a `"`, a comment's `<!--` or `-->` or a Markdown link,
-    which would break where the line is copied, in pages of other folders."""
+    line: a `<!-- entry` comment anywhere but at the start of line 1; a header longer than
+    ENTRY_HEADER_LIMIT, before it is parsed; an unknown key, a key out of order or twice,
+    extra spaces, a missing `-->` or text after it; an id that is not lower-case letters
+    and digits joined by hyphens; a card that is not an issue number; a brief not in
+    docs/briefs/, or the decisions page, which is dated history; a section not in
+    PROGRAM_NOTES; a correction or revert of an entry that is not earlier; an item
+    repeated or empty; and a line that is no news (news_fault)."""
     where = f"docs/decisions/{name}"
 
     def refuse(number, why):
@@ -3056,6 +3057,9 @@ def entry_header(name, text, stems, earlier):
     if not tokens:
         return None
     first = text.split("\n", 1)[0]
+    if len(first) > ENTRY_HEADER_LIMIT:
+        refuse(1, f"a header is {ENTRY_HEADER_LIMIT:,} characters at most, not "
+                  f"{len(first):,}")
     if not first.startswith(ENTRY_OPEN):
         refuse(1, f'a header begins "{ENTRY_OPEN}" exactly')
     if "-->" not in first:
@@ -3101,9 +3105,11 @@ def entry_header(name, text, stems, earlier):
     for key, items in lists.items():
         if "" in items:
             refuse(1, f"{key} is a list joined by commas, with no empty item")
-        twice = next((item for item in items if items.count(item) > 1), None)
-        if twice is not None:
-            refuse(1, f"{key} names {twice!r} twice")
+        seen = set()
+        for item in items:
+            if item in seen:
+                refuse(1, f"{key} names {item!r} twice")
+            seen.add(item)
     for card in lists["cards"]:
         if not ENTRY_CARD.fullmatch(card):
             refuse(1, f"the card {card!r} is not an issue number: digits, with no leading "
@@ -3124,19 +3130,35 @@ def entry_header(name, text, stems, earlier):
                 refuse(1, f"{key} {other!r}: a correction or revert must name an earlier "
                           "entry")
     line = fields["line"]
-    if not 1 <= len(line) <= ENTRY_LINE_LIMIT:
-        refuse(1, f"the line is 1 to {ENTRY_LINE_LIMIT} characters, not {len(line)}")
-    if line != line.strip():
-        refuse(1, "the line has no space at its start or its end")
-    if '"' in line:
-        refuse(1, 'the line holds no "')
-    if "<!--" in line or "-->" in line:
-        refuse(1, "the line holds no <!-- or -->")
-    if "](" in line:
-        refuse(1, "the line holds no Markdown link, since it is copied into pages in other "
-                  "folders, where a relative link would break")
+    fault = news_fault(line)
+    if fault:
+        refuse(1, fault)
     return {"id": fields["id"], **lists, "cards": [int(card) for card in lists["cards"]],
             "line": line}
+
+
+def news_fault(line):
+    """Why `line` may not be an entry's news, or None where it may. The news is copied
+    into pages of other folders, so it is one line of 1 to ENTRY_LINE_LIMIT characters,
+    with no space at either end, and holds no `"`, which would end it; no comment's `<!--`
+    or `-->`, which would hide part of the page; no Markdown link, where a relative link
+    would break; and no `<`, `[` or `]`, since raw HTML could hide text or link to a file,
+    and a bracket could bind to a link the page defines."""
+    if not 1 <= len(line) <= ENTRY_LINE_LIMIT:
+        return f"the line is 1 to {ENTRY_LINE_LIMIT} characters, not {len(line)}"
+    if line != line.strip():
+        return "the line has no space at its start or its end"
+    if '"' in line:
+        return 'the line holds no "'
+    if "<!--" in line or "-->" in line:
+        return "the line holds no <!-- or -->"
+    if "](" in line:
+        return ("the line holds no Markdown link, since it is copied into pages in other "
+                "folders, where a relative link would break")
+    if any(char in line for char in "<[]"):
+        return ("the line holds no <, [ or ]: raw HTML could hide text or link to a file, "
+                "and a bracket could bind to a link the page it is copied into defines")
+    return None
 
 
 def entry_headers(entries):
@@ -3169,34 +3191,81 @@ def entry_day(name):
     return f"{day.day} {MONTHS[day.month - 1]} {day.year}"
 
 
-def notes_lines(headers, named, up):
-    """The lines of a notes region: one for each of `named`, the entries whose headers name
-    it, in name order, which is date order. `up` leads from the page to docs/: "../" from a
-    brief, "" from PROGRAM.md. A line gives the entry's date, its cards in numeric order and
-    its news; then a sentence for the entries it corrects and for those it reverts, and,
-    for the entries of the same region that correct or revert it, one for each kind, each
-    entry linked; then the link to the entry itself."""
-    def linked(verb, others):
+# The sentences a notes line gives after its news, in this order: the entries it corrects,
+# those it reverts, and those that correct it or revert it.
+NOTES_VERBS = ("Corrects", "Reverts", "Corrected by", "Reverted by")
+
+
+def notes_line(name, cards, news, linked, up):
+    """The line of a notes region for the entry `name`: its date, its `cards` in numeric
+    order and its `news`; then, for each of NOTES_VERBS that `linked` gives entries to, a
+    sentence naming them in name order, each linked; then the link to the entry itself.
+    `up` leads from the page to docs/: "../" from a brief, "" from PROGRAM.md."""
+    def sentence(verb, others):
         if not others:
             return ""
         return f" {verb} " + and_list(f"[the entry of {entry_day(other)}]"
-                                      f"({up}decisions/{other})" for other in others) + "."
+                                      f"({up}decisions/{other})"
+                                      for other in sorted(others)) + "."
 
-    named = sorted(named)
-    lines = []
-    for name in named:
-        header = headers[name]
-        cards = ", ".join(f"[#{card}]({REPO}/issues/{card})"
-                          for card in sorted(header["cards"]))
-        lines.append(f"- {entry_day(name)}, {cards}: {header['line']}"
-                     + linked("Corrects", sorted(header["corrects"]))
-                     + linked("Reverts", sorted(header["reverts"]))
-                     + linked("Corrected by", [other for other in named
-                                               if name in headers[other]["corrects"]])
-                     + linked("Reverted by", [other for other in named
-                                              if name in headers[other]["reverts"]])
-                     + f" ([the entry]({up}decisions/{name}))")
-    return lines
+    links = ", ".join(f"[#{card}]({REPO}/issues/{card})" for card in sorted(cards))
+    return (f"- {entry_day(name)}, {links}: {news}"
+            + "".join(sentence(verb, others) for verb, others in zip(NOTES_VERBS, linked))
+            + f" ([the entry]({up}decisions/{name}))")
+
+
+def notes_lines(headers, named, up):
+    """The lines of a notes region (notes_line): one for each of `named`, the entries whose
+    headers name it, in name order, which is date order. The entries that correct or
+    revert an entry are read from every header of `headers`, whatever it names, so that a
+    correction is shown wherever the entry it corrects is."""
+    by = {"corrects": {}, "reverts": {}}
+    for other, header in headers.items():
+        for key, named_by in by.items():
+            for name in header[key]:
+                named_by.setdefault(name, []).append(other)
+    return [notes_line(name, headers[name]["cards"], headers[name]["line"],
+                       (headers[name]["corrects"], headers[name]["reverts"],
+                        by["corrects"].get(name, []), by["reverts"].get(name, [])), up)
+            for name in sorted(named)]
+
+
+@functools.cache
+def notes_form(up):
+    """The pattern of a line notes_line writes on a page whose way to docs/ is `up`, read
+    into its cards, its news, the entries each of NOTES_VERBS names (`v0` to `v3`) and the
+    entry's own name; notes_rendered checks the rest."""
+    up = re.escape(up)
+    name = r"[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md"
+    link = rf"\[the entry of [^\]\n]*\]\({up}decisions/{name}\)"
+    card = rf"\[#[1-9][0-9]*\]\({re.escape(REPO)}/issues/[1-9][0-9]*\)"
+    sentences = "".join(rf"(?: {verb} (?P<v{number}>{link}(?:(?:, | and ){link})*)\.)?"
+                        for number, verb in enumerate(NOTES_VERBS))
+    return re.compile(rf"- [^,\n]+, (?P<cards>{card}(?:, {card})*): "
+                      rf"(?P<news>[^\"<\[\]\n]+){sentences} "
+                      rf"\(\[the entry\]\({up}decisions/(?P<name>{name})\)\)")
+
+
+def notes_rendered(line, up):
+    """Whether `line` is a line notes_line writes on a page whose way to docs/ is `up`:
+    read into its parts (notes_form), its news is news an entry may give (news_fault),
+    with no character an entry may not hold (invisible), it names no card or entry twice,
+    and written again from its parts it is the same line, so that its date is its entry's
+    and its cards and entries stand in order."""
+    match = notes_form(up).fullmatch(line)
+    if (match is None or news_fault(match["news"])
+            or any(invisible(char) for char in match["news"])):
+        return False
+    cards = [int(card) for card in re.findall(r"\[#([0-9]+)\]", match["cards"])]
+    linked = [re.findall(r"decisions/([^)]*)\)", match[f"v{number}"] or "")
+              for number in range(len(NOTES_VERBS))]
+    if any(len(set(items)) < len(items) for items in (cards, *linked)):
+        return False
+    try:
+        again = notes_line(match["name"], cards, match["news"], linked, up)
+    except ValueError:  # a name whose date is no day of the calendar
+        return False
+    return again == line
 
 
 def notes_updates(headers, changes):
@@ -3207,8 +3276,10 @@ def notes_updates(headers, changes):
     regions and the number of pages that hold one. A page without markers is left as it
     is, and a region no header names is left empty, its two markers on consecutive lines.
     Every page's markers are read (generated_counts.notes_regions) before anything is
-    written, the decisions page's among them, which may hold none: a fault in any stops
-    the render, naming each."""
+    written, the decisions page's among them, which may hold none, and every line between
+    them must be a line render.py writes (notes_rendered), so that a misplaced marker never
+    swallows text written by hand: a fault in any stops the render, naming each page's
+    faults, the first line of each region that holds another."""
     rels = [(ROOT / "docs" / "briefs" / f"{stem}.md").relative_to(ROOT)
             for stem in brief_stems()]
     if os.path.lexists(ROOT / generated_counts.PROGRAM_PAGE):
@@ -3223,6 +3294,16 @@ def notes_updates(headers, changes):
             errors.append(printable_text(str(error)))
             continue
         up = "" if rel == generated_counts.PROGRAM_PAGE else "../"
+        for region in found:
+            first = text.count("\n", 0, region.body_start) + 1
+            lines = text[region.body_start:region.body_end].split("\n")[:-1]
+            stray = next((number for number, line in enumerate(lines, first)
+                          if not notes_rendered(line, up)), None)
+            if stray is not None:
+                errors.append(printable_text(
+                    f"{rel}:{stray}: a notes region holds only the lines render.py writes, "
+                    "and this is not one; move the text written by hand, or the marker, so "
+                    "that the region does not swallow it"))
         new = text
         for region in reversed(found):
             named = [name for name, header in headers.items()

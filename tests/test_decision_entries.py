@@ -6,8 +6,9 @@ root's .gitignore, .git/info/exclude or the user's excludes file, never a nested
 without a header into another page and leaves the decisions record as it was. Then the
 header line an entry may begin with, each of its refusals, and the notes regions of the
 briefs and of PROGRAM.md that render.py fills from the headers: their lines, their markers'
-refusals, which come before any write, and a whole run on a copy that changes one brief,
-between its markers, and nothing else.
+refusals and the refusal of a region holding a line render.py does not write, which come
+before any write, and a whole run on a copy that changes no file, then, with markers
+planted, one brief, between its markers, and nothing else.
 
     python3 -I tests/test_decision_entries.py
 
@@ -504,12 +505,25 @@ class EntryHeaders(HeaderFolder):
         line = "x" * render.ENTRY_LINE_LIMIT
         self.headed("2026-10-27-full.md", header(
             "id=full-2", "cards=577,12", "briefs=0008-centre,book-I",
-            "program=open-items,landed", "corrects=2026-10-25-old.md",
+            "program=landed", "corrects=2026-10-25-old.md",
             "reverts=2026-10-26-older.md,2026-10-25-old.md", line=line))
         self.assertEqual(self.headers()["2026-10-27-full.md"], {
             "id": "full-2", "cards": [577, 12], "briefs": ["0008-centre", "book-I"],
-            "program": ["open-items", "landed"], "corrects": ["2026-10-25-old.md"],
+            "program": ["landed"], "corrects": ["2026-10-25-old.md"],
             "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"], "line": line})
+
+    def test_a_header_of_the_longest_length_is_read(self):
+        # A header of ENTRY_HEADER_LIMIT characters is read; one character more is refused
+        # before it is parsed.
+        base = len(header("id=", "cards=1"))
+        longest = header("id=" + "a" * (render.ENTRY_HEADER_LIMIT - base), "cards=1")
+        self.assertEqual(len(longest), render.ENTRY_HEADER_LIMIT)
+        self.headed("2026-10-27-long.md", longest)
+        self.assertEqual(self.headers()["2026-10-27-long.md"]["cards"], [1])
+        self.headed("2026-10-27-long.md", longest.replace("id=a", "id=aa", 1))
+        with self.refused("^docs/decisions/2026-10-27-long\\.md:1: a header is 2,000 "
+                          "characters at most, not 2,001$"):
+            self.headers()
 
     def test_only_the_required_keys_and_no_header(self):
         self.headed("2026-10-27-a.md", header("id=a", "cards=1", line="News, of a kind."))
@@ -569,7 +583,10 @@ class EntryHeaders(HeaderFolder):
              "briefs names 'book-I' twice"),
             ('<!-- entry: id=a cards=1 program=status line="x" -->',
              "unknown PROGRAM.md section 'status'; the sections that hold notes are "
-             "open-items, landed"),
+             "landed"),
+            ('<!-- entry: id=a cards=1 program=open-items line="x" -->',
+             "unknown PROGRAM.md section 'open-items'; the sections that hold notes are "
+             "landed"),
             ('<!-- entry: id=a cards=1 program=Landed line="x" -->',
              "unknown PROGRAM.md section 'Landed'"),
             ('<!-- entry: id=a cards=1 program=landed,landed line="x" -->',
@@ -586,6 +603,16 @@ class EntryHeaders(HeaderFolder):
             (header("id=a", "cards=1", line="a --> b"), "the line holds no <!-- or -->"),
             (header("id=a", "cards=1", line="see [it](../x.md)"),
              "the line holds no Markdown link"),
+            # Raw HTML, which could hide text or link to a file, and a bracket, which could
+            # bind to a link the page it is copied into defines (PROGRAM.md defines [#1]).
+            *((header("id=a", "cards=1", line=f"a {form} b"), "the line holds no <, [ or ]: "
+               "raw HTML could hide text or link to a file")
+              for form in ("<b>bold</b>", "<?hidden?>", "<!x hidden>",
+                           "<a href=../../SECRET.md>here</a>", "<details>folded</details>",
+                           "<https://example.com>", "[#1]", "[it][#1]", "[x", "x]")),
+            ("<!-- entry: colour=" + "x" * render.ENTRY_HEADER_LIMIT + " -->",
+             f"a header is 2,000 characters at most, not "
+             f"{render.ENTRY_HEADER_LIMIT + len('<!-- entry: colour= -->'):,}"),
             (" " + header("id=a", "cards=1"), "an entry's header is its line 1"),
             (header("id=a", "cards=1") + header("id=b", "cards=2"),
              "an entry's header is its line 1, and it has one at most"),
@@ -705,6 +732,26 @@ class NotesRegions(HeaderFolder):
         path.write_text(want, encoding="utf-8")
         self.assertEqual(self.filled(), ({}, 1, 1))
 
+    def test_entries_of_one_day_stand_in_name_order(self):
+        # Two entries of one day in one region, written in the reverse of their names'
+        # order: the line of the slug that sorts first stands first.
+        path = self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n<!-- /notes -->\n")
+        self.headed("2026-10-27-third.md", header("id=third", "cards=577",
+                                                  "briefs=0008-centre", line="Third news."))
+        self.headed("2026-10-27-second.md", header("id=second", "cards=578",
+                                                   "briefs=0008-centre", line="Second news."))
+        want = ("# Centre\n\n<!-- notes -->\n"
+                f"- 27 October 2026, [#578]({ISSUE}578): Second news. "
+                "([the entry](../decisions/2026-10-27-second.md))\n"
+                f"- 27 October 2026, [#577]({ISSUE}577): Third news. "
+                "([the entry](../decisions/2026-10-27-third.md))\n<!-- /notes -->\n")
+        headers = self.headers()
+        shuffled = dict(reversed(list(headers.items())))
+        self.assertEqual(list(shuffled), ["2026-10-27-third.md", "2026-10-27-second.md"])
+        for given in (headers, shuffled):
+            with self.subTest(order=list(given)):
+                self.assertEqual(self.filled(given), ({path: want}, 1, 1))
+
     def test_a_page_without_markers_is_left_as_it_is(self):
         text = "# Book I\n\nNamed by an entry, but holding no markers.\n"
         path = self.brief("book-I", text)
@@ -715,25 +762,40 @@ class NotesRegions(HeaderFolder):
         self.assertEqual({p: p.read_bytes() for p in before}, before)
 
     def test_the_program_regions(self):
-        self.program.write_text(
-            "# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n### Landed\n\n"
-            "<!-- notes:landed -->\n- A stale line, replaced.\n<!-- /notes:landed -->\n\n"
-            "### Open items\n\n<!-- notes:open-items -->\n<!-- /notes:open-items -->\n",
-            encoding="utf-8")
-        self.headed("2026-10-26-open.md", header("id=open", "cards=7", "program=open-items",
-                                                 line="Open news."))
+        # PROGRAM.md's sections are `landed` alone, in the list render.py and the regions'
+        # reader share.
+        self.assertEqual(render.PROGRAM_NOTES, ("landed",))
+        self.assertIs(render.PROGRAM_NOTES, render.generated_counts.PROGRAM_NOTES)
+        top = "# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n### Landed\n\n"
+        stale = (f"- 20 October 2026, [#6]({ISSUE}6): Stale news, replaced. "
+                 "([the entry](decisions/2026-10-20-stale.md))")
+        self.program.write_text(f"{top}<!-- notes:landed -->\n{stale}\n<!-- /notes:landed -->\n",
+                                encoding="utf-8")
+        self.headed("2026-10-26-one.md", header("id=one", "cards=7", "program=landed",
+                                                line="One news."))
         self.headed("2026-10-27-both.md", header("id=both", "cards=8", "briefs=book-I",
-                                                 "program=landed,open-items",
-                                                 line="Both news."))
-        open_line = (f"- 26 October 2026, [#7]({ISSUE}7): Open news. "
-                     "([the entry](decisions/2026-10-26-open.md))")
+                                                 "program=landed", line="Both news."))
+        one_line = (f"- 26 October 2026, [#7]({ISSUE}7): One news. "
+                    "([the entry](decisions/2026-10-26-one.md))")
         both_line = (f"- 27 October 2026, [#8]({ISSUE}8): Both news. "
                      "([the entry](decisions/2026-10-27-both.md))")
-        want = ("# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n### Landed\n\n"
-                f"<!-- notes:landed -->\n{both_line}\n<!-- /notes:landed -->\n\n"
-                f"### Open items\n\n<!-- notes:open-items -->\n{open_line}\n{both_line}\n"
-                "<!-- /notes:open-items -->\n")
-        self.assertEqual(self.filled(), ({self.program: want}, 2, 1))
+        want = f"{top}<!-- notes:landed -->\n{one_line}\n{both_line}\n<!-- /notes:landed -->\n"
+        self.assertEqual(self.filled(), ({self.program: want}, 1, 1))
+        # Two sections, each region filled with the entries that name it: `later` stands in
+        # for a section a later card adds.
+        self.program.write_text(
+            f"{top}<!-- notes:landed -->\n{stale}\n<!-- /notes:landed -->\n\n### Later\n\n"
+            "<!-- notes:later -->\n<!-- /notes:later -->\n", encoding="utf-8")
+        with (mock.patch.object(render, "PROGRAM_NOTES", ("landed", "later")),
+              mock.patch.object(render.generated_counts, "PROGRAM_NOTES", ("landed", "later"))):
+            self.headed("2026-10-26-one.md", header("id=one", "cards=7", "program=later",
+                                                    line="One news."))
+            self.headed("2026-10-27-both.md", header("id=both", "cards=8", "briefs=book-I",
+                                                     "program=landed,later", line="Both news."))
+            want = (f"{top}<!-- notes:landed -->\n{both_line}\n<!-- /notes:landed -->\n\n"
+                    f"### Later\n\n<!-- notes:later -->\n{one_line}\n{both_line}\n"
+                    "<!-- /notes:later -->\n")
+            self.assertEqual(self.filled(), ({self.program: want}, 2, 1))
 
     def test_corrections_and_reverts_are_linked_both_ways(self):
         path = self.brief("book-I", "# Book I\n\n<!-- notes -->\n<!-- /notes -->\n")
@@ -747,6 +809,10 @@ class NotesRegions(HeaderFolder):
         self.headed("2026-10-27-d.md", header("id=d", "cards=4", "briefs=0008-centre",
                                               "corrects=2026-10-25-a.md,2026-10-24-old.md",
                                               "reverts=2026-10-26-b.md", line="D."))
+        # A correction or revert is shown wherever the entry it names is, whatever region
+        # the correcting entry names: D names another brief, and E names none.
+        self.headed("2026-10-28-e.md", header("id=e", "cards=5", "reverts=2026-10-27-c.md",
+                                              line="E."))
 
         def entry(name):
             return f"[the entry of {render.entry_day(name)}](../decisions/{name})"
@@ -754,11 +820,13 @@ class NotesRegions(HeaderFolder):
         want = {
             path: "# Book I\n\n<!-- notes -->\n"
                   f"- 25 October 2026, [#1]({ISSUE}1): A. Corrected by "
-                  f"{entry('2026-10-26-b.md')}. ([the entry](../decisions/2026-10-25-a.md))\n"
+                  f"{entry('2026-10-26-b.md')} and {entry('2026-10-27-d.md')}. "
+                  "([the entry](../decisions/2026-10-25-a.md))\n"
                   f"- 26 October 2026, [#2]({ISSUE}2): B. Corrects {entry('2026-10-25-a.md')}."
-                  f" Reverted by {entry('2026-10-27-c.md')}. "
+                  f" Reverted by {entry('2026-10-27-c.md')} and {entry('2026-10-27-d.md')}. "
                   "([the entry](../decisions/2026-10-26-b.md))\n"
                   f"- 27 October 2026, [#3]({ISSUE}3): C. Reverts {entry('2026-10-26-b.md')}. "
+                  f"Reverted by {entry('2026-10-28-e.md')}. "
                   "([the entry](../decisions/2026-10-27-c.md))\n<!-- /notes -->\n",
             other: "# Centre\n\n<!-- notes -->\n"
                    f"- 27 October 2026, [#4]({ISSUE}4): D. Corrects "
@@ -771,7 +839,12 @@ class NotesRegions(HeaderFolder):
 
     def test_a_region_no_header_names_is_empty(self):
         self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I"))
-        path = self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n- Old.\n- Older.\n"
+        # Two lines a render wrote before, of entries that name the brief no longer.
+        path = self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n"
+                                         f"- 20 October 2026, [#5]({ISSUE}5): Old. "
+                                         "([the entry](../decisions/2026-10-20-old.md))\n"
+                                         f"- 21 October 2026, [#6]({ISSUE}6): Older. "
+                                         "([the entry](../decisions/2026-10-21-older.md))\n"
                                          "<!-- /notes -->\nAfter.\n")
         self.assertEqual(self.filled(),
                          ({path: "# Centre\n\n<!-- notes -->\n<!-- /notes -->\nAfter.\n"}, 1, 1))
@@ -816,10 +889,12 @@ class NotesRegions(HeaderFolder):
             ("<!-- notes -->\n<!-- /notes -->\n", 1,
              "a notes marker of docs/PROGRAM.md names its section"),
             ("<!-- notes:status -->\n<!-- /notes:status -->\n", 1,
-             "unknown notes section 'status'; docs/PROGRAM.md's are open-items, landed"),
+             "unknown notes section 'status'; docs/PROGRAM.md's are landed"),
+            ("<!-- notes:open-items -->\n<!-- /notes:open-items -->\n", 1,
+             "unknown notes section 'open-items'; docs/PROGRAM.md's are landed"),
             ("<!-- notes:Landed -->\n<!-- /notes:Landed -->\n", 1, "malformed notes marker"),
             ("<!-- notes:landed -->\n<!-- /notes:open-items -->\n", 2,
-             "notes closing marker does not close the region 'landed', opened on line 1"),
+             "unknown notes section 'open-items'; docs/PROGRAM.md's are landed"),
             ("<!-- notes:landed -->\n<!-- /notes:landed -->\n<!-- notes:landed -->\n"
              "<!-- /notes:landed -->\n", 3,
              "repeated notes region; section 'landed' has one at most"),
@@ -838,6 +913,17 @@ class NotesRegions(HeaderFolder):
                                       f"{re.escape(rel)}:{number}: {re.escape(message)}$"):
                         self.filled()
             path.write_text("# Again as it was.\n", encoding="utf-8")
+        # A region closed by another section's marker: `later` stands in for a section a
+        # later card adds.
+        with (mock.patch.object(render.generated_counts, "PROGRAM_NOTES", ("landed", "later")),
+              self.subTest(path="docs/PROGRAM.md", sections="landed, later")):
+            self.program.write_text("<!-- notes:landed -->\n<!-- /notes:later -->\n",
+                                    encoding="utf-8")
+            with self.refused("^notes regions: nothing was rendered:\ndocs/PROGRAM.md:2: "
+                              "notes closing marker does not close the region 'landed', "
+                              "opened on line 1$"):
+                self.filled()
+        self.program.write_text("# Again as it was.\n", encoding="utf-8")
         for text in ("<!-- notes -->\n<!-- /notes -->\n", "<!-- /notes -->\n"):
             with self.subTest(path="docs/briefs/0002-decisions.md", text=text):
                 self.brief("0002-decisions", "# Decisions\n\n" + text)
@@ -855,21 +941,93 @@ class NotesRegions(HeaderFolder):
             "docs/briefs/book-I.md:1: unclosed notes marker",
             "docs/PROGRAM.md:1: a notes marker of docs/PROGRAM.md names its section"])
 
+    def test_a_region_holds_only_the_lines_render_writes(self):
+        # A misplaced marker never swallows text written by hand: a region whose body holds
+        # a line render.py does not write is refused, naming its first such line, and the
+        # page is left as it is.
+        self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=0008-centre",
+                                              "program=landed"))
+        good = (f"- 26 October 2026, [#5]({ISSUE}5): Good news. Corrects [the entry of 20 "
+                "October 2026](../decisions/2026-10-20-x.md). "
+                "([the entry](../decisions/2026-10-26-good.md))")
+        authored = ("A paragraph written by hand, which the region would swallow.\n\n"
+                    "Another, with [a link](../WORKFLOW.md).\n")
+        cases = (
+            ("authored paragraphs", authored, 4),
+            ("a blank line", f"{good}\n\n", 5),
+            ("a list item", f"{good}\n- An old status line.\n", 5),
+            ("a space at the end", f"{good} \n", 4),
+            ("a space after the colon", good.replace(": Good", ":  Good") + "\n", 4),
+            ("a date not the entry's", good.replace("- 26 October", "- 27 October") + "\n", 4),
+            ("a card linked elsewhere", good.replace("issues/5)", "issues/6)") + "\n", 4),
+            ("cards out of order", good.replace(f"[#5]({ISSUE}5)",
+                                                f"[#6]({ISSUE}6), [#5]({ISSUE}5)") + "\n", 4),
+            ("a card twice", good.replace(f"[#5]({ISSUE}5)",
+                                          f"[#5]({ISSUE}5), [#5]({ISSUE}5)") + "\n", 4),
+            ("a link's day not its entry's", good.replace("of 20 October", "of 21 October")
+             + "\n", 4),
+            ("PROGRAM.md's links in a brief", good.replace("../decisions/", "decisions/")
+             + "\n", 4),
+            ("news holding <", good.replace("Good news.", "Good <b>news</b>.") + "\n", 4),
+            ("news holding a quote", good.replace("Good news.", 'Good "news".') + "\n", 4),
+            ("a day not in the calendar", good.replace("2026-10-26-good", "2026-02-30-good")
+             + "\n", 4),
+        )
+        self.assertEqual(render.notes_lines(
+            {"2026-10-26-good.md": {"cards": [5], "line": "Good news.",
+                                    "corrects": ["2026-10-20-x.md"], "reverts": []}},
+            ["2026-10-26-good.md"], "../"), [good])
+        for what, body, number in cases:
+            with self.subTest(region=what):
+                text = f"# Centre\n\n<!-- notes -->\n{body}<!-- /notes -->\nAfter.\n"
+                path = self.brief("0008-centre", text)
+                with self.refused("^notes regions: nothing was rendered:\n"
+                                  f"docs/briefs/0008-centre\\.md:{number}: a notes region "
+                                  "holds only the lines render\\.py writes, and this is not "
+                                  "one; move the text written by hand, or the marker, so that "
+                                  "the region does not swallow it$"):
+                    self.filled()
+                self.assertEqual(path.read_text(encoding="utf-8"), text)
+        # In PROGRAM.md too, whose links lead to docs/ from docs/.
+        self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n<!-- /notes -->\n")
+        top = "# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n"
+        for body, number in ((authored, 8), (good + "\n", 8),
+                             (good.replace("../decisions/", "decisions/") + "\n- Old.\n", 9)):
+            with self.subTest(page="docs/PROGRAM.md", body=body):
+                text = f"{top}<!-- notes:landed -->\n{body}<!-- /notes:landed -->\n"
+                self.program.write_text(text, encoding="utf-8")
+                with self.refused(f"^notes regions: nothing was rendered:\ndocs/PROGRAM\\.md:"
+                                  f"{number}: a notes region holds only the lines"):
+                    self.filled()
+                self.assertEqual(self.program.read_text(encoding="utf-8"), text)
+        # A region that holds the lines a render wrote, or none, is filled.
+        self.program.write_text(f"{top}<!-- notes:landed -->\n"
+                                + good.replace("../decisions/", "decisions/")
+                                + "\n<!-- /notes:landed -->\n", encoding="utf-8")
+        self.brief("0008-centre", f"# Centre\n\n<!-- notes -->\n{good}\n<!-- /notes -->\n")
+        filled, regions, pages = self.filled()
+        self.assertEqual((len(filled), regions, pages), (2, 2, 2))
+
     def test_refusals_precede_all_renderer_writes(self):
-        # A bad header, or a bad notes marker, renders nothing: no count is written, and no
-        # page is built.
+        # A bad header, a bad notes marker, or a region around text written by hand, renders
+        # nothing: no count is written, and no page is built.
         pending = self.root / "pending.md"
         pending.write_text("<!-- count:vocabulary -->0<!-- /count -->\n", encoding="utf-8")
         brief = self.brief("book-I", "# Book I\n\n<!-- notes -->\n<!-- /notes -->\n")
-        for case in ("header", "marker"):
+        for case in ("header", "marker", "authored"):
             with self.subTest(case=case):
                 if case == "header":
                     self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-II"))
                     message = "no brief docs/briefs/book-II.md"
-                else:
+                elif case == "marker":
                     self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I"))
                     self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n")
                     message = "docs/briefs/0008-centre.md:3: unclosed notes marker"
+                else:
+                    self.brief("0008-centre", "# Centre\n\n<!-- notes -->\nA paragraph written "
+                                              "by hand.\n\nAnother.\n<!-- /notes -->\n")
+                    message = ("docs/briefs/0008-centre.md:4: a notes region holds only the "
+                               "lines render.py writes")
                 paths = [pending, brief, *self.briefs.iterdir(), self.program,
                          *self.folder.iterdir()]
                 before = {path: path.read_bytes() for path in paths}
@@ -889,9 +1047,9 @@ class NotesRegions(HeaderFolder):
 
 
 class RenderFillsTheNotes(unittest.TestCase):
-    """render.py, run whole on a copy of the sources with a headed entry and a pair of notes
-    markers planted in one brief, changes that brief, between its markers, and nothing
-    else."""
+    """render.py, run whole on a copy of the sources with a headed entry, changes no file;
+    with a pair of notes markers planted in one brief besides, it changes that brief,
+    between its markers, and nothing else."""
 
     def test_one_brief_changes_between_its_markers_alone(self):
         from negative_tests import count_source_copy
@@ -919,8 +1077,13 @@ class RenderFillsTheNotes(unittest.TestCase):
                         if path.is_file() and "__pycache__" not in path.parts}
 
             # First as the sources stand, the entry beside them: no page has markers, so
-            # the header renders nothing.
+            # the header renders nothing, and every file is byte for byte as it was.
+            before = files()
             run("0 filled in 0 pages")
+            after = files()
+            self.assertEqual(set(after), set(before))
+            self.assertEqual(sorted(path.relative_to(root).as_posix() for path in after
+                                    if before[path] != after[path]), [])
             brief = root / "docs" / "briefs" / "0008-centre.md"
             pair = "<!-- notes -->\n<!-- /notes -->\n"
             self.assertNotIn("<!-- notes", brief.read_text(encoding="utf-8"))

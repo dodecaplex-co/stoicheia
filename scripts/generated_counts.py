@@ -475,11 +475,15 @@ PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)
 # `<!-- notes -->` and `<!-- /notes -->`; docs/PROGRAM.md one at most for each section of
 # PROGRAM_NOTES, between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`. Each
 # marker stands on a line of its own. The decisions page, dated history, holds none.
-NOTES_START = re.compile(r"<!--\s*/?\s*notes\b", re.I)
+# The spaces are taken possessively, so a long run of them costs one pass, not a square.
+NOTES_START = re.compile(r"<!--\s*+/?\s*+notes\b", re.I)
 NOTES_MARKER = re.compile(r"<!-- (/?)notes(?::([a-z0-9]+(?:-[a-z0-9]+)*))? -->")
 # The sections of PROGRAM.md that may hold notes: a fixed vocabulary, not PROGRAM's
 # headings, so that renaming a heading can never break an entry, which is never edited.
-PROGRAM_NOTES = ("open-items", "landed")
+# `landed` alone: entries are only ever added, so a region of them only grows, as a record
+# of what landed does. A section whose items leave it, as PROGRAM's open items do, needs a
+# way for an entry to close an earlier one's item, which the header does not yet have.
+PROGRAM_NOTES = ("landed",)
 BRIEFS = Path("docs/briefs")
 DECISIONS_PAGE = BRIEFS / "0002-decisions.md"
 PROGRAM_PAGE = Path("docs/PROGRAM.md")
