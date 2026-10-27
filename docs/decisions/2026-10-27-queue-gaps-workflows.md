@@ -23,8 +23,9 @@
   out, since it is shown and never run. Any other setting, in any workflow, job or step,
   enforced or not, is refused, so a new way to weaken a job cannot pass unread. The model
   takes `if: ${{ x }}` as `if: x`, a need written alone as a list of one, triggers written
-  as a list as a mapping, and a continue-on-error that is false as none, since GitHub
-  reads each so. An `if` with text beside its `${{ }}`, or a second `${{ }}` in it, is
+  as a list as a mapping, an event written empty or as `{}` as one without filters, and a
+  continue-on-error that is false as none, since GitHub reads each so; an event given
+  `false`, `0` or another empty value keeps it, and matches no contract. An `if` with text beside its `${{ }}`, or a second `${{ }}` in it, is
   refused, since GitHub reads it as a string, which is always true.
 
   The contracts. `WORKFLOW_CONTRACTS`, in the test file, holds the contract of each of the
@@ -59,9 +60,11 @@
   and the shards' result and the proof's, 25 rows. In every row, its exit status and the
   lines it writes to `GITHUB_OUTPUT` must be the ones its contract gives the row. The
   table shows what the locked lines do over those inputs, not that they read nothing
-  else; that is for the review of a change to them, as for the other ten. So the
-  negative lane made to pass when the risk job did not succeed is refused by its digest
-  and by the first row it changes; a reworded message, a branch on an input the table
+  else; that is for the review of a change to them, as for the other ten. The rows run
+  only the lines the digest holds: a step whose text has changed is refused unrun, so no
+  workflow text under review runs in the test. So the negative lane made to pass when
+  the risk job did not succeed is refused by its digest, and its table, run over the
+  changed lines directly in a test of its own, shows the first row it changes; a reworded message, a branch on an input the table
   does not give, such as the event's name, and a failure suppressed by `|| true`, which
   would turn a failed write of `full=` green, change no row and are refused by the digest
   alone. A local run on macOS's bash 3.2 may refuse a form that CI's bash 5 accepts, such

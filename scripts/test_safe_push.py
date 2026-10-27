@@ -708,7 +708,10 @@ def workflow_meaning(workflow, place: str) -> dict:
         events = dict.fromkeys([events] if isinstance(events, str) else events)
     if not isinstance(events, dict) or not isinstance(meaning.get("jobs"), dict):
         raise AssertionError(f"{place} has no mapping of its triggers or of its jobs")
-    meaning["on"] = {event: filters or None for event, filters in events.items()}
+    # An event with no filters, written empty or as {}, is None; any other value, false
+    # or 0 among them, stays as written, so it matches no contract.
+    meaning["on"] = {event: None if filters is None or filters == {} else filters
+                     for event, filters in events.items()}
     jobs = meaning["jobs"] = {name: setting_meaning(job, JOB_KEYS, f"{place} job {name}")
                               for name, job in meaning["jobs"].items()}
     for name, job in jobs.items():
@@ -798,7 +801,10 @@ def contract_differences(found, wanted, place: str) -> list[str]:
     if isinstance(wanted, Script):
         digest = script_digest(found) if isinstance(found, tuple) else None
         problems = [] if digest == wanted.digest else [f"{place}: {digest}, not {wanted.digest}"]
-        if isinstance(wanted, Table) and digest and (rows := table_difference(found, wanted)):
+        # A Table's rows run only the text its digest holds: a changed step's text is
+        # refused unrun, so no workflow text under review runs in this test.
+        if isinstance(wanted, Table) and digest == wanted.digest \
+                and (rows := table_difference(found, wanted)):
             problems.append(f"{place}: {rows}")
         return problems
     if type(found) is not type(wanted):
@@ -13727,7 +13733,9 @@ class Units(unittest.TestCase):
         # contract says; any edit of one is refused by its digest, and the negative lane
         # made to pass when the risk job did not succeed by the first row it changes too.
         # A reworded message, || true, and a branch on the event's name, which the table
-        # does not give, change no row, and are refused by the digest alone.
+        # does not give, change no row. Each edit is refused by the digest alone, and its
+        # text is never run there; run over the table directly, the edit that ends a row
+        # otherwise shows it.
         workflows = read_workflows(SOURCE)
         rows = [len(step["run"].rows()) for contract in WORKFLOW_CONTRACTS.values()
                 for spec in contract["jobs"].values() if isinstance(spec, dict)
@@ -13750,7 +13758,37 @@ class Units(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, r"negative steps 1 run: [0-9a-f]{32}, "
                                             "not ab845bc546996a52ffbbe227cb9ec3ae") as refused:
                     hold_to_contracts(changed)
-                self.assertEqual(bool(re.search(row, str(refused.exception))), changes_a_row)
+                self.assertNotRegex(str(refused.exception), row)
+                table = WORKFLOW_CONTRACTS["ci.yml"]["jobs"]["negative"]["steps"][0]["run"]
+                rows = table_difference(tuple(step["run"].split("\n")), table)
+                self.assertEqual(bool(rows and re.search(row, rows)), changes_a_row)
+
+    def test_a_changed_step_of_logic_is_not_run(self):
+        # The contracts run a tabled step's rows only for the text its digest holds, so a
+        # step changed under review, here one that would leave a mark, never runs here.
+        workflows = read_workflows(SOURCE)
+        with tempfile.TemporaryDirectory() as scratch:
+            mark = Path(scratch) / "ran"
+            step = workflows["ci.yml"]["jobs"]["negative"]["steps"][0]
+            step["run"] = f": > '{mark}'\n" + step["run"]
+            with self.assertRaisesRegex(AssertionError, "negative steps 1 run"):
+                hold_to_contracts(workflows)
+            self.assertFalse(mark.exists())
+
+    def test_a_falsy_trigger_is_not_an_event_without_filters(self):
+        # GitHub reads an event written empty, or as {}, as one without filters; false, 0,
+        # an empty list or string are other values, which match no contract.
+        for value in ({}, None):
+            with self.subTest(kept=value):
+                workflows = read_workflows(SOURCE)
+                workflows["ci.yml"]["on"]["merge_group"] = value
+                hold_to_contracts(workflows)
+        for value in (False, 0, [], ""):
+            with self.subTest(refused=value):
+                workflows = read_workflows(SOURCE)
+                workflows["ci.yml"]["on"]["merge_group"] = value
+                with self.assertRaisesRegex(AssertionError, "on"):
+                    hold_to_contracts(workflows)
 
     def test_a_rewriting_that_keeps_the_meaning_keeps_the_contracts(self):
         # Flow style with the keys sorted, each collection on one line, and every string
