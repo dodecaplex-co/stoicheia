@@ -64,7 +64,7 @@ generates from every theorem that proves a law in the plane, is audited after th
 `Model.model_exists` last, so a law's theorem is audited through it as soon as the generator
 gathers it; the theorems listed one by one before it are every law's, `exists_centre` and
 `radius_ne_zero` among them, the copies kept under suffixed names, and `circlesMeet_self`.
-The 40 retired rules keep their individual audits as derived facts even though the
+The 41 retired rules keep their individual audits as derived facts even though the
 generated assembly no longer has assumption fields for them.
 -/
 
@@ -708,7 +708,7 @@ info: 'Model.Euclidean.triple_incidence3' depends on axioms: [propext, Classical
 
 /-! ## What the assembled model rests on
 
-`euclidean_laws` gathers proofs of all 49 locked laws, with no remaining hypothesis.
+`euclidean_laws` gathers proofs of all 48 locked laws, with no remaining hypothesis.
 It and `model_exists` rest on what those proofs rest on. -/
 
 /--

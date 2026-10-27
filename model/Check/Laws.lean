@@ -126,9 +126,6 @@ example : Law.Tacit.area_rotate original = type_of% @Elements.Tacit.area_rotate 
 
 example : Law.Tacit.between_cases original = type_of% @Elements.Tacit.between_cases := rfl
 
-example : Law.Tacit.between_of_inside_chord original =
-    type_of% @Elements.Tacit.between_of_inside_chord := rfl
-
 example : Law.Tacit.between_symm original = type_of% @Elements.Tacit.between_symm := rfl
 
 example : Law.Tacit.circle_eq original = type_of% @Elements.Tacit.circle_eq := rfl

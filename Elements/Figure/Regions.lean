@@ -138,9 +138,8 @@ theorem exists_inside_both {γ₁ γ₂ : Circle} (hγ₁ : Centre A γ₁) (hγ
   rcases lt_trichotomy ‖A K₁‖ ‖A K₂‖ with h | h | h
   · exact ⟨γ₁, hγ₁, fun P hP =>
       ⟨hP, inside_of_len_lt hγ₂ hK₂ (lt_trans (len_lt_of_inside hγ₁ hK₁ hP) h)⟩⟩
-  · have e : γ₁ = γ₂ := circle_eq hγ₁ hγ₂ hK₁ hK₂ h
-    subst e
-    exact ⟨γ₁, hγ₁, fun P hP => ⟨hP, hP⟩⟩
+  · exact ⟨γ₁, hγ₁, fun P hP =>
+      ⟨hP, inside_of_len_lt hγ₂ hK₂ (h ▸ len_lt_of_inside hγ₁ hK₁ hP)⟩⟩
   · exact ⟨γ₂, hγ₂, fun P hP =>
       ⟨inside_of_len_lt hγ₁ hK₁ (lt_trans (len_lt_of_inside hγ₂ hK₂ hP) h), hP⟩⟩
 

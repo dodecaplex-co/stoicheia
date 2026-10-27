@@ -16,15 +16,20 @@ here is meant to be new.
 Each entry names the Lean lemma or tacit rule that fills the gap. A few of System E's
 rules for circles do most of the work, and we name them once here. A circle's centre is
 within it (`centre_inside`, Generalities 3), now proved in Book Zero's `RuleBase.lean`
-from Circle 1, Definition I.15, Postulates 1 and 3, circle crossings, length addition and
-the rule that one centre and one radius make one circle (`circle_eq`, Diagram-segment 2):
-a centre outside would have unequal radii, which needs every radius to be something, and
-Postulate 3 and Diagram-segment 2 show that it is (`RuleProofs.Circle.radius_ne_zero` and
-`RuleProofs.Circle.length_pos`). That it has only one centre
-(`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`:
-two supposed centres bisect the same straight line through the circle by Definition I.15,
-and equal doubles have equal halves. A point within a circle, on a straight line that
-meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
+from Definition I.15, Postulates 1 and 3, circle crossings, length addition and our rule
+that a circle's radius is not nothing (`radius_ne_zero`): a centre outside would have
+unequal radii, which needs every radius to be something, and the rule, with Postulate 3
+for any two different points, says that it is (`RuleProofs.Circle.radius_ne_zero` and
+`RuleProofs.Circle.length_pos`). Until 26 October 2026 Circle 1 and the rule that one
+centre and one radius make one circle (`circle_eq`, Diagram-segment 2) showed it instead
+(#473). That it has only one centre
+(`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`: the
+straight line through two supposed centres, produced beyond each to the circle, would make
+the radius from one of them less than itself (Definition I.15); until 26 October 2026 the
+proof used Circle 1 (#477). A point within a circle, on a straight line that
+meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1);
+it is proved after III.2, from it, since 26 October 2026, and where the point within is
+the centre Book Zero proves it without III.2 (`between_of_centre_chord`).
 System E's Circle 2, that between two points on or within a circle every point is within
 it (`inside_of_between`), and its Circle 3 (`outside_of_between`), each of which gives
 III.2 at once, are proved after III.2, from it, since 24 October 2026; our III.1 and III.2
@@ -48,8 +53,10 @@ that no point of a straight line touching a circle is within it (`Touches.not_in
 Book III's proofs cite the earlier books as `BookI.PropN` and `BookII.PropN`. The steps
 they share that cite Books I and II live in
 [`Squares.lean`](../../Elements/BookIII/Squares.lean): equal squares are on equal
-straight lines (`BookI.Prop46.sq`), and the perpendicular from the centre to a straight
-line in the circle falls between its ends (`foot_between`). Those that cite III.20–III.22
+straight lines (`BookI.Prop46.sq`). The perpendicular from the centre to a straight line
+in the circle falls between its ends (`foot_between`) in
+[`Feet.lean`](../../Elements/BookIII/Feet.lean), after III.2, for its last step is Circle
+1, proved after III.2. Those that cite III.20–III.22
 live in [`Circumferences.lean`](../../Elements/BookIII/Circumferences.lean), and are what
 Euclid takes for granted of circumferences, which we measure by twice the angle
 standing on them: a circumference is twice the angle at any point of the other segment
@@ -74,7 +81,7 @@ references to III.1, in III.2 and III.14, have no call beside them.
 - "Let it be drawn through to E" asks that the straight line through D meet the circle on both sides of D. Todhunter observes that D is taken to be within the circle, which Euclid proves only in III.2, and Heath that the straight line must meet the circle twice, "an assumption which we are not entitled to make on the basis of what has gone before only" (vol. 2, p. 7). `Prop1.construction` obtains a centre through `exists_centre` solely inside the proof that D is within, and passes it to `Prop1.within`, which puts D within the circle by III.2's own argument (I.5, I.16, I.19), without Circle 3 or its consequence Circle 2 (`inside_of_between`), which would give III.2 at once (see III.2). That centre supplies none of the construction's outputs, and III.1's statement supplies none: the main reductio takes its own centre G from `exists_centre`. Intersections 5 (`line_circle_beyond`), used twice, finds C and E.
 - G, the supposed centre, must be off AB as well as off CE, or there are no triangles DAG, DBG for I.8. A centre on AB would be its middle point D (`Prop1.middle`), which is on CE.
 - "The angle FDB is equal to the angle GDB, the greater to the less": if AB passes through the centre, F falls on D and there is no angle FDB. Our proof sets the right angle CDB beside GDB, and `Prop1.perpendicular`, that at D only one straight line is at right angles to DB, says what "the greater to the less" stands for, on whichever side of CE G lies. With G across AB from C, it produces CD beyond D, and the angle there with DB is right by I.13, the two angles at D together making two right angles.
-- "Therefore the point F is the centre": the reductio shows only that the centre is on CE. Heath: "It is however taken for granted rather than proved that the centre must be the middle point of CE" (vol. 2, p. 8). The centre is within the circle (`centre_inside`), so between C and E (Circle 1, `between_of_inside_chord`), and its equal radii make it the middle point, which is F (`Prop1.middle`).
+- "Therefore the point F is the centre": the reductio shows only that the centre is on CE. Heath: "It is however taken for granted rather than proved that the centre must be the middle point of CE" (vol. 2, p. 8). The centre lies between C and E, for either other order would make one of its radii a part of the other (`between_of_centre_chord`, Circle 1 where the point within is the centre, proved in Book Zero without that rule), and its equal radii make it the middle point, which is F (`Prop1.middle`).
 - The Porism follows the main reductio directly from its given centre (`Prop1.porism`). If the centre is on AB, `Prop1.middle` shows that it is D, already on DC; otherwise `Prop1.equal_adjacent` supplies I.8's comparison and `Prop1.perpendicular` puts the centre on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`. Heath separately says that the claim that a circle has one centre "may be added to III. 1 as a corollary" (vol. 2, p. 8); our foundations give that claim as System E's Generalities 2 (`centre_unique`), now proved from the foundations in Book Zero's `Circles.lean`.
 
 ## III.2
@@ -112,7 +119,7 @@ references to III.1, in III.2 and III.14, have no call beside them.
 - Euclid speaks of the concave and the convex circumference, "terms which are not defined but taken as understood", as Heath remarks under III.7 (vol. 2, p. 16). We read the convex as where a straight line from D first meets the circle, and the concave as where it meets it again.
 - "As De Morgan points out, there are here two assumptions similar to that tacitly made in the proof of III. 7, namely that K falls within the triangle DLM and E outside the triangle DFM" (vol. 2, p. 20). The first is I.21's figure, the second gives I.24 its greater angle at M. We prove both as in III.7 (`Prop8.within`, `Prop8.outside`): where DK crosses the radius ML, or DE the radius MF, the crossing is within the circle, and so between the two points where that straight line meets the circle (Circle 1).
 - Our statement compares DA and DG with every point of the circle, and a point on DA itself makes no triangle for I.20. It is A or G (`Prop8.on_diameter`), and the part DG is less than the whole DA.
-- "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. This rule is now proved from Postulate 3 and `circle_eq`, with the radius nonzero, in `Elements/Figure/RuleBase.lean`. Definition I.15 gives only the other half: that a point of the circle is a radius away.
+- "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. This rule is now proved in `Elements/Figure/RuleBase.lean` by comparing lengths on the straight line from the centre through the point, with our radius rule (`radius_ne_zero`) and Postulate 3; until 26 October 2026 it was proved from Postulate 3 and `circle_eq`. Definition I.15 gives only the other half: that a point of the circle is a radius away.
 - "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle. Our proof takes Euclid's step where the convex order reaches, the concave order for two points of the concave circumference, and the two orders together for a point on each, through the second point where the straight line making the greater angle with DA meets the circle, which is on the other circumference: cases his figure leaves aside. Only where neither order reaches, one of the two points a point of contact, does it compare the angles at M: by I.24, unequal angles there give unequal straight lines from D.
 - Across DA, as in III.7, the companion `Prop8.general` compares through the partner on the other side, which Euclid's I.4 step at M makes equally inclined to DA; that it is in the same class, the convex or the concave circumference, is a step of its own (`Prop8.partner`), from the partners of the points of the circle beyond it or before it.
 
@@ -228,7 +235,7 @@ references to III.1, in III.2 and III.14, have no call beside them.
 - Our statement says that the remainders BKC, ELF are congruent too, and a congruence cannot be subtracted. III.24 gives it: the remaining segments stand on the equal straight lines BC, EF, and are similar, their angles making two right angles with the equal angles at A and D (III.22). Only the side names a segment, so they are the segments on K's and L's sides (`Arc.Congruent.congr_side`).
 
 ## III.27
-- "Let the angle BGK be constructed equal to the angle EHF [I. 23]": I.23 gives the ray, not K on the circle. K is laid off on it at the distance GB (`OnRay.exists_len_eq`), and the proved Diagram-segment 3 puts it on the circle (`on_circle_of_len_eq`, from Postulate 3 and `circle_eq`, as in III.8).
+- "Let the angle BGK be constructed equal to the angle EHF [I. 23]": I.23 gives the ray, not K on the circle. K is laid off on it at the distance GB (`OnRay.exists_len_eq`), and the proved Diagram-segment 3 puts it on the circle (`on_circle_of_len_eq`, proved from our radius rule and Postulate 3, as in III.8).
 - "Therefore BK is also equal to BC, the less to the greater" takes the part BK to be less than the whole BC. Our proof measures each circumference, the centre lying beyond it, by its angle at the centre (`Circumference.centre`), so that BK is less because the angle BGK is.
 - "And the angle at A is half of the angle BGC ... [III. 20]" holds where the angles at the circumference are acute. Heath: "the remarks about the method of treating the different cases apply here also" (vol. 2, p. 59). Our statement asks for angles of any size, as IV.11 needs. Our proof reaches the obtuse ones by the circumferences that remain, on which acute angles stand, and III.22, as III.26 does for the remaining segments; the right ones are angles in semicircles, read off the measure of the circumference (`Prop24.angle_type`).
 - Euclid argues one case of the inequality; the reductio is written once and used with the circles exchanged, as in I.26.
@@ -266,7 +273,7 @@ references to III.1, in III.2 and III.14, have no call beside them.
 ## III.33
 - "It is assumed in Euclid's proof of the first and third cases that AE and FG will meet; but of course there is no difficulty in satisfying ourselves of this" (vol. 2, p. 70). Our proof takes the meeting from Postulate 5 (`Postulate5`): the angle EAF is less than a right angle and the angle AFG is right. In the obtuse case, that EAF is less than a right angle needs DA produced beyond A.
 - Heath gives no bracket for constructing the angle BAD, bisecting AB or drawing AE and FG at right angles: they are I.23, I.10 and I.11.
-- "Therefore the circle described with centre G and distance GA will pass through B also": Definition I.15 says that the points of a circle are a radius away; that B, a radius away, is on the circle is the proved Diagram-segment 3 (`on_circle_of_len_eq`, from Postulate 3 and `circle_eq`, as in III.8).
+- "Therefore the circle described with centre G and distance GA will pass through B also": Definition I.15 says that the points of a circle are a radius away; that B, a radius away, is on the circle is the proved Diagram-segment 3 (`on_circle_of_len_eq`, proved from our radius rule and Postulate 3, as in III.8).
 - Which side of AB each point lies on is left to the three figures: G across AB from D when the angle is acute, on D's side when it is obtuse. In the second case E stays on D's side, as in Euclid's figure, so III.31 is used and not III.32, as Heath observes (vol. 2, p. 70).
 
 ## III.34
