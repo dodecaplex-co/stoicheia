@@ -50,7 +50,7 @@
       ],
       "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 37},
-      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre, counted separately from III.1's construction: 38 tacit rules after the second retirement, and 38 still once Book Zero came to rest on the radius rule (#473), with radius_ne_zero in the place of circle_eq. Since Book Zero and the porism's own case of a centre on AB stopped using Circle 1 (#477), between_of_inside_chord is gone from the list and the count is 37. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review. The proof neither calls III.1 nor uses exists_centre."
+      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre, counted separately from III.1's construction: 38 tacit rules after the second retirement, and 38 still once Book Zero came to rest on the radius rule (#473), with radius_ne_zero in the place of circle_eq. Since Book Zero and the porism's own case of a centre on AB stopped using Circle 1 (#477), between_of_inside_chord is gone from the list and the count is 37. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the pin on the porism's proved_rules, below, can (#168). The proof neither calls III.1 nor uses exists_centre."
     },
     {
       "ref": "III.1",
@@ -247,7 +247,7 @@
         "Tacit.triple_incidence3",
         "Tacit.inside_of_angle_add"
       ],
-      "why": "None of the eight retired names may appear as an axiom in III.1's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+      "why": "None of the eight retired names may appear as an axiom in III.1's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead. So this pin can no longer fail; the pin on III.1's proved_rules, below, can (#168)."
     },
     {
       "ref": "III.1 Por.",
@@ -262,7 +262,7 @@
         "Tacit.triple_incidence3",
         "Tacit.inside_of_angle_add"
       ],
-      "why": "None of the eight retired names may appear as an axiom in III.1 Por.'s certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+      "why": "None of the eight retired names may appear as an axiom in III.1 Por.'s certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead. So this pin can no longer fail; the pin on the porism's proved_rules, below, can (#168)."
     },
     {
       "ref": "III.2",
@@ -277,7 +277,7 @@
         "Tacit.triple_incidence3",
         "Tacit.inside_of_angle_add"
       ],
-      "why": "None of the eight retired names may appear as an axiom in III.2's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+      "why": "None of the eight retired names may appear as an axiom in III.2's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead. So this pin can no longer fail; the pin on III.2's proved_rules, below, can (#168)."
     },
     {
       "ref": "II.14",
@@ -292,7 +292,67 @@
         "Tacit.triple_incidence3",
         "Tacit.inside_of_angle_add"
       ],
-      "why": "None of the eight retired names may appear as an axiom in II.14's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+      "why": "None of the eight retired names may appear as an axiom in II.14's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead. So this pin can no longer fail; the pin on II.14's proved_rules, below, can (#168)."
+    },
+    {
+      "ref": "III.1",
+      "field": "proved_rules",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "III.1 rests on none of the eight tacit rules that the retirement of #119 made theorems. #168 calls for stronger pins keeping all eight from beneath III.1, III.1 Por., III.2 and II.14, to follow the retirement's first pin change; this is III.1's. An entry's proved_rules names every proved rule its statement or proof reaches, through what it cites, its Common Notions, its shared steps and the rules themselves; a proved rule leaves only the axioms beneath it in axioms, so a use of one of the eight shows here and in no axiom list. III.1 cites I.13, and once rested on its corollary Tacit.adjacent_eq_of_right; that use is gone (#168)."
+    },
+    {
+      "ref": "III.1 Por.",
+      "field": "proved_rules",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "III.1's porism rests on none of the eight tacit rules that the retirement of #119 made theorems. It is one of the stronger pins #168 calls for, to follow the retirement's first pin change; the first expectation holds the porism's axioms to exactly its proof's list. An entry's proved_rules names every proved rule its statement or proof reaches, through what it cites, its Common Notions, its shared steps and the rules themselves; a proved rule leaves only the axioms beneath it in axioms, so a use of one of the eight shows here and in no axiom list. The porism once rested on Tacit.adjacent_eq_of_right and on Tacit.centre_unique, the uniqueness of the centre; both uses are gone (#168)."
+    },
+    {
+      "ref": "III.2",
+      "field": "proved_rules",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "III.2 rests on none of the eight tacit rules that the retirement of #119 made theorems. It is one of the stronger pins #168 calls for, to follow the retirement's first pin change. An entry's proved_rules names every proved rule its statement or proof reaches, through what it cites, its Common Notions, its shared steps and the rules themselves; a proved rule leaves only the axioms beneath it in axioms, so a use of one of the eight shows here and in no axiom list. III.2 once rested on Tacit.adjacent_eq_of_right; that use is gone (#168). Three of the eight, Circle 2, Points 9 and Intersection 2, are proved after III.2 from its corollary Prop2.within, so Lean admits no use of them here. scripts/negative/retired_rule_used.py plants a use of Tacit.centre_unique in III.2's proof, which leaves its axioms and its cites as they are, and of this file's expectations this pin alone refuses it; check_fidelity.py also finds III.2's review record stale, as for any edit to that file."
+    },
+    {
+      "ref": "II.14",
+      "field": "proved_rules",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "II.14 rests on none of the eight tacit rules that the retirement of #119 made theorems, Circle 2 (Tacit.inside_of_between) among them (#60). It is one of the stronger pins #168 calls for, to follow the retirement's first pin change. An entry's proved_rules names every proved rule its statement or proof reaches, through what it cites, its Common Notions, its shared steps and the rules themselves; a proved rule leaves only the axioms beneath it in axioms, so a use of one of the eight shows here and in no axiom list. II.14 cites I.13, and once rested on its corollary Tacit.adjacent_eq_of_right; that use is gone (#168)."
     },
     {
       "ref": "I.4",
