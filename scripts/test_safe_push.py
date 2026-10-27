@@ -2529,15 +2529,26 @@ if os.environ.get("STOICHEIA_TEST_CLOCK"):
     safe_push.time = Clock({"still": 0.0, "leap": 3600.0}[os.environ["STOICHEIA_TEST_CLOCK"]])
 real_guards, real_watch = safe_push.guards, safe_push.watch_checks
 real_gates, real_refreshed = safe_push.gates, safe_push.refreshed
+guard_runs = 0
 def gates(ctx, number, rep, record=None):
     result = real_gates(ctx, number, rep, record)
     if action == "move-at-merge" and record is not None:
         subprocess.run(["git", "update-ref", "refs/heads/main", target], cwd=origin, check=True)
     return result
 def guards(*args, **kwargs):
+    global guard_runs
+    guard_runs += 1
     result = real_guards(*args, **kwargs)
     if action == "move":
         subprocess.run(["git", "update-ref", "refs/heads/main", target], cwd=origin, check=True)
+    elif action == "change-origin-in-merge-guards" and guard_runs == 2:
+        subprocess.run(["git", "remote", "set-url", "origin", target],
+                       cwd=args[0].repo, check=True)
+    elif action == "rewrite-harness-in-merge-guards" and guard_runs == 2:
+        source = safe_push.Path(safe_push.__file__)
+        planted = ("from pathlib import Path\n"
+                   f"Path({target!r}).write_text('rewritten harness ran')\n")
+        source.write_text(planted + source.read_text())
     elif action == "interrupt":
         raise KeyboardInterrupt("a test interruption")
     elif action == "edit-train-body":
@@ -4557,6 +4568,26 @@ class Land(Edge):
         self.assertEqual(self.origin_main(), BASE)
         self.assertEqual(self.origin_branch(), sha)
 
+    def test_origin_changed_during_merge_guards_is_refused(self):
+        sha = self.check_change()
+        url = git(WORK, "remote", "get-url", "origin").strip()
+        elsewhere = TMP / "guard-origin-copy.git"
+        shutil.rmtree(elsewhere, ignore_errors=True)
+        git(TMP, "clone", "--quiet", "--bare", str(ORIGIN), str(elsewhere))
+        self.addCleanup(shutil.rmtree, elsewhere, ignore_errors=True)
+        self.addCleanup(git, WORK, "remote", "set-url", "origin", url)
+        r = self.driven_land("change-origin-in-merge-guards", str(elsewhere))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        merged = self.merge_part(out)
+        self.assertIn(f"origin's URL changed during the run, from {url} to {elsewhere}; "
+                      "nothing is merged", merged)
+        self.assertEqual(self.merges(), [])
+        self.assertFalse(any("enqueuePullRequest" in arg
+                             for call in self.gh_state()["calls"] for arg in call))
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
     def test_harness_changed_during_ci_is_refused_never_handed_over(self):
         # origin/main moves during CI to a commit that changes safe_push.py: refused as a
         # moved main, before its harness is compared with the copy on disk, and never
@@ -4605,6 +4636,40 @@ class Land(Edge):
                 self.assertEqual(self.merges(), [])
                 self.assertEqual(self.origin_main(), BASE)
                 self.assertEqual(self.origin_branch(), sha)
+
+    def test_harness_rewritten_during_merge_guards_is_not_used(self):
+        checker = "def check_train(repo, base, sha, body):\n    return []\n"
+        base = self.new_base("Main's train checker", {"scripts/check_train.py": checker})
+        sha = self.good_commit()
+        folder = TMP / "land-train-harness"
+        shutil.rmtree(folder, ignore_errors=True)
+        folder.mkdir()
+        for name in ("safe_push.py", "heath.py"):
+            shutil.copy2(UNDER_TEST / name, folder / name)
+        (folder / "check_train.py").write_text(checker)
+        self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
+        marker = TMP / "rewritten-harness-ran"
+        marker.unlink(missing_ok=True)
+        body = TMP / "land-train-body.md"
+        body.write_text(ticked(self.text(safe_push.TEMPLATE)) + "\nGood train body.\n")
+        args = ("--branch", "train/docs-1", "--label", "docs", "--body-file", str(body),
+                "--ready", "--land")
+        r = subprocess.run(
+            [sys.executable, "-c", DRIVER, str(folder),
+             "rewrite-harness-in-merge-guards", str(ORIGIN), str(marker),
+             "--_test-skip-checks", *args], cwd=WORK, env=clean_env(),
+            capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        merged = self.merge_part(out)
+        self.assertIn("this copy of safe_push.py, heath.py or check_train.py on disk no "
+                      "longer matches origin/main's", merged)
+        self.assertFalse(marker.exists(), "the rewritten harness was executed")
+        self.assertEqual(self.merges(), [])
+        self.assertFalse(any("enqueuePullRequest" in arg
+                             for call in self.gh_state()["calls"] for arg in call))
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.origin_branch("train/docs-1"), sha)
 
     def test_accepted_forged_record_on_disk_changes_nothing(self):
         # Main unmoved: a record a separate --merge would let stand in (origin/main's

@@ -340,7 +340,7 @@ import types
 import unicodedata
 from collections import Counter
 from pathlib import Path
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import heath  # noqa: E402  (the contracts: parse_ref, prop_key, theorem_span)
@@ -4354,6 +4354,12 @@ class Preflight(NamedTuple):
     short: bool = False         # step 4 left to CI for the change's class
 
 
+class HarnessSnapshot(NamedTuple):
+    safe_push: bytes
+    heath: bytes
+    train: bytes | None
+
+
 def short_path(ctx, risk: Risk, g: Guarded, rep: Report) -> bool:
     """Whether step 4 is left to CI: for a change of R0 to R2 by origin/main's risk.py,
     which changes no check input nor any protected path but judged content (beyond_low).
@@ -4373,7 +4379,9 @@ def short_path(ctx, risk: Risk, g: Guarded, rep: Report) -> bool:
 
 
 def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
-                 checked: dict | None = None, train_body: str | None = None) -> Preflight:
+                 checked: dict | None = None, train_body: str | None = None,
+                 trusted_harness: HarnessSnapshot | None = None,
+                 revalidate: Callable[[], None] | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     The class `risk` (risk_class) is reported at the head of step 4: for R0 to R2 the full
     checks are skipped (short_path), CI running the rest of section 8's sequence before the
@@ -4395,8 +4403,10 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
             g = guards(ctx, wt, rep, logs)
+            if revalidate is not None:
+                revalidate()
             if train_body is not None:
-                train_check(ctx, train_body, rep)
+                train_check(ctx, train_body, rep, trusted_harness)
             rep.heading("4. The full local checks (docs/WORKFLOW.md, section 8)")
             rep.add("4", "class", "ok", f"{risk.cls}, {risk.why}", risk.seconds)
             short = short_path(ctx, risk, g, rep)
@@ -4419,6 +4429,8 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                     rep.add("4", "full local checks", "skip", "internal test flag, local origin")
                 else:
                     full_checks(ctx, wt, parent, g.check_inputs, rep, logs, checks)
+            if revalidate is not None:
+                revalidate()
     return Preflight(g.statements, g.protected, short)
 
 
@@ -4439,6 +4451,7 @@ class Context(NamedTuple):
     remote_branch: str | None = None    # the branch on origin before the push
     queue: bool = False
     harness_sha: str | None = None     # origin/main's tip, before queue_base changes base
+    trusted_harness: HarnessSnapshot | None = None
 
 
 def is_local(url: str) -> bool:
@@ -4597,6 +4610,35 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
     os.execve(PY, [PY, str(path), *ARGV], env)
 
 
+def harness_snapshot(repo: Path, base: str) -> HarnessSnapshot:
+    here = Path(__file__).resolve().parent
+    return HarnessSnapshot((here / "safe_push.py").read_bytes(),
+                           (here / "heath.py").read_bytes(),
+                           harness_train(repo, base))
+
+
+def land_state_unchanged(repo: Path, origin: str, harness_snapshot: HarnessSnapshot) -> None:
+    current_origin = git(repo, "remote", "get-url", "origin", check=False).strip()
+    if current_origin != origin:
+        raise Refusal(f"origin's URL changed during the run, from {origin} to "
+                      f"{current_origin}; nothing is merged: set it back, then --merge")
+    here = Path(__file__).resolve().parent
+    current = HarnessSnapshot(
+        (here / "safe_push.py").read_bytes(),
+        (here / "heath.py").read_bytes(),
+        (here / "check_train.py").read_bytes() if (here / "check_train.py").exists()
+        else None)
+    same = (current.safe_push, current.heath) == \
+        (harness_snapshot.safe_push, harness_snapshot.heath) and \
+        (current.train is None or current.train == harness_snapshot.train)
+    if not same:
+        raise Refusal("this copy of safe_push.py, heath.py or check_train.py on disk no "
+                      "longer matches origin/main's: it was rewritten since the run "
+                      "started, or origin/main's predates running from origin/main; the "
+                      "merge of --land runs no other copy, so nothing is merged: run "
+                      "--merge")
+
+
 def body_input(args) -> str | None:
     """--body-file's text, read once, as UTF-8, before the checks: the train check, the
     dry run's body and the pull request's body are all that same text."""
@@ -4617,7 +4659,8 @@ def train_input(ctx: Context, body: str | None) -> str | None:
     return body
 
 
-def train_check(ctx: Context, body: str, rep: Report) -> None:
+def train_check(ctx: Context, body: str, rep: Report,
+                trusted_harness: HarnessSnapshot | None = None) -> None:
     """Run origin/main's train checker on the commit and the body. While origin/main has
     none, every train is refused: no commit's own copy ever runs in its place. In queue
     mode the base compared against is the newest commit of main's chain that the head
@@ -4631,13 +4674,17 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
             # the commit's code may have written the harness's directory under the sandbox.
             raise Refusal("the train check cannot run once the main-checks cache's sandbox "
                           "is set")
-        source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
+        source = trusted_harness.train if trusted_harness is not None else \
+            harness_train(ctx.repo, ctx.harness_sha or ctx.base)
         if source is None:
             raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
                           "checked: land the train checker first, then the train")
         here = Path(__file__).resolve().parent
-        path = harness_copy((here / "safe_push.py").read_bytes(),
-                            (here / "heath.py").read_bytes(), source)
+        safe_source = trusted_harness.safe_push if trusted_harness is not None else \
+            (here / "safe_push.py").read_bytes()
+        heath_source = trusted_harness.heath if trusted_harness is not None else \
+            (here / "heath.py").read_bytes()
+        path = harness_copy(safe_source, heath_source, source)
         spec = importlib.util.spec_from_file_location("check_train", path / "check_train.py")
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
@@ -6142,12 +6189,14 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
                       "origin/main in first if the head lacks it), then --merge; in a merge "
                       "queue, --merge alone")
     harness(repo, base, rep, hand_over=held is None)
+    trusted_harness = harness_snapshot(repo, base) if held is not None else None
     slug = "test/stoicheia" if test_mode else github_slug(origin)
     if not slug:
         raise Refusal(f"origin ({origin}) is not on GitHub: there is no pull request to merge")
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
-    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base)
+    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base,
+                  trusted_harness=trusted_harness)
     queued = queue_enabled(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
@@ -7060,8 +7109,11 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
                     "run again; the full checks are not repeated")
         logs = logs_dir(ctx.sha)
         train_body = merge_train_input(ctx, view)
+        revalidate = None if held is None else \
+            lambda: land_state_unchanged(repo, held.origin, ctx.trusted_harness)
         pre = check_commit(ctx, rep, logs, test_mode, risk, checked=checked,
-                           train_body=train_body)
+                           train_body=train_body, trusted_harness=ctx.trusted_harness
+                           if held is not None else None, revalidate=revalidate)
         record = make_record(ctx, pre, rep, full=not test_mode and checked is None,
                              risk=risk, checked=checked)
         save_record(record)
@@ -7116,6 +7168,8 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
         view = current_view
         labels = current_labels
         kind = next((k for k in KIND_LABELS if k in labels), None)
+        if revalidate is not None:
+            revalidate()
         rep.heading("4. Merge")
         if ctx.queue:
             return queue_main(ctx, number, rep, dry_run, test_mode, view.get("body"))
