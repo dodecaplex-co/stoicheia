@@ -62,7 +62,7 @@
   to the new: the axiom list of `Elements.CirclesCut.cut_point` stands where that of
   `Audit.cut_point` stood, and the list of `Elements.CirclesCut.of_meet` where that of
   `Audit.CirclesCut.of_meet` stood, each list name for name as Lean printed it before.
-  The other five pins of the file are unchanged, and `lake build Audit` passes with all
-  seven. No pin loses a name or gains one, so none comes to list `Tacit.circles_meet`,
+  The move leaves the other five bridge pins and the two proposition pins unchanged, and
+  `lake build Audit` passes with all nine. No pin loses a name or gains one, so none comes to list `Tacit.circles_meet`,
   `Tacit.inside_of_between`, `Tacit.outside_of_between`, `Tacit.centre_unique` or
   `sorryAx` where it did not.
