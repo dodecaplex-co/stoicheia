@@ -488,17 +488,6 @@ def _(c):
 
 # ---- Triple incidence
 # ---- Circles
-@axiom('between_of_inside_chord', dict(A=P, B=P, C=P, L=L_, al=C_))
-def _(c):
-    A, B, Cc, L, al = (c[k] for k in ('A', 'B', 'C', 'L', 'al'))
-    if not (on_line(A, L) and on_line(B, L) and on_line(Cc, L) and inside(A, al) and on_circle(B, al)
-            and on_circle(Cc, al) and B != Cc):
-        return None
-    return between(B, A, Cc)
-
-
-
-
 # ---- Intersection (diagrammatic)
 @axiom('lines_meet_of_opposite_sides', dict(A=P, B=P, L=L_, M=L_))
 def _(c):
