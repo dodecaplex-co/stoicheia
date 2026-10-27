@@ -1052,9 +1052,10 @@ looked into.
     with each hit fixed or declared in its record; and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
-    the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
-    which refuses a pull request labelled `release` while any issue or pull request
-    labelled `blocks-release` is open, or when GitHub cannot be read. That merge also
+    the `release-gate` job on the release's pull request, and by `git safe-push`'s merge
+    phase (`--land`, or a separate `--merge`), which refuses a pull request labelled
+    `release` while any issue or pull request labelled `blocks-release` is open, or when
+    GitHub cannot be read. That merge also
     needs the full pre-flight of the release's head, which its label makes R5, and a green
     run of the `safe-push-tests` workflow at that exact head, each of its jobs passed, the
     shards among them, but `report`
@@ -1062,8 +1063,8 @@ looked into.
     that workflow being origin/main's: a change to it lands first, in a pull request of
     its own. The `release-gate` job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
-    again (or `release` removed and given again) before `--merge`, which counts its failed
-    run on a release pull request. Before that `--merge`, and after every other change the
+    again (or `release` removed and given again) before the merge, which counts its failed
+    run on a release pull request. Before that merge, and after every other change the
     release's pull request carries, two generated accounts are made again at its head, and
     what they write is committed to it. The model's full run,
     `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
@@ -1077,8 +1078,8 @@ looked into.
     screened, the number of statements in `facts.json` and what closed. Then
     `python3 -I tests/model/results_check.py` and
     `python3 -I Audit/screen.py --check-current` both pass: CI runs the first on every pull
-    request, and the coordinator runs the second on the head that `--merge` merges and
-    again just before the tag, and the pull request quotes the screen's closing lines. The
+    request, and the coordinator runs the second on the head that the merge phase merges
+    and again just before the tag, and the pull request quotes the screen's closing lines. The
     screen's check needs no Lean, but any change to the library makes it fail, and only a
     run, with Lean and about an hour and a half of processor time, may make it pass again;
     so it is a release step, not one of CI's. The check reads the record, not the run, so
@@ -1211,10 +1212,10 @@ While origin/main has no `scripts/check_train.py`, every train is refused, one t
 adds the checker too: no commit's own copy ever judges it, so the checker lands first,
 as an ordinary pull request. An unreadable checker or a refused train stops the
 pre-flight. `--body-file` is read once, as UTF-8, before the checks: the train check,
-the dry run's body and the body posted are that same text. `--merge` runs the train
-check again, in both modes, on the pull request's current body, and refuses if a later
-read of the body, by the gates, by the merge's own read or by the last gates before the
-merge, differs from the text checked.
+the dry run's body and the body posted are that same text. The merge phase runs the train
+check again, with the queue on or off, on the pull request's current body, and refuses if
+a later read of the body, by the gates, by the merge's own read or by the last gates before
+the merge, differs from the text checked.
 
 **Building a train that passes.** Start the train from origin/main, never from a
 member. Merge each member once, at its final head, after its reviews and `/no-mistakes`
@@ -1406,8 +1407,8 @@ the judge reads only its head's repository and who wrote it, since GitHub's queu
 longer lists it and its own group judged it when it merged. GraphQL names a bot by a
 login without the "[bot]" that REST adds, so the actor's type is read, not its login.
 And while an issue labelled `main-red` is open, an entry in the queue lands only as
-main's fix: its body must declare, as `--merge` reads it, every open `main-red` issue
-and no other ("Out of a red main", below), or the judge refuses it.
+main's fix: its body must declare, as the merge phase reads it, every open `main-red`
+issue and no other ("Out of a red main", below), or the judge refuses it.
 
 **The gaps of what is new.** In the `queue-gaps` job, `check_queue.py --gaps` takes the
 union of the entries' derived changes and their declarations. A changed
@@ -1551,9 +1552,9 @@ out of the queue. Reverting such a change does
 not take the key back: the owner makes a new key. And the pre-flight block
 in a pull request body is evidence the coordinator's harness wrote, which anyone who can
 edit the body could imitate; the queue checks it for the head and the harness, and
-`git safe-push --merge` remains the way trains are queued.
+`git safe-push`'s merge phase remains the way trains are queued.
 
-Landing through `--merge` pauses while an open `main-red` issue exists or the latest
+The merge phase pauses while an open `main-red` issue exists or the latest
 completed post-merge run at main's tip concluded anything other than success, neutral
 or skipped. A tip with no completed run is not itself marked red; unreadable health
 answers refuse. The queue's judge holds the same pause for trains already queued, or
@@ -1682,6 +1683,7 @@ git safe-push --branch <name> --dry-run            # every check; nothing pushed
 git safe-push --branch <name> --label <kind>       # the pre-flight, the push, a draft pull request
 git safe-push --branch <name>                      # after a fix: again, on the new head
 gh pr ready <n>                                    # when the reviews are done
+git safe-push --branch <name> --ready --land       # final body: push, follow CI and merge
 git safe-push --merge <n> --dry-run                # the gates, and no merge
 git safe-push --merge <n>                          # the gates, then queue or direct merge
 ```
@@ -2058,30 +2060,47 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       an earlier `release` label is waited for, never counted. Once `git push` succeeds,
       an interruption, a failure to follow CI or a refusal is reported as "pushed; CI not
       followed", exit 3, never as a refusal before the push.
+
+   With `--land`, this is one uninterrupted landing: the option requires `--branch` and
+   `--ready`, cannot be combined with `--dry-run` or `--merge`, and means that the pull
+   request body is final when the branch is pushed. After CI passes, the same process
+   enters the merge below. Anything that stops it after the push without a verified merge
+   exits 3. A pre-flight note for an origin/main check failure that `keep_apart` reads, or
+   its "pinned values" note, instead holds the merge for the security review; after that
+   review, use a separate `--merge`. The detailed refusal and recovery rules are recorded
+   in the [one-run landing decision](decisions/2026-10-26-one-run-landing.md).
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
-   merge, run without its push and pull request steps, since `git safe-push` alone
-   pushes and opens pull requests. Each blocking or material finding (section 9) is
-   resolved, and the pull request says how. A fix is a new commit on the branch, and the
-   pre-flight runs again.
-4. **The merge.** `git safe-push --merge <n>` reads main's effective rules; an unreadable
-   answer refuses. A `merge_queue` rule selects queue mode. In either mode it checks
-   main's health (a red main admits only its fix: "Out of a red main", above) and runs
+   merge, run without its push and pull request steps before `--land` or a separate
+   `--merge`, since `git safe-push` owns those steps. Each blocking or material finding
+   (section 9) is resolved, and the pull request says how. A fix is a new commit on the
+   branch, and the pre-flight runs again.
+4. **The merge.** This is reached by the same process after `--land` passes CI, or by
+   `git safe-push --merge <n>` as a separate run. It reads main's effective rules; an
+   unreadable answer refuses. A `merge_queue` rule selects queue mode. In either mode it
+   checks main's health (a red main admits only its fix: "Out of a red main", above) and runs
    the secret scan and guards on the pull request's head again, every time. With the
    queue off, the base is current origin/main, which the head must contain. With the
    queue on, the base is the newest commit of current origin/main's first-parent chain
    that the head contains, which is what its pre-flight recorded, so the head need not
    contain the intervening main changes. It is not the head's merge base with main,
    which lies off the chain when a member was merged on its own before its train: so
-   `--merge`'s own checks, its train check and the queue's judge (rule (b), above)
+   the merge's own checks, its train check and the queue's judge (rule (b), above)
    compare against one base. The
-   pre-flight's record is a local file, which code the pre-flight ran (a commit's
+   separate `--merge` reads the pre-flight's record from a local file, which code the
+   pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
    checks, which CI runs as well, and only for this head and base with the running
    origin/main harness's blob, and never for a head that changes the checks (`scripts/`,
    `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) or any protected
    path, since CI runs a head's own copies and its own workflow, and only the pre-flight
-   runs origin/main's on it; otherwise they run again too. A record that left them to CI
+   runs origin/main's on it; otherwise they run again too. With `--land`, the pre-flight
+   instead keeps a copy in memory before saving the file, and this merge never reads the
+   file. That copy may stand in for step 4 even when the head changes a check or protected
+   path, but not when origin/main's pass came from the main-checks cache or the record is
+   otherwise unacceptable. The merge still runs the secret scan and guards again, and
+   refuses if the pull request's head, origin's URL, origin/main or the on-disk harness
+   changed during CI. A record that left them to CI
    for its class stands in only while the class, recomputed then by origin/main's
    classifier for that head against that base, is still R0 to R2; otherwise step 4 runs
    again, by the class. The body must already carry
@@ -2218,14 +2237,15 @@ check stays a decision of the owner's ([FORMALIZATION.md](FORMALIZATION.md), sec
 checks judge, not checks, so they stay judged when a check fails with origin/main's copies
 (step 4).
 
-**A pull request from a fork** is not merged by `--merge`: the coordinator brings its
-commits to a branch of origin with the pre-flight, which opens a pull request of its own,
-and closes the fork's with a link to it.
+**A pull request from a fork** is not merged by either landing form: the coordinator
+brings its commits to a branch of origin with the pre-flight, which opens a pull request
+of its own, and closes the fork's with a link to it.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
-in `preflight/`, which `--branch` and `--merge` write and only `--merge` reads (step 4,
-above); origin/main's harness, when it runs in place of another copy, is written to
+in `preflight/`, which `--branch` and a separate `--merge` write and that separate
+`--merge` reads (step 4, above); `--land` keeps its merge's copy in memory and never reads
+the file. origin/main's harness, when it runs in place of another copy, is written to
 `harness/`, named by its blobs; and, with `--main-checks-cache`, origin/main's pass of
 step 4 in `main-checks/`. `sh scripts/install_hooks.sh` installs the launcher and the
 pre-push hook: the hook refuses every push to main, scans a push to any other branch (its
