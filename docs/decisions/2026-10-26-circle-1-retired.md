@@ -87,10 +87,9 @@
   `III_30_measure`, whose prose stays true, and in `Audit/Crossing.lean` those of
   `III_5_today`, `III_11_today`, `III_13_today`, `cut_point` and `CirclesCut.of_meet`,
   whose prose now says that Circle 1 is proved after III.2 and cannot appear in a list.
-  Every audit lemma and every `#guard_msgs` stays. The overlap screen's list of circle rules
-  in `Audit/screen.py` still names Circle 1, and this change leaves that file to its
-  current owner (#416): until the name leaves the list, the screen stops before it tries
-  anything, as it must on a name the certificate does not hold as an axiom. The
+  Every audit lemma and every `#guard_msgs` stays. This change removes Circle 1 from
+  `Audit/screen.py`'s `CIRCLE` list, leaving nine names and avoiding rejection of that
+  retired axiom. The
   certificate's expectation that III.2's axioms exclude Circle 1 can no longer fail, and
   its reason, written while the rule was an axiom, is restated in a later change.
 
