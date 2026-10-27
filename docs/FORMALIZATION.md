@@ -431,11 +431,15 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->42<!-- /count --> tacit rules, <!-- count:axioms -->48<!-- /count --> in all, each tacit rule from System E (or
-  LeanEuclid's corrections of it) with its citation, save one of our own, added by the
-  owner's decision of 18 October 2026: every circle has a centre (`exists_centre`), whose
+  Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
+  LeanEuclid's corrections of it) with its citation, save two of our own: every circle has
+  a centre (`exists_centre`), added by the owner's decision of 18 October 2026, whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
-  section 2). A new rule, or a change to one, is a foundation decision (section 1);
+  section 2); and a circle's radius is not nothing (`radius_ne_zero`), added by the
+  owner's decision of 25 October 2026
+  ([its decisions entry](decisions/2026-10-25-radius-rule.md)), since Euclid draws every
+  circle with a distance (Postulate 3). A new rule, or a change to one, is a foundation
+  decision (section 1);
   `Certificate/axioms.lock` holds every axiom's exact statement, with every definition that
   the axioms' statements or the propositions', porisms' and companions' statements reach
   (`Touches`, `rect`, `Parallel`), so that no word can change what an axiom or a claim
@@ -877,7 +881,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->49<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
