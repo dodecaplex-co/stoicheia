@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.Figure.Circles
 import Elements.BookIII.Squares
+import Elements.BookIII.Feet
 import Elements.BookI.Prop20
 import Elements.BookI.Prop47
 import Elements.BookIII.Prop03
@@ -166,7 +167,7 @@ theorem Prop14.general {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E AB
     have hF_E : F = E := hF.2.1 hE_AB
     obtain ⟨L, hA_L, hB_L, hE_L⟩ := hE_AB
     have hAEB : Between A E B :=
-      between_of_inside_chord hE_L hA_L hB_L (centre_inside hE) hA hB hAB
+      between_of_centre_chord hE_L hA_L hB_L hE hA hB hAB
     have hAB_sum : ‖A B‖ = ‖C E‖ + ‖E D‖ :=
       Prop14.diameter_sum hE hA hB hC hD hAEB
     by_cases hE_CD : Collinear C D E
@@ -174,7 +175,7 @@ theorem Prop14.general {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E AB
       have hG_E : G = E := hG.2.1 hE_CD
       obtain ⟨M, hC_M, hD_M, hE_M⟩ := hE_CD
       have hCED : Between C E D :=
-        between_of_inside_chord hE_M hC_M hD_M (centre_inside hE) hC hD hCD
+        between_of_centre_chord hE_M hC_M hD_M hE hC hD hCD
       have hAB_CD : ‖A B‖ = ‖C D‖ := hAB_sum.trans (len_add_of_between hCED)
       exact ⟨fun _ => by rw [hF_E, hG_E], fun _ => hAB_CD⟩
     · /- Only AB is a diameter: CD is shorter, and its foot is at some distance from E. -/
@@ -192,7 +193,7 @@ theorem Prop14.general {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E AB
       have hG_E : G = E := hG.2.1 hE_CD
       obtain ⟨M, hC_M, hD_M, hE_M⟩ := hE_CD
       have hCED : Between C E D :=
-        between_of_inside_chord hE_M hC_M hD_M (centre_inside hE) hC hD hCD
+        between_of_centre_chord hE_M hC_M hD_M hE hC hD hCD
       have hCD_sum : ‖C D‖ = ‖A E‖ + ‖E B‖ :=
         Prop14.diameter_sum hE hC hD hA hB hCED
       have hAB_CD : ‖A B‖ < ‖C D‖ := by

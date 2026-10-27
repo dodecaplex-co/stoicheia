@@ -17,7 +17,7 @@ note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is E
 [[passage]]
 at = "For let BE, CE, GE be joined"
 kind = "case"
-note = "Euclid joins radii to points off AD; the Lean also compares the ends of the diameter, proving FD less than FA by parts of equal radii before either triangle inequality. Beneath the setting-out, `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, put E between A and any other point of the circle on AD; equal radii and `OnRay.eq_of_len_eq` make that point D."
+note = "Euclid joins radii to points off AD; the Lean also compares the ends of the diameter, proving FD less than FA by parts of equal radii before either triangle inequality. Beneath the setting-out, `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, put E between A and any other point of the circle on AD; equal radii and `OnRay.eq_of_len_eq` make that point D."
 
 [[passage]]
 at = "But AE is equal to BE"
@@ -94,11 +94,11 @@ note = "K marks the supposed third point of Euclid's reductio, with FK equal to 
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "689ab169f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c17359dc02a3b53d"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 18c7a5cf"
-text = "sha256:5969aa52c7a4c8b2"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 18c7a5cf; previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f"
+text = "sha256:cef3edcfda468179"
 
 [review.items]
 statement = "pass"

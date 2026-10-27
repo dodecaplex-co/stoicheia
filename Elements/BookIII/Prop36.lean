@@ -1,10 +1,12 @@
 import Elements.Figure.Basics
 import Elements.Figure.Circles
 import Elements.BookIII.Squares
+import Elements.BookIII.Feet
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop12
 import Elements.BookI.Prop47
 import Elements.BookII.Prop06
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop03
 import Elements.BookIII.Prop18
 
@@ -169,8 +171,8 @@ theorem Prop36.through_centre {A B C D F : Point} {ABC : Circle}
     (hDB : Touches D B ABC) :
     rect A D D C = sq D B := by
   obtain ⟨AC, hA_AC, hC_AC, hF_AC⟩ := hACF
-  have hAFC : Between A F C := between_of_inside_chord hF_AC hA_AC hC_AC
-    (centre_inside hF) hA hC (ne_of_between (between_symm hDCA))
+  have hAFC : Between A F C := between_of_centre_chord hF_AC hA_AC hC_AC
+    hF hA hC (ne_of_between (between_symm hDCA))
   have hFCD : Between F C D := between_inner hAFC (between_symm hDCA)
   have hD : OutsideCircle D ABC := outside_of_len_gt hF hC (len_lt_of_between hFCD)
   exact Prop36 hD hA hB hC hDCA hDB
