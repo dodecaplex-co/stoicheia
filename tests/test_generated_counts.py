@@ -184,6 +184,18 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_dynamic_itertools_mutation(self):
+        path = self.root / counts.SCREEN
+        original = path.read_text()
+        call = "pairs = list(itertools.combinations(CIRCLE, 2))"
+        mutation = ('import importlib\n'
+                    'shadow = importlib.import_module("itertools")\n'
+                    'shadow.combinations = lambda xs, n: '
+                    '(xs.append("Postulate1") or ())\n')
+        path.write_text(original.replace(call, mutation + call))
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
     def test_screen_circle_rules_refuse_wildcard_imports(self):
         path = self.root / counts.SCREEN
         path.write_text(path.read_text() + "\nfrom shadow import *\n")
@@ -222,6 +234,25 @@ def note : String := "#print axioms Elements.inString"
                           '    break\n')
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
+
+    def test_screen_circle_rules_refuse_string_attribute_access(self):
+        path = self.root / counts.SCREEN
+        original = path.read_text()
+        accesses = (
+            ('import operator\n', 'operator.attrgetter'),
+            ('from operator import attrgetter\n', 'attrgetter'),
+            ('from operator import attrgetter as reader\n', 'reader'),
+        )
+        for import_line, access in accesses:
+            with self.subTest(access=access):
+                path.write_text(original
+                                + '\n' + import_line
+                                  + 'for rule in CIRCLE:\n'
+                                  + f'    {access}("__globals__")(lambda: None)['
+                                  '"CIRCLE"].append("Postulate1")\n'
+                                  '    break\n')
+                with self.assertRaisesRegex(ValueError, counts.SCREEN):
+                    counts.screen_circle_rules(self.root)
 
     def test_screen_circle_rules_refuse_frame_namespaces(self):
         path = self.root / counts.SCREEN

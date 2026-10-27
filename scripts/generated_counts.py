@@ -306,8 +306,8 @@ SUPERPOSITION = "Audit/Superposition.lean"
 PRINT_AXIOMS = re.compile(r"#print[ \t\r\n]+axioms\s+(?=[^\W\d])")
 ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 SYNTAX_QUOTATION = re.compile(r"`[ \t\r\n]*\(")
-REFLECTIVE_NAMES = {"__builtins__", "__getattribute__", "delattr", "eval", "exec",
-                    "getattr", "globals", "locals", "setattr", "vars"}
+REFLECTIVE_NAMES = {"__builtins__", "__getattribute__", "attrgetter", "delattr", "eval",
+                    "exec", "getattr", "globals", "locals", "setattr", "vars"}
 
 
 def source_text(root, path):
@@ -378,6 +378,15 @@ def screen_circle_rules(root):
         if (isinstance(node, ast.alias) and node.name == "itertools"
                 and node is not itertools_import):
             raise ValueError(f"{SCREEN}:{node.lineno}: itertools is imported more than once")
+        if isinstance(node, ast.Attribute) and node.attr == "combinations":
+            call = parents.get(node)
+            read_only = (isinstance(node.ctx, ast.Load)
+                         and isinstance(node.value, ast.Name)
+                         and node.value.id == "itertools"
+                         and isinstance(call, ast.Call)
+                         and call.func is node)
+            if not read_only:
+                raise ValueError(f"{SCREEN}:{node.lineno}: combinations escapes its read-only use")
         bindings = bound_names(node)
         if "itertools" in bindings and node is not itertools_import:
             raise ValueError(f"{SCREEN}:{node.lineno}: itertools is rebound outside its import")
