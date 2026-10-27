@@ -4,6 +4,7 @@
 import io
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -158,6 +159,25 @@ def note : String := "#print axioms Elements.inString"
                                     rf"^{re.escape(path)}(:\d+)?: .*{re.escape(phrase)}"):
             reader(self.root)
 
+    def test_markers_load_without_superposition_checker(self):
+        harness = self.root / "count-reader"
+        harness.mkdir()
+        for name in ("generated_counts.py", "heath.py"):
+            shutil.copyfile(REPO / "scripts" / name, harness / name)
+        probe = """\
+import sys
+sys.path.insert(0, sys.argv[1])
+import generated_counts
+marker, = generated_counts.markers(
+    "<!-- count:axioms -->10<!-- /count -->", "note.md")
+assert "check_superposition_pins" not in sys.modules
+print(marker.name)
+"""
+        result = subprocess.run([sys.executable, "-I", "-c", probe, str(harness)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "axioms\n")
+
     def test_every_count_on_small_files(self):
         self.assertEqual({name: fn(self.root) for name, fn in counts.COUNTS.items()}, {
             "axioms": 10, "tacit-rules": 3, "postulates": 4, "axioms-but-postulate-5": 9,
@@ -236,7 +256,10 @@ def note : String := "#print axioms Elements.inString"
         mutations = self.root / counts.MUTATIONS
         original_mutations = mutations.read_text()
         for suffix in ("from model import M as shadow\n",
-                       "report(M=len(M))\n"):
+                       "report(M=len(M))\n",
+                       "seen = M.count(('first', None))\n",
+                       "count = M.count\n",
+                       "supports_append = M.append is not None\n"):
             with self.subTest(reader="mutations", suffix=suffix):
                 mutations.write_text(original_mutations + suffix)
                 self.assertEqual(counts.model_statement_mutations(self.root), 2)

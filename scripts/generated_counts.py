@@ -29,7 +29,6 @@ import re
 import subprocess
 import tomllib
 
-from check_superposition_pins import FENCE, HEADING_LINE, IDENTIFIER, NAME_END
 import heath
 
 
@@ -309,6 +308,10 @@ SCREEN = "Audit/screen.py"
 SUPERPOSITION = "Audit/Superposition.lean"
 MUTATIONS = "tests/model/mutations.py"
 FORMALIZATION = "docs/FORMALIZATION.md"
+_PART = r"[^\W\d][\w'!?₀-₉]*"
+IDENTIFIER = re.compile(rf"{_PART}(?:\.{_PART})*")
+NAME_END = r"(?![\w.'!?₀-₉])"
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 # A dependency check as the audit pins one: a bare `#guard_msgs in`, then `#print axioms`
 # and one name, ended as check_superposition_pins ends a name. Every `#print axioms` in the
 # code must be one, or the file is refused rather than miscounted.
@@ -485,10 +488,11 @@ def model_statement_mutations(root):
                                  "one mutation")
             appends.append(call.func)
     # As for the screen's CIRCLE: the assignment and the module-level appends after it are
-    # the only bindings of M and the only calls through it. What reaches the list by another
-    # name is left to the review of tests/, a protected path.
+    # the only bindings or changes of M; reads through it are permitted. What reaches the
+    # list by another name is left to the review of tests/, a protected path.
     refuse_other_bindings(tree, MUTATIONS, "M", {tree.body[start].targets[0], *appends}, start,
-                          "its one assignment and the module-level appends after it")
+                          "its one assignment and the module-level appends after it",
+                          mutating_methods=LIST_MUTATORS)
     return len(appends)
 
 
