@@ -6137,8 +6137,10 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
     # so a moved main a separate --merge would check in full and enqueue waits for it.
     if held is not None and base != held.base:
         raise Refusal(f"origin/main moved from {held.base[:12]} to {base[:12]} during CI; "
-                      "nothing is merged, nor judged against the new main: run --merge, "
-                      "which judges the head against it")
+                      "nothing is merged, nor judged against the new main: run the "
+                      "pre-flight again against it (`git safe-push --branch <name>`, merging "
+                      "origin/main in first if the head lacks it), then --merge; in a merge "
+                      "queue, --merge alone")
     harness(repo, base, rep, hand_over=held is None)
     slug = "test/stoicheia" if test_mode else github_slug(origin)
     if not slug:

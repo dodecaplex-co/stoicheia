@@ -40,7 +40,10 @@
   (`core.sshCommand`, `http.proxy`, `include.path` and the like) are no more checked here
   than for a separate `--merge`, a gap older than this change, noted for a card of its
   own. origin/main moved during CI, refused as soon as the merge's fetch shows it, before
-  origin/main's harness is compared or anything is judged against the new main. Run on,
+  origin/main's harness is compared or anything is judged against the new main; the
+  refusal says to run the pre-flight again against the new main, then `--merge` (in a
+  merge queue, `--merge` alone). The card asked that the full checks run in this case;
+  refusing is the stricter choice, for these reasons. Run on,
   the full checks would take about 36 minutes, and then the body's summary, of the old
   main, refuses the merge, or the merge's preconditions refuse it for a main the head
   lacks; and the harness would be compared with the copy on disk, which code left running
@@ -66,7 +69,10 @@
   after the push's summary it says that CI is green but the pre-flight noted origin/main's
   checks failing on the head, names the notes, and says to record the security review
   before a separate `--merge`. `keep_apart` and this rule read the failures through one
-  function, `base_pass_failures`, so the two cannot drift apart.
+  function, `base_pass_failures`, so the two cannot drift apart. The hold exits 3, as a
+  failed CI does, so a lane that falls back to a separate `--merge` when CI fails must
+  stop on the hold instead, and never fall back on it: the line "CI is green, but the
+  pre-flight noted" marks it.
 
   When the copy stands in. Otherwise the copy stands in for step 4 only while
   origin/main's pass of step 4 in the pre-flight was not taken from the main-checks cache,
@@ -87,9 +93,10 @@
   origin: when CI fails, as a push does today, and the lane's retry falls back to a
   separate `--merge`; when the merge is refused; when it is held for the security review;
   and when the run is interrupted, or stops on an error of the harness's own, anywhere
-  from the push's summary to the merge's end. An interruption or an error once the merge
-  has started says that it may have merged, and to look at the pull request before
-  anything else.
+  from the push's summary to the merge's end. An error once the merge has started, or an
+  interruption once `gh pr merge` has been asked, says that it may have merged, and to
+  look at the pull request before anything else; an interruption before then says that
+  the run was interrupted, and nothing is merged.
 
   What does not change. A separate `--merge` keeps its rule, line for line: for a head
   that changes the checks or a protected path, it runs the full checks again, whatever
@@ -107,7 +114,7 @@
   followed, leaves a cache and its sandbox set after it, plants a note in the pre-flight's
   report once its checks are done, crashes or interrupts the merge's first step, and
   interrupts a run's summary, the push's or the merge's. A new class, `Land`, holds
-  seventeen tests. A head that changes the checks lands in one run, step 4 taken from
+  eighteen tests. A head that changes the checks lands in one run, step 4 taken from
   memory and never run again at the merge, while the scan and the guards run again; a
   head of R0 lands in one run, its short record standing in. origin/main moving during CI
   is refused once fetched, before the harness is compared, whether the head holds the new
@@ -115,10 +122,13 @@
   refused before any fetch, the clone's origin/main left where it was. A harness changed
   during CI is refused, with no hand-over and no second push: on a main moved to it, as a
   moved main; and, with main unmoved, when the copy that runs is rewritten on disk, in a
-  run handed over too. A forged record on disk changes nothing, neither one that would
-  stand in for nothing nor one, written for a main moved during CI, that a separate
-  `--merge` does let stand in, as the test then shows. A separate `--merge` still runs
-  the full checks again for a head that changes the checks. The parser's rules hold. CI
+  run handed over too. A forged record on disk changes nothing: with main unmoved, one
+  that `checks_record` would accept, written during CI where a separate `--merge` would
+  read it, is never read, and the record kept in memory stands in; one that would stand
+  in for nothing changes nothing either; and one written for a main moved during CI,
+  which a separate `--merge` then does let stand in, as the test shows, is never reached.
+  A separate `--merge` still runs the full checks again for a head that changes the
+  checks. The parser's rules hold. CI
   failing merges nothing. A cache hit lets the copy stand in for nothing, shown by calling
   the merge in the test's own process with what `--land` would hand it, since the cache
   needs step 4 in full, which the internal test flag skips; the cache's lookup marks a hit
@@ -150,7 +160,7 @@
   gh gains the four actions above, each documented beside its others, whose driver gains
   the six actions above, each documented beside its others, and wraps `check_commit`,
   `merge_preconditions` and `summary` for them, which gains the class `Land` and its
-  seventeen tests, and in whose two tests of `HandOver` the line that defines `harness` is
+  eighteen tests, and in whose two tests of `HandOver` the line that defines `harness` is
   looked for, and rewritten, as it now reads.
 
   Approved here too is the one change to the launcher, `scripts/hooks/safe-push`, whose

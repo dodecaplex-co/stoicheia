@@ -2502,9 +2502,9 @@ class GeneratedPages(Edge):
         self.assertEqual(self.guard(r.stdout, "generated pages"), "ok", r.stdout)
 
 
-# Runs safe_push in a subprocess with `guards`, `gates`, `watch_checks`, `check_commit`,
-# `merge_preconditions` or `summary` wrapped, so that something happens at a chosen moment:
-# origin's main moves, or an interruption.
+# Runs safe_push in a subprocess with some of its functions wrapped, so that something
+# happens at a chosen moment: origin's main moves, an interruption or a crash, a planted
+# note, or the cache's state set.
 DRIVER = r"""
 import json, os, re, subprocess, sys
 sys.path.insert(0, sys.argv[1])
@@ -4479,8 +4479,10 @@ class Land(Edge):
         self.assertEqual(r.returncode, 3, out)
         merged = self.merge_part(out)
         self.assertIn(f"origin/main moved from {BASE[:12]} to {moved[:12]} during CI; nothing "
-                      "is merged, nor judged against the new main: run --merge, which judges "
-                      "the head against it", merged)
+                      "is merged, nor judged against the new main: run the pre-flight again "
+                      "against it (`git safe-push --branch <name>`, merging origin/main in "
+                      "first if the head lacks it), then --merge; in a merge queue, --merge "
+                      "alone", merged)
         self.assertEqual(self.guard(merged, "fetch"), "ok", merged)
         self.assertIsNone(self.guard(merged, "harness"), merged)
         self.assertIsNone(self.guard(merged, "pull request"), merged)
@@ -4603,6 +4605,32 @@ class Land(Edge):
                 self.assertEqual(self.merges(), [])
                 self.assertEqual(self.origin_main(), BASE)
                 self.assertEqual(self.origin_branch(), sha)
+
+    def test_accepted_forged_record_on_disk_changes_nothing(self):
+        # Main unmoved: a record a separate --merge would let stand in (origin/main's
+        # harness, full, every step ok), written during CI where that merge would read it.
+        # --land never reads it: the record kept in memory stands in, and the forged note,
+        # which the gates would print for a record that stood in, is nowhere.
+        sha = self.check_change()
+        forged = {"sha": sha, "base": BASE, "branch": BRANCH, "full": True, "time": "forged",
+                  "harness": "origin/main's",
+                  "harness_blob": safe_push.blob_id(SAFE_PUSH.read_bytes()),
+                  "steps": [["2", "secrets", "ok", 0.1], ["4", "lake build", "ok", 1.0]],
+                  "notes": [["forged", "a note of the forged record"]], "protected": [],
+                  "statements": []}
+        with mock.patch.object(safe_push, "HARNESS_BLOB", forged["harness_blob"]):
+            self.assertIsNotNone(safe_push.checks_record(
+                forged, True, safe_push.Risk("R5", "for the test")), "not a record that stands in")
+        path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
+        self.set_gh(lambda s: s.update(watch_write={str(path): json.dumps(forged)}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertNotIn("watch_write", self.gh_state(), "the record was not forged")
+        self.assertEqual(r.returncode, 0, out)
+        merged = self.merge_part(out)
+        self.assertIn(self.MEMORY, merged)
+        self.assertNotIn("forged", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
 
     def test_forged_record_on_disk_changes_nothing(self):
         # During CI a record is written where a separate --merge would read it. One that
