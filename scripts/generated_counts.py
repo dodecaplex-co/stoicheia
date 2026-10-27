@@ -26,7 +26,6 @@ import re
 import subprocess
 import tomllib
 
-from check_superposition_pins import FENCE, HEADING_LINE, IDENTIFIER, NAME_END
 import heath
 
 
@@ -306,6 +305,10 @@ SCREEN = "Audit/screen.py"
 SUPERPOSITION = "Audit/Superposition.lean"
 MUTATIONS = "tests/model/mutations.py"
 FORMALIZATION = "docs/FORMALIZATION.md"
+_PART = r"[^\W\d][\w'!?₀-₉]*"
+IDENTIFIER = re.compile(rf"{_PART}(?:\.{_PART})*")
+NAME_END = r"(?![\w.'!?₀-₉])"
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 # A dependency check as the audit pins one: a bare `#guard_msgs in`, then `#print axioms`
 # and one name, ended as check_superposition_pins ends a name. Every `#print axioms` in the
 # code must be one, or the file is refused rather than miscounted.

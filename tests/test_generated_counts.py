@@ -4,6 +4,7 @@
 import io
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -157,6 +158,25 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError,
                                     rf"^{re.escape(path)}(:\d+)?: .*{re.escape(phrase)}"):
             reader(self.root)
+
+    def test_markers_load_without_superposition_checker(self):
+        harness = self.root / "count-reader"
+        harness.mkdir()
+        for name in ("generated_counts.py", "heath.py"):
+            shutil.copyfile(REPO / "scripts" / name, harness / name)
+        probe = """\
+import sys
+sys.path.insert(0, sys.argv[1])
+import generated_counts
+marker, = generated_counts.markers(
+    "<!-- count:axioms -->10<!-- /count -->", "note.md")
+assert "check_superposition_pins" not in sys.modules
+print(marker.name)
+"""
+        result = subprocess.run([sys.executable, "-I", "-c", probe, str(harness)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "axioms\n")
 
     def test_every_count_on_small_files(self):
         self.assertEqual({name: fn(self.root) for name, fn in counts.COUNTS.items()}, {
