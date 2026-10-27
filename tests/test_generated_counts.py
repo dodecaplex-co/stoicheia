@@ -278,36 +278,6 @@ def note : String := "#print axioms Elements.inString"
                 (original + "def «unclosed", "a «…» name"),
                 (original + "`(command| #guard_msgs in #print axioms Elements.fake)\n",
                  "a syntax quotation"),
-                (original + "set_option pp.universes true in\n#guard_msgs in\n"
-                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
-                (original + "set_option pp.universes true in #guard_msgs in "
-                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
-                (original + "#print Nat set_option pp.universes true in #guard_msgs in "
-                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
-                (original + "set_option pp.universes true /- a remark -/ in\n"
-                 "-- another remark\n#guard_msgs in\n#print axioms Elements.third\n",
-                 "a guarded pin under `set_option`"),
-                (original + "set_option\n  pp.universes\n\n  true\n  in\n"
-                 "#guard_msgs in\n#print axioms Elements.third\n",
-                 "a guarded pin under `set_option`"),
-                (original + "set_option pp.universes true\n#guard_msgs in\n"
-                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
-                (original + "set_option pp.universes true #guard_msgs in "
-                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
-                (original + "section Outer\nset_option pp.universes true\n"
-                 "section Inner\nend Inner\n#guard_msgs in\n"
-                 "#print axioms Elements.third\nend Outer\n",
-                 "a guarded pin under `set_option`"),
-                (original + "@[expose] public section\nset_option pp.universes true\n"
-                 "#guard_msgs in #print axioms Elements.third\nend\n",
-                 "a guarded pin under `set_option`"),
-                (original + "#check Nat namespace Active set_option pp.universes true "
-                 "#guard_msgs in #print axioms Elements.third end Active\n",
-                 "a guarded pin under `set_option`"),
-                (original + "section Outer\nset_option pp.universes true\nmutual\n"
-                 "def mutualFirst : Nat := 1\ndef mutualSecond : Nat := 2\nend\n"
-                 "#guard_msgs in #print axioms Elements.third\nend Outer\n",
-                 "a guarded pin under `set_option`"),
                 (original + "#print axioms Elements.third\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms.foo\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms' Elements.third\n", unguarded),
@@ -342,6 +312,8 @@ def note : String := "#print axioms Elements.inString"
                  "end Earlier\n#guard_msgs in #print axioms Elements.third\n", 3),
                 (original + "set_option\n  pp.universes\n  true\n  in\n#check Nat\n"
                  "#guard_msgs in\n#print axioms Elements.third\n", 3),
+                (original + "set_option pp.universes true in\n#guard_msgs in\n"
+                 "#print axioms Elements.third\n", 3),
                 (original + "#guard_msgs in -- a remark\n#print\n  axioms Elements.third\n", 3)):
             with self.subTest(text=text):
                 path.write_bytes(text.encode())

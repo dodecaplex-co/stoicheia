@@ -311,12 +311,6 @@ FORMALIZATION = "docs/FORMALIZATION.md"
 # code must be one, or the file is refused rather than miscounted.
 AXIOM_PIN = re.compile(rf"#guard_msgs\s+in\s*#print\s+axioms\s+{IDENTIFIER.pattern}{NAME_END}")
 PRINT_AXIOMS = re.compile(r"#print\s+axioms")
-SET_OPTION_COMMAND = re.compile(
-    rf"(?<![\w.'!?₀-₉])set_option\s+{IDENTIFIER.pattern}{NAME_END}"
-    rf"\s+(?P<value>\S+)(?P<local>\s+in\b)?")
-LEAN_SCOPE_OPEN = re.compile(
-    rf"(?<![\w.'!?₀-₉])(?P<kind>section|namespace|mutual){NAME_END}")
-LEAN_SCOPE_END = re.compile(rf"(?<![\w.'!?₀-₉])end{NAME_END}")
 SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
 # table it may hold.
@@ -458,43 +452,11 @@ def superposition_dependency_checks(root):
     if quotation := SYNTAX_QUOTATION.search(code):
         raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quotation.start()) + 1}: "
                          "a syntax quotation, whose commands are not run")
-    if optioned := optioned_axiom_pin(code):
-        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, optioned.start()) + 1}: "
-                         "a guarded pin under `set_option`, not a bare top-level guard")
     pins = len(AXIOM_PIN.findall(code))
     if pins != len(PRINT_AXIOMS.findall(code)):
         raise ValueError(f"{SUPERPOSITION}: a `#print axioms` that is not a guarded pin of one "
                          "name, a bare `#guard_msgs in` then `#print axioms <name>`")
     return pins
-
-
-def optioned_axiom_pin(code):
-    """Return the first axiom pin governed by a local or persistent set_option command."""
-    options = list(SET_OPTION_COMMAND.finditer(code))
-    for option in options:
-        if option.group("local") is not None:
-            position = option.end()
-            while position < len(code) and code[position].isspace():
-                position += 1
-            if pin := AXIOM_PIN.match(code, position):
-                return pin
-    events = [(match.start(), "pin", match) for match in AXIOM_PIN.finditer(code)]
-    events.extend((match.start(), "option", match) for match in options
-                  if match.group("local") is None)
-    events.extend((match.start(), "open", match) for match in LEAN_SCOPE_OPEN.finditer(code))
-    events.extend((match.start(), "end", None) for match in LEAN_SCOPE_END.finditer(code))
-    scopes = [("root", False)]
-    for _, kind, match in sorted(events, key=lambda event: event[0]):
-        if kind == "end":
-            if len(scopes) > 1:
-                scopes.pop()
-        elif kind == "open":
-            scopes.append((match.group("kind"), False))
-        elif kind == "option":
-            scopes[-1] = (scopes[-1][0], True)
-        elif any(optioned for _, optioned in scopes):
-            return match
-    return None
 
 
 def model_statement_mutations(root):

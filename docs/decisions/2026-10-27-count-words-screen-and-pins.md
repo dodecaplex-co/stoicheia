@@ -3,10 +3,10 @@
   [#576](https://github.com/jackChallis/stoicheia/issues/576)).**
   The coordinator's orders of 27 October 2026 assign card #576, under the plan for shared
   files that the owner approved that day. As the orders give the plan's aim, each thing is
-  said once, and its restatements are compiled from it. Four counts in prose restate what a file says exactly, and have been
-  retyped by hand when the file changed. So
+  said once, and its restatements are compiled from it. Four counts in prose restate what
+  a file says exactly, and have been retyped by hand when the file changed. So
   [`scripts/generated_counts.py`](../../scripts/generated_counts.py) gains a count word for
-  each, read from the file alone, never by importing it, running it or building anything.
+  each, read from files alone, never by importing them, running them or building anything.
   Each file is refused, by its name, when it cannot be read, decoded or parsed:
 
   - `screen-circle-rules`, the number of names in `CIRCLE`, the screen's list of rules about
@@ -18,9 +18,11 @@
     many of the certificate's axioms are in the list. Every other binding of the name is
     refused (an assignment of any kind, a target, a `def`, a parameter or keyword argument,
     an import, a `global`, a pattern's capture or `**rest`, and a star import after the
-    assignment), as is every store or call through it, as `CIRCLE.append`. What reaches the
-    list by another name (`globals()`, an alias, `exec`) is left to the review of `Audit/`,
-    a protected path.
+    assignment), as is every store through it and every call of a method that changes a
+    list, as `CIRCLE.append`; a read, as `len(CIRCLE)` or `CIRCLE.index(…)`, counts. What
+    reaches the
+    list by another name (`globals()`, an alias, `exec`) is left to the review of
+    `Audit/`, a protected path.
   - `superposition-dependency-checks`, the number of dependency checks pinned in
     [`Audit/Superposition.lean`](../../Audit/Superposition.lean): a bare `#guard_msgs in`,
     then `#print axioms` and one name, ended as `scripts/check_superposition_pins.py` ends a
@@ -28,8 +30,9 @@
     reads its bytes (`lean_text`). It is refused where it holds a lone carriage return,
     where `read_lean` is unsure of a string, where a comment or a string is left open, which
     `read_lean` reads on to the end of the file without counting it unsure, where a `«` is
-    left in the code, and where any other `#print axioms` stands: unguarded, under options,
-    or without one name after it.
+    left in the code, where a syntax quotation stands, and where any other `#print axioms`
+    stands: unguarded, or without one name after it. A `set_option` near a pin does not
+    stop the count, which counts pins, not what they print.
   - `model-statement-mutations`, the number of planted mutations in
     [`tests/model/mutations.py`](../../tests/model/mutations.py): its module-level
     `M.append(…)` calls, each of one mutation. The file is parsed as the screen is. `M` must
@@ -50,10 +53,13 @@
   that says how many of the axioms the screen tries are in its list of rules about circles;
   the sentence of [brief 0009](../briefs/0009-superposition.md) that says how many
   dependency checks pin the production evidence; the row of FORMALIZATION.md's table of
-  evidence on the numerical model tests, which says how many statements the planted
-  mutations change; and the sentence of [brief book-I](../briefs/book-I.md) that says how
-  many rules are now theorems. Their markers are placed by card #579's migrations, not
-  here: this change places none. The same row of the table of evidence says that fourteen
+  evidence on the numerical model tests, which gives the number of planted mutations, each
+  one weakened statement (two of them weaken the same rule, so the row's wording, "15
+  statements", is for the owner of that file to settle when the marker is placed); and the
+  sentence of [brief book-I](../briefs/book-I.md) that says how many rules are now
+  theorems. Their markers are placed later, by each file's subject owner in a migration of
+  its own (card #579 or its like), not here: this change places none. The same row of the
+  table of evidence says that fourteen
   of the mutations are of rules; that number stays typed, since `mutations.py` tells a
   mutation of a rule from the one of the placement only by a comment and the free text of
   its name.
