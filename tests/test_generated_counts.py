@@ -51,6 +51,34 @@ def Elements.companions : List (Lean.Name × String) := [
                            f'[review]\nstage = "{stage}"\n')
         self.write("review/I/notes.toml", 'stage = "full"')
         self.report("**7 failing items**. 2 of the 6 propositions pass every item of their own.")
+        self.write(counts.SCREEN, '''"""A small screen; its CIRCLE is named here only in prose."""
+
+RULES = """Postulate1 Postulate2 Postulate3""".split()
+
+# Rules that speak of circles.
+CIRCLE = """Definition15 Postulate3
+Tacit.circles_meet""".split()
+
+missing = [rule for rule in CIRCLE if rule not in RULES]
+''')
+        self.write(counts.SUPERPOSITION, '''import Elements.Figure.Superposition
+
+/-! The first two pins record their dependencies. -/
+
+/-- info: 'Elements.first' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Elements.first
+
+/-- info: 'Elements.second' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Elements.second
+
+#print Elements.Superposition.Placed
+
+-- #print axioms Elements.lineComment
+/- Outer /- #print axioms Elements.nestedComment -/ still a comment. -/
+def note : String := "#print axioms Elements.inString"
+''')
         self.tracked = [p.relative_to(self.root) for p in self.root.rglob("*") if p.is_file()]
         self.enterContext(patch.object(
             counts, "tracked_files",
@@ -79,7 +107,75 @@ def Elements.companions : List (Lean.Name × String) := [
             "reviews:I": 2, "reviews:II": 1, "reviews:III": 3,
             "reviews:I:full": 1, "reviews:II:full": 0, "reviews:III:full": 3,
             "acceptance:failing": 7, "acceptance:passing": 2,
+            "screen-circle-rules": 3, "superposition-dependency-checks": 2,
         })
+
+    def test_screen_circle_rules_refuse_any_other_shape(self):
+        path = self.root / counts.SCREEN
+        original = path.read_text()
+        assignment = 'CIRCLE = """Definition15 Postulate3\nTacit.circles_meet""".split()'
+        for text in (original.replace("CIRCLE =", "CIRCLES ="),
+                     original + 'CIRCLE = "Postulate1".split()\n',
+                     original + "CIRCLE: list[str]\n",
+                     original + 'CIRCLE += ["Postulate1"]\n',
+                     original.replace("CIRCLE =", "CIRCLE: list[str] ="),
+                     original.replace("CIRCLE =", "CIRCLE = OTHER ="),
+                     original.replace(assignment, 'CIRCLE = ["Definition15", "Postulate3"]'),
+                     original.replace(".split()\n\nmissing", '.split(" ")\n\nmissing'),
+                     original.replace(".split()\n\nmissing", ".split(sep=None)\n\nmissing"),
+                     original.replace(assignment, 'CIRCLE = f"{RULES[2]} Definition15".split()'),
+                     original.replace(assignment, "CIRCLE = RULES"),
+                     original.replace(assignment, 'CIRCLE = b"Definition15 Postulate3".split()'),
+                     original.replace("Tacit.circles_meet", "Postulate3"),
+                     original + "if RULES:\n    CIRCLE = []\n",
+                     original + "def widen():\n    global CIRCLE\n    CIRCLE = RULES\n",
+                     original + 'CIRCLE.append("Postulate1")\n',
+                     original + "del CIRCLE[0]\n",
+                     original + "from rules import CIRCLE\n",
+                     original + "CIRCLE = (\n"):
+            with self.subTest(text=text):
+                path.write_text(text)
+                with self.assertRaisesRegex(ValueError, counts.SCREEN):
+                    counts.screen_circle_rules(self.root)
+        path.unlink()
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
+    def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
+        path = self.root / counts.SUPERPOSITION
+        original = path.read_text()
+        for text in (original + "/- A comment never closed.\n#print axioms Elements.third\n",
+                     original + 'def unclosed : String := "never closed\n'
+                     "#print axioms Elements.third\n",
+                     original + 'def braces : String := "{ a hole or text?"\n'):
+            with self.subTest(text=text):
+                path.write_text(text)
+                with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
+                    counts.superposition_dependency_checks(self.root)
+        path.unlink()
+        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
+            counts.superposition_dependency_checks(self.root)
+
+    def test_screen_and_superposition_words_fill_markers(self):
+        text = ("<!-- count:screen-circle-rules:Word -->Ten<!-- /count --> rules about circles "
+                "(<!-- count:screen-circle-rules -->10<!-- /count -->); "
+                "<!-- count:superposition-dependency-checks -->28<!-- /count --> checks, "
+                "<!-- count:superposition-dependency-checks:word -->twenty-eight"
+                "<!-- /count --> in words.\n")
+        path = self.write("docs/notes.md", text)
+        changes, errors = self.scan(["docs/notes.md"])
+        self.assertEqual(errors, [])
+        self.assertEqual(changes[path], text.replace("-->Ten<!--", "-->Three<!--")
+                         .replace("-->10<!--", "-->3<!--").replace("-->28<!--", "-->2<!--")
+                         .replace("-->twenty-eight<!--", "-->two<!--"))
+        self.assertEqual(counts.value(self.root, "screen-circle-rules:word", {}), "three")
+        self.assertEqual(counts.value(self.root, "superposition-dependency-checks:Word", {}),
+                         "Two")
+
+    def test_real_screen_and_superposition_files_read(self):
+        # Their values are left to the markers: asserting them here would retype the counts.
+        self.assertGreater(counts.screen_circle_rules(REPO), 0)
+        self.assertGreater(counts.superposition_dependency_checks(REPO), 0)
 
     def test_companions_refuse_unreadable_or_duplicate_entries(self):
         path = self.root / "Elements/Companions.lean"

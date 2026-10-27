@@ -17,6 +17,7 @@ alone, never a Lean run or build outputs. Run this module to print every availab
 count and its current value.
 """
 
+import ast
 from dataclasses import dataclass
 from functools import partial
 import os
@@ -300,6 +301,72 @@ def acceptance_passing(root):
     return acceptance_summary(root)[1]
 
 
+SCREEN = "Audit/screen.py"
+SUPERPOSITION = "Audit/Superposition.lean"
+PRINT_AXIOMS = re.compile(r"#print\s+axioms\b")
+
+
+def source_text(root, path):
+    """Read a source file a count parses, refusing it by name if it cannot be read."""
+    try:
+        return repository_path(root, path).read_text()
+    except OSError as error:
+        raise ValueError(f"{path}: cannot read the file ({error.strerror})") from error
+
+
+def screen_circle_rules(root):
+    """Count the names in Audit/screen.py's CIRCLE, parsed with ast, never imported or run."""
+    try:
+        tree = ast.parse(source_text(root, SCREEN), SCREEN)
+    except SyntaxError as error:
+        raise ValueError(f"{SCREEN}: cannot parse the screen") from error
+    assigned = [node for node in tree.body if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and target.id == "CIRCLE" for target in node.targets)]
+    if len(assigned) != 1 or len(assigned[0].targets) != 1:
+        raise ValueError(f"{SCREEN}: expected one module-level assignment to CIRCLE alone")
+    target, value = assigned[0].targets[0], assigned[0].value
+    if not (isinstance(value, ast.Call) and not value.args and not value.keywords
+            and isinstance(value.func, ast.Attribute) and value.func.attr == "split"
+            and isinstance(value.func.value, ast.Constant)
+            and isinstance(value.func.value.value, str)):
+        raise ValueError(f"{SCREEN}: CIRCLE is not a string literal split with no arguments")
+    # That assignment must be the only place the file binds CIRCLE or changes it: another
+    # binding of the name at any depth (augmented, annotated, in a loop, a def, an import or
+    # a `global`), an attribute of it, as CIRCLE.append, or a store or deletion through it
+    # is refused, rather than counted as if the literal were the list the screen uses.
+    for node in ast.walk(tree):
+        through = node.value if isinstance(node, (ast.Attribute, ast.Subscript)) else None
+        if isinstance(node, ast.Name):
+            changed = (node.id == "CIRCLE" and node is not target
+                       and not isinstance(node.ctx, ast.Load))
+        elif isinstance(through, ast.Name) and through.id == "CIRCLE":
+            changed = isinstance(node, ast.Attribute) or not isinstance(node.ctx, ast.Load)
+        else:
+            changed = "CIRCLE" in (getattr(node, "name", None), getattr(node, "asname", None),
+                                   *getattr(node, "names", ()))
+        if changed:
+            raise ValueError(f"{SCREEN}:{node.lineno}: CIRCLE is bound or changed "
+                             "outside its one assignment")
+    names = value.func.value.value.split()
+    if len(names) != len(set(names)):
+        raise ValueError(f"{SCREEN}: CIRCLE names a rule twice")
+    return len(names)
+
+
+def superposition_dependency_checks(root):
+    """Count #print axioms commands in Audit/Superposition.lean, outside comments and strings."""
+    # Reuse the source scanner, as companion_entries does, and for the same reason import
+    # it locally. read_lean reads a comment or a string that never closes on to the end of
+    # the file without counting it unsure, so a line of code is set after the end: it is
+    # blanked only when something the file opens is left open.
+    from check_fidelity import read_lean
+
+    code, unsure = read_lean(source_text(root, SUPERPOSITION) + "\nend")
+    if unsure or not code.endswith("\nend"):
+        raise ValueError(f"{SUPERPOSITION}: cannot read every comment and string for certain")
+    return len(PRINT_AXIOMS.findall(code))
+
+
 COUNTS = {
     "axioms": axioms,
     "tacit-rules": tacit_rules,
@@ -312,6 +379,8 @@ COUNTS = {
     **{f"reviews:{book}:full": partial(full_reviews, book=book) for book in heath.BOOKS},
     "acceptance:failing": acceptance_failing,
     "acceptance:passing": acceptance_passing,
+    "screen-circle-rules": screen_circle_rules,
+    "superposition-dependency-checks": superposition_dependency_checks,
 }
 
 
