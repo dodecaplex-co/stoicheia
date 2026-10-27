@@ -57,7 +57,7 @@ hypotheses keep out the cases the conventions cannot fix.
 The programs take an axiom, build configurations of points, lines and circles, keep those
 that satisfy its hypotheses, and check its conclusion. Where the conclusion says that a
 point exists, the program constructs one and checks it. The exhaustive and structured
-harnesses also run 40 predicates independently as retained derived properties. They
+harnesses also run 41 predicates independently as retained derived properties. They
 preserve the existing numerical checks and configurations for those laws, but do not
 depend on the corresponding declarations remaining in the axiom registry.
 
@@ -69,13 +69,15 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps 40 numerical predicates under names beginning
-  `derived.`, one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
-  proved after III.2 since 24 October 2026, among them.
+- **[derived.py](derived.py)** keeps 41 numerical predicates under names beginning
+  `derived.`: one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
+  proved after III.2 since 24 October 2026, among them; and Circle 1's
+  (`between_of_inside_chord`), still an axiom, with preparation for its retirement after
+  III.2 tracked in #477.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
-  predicates in all: 36 axiom laws and the 40 retained derived properties, with degenerate
+  predicates in all: 35 axiom laws and the 41 retained derived properties, with degenerate
   configurations included.
-- **[structured.py](structured.py)** builds the hypotheses of 17 axiom laws and all 40
+- **[structured.py](structured.py)** builds the hypotheses of 16 axiom laws and all 41
   retained derived properties on purpose, where chance rarely meets them (three straight
   lines through one point, a right angle, two circles through a common point), over a
   large lattice and over fractions.
@@ -107,9 +109,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `3a2ba2364a3a`, 2026-10-26, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `c6515f8dacfc`, 2026-10-26, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,104,014** configurations met an axiom's hypotheses (1,223,581 in the search, 2,247,172 exhaustive, 633,261 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 511,547 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,063,054** configurations met an axiom's hypotheses (1,223,581 in the search, 2,243,944 exhaustive, 595,529 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 511,547 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -141,7 +143,7 @@ In the plane: **4,104,014** configurations met an axiom's hypotheses (1,223,581 
 | `Tacit.not_on_line_of_same_side` | 315 | 45,192 | · | 4,389 |
 | `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
 | `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
-| `Tacit.between_of_inside_chord` | 239 | 3,228 | 37,732 | 8,315 |
+| `Tacit.between_of_inside_chord` | 239 | · | · | 8,315 |
 | `Tacit.lines_meet_of_opposite_sides` | 14 | 26,248 | 39,362 | 4,460 |
 | `Tacit.circles_meet` | 1,313 | 10,668 | 1,587 | 2,555 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
@@ -163,7 +165,7 @@ In the plane: **4,104,014** configurations met an axiom's hypotheses (1,223,581 
 | `Tacit.area_add_of_between` | 19 | 6,176 | 55,499 | 8,450 |
 | `Tacit.superposition` | 100 | 363,888 | 71,970 | 8,755 |
 
-Separately, **9,855,030** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **9,895,990** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -172,6 +174,7 @@ Separately, **9,855,030** configurations met a retained derived property's hypot
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
 | `derived.outside_of_between` | 281,664 | 47,802 |
+| `derived.between_of_inside_chord` | 3,228 | 37,732 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
@@ -391,7 +394,7 @@ positive lengths could rest on it in their place, and so on neither of those rul
 
 | Axiom | Why it holds |
 |---|---|
-| `superposition` | Move the plane rigidly, taking `A` to `D` and the ray from `A` through `B` onto the ray from `D` through `G`, and reflect in `L` if `C` lands on the side away from `H`. Rigid motions keep lengths and angles. `B'` lies on the ray, so `D` is not between `B'` and `G`, and `C'` is off `L` because `ABC` is a triangle. Since `D` is on `L`, `D ≠ C'`; draw their straight line for the kept side. `Rule.of_placement` reduces the restricted inference rule to this placement with its side. The numerical harness checks this sufficient construction; the formal model proves the reduction and the construction in Lean. |
+| `superposition` | Move the plane rigidly, taking `A` to `D` and the ray from `A` through `B` onto the ray from `D` through `G`, and reflect in `L` if `C` lands on the side away from `H`. Rigid motions keep lengths and angles. `B'` lies on the ray, so `D` is not between `B'` and `G`. The triangle guard puts the image of `C` off `L`, so it can be placed on `H`'s side as `C'`. Same side 3 then puts `C'` off `L`; since `D` is on `L`, `D ≠ C'`, and Postulate 1 draws their straight line for the kept side. `Rule.of_placement_of_join` states this reduction, through `Rule.of_placement`. The numerical harness checks the sufficient construction; the formal model proves the reduction and the construction in Lean. The harness's check of the kept side is a construction smoke test: it confirms that the harness builds the line, but it cannot fail on its own, since the line is drawn through `D` and `C'`, and `D ≠ C'` already follows from the check that `C'` is on `H`'s side of `L`. No mutation targets it. |
 
 ## The guards and the mutations
 
@@ -463,7 +466,12 @@ triangle. And the hyperbolic plane's motions can lay any triangle down at any po
 along any ray, on either side. The harness also constructs and checks the straight line
 through the starting point and placed third corner, the kept side. These are numerical
 tests of the sufficient placement for the restricted rule, by `Rule.of_placement`;
-there is no Lean proof of the hyperbolic model here. Marvin Jay Greenberg's
+there is no Lean proof of the hyperbolic model here. As in the plane
+([above](#superposition)), the check of the kept side is a construction smoke test: it
+cannot fail on its own, since the line is drawn through the starting point and the placed
+third corner, and that corner is checked to lie strictly on the chosen side of the line
+the triangle is laid along, so is not the starting point, which is on that line; and no
+mutation targets it. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
@@ -517,7 +525,7 @@ as Astra advised, with our thanks. The model has four parts.
    a theorem of its own. The hardest were taken first, since they might have reshaped the
    representation: where circles meet, and on which side; angle addition, both ways; the
    side on which Postulate 5's lines meet; restricted superposition, from placement by
-   isometry and reflection, its kept side by Postulate 1, and `Rule.of_placement`; the area
+   isometry and reflection, Same side 3, Postulate 1 and `Rule.of_placement_of_join`; the area
    rules; and the finite `avoid` lists. `superposition_placement` proves the supporting
    placement construction; it is not a second locked law. The generator gathers the <!-- count:axioms -->49<!-- /count --> into
    `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
@@ -607,7 +615,7 @@ the model follows the axiom in the same pull request as the Lean:
    own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
    or restated so that its law reads other letters, that program must drop or re-key the
    law first, in a pull request of its own, before the axiom moves. That preparation is
-   already complete for the 40 predicates in [derived.py](derived.py): both programs
+   already complete for the 41 predicates in [derived.py](derived.py): both programs
    call their `derived.` names, and `run.py` requires each report independently of the
    axiom registry.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
