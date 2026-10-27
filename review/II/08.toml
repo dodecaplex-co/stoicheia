@@ -15,7 +15,7 @@ note = "Euclid produces AB to D with BD equal to CB. The statement takes every D
 at = "let the square AEFD be described on AD"
 kind = "helper"
 helper = "Prop8.cell"
-note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves CH parallel to BL and MN parallel to OP with `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) to form the cells and order points across three parallels, finds G and R with `BookI.Prop30.meet`, and establishes the order of their points with `Parallel.between`."
+note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, each about the diameter DE: through B, BL parallel to AE, cutting DE at K, and MN through K parallel to AD; through C, CH parallel to AE, cutting DE at Q, and OP through Q parallel to AD. It obtains their complements by `Parallelogram.complements`, proves CH parallel to BL and MN parallel to OP with `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) to form the cells and order points across three parallels, finds G and R with `BookI.Prop30.meet`, and establishes the order of their points with `Parallel.between`."
 
 [[passage]]
 at = "while CB is equal to GK, and BD to KN"
@@ -61,11 +61,11 @@ note = "Euclid takes the gnomon STU and OH together as the whole square AEFD. `P
 
 [review]
 stage = "full"
-commit = "1e482112"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "7103f442a"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:ce2b21d5eedee152"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at ad50305f use Common Notion 2 to add OH and simplify the equality CG = GQ; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
-text = "sha256:23997e0710e3e86a"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at ad50305f use Common Notion 2 to add OH and simplify the equality CG = GQ; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a"
+text = "sha256:636a7f2644d915aa"
 
 [review.items]
 statement = "pass"

@@ -227,7 +227,7 @@ private theorem inside_of_angle_add_one_side {A B C D : Point} {L M : Line}
 
 /-- An angle of a triangle is less than two right angles. Produce BA beyond A to E: by
 I.13 the angles BAC, CAE make two right angles, and CAE is greater than nothing. -/
-private theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C) :
+theorem Prop13.angle_lt_two_right {A B C : Point} (h : Triangle B A C) :
     ∠ B A C < ∟ + ∟ := by
   obtain ⟨L, hB, hA⟩ := Postulate1 B A h.ne₁₂
   obtain ⟨E, hE, hBAE, _⟩ := Postulate2 hB hA h.ne₁₂ []
@@ -294,7 +294,7 @@ theorem _root_.Elements.Tacit.inside_of_angle_add {A B C D : Point} {L M : Line}
     _ = (∠ B A D + ∠ B A E) + (∠ D A C + ∠ E A C) := by ac_rfl
     _ = (∟ + ∟) + (∟ + ∟) := CommonNotion2 hb13 hc13
   have hequal := Magnitude.eq_of_add_self_eq heq
-  have hlt := triangle_angle_lt_two_right (Triangle.of_line hB hAL hAB.symm hCL)
+  have hlt := Prop13.angle_lt_two_right (Triangle.of_line hB hAL hAB.symm hCL)
   exact False.elim (Magnitude.ne_of_lt hlt hequal)
 
 end Elements.BookI
