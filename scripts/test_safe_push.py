@@ -4835,7 +4835,8 @@ class Land(Edge):
         interrupted = "interrupted (a test interruption)"
         for action, said, merges in (
                 ("merge-start-fail", stopped.format("RuntimeError: a test crash"), 0),
-                ("merge-start-interrupt", f"Interrupted: {interrupted}.", 0),
+                ("merge-start-interrupt", f"Interrupted: {interrupted}. Nothing is merged: "
+                 "run `git safe-push --merge 1`.", 0),
                 ("summary-interrupt:merge", stopped.format(interrupted), 1),
                 ("summary-interrupt:push", "Pushed, CI green; stopped before the merge: "
                  f"{interrupted}. Nothing is merged: run `git safe-push --merge 1`.", 0)):

@@ -7159,7 +7159,11 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
             done = merging == "merged"
             result = f"interrupted ({e or 'Ctrl-C'})" + ("; merged" if done else "")
             code = 3 if done else 1
-            print(f"\nInterrupted: {result}.")
+            if held is not None and not done:
+                print(f"\nInterrupted: {result}. Nothing is merged: run "
+                      f"`git safe-push --merge {number}`.")
+            else:
+                print(f"\nInterrupted: {result}.")
     if held is None:
         summary(rep, mode, sha, base, result, "")
     else:
