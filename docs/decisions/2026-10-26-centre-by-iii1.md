@@ -89,18 +89,20 @@
     makes afresh, where III.1 now stands among the Lean's citations of III.4, III.8 and
     III.17 beside Heath's reference. In this train too, a dated update to the [overlap
     catalogue](../reports/overlaps.md) under III.1's corollary, and an addendum to the
-    [routes report](../reports/routes-book-III.md). Left to their owners, with text
-    proposed: a dated note in [brief 0004](../briefs/0004-book-III.md) under "Circles and
-    their centres", and a dated note in brief 0008 that points here. For Book IV, [brief
-    0012](../briefs/0012-book-IV.md) finds a centre, where a construction needs one, by
-    III.1, as Euclid finds it under Heath's bracket; that plan agrees with the corrected
-    declaration as it is written. [Brief 0007](../briefs/0007-stage-4b.md), also frozen,
-    says that III.17's outside case takes its centre through `Prop1.of_circle`, which is
-    true again, and that its case on the circle takes it through `exists_centre`, which
-    this train overtakes, for that case too now finds its centre by `Prop1.of_circle`.
-    Later, with III.2, its Lean file, record and page; and with the registration,
-    `Elements/Companions.lean` and III.1's record and page. Since the statement of III.14
-    names its centre E, its proof takes no centre at all, and this train leaves it alone.
+    [routes report](../reports/routes-book-III.md), and the sentence of
+    [STYLE](../STYLE.md), section 3, that tells what Book III's introduction says of the
+    centre. Left to their owners, with text proposed: a dated note in [brief
+    0004](../briefs/0004-book-III.md) under "Circles and their centres", and a dated note
+    in brief 0008 that points here. For Book IV, [brief 0012](../briefs/0012-book-IV.md)
+    finds a centre, where a construction needs one, by III.1, as Euclid finds it under
+    Heath's bracket; that plan agrees with the corrected declaration as it is written.
+    [Brief 0007](../briefs/0007-stage-4b.md), also frozen, says that III.17's outside case
+    takes its centre through `Prop1.of_circle`, which is true again, and that its case on
+    the circle takes it through `exists_centre`, which this train overtakes, for that case
+    too now finds its centre by `Prop1.of_circle`. Later, with III.2, its Lean file,
+    record and page; and with the registration, `Elements/Companions.lean` and III.1's
+    record and page. Since the statement of III.14 names its centre E, its proof takes no
+    centre at all, and this train leaves it alone.
 
   `Audit/Crossing.lean`, a protected path, is approved here for a change to its note on
   what the bridges rest on, and to nothing else in it: the note said that no bridge
