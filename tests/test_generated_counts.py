@@ -3,6 +3,7 @@
 
 import io
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -24,10 +25,13 @@ class CountTests(unittest.TestCase):
 [axioms]
 Postulate1 = "first"
 Postulate2 = "second"
+Postulate3 = "circles"
 Postulate5 = "parallels"
 "Definition1.15" = "definition"
+Definition15 = "definition"
 "Tacit.first" = "rule"
 "Tacit.second" = "rule"
+"Tacit.circles_meet" = "rule"
 "Other.rule" = "other"
 [vocabulary]
 Point = "word"
@@ -53,6 +57,8 @@ def Elements.companions : List (Lean.Name × String) := [
         self.report("**7 failing items**. 2 of the 6 propositions pass every item of their own.")
         self.write(counts.SCREEN, '''"""A small screen; its CIRCLE is named here only in prose."""
 
+import itertools
+
 RULES = """Postulate1 Postulate2 Postulate3""".split()
 
 # Rules that speak of circles.
@@ -60,7 +66,54 @@ CIRCLE = """Definition15 Postulate3
 Tacit.circles_meet""".split()
 
 missing = [rule for rule in CIRCLE if rule not in RULES]
+pairs = list(itertools.combinations(CIRCLE, 2))
+print(len(CIRCLE), CIRCLE[0])
 ''')
+        self.write(counts.MUTATIONS, '''"""A small mutation test; M.append in prose is no call."""
+from model import *  # noqa
+
+
+def first(gen):
+    for x in gen:
+        return x
+    return None
+
+
+M = []
+
+# M1: a rule without its guard
+M.append(('first rule without a guard', first(x for x in range(3) if x > 1)))
+# M.append(('a mutation in a comment', None))
+M.append(('second rule, "M.append" in its name', None))
+
+for name, w in M:
+    print(name, w)
+print(f"{len(M)} mutations")
+''')
+        self.write(counts.FORMALIZATION, """# Formalization
+
+### Rules now proved
+
+<!-- count:rules-now-proved:Word -->Forty<!-- /count --> rules became theorems, taking the
+lock to <!-- count:axioms -->49<!-- /count --> axioms.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `first_rule` | Points 1 | Proved from the foundations. |
+| `second_rule` | Points 2 | Proved after <!-- count:companions -->47<!-- /count --> companions. |
+
+#### A later retirement
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `third_rule` | Circle 1 | Proved in `Circles.lean`. |
+
+## 8. Completion claims
+
+| Not a rule | Why |
+|---|---|
+| `after_the_section` | Not counted. |
+""")
         self.write(counts.SUPERPOSITION, '''import Elements.Figure.Superposition
 
 /-! The first two pins record their dependencies. -/
@@ -99,83 +152,249 @@ def note : String := "#print axioms Elements.inString"
         with patch.object(counts, "tracked_markdown", return_value=list(map(Path, files))):
             return counts.updates(self.root, check=check)
 
+    def assertRefused(self, reader, path, phrase):
+        """`reader` refuses the fixture with one ValueError, naming `path` and saying `phrase`."""
+        with self.assertRaisesRegex(ValueError,
+                                    rf"^{re.escape(path)}(:\d+)?: .*{re.escape(phrase)}"):
+            reader(self.root)
+
     def test_every_count_on_small_files(self):
         self.assertEqual({name: fn(self.root) for name, fn in counts.COUNTS.items()}, {
-            "axioms": 7, "tacit-rules": 2, "postulates": 3, "axioms-but-postulate-5": 6,
+            "axioms": 10, "tacit-rules": 3, "postulates": 4, "axioms-but-postulate-5": 9,
             "vocabulary": 3,
             "companions": 3, "companion-propositions": 2,
             "reviews:I": 2, "reviews:II": 1, "reviews:III": 3,
             "reviews:I:full": 1, "reviews:II:full": 0, "reviews:III:full": 3,
             "acceptance:failing": 7, "acceptance:passing": 2,
             "screen-circle-rules": 3, "superposition-dependency-checks": 2,
+            "model-statement-mutations": 2, "rules-now-proved": 3,
         })
 
     def test_screen_circle_rules_refuse_any_other_shape(self):
         path = self.root / counts.SCREEN
         original = path.read_text()
         assignment = 'CIRCLE = """Definition15 Postulate3\nTacit.circles_meet""".split()'
-        for text in (original.replace("CIRCLE =", "CIRCLES ="),
-                     original + 'CIRCLE = "Postulate1".split()\n',
-                     original + "CIRCLE: list[str]\n",
-                     original + 'CIRCLE += ["Postulate1"]\n',
-                     original.replace("CIRCLE =", "CIRCLE: list[str] ="),
-                     original.replace("CIRCLE =", "CIRCLE = OTHER ="),
-                     original.replace(assignment, 'CIRCLE = ["Definition15", "Postulate3"]'),
-                     original.replace(".split()\n\nmissing", '.split(" ")\n\nmissing'),
-                     original.replace(".split()\n\nmissing", ".split(sep=None)\n\nmissing"),
-                     original.replace(assignment, 'CIRCLE = f"{RULES[2]} Definition15".split()'),
-                     original.replace(assignment, "CIRCLE = RULES"),
-                     original.replace(assignment, 'CIRCLE = b"Definition15 Postulate3".split()'),
-                     original.replace("Tacit.circles_meet", "Postulate3"),
-                     original + "if RULES:\n    CIRCLE = []\n",
-                     original + "def widen():\n    global CIRCLE\n    CIRCLE = RULES\n",
-                     original + 'CIRCLE.append("Postulate1")\n',
-                     original + "del CIRCLE[0]\n",
-                     original + "from rules import CIRCLE\n",
-                     original + "CIRCLE = (\n"):
-            with self.subTest(text=text):
+        bound = "bound or changed outside its one assignment"
+        not_split = "not a string literal split with no arguments"
+        for text, phrase in (
+                (original.replace("CIRCLE =", "CIRCLES ="), "one module-level assignment"),
+                (original + 'CIRCLE = "Postulate1".split()\n', "one module-level assignment"),
+                (original + "CIRCLE: list[str]\n", bound),
+                (original + 'CIRCLE += ["Postulate1"]\n', bound),
+                (original.replace("CIRCLE =", "CIRCLE: list[str] ="),
+                 "one module-level assignment"),
+                (original.replace("CIRCLE =", "CIRCLE = OTHER ="), "one module-level assignment"),
+                (original.replace(assignment, 'CIRCLE = ["Definition15", "Postulate3"]'),
+                 not_split),
+                (original.replace(".split()\n\nmissing", '.split(" ")\n\nmissing'), not_split),
+                (original.replace(".split()\n\nmissing", ".split(sep=None)\n\nmissing"),
+                 not_split),
+                (original.replace(assignment, 'CIRCLE = f"{RULES[2]} Definition15".split()'),
+                 not_split),
+                (original.replace(assignment, "CIRCLE = RULES"), not_split),
+                (original.replace(assignment, 'CIRCLE = b"Definition15 Postulate3".split()'),
+                 not_split),
+                (original.replace("Tacit.circles_meet", "Postulate3"), "names a rule twice"),
+                (original.replace("Tacit.circles_meet", "Tacit.proved_since"),
+                 "not an axiom of Certificate/axioms.lock: Tacit.proved_since"),
+                (original + "if RULES:\n    CIRCLE = []\n", bound),
+                (original + "def widen():\n    global CIRCLE\n    CIRCLE = RULES\n", bound),
+                (original + "def attempts(facts, CIRCLE=RULES):\n    return facts\n", bound),
+                (original + "check = lambda CIRCLE: CIRCLE\n", bound),
+                (original + "def widen(**CIRCLE):\n    return None\n", bound),
+                (original + "globals().update(CIRCLE=RULES)\n", bound),
+                (original + "match RULES:\n    case {**CIRCLE}:\n        pass\n", bound),
+                (original + "match RULES:\n    case [*CIRCLE]:\n        pass\n", bound),
+                (original + "try:\n    pass\nexcept ValueError as CIRCLE:\n    pass\n", bound),
+                (original + 'CIRCLE.append("Postulate1")\n', bound),
+                (original + "del CIRCLE[0]\n", bound),
+                (original + "from rules import CIRCLE\n", bound),
+                (original + "import CIRCLE.rules\n", bound),
+                (original + "from rules import *\n", "star import after CIRCLE is bound"),
+                (original + "CIRCLE = (\n", "cannot parse the file"),
+                ("-" * 100000 + "1\n", "cannot parse the file"),
+                ("+".join(["1"] * 300000) + "\n", "cannot parse the file")):
+            with self.subTest(text=text[:200]):
                 path.write_text(text)
-                with self.assertRaisesRegex(ValueError, counts.SCREEN):
-                    counts.screen_circle_rules(self.root)
-        path.unlink()
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
+                self.assertRefused(counts.screen_circle_rules, counts.SCREEN, phrase)
+
+    def test_screen_circle_rules_read_the_file_as_python_does(self):
+        path = self.root / counts.SCREEN
+        original = path.read_text()
+        cookie = "# -*- coding: latin-1 -*-\n"
+        # U+0085, a separator to str.split, is the byte 0x85 in Latin-1 and is not UTF-8.
+        path.write_bytes((cookie + original.replace(" Postulate3\n", "\x85Postulate3\n"))
+                         .encode("latin-1"))
+        self.assertEqual(counts.screen_circle_rules(self.root), 3)
+        # U+2028's UTF-8 bytes read as Latin-1 join two names into one, which is no axiom.
+        path.write_bytes(cookie.encode() + original.replace(" Postulate3\n", "\u2028Postulate3\n")
+                         .encode())
+        self.assertRefused(counts.screen_circle_rules, counts.SCREEN, "not an axiom of")
+        path.write_bytes(b"\xef\xbb\xbf" + original.encode())
+        self.assertEqual(counts.screen_circle_rules(self.root), 3)
+        # A star import before the assignment is overridden by it.
+        path.write_text(original.replace("\nRULES =", "\nfrom rules import *\nRULES ="))
+        self.assertEqual(counts.screen_circle_rules(self.root), 3)
 
     def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
         path = self.root / counts.SUPERPOSITION
         original = path.read_text()
-        for text in (original + "/- A comment never closed.\n#print axioms Elements.third\n",
-                     original + 'def unclosed : String := "never closed\n'
-                     "#print axioms Elements.third\n",
-                     original + 'def braces : String := "{ a hole or text?"\n'):
+        certain = "cannot read every comment and string for certain"
+        unguarded = "not a guarded pin of one name"
+        for text, phrase in (
+                (original + "/- A comment never closed.\n#print axioms Elements.third\n", certain),
+                (original + 'def unclosed : String := "never closed\n'
+                 "#print axioms Elements.third\n", certain),
+                (original + 'def braces : String := "{ a hole or text?"\n', certain),
+                (original + "-- a remark\r#guard_msgs in\n#print axioms Elements.third\n",
+                 "lone carriage return"),
+                (original + '-- a remark\r"\n#guard_msgs in\n#print axioms Elements.third\n'
+                 '-- "\n', "lone carriage return"),
+                (original + "theorem «#print axioms Elements.third» : True := trivial\n",
+                 "a «…» name"),
+                (original + "def «unclosed", "a «…» name"),
+                (original + "#print axioms Elements.third\n", unguarded),
+                (original + "#guard_msgs in\n#print axioms.foo\n", unguarded),
+                (original + "#guard_msgs in\n#print axioms' Elements.third\n", unguarded),
+                (original + "#guard_msgs in\n#print axiomsElements.third\n", unguarded),
+                (original + "#guard_msgs (drop info) in\n#print axioms Elements.third\n",
+                 unguarded),
+                (original + "#guard_msgs in\n#print axioms", unguarded)):
+            with self.subTest(text=text):
+                path.write_bytes(text.encode())
+                self.assertRefused(counts.superposition_dependency_checks, counts.SUPERPOSITION,
+                                   phrase)
+
+    def test_superposition_dependency_checks_read_the_file_as_lean_does(self):
+        path = self.root / counts.SUPERPOSITION
+        original = path.read_text()
+        for text, expected in (
+                (original.replace("\n", "\r\n"), 2),
+                (original + "#guard_msgs in #print axioms Elements.third\n", 3),
+                (original + "#guard_msgs in -- a remark\n#print\n  axioms Elements.third\n", 3)):
+            with self.subTest(text=text):
+                path.write_bytes(text.encode())
+                self.assertEqual(counts.superposition_dependency_checks(self.root), expected)
+
+    def test_model_statement_mutations_refuse_any_other_shape(self):
+        path = self.root / counts.MUTATIONS
+        original = path.read_text()
+        bound = "\nM = []\n"
+        alone = "one module-level assignment M = [] alone"
+        changed = "bound or changed outside its one assignment and the module-level appends"
+        one = "M.append is given other than one mutation"
+        for text, phrase in (
+                (original.replace(bound, "\nM = [('planted', None)]\n"), alone),
+                (original.replace(bound, "\nM = list()\n"), alone),
+                (original.replace(bound, "\nM: list = []\n"), alone),
+                (original.replace(bound, "\nM = N = []\n"), alone),
+                (original + "M = []\n", alone),
+                (original.replace(bound, "\nM.append(('early', None))\nM = []\n"), changed),
+                (original + "M.extend([('more', None)])\n", changed),
+                (original + "for x in range(2):\n    M.append((x, None))\n", changed),
+                (original + "if M:\n    M.append(('more', None))\n", changed),
+                (original + "def more():\n    M.append(('more', None))\n", changed),
+                (original + "M += [('more', None)]\n", changed),
+                (original + "M[0] = None\n", changed),
+                (original + "del M[0]\n", changed),
+                (original + "def run(M):\n    return M\n", changed),
+                (original + "import M\n", changed),
+                (original + "M.append(*[('more', None)])\n", one),
+                (original + "M.append(('more', None), ('again', None))\n", one),
+                (original + "M.append(item=('more', None))\n", one),
+                (original + "from model import *\n", "star import after M is bound"),
+                (original + "M = (\n", "cannot parse the file")):
             with self.subTest(text=text):
                 path.write_text(text)
-                with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
-                    counts.superposition_dependency_checks(self.root)
-        path.unlink()
-        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
-            counts.superposition_dependency_checks(self.root)
+                self.assertRefused(counts.model_statement_mutations, counts.MUTATIONS, phrase)
 
-    def test_screen_and_superposition_words_fill_markers(self):
+    def test_rules_now_proved_refuse_any_other_shape(self):
+        path = self.root / counts.FORMALIZATION
+        original = path.read_text()
+        row = "| `third_rule` | Circle 1 | Proved in `Circles.lean`. |"
+        later = "#### A later retirement"
+        not_one = "a row whose first cell is not one theorem's name in backticks"
+        hides = "fenced code, a comment or an underline"
+        for text, phrase in (
+                (original.replace("### Rules now proved", "### Rules proved"),
+                 "expected one heading"),
+                (original + "\n### Rules now proved\n", "expected one heading"),
+                (original.replace("`third_rule` |", "`third_rule`, `fourth_rule` |"), not_one),
+                (original.replace("| `third_rule` |", "| third_rule |"), not_one),
+                (original.replace("| `third_rule` |",
+                                  "| <!-- count:companions -->`fake_rule`<!-- /count --> |"),
+                 not_one),
+                (original.replace("`third_rule`", "`first_rule`"),
+                 "`first_rule` is named twice, first at line 10"),
+                (original.replace(later, "| Rule | Why |\n|---|---|\n| `fourth_rule` | x |"),
+                 "a table that is not a table of rules now proved"),
+                (original.replace(row, row + "\nfourth_rule"),
+                 "a line that continues a table of rules as a row"),
+                (original.replace("rules became", "rules | became"),
+                 "a table row that does not open with '|'"),
+                (original.replace("|---|---|---|\n| `third", "|:-|:-|:-|\n| `third"),
+                 "expected the delimiter row"),
+                (original.replace(later, "```\n| `fourth_rule` | x | y |\n```"), hides),
+                (original.replace(later, "<!--\n| `fourth_rule` | x | y |\n-->"), hides),
+                (original.replace(later, "A later retirement\n---"), hides)):
+            with self.subTest(text=text):
+                path.write_text(text)
+                self.assertRefused(counts.rules_now_proved, counts.FORMALIZATION, phrase)
+
+    def test_rules_now_proved_never_rest_on_a_marker_value(self):
+        path = self.root / counts.FORMALIZATION
+        changes, errors = self.scan([counts.FORMALIZATION])
+        self.assertEqual(errors, [])
+        self.assertIn("-->Three<!-- /count --> rules became", changes[path])
+        path.write_text(changes[path])
+        self.assertEqual(counts.rules_now_proved(self.root), 3)
+        self.assertEqual(self.scan([counts.FORMALIZATION], check=True), ({}, []))
+        for value in ("| `fake_rule` | x |", "<!-- a comment -->"):
+            with self.subTest(value=value):
+                path.write_text(changes[path].replace("-->10<!--", f"-->{value}<!--"))
+                self.assertEqual(counts.rules_now_proved(self.root), 3)
+
+    def test_source_readers_name_an_unreadable_file(self):
+        for path, reader, phrase in (
+                (counts.SCREEN, counts.screen_circle_rules, "cannot parse the file"),
+                (counts.MUTATIONS, counts.model_statement_mutations, "cannot parse the file"),
+                (counts.SUPERPOSITION, counts.superposition_dependency_checks,
+                 "cannot decode the file as UTF-8"),
+                (counts.FORMALIZATION, counts.rules_now_proved,
+                 "cannot decode the file as UTF-8")):
+            with self.subTest(path=path):
+                (self.root / path).write_bytes(b"\xff\n")
+                self.assertRefused(reader, path, phrase)
+                (self.root / path).unlink()
+                self.assertRefused(reader, path, "cannot read the file")
+
+    def test_source_words_fill_markers(self):
         text = ("<!-- count:screen-circle-rules:Word -->Ten<!-- /count --> rules about circles "
                 "(<!-- count:screen-circle-rules -->10<!-- /count -->); "
                 "<!-- count:superposition-dependency-checks -->28<!-- /count --> checks, "
                 "<!-- count:superposition-dependency-checks:word -->twenty-eight"
-                "<!-- /count --> in words.\n")
+                "<!-- /count --> in words; "
+                "<!-- count:model-statement-mutations -->15<!-- /count --> mutations; "
+                "<!-- count:rules-now-proved:Word -->Forty<!-- /count --> rules now proved.\n")
         path = self.write("docs/notes.md", text)
         changes, errors = self.scan(["docs/notes.md"])
         self.assertEqual(errors, [])
         self.assertEqual(changes[path], text.replace("-->Ten<!--", "-->Three<!--")
                          .replace("-->10<!--", "-->3<!--").replace("-->28<!--", "-->2<!--")
-                         .replace("-->twenty-eight<!--", "-->two<!--"))
+                         .replace("-->twenty-eight<!--", "-->two<!--")
+                         .replace("-->15<!--", "-->2<!--").replace("-->Forty<!--", "-->Three<!--"))
         self.assertEqual(counts.value(self.root, "screen-circle-rules:word", {}), "three")
         self.assertEqual(counts.value(self.root, "superposition-dependency-checks:Word", {}),
                          "Two")
+        self.assertEqual(counts.value(self.root, "model-statement-mutations:word", {}), "two")
+        self.assertEqual(counts.value(self.root, "rules-now-proved:word", {}), "three")
 
-    def test_real_screen_and_superposition_files_read(self):
+    def test_real_source_files_read(self):
         # Their values are left to the markers: asserting them here would retype the counts.
-        self.assertGreater(counts.screen_circle_rules(REPO), 0)
-        self.assertGreater(counts.superposition_dependency_checks(REPO), 0)
+        for reader in (counts.screen_circle_rules, counts.superposition_dependency_checks,
+                       counts.model_statement_mutations, counts.rules_now_proved):
+            with self.subTest(reader=reader.__name__):
+                self.assertGreater(reader(REPO), 0)
 
     def test_companions_refuse_unreadable_or_duplicate_entries(self):
         path = self.root / "Elements/Companions.lean"
