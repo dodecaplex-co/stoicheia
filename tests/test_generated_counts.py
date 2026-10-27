@@ -141,6 +141,18 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_an_alias_that_is_mutated(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text() + '\nalias = CIRCLE\nalias.append("Postulate1")\n')
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
+    def test_screen_circle_rules_refuse_argument_bindings(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text() + "\ndef shadow(CIRCLE):\n    return None\n")
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
     def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
         path = self.root / counts.SUPERPOSITION
         original = path.read_text()
@@ -155,6 +167,21 @@ def note : String := "#print axioms Elements.inString"
         path.unlink()
         with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
             counts.superposition_dependency_checks(self.root)
+
+    def test_source_readers_name_decode_failures(self):
+        for relative, reader in ((counts.SCREEN, counts.screen_circle_rules),
+                                 (counts.SUPERPOSITION,
+                                  counts.superposition_dependency_checks)):
+            with self.subTest(path=relative):
+                (self.root / relative).write_bytes(b"\xff")
+                with self.assertRaises(ValueError) as raised:
+                    reader(self.root)
+                self.assertIn(relative, str(raised.exception))
+
+    def test_superposition_dependency_checks_ignore_escaped_names(self):
+        path = self.root / counts.SUPERPOSITION
+        path.write_text(path.read_text() + '\ndef «#print axioms Elements.note» := 0\n')
+        self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
 
     def test_screen_and_superposition_words_fill_markers(self):
         text = ("<!-- count:screen-circle-rules:Word -->Ten<!-- /count --> rules about circles "

@@ -303,13 +303,16 @@ def acceptance_passing(root):
 
 SCREEN = "Audit/screen.py"
 SUPERPOSITION = "Audit/Superposition.lean"
-PRINT_AXIOMS = re.compile(r"#print\s+axioms\b")
+PRINT_AXIOMS = re.compile(r"(?m)^[ \t]*#print[ \t]+axioms\b")
+ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
 def source_text(root, path):
     """Read a source file a count parses, refusing it by name if it cannot be read."""
     try:
         return repository_path(root, path).read_text()
+    except UnicodeError as error:
+        raise ValueError(f"{path}: cannot decode the file") from error
     except OSError as error:
         raise ValueError(f"{path}: cannot read the file ({error.strerror})") from error
 
@@ -330,20 +333,39 @@ def screen_circle_rules(root):
             and isinstance(value.func.value, ast.Constant)
             and isinstance(value.func.value.value, str)):
         raise ValueError(f"{SCREEN}: CIRCLE is not a string literal split with no arguments")
-    # That assignment must be the only place the file binds CIRCLE or changes it: another
-    # binding of the name at any depth (augmented, annotated, in a loop, a def, an import or
-    # a `global`), an attribute of it, as CIRCLE.append, or a store or deletion through it
-    # is refused, rather than counted as if the literal were the list the screen uses.
+    parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
     for node in ast.walk(tree):
-        through = node.value if isinstance(node, (ast.Attribute, ast.Subscript)) else None
         if isinstance(node, ast.Name):
-            changed = (node.id == "CIRCLE" and node is not target
-                       and not isinstance(node.ctx, ast.Load))
-        elif isinstance(through, ast.Name) and through.id == "CIRCLE":
-            changed = isinstance(node, ast.Attribute) or not isinstance(node.ctx, ast.Load)
+            if node.id != "CIRCLE" or node is target:
+                continue
+            parent = parents[node]
+            read_only = (
+                isinstance(node.ctx, ast.Load)
+                and ((isinstance(parent, (ast.For, ast.AsyncFor, ast.comprehension))
+                      and parent.iter is node)
+                     or (isinstance(parent, ast.Call)
+                         and node in parent.args
+                         and isinstance(parent.func, ast.Attribute)
+                         and isinstance(parent.func.value, ast.Name)
+                         and parent.func.value.id == "itertools"
+                         and parent.func.attr == "combinations")))
+            changed = not read_only
+        elif isinstance(node, ast.arg):
+            changed = node.arg == "CIRCLE"
+        elif isinstance(node, ast.alias):
+            changed = (node.asname or node.name.split(".")[0]) == "CIRCLE"
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            changed = node.name == "CIRCLE"
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            changed = "CIRCLE" in node.names
+        elif isinstance(node, ast.ExceptHandler):
+            changed = node.name == "CIRCLE"
+        elif isinstance(node, (ast.MatchAs, ast.MatchStar)):
+            changed = node.name == "CIRCLE"
+        elif isinstance(node, ast.MatchMapping):
+            changed = node.rest == "CIRCLE"
         else:
-            changed = "CIRCLE" in (getattr(node, "name", None), getattr(node, "asname", None),
-                                   *getattr(node, "names", ()))
+            changed = False
         if changed:
             raise ValueError(f"{SCREEN}:{node.lineno}: CIRCLE is bound or changed "
                              "outside its one assignment")
@@ -364,7 +386,8 @@ def superposition_dependency_checks(root):
     code, unsure = read_lean(source_text(root, SUPERPOSITION) + "\nend")
     if unsure or not code.endswith("\nend"):
         raise ValueError(f"{SUPERPOSITION}: cannot read every comment and string for certain")
-    return len(PRINT_AXIOMS.findall(code))
+    plain = ESCAPED_NAME.sub(lambda match: re.sub(r"[^\n]", " ", match[0]), code)
+    return len(PRINT_AXIOMS.findall(plain))
 
 
 COUNTS = {
