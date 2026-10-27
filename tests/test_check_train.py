@@ -901,6 +901,18 @@ class TrainChecks(Repository):
                 self.refused("/security-review gives no visible review verdict",
                              text=body([row]))
 
+    def test_a_negation_three_long_words_back_unseats_a_verdict(self):
+        # The look-back reads 60 characters; a negation beyond them, still among the three
+        # words before the verdict, leaves it unread, so the verdict does not stand.
+        long = "x" * 70
+        for cell in (f"1a2b3c4: not {long} fully passed.", f"1a2b3c4: never {long} passed."):
+            with self.subTest(refused=cell[:24]):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.refused("/code-review gives no visible review verdict", text=body([row]))
+        cell = f"1a2b3c4: read {long} and the rest: passed."
+        row = dict(self.row, code_review=self.own(cell, self.member))
+        self.assertEqual(self.problems(text=body([row])), [])
+
     def test_a_stop_inside_a_name_or_number_ends_no_clause(self):
         # Reviewers' cells name their model and files beside the commit ("Claude Opus
         # 5.5", "review/SCHEMA.md", as four fed cells do); a stop between two letters or

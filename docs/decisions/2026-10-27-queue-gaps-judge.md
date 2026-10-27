@@ -92,7 +92,9 @@
   negation, modal or hedge among the three words before it in its phrase ("may have
   passed", "almost passed", "didnt pass"), as a noun ("a first pass", "two passes"),
   struck through (`~~passed~~`), or followed at once by a word saying the review is
-  unfinished ("passed (partial)"). The clause's commit may be any the cell names; with a
+  unfinished ("passed (partial)"); and it does not stand when the 60 characters read
+  before it end inside its phrase before three whole words of it, since the third word
+  back is then unread. The clause's commit may be any the cell names; with a
   repository, the cell must also name one of the member's own, though not necessarily in
   that clause. As a second layer, words that say a review is still to come, in progress or
   provisional refuse anywhere in the cell: "will", "yet", "outstanding", "in progress",

@@ -369,12 +369,17 @@ def _stands(text: str, match: re.Match) -> bool:
     modifier-letter apostrophe hides no "n't"), no "pass" after a PASS_NOUN word or
     "passes" after a number, and no UNFINISHED word straight after it ("passed
     (partial)", "PASS, incomplete"). Only the 60 characters before it and the 20 after
-    are read, so a cell of many verdicts is still read in linear time."""
+    are read, so a cell of many verdicts is still read in linear time; when those 60 cut
+    a phrase before three whole words of it, the verdict does not stand, since the third
+    word back is unread."""
     begin = max(0, match.start() - 60)
+    capped = begin > 0
     for end in PHRASE.finditer(text, begin, match.start()):
-        begin = end.end()
-    words = [w.encode("ascii", "ignore").decode()
-             for w in WORD.findall(text, begin, match.start())[-3:]]
+        begin, capped = end.end(), False
+    found = WORD.findall(text, begin, match.start())
+    if capped and len(found) < 4:
+        return False
+    words = [w.encode("ascii", "ignore").decode() for w in found[-3:]]
     said = match.group()
     after = SEPARATORS.match(text, match.end(), match.end() + 20).end()
     return not any(w in NEGATIONS for w in words) and not (words and (
