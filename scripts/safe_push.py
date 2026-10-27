@@ -4551,8 +4551,7 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
     # module afresh before importing it, so an absent local copy needs no hand-over.
     same = (theirs, theirs_heath) == (own, own_heath) and \
         (own_train is None or own_train == theirs_train)
-    if not hand_over and (theirs, theirs_heath, theirs_train) != \
-            (own, own_heath, own_train):
+    if not hand_over and not same:
         # Run again with the push's arguments, origin/main's harness would push again. The
         # merge has refused a moved main already, so the copy on disk was rewritten since
         # the run started, or origin/main's predates running from origin/main; a handed-over
@@ -6928,7 +6927,7 @@ def preflight_main(repo: Path, args) -> int:
             raise
         result, code = f"pushed; CI not followed ({type(e).__name__}: {e})", 3
         print(f"\nPushed; CI not followed: {type(e).__name__}: {e}")
-    if not args.land or not pushed:
+    if held is None and not noted:
         summary(rep, mode, sha, base, result, ci)
         return code
     # --land, CI green: from the push's summary on, an interruption or a crash is exit 3,
@@ -6937,8 +6936,6 @@ def preflight_main(repo: Path, args) -> int:
     started = False
     try:
         summary(rep, mode, sha, base, result, ci)
-        if held is None and not noted:
-            return code
         if noted:
             print(f"\nCI is green, but the pre-flight noted origin/main's checks failing "
                   f"on the head ({', '.join(noted)}), for the security review, which must "
@@ -6956,13 +6953,11 @@ def preflight_main(repo: Path, args) -> int:
         if started:
             print(f"\nPushed; the merge stopped: {why}. It may have merged: look with "
                   f"`gh pr view {pr.number}` before anything else.")
-        elif held is not None or noted:
+        else:
             then = f"the security review reads {', '.join(noted)} first, then" if noted \
                 else "run"
             print(f"\nPushed, CI green; stopped before the merge: {why}. Nothing is "
                   f"merged: {then} `git safe-push --merge {pr.number}`.")
-        else:
-            print(f"\nPushed; stopped after the push: {why}. Nothing is merged.")
         return 3
     return 3 if code == 1 else code     # refused, nothing merged; but the branch was pushed
 

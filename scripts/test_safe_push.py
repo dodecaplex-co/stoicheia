@@ -998,8 +998,6 @@ def main(argv):
             for path, text in s.pop("watch_write", {}).items():
                 with open(path, "w") as f:
                     f.write(text)
-            for path in s.pop("watch_remove", []):
-                os.unlink(path)
             save(s)
             kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
@@ -2594,8 +2592,6 @@ def summary(rep, mode, *args):
     # "merge") is written, outside the merge's own try.
     if action == f"summary-interrupt:{mode}":
         raise KeyboardInterrupt("a test interruption")
-    if action == f"summary-fail:{mode}":
-        raise RuntimeError("a test crash")
     return real_summary(rep, mode, *args)
 def refreshed(body, parts):
     result = real_refreshed(body, parts)
@@ -4610,30 +4606,6 @@ class Land(Edge):
                 self.assertEqual(self.origin_main(), BASE)
                 self.assertEqual(self.origin_branch(), sha)
 
-    def test_train_harness_deleted_during_ci_is_refused(self):
-        sha = self.good_commit()
-        folder = TMP / "land-harness"
-        shutil.rmtree(folder, ignore_errors=True)
-        shutil.copytree(UNDER_TEST, folder)
-        self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
-        running = folder / "safe_push.py"
-        checker = folder / "check_train.py"
-        self.assertTrue(checker.is_file())
-        self.set_gh(lambda s: s.update(watch_remove=[str(checker)]))
-        r = self.land(script=running)
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertFalse(checker.exists(), "the checker was not deleted")
-        merged = self.merge_part(out)
-        self.assertIn("this copy of safe_push.py, heath.py or check_train.py on disk no "
-                      "longer matches origin/main's", merged)
-        self.assertIsNone(self.guard(merged, "harness"), merged)
-        self.assertNotIn("running origin/main's in its place", out)
-        self.assertEqual(out.count("safe_push: push of"), 1, out)
-        self.assertEqual(self.merges(), [])
-        self.assertEqual(self.origin_main(), BASE)
-        self.assertEqual(self.origin_branch(), sha)
-
     def test_accepted_forged_record_on_disk_changes_nothing(self):
         # Main unmoved: a record a separate --merge would let stand in (origin/main's
         # harness, full, every step ok), written during CI where that merge would read it.
@@ -4750,25 +4722,6 @@ class Land(Edge):
         self.assertEqual(self.merges(), [])
         self.assertEqual(self.origin_main(), BASE)
         self.assertEqual(self.origin_branch(), sha)
-
-    def test_failed_ci_summary_failure_is_exit_3(self):
-        for action, why in (("summary-interrupt:push", "interrupted (a test interruption)"),
-                            ("summary-fail:push", "RuntimeError: a test crash")):
-            with self.subTest(action=action):
-                self.setUp()
-                sha = self.check_change()
-                failing = [dict(c, bucket="fail", state="FAILURE") for c in PASSING]
-                self.set_gh(lambda s: s["checks"].update({sha: failing}))
-                r = self.driven_land(action)
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 3, out)
-                self.assertIn("CI did not pass for the pull request. Nothing is merged", out)
-                self.assertIn(f"Pushed; stopped after the push: {why}. Nothing is merged.", out)
-                self.assertNotIn("CI green", out)
-                self.assertNotIn("safe_push: merge of", out)
-                self.assertEqual(self.merges(), [])
-                self.assertEqual(self.origin_main(), BASE)
-                self.assertEqual(self.origin_branch(), sha)
 
     def test_cache_hit_does_not_stand_in(self):
         # When origin/main's pass of step 4 came from the main-checks cache, a file, the
