@@ -772,8 +772,9 @@ REGISTRY = {
                       'WithinAngle MixedAngle MixedAngle.vertex MixedAngle.region '
                       'MixedAngle.WellFormed LocallyWithin NearVertex Surrounds NearVertexOpen '
                       'LocallyLess LocallyEqual MixedAngle.Exceeds MixedAngle.FallsShort CirclesCut '
-                      'circumference standing Arc Arc.Drawn OnSideOrLine OnArc InSegment Arc.Less '
-                      'Arc.Semicircle Arc.Greater Arc.SameKind Arc.measure Places Arc.Congruent Foot',
+                      'circumference angleAtCentre standing Arc Arc.Drawn OnSideOrLine OnArc '
+                      'InSegment Arc.Less Arc.Semicircle Arc.Greater Arc.SameKind Arc.measure '
+                      'Places Arc.Congruent Foot',
     'Magnitudes': 'Kind MagnitudeImpl Magnitude Length Angle Area len ang area rightAngle Magnitude.sum',
     # The restricted rule of superposition's meanings, which I.4's and I.8's records check: the
     # laws a derivation cites, as data, and what a law, and so a cited law, asserts.
@@ -899,6 +900,18 @@ CONTACT_BRIDGES = ['Elements.BookIII.Prop18.branch', 'Elements.BookIII.Prop18.co
 TOUCHING_BRIDGES = ['Elements.BookIII.Prop13.touchesInternally_iff',
                     'Elements.BookIII.Prop13.touchesExternally_iff',
                     'Elements.BookIII.Prop13.circlesTouch_iff']
+# The angle at the centre standing on a circumference, of any size, our reading after Heath's
+# notes (`angleAtCentre`), which III.20's, III.21's and III.26's records name. For III.20 and
+# III.21 it is the angle BEC, E the centre, where E lies across the base from that
+# circumference, as Euclid's angles at the centre are (`angleAtCentre.within`), and it reads
+# only the side of the base that the point naming the circumference lies on
+# (`angleAtCentre.congr`). III.20's representation note names the first, says in words that the
+# reading depends on neither the diameter nor the centre (`angleAtCentre.diameter`), nor the
+# point naming the side (`congr`), and names our measure of a circumference as its angle at the
+# centre (`Prop20.circumference`). III.21's record has no representation note: its route and
+# passages name the angle at the centre and `angleAtCentre.congr`.
+CENTRE_DEFINITIONS = ['angleAtCentre']
+CENTRE_BRIDGES = ['Elements.BookIII.angleAtCentre.within', 'Elements.BookIII.angleAtCentre.congr']
 # A straight line's distance from the centre is the perpendicular to its foot (Definition III.4).
 FOOT_BRIDGES = ['Elements.Foot.exists', 'Elements.Foot.unique']
 RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
@@ -961,6 +974,13 @@ def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[st
             bridges += KIND_BRIDGES
         if n == 30:
             bridges += ['Elements.BookIII.Circumference.add']
+        if n in (20, 21, 26):
+            definitions += CENTRE_DEFINITIONS
+        if n in (20, 21):
+            bridges += CENTRE_BRIDGES
+        if n == 20:
+            bridges += ['Elements.BookIII.Prop20.circumference',
+                        'Elements.BookIII.angleAtCentre.diameter']
         if 35 <= n <= 37:
             definitions += ['Rectangle', 'Contain', 'rect', 'Parallelogram', 'quadArea']
             bridges += RECTANGLE_BRIDGES
@@ -2557,11 +2577,14 @@ PLANTS = {
         (('replace', ['state', 'commentary'], 'is less than a right angle (I.17)',
           'is less than a right angle (I.5)'),)),
     ('P14', 'III.20'): Plant(
-        3, '"So our statement keeps E on A\'s side of BC" made "takes E on either side of BC"',
-        "The statement assumes the centre E on A's side of BC (`SameSideOf E A B C`), as the "
-        'record says; the commentary now says it covers E on either side.',
-        (('replace', ['state', 'commentary'], "So our statement keeps E on A's side of BC.",
-          'So our statement takes E on either side of BC.'),)),
+        3, '"Our III.20 reaches Heron\'s case all the same." made "Our III.20 keeps E on A\'s side '
+        'of BC, as Euclid does."',
+        'The statement (`Prop20`) names no centre and no side for it: its angle at the centre, '
+        '`angleAtCentre`, stands on the circumference BC away from A wherever the centre lies, two '
+        'right angles or more when E is on BC or beyond it, as the record says; the commentary now '
+        "says the statement keeps E on A's side of BC.",
+        (('replace', ['state', 'commentary'], "Our III.20 reaches Heron's case all the same.",
+          "Our III.20 keeps E on A's side of BC, as Euclid does."),)),
     ('P14', 'III.4'): Plant(
         4, '`onRay_of_angle_eq` said to hold whether the other arms lie on one side of FE or on '
         'opposite sides of it',

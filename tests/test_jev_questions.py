@@ -1338,7 +1338,7 @@ class BookThree(unittest.TestCase):
                 for name in row['state']['represented_objects']:
                     self.assertIn('Elements.' + name, generator.index.decls)
                 self.assertEqual(sorted(bridges), sorted(set(verdict[1])))
-        for n in (13, 14, 16, 18, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
+        for n in (13, 14, 16, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
             self.assertTrue(rows[f'III.{n}']['state']['bridges'], n)
         state = rows['III.35']['state']
         self.assertTrue({'sq', 'Square'} <= set(state['definitions']))
@@ -1406,6 +1406,59 @@ class BookThree(unittest.TestCase):
                 self.assertEqual(bool(set(questions.TOUCHING_BRIDGES) & set(bridges)), n == 13)
                 self.assertEqual('TouchesInternallyAt' in definitions, n == 13)
 
+    def test_iii_20_and_iii_21_get_the_angle_at_the_centre_and_its_bridges(self):
+        # III.20's and III.21's records pass their representations on the angle at the centre of
+        # any size (#129). III.20's note names the word, the bridge that makes it the angle BEC
+        # where Euclid's angles at the centre are, and its companion on the measure of a
+        # circumference, and says in words that the reading depends on neither the diameter, nor
+        # the centre (`angleAtCentre.diameter`), nor the point naming the side
+        # (`angleAtCentre.congr`); III.21's record has no representation note, and its route and
+        # passages name the word and `angleAtCentre.congr`. III.26's note names the word as well.
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        records = {n: questions.tomllib.loads(generator.evidence.read(f'review/III/{n}.toml'))
+                   for n in (20, 21, 26)}
+        for n, record in records.items():
+            self.assertEqual(record['review']['items']['representations'], 'pass', n)
+        self.assertNotIn('representation', records[21])
+        self.assertIn('It depends on neither the diameter, nor the centre, nor the point naming the side',
+                      records[20]['representation']['note'])
+        self.assertEqual(questions.CENTRE_DEFINITIONS, ['angleAtCentre'])
+        self.assertEqual(questions.CENTRE_BRIDGES, ['Elements.BookIII.angleAtCentre.within',
+                                                    'Elements.BookIII.angleAtCentre.congr'])
+        for n, extra in ((20, ['Elements.BookIII.Prop20.circumference',
+                               'Elements.BookIII.angleAtCentre.diameter']),
+                         (21, [])):
+            with self.subTest(ref=f'III.{n}'):
+                state = rows[f'III.{n}']['state']
+                self.assertEqual(rows[f'III.{n}']['expected'], 'bridge stated')
+                self.assertEqual(sorted(state['bridges']), sorted(questions.CENTRE_BRIDGES + extra))
+                self.assertEqual(state['represented_objects'], questions.CENTRE_DEFINITIONS)
+                self.assertIn('angleAtCentre', state['definitions'])
+        # III.26 takes the word after its circumferences' words, and none of its bridges.
+        state = rows['III.26']['state']
+        self.assertEqual(state['represented_objects'],
+                         list(dict.fromkeys(questions.MEASURE_DEFINITIONS + questions.CONGRUENCE_DEFINITIONS
+                                            + questions.CENTRE_DEFINITIONS)))
+        self.assertFalse(set(questions.CENTRE_BRIDGES) & set(state['bridges']))
+        # III.20's note names its companion Prop20.circumference, which its row supplies both as
+        # a bridge and as an attached statement: it is missing only without either.
+        name = 'Elements.BookIII.Prop20.circumference'
+        state = copy.deepcopy(rows['III.20']['state'])
+        self.assertIn('III.20 circumference', state['attached_statements'])
+        del state['bridges'][name]
+        self.assertEqual(generator.checked('III.20', records[20], state), [])
+        del state['attached_statements']['III.20 circumference']
+        self.assertEqual(generator.checked('III.20', records[20], state), [name])
+        # No other proposition of Book III gets the word or its bridges.
+        for n in range(1, 38):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(n=n):
+                self.assertEqual('angleAtCentre' in definitions, n in (20, 21, 26))
+                self.assertEqual(bool(set(questions.CENTRE_BRIDGES) & set(bridges)), n in (20, 21))
+                self.assertEqual('Elements.BookIII.angleAtCentre.congr' in bridges, n in (20, 21))
+                self.assertEqual('Elements.BookIII.angleAtCentre.diameter' in bridges, n == 20)
+
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
         # Derives.sound and Rule.apply, and the laws each cites, with their meaning; I.8's,
@@ -1453,9 +1506,9 @@ class BookThree(unittest.TestCase):
             f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')) for ref in rows}
         passed = [ref for ref, record in records.items()
                   if record['review'].get('items', {}).get('representations') == 'pass']
-        self.assertEqual(len(passed), 47)
-        self.assertIn('III.13', passed)
-        self.assertIn('III.18', passed)
+        self.assertEqual(len(passed), 49)
+        for ref in ('III.13', 'III.18', 'III.20', 'III.21', 'III.26'):
+            self.assertIn(ref, passed)
         for ref in passed:
             with self.subTest(ref=ref):
                 self.assertEqual(generator.checked(ref, records[ref], rows[ref]['state']), [])
@@ -1484,7 +1537,10 @@ class BookThree(unittest.TestCase):
                                  ('III.13', 'definitions', 'CirclesTouchAt'),
                                  ('III.18', 'definitions', 'MixedAngle'),
                                  ('III.18', 'definitions', 'MixedAngle.WellFormed'),
-                                 ('III.18', 'bridges', 'Elements.BookIII.Prop18.branch')):
+                                 ('III.18', 'bridges', 'Elements.BookIII.Prop18.branch'),
+                                 ('III.20', 'definitions', 'angleAtCentre'),
+                                 ('III.20', 'bridges', 'Elements.BookIII.angleAtCentre.within'),
+                                 ('III.26', 'definitions', 'angleAtCentre')):
             with self.subTest(ref=ref, missing=name):
                 state = copy.deepcopy(rows[ref]['state'])
                 del state[table][name]
