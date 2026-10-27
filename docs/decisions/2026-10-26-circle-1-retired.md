@@ -146,12 +146,9 @@
   This entry approves the change to `tests/model/search.py`, from which the function for
   Circle 1's law goes, with the blank lines after it, the rest of the file untouched.
 
-  This entry approves the change to `tests/model/hyperbolic.py`, from which Circle 1's
-  hyperbolic law goes in the same way, its kind of `gs_cm` and every other line kept.
-
-  This entry approves the change to `tests/model/derived.py`, one clause of its opening
-  note, which said that Circle 1 is still an axiom and now says that its retirement
-  followed.
+  With Circle 1 retired, its law in the hyperbolic plane leaves `tests/model/hyperbolic.py`
+  as its plane law leaves search.py, and that change is approved; the kind `gs_cm` and
+  every other line of the file stay.
 
   This entry approves the change to `tests/model/MODEL.md`, whose prose now counts
   forty-one former axioms, places Circle 1 among them and gives its reason in the section
@@ -182,13 +179,17 @@
   rewrote the counts between MODEL.md's own markers.
 
   Each result file that run rewrites is approved in a sentence of its own. The angle and
-  area check's output, `tests/model/results/angle_check.txt`, is approved. The full grid
-  enumeration's output, `tests/model/results/exhaustive.txt`, is approved. The second exact
-  grid check's output, `tests/model/results/grid_check.txt`, is approved. The hyperbolic
-  run's output, `tests/model/results/hyperbolic.txt`, is approved. The weakened statements'
-  output, `tests/model/results/mutations.txt`, is approved. The random search's first seed,
-  `tests/model/results/search-seed1.txt`, is approved. Its second seed,
-  `tests/model/results/search-seed2.txt`, is approved. Its third seed,
-  `tests/model/results/search-seed3.txt`, is approved. The structured search's output,
-  `tests/model/results/structured.txt`, is approved. The table drawn from them all,
-  `tests/model/results/summary.txt`, is approved.
+  area check's output, `tests/model/results/angle_che  Each file of results the run of 5ef38f3f wrote is approved here, one sentence apiece. For
+  Circle 1's retirement we approve `tests/model/results/angle_check.txt`, the checks of
+  angles and areas. We approve `tests/model/results/exhaustive.txt` too, which enumerates
+  the grid in full without the retired law. As written at that commit,
+  `tests/model/results/grid_check.txt`, the second exact check of the grid, is approved.
+  Written without Circle 1's hyperbolic law, `tests/model/results/hyperbolic.txt` is
+  approved. With its fifteen weakened statements all caught,
+  `tests/model/results/mutations.txt` is approved. The first seed of the random search,
+  redrawn without the law, `tests/model/results/search-seed1.txt`, is approved. Redrawn
+  in the same way, the second seed's `tests/model/results/search-seed2.txt` is approved.
+  And the third seed's, `tests/model/results/search-seed3.txt`, is approved as redrawn.
+  From the structured search after the retirement, `tests/model/results/structured.txt`
+  is approved. Last, the summary table those runs give, `tests/model/results/summary.txt`,
+  is approved as 5ef38f3f wrote it.
