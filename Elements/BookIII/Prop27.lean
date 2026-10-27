@@ -99,7 +99,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- I say that the angle BGC is equal to the angle EHF,
   -- and the angle BAC is equal to the angle EDF.
   /- We name the circumferences BC, EF by points Q, R beyond them, across BC from A and
-     across EF from D. The angles at A and D stand on them, so they are equal. -/
+     across EF from D. These are the circumferences on which the angles at A and D stand, so
+     their equality is given. -/
   obtain ⟨Q, hQA, -⟩ := exists_oppositeSidesOf hBAC.acb []
   obtain ⟨R, hRD, -⟩ := exists_oppositeSidesOf hEDF.acb []
   have hBC : circumference ABC B Q C = circumference DEF E R F := by
