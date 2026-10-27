@@ -1169,10 +1169,29 @@ commits ...") does not. `/security-review` may instead say "Not required", and o
 if no protected path changed, read against every merge base of
 the member with origin/main; a member that changes a protected path must name its
 commit there, and its cell may not say "Not required" anywhere, in any case or
-spelling. Beyond that, the cells are the coordinator's words: the check reads that a
-review of the member is named and that some visible verdict or findings stand beyond the
-commit name and its punctuation or markup. It imposes no verdict vocabulary or prose
-length. `/no-mistakes` says
+spelling. Beyond that, the cells are the coordinator's words, read three times: as
+written, as a reader sees them, and as a reader sees them with the inline Markdown
+markers (`*`, `_`, `` ` `` and `~`) taken out, each with Unicode's default-ignorable
+characters (a Hangul filler among them) dropped, so that markup or an invisible letter
+inside a word (`w*i*ll`, `pen<i></i>ding`) cannot hide the word from all three at once.
+In each reading a cell must give a verdict that stands as one (passed, approved, fixed,
+no findings or a number of them, and their like, and on `/security-review` "not
+required") in the same clause as a commit it names. A clause ends at every `;`, `!`,
+line end and line break a reader sees (`<br>`, `<p>`), at every `?` but one that begins
+a link's query, and at every `.` but one between two letters or digits, inside a name
+or a number (`SCHEMA.md`, `5.5`), so `Started at <commit>; CI passed` refuses. A
+verdict that is negated,
+hedged, used as a noun, struck through or followed at once by a word saying the review
+is unfinished is none ("may have passed", "a first pass", `~~passed~~`, "passed
+(partial)"). As a second layer, a cell refuses if any reading says, anywhere, that the
+review is still to come, in progress or provisional ("will", "yet", "outstanding", "to
+follow", "to be reported", "unreviewed", "preliminary", "for now", "later" saying when,
+a question mark that does not begin a link's query, and their like), in those readings
+or in a fourth that keeps Unicode's other invisible characters as separators, or says, in a phrase that names the review, a finding, a
+verdict or the rest, that it is deferred, incomplete, partial, interim or not yet done.
+A rule read from prose cannot list every way of saying that a review is not done ("PASS
+if CI is green" still passes): the cells are written by the coordinator's crews, and
+each is read by the lane as well. The check imposes no prose length. `/no-mistakes` says
 `passed at <head>` for that same member head, or `not run: <reason>`, with at least
 five words giving the reason.
 
@@ -1414,8 +1433,12 @@ union of the entries' derived changes and their declarations. A changed
 `tests/test_*.py` runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself;
 a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
 `scripts/test_<name>.py` tests. The safe_push test command is
-`python3 scripts/test_safe_push.py`. A file the group deletes asks for no test; when an
-entry has more than one merge base, it asks for the tests of what it changes against
+`python3 scripts/test_safe_push.py`. A file under `.github/`, changed or deleted, asks
+for the tests that read it, which `GITHUB_TESTS` names; any other path under `.github/`
+is refused, as is a group that deletes a test named there, whether or not it changes a
+file under `.github/`, until main's copy of the map changes. Any other file the group
+deletes asks for no test; when an entry has more than one merge base, it asks for the
+tests of what it changes against
 any of them, and a deletion excuses a test only if it is a deletion against all. Each
 selected command runs once, and a failure fails the job. Changed propositions have
 their acceptance items printed from the acceptance artifact, as a report of the
@@ -1512,12 +1535,14 @@ when its named run is a failed post-merge run of a push to main, its branch is
 `main-red` names the run on its own `Run:` line, by this repository's address for the
 run (a run of another repository, or an address elsewhere in the issue, names nothing).
 The push, its `before` and `after` read from GitHub's record of pushes to main, must be
-two-parent merges only, and the merges the revert names must be exactly those, newest
-first. The revert's one merge base with main must be the push's tip, `after`, and
-`after..head` exactly the reverts and at most one keep commit, with no merge: one
-commit for each named merge, in that order, whose tree is that merge reverted onto the
-last (merge attributes read from `before`, as the script reads them), then, only where
-the reverts changed the decisions record, one commit whose tree keeps
+two-parent merges only, each the recorded merge of a merged pull request into this
+repository's main, as `auto_revert.py` reads a train (its subject, a number named once,
+its merge and head commits, a title and a kind label), and the merges the revert names
+must be exactly those, newest first. The revert's one merge base with main must be the
+push's tip, `after`, and `after..head` exactly the reverts and at most one keep commit,
+with no merge: one commit for each named merge, in that order, whose tree is that merge
+reverted onto the last (merge attributes read from `before`, as the script reads them),
+then, only where the reverts changed the decisions record, one commit whose tree keeps
 `docs/decisions/` and the decisions page as at `after`, as above. Nothing else may
 differ, so a revert that takes a train's lines off the page, or changes it in any other
 way, refuses, and so does one built on a later main, or through any other commit. The
