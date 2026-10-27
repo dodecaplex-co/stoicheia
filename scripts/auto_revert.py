@@ -658,7 +658,7 @@ def github_is_ancestor(api: GitHub, ancestor: str, descendant: str) -> bool:
     merge_base = data.get("merge_base_commit")
     return (data.get("status") == "ahead"
             and type(data.get("ahead_by")) is int and data["ahead_by"] > 0
-            and data.get("behind_by") == 0
+            and type(data.get("behind_by")) is int and data["behind_by"] == 0
             and isinstance(base, dict) and base.get("sha") == ancestor
             and isinstance(merge_base, dict) and merge_base.get("sha") == ancestor)
 

@@ -1122,6 +1122,21 @@ class AutoRevert(unittest.TestCase):
                 self.assertEqual(status, 1, output)
                 self.assertEqual(self.api.deleted, removed)
 
+    def test_malformed_behind_by_keeps_main_red(self):
+        after, later = self.slow_failure()
+        self.tip_runs(later, [self.finished(9, later)])
+        for value in (False, 0.0):
+            with self.subTest(value=value):
+                self.comparison(after, later, behind_by=value)
+                status, output = self.run_moved_on(
+                    after, env={"GITHUB_TOKEN": WORKFLOW_TOKEN})
+                self.assertEqual(status, 1, output)
+                self.assertEqual(self.api.deleted, [])
+                self.assertEqual(len(self.api.issues), 1)
+                self.assertEqual(self.api.issues[1000]["labels"],
+                                 ["blocks-release", "main-red"])
+                self.assertIn(f"{later} could not be shown to contain {after}", self.body())
+
     def test_a_failure_recorded_after_main_moved_on_keeps_main_red_without_evidence(self):
         after, later = self.slow_failure()
         self.git("switch", "-c", "side", self.before)
