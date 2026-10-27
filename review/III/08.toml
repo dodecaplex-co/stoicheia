@@ -48,7 +48,7 @@ note = "Euclid uses the equality of ME and MF without giving a reason. The Lean 
 at = "and the angle EMD is greater than the angle FMD"
 kind = "helper"
 helper = "Prop8.outside"
-note = "Euclid reads E outside the triangle DFM from his figure, without a reference from Heath. In `Prop8.outside`, the Lean uses `BookI.Prop24.within` and `crossbar` to find Y on MF and DE, puts Y within the circle by `InsideCircle.of_between_centre`, and uses `Tacit.between_of_inside_chord`, a rule we assume (System E, Circle 1), to put Y between H and E; `angle_lt_of_between` then compares the angles at M."
+note = "Euclid reads E outside the triangle DFM from his figure, without a reference from Heath. In `Prop8.outside`, the Lean uses `BookI.Prop24.within` and `crossbar` to find Y on MF and DE, puts Y within the circle by `InsideCircle.of_between_centre`, and uses `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, to put Y between H and E; `angle_lt_of_between` then compares the angles at M."
 
 [[passage]]
 at = "Similarly we can prove that FD is greater than CD"
@@ -76,7 +76,7 @@ note = "Euclid takes MD as MG and GD together before subtracting the equal radii
 at = "And, since on MD, one of the sides of the triangle MLD"
 kind = "helper"
 helper = "Prop8.within"
-note = "Euclid reads K within the triangle DLM from his figure. In `Prop8.within`, the Lean uses `BookI.Prop24.within`, `crossbar` and `InsideCircle.of_between_centre` to find Z on ML and DK within the circle; `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, puts Z between K and C, so K is between D and Z, and the assumed rule `Tacit.pasch2` (System E, Pasch 2) puts K on D's side of ML."
+note = "Euclid reads K within the triangle DLM from his figure. In `Prop8.within`, the Lean uses `BookI.Prop24.within`, `crossbar` and `InsideCircle.of_between_centre` to find Z on ML and DK within the circle; `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, puts Z between K and C, so K is between D and Z, and the assumed rule `Tacit.pasch2` (System E, Pasch 2) puts K on D's side of ML."
 
 [[passage]]
 at = "and MK is equal to ML"
@@ -132,7 +132,7 @@ stage = "full"
 commit = "422ff9a3f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:db251b6dc594ff8e"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex)"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex)"
 text = "sha256:7d4ebb976462f95e"
 
 [review.items]

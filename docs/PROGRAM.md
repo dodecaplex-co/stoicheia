@@ -199,7 +199,7 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all <!-- count:axioms -->49<!-- /count --> locked laws in the ordinary
+  a gate for the consolidation release), it proves all <!-- count:axioms -->48<!-- /count --> locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the

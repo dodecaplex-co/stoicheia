@@ -1030,17 +1030,6 @@ def _(c):
 
 
 # ---- Circles
-@axiom('between_of_inside_chord', dict(A=P, B=P, C=P, L=L_, al=C_), gs_cm('chord'))
-def _(c):
-    A, B, C, L, al = (c[k] for k in ('A', 'B', 'C', 'L', 'al'))
-    if not (on_line(A, L) and on_line(B, L) and on_line(C, L) and inside(A, al) and on_circle(B, al)
-            and on_circle(C, al) and B != C):
-        return None
-    return between(B, A, C)
-
-
-
-
 # ---- Intersection (diagrammatic)
 @axiom('lines_meet_of_opposite_sides', dict(A=P, B=P, L=L_, M=L_), gs_lines_meet)
 def _(c):

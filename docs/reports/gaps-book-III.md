@@ -23,10 +23,13 @@ for any two different points, says that it is (`RuleProofs.Circle.radius_ne_zero
 `RuleProofs.Circle.length_pos`). Until 26 October 2026 Circle 1 and the rule that one
 centre and one radius make one circle (`circle_eq`, Diagram-segment 2) showed it instead
 (#473). That it has only one centre
-(`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`:
-two supposed centres bisect the same straight line through the circle by Definition I.15,
-and equal doubles have equal halves. A point within a circle, on a straight line that
-meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
+(`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`: the
+straight line through two supposed centres, produced beyond each to the circle, would make
+the radius from one of them less than itself (Definition I.15); until 26 October 2026 the
+proof used Circle 1 (#477). A point within a circle, on a straight line that
+meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1);
+it is proved after III.2, from it, since 26 October 2026, and where the point within is
+the centre Book Zero proves it without III.2 (`between_of_centre_chord`).
 System E's Circle 2, that between two points on or within a circle every point is within
 it (`inside_of_between`), and its Circle 3 (`outside_of_between`), each of which gives
 III.2 at once, are proved after III.2, from it, since 24 October 2026; our III.1 and III.2
@@ -50,8 +53,10 @@ that no point of a straight line touching a circle is within it (`Touches.not_in
 Book III's proofs cite the earlier books as `BookI.PropN` and `BookII.PropN`. The steps
 they share that cite Books I and II live in
 [`Squares.lean`](../../Elements/BookIII/Squares.lean): equal squares are on equal
-straight lines (`BookI.Prop46.sq`), and the perpendicular from the centre to a straight
-line in the circle falls between its ends (`foot_between`). Those that cite III.20–III.22
+straight lines (`BookI.Prop46.sq`). The perpendicular from the centre to a straight line
+in the circle falls between its ends (`foot_between`) in
+[`Feet.lean`](../../Elements/BookIII/Feet.lean), after III.2, for its last step is Circle
+1, proved after III.2. Those that cite III.20–III.22
 live in [`Circumferences.lean`](../../Elements/BookIII/Circumferences.lean), and are what
 Euclid takes for granted of circumferences, which we measure by twice the angle
 standing on them: a circumference is twice the angle at any point of the other segment
@@ -75,7 +80,7 @@ references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call bes
 - "Let it be drawn through to E" asks that the straight line through D meet the circle on both sides of D. Todhunter observes that D is taken to be within the circle, which Euclid proves only in III.2, and Heath that the straight line must meet the circle twice, "an assumption which we are not entitled to make on the basis of what has gone before only" (vol. 2, p. 7). `Prop1.construction` obtains a centre through `exists_centre` solely inside the proof that D is within, and passes it to `Prop1.within`, which puts D within the circle by III.2's own argument (I.5, I.16, I.19), without Circle 3 or its consequence Circle 2 (`inside_of_between`), which would give III.2 at once (see III.2). That centre supplies none of the construction's outputs, and III.1's statement supplies none: the main reductio takes its own centre G from `exists_centre`. Intersections 5 (`line_circle_beyond`), used twice, finds C and E.
 - G, the supposed centre, must be off AB as well as off CE, or there are no triangles DAG, DBG for I.8. A centre on AB would be its middle point D (`Prop1.middle`), which is on CE.
 - "The angle FDB is equal to the angle GDB, the greater to the less": if AB passes through the centre, F falls on D and there is no angle FDB. Our proof sets the right angle CDB beside GDB, and `Prop1.perpendicular`, that at D only one straight line is at right angles to DB, says what "the greater to the less" stands for, on whichever side of CE G lies. With G across AB from C, it produces CD beyond D, and the angle there with DB is right by I.13, the two angles at D together making two right angles.
-- "Therefore the point F is the centre": the reductio shows only that the centre is on CE. Heath: "It is however taken for granted rather than proved that the centre must be the middle point of CE" (vol. 2, p. 8). The centre is within the circle (`centre_inside`), so between C and E (Circle 1, `between_of_inside_chord`), and its equal radii make it the middle point, which is F (`Prop1.middle`).
+- "Therefore the point F is the centre": the reductio shows only that the centre is on CE. Heath: "It is however taken for granted rather than proved that the centre must be the middle point of CE" (vol. 2, p. 8). The centre lies between C and E, for either other order would make one of its radii a part of the other (`between_of_centre_chord`, Circle 1 where the point within is the centre, proved in Book Zero without that rule), and its equal radii make it the middle point, which is F (`Prop1.middle`).
 - The Porism follows the main reductio directly from its given centre (`Prop1.porism`). If the centre is on AB, `Prop1.middle` shows that it is D, already on DC; otherwise `Prop1.equal_adjacent` supplies I.8's comparison and `Prop1.perpendicular` puts the centre on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`. Heath separately says that the claim that a circle has one centre "may be added to III. 1 as a corollary" (vol. 2, p. 8); our foundations give that claim as System E's Generalities 2 (`centre_unique`), now proved from the foundations in Book Zero's `Circles.lean`.
 
 ## III.2

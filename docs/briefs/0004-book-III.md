@@ -275,6 +275,14 @@ in equal circles and of one kind, are one), which adds I.7; and, from stage 4,
 from a point), which add I.12 and I.17. The file imports Book II's
 ground, so every proposition of Book III has `rect`, `sq` and `BookI.Prop47.sq`.
 
+**26 October 2026, `foot_between` (#477).** `foot_between` has moved, with its name and type,
+to a ground of its own after III.2, `Elements/BookIII/Feet.lean`, which III.14, III.15,
+III.35 and III.36 import. Its last step is Circle 1, and Circle 1 is to be proved after
+III.2, by the owner's decision of 25 October 2026
+([the entry for this move](../decisions/2026-10-25-circle-1-bookzero.md)); III.1 and III.2
+import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
+unchanged; the rest of `Squares.lean` stands as it says.
+
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`

@@ -29,7 +29,7 @@ note = "Euclid draws DFE through the circle, taking F between D and the supposed
 at = "Then, since DA is equal to DB"
 kind = "case"
 helper = "Prop2.through_centre"
-note = "Euclid's figure keeps the centre D off AB; when AB passes through D, the Lean puts D within the circle by the proved theorem `Tacit.centre_inside` (System E, Generalities 3) and then between A and B by the assumed rule `Tacit.between_of_inside_chord` (System E, Circle 1). There are then no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: if E is D, DE has length zero and DB a positive length; otherwise DE is part of DA or of DB, which are equal."
+note = "Euclid's figure keeps the centre D off AB; when AB passes through D, the Lean puts D between A and B by Book Zero's `between_of_centre_chord`, Circle 1 (`Tacit.between_of_inside_chord`) for a centre, proved without that rule from Definition I.15, the three orders of three points on a straight line (System E, Between 6) and our radius rule: either other order would make one radius a part of the other. There are then no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: if E is D, DE has length zero and DB a positive length; otherwise DE is part of DA or of DB, which are equal."
 
 [[passage]]
 at = "But DB is equal to DF"
@@ -54,11 +54,11 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "full"
-commit = "81424ad0a"
+commit = "689ab169f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:03307d9e71d6c0dc"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex); card 478, ship XS, from git and record evidence, added without a restamp: main Prop2 proof by OpenAI Codex (014570748); the last full reading by Claude Opus 5.5 is ER-s131c3's at eed076538 (23a2805f2, 23 October 2026); since then lines 178 to 257 of Prop02.lean (962c8c890, by crew writer C7-c294b-w, and dfb0fe775, which names no writer), the removal of [overlap] (962c8c890) and the notes at 'and let DFE be drawn through' and 'Then, since DA is equal to DB' in the words of the cross-family reader C7-c294b-iii2 (81424ad0a) have been read only by GPT-6 Astra (Codex), reader C7-c294b-iii2b, at 81424ad0a (2f4a6412a, 24 October 2026); a reading by Claude of the whole record is still to come"
-text = "sha256:9835f462d8ba1fe3"
+lean = "sha256:da608135436ecd03"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex); card 478, ship XS, from git and record evidence, added without a restamp: main Prop2 proof by OpenAI Codex (014570748); the last full reading by Claude Opus 5.5 is ER-s131c3's at eed076538 (23a2805f2, 23 October 2026); since then lines 178 to 257 of Prop02.lean (962c8c890, by crew writer C7-c294b-w, and dfb0fe775, which names no writer), the removal of [overlap] (962c8c890) and the notes at 'and let DFE be drawn through' and 'Then, since DA is equal to DB' in the words of the cross-family reader C7-c294b-iii2 (81424ad0a) have been read only by GPT-6 Astra (Codex), reader C7-c294b-iii2b, at 81424ad0a (2f4a6412a, 24 October 2026); a reading by Claude of the whole record is still to come; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f"
+text = "sha256:6e776d12f07c072e"
 
 [review.items]
 statement = "pass"
