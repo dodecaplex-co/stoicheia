@@ -10,22 +10,26 @@ the small contracts the other scripts share:
   `load_terms` (the schema is review/SCHEMA.md);
 * Lean read as Lean 4.35's tokenizer reads it, its comments, literals and names:
   `read_lean`, `without_comments`, `lean_comments` and `comment_end` (#206, #349);
-* what render.py writes, whole or between markers, the one account of it: the generated
-  regions, `GENERATED_WHOLE`, `REGIONS`, `RegionError`, `regions`, `outside`, `bodies` and
-  `fill`, and the inline counts' markers (#578).
+* what is generated, the one account of it: `GENERATED_WHOLE`, the files generated whole
+  (facts.json, which `lake env lean Certificate/Facts.lean` writes, and book/,
+  CERTIFICATE.md and GRAPH.md, which render.py writes), and `REGIONS`, the files render.py
+  writes only between markers, with `RegionError`, `regions`, `outside`, `bodies` and
+  `fill`, which read them; and the inline counts' markers (#578).
 
-Shared by scaffold_book.py, check_fidelity.py and render.py. Standard library only.
-Reading review records needs Python 3.11 or later, for tomllib; the rest runs on older
-Pythons too. `python3 scripts/heath.py` checks the contracts against themselves: the
-examples in review/SCHEMA.md, review/terms.toml and every review record present; and that
-the reader of Lean reads deep and long runs of string holes in under half a second each
-(`READER_PLANTS`, #390), and refuses as quickly strings nested past their budget
-(`READER_REFUSED`); and that it reads a name on through a `.` after its «…» part as Lean
-does, and marks a raw string after `℃.` as one it cannot read for certain
-(`READER_NAMES`, #430); and that today's README.md, docs/PROGRAM.md and docs/WORKFLOW.md
-hold their regions as `regions` requires, that a hand deletion inside a region leaves
-the part written by hand as it was, that one outside every region's body is refused or
-seen, and that `fill` refuses a write that reaches outside a body (`REGION_PLANTS`, #578).
+Shared by scaffold_book.py, check_fidelity.py and render.py, and the generated regions also
+by safe_push.py, check_queue.py, generated_counts.py and negative_tests.py. Standard
+library only. Reading review records needs Python 3.11 or later, for tomllib; the rest runs
+on older Pythons too. `python3 scripts/heath.py` checks the
+contracts against themselves: the examples in review/SCHEMA.md, review/terms.toml and
+every review record present; and that the reader of Lean reads deep and long runs of
+string holes in under half a second each (`READER_PLANTS`, #390), and refuses as quickly
+strings nested past their budget (`READER_REFUSED`); and that it reads a name on through a
+`.` after its «…» part as Lean does, and marks a raw string after `℃.` as one it cannot
+read for certain (`READER_NAMES`, #430); and that today's README.md, docs/PROGRAM.md and
+docs/WORKFLOW.md hold their regions as `regions` requires, that a hand deletion inside a
+region leaves the part written by hand as it was, that one outside every region's body is
+refused or seen, and that `fill` refuses a write that reaches outside a body
+(`REGION_PLANTS`, #578).
 """
 
 from __future__ import annotations
@@ -716,13 +720,15 @@ def _schema_examples():
             yield m.group(1), int(m.group(2)), block
 
 
-# Generated regions (#578): the one account of what render.py writes, read alike by
-# render.py and generated_counts.py, by safe_push.py, whose harness carries origin/main's
-# copy of this file beside it, so that a commit is never judged by its own boundaries, by
-# check_queue.py and the negative suite, and, from the main clone, by the merge queue's
-# lane. render.py writes the files of GENERATED_WHOLE whole ("book/" is a folder), and each
-# file of REGIONS only between its markers: there the body is generated, and the markers
-# and every byte outside them are written by hand. README.md holds a book's completion
+# Generated regions (#578): the one account of what is generated, read alike by render.py
+# and generated_counts.py, by safe_push.py, whose harness carries origin/main's copy of this
+# file beside it, so that a commit is never judged by its own boundaries, and by
+# check_queue.py and the negative suite; the merge queue's lane is to read it from the main
+# clone. The files of GENERATED_WHOLE are generated whole ("book/" is a folder): facts.json,
+# which `lake env lean Certificate/Facts.lean` writes, and book/, CERTIFICATE.md and
+# GRAPH.md, which render.py writes. render.py writes each file of REGIONS only between its
+# markers: there the body is generated, and the markers and every byte outside them are
+# written by hand. README.md holds a book's completion
 # summary between `<!-- scope:I -->` and `<!-- /scope:I -->`, inline in its table's row, a
 # region for each book of BOOKS (groups: 1 the opener, 2 the book, 3 the body, 4 the
 # closer); docs/PROGRAM.md its status table between `<!-- status -->` and
@@ -745,10 +751,10 @@ MARKER_WORDS = {"README.md": "scope", "docs/PROGRAM.md": "status", "docs/WORKFLO
 LINE_MARKERS = ("docs/PROGRAM.md", "docs/WORKFLOW.md")
 # An inline count (generated_counts.py): what begins a comment that looks like one of its
 # markers, its opener and its closer; render.py writes its value, between them.
-COUNT_START = re.compile(r"<!--\s*/?\s*count\b", re.I)
+COUNT_START = re.compile(r"<!--\s*(?:/\s*)?count\b", re.I)
 COUNT_OPEN = re.compile(r"<!-- count:([A-Za-z0-9]+(?:[-:][A-Za-z0-9]+)*) -->")
 COUNT_CLOSE = "<!-- /count -->"
-COUNT_VALUE = re.compile(f"({COUNT_OPEN.pattern})[^<\\n]*({re.escape(COUNT_CLOSE)})")
+COUNT_VALUE = re.compile(f"({COUNT_OPEN.pattern})[^\\n]*?({re.escape(COUNT_CLOSE)})")
 
 
 class RegionError(ValueError):
@@ -760,6 +766,24 @@ def _region_name(path: str, m: re.Match) -> str:
     return m.groupdict().get("name") or MARKER_WORDS[path]
 
 
+def _cut(token: str) -> str:
+    """`token` as a RegionError shows it: its first 80 characters, and "..." if cut."""
+    return token if len(token) <= 80 else token[:80] + "..."
+
+
+def _marker_text(path: str) -> re.Pattern:
+    """What begins a comment that looks like a marker of `path`, in any case and spacing.
+    The spaces after `<!--` are read by one `\\s*` alone, the second standing only after a
+    `/`, so that a long run of them is read once, never tried again split another way
+    (possessive quantifiers would do the same, but need Python 3.11)."""
+    return re.compile(rf"<!--\s*(?:/\s*)?{MARKER_WORDS[path]}\b", re.I)
+
+
+def _marked_body(path: str, m: re.Match) -> bool:
+    """Whether the body of the region `m` holds text that looks like a marker of `path`."""
+    return _marker_text(path).search(m["body"]) is not None
+
+
 def _marker_like(path: str, text: str):
     """Each comment of `text` that looks like a marker of `path`, as (its offset, its
     text): in README.md, a comment that begins `<!-- scope` or `<!-- /scope`, in any case
@@ -767,10 +791,10 @@ def _marker_like(path: str, text: str):
     line whose first characters but spaces begin such a comment, the whole line."""
     word = MARKER_WORDS[path]
     if path in LINE_MARKERS:
-        for m in re.finditer(rf"^[ \t]*<!--\s*/?\s*{word}\b.*$", text, re.I | re.M):
+        for m in re.finditer(rf"^[ \t]*<!--\s*(?:/\s*)?{word}\b.*$", text, re.I | re.M):
             yield m.start(), m.group(0)
         return
-    for m in re.finditer(rf"<!--\s*/?\s*{word}\b", text, re.I):
+    for m in _marker_text(path).finditer(text):
         end = text.find("-->", m.end())
         yield m.start(), text[m.start():end + 3 if end >= 0 else len(text)]
 
@@ -780,9 +804,10 @@ def regions(path: str, text: str) -> list[re.Match]:
     REGIONS has none. RegionError, naming the line, at the first comment that looks like
     a marker but is not exactly one (for status and checks, alone on its line), a closer
     with no opener, an opener with no closer, a region inside another, the same region
-    twice, or a README.md region for a book not in BOOKS; and when a region is missing:
+    twice, or a README.md region for a book not in BOOKS; when a region is missing:
     README.md holds one for each book of BOOKS, in any order, docs/PROGRAM.md one status
-    and docs/WORKFLOW.md one checks."""
+    and docs/WORKFLOW.md one checks; and at text in a region's body that looks like a
+    marker, even not alone on its line. A token is shown cut to 80 characters."""
     pattern = REGIONS.get(path)
     if pattern is None:
         return []
@@ -804,22 +829,22 @@ def regions(path: str, text: str) -> list[re.Match]:
         where = f"{path}:{line(start)}"
         m = marker.fullmatch(token)
         if m is None:
-            raise RegionError(f"{where}: {token!r} looks like a marker but is not one: a "
-                              f"marker is exactly {shape}")
+            raise RegionError(f"{where}: {_cut(token)!r} looks like a marker but is not one: "
+                              f"a marker is exactly {shape}")
         closer, name = m.group(1) == "/", m.group(2)
         if path not in LINE_MARKERS and name not in BOOKS:
-            raise RegionError(f"{where}: {token!r} names Book {name}, which is not one of "
-                              f"the books carried into Lean ({', '.join(BOOKS)})")
+            raise RegionError(f"{where}: {_cut(token)!r} names Book {_cut(name)}, which is not "
+                              f"one of the books carried into Lean ({', '.join(BOOKS)})")
         if not closer and opened is not None:
-            raise RegionError(f"{where}: {token!r} opens a region inside the "
+            raise RegionError(f"{where}: {_cut(token)!r} opens a region inside the "
                               f"{label(opened[0])} region opened at line {line(opened[1])}")
         if not closer and name in found:
-            raise RegionError(f"{where}: {token!r} opens a second {label(name)} region; the "
-                              f"first opens at line {line(found[name])}")
+            raise RegionError(f"{where}: {_cut(token)!r} opens a second {label(name)} region; "
+                              f"the first opens at line {line(found[name])}")
         if closer and opened is None:
-            raise RegionError(f"{where}: {token!r} closes no region")
+            raise RegionError(f"{where}: {_cut(token)!r} closes no region")
         if closer and opened[0] != name:
-            raise RegionError(f"{where}: {token!r} stands inside the {label(opened[0])} "
+            raise RegionError(f"{where}: {_cut(token)!r} stands inside the {label(opened[0])} "
                               f"region opened at line {line(opened[1])}")
         if closer:
             found[name], opened = opened[1], None
@@ -839,6 +864,18 @@ def regions(path: str, text: str) -> list[re.Match]:
     if [(_region_name(path, m), m.start()) for m in matches] != sorted(found.items(),
                                                                        key=lambda f: f[1]):
         raise RegionError(f"{path}: its markers pair otherwise than REGIONS reads them")
+    # A marker's text inside a body but not alone on its line (in status and checks, which
+    # the scan above reads only at a line's start), as `<!-- /status --> by hand` after a
+    # row: render.py would write over it, so it is refused here, and `outside` reads it as
+    # written by hand.
+    for m in matches:
+        if inner := _marker_text(path).search(m["body"]):
+            at = m.start("body") + inner.start()
+            end = text.find("-->", at)
+            token = text[at:end + 3 if end >= 0 else m.end("body")]
+            raise RegionError(f"{path}:{line(at)}: {_cut(token)!r} looks like a marker, inside "
+                              f"the body of the {label(_region_name(path, m))} region opened at "
+                              f"line {line(m.start())}: a body holds no marker's text")
     return matches
 
 
@@ -846,22 +883,25 @@ def outside(path: str, text: str, counts: bool = False) -> str:
     """`text` with the body of each region of `path` emptied and its markers kept, and,
     with `counts`, each inline count's value emptied too, between its opener and its
     closer, in any file: the part written by hand, to compare. It never refuses: a region
-    whose markers are broken is not emptied, so that a change to a marker, or to a region
-    so broken, shows here as a change to the part written by hand."""
+    whose markers are broken, or whose body holds a marker's text, is not emptied, so that
+    a change to a marker, or to a region so broken, shows here as a change to the part
+    written by hand."""
     pattern = REGIONS.get(path)
     if pattern is not None:
-        text = pattern.sub(lambda m: m["open"] + m["close"], text)
+        text = pattern.sub(lambda m: m[0] if _marked_body(path, m) else m["open"] + m["close"],
+                           text)
     if counts:
         text = COUNT_VALUE.sub(lambda m: m[1] + m[3], text)
     return text
 
 
 def bodies(path: str, text: str) -> list[tuple[str, str]]:
-    """The (name, body) of each region of `path` in `text` that REGIONS reads, in order:
-    the part render.py writes, to compare. Like `outside`, it never refuses."""
+    """The (name, body) of each region of `path` in `text` that REGIONS reads, in order,
+    less any whose body holds a marker's text: the part render.py writes, the bodies
+    `outside` empties, to compare. Like `outside`, it never refuses."""
     pattern = REGIONS.get(path)
-    return ([(_region_name(path, m), m["body"]) for m in pattern.finditer(text)]
-            if pattern else [])
+    return ([(_region_name(path, m), m["body"]) for m in pattern.finditer(text)
+             if not _marked_body(path, m)] if pattern else [])
 
 
 def fill(path: str, text: str, write) -> str:
@@ -887,11 +927,13 @@ def fill(path: str, text: str, write) -> str:
 # The regions' plants (#578), hand edits of today's README.md, docs/PROGRAM.md and
 # docs/WORKFLOW.md, each (what it does, the file, its verdict, the edit). A deletion inside
 # a region is "inside": `regions` accepts it, `outside` is as it was and `bodies` shows it,
-# for it touches only what render.py writes, and writes back, so that the freshness check
-# and safe_push's guard of the generated pages refuse the page left stale. A marker
-# deleted or bent, a region deleted with its markers, doubled or put inside another, is
-# "refused": `regions` raises RegionError, and `outside` shows the change. A word of prose
-# deleted is "seen": `regions` accepts it, `outside` shows it and `bodies` does not.
+# for it touches only what render.py writes, and writes back (`fill`, given today's
+# bodies, gives back today's file), so that the freshness check and safe_push's guard of
+# the generated pages refuse the page left stale. A marker deleted or bent, a region
+# deleted with its markers, doubled or put inside another, or a marker's text put in a
+# body, is "refused": `regions` raises RegionError, and `outside` shows the change. A word
+# of prose deleted is "seen": `regions` accepts it, `outside` shows it and `bodies` does
+# not.
 def _region(path: str, text: str, name: str) -> re.Match:
     return next(m for m in REGIONS[path].finditer(text) if _region_name(path, m) == name)
 
@@ -908,6 +950,11 @@ def _in_body(path: str, text: str, name: str, edit) -> str:
 def _without_line(text: str, k: int) -> str:
     lines = text.splitlines(True)
     return "".join(lines[:k] + lines[k + 1:])
+
+
+def _line_end(text: str, k: int) -> int:
+    """The offset of the newline that ends line k of `text`."""
+    return len("".join(text.splitlines(True)[:k + 1])) - 1
 
 
 def _without_word(text: str, i: int) -> str:
@@ -960,6 +1007,12 @@ REGION_PLANTS = [
     ("Book III's markers renamed for a book not carried into Lean", "README.md", "refused",
      _renamed),
     ("Book II's region moved inside Book I's", "README.md", "refused", _nested),
+    ("a closer's text after a row of the status table", "docs/PROGRAM.md", "refused",
+     lambda p, t: _in_body(p, t, "status", lambda b: _put(b, (_line_end(b, 3),) * 2,
+                                                         " <!-- /status --> by hand"))),
+    ("a closer quoted on a line of the checks block", "docs/WORKFLOW.md", "refused",
+     lambda p, t: _in_body(p, t, "checks", lambda b: _put(b, (_line_end(b, 1) + 1,) * 2,
+                                                         "`<!-- /checks -->`\n"))),
     ("a word of prose after Book II's region deleted", "README.md", "seen",
      lambda p, t: _without_word(t, _region(p, t, "II").end())),
     ("a word of prose after the status table deleted", "docs/PROGRAM.md", "seen",
@@ -974,7 +1027,7 @@ REGION_VERDICTS = {"inside": (False, False, True), "refused": (True, True, None)
 def _region_faults() -> tuple[list[str], int]:
     """The faults of `regions`, `outside`, `bodies` and `fill` on today's README.md,
     docs/PROGRAM.md and docs/WORKFLOW.md and on REGION_PLANTS; and how many writes `fill`
-    refuses."""
+    refuses as reaching outside a body."""
     faults, real = [], {}
     for path in REGIONS:
         try:
@@ -994,8 +1047,17 @@ def _region_faults() -> tuple[list[str], int]:
             faults.append(f"fill changes today's {path} when it writes each body back")
     if faults:
         return faults, 0
+    today = {path: dict(bodies(path, text)) for path, text in real.items()}
     for what, path, verdict, edit in REGION_PLANTS:
         text = edit(path, real[path])
+        if verdict == "inside":
+            try:
+                back = fill(path, text, lambda name, body: today[path][name])
+            except RegionError as e:
+                back = f"RegionError: {e}"
+            if back != real[path]:
+                faults.append(f"{path}, {what}: fill, given today's bodies, does not give "
+                              f"back today's {path}")
         try:
             regions(path, text)
             refused = False
@@ -1008,25 +1070,30 @@ def _region_faults() -> tuple[list[str], int]:
                           f"outside {'shows' if got[1] else 'does not show'} it and bodies "
                           f"{'shows' if got[2] else 'does not show'} it, where a plant "
                           f"{verdict} expects {REGION_VERDICTS[verdict]}")
-    # fill: a write that closes its region early and puts prose after it, and one that
-    # opens a region inside another, are refused; and where a marker is gone, fill refuses
-    # before it writes.
-    refused = 0
+    # fill: a write that closes its region early and puts prose after it reaches outside its
+    # body, and so does one that puts a marker's text in a body, since `outside` keeps that
+    # region whole, as written by hand; each is refused by fill's comparison of `outside`.
+    # And where a marker is gone, fill refuses before it writes.
+    reached = 0
     for path, after in [("docs/PROGRAM.md", "<!-- /status -->\nProse.\n"),
                         ("docs/WORKFLOW.md", "<!-- /checks -->\nProse.\n"),
                         ("README.md", "<!-- scope:II -->")]:
         try:
             fill(path, real[path], lambda name, body: body + after)
             faults.append(f"fill accepts a write into {path} that reaches outside its body")
-        except RegionError:
-            refused += 1
+        except RegionError as e:
+            if "reaches outside" in str(e):
+                reached += 1
+            else:
+                faults.append(f"fill refuses a write into {path} that reaches outside its "
+                              f"body, but not as one: {e}")
     called, readme = [], real["README.md"]
     try:
         fill("README.md", _put(readme, _region("README.md", readme, "III").span("open")),
              lambda name, body: called.append(name) or body)
         faults.append("fill fills README.md with Book III's opener deleted")
     except RegionError:
-        refused += 1
+        pass
     if called:
         faults.append(f"fill writes the regions {called} before it refuses README.md's markers")
     # An inline count's value is emptied with `counts`, and only with it.
@@ -1034,7 +1101,7 @@ def _region_faults() -> tuple[list[str], int]:
     if (outside("docs/STYLE.md", count), outside("docs/STYLE.md", count, counts=True)) != \
             (count, "A <!-- count:axioms --><!-- /count --> b."):
         faults.append("outside does not empty an inline count's value with counts alone")
-    return faults, refused
+    return faults, reached
 
 
 # The reader's time (#390). Before #390 the reader of Lean read a string with holes
@@ -1251,7 +1318,7 @@ def _self_test() -> int:
                     faults.append(str(e))
     faults += _reader_time()
     faults += _reader_names()
-    region_faults, refused = _region_faults()
+    region_faults, reached = _region_faults()
     faults += region_faults
     for f in faults:
         print("  ✗ " + f)
@@ -1267,9 +1334,11 @@ def _self_test() -> int:
         kinds = [verdict for _, _, verdict, _ in REGION_PLANTS]
         print(f"✓ the generated regions of {', '.join(REGIONS)} hold today; of "
               f"{len(REGION_PLANTS)} hand edits, the {kinds.count('inside')} inside a region "
-              f"leave the part written by hand as it was, the {kinds.count('refused')} to "
-              f"markers are refused and seen, the {kinds.count('seen')} to prose are seen; "
-              f"fill refuses {refused} writes that reach outside a body")
+              f"leave the part written by hand as it was and fill writes today's file back, "
+              f"the {kinds.count('refused')} to markers or a marker's text are refused and "
+              f"seen, the {kinds.count('seen')} to prose are seen; fill refuses the {reached} "
+              f"writes that reach outside a body (two close their region early, one puts a "
+              f"marker's text in a body) and, before it writes, a file whose marker is gone")
     return len(faults)
 
 

@@ -524,10 +524,12 @@ SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
-# What render.py writes, as heath.py's "Generated regions" gives it (#578), which the
-# pre-flight reads from origin/main's heath.py, carried beside this file by the harness:
-# the files of heath.GENERATED_WHOLE whole, and the three of heath.REGIONS, README.md,
-# docs/PROGRAM.md and docs/WORKFLOW.md, only between their markers, the markers and the
+# What is generated, whole or in part, as heath.py's "Generated regions" gives it (#578),
+# which the pre-flight reads from origin/main's heath.py, carried beside this file by the
+# harness: the files of heath.GENERATED_WHOLE, generated whole (facts.json, which
+# `lake env lean Certificate/Facts.lean` writes, and book/, CERTIFICATE.md and GRAPH.md,
+# which render.py writes), and the three of heath.REGIONS, README.md, docs/PROGRAM.md and
+# docs/WORKFLOW.md, which render.py writes only between their markers, the markers and the
 # rest of each written by hand.
 GENERATED = (*heath.GENERATED_WHOLE, *heath.REGIONS)
 GENERATED_REGIONS = heath.REGIONS
@@ -4889,13 +4891,13 @@ def put_block(body: str, block: str) -> str:
 
 
 def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
-    """Does the change touch what render.py writes in `path`, and does it touch the rest,
+    """Does the change touch what is generated in `path`, and does it touch the rest,
     written by hand? Only the files of GENERATED_REGIONS have a rest (README.md,
     docs/PROGRAM.md and docs/WORKFLOW.md): render.py writes them only between their
-    markers, and every other generated file whole. What render.py writes is each region's
-    body (heath.bodies); the rest is the file with those bodies emptied and the markers
-    kept (heath.outside), so that a marker deleted or bent, or a region deleted with its
-    markers, is a change to the rest, written by hand."""
+    markers, and every other generated file is generated whole. What render.py writes is
+    each region's body (heath.bodies); the rest is the file with those bodies emptied and
+    the markers kept (heath.outside), so that a marker deleted or bent, or a region
+    deleted with its markers, is a change to the rest, written by hand."""
     if path not in GENERATED_REGIONS:
         return True, False
     old, new = show(repo, base, path) or "", show(repo, sha, path) or ""

@@ -130,7 +130,7 @@ ROOT = heath.ROOT
 PLANTED = ROOT / "Elements" / "Foundations" / "Tacit" / "Planted.lean"
 failures: list[str] = []
 refusals: list[str] = []
-# What render.py writes, whole or in part (heath.py's "Generated regions", #578).
+# What is generated, whole or in part (heath.py's "Generated regions", #578).
 GENERATED = (*(name.rstrip("/") for name in heath.GENERATED_WHOLE), *heath.REGIONS)
 # The plants' folder, from ROOT, and the name of a plant's file in it.
 PLANTS = Path("scripts", "negative")

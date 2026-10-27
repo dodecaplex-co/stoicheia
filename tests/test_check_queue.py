@@ -1953,6 +1953,23 @@ class QueueTests(unittest.TestCase):
         (self.repo / TEXT).write_text("A working copy change.\n", encoding="utf-8")
         self.verdict(self.cli(prepare=False), 1, "checkout has source changes")
 
+    def test_working_edits_to_readme_prose_refuse_and_to_a_body_do_not(self):
+        # #578: README.md is generated only between its markers, so a working-tree edit of
+        # its prose is a source change; one inside a scope body is render's, which the
+        # render freshness check catches.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        group = self.merge(self.base, self.train(1, {TEXT: "A reviewed line.\n"}), 1)
+        for old, new, code, message in (
+                ("Prose by hand.", "Prose, edited.", 1, "checkout has source changes"),
+                ("Row.", "Row, regenerated.", 0, "queue: PASS")):
+            with self.subTest(new=new):
+                self.checkout(group)
+                (self.repo / "README.md").write_text(readme.replace(old, new), encoding="utf-8")
+                self.verdict(self.cli(head=group, prepare=False), code, message)
+
     def test_deleted_tracked_file_is_unreadable_in_tree_mode(self):
         # Rule (d) reads the decisions page alone; conflict markers are S23's.
         self.checkout(self.head)

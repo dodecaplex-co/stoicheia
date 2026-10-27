@@ -1274,12 +1274,30 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
 
 
 def checkout(repo: Path, head: str) -> None:
-    """Require the checked commit and unchanged sources before running its commands."""
+    """Require the checked commit and unchanged sources before running its commands. A
+    file generated whole may differ from the head; one of safe_push.GENERATED_REGIONS only
+    in its regions' bodies, since the rest, its markers among it, is written by hand
+    (heath.outside). Its bytes are compared as they are, and a working file that is missing,
+    a link or unreadable counts as changed."""
     if commit(repo, "HEAD") != head:
         raise Refused("checkout is not the supplied group head")
     changed = safe_push.git(repo, "diff", "--name-only", "-z", head, "--").split("\0")
     if any(path and not safe_push.under(path, GENERATED) for path in changed):
         raise Refused("checkout has source changes outside the supplied group head")
+    for path in safe_push.GENERATED_REGIONS:
+        if path not in changed:
+            continue
+        working = repo / path
+        try:
+            same = not working.is_symlink() and (
+                heath.outside(path, working.read_bytes().decode("utf-8", "surrogateescape"))
+                == heath.outside(path, (safe_push.show_bytes(repo, head, path) or b"")
+                                 .decode("utf-8", "surrogateescape")))
+        except OSError:
+            same = False
+        if not same:
+            raise Refused("checkout has source changes outside the supplied group head: the "
+                          f"part of {path} written by hand, outside its regions' bodies")
 
 
 def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) -> list[list[str]]:
