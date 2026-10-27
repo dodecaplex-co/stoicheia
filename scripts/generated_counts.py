@@ -303,9 +303,11 @@ def acceptance_passing(root):
 
 SCREEN = "Audit/screen.py"
 SUPERPOSITION = "Audit/Superposition.lean"
-PRINT_AXIOMS = re.compile(r"(?m)^[ \t]*#print[ \t]+axioms\s+(?=[^\W\d])")
+PRINT_AXIOMS = re.compile(r"(?<!\S)#print[ \t]+axioms\s+(?=[^\W\d])")
 ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
-COMMAND_QUOTATION = re.compile(r"`\([ \t\r\n]*command[ \t\r\n]*\|")
+SYNTAX_QUOTATION = re.compile(r"`[ \t\r\n]*\(")
+REFLECTIVE_NAMES = {"__builtins__", "delattr", "eval", "exec", "getattr", "globals",
+                    "locals", "setattr", "vars"}
 
 
 def source_text(root, path):
@@ -366,10 +368,11 @@ def screen_circle_rules(root):
         if (isinstance(node, ast.ImportFrom)
                 and any(name.name == "*" for name in node.names)):
             raise ValueError(f"{SCREEN}:{node.lineno}: wildcard import can bind CIRCLE")
-        if ((isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
-             and node.func.id in {"delattr", "eval", "exec", "getattr", "globals", "locals",
-                                  "setattr", "vars"})
-                or (isinstance(node, ast.Attribute) and node.attr in {"CIRCLE", "__dict__"})):
+        if ((isinstance(node, ast.Name) and node.id in REFLECTIVE_NAMES)
+                or (isinstance(node, ast.Attribute)
+                    and node.attr in REFLECTIVE_NAMES | {"CIRCLE", "__dict__"})
+                or (isinstance(node, ast.alias)
+                    and node.name.split(".")[-1] in REFLECTIVE_NAMES)):
             raise ValueError(f"{SCREEN}:{node.lineno}: reflective namespace access is forbidden")
         bindings = bound_names(node)
         if "itertools" in bindings and node is not itertools_import:
@@ -427,8 +430,8 @@ def superposition_dependency_checks(root):
     plain = ESCAPED_NAME.sub(
         lambda match: "x" + re.sub(r"[^\n]", " ", match[0][1:])
         if match[0].endswith("»") else re.sub(r"[^\n]", " ", match[0]), code[:-4])
-    if COMMAND_QUOTATION.search(plain):
-        raise ValueError(f"{SUPERPOSITION}: command quotations cannot be counted")
+    if SYNTAX_QUOTATION.search(plain):
+        raise ValueError(f"{SUPERPOSITION}: syntax quotations cannot be counted")
     return len(PRINT_AXIOMS.findall(plain))
 
 
