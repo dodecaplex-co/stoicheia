@@ -10,7 +10,7 @@
   that close them pass with main's code too; their evidence is a set of changes made to
   the workflow or the code, each in a scratch copy of the tree in which main's tests and
   the new ones were both run. The fourth changes `scripts/auto_revert.py`, and each of
-  its four tests fails with main's copy of that file, in 26 cases in all.
+  its six tests fails with main's copy of that file, in 35 cases in all.
 
   *post-merge-final-invocation-remains-uncovered.* The tests ran the step that takes the
   trusted script from the previous main, and the fallback's shell with an environment of
@@ -30,23 +30,33 @@
   the job so far has succeeded, failed or been cancelled: the job runs only when
   integration failed, and exactly one of the two steps runs. It then runs each step's
   `run` text as Actions runs it, in bash, with the job's environment and the step's,
-  their expressions given fake values, and stand-ins for `python3` and `gh` on the path
-  that record their arguments and environment. The record step must call the trusted
-  script in Python's isolated mode with the push's own arguments, give it the job's token
-  and the App's secrets, which the job has only through its `auto-revert` environment,
-  hold the job's token in `GH_TOKEN` and `GITHUB_TOKEN` alone and the App's key in its
-  own `STOICHEIA_REVERT_APP_KEY` alone, and fail the job whenever the script exits with
-  anything but 0. The fallback must open the issue with `gh` alone, the job's token in
-  `GH_TOKEN` and no other credential in any variable, and fail the job. Each of the two
-  earlier steps has its run text run by tests of its own (one of them new, since no test
-  ran the step that reads the failed jobs), and neither may write to `GITHUB_ENV` or
-  `GITHUB_PATH`, through which it could change what the record step runs with. Of 55
-  changes to the workflow's text, main's tests catch 5, four in the fallback's shell and
-  one in the step that takes the trusted script, and the new tests catch 54: the one
-  they miss changes the workflow's trigger, `on:`, which no test reads and which is
-  outside #259. Of eight changes that keep what the job does (`; exit 0` after the call
-  among them, which `bash -e` never reaches when the script fails), the new tests pass
-  all eight.
+  their expressions given fake values, stand-ins for `python3` and `gh` on the path that
+  record their arguments and environment, and bash's trace (`set -x`) of each command
+  the step runs. The record step must run two commands alone, `cat` to read the failed
+  jobs and then the trusted script, and perhaps `exit`; it must call the script in
+  Python's isolated mode with the push's own arguments, give it the job's token and the
+  App's secrets, which the job has only through its `auto-revert` environment, hold the
+  job's token in `GH_TOKEN` and `GITHUB_TOKEN` alone and the App's key in its own
+  `STOICHEIA_REVERT_APP_KEY` alone, and fail the job whenever the script exits with
+  anything but 0. The fallback must run exactly the commands of its text, in order, on
+  the path the test gives it, call GitHub with `gh` alone, the job's token in `GH_TOKEN`
+  and no other credential in any variable, and fail the job. Each of the two earlier
+  steps has its run text run, traced in the same way, by tests of its own (one of them
+  new, since no test ran the step that reads the failed jobs): each must run exactly the
+  commands of its text on each path those tests take, and neither may write to
+  `GITHUB_ENV` or `GITHUB_PATH`, through which it could change what the record step runs
+  with. So a command added to a step's text, on a path a test takes, fails it even when
+  it finds in the test's checkout no file of the failed push to run. Of 55 changes to the
+  workflow's text, main's tests catch 5, four in the fallback's shell and one in the step
+  that takes the trusted script, and the new tests catch 54: the one they miss changes
+  the workflow's trigger, `on:`, which no test reads and which is outside #259. Of eight
+  changes that keep what the job does (`; exit 0` after the call among them, which
+  `bash -e` never reaches when the script fails), the new tests pass all eight. Of 13
+  further changes, among them a line in each of the four steps that runs a file of the
+  failed push only when the checkout holds one, the new tests catch 12: the one they miss
+  stops the integration job, whose failure starts the revert job, from running at all,
+  which is outside #259. They pass both of two further changes that keep what the job
+  does.
 
   *link-policy-test-compares-regex-source-shape.* The test of the link reading compared
   the patterns `auto_revert.py` copies from `check_links.py` by their text and flags. It
@@ -80,16 +90,18 @@
   the issue is open. While the tip is still the failed push it changes nothing more,
   since a later push's run that passes clears the issue as any other. When main has moved
   on, it removes `main-red` from the issue it opened only if GitHub's comparison of the
-  failed push with the tip shows the tip ahead of it and not behind (the job's checkout,
-  of the failed push, cannot hold a later tip, so Git there could never show it), the
-  tip's latest post-merge run, every page of runs read, completed with success,
-  and main still names that tip just before the removal. If any of that cannot be read or
-  confirmed, or main's tip cannot be read, the label stays and the issue says how to
-  clear it: re-run the `clear` job of a passing run at main's tip. The tests hold each
-  guard of that reading too: a run of another branch or event, a run listed twice, a
-  count that changes between pages, a run id of 0, a run not completed though it names a
-  conclusion, and a page listed newest first, as GitHub lists runs, whose newest run is
-  in progress, and a comparison that is missing, malformed, diverged or behind.
+  failed push with the tip shows the tip ahead of it and not behind (the job's checkout
+  holds main only as it stood when the job began), the tip's latest post-merge run,
+  every page of runs read, completed with success, and main still names that tip just
+  before the removal. If any of that cannot be read or confirmed, or main's tip cannot be
+  read, the label stays and the issue says how to clear it: re-run the `clear` job of a
+  passing run at main's tip. The tests hold these guards of that reading too, by a case
+  each: a run of another branch or event, a run listed twice, a count that changes
+  between pages, a run id of 0, a run not completed though it names a conclusion, a page
+  listed newest first, as GitHub lists runs, whose newest run is in progress, and a
+  comparison that is missing, malformed or diverged; and, one guard at a time, a
+  comparison that is an ahead tip's in every field but one: its status behind or
+  identical, the tip also behind or ahead by none, or another base or merge base.
   [WORKFLOW](../WORKFLOW.md), section 10, says so at the end of "Out of a red main", and
   its sentence that the job that clears `main-red` runs no repository code now names the
   `clear` job, since the revert job, which runs the previous main's script, can now
@@ -100,12 +112,13 @@
 
   This entry approves the change to `scripts/auto_revert.py`: the stale `main-red`
   removed on that evidence or kept with word of how to clear it (`HOW_TO_CLEAR`,
-  `github_is_ancestor`, `runs_at`, `clear_moved_on` and `record`), with its docstring and dry run, and its
-  comment on the protected list, which no longer claims an order, since order decides
-  nothing there.
+  `github_is_ancestor`, `runs_at`, `clear_moved_on` and `record`), with its docstring
+  and dry run, and its comment on the protected list, which no longer claims an order,
+  since order decides nothing there.
 
   This entry approves the change to `tests/test_auto_revert.py`: the revert job's record
   step and fallback run as Actions runs them, with the job's permissions, steps and
-  variables held; the step that reads the failed jobs run; the link reading and the
-  protected paths compared by behaviour, the folders read from the tree; and the tests of
-  the stale `main-red` and of each guard of its reading.
+  variables held; the step that reads the failed jobs run; each of the four steps' run
+  text traced, and held to the commands of its text; the link reading and the protected
+  paths compared by behaviour, the folders read from the tree; and the tests of the
+  stale `main-red` and of the guards of its reading.

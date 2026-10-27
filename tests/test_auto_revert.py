@@ -273,12 +273,27 @@ def expressions(text: str, values: dict) -> str:
     return result
 
 
+# Put before a step's run text, this has bash print to stderr each command the step runs,
+# before running it, as bash 3.2 and bash 5 both print it: a + for each level of command
+# substitution, XTRACE, and the command with its words expanded.
+TRACE = "PS4='+XTRACE '; set -x\n"
+
+
+def commands(stderr: str) -> list[str]:
+    """The commands a step run after TRACE ran, in order, from its stderr: each one's
+    name, or the variable it sets and `=`, after a + for each level of command
+    substitution it ran in. So each command the step runs is seen, whether or not it
+    finds, in the test's checkout, a file it would run."""
+    return [depth[1:] + re.match(r"[A-Za-z_][A-Za-z0-9_]*=|\S*", text)[0]
+            for depth, text in re.findall(r"^(\++)XTRACE (.*)$", stderr, re.M)]
+
+
 def run_step(job: dict, step: dict, values: dict, runner: Path, cwd: Path, path: str):
     """Run a step of a Linux job as Actions runs it: the job's env and then the step's,
     each expression in them and in run given its value, and run written to a file that
     the step's shell runs (`bash -e` when it names none, and bash with pipefail, without
-    profile or rc files, for `shell: bash`). Returns the process and whether its exit
-    fails the job. A step key or shell this does not model fails the test."""
+    profile or rc files, for `shell: bash`), after TRACE. Returns the process and whether
+    its exit fails the job. A step key or shell this does not model fails the test."""
     shells = {None: ["bash", "-e"],
               "bash": ["bash", "--noprofile", "--norc", "-eo", "pipefail"]}
     keep_going = step.get("continue-on-error", "false")
@@ -290,7 +305,7 @@ def run_step(job: dict, step: dict, values: dict, runner: Path, cwd: Path, path:
     for scope in (job.get("env", {}), step.get("env", {})):
         env.update({key: expressions(text, values) for key, text in scope.items()})
     script = runner / "step.sh"
-    script.write_text(expressions(step["run"], values), encoding="utf-8")
+    script.write_text(TRACE + expressions(step["run"], values), encoding="utf-8")
     result = subprocess.run([*shells[step.get("shell")], str(script)], cwd=cwd, env=env,
                             text=True, capture_output=True, check=False)
     return result, result.returncode != 0 and keep_going == "false"
@@ -1044,13 +1059,13 @@ class AutoRevert(unittest.TestCase):
                 "workflow_runs": runs}
 
     def comparison(self, ancestor, descendant, *, status="ahead", merge_base=None,
-                   ahead_by=1, behind_by=0):
+                   ahead_by=1, behind_by=0, base=None):
         path = f"/repos/{SLUG}/compare/{ancestor}...{descendant}"
         self.api.comparisons[path] = {
             "status": status,
             "ahead_by": ahead_by,
             "behind_by": behind_by,
-            "base_commit": {"sha": ancestor},
+            "base_commit": {"sha": ancestor if base is None else base},
             "merge_base_commit": {"sha": ancestor if merge_base is None else merge_base},
         }
 
@@ -1136,6 +1151,25 @@ class AutoRevert(unittest.TestCase):
                 self.assertEqual(self.api.issues[1000]["labels"],
                                  ["blocks-release", "main-red"])
                 self.assertIn(f"{later} could not be shown to contain {after}", self.body())
+
+    def test_each_guard_of_the_comparison_keeps_main_red(self):
+        # A comparison that is an ahead tip's in every field but one, so that each guard
+        # alone must refuse it: the tip also behind, ahead by none, behind or identical by
+        # its status, or another commit as the base or the merge base.
+        after, later = self.slow_failure()
+        self.tip_runs(later, [self.finished(9, later)])
+        stays = (f"Main has moved on from {after} to {later}, and main-red stays: {later} "
+                 f"could not be shown to contain {after}. {self.HOW}")
+        for change in ({"behind_by": 1}, {"ahead_by": 0}, {"status": "behind"},
+                       {"status": "identical"}, {"base": self.before},
+                       {"merge_base": self.before}):
+            with self.subTest(**change):
+                self.comparison(after, later, **change)
+                status, output = self.run_moved_on(
+                    after, env={"GITHUB_TOKEN": WORKFLOW_TOKEN})
+                self.assertEqual(status, 1, output)
+                self.assertEqual(self.api.deleted, [])
+                self.assertIn(stays, self.body())
 
     def test_a_failure_recorded_after_main_moved_on_keeps_main_red_without_evidence(self):
         after, later = self.slow_failure()
@@ -1828,12 +1862,33 @@ class AutoRevert(unittest.TestCase):
                    ISSUE_PAYLOAD=str(self.directory / "issue.json"), FAILED_JOBS=str(jobs))
         return env
 
+    # The commands the step that takes the trusted script runs, as traced, on each path
+    # through its text, by the reason it gives ("" when it takes the script): it reads the
+    # runs only for a previous commit of 40 hex digits, not all zeros, judges them only when
+    # GitHub answers, and reads the script only from a previous main whose run passed.
+    READ_RUNS = "set +mktemp script= reason= [[ [[ +mktemp response= +mktemp verdict= reason= gh"
+    TRUSTED_PATHS = {
+        "The previous main commit is invalid.": (
+            "set +mktemp script= reason= [[ rm echo printf",
+            "set +mktemp script= reason= [[ [[ rm echo printf"),
+        "The previous main's post-merge runs could not be read.": (
+            READ_RUNS + " rm echo printf", READ_RUNS + " jq rm echo printf"),
+        "No post-merge run was found for the previous main.": (
+            READ_RUNS + " jq +cat reason= [[ rm echo printf",),
+        "The latest post-merge run for the previous main did not conclude success.": (
+            READ_RUNS + " jq +cat reason= [[ rm echo printf",),
+        "The successful previous main has no readable revert script.": (
+            READ_RUNS + " jq +cat reason= [[ reason= git rm echo printf",
+            READ_RUNS + " jq +cat reason= [[ reason= git test rm echo printf"),
+        "": (READ_RUNS + " jq +cat reason= [[ reason= git test echo echo exit",),
+    }
+
     def run_trusted_extraction(self, before, pages=None, *, unreadable=False):
         script = workflow_step("post-merge.yml", "Take the revert script from the previous main")
         if pages is None:
             pages = [{"total_count": 1, "workflow_runs": [self.successful_run(before)]}]
         env = self.workflow_env(before, pages, unreadable=unreadable)
-        result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+        result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", TRACE + script],
                                 cwd=self.repo, env=env, text=True, capture_output=True,
                                 check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -1841,6 +1896,8 @@ class AutoRevert(unittest.TestCase):
         self.trusted_outputs = dict(
             line.split("=", 1) for line in
             Path(env["GITHUB_OUTPUT"]).read_text(encoding="utf-8").splitlines())
+        self.assertIn(" ".join(commands(result.stderr)),
+                      self.TRUSTED_PATHS[self.trusted_outputs["reason"]], result.stderr)
         self.workflow_environment = env
         return self.trusted_outputs["script"]
 
@@ -1957,21 +2014,29 @@ class AutoRevert(unittest.TestCase):
 
     def test_workflow_reads_the_failed_jobs_and_nothing_for_later_steps(self):
         # The step that reads the failed jobs, run on GitHub's answers: it names them, or
-        # says they could not be read, and leaves the later steps alone.
+        # says they could not be read, and leaves the later steps alone. It runs the
+        # commands of its text alone, traced as the record step's are.
         script = workflow_step("post-merge.yml", "Read the failed jobs")
         unread = "Failed job details could not be read; integration reported failure.\n"
         page = {"jobs": [{"name": "integration / check", "conclusion": "failure"},
                          {"name": "integration / model", "conclusion": "success"},
-                         {"name": "integration / lean", "conclusion": None}]}
-        for jobs, readable, text in (([page], "true", "integration / check: failure\n"),
-                                     (None, "false", unread), ([{"jobs": []}], "false", unread)):
+                         {"name": "integration / lean", "conclusion": None},
+                         {"name": "integration / acceptance", "conclusion": "skipped"},
+                         {"name": "integration / gaps", "conclusion": "neutral"}]}
+        for jobs, readable, text, ran in (
+                ([page], "true", "integration / check: failure\n", "gh jq echo echo"),
+                (None, "false", unread, "gh echo echo echo"),
+                ([{"jobs": []}], "false", unread, "gh jq echo echo echo")):
             with self.subTest(jobs=jobs):
                 env = self.workflow_env(self.before, [], jobs=jobs)
                 env["RUN_ATTEMPT"] = "1"
-                result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", TRACE + script],
                                         cwd=self.repo, env=env, text=True, capture_output=True,
                                         check=False)
                 self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(commands(result.stderr),
+                                 ("set +mktemp jobs= +mktemp response= " + ran).split(),
+                                 result.stderr)
                 outputs = dict(line.split("=", 1) for line in Path(
                     env["GITHUB_OUTPUT"]).read_text(encoding="utf-8").splitlines())
                 self.assertEqual(outputs["readable"], readable)
@@ -2088,6 +2153,11 @@ class AutoRevert(unittest.TestCase):
                 self.assertEqual(holding(env), {"GH_TOKEN": "the job's token",
                                                 "GITHUB_TOKEN": "the job's token",
                                                 "STOICHEIA_REVERT_APP_KEY": "the App's key"})
+                # The step runs the read of the failed jobs and the trusted script alone, and
+                # may exit: any other command fails, even one that finds in the test's
+                # checkout no file of the failed push to run.
+                self.assertEqual([name for name in commands(result.stderr) if name != "exit"],
+                                 ["+cat", "python3"], result.stderr)
                 # The script's exit is the step's, and any but 0 fails the job.
                 self.assertEqual(result.returncode, code, result.stderr)
                 self.assertEqual(fails, code != 0)
@@ -2099,6 +2169,13 @@ class AutoRevert(unittest.TestCase):
         calls.write_text("", encoding="utf-8")
         result, fails = run_step(job, fallback, values, runner, self.repo, path)
         self.assertEqual((result.returncode, fails), (1, True), result.stderr)
+        # These commands alone, in this order: gh reads the labels and the train's title and
+        # opens the issue, and exit fails the job.
+        self.assertEqual(commands(result.stderr), (
+            "set +mktemp labels= gh for grep for grep +mktemp body= printf printf [[ [[ +mktemp"
+            " history= git IFS= read commit= subject= [[ number= +gh title= printf IFS= read"
+            " printf test test cat printf printf printf +mktemp payload= jq gh exit").split(),
+            result.stderr)
         self.assertEqual([call[0] for call in made()], ["gh"] * 3)
         self.assertEqual([holding(call[2]) for call in made()],
                          [{"GH_TOKEN": "the job's token"}] * 3)

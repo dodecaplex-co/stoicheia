@@ -1597,12 +1597,12 @@ afresh. While the tip is still the failed push, it changes nothing more: a later
 run that passes clears the issue as any other. When main has moved on, it removes
 `main-red` from the issue it opened, naming the run, if GitHub's comparison of the
 issue's `After` with the tip shows the tip ahead of it and not behind (the job's
-checkout, of `After`, cannot hold a later tip), the tip's latest post-merge run (every page read) completed with success, and
-main still names that tip just before the removal. When main has moved on, or its tip
-cannot be read, and the label stays, the issue says how to clear it, the way that also
-clears an issue the fallback opened: once main's tip has a post-merge run that passed,
-re-run that run's `clear` job, which removes the label from every open `main-red` issue
-whose `After` main's tip contains.
+checkout holds main only as it stood when the job began), the tip's latest post-merge
+run (every page read) completed with success, and main still names that tip just before
+the removal. When main has moved on, or its tip cannot be read, and the label stays,
+the issue says how to clear it, the way that also clears an issue the fallback opened:
+once main's tip has a post-merge run that passed, re-run that run's `clear` job, which
+removes the label from every open `main-red` issue whose `After` main's tip contains.
 
 **Turning it on.** The queue remains off until the owner enables it, and not before the
 owner has chosen the authenticated source for the pre-flight's evidence that rule (b)
