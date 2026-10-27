@@ -768,7 +768,11 @@ def table_difference(lines: tuple[str, ...], table: Table) -> str | None:
     no shell named, `bash -e` over a file of them, with the row and GITHUB_OUTPUT alone as
     its environment, ends otherwise than its outcome says; None if none does. It shows
     what the lines do over the table, not that they read nothing else: that is for the
-    review of a change to them, which changes their digest."""
+    review of a change to them, which changes their digest. Lines whose digest the table
+    does not hold are refused before they are cached, written or run."""
+    digest = script_digest(lines)
+    if digest != table.digest:
+        raise AssertionError(f"the table holds {table.digest}, not {digest}")
     if (lines, table) not in TABLE_DIFFERENCES:
         from concurrent.futures import ThreadPoolExecutor
         with tempfile.TemporaryDirectory() as tmp:
@@ -13734,8 +13738,8 @@ class Units(unittest.TestCase):
         # made to pass when the risk job did not succeed by the first row it changes too.
         # A reworded message, || true, and a branch on the event's name, which the table
         # does not give, change no row. Each edit is refused by the digest alone, and its
-        # text is never run there; run over the table directly, the edit that ends a row
-        # otherwise shows it.
+        # text is never run there; run as a pinned fixture of its own, the edit that ends
+        # a row otherwise shows it.
         workflows = read_workflows(SOURCE)
         rows = [len(step["run"].rows()) for contract in WORKFLOW_CONTRACTS.values()
                 for spec in contract["jobs"].values() if isinstance(spec, dict)
@@ -13744,12 +13748,38 @@ class Units(unittest.TestCase):
         first = 'if [ "$RESULT" != success ]; then'
         row = (r"with \{'RESULT': 'failure', 'CLASS': 'R0'\}, exit 0 and output \[\], "
                r"not exit 1")
-        for old, new, changes_a_row in (
-                ("the negative tests cannot pass", "no negative test can pass", False),
-                ('cannot pass"\n  exit 1', 'cannot pass"\n  exit 0', True),
-                ("\nesac", "\nesac || true", False),
+        fixture = (
+            'if [ "$RESULT" != success ]; then',
+            '  echo "the risk job ended: $RESULT; without its class, the negative tests '
+            'cannot pass"',
+            '  exit 1',
+            'fi',
+            'case "$CLASS" in',
+            '  R3|R4|R5)',
+            '    echo "class $CLASS: the negative tests run in full"',
+            '    echo "full=true" >> "$GITHUB_OUTPUT" ;;',
+            '  R0|R1|R2)',
+            '    echo "class $CLASS: the negative tests run in main\'s run after the merge '
+            'and on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md, '
+            'docs/decisions/2026-10-22-checks-by-risk.md)"',
+            '    echo "full=false" >> "$GITHUB_OUTPUT" ;;',
+            '  *)',
+            '    echo "the risk job gave no class from R0 to R5: \'$CLASS\'"',
+            '    exit 1 ;;',
+            'esac',
+        )
+        fixture_inputs = (("RESULT", ("success", "failure")), ("CLASS", ("R0",)))
+        fixture_outcome = lambda values: (
+            (0, ("full=false",)) if values["RESULT"] == "success" else (1, ()))
+        for old, new, digest, changes_a_row in (
+                ("the negative tests cannot pass", "no negative test can pass",
+                 "10f7099138f2cf746571728af9c999b9", False),
+                ('cannot pass"\n  exit 1', 'cannot pass"\n  exit 0',
+                 "51af9d85211659458ef5a96fb51f3f1b", True),
+                ("\nesac", "\nesac || true", "297a30946839c1752e227ed4a743d6a5", False),
                 (first, "# GITHUB_EVENT_NAME= is set by GitHub\n"
-                        f'[ "$GITHUB_EVENT_NAME" != merge_group ] || exit 0\n{first}', False)):
+                        f'[ "$GITHUB_EVENT_NAME" != merge_group ] || exit 0\n{first}',
+                 "0b70251e583ed5d291164a0e65d2cd5d", False)):
             with self.subTest(new):
                 changed = copy.deepcopy(workflows)
                 step = changed["ci.yml"]["jobs"]["negative"]["steps"][0]
@@ -13759,20 +13789,23 @@ class Units(unittest.TestCase):
                                             "not ab845bc546996a52ffbbe227cb9ec3ae") as refused:
                     hold_to_contracts(changed)
                 self.assertNotRegex(str(refused.exception), row)
-                table = WORKFLOW_CONTRACTS["ci.yml"]["jobs"]["negative"]["steps"][0]["run"]
-                rows = table_difference(tuple(step["run"].split("\n")), table)
+                fixture_text = "\n".join(fixture)
+                self.assertIn(old, fixture_text)
+                fixture_lines = tuple(fixture_text.replace(old, new).split("\n"))
+                rows = table_difference(
+                    fixture_lines, Table(digest, fixture_inputs, fixture_outcome))
                 self.assertEqual(bool(rows and re.search(row, rows)), changes_a_row)
 
     def test_a_changed_step_of_logic_is_not_run(self):
-        # The contracts run a tabled step's rows only for the text its digest holds, so a
-        # step changed under review, here one that would leave a mark, never runs here.
-        workflows = read_workflows(SOURCE)
         with tempfile.TemporaryDirectory() as scratch:
             mark = Path(scratch) / "ran"
-            step = workflows["ci.yml"]["jobs"]["negative"]["steps"][0]
-            step["run"] = f": > '{mark}'\n" + step["run"]
-            with self.assertRaisesRegex(AssertionError, "negative steps 1 run"):
-                hold_to_contracts(workflows)
+            held = (":",)
+            changed = (*held, f": > '{mark}'")
+            table = Table("e7ac0786668e0ff0f02b62bd04f45ff6", (), lambda _: (0, ()))
+            with self.assertRaisesRegex(
+                    AssertionError, r"the table holds e7ac0786668e0ff0f02b62bd04f45ff6, "
+                    r"not [0-9a-f]{32}"):
+                table_difference(changed, table)
             self.assertFalse(mark.exists())
 
     def test_a_falsy_trigger_is_not_an_event_without_filters(self):
