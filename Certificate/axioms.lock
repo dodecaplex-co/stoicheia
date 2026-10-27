@@ -15,7 +15,7 @@
 #
 #     python3 scripts/check_fidelity.py --write-lock
 
-[axioms]  # 48
+[axioms]  # 49
 "Definition15" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Elements.OnCircle C α → Eq (Elements.len A B) (Elements.len A C)"
 "Postulate1" = "∀ (A B : Elements.Point), Ne A B → Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (Elements.OnLine B L)"
 "Postulate2" = "∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L → Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Elements.Between B C A) (Not (Membership.mem avoid A)))"
@@ -61,6 +61,7 @@
 "Tacit.not_on_line_of_same_side" = "∀ {A B : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Not (Elements.OnLine A L)"
 "Tacit.on_line_of_area_eq_zero" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.OnLine A L → Elements.OnLine B L → Ne A B → Eq (Elements.area A B C) 0 → Elements.OnLine C L"
 "Tacit.pasch2" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C → Elements.OnLine A L → Not (Elements.OnLine B L) → Elements.SameSide B C L"
+"Tacit.radius_ne_zero" = "∀ {A B : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Ne (Elements.len A B) 0"
 "Tacit.same_ray_of_angle_eq_zero" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Ne A B → Ne A C → Elements.OnLine A L → Elements.OnLine B L → Eq (Elements.ang B A C) 0 → And (Elements.OnLine C L) (Not (Elements.Between B A C))"
 "Tacit.same_side_trans" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Elements.SameSide A C L → Elements.SameSide B C L"
 "Tacit.superposition" = "Elements.Superposition.Rule Elements.primitives"

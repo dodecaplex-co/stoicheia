@@ -431,11 +431,15 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->42<!-- /count --> tacit rules, <!-- count:axioms -->48<!-- /count --> in all, each tacit rule from System E (or
-  LeanEuclid's corrections of it) with its citation, save one of our own, added by the
-  owner's decision of 18 October 2026: every circle has a centre (`exists_centre`), whose
+  Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
+  LeanEuclid's corrections of it) with its citation, save two of our own: every circle has
+  a centre (`exists_centre`), added by the owner's decision of 18 October 2026, whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
-  section 2). A new rule, or a change to one, is a foundation decision (section 1);
+  section 2); and a circle's radius is not nothing (`radius_ne_zero`), added by the
+  owner's decision of 25 October 2026
+  ([its decisions entry](decisions/2026-10-25-radius-rule.md)), since Euclid draws every
+  circle with a distance (Postulate 3). A new rule, or a change to one, is a foundation
+  decision (section 1);
   `Certificate/axioms.lock` holds every axiom's exact statement, with every definition that
   the axioms' statements or the propositions', porisms' and companions' statements reach
   (`Touches`, `rect`, `Parallel`), so that no word can change what an axiom or a claim
@@ -796,7 +800,7 @@ contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
 | Theorem under `Elements.Tacit` | System E label | Derivation and home |
 |---|---|---|
 | `centre_inside` | Generalities 3 | A centre that were not inside would lie on a straight line through an inside point beyond it, and its radii to the two crossings would be unequal. Proved in [`RuleBase.lean`](../Elements/Figure/RuleBase.lean). |
-| `on_circle_of_len_eq` | Diagram-segment 3, the half that Definition 15 doesn't give | The circle about the centre through the point is the given circle; the centre itself is excluded, since a radius is never nothing. Proved in `RuleBase.lean`. |
+| `on_circle_of_len_eq` | Diagram-segment 3, the half that Definition 15 doesn't give | The centre itself is excluded, since a radius is never nothing. A point within would be nearer the centre than the place where the straight line from the centre through it, produced, meets the circle (Intersections 5); a point without would be farther than the place where that line leaves the circle (Intersections 4). Proved in `RuleBase.lean`, since 26 October 2026 without Diagram-segment 2, which gave the step before. |
 | `same_side_symm` | Same side 2 | Two circles about points of the line cut on A's side, by Intersection 5, Generalities 3 and Intersections 8; Same side 4 then makes B's relation to A follow from A's to B. Proved in `RuleBase.lean`. |
 | `exists_point_same_side` | Points 5 | Postulate 2 extends a line from a point of L beyond B; Pasch 2 puts its endpoint on B's side. Proved in `RuleBase.lean`. |
 | `ne_of_between` | Between 1 | Coincidence would make the forbidden reversed order identical to the given order. Proved in `RuleBase.lean`. |
@@ -806,7 +810,7 @@ contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
 | `triple_incidence1` | Triple incidence 1 | Two angle decompositions would make each of two angles greater than the other. Proved in `RuleBase.lean`. |
 | `pasch3` | Pasch 3 | Join A and C to another point of the line: Pasch 2 puts B within the angle they make there, and Triple incidence 1 then forbids A and C one side. Proved in `RuleBase.lean`. |
 | `inside_not_on` | Generalities 4 | A line produced from the point meets the circle; Circle 1 would put that point between itself and the crossing. Proved in `RuleBase.lean`. |
-| `eq_of_len_eq_zero` | Metric 1 | A circle drawn with distinct endpoints would put its own centre on its circumference. Proved in `RuleBase.lean`. |
+| `eq_of_len_eq_zero` | Metric 1 | A circle drawn about one end through the other (Postulate 3) has the straight line for a radius, and a radius is not nothing (our `radius_ne_zero`, section 7). Proved in `RuleBase.lean`; until 26 October 2026 it was proved from Generalities 3 and 4 and Diagram-segment 3's half, and so rested on Circle 1 and Diagram-segment 2. |
 | `inside_of_len_lt` | Diagram-segment 4 | A point outside would lie beyond a circumference crossing, whose radius is shorter than its distance. Proved in [`Incidence.lean`](../Elements/Figure/Incidence.lean). |
 | `len_lt_of_inside` | Diagram-segment 4 | Produce the line from the centre through the interior point to the circumference; its distance is a part of the radius. Proved in `Incidence.lean`. |
 | `ne_of_between_ends` | Between 1 | Coincident endpoints would make a sum containing a positive length equal to zero. Proved in `Incidence.lean`. |
@@ -877,7 +881,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->49<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
