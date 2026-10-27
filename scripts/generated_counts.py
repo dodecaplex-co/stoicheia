@@ -303,7 +303,7 @@ def acceptance_passing(root):
 
 SCREEN = "Audit/screen.py"
 SUPERPOSITION = "Audit/Superposition.lean"
-PRINT_AXIOMS = re.compile(r"(?<!\S)#print[ \t\r\n]+axioms\s+(?=[^\W\d])")
+PRINT_AXIOMS = re.compile(r"#print[ \t\r\n]+axioms\s+(?=[^\W\d])")
 ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 SYNTAX_QUOTATION = re.compile(r"`[ \t\r\n]*\(")
 REFLECTIVE_NAMES = {"__builtins__", "delattr", "eval", "exec", "getattr", "globals",
@@ -370,7 +370,8 @@ def screen_circle_rules(root):
             raise ValueError(f"{SCREEN}:{node.lineno}: wildcard import can bind CIRCLE")
         if ((isinstance(node, ast.Name) and node.id in REFLECTIVE_NAMES)
                 or (isinstance(node, ast.Attribute)
-                    and node.attr in REFLECTIVE_NAMES | {"CIRCLE", "__dict__", "__globals__"})
+                    and node.attr in REFLECTIVE_NAMES
+                    | {"CIRCLE", "__dict__", "__globals__", "f_globals", "f_locals"})
                 or (isinstance(node, ast.alias)
                     and node.name.split(".")[-1] in REFLECTIVE_NAMES)):
             raise ValueError(f"{SCREEN}:{node.lineno}: reflective namespace access is forbidden")
