@@ -4452,6 +4452,7 @@ class Context(NamedTuple):
     queue: bool = False
     harness_sha: str | None = None     # origin/main's tip, before queue_base changes base
     trusted_harness: HarnessSnapshot | None = None
+    pinned_origin: str | None = None
 
 
 def is_local(url: str) -> bool:
@@ -4467,8 +4468,10 @@ def github_slug(url: str) -> str | None:
     return f"{m.group(1)}/{m.group(2)}" if m else None
 
 
-def remote_refs(repo, *args) -> dict[str, str]:
-    out = git(repo, "ls-remote", "origin", *args)
+def remote_refs(repo, *args, remote: str = "origin") -> dict[str, str]:
+    command = ("ls-remote", "origin", *args) if remote == "origin" else \
+        ("ls-remote", "--", remote, *args)
+    out = git(repo, *command)
     refs = {}
     for line in out.splitlines():
         sha, _, ref = line.partition("\t")
@@ -4611,10 +4614,11 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
 
 
 def harness_snapshot(repo: Path, base: str) -> HarnessSnapshot:
-    here = Path(__file__).resolve().parent
-    return HarnessSnapshot((here / "safe_push.py").read_bytes(),
-                           (here / "heath.py").read_bytes(),
-                           harness_train(repo, base))
+    safe_source = show_bytes(repo, base, "scripts/safe_push.py")
+    heath_source = show_bytes(repo, base, "scripts/heath.py")
+    if safe_source is None or heath_source is None:
+        raise Refusal("origin/main's safe_push.py or heath.py could not be read")
+    return HarnessSnapshot(safe_source, heath_source, harness_train(repo, base))
 
 
 def land_state_unchanged(repo: Path, origin: str, harness_snapshot: HarnessSnapshot) -> None:
@@ -4760,11 +4764,14 @@ def gh_ready(gh: tuple, repo, test_mode: bool) -> None:
         raise Refusal("gh is not logged in to github.com (`gh auth login`)")
 
 
-def fetch_base(repo, origin: str, test_mode: bool, rep: Report) -> str:
+def fetch_base(repo, origin: str, test_mode: bool, rep: Report,
+               remote: str = "origin") -> str:
     if test_mode and not is_local(origin):
         raise Refusal("the internal test flag works only against a local origin")
     t = time.time()
-    r = run(["git", "fetch", "origin"], repo)
+    command = ["git", "fetch", "origin"] if remote == "origin" else \
+        ["git", "fetch", "--", remote, "+refs/heads/*:refs/remotes/origin/*"]
+    r = run(command, repo)
     if r.returncode != 0:
         raise Refusal(f"`git fetch origin` failed: {r.stderr.strip()}")
     rep.add("1", "fetch", "ok", f"git fetch origin ({origin})", time.time() - t)
@@ -6173,7 +6180,8 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
     if held is not None and origin != held.origin:
         raise Refusal(f"origin's URL changed during the run, from {held.origin} to "
                       f"{origin}; nothing is merged: set it back, then --merge")
-    base = fetch_base(repo, origin, test_mode, rep)
+    base = fetch_base(repo, origin, test_mode, rep,
+                      remote=held.origin if held is not None else "origin")
     # Before the harness is compared or anything judged against the new main. Run on, the
     # full checks would take about 36 minutes, and then the body's summary, of the old
     # main, refuses the merge, or these preconditions refuse it for a main the head lacks.
@@ -6196,7 +6204,8 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
     ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base,
-                  trusted_harness=trusted_harness)
+                  trusted_harness=trusted_harness,
+                  pinned_origin=held.origin if held is not None else None)
     queued = queue_enabled(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
@@ -6388,10 +6397,21 @@ class MergeUnknown(Refusal):
     nothing on main is known to be the merge (issue #42)."""
 
 
+def landing_remote(ctx: Context) -> str:
+    if ctx.pinned_origin is None:
+        return "origin"
+    current = git(ctx.repo, "remote", "get-url", "origin", check=False).strip()
+    if current != ctx.pinned_origin:
+        raise Refusal(f"origin's URL changed during the run, from {ctx.pinned_origin} to "
+                      f"{current}; nothing is merged: set it back, then --merge")
+    return ctx.pinned_origin
+
+
 def main_unmoved(ctx: Context) -> None:
     """The last look at main before the merge: --match-head-commit pins the head, not the
     base, so origin/main must still be the base checked."""
-    now = remote_refs(ctx.repo, "refs/heads/main").get("refs/heads/main")
+    remote = landing_remote(ctx)
+    now = remote_refs(ctx.repo, "refs/heads/main", remote=remote).get("refs/heads/main")
     if now != ctx.base:
         raise Refusal(f"origin/main moved from {ctx.base[:12]} to {str(now)[:12]}: run "
                       "--merge again")
@@ -6469,7 +6489,10 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
     is known to be the merge, so MergeUnknown, and no revert is advised: it would name
     origin/main's last commit in place of the merge (issue #42). Returns the merge commit,
     or None when origin could not be read."""
-    r = run(["git", "fetch", "origin"], ctx.repo)
+    remote = landing_remote(ctx)
+    command = ["git", "fetch", "origin"] if remote == "origin" else \
+        ["git", "fetch", "--", remote, "+refs/heads/*:refs/remotes/origin/*"]
+    r = run(command, ctx.repo)
     if r.returncode != 0:
         rep.add("5", "main", "FAIL", f"not checked: `git fetch origin` failed after the merge: "
                 f"{r.stderr.strip()}")
@@ -6494,7 +6517,7 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
         rep.add("5", "main", "FAIL", f"{commit[:12]}, on origin/main ({main[:12]}), has parents "
                 f"{', '.join(p[:12] for p in parents)}, and "
                 f"{'the' if same_tree else 'not the'} tree checked")
-    gone = not remote_refs(ctx.repo, f"refs/heads/{ctx.branch}")
+    gone = not remote_refs(ctx.repo, f"refs/heads/{ctx.branch}", remote=landing_remote(ctx))
     rep.add("5", "branch", "ok" if gone else "note",
             f"{ctx.branch} deleted on origin" if gone else f"{ctx.branch} is still on origin")
     return commit
@@ -6776,7 +6799,12 @@ def verify_queue_merge(ctx: Context, number: int, view: dict, rep: Report) -> st
     oid = merged.get("oid") if isinstance(merged, dict) else None
     if not isinstance(oid, str) or not FULL_OID.fullmatch(oid):
         raise Refusal(f"GitHub names no full merge commit for queued #{number}")
-    git(ctx.repo, "fetch", "origin")
+    remote = landing_remote(ctx)
+    if remote == "origin":
+        git(ctx.repo, "fetch", "origin")
+    else:
+        git(ctx.repo, "fetch", "--", remote,
+            "+refs/heads/*:refs/remotes/origin/*")
     main = rev_parse(ctx.repo, "refs/remotes/origin/main^{commit}")
     if not main or rev_parse(ctx.repo, f"{oid}^{{commit}}") is None \
             or not git_ok(ctx.repo, "merge-base", "--is-ancestor", oid, main):
@@ -6799,7 +6827,8 @@ def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode:
             rep.add("4", "enqueue", "skip", f"dry run: would enqueue #{number}, head {ctx.sha}")
             result, code = "passed every gate (dry run, not queued)", 0
         else:
-            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep)
+            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep,
+                             remote=landing_remote(ctx))
             main_health(ctx._replace(base=tip), rep, body)
             view = queue_view(ctx, number)
             if view["state"] != "OPEN":
