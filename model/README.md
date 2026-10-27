@@ -72,7 +72,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Postulate5.lean](Model/Euclidean/Postulate5.lean) | Postulate 5, with the meeting on the stated side, proved in the plane | Mathlib |
 | [Model/Euclidean/Segments.lean](Model/Euclidean/Segments.lean) | the diagram-segment rules 1 to 4 proved in the plane | Mathlib |
 | [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
-| [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | restricted superposition from placement by isometry and reflection, its kept side, and `Rule.of_placement` | Mathlib, pure calculus soundness |
+| [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | restricted superposition from placement by isometry and reflection, its kept side by Same side 3 and Postulate 1, through `Rule.of_placement_of_join` | Mathlib, pure calculus soundness |
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all <!-- count:axioms -->49<!-- /count --> proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: `Elements.Point` remains unknown, and every proof and the assembly have their pinned logical axioms | every module of `Model` |
@@ -638,7 +638,7 @@ no longer gathers them as assumptions.
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides`, `lines_meet_of_opposite_sides` | proved here |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | proved here |
 | Postulate 5 | the meeting on the stated side, not only a meeting | proved here |
-| Superposition | `superposition`: the restricted rule, from `superposition_placement`, its side by Postulate 1, and `Rule.of_placement` | proved here |
+| Superposition | `superposition`: the restricted rule, from `superposition_placement`, Same side 3, Postulate 1 and `Rule.of_placement_of_join` | proved here |
 | Areas | all eight area laws, including `area_congruent`, `area_add_of_between` and `between_of_area_add`, with collinear and repeated corners | proved here |
 | Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | proved here: infinite real intervals on a line, and injective families indexed by ℕ for regions and circumferences |
 
