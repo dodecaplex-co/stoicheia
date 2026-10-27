@@ -279,6 +279,47 @@ def note : String := "#print axioms Elements.inString"
                     self.assertIn("region", errors[0])
                     self.assertEqual(source.read_text(), text)
 
+    def test_markers_in_notes_regions_are_refused(self):
+        # render.py replaces a notes region's text, so a count marker there is refused, in
+        # a brief and in each of PROGRAM.md's regions; one outside them is filled.
+        marker = "<!-- count:vocabulary -->3<!-- /count -->"
+        status = "<!-- status -->\nGenerated status.\n<!-- /status -->\n"
+        cases = (
+            ("docs/briefs/0008-centre.md",
+             f"# Brief\n\n<!-- notes -->\n- {marker} words.\n<!-- /notes -->\n",
+             "docs/briefs/0008-centre.md notes region"),
+            ("docs/PROGRAM.md",
+             f"# Programme\n{status}<!-- notes:landed -->\n{marker}\n<!-- /notes:landed -->\n",
+             "docs/PROGRAM.md notes:landed region"),
+            ("docs/PROGRAM.md",
+             f"# Programme\n{status}<!-- notes:open-items -->\n<!-- /notes:open-items -->\n"
+             f"<!-- notes:landed -->\n- {marker}\n<!-- /notes:landed -->\n",
+             "docs/PROGRAM.md notes:landed region"),
+        )
+        for path, text, region in cases:
+            source = self.write(path, text)
+            line = text.count("\n", 0, counts.START.search(text).start()) + 1
+            for check in (False, True):
+                with self.subTest(path=path, text=text, check=check):
+                    changes, errors = self.scan([path], check=check)
+                    self.assertEqual(changes, {})
+                    self.assertEqual(errors, [f"{path}:{line}: count marker 'vocabulary' is "
+                                              f"forbidden in {region}"])
+                    self.assertEqual(source.read_text(), text)
+        path = "docs/briefs/0008-centre.md"
+        text = f"# Brief\n\n{marker} words.\n\n<!-- notes -->\n- Notes.\n<!-- /notes -->\n"
+        source = self.write(path, text)
+        self.assertEqual(self.scan([path], check=True), ({}, []))
+        source.write_text(text.replace("-->3<!--", "-->0<!--"))
+        self.assertEqual(self.scan([path]), ({source: text}, []))
+        # A brief holding a count marker has its notes markers read as render.py reads them:
+        # a fault in them is refused too.
+        self.write(path, f"# Brief\n\n{marker} words.\n\n<!-- notes -->\n")
+        for check in (False, True):
+            with self.subTest(fault="unclosed", check=check):
+                self.assertEqual(self.scan([path], check=check),
+                                 ({}, [f"{path}:5: unclosed notes marker"]))
+
     def test_malformed_and_unknown_markers_name_the_line(self):
         bad = ("<!-- count:vocabulary -->3", "<!-- /count -->",
                "<!--count:vocabulary -->3<!-- /count -->",

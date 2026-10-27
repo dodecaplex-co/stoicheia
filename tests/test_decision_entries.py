@@ -3,7 +3,11 @@
 of its own, before it writes anything, passing over the files Git ignores by a rule of the
 root's .gitignore, .git/info/exclude or the user's excludes file, never a nested
 .gitignore's; and that render.py, run whole on a copy of the sources, assembles no entry
-into another page and leaves the decisions record as it was.
+without a header into another page and leaves the decisions record as it was. Then the
+header line an entry may begin with, each of its refusals, and the notes regions of the
+briefs and of PROGRAM.md that render.py fills from the headers: their lines, their markers'
+refusals, which come before any write, and a whole run on a copy that changes one brief,
+between its markers, and nothing else.
 
     python3 -I tests/test_decision_entries.py
 
@@ -18,6 +22,7 @@ request of R3 and above.
 import contextlib
 import io
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -41,7 +46,9 @@ def git_environment(home):
             "GIT_CEILING_DIRECTORIES": str(home.parent)}
 
 
-class DecisionEntries(unittest.TestCase):
+class EntryFolder(unittest.TestCase):
+    """A repository of a test's own, with an empty docs/decisions/, as render.py's root."""
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -72,6 +79,8 @@ class DecisionEntries(unittest.TestCase):
     def refused(self, pattern):
         return self.assertRaisesRegex(SystemExit, pattern)
 
+
+class DecisionEntries(EntryFolder):
     def test_entries_are_pages_read_where_they_are(self):
         self.entry("README.md", "# Decision entries\n\nEach decision is a file.\n")
         self.entry("2026-11-01-later.md", "- **The next month.** A decision.\n")
@@ -461,6 +470,472 @@ class RenderLeavesTheRecord(unittest.TestCase):
                              if path.is_file() and path not in entries
                              and any(word.encode() in path.read_bytes() for word in words))
             self.assertEqual(holding, [])
+
+
+ISSUE = "https://github.com/jackChallis/stoicheia/issues/"
+
+
+def header(*keys, line="News."):
+    """An entry's header line: `keys` as written, then the line."""
+    return "<!-- entry: " + " ".join(keys) + f' line="{line}" -->'
+
+
+class HeaderFolder(EntryFolder):
+    """An entry folder beside three briefs, the decisions page among them."""
+
+    def setUp(self):
+        super().setUp()
+        briefs = self.root / "docs" / "briefs"
+        briefs.mkdir()
+        for stem in ("0002-decisions", "0008-centre", "book-I"):
+            (briefs / f"{stem}.md").write_text(f"# {stem}\n", encoding="utf-8")
+
+    def headed(self, name, first, rest="- **A decision.** Words.\n"):
+        return self.entry(name, first + "\n" + rest)
+
+    def headers(self):
+        return render.entry_headers(render.decision_entries())
+
+
+class EntryHeaders(HeaderFolder):
+    def test_a_header_with_every_key(self):
+        self.entry("2026-10-25-old.md", "- **An old decision.** Words.\n")
+        self.headed("2026-10-26-older.md", header("id=older", "cards=5"))
+        line = "x" * render.ENTRY_LINE_LIMIT
+        self.headed("2026-10-27-full.md", header(
+            "id=full-2", "cards=577,12", "briefs=0008-centre,book-I",
+            "program=open-items,landed", "corrects=2026-10-25-old.md",
+            "reverts=2026-10-26-older.md,2026-10-25-old.md", line=line))
+        self.assertEqual(self.headers()["2026-10-27-full.md"], {
+            "id": "full-2", "cards": [577, 12], "briefs": ["0008-centre", "book-I"],
+            "program": ["open-items", "landed"], "corrects": ["2026-10-25-old.md"],
+            "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"], "line": line})
+
+    def test_only_the_required_keys_and_no_header(self):
+        self.headed("2026-10-27-a.md", header("id=a", "cards=1", line="News, of a kind."))
+        self.entry("2026-10-27-b.md", "- **No header.** An entry may have none.\n")
+        self.assertEqual(self.headers(), {"2026-10-27-a.md": {
+            "id": "a", "cards": [1], "briefs": [], "program": [], "corrects": [],
+            "reverts": [], "line": "News, of a kind."}})
+
+    def test_each_refusal(self):
+        self.entry("2026-10-26-earlier.md", "- **Earlier.** Words.\n")
+        good = 'id=a cards=1 line="x" -->'
+        cases = (
+            ('<!-- entry: id=a cards=1 colour=red line="x" -->', "unknown key 'colour'"),
+            ('<!-- entry: cards=1 id=a line="x" -->', "the key 'id' is out of order"),
+            ('<!-- entry: id=a cards=1 program=landed briefs=book-I line="x" -->',
+             "the key 'briefs' is out of order"),
+            ('<!-- entry: id=a cards=1 cards=2 line="x" -->', "the key 'cards' is given twice"),
+            ('<!-- entry: id=a cards=1 line="x" line="y" -->', "the line holds no \""),
+            ('<!-- entry: id=a  cards=1 line="x" -->', "single spaces separate"),
+            ('<!-- entry:  id=a cards=1 line="x" -->', "single spaces separate"),
+            ('<!-- entry:id=a cards=1 line="x" -->', "single spaces separate"),
+            ('<!-- entry: id=a cards=1 line="x"  -->', "single spaces separate"),
+            ('<!-- entry: id=a cards=1 line="x"-->', "single spaces separate"),
+            ('<!-- entry: id=a cards=1 line="x"', "line 1 holds no --> to close the header"),
+            ('<!-- entry: id=a cards=1 line="x"\n-->', "line 1 holds no --> to close"),
+            ('<!-- entry: id=a cards=1 line="x" --> More.', "text after the header's -->"),
+            ('<!-- entry: id=a cards=1 line="x" --> ', "text after the header's -->"),
+            ("<!--entry: " + good, 'a header begins "<!-- entry:" exactly'),
+            ("<!-- Entry: " + good, 'a header begins "<!-- entry:" exactly'),
+            ("<!-- entry " + good, 'a header begins "<!-- entry:" exactly'),
+            ('<!-- entry: id=a cards=1 news line="x" -->', "expected key=value, not 'news'"),
+            ('<!-- entry: ID=a cards=1 line="x" -->', "unknown key 'ID'"),
+            ('<!-- entry: cards=1 line="x" -->', "the key 'id' is required"),
+            ('<!-- entry: id=a line="x" -->', "the key 'cards' is required"),
+            ("<!-- entry: id=a cards=1 -->", "the key 'line' is required"),
+            ("<!-- entry: -->", "the key 'id' is required"),
+            ('<!-- entry: id=a cards=1 line="x" briefs=book-I -->', "the line comes last"),
+            ("<!-- entry: id=a cards=1 line=x -->", "the line comes last"),
+            ('<!-- entry: id=A cards=1 line="x" -->', "the id 'A' is not lower-case letters"),
+            ('<!-- entry: id=a_b cards=1 line="x" -->', "the id 'a_b' is not lower-case"),
+            ('<!-- entry: id=a- cards=1 line="x" -->', "the id 'a-' is not lower-case"),
+            ('<!-- entry: id= cards=1 line="x" -->', "the id '' is not lower-case"),
+            ('<!-- entry: id=a cards=0 line="x" -->', "the card '0' is not an issue number"),
+            ('<!-- entry: id=a cards=07 line="x" -->', "the card '07' is not an issue"),
+            ('<!-- entry: id=a cards=#5 line="x" -->', "the card '#5' is not an issue"),
+            ('<!-- entry: id=a cards=5,5 line="x" -->', "cards names '5' twice"),
+            ('<!-- entry: id=a cards= line="x" -->', "cards is a list joined by commas, "
+                                                    "with no empty item"),
+            ('<!-- entry: id=a cards=5, line="x" -->', "cards is a list joined by commas"),
+            ('<!-- entry: id=a cards=1 briefs=0099-none line="x" -->',
+             "no brief docs/briefs/0099-none.md"),
+            ('<!-- entry: id=a cards=1 briefs=book-I.md line="x" -->',
+             "no brief docs/briefs/book-I.md.md"),
+            ('<!-- entry: id=a cards=1 briefs=0002-decisions line="x" -->',
+             "the decisions page, 0002-decisions, is dated history and holds no notes"),
+            ('<!-- entry: id=a cards=1 briefs=book-I,book-I line="x" -->',
+             "briefs names 'book-I' twice"),
+            ('<!-- entry: id=a cards=1 program=status line="x" -->',
+             "unknown PROGRAM.md section 'status'; the sections that hold notes are "
+             "open-items, landed"),
+            ('<!-- entry: id=a cards=1 program=Landed line="x" -->',
+             "unknown PROGRAM.md section 'Landed'"),
+            ('<!-- entry: id=a cards=1 program=landed,landed line="x" -->',
+             "program names 'landed' twice"),
+            ('<!-- entry: id=a cards=1 corrects=2026-10-26-earlier.md,2026-10-26-earlier.md '
+             'line="x" -->', "corrects names '2026-10-26-earlier.md' twice"),
+            ('<!-- entry: id=a cards=1 line="" -->', "the line is 1 to 300 characters, not 0"),
+            (header("id=a", "cards=1", line="x" * 301), "the line is 1 to 300 characters, "
+                                                         "not 301"),
+            (header("id=a", "cards=1", line=" x"), "the line has no space at its start"),
+            (header("id=a", "cards=1", line="x "), "the line has no space at its start"),
+            (header("id=a", "cards=1", line='a "b" c'), 'the line holds no "'),
+            (header("id=a", "cards=1", line="a <!-- b"), "the line holds no <!-- or -->"),
+            (header("id=a", "cards=1", line="a --> b"), "the line holds no <!-- or -->"),
+            (header("id=a", "cards=1", line="see [it](../x.md)"),
+             "the line holds no Markdown link"),
+            (" " + header("id=a", "cards=1"), "an entry's header is its line 1"),
+            (header("id=a", "cards=1") + header("id=b", "cards=2"),
+             "an entry's header is its line 1, and it has one at most"),
+            (header("id=a", "cards=1", line="see <!-- entry"), "an entry's header is its line"),
+        )
+        for first, message in cases:
+            with self.subTest(header=first):
+                self.headed("2026-10-27-test.md", first)
+                with self.refused("^docs/decisions/2026-10-27-test\\.md:1: "
+                                  + re.escape(message)):
+                    self.headers()
+        for text, number in ((header("id=a", "cards=1") + "\n\n" + header("id=b", "cards=2")
+                              + "\n", 3),
+                             ("- **A decision.**\n" + header("id=a", "cards=1") + "\n", 2),
+                             ("- **A decision.** <!--  ENTRY: in passing -->\n", 1)):
+            with self.subTest(text=text):
+                self.entry("2026-10-27-test.md", text)
+                with self.refused(f"^docs/decisions/2026-10-27-test\\.md:{number}: an "
+                                  "entry's header is its line 1, and it has one at most$"):
+                    self.headers()
+
+    def test_refusals_print_what_they_quote_with_escapes(self):
+        # A no-break space passes decision_entries, which keeps it as text; a refusal that
+        # quotes it writes it as an escape (printable_text).
+        self.headed("2026-10-27-test.md", header("id=a", "cards=1", "briefs=book I"))
+        self.assertEqual(render.decision_entries(), ["2026-10-27-test.md"])
+        with self.assertRaises(SystemExit) as caught:
+            self.headers()
+        self.assertEqual(str(caught.exception), "docs/decisions/2026-10-27-test.md:1: no brief "
+                                                "docs/briefs/book\\xa0I.md")
+
+    def test_ids_are_unique(self):
+        self.headed("2026-10-26-a.md", header("id=same", "cards=1"))
+        self.headed("2026-10-27-b.md", header("id=other", "cards=2"))
+        self.headed("2026-10-27-c.md", header("id=same", "cards=3"))
+        with self.refused("^docs/decisions/2026-10-27-c\\.md:1: the id 'same' is the id of "
+                          "docs/decisions/2026-10-26-a\\.md too; an id is unique$"):
+            self.headers()
+
+    def test_a_correction_or_revert_names_an_earlier_entry(self):
+        self.entry("2026-10-26-a.md", "- **No header.** An old entry may be corrected.\n")
+        self.headed("2026-10-27-b.md", header("id=b", "cards=2"))
+        self.entry("README.md", "# Decision entries\n")
+        for key in ("corrects", "reverts"):
+            with self.subTest(key=key, named="earlier"):
+                self.headed("2026-10-27-c.md", header(
+                    "id=c", "cards=3", f"{key}=2026-10-26-a.md,2026-10-27-b.md"))
+                self.assertEqual(self.headers()["2026-10-27-c.md"][key],
+                                 ["2026-10-26-a.md", "2026-10-27-b.md"])
+            self.headed("2026-10-28-d.md", header("id=d", "cards=4"))
+            for named in ("2026-10-27-c.md", "2026-10-28-d.md", "2026-10-20-none.md",
+                          "README.md", "2026-10-26-a", "../decisions/2026-10-26-a.md"):
+                with self.subTest(key=key, named=named):
+                    self.headed("2026-10-27-c.md", header("id=c", "cards=3", f"{key}={named}"))
+                    with self.refused(f"^docs/decisions/2026-10-27-c\\.md:1: {key} "
+                                      f"{re.escape(repr(named))}: a correction or revert "
+                                      "must name an earlier entry$"):
+                        self.headers()
+            (self.folder / "2026-10-28-d.md").unlink()
+        # Name order is date order, then slug: of two entries of one day, the first slug.
+        self.headed("2026-10-27-c.md", header("id=c", "cards=3"))
+        self.headed("2026-10-27-a.md", header("id=a", "cards=1", "corrects=2026-10-27-c.md"))
+        with self.refused("a correction or revert must name an earlier entry"):
+            self.headers()
+
+
+class NotesRegions(HeaderFolder):
+    """The notes regions render.py fills: their lines, and their markers' refusals."""
+
+    def setUp(self):
+        super().setUp()
+        self.briefs = self.root / "docs" / "briefs"
+        self.program = self.root / "docs" / "PROGRAM.md"
+        self.program.write_text("# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n",
+                                encoding="utf-8")
+
+    def brief(self, stem, text):
+        path = self.briefs / f"{stem}.md"
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def filled(self, headers=None, changes=None):
+        headers = self.headers() if headers is None else headers
+        return render.notes_updates(headers, changes or {})
+
+    def test_lines_are_sorted_however_the_entries_are_written(self):
+        path = self.brief("0008-centre", "# Centre\n\nBefore.\n\n<!-- notes -->\n"
+                                         "<!-- /notes -->\n\nAfter.\n")
+        written = [("2026-10-27-third.md", header("id=third", "cards=577",
+                                                  "briefs=0008-centre", line="Third news.")),
+                   ("2026-10-21-first.md", header("id=first", "cards=12",
+                                                  "briefs=book-I,0008-centre",
+                                                  line="First news.")),
+                   ("2026-10-26-elsewhere.md", header("id=elsewhere", "cards=9",
+                                                      "briefs=book-I", "program=landed")),
+                   ("2026-10-26-second.md", header("id=second", "cards=100,20",
+                                                   "briefs=0008-centre",
+                                                   line="Second news, with `code`."))]
+        for name, first in written:
+            self.headed(name, first)
+        self.entry("2026-10-25-plain.md", "- **No header.** Never in a region.\n")
+        lines = [f"- 21 October 2026, [#12]({ISSUE}12): First news. "
+                 "([the entry](../decisions/2026-10-21-first.md))",
+                 f"- 26 October 2026, [#20]({ISSUE}20), [#100]({ISSUE}100): Second news, with "
+                 "`code`. ([the entry](../decisions/2026-10-26-second.md))",
+                 f"- 27 October 2026, [#577]({ISSUE}577): Third news. "
+                 "([the entry](../decisions/2026-10-27-third.md))"]
+        want = ("# Centre\n\nBefore.\n\n<!-- notes -->\n" + "\n".join(lines)
+                + "\n<!-- /notes -->\n\nAfter.\n")
+        headers = self.headers()
+        shuffled = dict(reversed(list(headers.items())))
+        self.assertNotEqual(list(shuffled), list(headers))
+        for given in (headers, shuffled):
+            with self.subTest(order=list(given)):
+                self.assertEqual(self.filled(given), ({path: want}, 1, 1))
+        # Filled again, the region is the same: nothing changes.
+        path.write_text(want, encoding="utf-8")
+        self.assertEqual(self.filled(), ({}, 1, 1))
+
+    def test_a_page_without_markers_is_left_as_it_is(self):
+        text = "# Book I\n\nNamed by an entry, but holding no markers.\n"
+        path = self.brief("book-I", text)
+        self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I",
+                                              "program=landed"))
+        before = {p: p.read_bytes() for p in (path, self.program)}
+        self.assertEqual(self.filled(), ({}, 0, 0))
+        self.assertEqual({p: p.read_bytes() for p in before}, before)
+
+    def test_the_program_regions(self):
+        self.program.write_text(
+            "# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n### Landed\n\n"
+            "<!-- notes:landed -->\n- A stale line, replaced.\n<!-- /notes:landed -->\n\n"
+            "### Open items\n\n<!-- notes:open-items -->\n<!-- /notes:open-items -->\n",
+            encoding="utf-8")
+        self.headed("2026-10-26-open.md", header("id=open", "cards=7", "program=open-items",
+                                                 line="Open news."))
+        self.headed("2026-10-27-both.md", header("id=both", "cards=8", "briefs=book-I",
+                                                 "program=landed,open-items",
+                                                 line="Both news."))
+        open_line = (f"- 26 October 2026, [#7]({ISSUE}7): Open news. "
+                     "([the entry](decisions/2026-10-26-open.md))")
+        both_line = (f"- 27 October 2026, [#8]({ISSUE}8): Both news. "
+                     "([the entry](decisions/2026-10-27-both.md))")
+        want = ("# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n### Landed\n\n"
+                f"<!-- notes:landed -->\n{both_line}\n<!-- /notes:landed -->\n\n"
+                f"### Open items\n\n<!-- notes:open-items -->\n{open_line}\n{both_line}\n"
+                "<!-- /notes:open-items -->\n")
+        self.assertEqual(self.filled(), ({self.program: want}, 2, 1))
+
+    def test_corrections_and_reverts_are_linked_both_ways(self):
+        path = self.brief("book-I", "# Book I\n\n<!-- notes -->\n<!-- /notes -->\n")
+        other = self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n<!-- /notes -->\n")
+        self.entry("2026-10-24-old.md", "- **No header.** An old entry.\n")
+        self.headed("2026-10-25-a.md", header("id=a", "cards=1", "briefs=book-I", line="A."))
+        self.headed("2026-10-26-b.md", header("id=b", "cards=2", "briefs=book-I",
+                                              "corrects=2026-10-25-a.md", line="B."))
+        self.headed("2026-10-27-c.md", header("id=c", "cards=3", "briefs=book-I",
+                                              "reverts=2026-10-26-b.md", line="C."))
+        self.headed("2026-10-27-d.md", header("id=d", "cards=4", "briefs=0008-centre",
+                                              "corrects=2026-10-25-a.md,2026-10-24-old.md",
+                                              "reverts=2026-10-26-b.md", line="D."))
+
+        def entry(name):
+            return f"[the entry of {render.entry_day(name)}](../decisions/{name})"
+
+        want = {
+            path: "# Book I\n\n<!-- notes -->\n"
+                  f"- 25 October 2026, [#1]({ISSUE}1): A. Corrected by "
+                  f"{entry('2026-10-26-b.md')}. ([the entry](../decisions/2026-10-25-a.md))\n"
+                  f"- 26 October 2026, [#2]({ISSUE}2): B. Corrects {entry('2026-10-25-a.md')}."
+                  f" Reverted by {entry('2026-10-27-c.md')}. "
+                  "([the entry](../decisions/2026-10-26-b.md))\n"
+                  f"- 27 October 2026, [#3]({ISSUE}3): C. Reverts {entry('2026-10-26-b.md')}. "
+                  "([the entry](../decisions/2026-10-27-c.md))\n<!-- /notes -->\n",
+            other: "# Centre\n\n<!-- notes -->\n"
+                   f"- 27 October 2026, [#4]({ISSUE}4): D. Corrects "
+                   f"{entry('2026-10-24-old.md')} and {entry('2026-10-25-a.md')}. Reverts "
+                   f"{entry('2026-10-26-b.md')}. ([the entry](../decisions/2026-10-27-d.md))\n"
+                   "<!-- /notes -->\n"}
+        self.assertEqual(entry("2026-10-24-old.md"),
+                         "[the entry of 24 October 2026](../decisions/2026-10-24-old.md)")
+        self.assertEqual(self.filled(), (want, 2, 2))
+
+    def test_a_region_no_header_names_is_empty(self):
+        self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I"))
+        path = self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n- Old.\n- Older.\n"
+                                         "<!-- /notes -->\nAfter.\n")
+        self.assertEqual(self.filled(),
+                         ({path: "# Centre\n\n<!-- notes -->\n<!-- /notes -->\nAfter.\n"}, 1, 1))
+        path.write_text("# Centre\n\n<!-- notes -->\n<!-- /notes -->\nAfter.\n")
+        self.assertEqual(self.filled(), ({}, 1, 1))
+
+    def test_the_page_is_read_as_the_count_markers_leave_it(self):
+        path = self.brief("book-I", "<!-- count:vocabulary -->0<!-- /count -->\n"
+                                    "<!-- notes -->\n<!-- /notes -->\n")
+        self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I"))
+        counted = "<!-- count:vocabulary -->42<!-- /count -->\n<!-- notes -->\n<!-- /notes -->\n"
+        filled = self.filled(changes={path: counted})[0]
+        self.assertTrue(filled[path].startswith("<!-- count:vocabulary -->42<!-- /count -->\n"
+                                                "<!-- notes -->\n- 27 October 2026"))
+
+    def test_marker_refusals(self):
+        brief_cases = (
+            ("<!--notes-->\n<!-- /notes -->\n", 1, "malformed notes marker"),
+            ("<!-- NOTES -->\n<!-- /notes -->\n", 1, "malformed notes marker"),
+            ("<!-- notes  -->\n<!-- /notes -->\n", 1, "malformed notes marker"),
+            ("<!-- notes: -->\n<!-- /notes -->\n", 1, "malformed notes marker"),
+            ("<!-- notes -->\n<!-- / notes -->\n", 2, "malformed notes marker"),
+            ("<!-- notes, an ordinary comment -->\n", 1, "malformed notes marker"),
+            ("<!-- notes\n-->\n<!-- /notes -->\n", 1, "malformed notes marker"),
+            ("Text <!-- notes -->\n<!-- /notes -->\n", 1, "a notes marker stands on a line "
+                                                         "of its own"),
+            ("<!-- notes --> text\n<!-- /notes -->\n", 1, "a notes marker stands on a line "
+                                                         "of its own"),
+            ("<!-- notes -->\n<!-- /notes --> text\n", 2, "a notes marker stands on a line "
+                                                         "of its own"),
+            ("<!-- notes:landed -->\n<!-- /notes:landed -->\n", 1,
+             "a brief's notes markers name no section"),
+            ("<!-- /notes -->\n", 1, "notes closing marker has no opening marker"),
+            ("x\n<!-- notes -->\n", 2, "unclosed notes marker"),
+            ("<!-- notes -->\n<!-- notes -->\n<!-- /notes -->\n<!-- /notes -->\n", 2,
+             "nested notes marker"),
+            ("<!-- notes -->\n<!-- /notes -->\n\n<!-- notes -->\n<!-- /notes -->\n", 4,
+             "repeated notes region; a brief holds one at most"),
+        )
+        status = "<!-- status -->\n| table |\n<!-- /status -->\n"
+        program_cases = (
+            ("<!-- notes -->\n<!-- /notes -->\n", 1,
+             "a notes marker of docs/PROGRAM.md names its section"),
+            ("<!-- notes:status -->\n<!-- /notes:status -->\n", 1,
+             "unknown notes section 'status'; docs/PROGRAM.md's are open-items, landed"),
+            ("<!-- notes:Landed -->\n<!-- /notes:Landed -->\n", 1, "malformed notes marker"),
+            ("<!-- notes:landed -->\n<!-- /notes:open-items -->\n", 2,
+             "notes closing marker does not close the region 'landed', opened on line 1"),
+            ("<!-- notes:landed -->\n<!-- /notes:landed -->\n<!-- notes:landed -->\n"
+             "<!-- /notes:landed -->\n", 3,
+             "repeated notes region; section 'landed' has one at most"),
+            ("<!-- notes:landed -->\n" + status + "<!-- /notes:landed -->\n", 1,
+             "notes region 'landed' overlaps the status region"),
+            ("<!-- status -->\n<!-- notes:landed -->\n<!-- /notes:landed -->\n"
+             "<!-- /status -->\n", 2, "notes region 'landed' overlaps the status region"),
+        )
+        for rel, cases in (("docs/briefs/0008-centre.md", brief_cases),
+                           ("docs/PROGRAM.md", program_cases)):
+            path = self.root / rel
+            for text, number, message in cases:
+                with self.subTest(path=rel, text=text):
+                    path.write_text(text, encoding="utf-8")
+                    with self.refused("^notes regions: nothing was rendered:\n"
+                                      f"{re.escape(rel)}:{number}: {re.escape(message)}$"):
+                        self.filled()
+            path.write_text("# Again as it was.\n", encoding="utf-8")
+        for text in ("<!-- notes -->\n<!-- /notes -->\n", "<!-- /notes -->\n"):
+            with self.subTest(path="docs/briefs/0002-decisions.md", text=text):
+                self.brief("0002-decisions", "# Decisions\n\n" + text)
+                with self.refused("^notes regions: nothing was rendered:\n"
+                                  "docs/briefs/0002-decisions.md:3: notes markers are "
+                                  "forbidden in dated history$"):
+                    self.filled()
+        # Every page's fault is named, not the first alone.
+        self.brief("book-I", "<!-- notes -->\n")
+        self.program.write_text("<!-- notes -->\n<!-- /notes -->\n", encoding="utf-8")
+        with self.assertRaises(SystemExit) as caught:
+            self.filled()
+        self.assertEqual(str(caught.exception).splitlines()[1:], [
+            "docs/briefs/0002-decisions.md:3: notes markers are forbidden in dated history",
+            "docs/briefs/book-I.md:1: unclosed notes marker",
+            "docs/PROGRAM.md:1: a notes marker of docs/PROGRAM.md names its section"])
+
+    def test_refusals_precede_all_renderer_writes(self):
+        # A bad header, or a bad notes marker, renders nothing: no count is written, and no
+        # page is built.
+        pending = self.root / "pending.md"
+        pending.write_text("<!-- count:vocabulary -->0<!-- /count -->\n", encoding="utf-8")
+        brief = self.brief("book-I", "# Book I\n\n<!-- notes -->\n<!-- /notes -->\n")
+        for case in ("header", "marker"):
+            with self.subTest(case=case):
+                if case == "header":
+                    self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-II"))
+                    message = "no brief docs/briefs/book-II.md"
+                else:
+                    self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I"))
+                    self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n")
+                    message = "docs/briefs/0008-centre.md:3: unclosed notes marker"
+                paths = [pending, brief, *self.briefs.iterdir(), self.program,
+                         *self.folder.iterdir()]
+                before = {path: path.read_bytes() for path in paths}
+                with (mock.patch.object(render.generated_counts, "tracked_markdown",
+                                        return_value=[pending.relative_to(self.root)]),
+                      mock.patch.dict(render.generated_counts.COUNTS,
+                                      {"vocabulary": lambda root: 42}),
+                      mock.patch.object(render, "load_checks", return_value=[]),
+                      mock.patch.object(render, "write_text") as write,
+                      mock.patch.object(render, "load_facts") as facts,
+                      contextlib.redirect_stdout(io.StringIO())):
+                    with self.refused(re.escape(message)):
+                        render.main()
+                    write.assert_not_called()
+                    facts.assert_not_called()
+                self.assertEqual({path: path.read_bytes() for path in paths}, before)
+
+
+class RenderFillsTheNotes(unittest.TestCase):
+    """render.py, run whole on a copy of the sources with a headed entry and a pair of notes
+    markers planted in one brief, changes that brief, between its markers, and nothing
+    else."""
+
+    def test_one_brief_changes_between_its_markers_alone(self):
+        from negative_tests import count_source_copy
+
+        word = uuid.uuid4().hex
+        name = f"2026-10-27-render-notes-{word}.md"
+        line = f"A note for the test ({word})."
+        with count_source_copy() as (root, env):
+            entry = root / "docs" / "decisions" / name
+            self.assertFalse(entry.exists())
+            entry.write_text(header(f"id=render-notes-{word}", "cards=577",
+                                    "briefs=0008-centre", line=line)
+                             + "\n- **A decision for the test.** It names a brief.\n",
+                             encoding="utf-8")
+
+            def run(expected):
+                result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root,
+                                        env=env, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn(f"\nnotes regions: {expected}\n", result.stdout)
+                self.assertIn("rendered book pages", result.stdout)
+
+            def files():
+                return {path: path.read_bytes() for path in root.rglob("*")
+                        if path.is_file() and "__pycache__" not in path.parts}
+
+            # First as the sources stand, the entry beside them: no page has markers, so
+            # the header renders nothing.
+            run("0 filled in 0 pages")
+            brief = root / "docs" / "briefs" / "0008-centre.md"
+            pair = "<!-- notes -->\n<!-- /notes -->\n"
+            self.assertNotIn("<!-- notes", brief.read_text(encoding="utf-8"))
+            planted = brief.read_text(encoding="utf-8") + "\n" + pair
+            brief.write_text(planted, encoding="utf-8")
+            before = files()
+            run("1 filled in 1 page")
+            after = files()
+            self.assertEqual(sorted(path.relative_to(root).as_posix() for path in after
+                                    if before.get(path) != after[path]),
+                             ["docs/briefs/0008-centre.md"])
+            self.assertEqual(set(after), set(before))
+            self.assertEqual(brief.read_text(encoding="utf-8"), planted.replace(
+                pair, f"<!-- notes -->\n- 27 October 2026, [#577]({ISSUE}577): {line} "
+                      f"([the entry](../decisions/{name}))\n<!-- /notes -->\n"))
 
 
 if __name__ == "__main__":

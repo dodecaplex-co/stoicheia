@@ -12,9 +12,12 @@ through a symlink and paths resolving outside the root are refused; a symlink is
 never absent. Whole renderer outputs are scanned but may not contain markers. The
 decisions log and reports are history, except the living gap and overlap catalogues;
 markers there are refused. Markers are also refused when they overlap README scope
-regions or PROGRAM's status region, which the renderer replaces. Counts use files
-alone, never a Lean run or build outputs. Run this module to print every available
-count and its current value.
+regions, PROGRAM's status region or the notes regions of a brief or of PROGRAM, which
+the renderer replaces. Counts use files alone, never a Lean run or build outputs. Run
+this module to print every available count and its current value.
+
+The notes regions' reader is here too (notes_regions), beside the other regions'
+patterns, so that every tool that reads a region reads it the same way.
 """
 
 import ast
@@ -467,19 +470,117 @@ README_SCOPE_MARKERS = re.compile(
     r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
 PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
 
+# The notes regions, which render.py fills from the decision entries' header lines
+# (docs/WORKFLOW.md, section 10, "Decision entries"). A brief holds one at most, between
+# `<!-- notes -->` and `<!-- /notes -->`; docs/PROGRAM.md one at most for each section of
+# PROGRAM_NOTES, between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`. Each
+# marker stands on a line of its own. The decisions page, dated history, holds none.
+NOTES_START = re.compile(r"<!--\s*/?\s*notes\b", re.I)
+NOTES_MARKER = re.compile(r"<!-- (/?)notes(?::([a-z0-9]+(?:-[a-z0-9]+)*))? -->")
+# The sections of PROGRAM.md that may hold notes: a fixed vocabulary, not PROGRAM's
+# headings, so that renaming a heading can never break an entry, which is never edited.
+PROGRAM_NOTES = ("open-items", "landed")
+BRIEFS = Path("docs/briefs")
+DECISIONS_PAGE = BRIEFS / "0002-decisions.md"
+PROGRAM_PAGE = Path("docs/PROGRAM.md")
+
+
+@dataclass(frozen=True)
+class Notes:
+    section: str | None  # a name of PROGRAM_NOTES in PROGRAM.md; None in a brief
+    start: int           # where the opening marker begins
+    body_start: int      # the start of the line after it
+    body_end: int        # where the closing marker begins
+    end: int             # just after the closing marker
+
+
+def notes_page(path):
+    """Whether `path`, relative to the root, is a page whose notes markers are read: a
+    Markdown file of docs/briefs/, the decisions page among them, or docs/PROGRAM.md."""
+    path = Path(path)
+    return path == PROGRAM_PAGE or (path.parent == BRIEFS and path.suffix == ".md")
+
+
+def notes_regions(text, path):
+    """Read every notes comment of a brief or of docs/PROGRAM.md (`path`, relative to the
+    root), refusing a malformed, unpaired, nested or repeated marker, one not on a line of
+    its own, a named marker in a brief or a bare one in PROGRAM.md, an unknown section, any
+    marker in the decisions page and a PROGRAM region overlapping the status region. Every
+    comment that begins `<!-- notes` or `<!-- /notes`, spaced or cased otherwise, must have
+    the exact form, so that a near miss is refused, not passed over."""
+    path = Path(path)
+    if not notes_page(path):
+        raise ValueError(f"{path}: notes regions stand only in a brief or docs/PROGRAM.md")
+    named = path == PROGRAM_PAGE
+    opened = None
+    found = []
+    for token in NOTES_START.finditer(text):
+        line = text.count("\n", 0, token.start()) + 1
+        where = f"{path}:{line}"
+        if path == DECISIONS_PAGE:
+            raise ValueError(f"{where}: notes markers are forbidden in dated history")
+        end = text.find("-->", token.end())
+        comment = text[token.start():end + 3] if end >= 0 else ""
+        match = NOTES_MARKER.fullmatch(comment)
+        if match is None:
+            raise ValueError(f"{where}: malformed notes marker")
+        if not ((token.start() == 0 or text[token.start() - 1] == "\n")
+                and text[end + 3:end + 4] in ("", "\n")):
+            raise ValueError(f"{where}: a notes marker stands on a line of its own")
+        closing, section = match[1] == "/", match[2]
+        if named and section is None:
+            raise ValueError(f"{where}: a notes marker of docs/PROGRAM.md names its section")
+        if not named and section is not None:
+            raise ValueError(f"{where}: a brief's notes markers name no section")
+        if named and section not in PROGRAM_NOTES:
+            raise ValueError(f"{where}: unknown notes section {section!r}; "
+                             f"docs/PROGRAM.md's are {', '.join(PROGRAM_NOTES)}")
+        if not closing:
+            if opened is not None:
+                raise ValueError(f"{where}: nested notes marker")
+            if any(region.section == section for region in found):
+                raise ValueError(f"{where}: repeated notes region; "
+                                 + (f"section {section!r} has one at most" if named
+                                    else "a brief holds one at most"))
+            opened = (section, token.start(), end + 4, line)
+        elif opened is None:
+            raise ValueError(f"{where}: notes closing marker has no opening marker")
+        elif opened[0] != section:
+            raise ValueError(f"{where}: notes closing marker does not close the region "
+                             f"{opened[0]!r}, opened on line {opened[3]}")
+        else:
+            found.append(Notes(section, opened[1], opened[2], token.start(), end + 3))
+            opened = None
+    if opened is not None:
+        raise ValueError(f"{path}:{opened[3]}: unclosed notes marker")
+    if named:
+        for status in PROGRAM_STATUS_MARKERS.finditer(text):
+            for region in found:
+                if region.start < status.end() and status.start() < region.end:
+                    raise ValueError(f"{path}:{text.count(chr(10), 0, region.start) + 1}: "
+                                     f"notes region {region.section!r} overlaps the status "
+                                     "region")
+    return found
+
 
 def partial_output_region(path, text, span):
-    """Name a renderer-owned region containing a count marker, if there is one."""
+    """Name a renderer-owned region containing a count marker, if there is one. A brief's
+    or PROGRAM.md's notes markers are read by notes_regions, which raises ValueError for
+    a fault in them."""
+    regions = []
     if path == Path("README.md"):
-        pattern, name = README_SCOPE_MARKERS, "README.md scope region"
-    elif path == Path("docs/PROGRAM.md"):
-        pattern, name = PROGRAM_STATUS_MARKERS, "docs/PROGRAM.md status region"
-    else:
-        return None
-    if any(span.start < region.end() and region.start() < span.end
-           for region in pattern.finditer(text)):
-        return name
-    return None
+        regions = [(region.start(), region.end(), "README.md scope region")
+                   for region in README_SCOPE_MARKERS.finditer(text)]
+    elif path == PROGRAM_PAGE:
+        regions = [(region.start(), region.end(), "docs/PROGRAM.md status region")
+                   for region in PROGRAM_STATUS_MARKERS.finditer(text)]
+    if notes_page(path):
+        regions += [(region.start, region.end,
+                     f"{Path(path).as_posix()} notes"
+                     + (f":{region.section}" if region.section else "") + " region")
+                    for region in notes_regions(text, path)]
+    return next((name for start, end, name in regions
+                 if span.start < end and start < span.end), None)
 
 
 def tracked_markdown(root):
@@ -529,7 +630,11 @@ def updates(root, *, check=False):
             if historical(path):
                 errors.append(f"{where}: count marker {span.name!r} is forbidden in dated history")
                 continue
-            region = partial_output_region(path, text, span)
+            try:
+                region = partial_output_region(path, text, span)
+            except ValueError as error:
+                errors.append(str(error))
+                break
             if region:
                 errors.append(f"{where}: count marker {span.name!r} is forbidden in {region}")
                 continue

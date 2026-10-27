@@ -16,7 +16,11 @@ every book in `heath.BOOKS`:
                        (and likewise for each book): the book's completion summary
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
-                       release read from `docs/program.toml`
+                       release read from `docs/program.toml`, and each notes region,
+                       between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`
+    docs/briefs/       only a brief's notes region, between `<!-- notes -->` and
+                       `<!-- /notes -->`, where it has one: a line for each decision
+                       entry whose header names the brief (or the PROGRAM section)
     docs/WORKFLOW.md   only section 8's first command block, between `<!-- checks -->`
                        and `<!-- /checks -->`: CI's `check` job's sequence, from the
                        registry of checks, one file per check in `checks/`
@@ -25,9 +29,11 @@ every book in `heath.BOOKS`:
 
 Before it writes anything, the script checks the dated decision entries of
 `docs/decisions/` (`decision_entries`): each is a page of its own, read where it is, and
-nothing is assembled from them. It computes the inline count updates next, then reads the
-registry of checks by `scripts/registry.py`, which refuses a registry that breaks its
-rules, naming the file. A fault in any of the three leaves every generated file unwritten.
+nothing is assembled from them but the header line an entry may begin with, which it
+checks next (`entry_headers`). It computes the inline count updates after that, then reads
+the registry of checks by `scripts/registry.py`, which refuses a registry that breaks its
+rules, naming the file, and then the notes markers of every brief and of PROGRAM.md
+(`notes_updates`). A fault in any of them leaves every generated file unwritten.
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -2904,8 +2910,10 @@ def git_ignored(names):
 def decision_entries():
     """Check docs/decisions/, the folder of dated decision entries, and return the
     entries' names. Each entry is a page of its own, read where it is, and nothing is
-    assembled from them: so an entry may hold whatever a page may, headings included, and
-    needs no date heading, since its name carries its date. The folder may be absent.
+    assembled from it but its header line, if it has one (entry_headers checks it), whose
+    news render.py copies into the notes regions it names: so an entry may hold whatever
+    a page may, headings included, and needs no date heading, since its name carries its
+    date. The folder may be absent.
     Where it is not, it is a folder under no link, spelled so on disk with nothing beside
     it spelled otherwise, and holds regular files alone: its README.md, which is no entry,
     and entries named `<YYYY-MM-DD>-<slug>.md`, a valid date no earlier than FIRST_ENTRY
@@ -2983,6 +2991,251 @@ def decision_entries():
         if match:
             entries.append(name)
     return entries
+
+
+# The header line an entry may begin with, its line 1 (docs/WORKFLOW.md, section 10,
+# "Decision entries"): what the entry is news for, from which render.py compiles the notes
+# regions of the briefs and of PROGRAM.md (generated_counts.notes_regions). Its keys stand
+# in the order of ENTRY_KEYS, each once at most, separated by single spaces; `id`, `cards`
+# and `line` are required:
+#
+#   <!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]]
+#        [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]]
+#        [reverts=<entry>[,<entry>…]] line="<news>" -->
+ENTRY_KEYS = ("id", "cards", "briefs", "program", "corrects", "reverts", "line")
+ENTRY_REQUIRED = ("id", "cards", "line")
+ENTRY_LISTS = ("cards", "briefs", "program", "corrects", "reverts")
+ENTRY_START = re.compile(r"<!--\s*entry\b", re.I)
+ENTRY_OPEN = "<!-- entry:"
+ENTRY_KEY = re.compile(r"([^= ]+)=")
+ENTRY_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+ENTRY_CARD = re.compile(r"[1-9][0-9]*")
+ENTRY_LINE_LIMIT = 300
+# The sections of PROGRAM.md that may hold notes (generated_counts.py, beside the reader
+# of the regions, which every tool that reads them shares).
+PROGRAM_NOTES = generated_counts.PROGRAM_NOTES
+MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
+          "September", "October", "November", "December")
+
+
+def brief_stems():
+    """The stems of the Markdown files of docs/briefs/, as the disk holds them, the
+    decisions page's among them; none where the folder is absent."""
+    try:
+        folder = generated_counts.repository_path(ROOT, ROOT / "docs" / "briefs")
+    except ValueError as error:
+        raise SystemExit(f"docs/briefs: {error}") from None
+    if not folder.is_dir():
+        return []
+    return sorted(name[:-3] for name in os.listdir(folder) if name.endswith(".md"))
+
+
+def entry_header(name, text, stems, earlier):
+    """The header that the entry `name`, whose text is `text`, begins with, as a dict of
+    ENTRY_KEYS (each list split at its commas, the cards as numbers), or None where it
+    has none. `stems` are the briefs' (brief_stems), `earlier` the names of the entries
+    that sort before it. Anything but the exact form is refused, naming the file and the
+    line: a `<!-- entry` comment anywhere but at the start of line 1; an unknown key, a
+    key out of order or twice, extra spaces, a missing `-->` or text after it; an id that
+    is not lower-case letters and digits joined by hyphens; a card that is not an issue
+    number; a brief not in docs/briefs/, or the decisions page, which is dated history; a
+    section not in PROGRAM_NOTES; a correction or revert of an entry that is not earlier;
+    an item repeated or empty; and a line empty, longer than ENTRY_LINE_LIMIT, with a
+    space at either end, or holding a `"`, a comment's `<!--` or `-->` or a Markdown link,
+    which would break where the line is copied, in pages of other folders."""
+    where = f"docs/decisions/{name}"
+
+    def refuse(number, why):
+        raise SystemExit(printable_text(f"{where}:{number}: {why}"))
+
+    tokens = list(ENTRY_START.finditer(text))
+    for token in tokens:
+        if token.start():
+            refuse(text.count("\n", 0, token.start()) + 1,
+                   "an entry's header is its line 1, and it has one at most")
+    if not tokens:
+        return None
+    first = text.split("\n", 1)[0]
+    if not first.startswith(ENTRY_OPEN):
+        refuse(1, f'a header begins "{ENTRY_OPEN}" exactly')
+    if "-->" not in first:
+        refuse(1, "line 1 holds no --> to close the header")
+    if not first.endswith("-->"):
+        refuse(1, "text after the header's -->: the header is the whole of line 1")
+    body = first[len(ENTRY_OPEN):-len("-->")]
+    spaced = "single spaces separate entry:, each key and the closing -->"
+    if body[:1] != " " or body[-1:] != " " or "  " in (body[:2], body[-2:]):
+        refuse(1, spaced)
+    inner, fields, at = body[1:-1], {}, 0
+    while at < len(inner):
+        if inner[at] == " ":
+            refuse(1, spaced)
+        match = ENTRY_KEY.match(inner, at)
+        if match is None:
+            refuse(1, f"expected key=value, not {inner[at:].split(' ')[0]!r}")
+        key = match[1]
+        if key not in ENTRY_KEYS:
+            refuse(1, f"unknown key {key!r}; the keys are {', '.join(ENTRY_KEYS)}")
+        if key in fields:
+            refuse(1, f"the key {key!r} is given twice")
+        if fields and ENTRY_KEYS.index(key) < ENTRY_KEYS.index(list(fields)[-1]):
+            refuse(1, f"the key {key!r} is out of order; the keys stand in the order "
+                      f"{', '.join(ENTRY_KEYS)}")
+        start = match.end()
+        if key == "line":
+            if not (inner[start:start + 1] == '"' and inner.endswith('"')
+                    and len(inner) > start + 1):
+                refuse(1, 'the line comes last, in double quotes: line="<news>"')
+            fields[key], at = inner[start + 1:-1], len(inner)
+        else:
+            stop = inner.find(" ", start)
+            stop = len(inner) if stop < 0 else stop
+            fields[key], at = inner[start:stop], stop + 1
+    for key in ENTRY_REQUIRED:
+        if key not in fields:
+            refuse(1, f"the key {key!r} is required")
+    if not ENTRY_ID.fullmatch(fields["id"]):
+        refuse(1, f"the id {fields['id']!r} is not lower-case letters and digits joined by "
+                  "hyphens")
+    lists = {key: fields[key].split(",") if key in fields else [] for key in ENTRY_LISTS}
+    for key, items in lists.items():
+        if "" in items:
+            refuse(1, f"{key} is a list joined by commas, with no empty item")
+        twice = next((item for item in items if items.count(item) > 1), None)
+        if twice is not None:
+            refuse(1, f"{key} names {twice!r} twice")
+    for card in lists["cards"]:
+        if not ENTRY_CARD.fullmatch(card):
+            refuse(1, f"the card {card!r} is not an issue number: digits, with no leading "
+                      "zero")
+    for stem in lists["briefs"]:
+        if stem == "0002-decisions":
+            refuse(1, "the decisions page, 0002-decisions, is dated history and holds no "
+                      "notes")
+        if stem not in stems:
+            refuse(1, f"no brief docs/briefs/{stem}.md")
+    for section in lists["program"]:
+        if section not in PROGRAM_NOTES:
+            refuse(1, f"unknown PROGRAM.md section {section!r}; the sections that hold notes "
+                      f"are {', '.join(PROGRAM_NOTES)}")
+    for key in ("corrects", "reverts"):
+        for other in lists[key]:
+            if other not in earlier:
+                refuse(1, f"{key} {other!r}: a correction or revert must name an earlier "
+                          "entry")
+    line = fields["line"]
+    if not 1 <= len(line) <= ENTRY_LINE_LIMIT:
+        refuse(1, f"the line is 1 to {ENTRY_LINE_LIMIT} characters, not {len(line)}")
+    if line != line.strip():
+        refuse(1, "the line has no space at its start or its end")
+    if '"' in line:
+        refuse(1, 'the line holds no "')
+    if "<!--" in line or "-->" in line:
+        refuse(1, "the line holds no <!-- or -->")
+    if "](" in line:
+        refuse(1, "the line holds no Markdown link, since it is copied into pages in other "
+                  "folders, where a relative link would break")
+    return {"id": fields["id"], **lists, "cards": [int(card) for card in lists["cards"]],
+            "line": line}
+
+
+def entry_headers(entries):
+    """Read and check the header line that each of `entries`, the names decision_entries
+    returns, may begin with (entry_header), and return {name: header} for those that have
+    one. render.py cannot tell a new entry from an old one, so it checks a header where
+    one stands and requires none; docs/WORKFLOW.md asks every new entry for one. An id is
+    unique: a second is refused, naming both files."""
+    folder = ROOT / "docs" / "decisions"
+    stems, headers, ids = set(brief_stems()), {}, {}
+    for number, name in enumerate(entries):
+        path = generated_counts.repository_path(ROOT, folder / name)
+        header = entry_header(name, path.read_bytes().decode("utf-8"), stems,
+                              set(entries[:number]))
+        if header is None:
+            continue
+        if header["id"] in ids:
+            raise SystemExit(printable_text(
+                f"docs/decisions/{name}:1: the id {header['id']!r} is the id of "
+                f"docs/decisions/{ids[header['id']]} too; an id is unique"))
+        ids[header["id"]] = name
+        headers[name] = header
+    return headers
+
+
+def entry_day(name):
+    """"27 October 2026": the date an entry's name carries, as the repository writes
+    dates."""
+    day = date.fromisoformat(DECISION_FILE.fullmatch(name).group(1))
+    return f"{day.day} {MONTHS[day.month - 1]} {day.year}"
+
+
+def notes_lines(headers, named, up):
+    """The lines of a notes region: one for each of `named`, the entries whose headers name
+    it, in name order, which is date order. `up` leads from the page to docs/: "../" from a
+    brief, "" from PROGRAM.md. A line gives the entry's date, its cards in numeric order and
+    its news; then a sentence for the entries it corrects and for those it reverts, and,
+    for the entries of the same region that correct or revert it, one for each kind, each
+    entry linked; then the link to the entry itself."""
+    def linked(verb, others):
+        if not others:
+            return ""
+        return f" {verb} " + and_list(f"[the entry of {entry_day(other)}]"
+                                      f"({up}decisions/{other})" for other in others) + "."
+
+    named = sorted(named)
+    lines = []
+    for name in named:
+        header = headers[name]
+        cards = ", ".join(f"[#{card}]({REPO}/issues/{card})"
+                          for card in sorted(header["cards"]))
+        lines.append(f"- {entry_day(name)}, {cards}: {header['line']}"
+                     + linked("Corrects", sorted(header["corrects"]))
+                     + linked("Reverts", sorted(header["reverts"]))
+                     + linked("Corrected by", [other for other in named
+                                               if name in headers[other]["corrects"]])
+                     + linked("Reverted by", [other for other in named
+                                              if name in headers[other]["reverts"]])
+                     + f" ([the entry]({up}decisions/{name}))")
+    return lines
+
+
+def notes_updates(headers, changes):
+    """The briefs and PROGRAM.md with their notes regions filled, each region with the
+    lines (notes_lines) of the entries whose headers name it, the brief or the PROGRAM
+    section, and nothing else: {path: text} for each page whose text changes, read as the
+    count markers leave it (`changes`, generated_counts.updates); then the number of
+    regions and the number of pages that hold one. A page without markers is left as it
+    is, and a region no header names is left empty, its two markers on consecutive lines.
+    Every page's markers are read (generated_counts.notes_regions) before anything is
+    written, the decisions page's among them, which may hold none: a fault in any stops
+    the render, naming each."""
+    rels = [(ROOT / "docs" / "briefs" / f"{stem}.md").relative_to(ROOT)
+            for stem in brief_stems()]
+    if os.path.lexists(ROOT / generated_counts.PROGRAM_PAGE):
+        rels.append(generated_counts.PROGRAM_PAGE)
+    filled, errors, regions, pages = {}, [], 0, 0
+    for rel in rels:
+        path = ROOT / rel
+        try:
+            text = changes[path] if path in changes else read_text(path)
+            found = generated_counts.notes_regions(text, rel)
+        except (ValueError, OSError) as error:
+            errors.append(printable_text(str(error)))
+            continue
+        up = "" if rel == generated_counts.PROGRAM_PAGE else "../"
+        new = text
+        for region in reversed(found):
+            named = [name for name, header in headers.items()
+                     if (region.section in header["program"] if region.section
+                         else rel.stem in header["briefs"])]
+            body = "".join(line + "\n" for line in notes_lines(headers, named, up))
+            new = new[:region.body_start] + body + new[region.body_end:]
+        regions, pages = regions + len(found), pages + bool(found)
+        if new != text:
+            filled[path] = new
+    if errors:
+        raise SystemExit("notes regions: nothing was rendered:\n" + "\n".join(errors))
+    return filled, regions, pages
 
 
 def heath_edges(book, count):
@@ -3248,6 +3501,7 @@ def main() -> None:
     print(f"self-check: the modern figure is placed or refused rightly in {count} cases")
     entries = decision_entries()
     print(f"decision entries: {len(entries)} checked in docs/decisions/")
+    headers = entry_headers(entries)
     changes, errors = generated_counts.updates(ROOT)
     if errors:
         raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))
@@ -3255,11 +3509,15 @@ def main() -> None:
     # so a fault in either still renders nothing, and each is reported as it was before.
     checks = load_checks()
     print(f"registry of checks: {len(checks)} read from {registry.FOLDER}/")
+    # The notes regions last, read from the pages as the count markers leave them.
+    notes, regions, pages = notes_updates(headers, changes)
+    changes.update(notes)
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
     for path, text in changes.items():
         write_text(path, text)
+    print(f"notes regions: {regions} filled in {pages} page{'' if pages == 1 else 's'}")
     for book, (count, titles) in BOOKS.items():
         out_dir = generated_counts.repository_path(ROOT, ROOT / "book" / book)
         out_dir.mkdir(parents=True, exist_ok=True)
