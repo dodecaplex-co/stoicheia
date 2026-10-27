@@ -12001,7 +12001,7 @@ class Units(unittest.TestCase):
             self.assertEqual(entry.section8.split("#", 1)[0].strip(),
                              FRESHNESS_COMMAND if entry.empty else entry.name)
         workflow = (root / "docs/WORKFLOW.md").read_text()
-        regions = registry.MARKERS.findall(workflow)
+        regions = safe_push.heath.REGIONS["docs/WORKFLOW.md"].findall(workflow)
         self.assertEqual(len(regions), 1, "section 8's block stands between one pair of markers")
         self.assertEqual(regions[0][1], registry.section8_block(entries))
         # The region is section 8's first command block, as before.
@@ -12112,17 +12112,47 @@ class Units(unittest.TestCase):
 
     def test_the_generated_region_is_the_registrys(self):
         # safe_push's guards read section 8's block as generated (GENERATED_REGIONS), the
-        # region render.py writes between registry.py's markers, and nothing else.
+        # region render.py writes between the markers heath.REGIONS gives, and nothing else.
         workflow = (SOURCE / "docs/WORKFLOW.md").read_text()
         self.assertIn("docs/WORKFLOW.md", safe_push.GENERATED)
         pattern = safe_push.GENERATED_REGIONS["docs/WORKFLOW.md"]
+        markers = safe_push.heath.REGIONS["docs/WORKFLOW.md"]
         self.assertEqual([m.group(0) for m in pattern.finditer(workflow)],
-                         [m.group(0) for m in registry.MARKERS.finditer(workflow)])
+                         [m.group(0) for m in markers.finditer(workflow)])
         # A block changed between the markers changes no hand-written part of the page.
-        changed = registry.MARKERS.sub(lambda m: m.group(1) + "```sh\nlake build\n```\n"
-                                       + m.group(3), workflow)
+        changed = markers.sub(lambda m: m.group(1) + "```sh\nlake build\n```\n" + m.group(3),
+                              workflow)
         self.assertNotEqual(changed, workflow)
-        self.assertEqual(pattern.sub("", changed), pattern.sub("", workflow))
+        self.assertEqual(safe_push.heath.outside("docs/WORKFLOW.md", changed),
+                         safe_push.heath.outside("docs/WORKFLOW.md", workflow))
+
+    def test_a_region_deleted_with_its_markers_touches_the_hand_written_rest(self):
+        # #578: generated_parts reads what render.py writes as the regions' bodies
+        # (heath.bodies) and the rest as the file with those bodies emptied and the markers
+        # kept (heath.outside). A commit that deletes README.md's Book III region, markers
+        # and all, so touches the rest, written by hand, where before #578, with each region
+        # taken out whole, markers and all, it touched only what render.py writes.
+        readme = (SOURCE / "README.md").read_text()
+        three = next(m for m in safe_push.heath.REGIONS["README.md"].finditer(readme)
+                     if m.group(2) == "III")
+        deleted = readme[:three.start()] + readme[three.end():]
+        before = re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S)
+        self.assertEqual(before.sub("", readme), before.sub("", deleted))
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "generated parts test")
+            git(repo, "config", "user.email", "generated-parts-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            (repo / "README.md").write_text(readme)
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-q", "-m", "README.md as it stands")
+            base = git(repo, "rev-parse", "HEAD").strip()
+            (repo / "README.md").write_text(deleted)
+            git(repo, "commit", "-q", "-am", "Book III's region deleted with its markers")
+            sha = git(repo, "rev-parse", "HEAD").strip()
+            self.assertEqual(safe_push.generated_parts(repo, base, sha, "README.md"),
+                             (True, True))
 
     def test_path_checks_are_read_from_checks(self):
         # #186, a looser path check: keep_apart's rule names the two path commands as the

@@ -645,6 +645,33 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=group), 1,
                      "not overwriting: #1 changed lines were overwritten: README.md")
 
+    def test_valid_later_train_deleting_readme_markers_is_caught(self):
+        # #578: README.md's markers are written by hand, so its hand-written part is read
+        # with each region's body emptied and its markers kept (heath.outside). Train 1
+        # adds Book II's region inline in a line of prose; a reviewed member of train 2, on
+        # train 1's member, deletes it, markers and all, and keeps the prose. Every merge is
+        # automatic, and with the regions taken out whole, markers and all, as before #578,
+        # the hand-written part read as train 1 left it.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        added = readme + "Book II: <!-- scope:II -->Row two.<!-- /scope:II --> Read it.\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {"README.md": added})
+        member = queue.parents(self.repo, one)[1]
+        deleted = self.make([member], {"README.md": readme + "Book II:  Read it.\n"})
+        head = self.merge(self.merge(self.base, member), deleted)
+        rows = "".join(f"| content/{name} | {sha} | {REVIEW} {sha[:12]}: pass. | "
+                       f"{REVIEW} {sha[:12]}: pass. | passed at {sha} |\n"
+                       for name, sha in (("1b", member), ("2", deleted)))
+        self.pr(2, head, "train/area-2", (
+            "## Members\n\n| Branch | Head | /code-review | /security-review | "
+            "/no-mistakes |\n|---|---|---|---|---|\n" + rows
+            + "\n## What is new\n\nNone.\n\n" + self.block(head)))
+        group = self.merge(self.merge(self.base, one, 1), head, 2)
+        self.verdict(self.cli(head=group), 1,
+                     "not overwriting: #1 changed lines were overwritten: README.md")
+
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
         self.base = self.make([old_base], {

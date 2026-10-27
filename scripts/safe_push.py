@@ -524,16 +524,13 @@ SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
-GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md",
-             "docs/WORKFLOW.md")
-# Of these, three are generated only between their markers (render.py's SCOPE_MARKERS and
-# STATUS_MARKERS, and registry.py's MARKERS, between which render.py writes section 8's
-# first command block from the registry of checks); the rest of each is written by hand.
-GENERATED_REGIONS = {
-    "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
-    "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
-    "docs/WORKFLOW.md": re.compile(r"<!-- checks -->\n.*?<!-- /checks -->", re.S),
-}
+# What render.py writes, as heath.py's "Generated regions" gives it (#578), which the
+# pre-flight reads from origin/main's heath.py, carried beside this file by the harness:
+# the files of heath.GENERATED_WHOLE whole, and the three of heath.REGIONS, README.md,
+# docs/PROGRAM.md and docs/WORKFLOW.md, only between their markers, the markers and the
+# rest of each written by hand.
+GENERATED = (*heath.GENERATED_WHOLE, *heath.REGIONS)
+GENERATED_REGIONS = heath.REGIONS
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them (both shortened by the tests)
 CI_WATCH_INTERVAL = "30"  # seconds between `gh pr checks --watch` refreshes
@@ -4895,14 +4892,15 @@ def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
     """Does the change touch what render.py writes in `path`, and does it touch the rest,
     written by hand? Only the files of GENERATED_REGIONS have a rest (README.md,
     docs/PROGRAM.md and docs/WORKFLOW.md): render.py writes them only between their
-    markers, and every other generated file whole."""
-    pattern = GENERATED_REGIONS.get(path)
-    if pattern is None:
+    markers, and every other generated file whole. What render.py writes is each region's
+    body (heath.bodies); the rest is the file with those bodies emptied and the markers
+    kept (heath.outside), so that a marker deleted or bent, or a region deleted with its
+    markers, is a change to the rest, written by hand."""
+    if path not in GENERATED_REGIONS:
         return True, False
     old, new = show(repo, base, path) or "", show(repo, sha, path) or ""
-    return ([m.group(0) for m in pattern.finditer(old)]
-            != [m.group(0) for m in pattern.finditer(new)],
-            pattern.sub("", old) != pattern.sub("", new))
+    return (heath.bodies(path, old) != heath.bodies(path, new),
+            heath.outside(path, old) != heath.outside(path, new))
 
 
 def generated_changed(repo, base, sha, path: str) -> bool:
