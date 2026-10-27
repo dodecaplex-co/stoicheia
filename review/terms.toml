@@ -35,10 +35,6 @@ meaning = "Straight lines through the centre are excluded by hypothesis, so the 
 kind = "representation"
 meaning = "An angle contained by a straight line and a circumference (Definition III.7) is read as the region it opens near its vertex, and compared with a rectilineal angle placed at that vertex, along its straight arm and on its side, by containment near the vertex with whole small circles to spare: the comparisons use local containment of curved angular regions, and no general arithmetic or ratio theory of mixed angles is claimed, nor any motion of one (III.16, III.31)."
 
-[tag.centre-given]
-kind = "representation"
-meaning = "The statement gives the circle its centre, named or as `∃ G, Centre G α`, as a hypothesis, where Euclid's setting-out takes the centre or a proof needs one. Brief 0008's centre rule, once it is in the axiom lock, gives every circle a centre, so the hypothesis then asks only for a centre the circle already has and excludes no circle (briefs 0004 and 0008)."
-
 [tag.touching-whole-circles]
 kind = "representation"
 meaning = "Circles touching one another are read of the whole circles: touching within, a point of the inner is within the outer, and no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
