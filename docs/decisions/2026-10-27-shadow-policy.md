@@ -34,6 +34,9 @@
   the candidate cannot change is a later train of the plan, and nothing is signed, required
   or removed here. Actions are pinned by commit, and elan by its release's checksum.
 
-  The files, each a protected path new here:
-  - .github/workflows/shadow-policy.yml: the workflow, its triggers, pins and jobs.
-  - scripts/shadow_policy.py: the driver, its planted cases and its self-test.
+  The files, each a protected path:
+  - .github/workflows/shadow-policy.yml, new: the workflow, its triggers, pins and jobs.
+  - scripts/shadow_policy.py, new: the driver, its planted cases and its self-test. It is
+    the landing tool's and CI's, as scripts/run_checks.py is, so it is R5.
+  - scripts/risk.py: classes scripts/shadow_policy.py R5, beside scripts/run_checks.py.
+  - tests/test_risk.py: a row for it among the paths a broader, lighter rule also matches.
