@@ -129,11 +129,11 @@ note = "N marks the supposed third point of Euclid's reductio, with DN equal to 
 
 [review]
 stage = "full"
-commit = "422ff9a3f"
+commit = "539139c7a"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:db251b6dc594ff8e"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:7d4ebb976462f95e"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main and with the Circle 1 retirement, by GPT-6 Astra (Codex)"
+text = "sha256:eb4844c6ca4654a2"
 
 [review.items]
 statement = "pass"
