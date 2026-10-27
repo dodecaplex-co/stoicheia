@@ -8,7 +8,7 @@
   And safe_push and the queue's judge dropped the markers along with the regions when
   they compared the hand-written rest, so a train deleting a whole region, markers and
   all, looked like a change to generated text alone. This is train 3 of the plan for
-  compiling the shared pages that the owner approved on 27 October 2026
+  compiling the shared pages, recorded on 27 October 2026
   ([#572](https://github.com/jackChallis/stoicheia/issues/572) and #578 are the
   coordinator's record of it): widening work, for which the hold on new guards in the
   landing tool is waived.
