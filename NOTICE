@@ -10,10 +10,11 @@ With great thanks to LeanEuclid
 
 Our tacit rules (Elements/Foundations/Tacit/) follow the System E of Jeremy
 Avigad, Edward Dean and John Mumma ("A formal system for Euclid's Elements",
-Review of Symbolic Logic 2(4), 2009), save exists_centre (every circle has a
-centre), which is ours, from Euclid's Definitions I.15 and I.16. While writing
-them we kept LeanEuclid's Lean rendering of System E open beside the paper the
-whole time, and we owe it a great deal:
+Review of Symbolic Logic 2(4), 2009), save two, which are ours: exists_centre
+(every circle has a centre), from Euclid's Definitions I.15 and I.16, and
+radius_ne_zero (a circle's radius is not nothing), from Postulate 3. While
+writing them we kept LeanEuclid's Lean rendering of System E open beside the
+paper the whole time, and we owe it a great deal:
 
   * the placement data within our restricted superposition rule follows
     LeanEuclid's combined form of the placements in System E's two rules;

@@ -56,9 +56,10 @@
     {
       "ref": "III.1",
       "field": "axioms",
+      "includes": ["Tacit.exists_centre"],
       "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 39},
-      "why": "III.1's certificate now also carries exists_centre through its construction, for D within by III.2's argument: since the second retirement, 39 tacit rules, counted separately from its porism. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review."
+      "why": "III.1's certificate now also carries exists_centre, for D within by III.2's argument inside its construction and for the supposed centre G of its reductio, and the entry pins it by name, so that the count alone cannot hide it giving way to another rule: since the second retirement, 39 tacit rules, counted separately from its porism. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review."
     },
     {
       "ref": "III.1 Por.",
