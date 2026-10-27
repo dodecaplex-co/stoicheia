@@ -277,6 +277,16 @@ def note : String := "#print axioms Elements.inString"
                 (original + "def «unclosed", "a «…» name"),
                 (original + "`(command| #guard_msgs in #print axioms Elements.fake)\n",
                  "a syntax quotation"),
+                (original + "set_option pp.universes true in\n#guard_msgs in\n"
+                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
+                (original + "set_option pp.universes true in #guard_msgs in "
+                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
+                (original + "set_option pp.universes true /- a remark -/ in\n"
+                 "-- another remark\n#guard_msgs in\n#print axioms Elements.third\n",
+                 "a guarded pin under `set_option`"),
+                (original + "set_option\n  pp.universes\n\n  true\n  in\n"
+                 "#guard_msgs in\n#print axioms Elements.third\n",
+                 "a guarded pin under `set_option`"),
                 (original + "#print axioms Elements.third\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms.foo\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms' Elements.third\n", unguarded),

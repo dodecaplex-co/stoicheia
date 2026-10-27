@@ -311,6 +311,9 @@ FORMALIZATION = "docs/FORMALIZATION.md"
 # code must be one, or the file is refused rather than miscounted.
 AXIOM_PIN = re.compile(rf"#guard_msgs\s+in\s*#print\s+axioms\s+{IDENTIFIER.pattern}{NAME_END}")
 PRINT_AXIOMS = re.compile(r"#print\s+axioms")
+OPTION_WRAPPED_AXIOM_PIN = re.compile(
+    rf"(?m)^[ \t]*set_option\s+{IDENTIFIER.pattern}{NAME_END}"
+    rf"(?:(?!^[ \t]*set_option\b)[\s\S])*?\bin\s*{AXIOM_PIN.pattern}")
 SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
 # table it may hold.
@@ -447,6 +450,9 @@ def superposition_dependency_checks(root):
     if quotation := SYNTAX_QUOTATION.search(code):
         raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quotation.start()) + 1}: "
                          "a syntax quotation, whose commands are not run")
+    if wrapped := OPTION_WRAPPED_AXIOM_PIN.search(code):
+        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, wrapped.start()) + 1}: "
+                         "a guarded pin under `set_option`, not a bare top-level guard")
     pins = len(AXIOM_PIN.findall(code))
     if pins != len(PRINT_AXIOMS.findall(code)):
         raise ValueError(f"{SUPERPOSITION}: a `#print axioms` that is not a guarded pin of one "
