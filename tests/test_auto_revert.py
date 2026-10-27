@@ -400,6 +400,7 @@ class GitHub:
         self.broken = None
         self.deleted = []
         self.tip_reads = []
+        self.comparisons = {}
         self.issued_permissions = None
         self.jwt = None
         self.pages = {}
@@ -425,6 +426,10 @@ class GitHub:
                 tip = self.tip_reads.pop(0) if len(self.tip_reads) > 1 else self.tip_reads[0]
                 return {"object": {"sha": tip}}
             return {"object": {"sha": self.after}}
+        if method == "GET" and path.startswith(root + "/compare/"):
+            if path in self.comparisons:
+                return copy.deepcopy(self.comparisons[path])
+            raise AssertionError(f"No comparison evidence for {path}")
         if method == "GET" and path == root + "/installation":
             self.jwt = token
             return {"id": 42}
@@ -1038,6 +1043,17 @@ class AutoRevert(unittest.TestCase):
                 "total_count": total[number - 1] if isinstance(total, list) else total,
                 "workflow_runs": runs}
 
+    def comparison(self, ancestor, descendant, *, status="ahead", merge_base=None,
+                   ahead_by=1, behind_by=0):
+        path = f"/repos/{SLUG}/compare/{ancestor}...{descendant}"
+        self.api.comparisons[path] = {
+            "status": status,
+            "ahead_by": ahead_by,
+            "behind_by": behind_by,
+            "base_commit": {"sha": ancestor},
+            "merge_base_commit": {"sha": ancestor if merge_base is None else merge_base},
+        }
+
     @classmethod
     def finished(cls, number, sha, conclusion="success"):
         return cls.run_of(number, sha, status="completed", conclusion=conclusion)
@@ -1046,7 +1062,15 @@ class AutoRevert(unittest.TestCase):
         """A push, after, whose run fails slowly, and a later push on it, main's tip, whose
         own run passed, and cleared, before after's issue existed."""
         after = self.train()
-        return after, self.train(12, text="A later train.\n")
+        checkout = self.directory / "later-main"
+        command(self.directory, "git", "clone", "--no-local", str(self.repo), str(checkout))
+        (checkout / "chapter.txt").write_text("A later train.\n", encoding="utf-8")
+        command(checkout, "git", "add", "chapter.txt")
+        command(checkout, "git", "commit", "-m", "A later train")
+        later = command(checkout, "git", "rev-parse", "HEAD")
+        self.api.after = later
+        self.comparison(after, later)
+        return after, later
 
     def run_moved_on(self, after, *, env=None, tips=None, broken=None):
         self.api.issues, self.api.deleted, self.api.calls = {}, [], []
@@ -1055,6 +1079,7 @@ class AutoRevert(unittest.TestCase):
 
     def test_a_failure_recorded_after_main_moved_on_and_passed_is_cleared(self):
         after, later = self.slow_failure()
+        self.assertFalse(ar.is_ancestor(self.repo, after, later))
         self.tip_runs(later, [self.finished(7, later, "failure"), self.finished(9, later)])
         cleared = (f"Main has moved on from {after} to {later}, which contains it, and its "
                    f"latest post-merge run, 9, https://github.com/{SLUG}/actions/runs/9, "
@@ -1150,8 +1175,11 @@ class AutoRevert(unittest.TestCase):
             "the tip does not contain after": (
                 [side], [self.finished(9, side)], {},
                 f"{side} could not be shown to contain {after}"),
+            "the comparison is malformed": (
+                [later], [self.finished(9, later)], {"comparison": {}},
+                f"{later} could not be shown to contain {after}"),
             "the tip is unknown here": (
-                ["f" * 40], [self.finished(9, "f" * 40)], {},
+                ["f" * 40], [self.finished(9, "f" * 40)], {"comparison": None},
                 f"{'f' * 40} could not be shown to contain {after}"),
             "main moves again before the removal": (
                 [later, newest], passed, {},
@@ -1162,6 +1190,17 @@ class AutoRevert(unittest.TestCase):
         for name, (tips, runs, extra, reason) in cases.items():
             with self.subTest(name):
                 self.api.pages = {}
+                path = f"/repos/{SLUG}/compare/{after}...{tips[0]}"
+                comparison = extra.get("comparison", "valid")
+                if comparison == "valid":
+                    self.comparison(after, tips[0])
+                elif comparison is None:
+                    self.api.comparisons.pop(path, None)
+                else:
+                    self.api.comparisons[path] = comparison
+                if name == "the tip does not contain after":
+                    self.comparison(after, tips[0], status="diverged",
+                                    merge_base=self.before, ahead_by=1, behind_by=1)
                 if runs is None:
                     self.api.pages["GET", self.RUNS.format(tips[0], 1)] = {
                         "total_count": 1, "workflow_runs": None}

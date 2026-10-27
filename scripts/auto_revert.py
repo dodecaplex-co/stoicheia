@@ -647,6 +647,22 @@ def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
     return result.returncode == 0
 
 
+def github_is_ancestor(api: GitHub, ancestor: str, descendant: str) -> bool:
+    try:
+        data = api.call("GET", f"{api.root}/compare/{ancestor}...{descendant}")
+    except Exception:
+        return False
+    if not isinstance(data, dict):
+        return False
+    base = data.get("base_commit")
+    merge_base = data.get("merge_base_commit")
+    return (data.get("status") == "ahead"
+            and type(data.get("ahead_by")) is int and data["ahead_by"] > 0
+            and data.get("behind_by") == 0
+            and isinstance(base, dict) and base.get("sha") == ancestor
+            and isinstance(merge_base, dict) and merge_base.get("sha") == ancestor)
+
+
 # What a failure's issue says when its main-red stays although main may have moved on.
 HOW_TO_CLEAR = ("Once main's tip has a post-merge run that passed, re-run that run's clear "
                 "job: it removes main-red from every open issue whose After main's tip "
@@ -685,7 +701,7 @@ def runs_at(api: GitHub, sha: str) -> list[dict]:
     return runs
 
 
-def clear_moved_on(api: GitHub, repo: str, source: Path, after: str, number: int) -> str:
+def clear_moved_on(api: GitHub, repo: str, after: str, number: int) -> str:
     """What becomes of the main-red of issue `number`, which the failed push `after` has
     just opened: "" while main's tip is still `after`, since a later push's clear will
     see the issue. A later push's run may have passed, and cleared, before the issue
@@ -701,7 +717,7 @@ def clear_moved_on(api: GitHub, repo: str, source: Path, after: str, number: int
     if tip == after:
         return ""
     try:
-        if not is_ancestor(source, after, tip):
+        if not github_is_ancestor(api, after, tip):
             raise Refusal(f"{tip} could not be shown to contain {after}")
         try:
             runs = runs_at(api, tip)
@@ -854,7 +870,7 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
     print(f"Opened failure issue #{issue['number']}.")
     if problem:
         print(problem)
-        moved = clear_moved_on(api, args.repo, source, args.after, issue["number"])
+        moved = clear_moved_on(api, args.repo, args.after, issue["number"])
         if not moved:
             return 1
         print(moved)
@@ -933,7 +949,7 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
                   else "The automatic revert could not be completed.")
         outcome = f"{reason}\n{stage}"
     if result:
-        moved = clear_moved_on(api, args.repo, source, args.after, issue["number"])
+        moved = clear_moved_on(api, args.repo, args.after, issue["number"])
         outcome += f"\n{moved}" if moved else ""
     print(outcome)
     return record(api, args, entries, issue["number"], outcome, result)
