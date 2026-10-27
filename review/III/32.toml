@@ -26,13 +26,13 @@ note = "The angles and triangles are named by their points, so joining AD, DC an
 at = "the centre of the circle ABCD is on BA"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid places the centre on BA by III.19. The Lean first obtains a centre O by `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16 with no System E counterpart, then applies III.19."
+note = "The Lean takes a centre O from `Tacit.exists_centre`, as the [introduction](index.md) explains, then places it on BA by III.19."
 
 [[passage]]
 at = "Therefore BA is a diameter of the circle ABCD"
 kind = "helper"
 helper = "Prop32.sameSide"
-note = "Euclid takes for granted that A and D lie on one side of EF; the Lean proves it: on opposite sides, AD would cross EF within the circle (III.2), and no point of a straight line touching a circle is within it, as in III.18. Heath prints no reference to III.2 here; before this comparison the Lean takes A beyond O from B by `Tacit.line_circle_beyond` (System E, Intersections 5), a rule we assume, with O within by `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`."
+note = "The Lean takes A beyond the centre O from B by `Tacit.line_circle_beyond`, a rule we assume. `Prop32.sameSide` puts A and D on one side of EF: on opposite sides, AD would cross EF within the circle (III.2), contrary to `Touches.not_inside`. Heath gives no reference to III.2 here."
 
 [[passage]]
 at = "therefore the angle ADB, being an angle in a semicircle, is right"
@@ -49,7 +49,7 @@ note = "Euclid reads ABD as part of ABF before subtracting it. In the chosen cas
 at = "therefore the angle DBF which remains"
 kind = "helper"
 helper = "Prop21"
-note = "Euclid's A is the end of the diameter; the statement says this of every point of the segment BAD, and III.21 makes each such angle equal to BAD. Heath prints no reference to III.21 or to III.2 here: the Lean uses `Prop2.triangle` and `crossbar` to locate A across BD from F, with `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`, separating the ends of AF at its crossing with BD."
+note = "Euclid's A is the end of the diameter; the statement says this of every point of the segment BAD, and III.21 makes each such angle equal to BAD. For A's position across BD from F, `Prop2.triangle` and `crossbar` give a crossing of AF with BD, and `Tacit.pasch3` separates A and F there. Heath gives no reference to III.21 or III.2 here."
 
 [[passage]]
 at = "But the angles DBF, DBE are also equal to two right angles"
@@ -60,18 +60,18 @@ note = "Euclid takes the adjacent angles DBF and DBE to make two right angles. T
 [[passage]]
 at = "Therefore etc."
 kind = "case"
-note = "Euclid's figure has D on F's side of BA, within the angle ABF; when D is on E's side, the Lean gives the same argument with E and F exchanged. After the diameter case described above, `Prop2.triangle` (III.2, for which Heath prints no reference here) excludes any other D on BA; `OppositeSidesOf.of_between` separates E and F across BA by the proved rule `Tacit.pasch3` (System E, Pasch 3), and `OppositeSidesOf.sameSideOf` puts D on E's side when it is not on F's by `Tacit.same_side_or` (System E, Same side 5), proved in `Elements/Figure/Incidence.lean`."
+note = "When D is on E's side of BA, the Lean gives the same argument with E and F exchanged. After the diameter case above, `Prop2.triangle` excludes any other D on BA; `OppositeSidesOf.of_between` separates E and F across BA, and `OppositeSidesOf.sameSideOf` puts D on E's side when it is not on F's. Heath gives no reference to III.2 here."
 
 [figure]
 case = "D on F's side of BA and apart from A, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "52cf554f"
+commit = "7b71d1782"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c66a4535c2813f36"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r5, at e00da4b4; its mishnah's reference given its volume (f242fd2b), confirmed by Claude Opus 5.5, reader R3-337-r6, at 52cf554f"
-text = "sha256:5ee82dbb0c2a6cf8"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r5, at e00da4b4; its mishnah's reference given its volume (f242fd2b), confirmed by Claude Opus 5.5, reader R3-337-r6, at 52cf554f; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
+text = "sha256:a8e82a9b6b230272"
 
 [review.items]
 statement = "pass"

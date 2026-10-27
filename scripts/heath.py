@@ -363,7 +363,8 @@ FIELDS = {
                  "text_only": (_LIST, False)},
     "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
                 "note": (_STR, False), "unused": (_NAMES, False)},
-    "figure": {"case": (_STR, False), "every_case": (_BOOL, False), "note": (_STR, False)},
+    "figure": {"case": (_STR, False), "every_case": (_BOOL, False),
+               "some_cases": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
                "text": (_STR, "stamp"), "reviewer": (_STR, True), "run": (_STR, False),
                "items": (_TABLE, False)},
@@ -612,8 +613,10 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
             if plain(q) not in enunciation and plain(q) not in proof_text:
                 bad(f"[coverage]: text_only {q!r} is not quoted from Heath")
 
-    # [figure]: `every_case` says only which words lead the caption, so the section still
-    # needs a `case` or a `note`, and `every_case` the `case` that names the cases drawn.
+    # [figure]: `every_case` and `some_cases` say only which words lead the caption, so the
+    # section still needs a `case` or a `note`, and each the `case` that names the cases
+    # drawn; `some_cases` its `note` too, naming the cases left undrawn; and the two keys
+    # are alternative declarations.
     if "figure" in record:
         fig = record["figure"]
         if "case" not in fig and "note" not in fig:
@@ -621,6 +624,14 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         if fig.get("every_case") and "case" not in fig:
             bad("[figure]: `every_case` needs the `case` that names the cases the figure "
                 "draws, for the caption \"Drawn for every case: …\"")
+        if fig.get("some_cases") and "case" not in fig:
+            bad("[figure]: `some_cases` needs the `case` that names the cases the figure "
+                "draws, for the caption \"Drawn for some of its cases: …\"")
+        if fig.get("some_cases") and "note" not in fig:
+            bad("[figure]: `some_cases` needs the `note` that names the cases the theorem "
+                "covers and the figure does not draw")
+        if "every_case" in fig and "some_cases" in fig:
+            bad("[figure]: `every_case` and `some_cases` cannot appear together")
 
     # [[passage]]
     seen = set()

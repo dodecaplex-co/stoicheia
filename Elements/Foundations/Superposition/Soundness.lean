@@ -154,6 +154,26 @@ theorem Rule.of_placement
   rw [← hw, ← Atom.holds_map, ← Metric.toAtom_map]
   exact hd'
 
+/-- **What the side laid down costs.** If every triangle can be laid down on every ray, on
+either side, with its sides and angles kept but no side drawn, then `Rule` holds once a point
+on one side of a straight line is off it and a straight line passes through any two distinct
+points. C′ is on H's side of L, so it is off L, while D is on L: so D is not C′, and a
+straight line through them is the side AC laid down. `Rule.of_placement` does the rest. This
+is the kept side's cost made a theorem: beyond the placement, the side AC laid down costs no
+more than Same side 3's form and Postulate 1's. -/
+theorem Rule.of_placement_of_join
+    (hplace : ∀ {A B C D G H : I.Point} {L : I.Line}, Triangle I A B C → I.OnLine D L → I.OnLine G L →
+      D ≠ G → ¬ I.OnLine H L → ∃ B' C' : I.Point, Placed I A B C D G H L B' C')
+    (hoff : ∀ {P Q : I.Point} {L : I.Line}, I.SameSide P Q L → ¬ I.OnLine P L)
+    (hjoin : ∀ {P Q : I.Point}, P ≠ Q → ∃ N : I.Line, I.OnLine P N ∧ I.OnLine Q N) :
+    Rule I := by
+  apply Rule.of_placement
+  intro A B C D G H L hT hd hg hdg hh
+  obtain ⟨B', C', hp⟩ := hplace hT hd hg hdg hh
+  /- C′ is on H's side of L, so off L; D is on L. -/
+  obtain ⟨N, hDN, hC'N⟩ := hjoin fun heq : D = C' => hoff hp.2.2.1 (heq ▸ hd)
+  exact ⟨B', C', N, hp, hDN, hC'N⟩
+
 /-! ## Naming the symbols
 
 The rule numbers its symbols. A proof may name them instead, with an inductive type of its

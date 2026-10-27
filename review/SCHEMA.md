@@ -207,9 +207,10 @@ unused = ["FC", "GB"]
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `case` | string | no | The case the figure shows, when the theorem covers several, or, with `every_case`, the cases it draws. The caption names it. |
+| `case` | string | no | The case the figure shows, when the theorem covers several, or, with `every_case` or `some_cases`, the cases it draws. The caption names it. |
 | `every_case` | boolean | no | True when the figure draws every case the theorem covers, side by side or on one figure, as III.25's draws Euclid's three: the caption then reads "Drawn for every case: …" rather than "Drawn for one case: …". Needs a `case`. |
-| `note` | string | no | Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean does; shown under the figure (docs/STYLE.md, section 7). |
+| `some_cases` | boolean | no | True when the figure draws more than one of the cases the theorem covers but not every one, as III.35's draws Euclid's two and none of Simson's: the caption then reads "Drawn for some of its cases: …" rather than "Drawn for one case: …", and the `note` says which cases the theorem covers that the figure does not draw. Needs a `case` and a `note`; not with `every_case`. |
+| `note` | string | no | Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean does, or, with `some_cases`, the cases the theorem covers that the figure does not draw; shown under the figure (docs/STYLE.md, section 7). |
 
 The section needs a `case` or a `note`, or both, and is left out when it has neither.
 
@@ -296,47 +297,52 @@ about names in backticks, except the non-declarations listed in `NOT_DECLARED`.
 
 ## Worked examples
 
-These two show the shape of a record; they are not the records themselves, which live in
-`review/III/16.toml` and `review/I/40.toml`. Their stamps were computed at commit
-d040117, and serve as test values: at that commit, `heath.review_fingerprint` gives
-`sha256:9fd59073303dbcdc` for III.16 (its statement, then III.16 Por.'s) and
+These two show the shape of a record. The records themselves live in `review/III/16.toml`
+and `review/I/40.toml`, and may change after the commits named here: the first example is
+III.16's record whole, as it stood at commit 560da15a2; the second is I.40's as it stood
+at commit d040117. Their stamps serve as test values: at commit 560da15a2,
+`heath.review_fingerprint` gives `sha256:bbe980064221ec4c` for III.16 (its statement, then
+those of III.16 Por. and its three companions), and at d040117 it gives
 `sha256:5ea666d96871b7f8` for I.40. Their `text` is `heath.text_hash` of each example as
 printed here, which `python3 scripts/heath.py` checks.
 
-At d040117, III.16 was partial: the clause about the angle of the semicircle and the
-horn-like angle was not stated, its porism was proved on its own, and one run of sentences
-had no Lean beneath it.
+At 560da15a2, III.16 was full: its three companions stated the clauses about the angle of
+the semicircle and the remaining angle, and its porism was proved on its own. Its route
+was modified, and its passages show five of the kinds above.
 
 ```toml
 # review/III/16.toml
 [statement]
-scope = "partial"
-omitted = [
-  "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
-]
-note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the clause map below shows what stays in Euclid's words."
-short = "the angle clauses stay in Euclid's words"
-fingerprint = "sha256:9fd59073303dbcdc"
+scope = "full"
+note = "With its companions: `Prop16.semicircle` and `Prop16.remaining` compare the two angles with every acute angle placed at A; `Prop16.acute` with any acute angle."
+companions = ["III.16 semicircle", "III.16 remaining", "III.16 acute"]
+fingerprint = "sha256:bbe980064221ec4c"
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "Euclid proves the angle clauses by reductio from the second part, since a straight line would be interposed; the companions argue directly from it. The straight line of an acute angle falls within the circle, so near A the acute angle lies within the angle of the semicircle, and the remaining angle within the acute angle, each with whole small circles to spare (`Prop16.semicircle_gt`, `Prop16.horn_lt`). How near A is said by the perpendicular from A, by I.12, I.17 and I.19, which Euclid leaves unsaid."
 
 [representation]
-tags = ["mixed-angles-omitted"]
-note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart."
+tags = ["mixed-angles-local"]
+note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of the semicircle is the points within the circle on E's side of AB, and the remaining angle the points without it, between AE and the circumference. A mixed angle is greater than a rectilineal angle placed at A along its straight arm, on its side, when near A the rectilineal angle lies within it with whole small circles to spare, and less the other way about. The companions place every acute rectilineal angle so, and prove that the named points give the angles Euclid draws (`MixedAngle.WellFormed`); no addition, ratio or motion of mixed angles is claimed. The centre D is given, as Euclid's setting-out names it."
 
-[coverage]
-checked = [
-  "Every point of AE other than A is outside the circle.",
-  "Every other straight line through A has a point within the circle, so none can be interposed between AE and the circumference.",
-  "Porism: AE touches the circle (III.16 Por.).",
-]
-explains = [
-  "The second claim is what Euclid proves the angle clauses by. A rectilineal angle between them would need a straight line interposed.",
-]
-text_only = [
-  "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
-]
+[[passage]]
+at = "Since DA is equal to DC"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii DA and DC without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "But the angle DAC is right"
+kind = "helper"
+helper = "Tacit.adjacent_eq_of_right"
+note = "Euclid takes DAC to be right, as supposed. The Lean proves this for either ray of AE beneath the setting-out, using `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, for the ray beyond A from E; Heath prints no reference to I.13 here."
+
+[[passage]]
+at = "Therefore the straight line drawn from the point A at right angles to BA will not fall within"
+kind = "helper"
+helper = "Tacit.line_circle_beyond"
+note = "Euclid rules out a straight line entering the circle by the contradiction at C. From a supposed interior point P, the Lean obtains C on the circumference beyond P from A by `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, and applies the preceding contradiction."
 
 [[passage]]
 at = "Similarly we can prove that neither will it fall on the circumference"
@@ -344,29 +350,82 @@ kind = "grouped"
 note = "One step shows that no point of AE but A is on the circle; it gives both \"not within\" and \"not on the circumference\"."
 
 [[passage]]
+at = "For, if possible, let another straight line be so interposed"
+kind = "case"
+helper = "Prop1.perpendicular"
+note = "Euclid's figure keeps FA off the centre and G, the foot of DG, away from A. If FA passes through the centre, `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, supplies D within; otherwise I.12 draws DG and `Prop1.perpendicular`, proved using I.13, rules out G at A, since only one straight line there is at right angles to AD, with no reference to either proposition printed by Heath here."
+
+[[passage]]
+at = "and the angle DAG is less than a right angle"
+kind = "helper"
+helper = "BookI.Prop17"
+note = "Euclid takes the angle DAG to be less than a right angle without a printed reference here. The Lean uses I.17 in triangle DGA and removes the right angle at G from the inequality by `Magnitude.lt_of_add_lt_add_left`."
+
+[[passage]]
+at = "But DA is equal to DH"
+kind = "grouped"
+note = "Our proof names no point H: DG, less than the radius DA, puts G within the circle by `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), proved in `Elements/Figure/Incidence.lean`, which the supposed interposition forbids. One step carries both sentences."
+
+[[passage]]
+at = "Therefore another straight line cannot be interposed"
+kind = "grouped"
+note = "The conclusion of the second reductio, which the contradiction above has proved: the supposed FA has a point G within the circle."
+
+[[passage]]
 at = "I say further that the angle of the semicircle"
-kind = "unformalized"
-note = "Euclid's argument for the two angle clauses, which the clause map above accounts for."
+kind = "carried"
+helper = "Prop16.semicircle"
+note = "Proved as its own companion, III.16 semicircle."
+
+[[passage]]
+at = "and the remaining angle contained by the circumference CHA"
+kind = "carried"
+helper = "Prop16.remaining"
+note = "For the remaining angle, `Prop16.horn_within` excludes points on AF and on its far side, which would be within the circle near A. It uses `Tacit.same_side_or` (System E, Same side 5), proved in `Elements/Figure/Incidence.lean`, to put every point of the horn on E's side of AF."
+
+[[passage]]
+at = "For, if there is any rectilineal angle greater than the angle contained"
+kind = "different"
+helper = "Prop16.near_inside"
+note = "Euclid infers an interposed straight line from the supposed angle comparisons; the Lean instead uses `Prop16.near_inside` for containment and `near_across` for whole small circles of excess, through I.12, I.17, I.19, I.20 and III.2, for which Heath prints no references here. To put the interior point on the required ray, `Prop16.sameSideOf_of_inside` uses III.2 with `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`; `near_across` takes a crossing of the circumference by `Tacit.line_circle_between` (System E, Intersections 4), the two intersection rules being assumed."
+
+[[passage]]
+at = "But such a straight line cannot be interposed"
+kind = "different"
+note = "Euclid invokes the second part to rule out the supposed interposition. The companions use it directly through `Prop16.near_inside` to find a point of the acute angle's straight line within the circle, as the route note explains."
+
+[[passage]]
+at = "therefore there will not be any acute angle contained by straight lines"
+kind = "carried"
+helper = "Prop16.acute"
+note = "Euclid concludes for any acute rectilineal angle. `Prop16.acute` places it at A along AB and along AE by I.23, for which Heath prints no reference here, and applies the two comparisons."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop16.porism"
-note = "Proved as its own theorem, with its own certificate entry, III.16 Por."
+note = "Proved as its own theorem, III.16 Por., from the first part of the statement."
+
+[figure]
+case = "FA off the centre, with G distinct from A and between D and H; the mixed angles are on E's side of AB"
+note = "G is drawn within the circle and H beyond G, on the circumference, as the proof finds them; Heath's figure draws the supposition, with H between D and G. CA shows the first reductio's supposed perpendicular to AB; the perpendicular in the drawn geometry is AE."
 
 [review]
-stage = "exceptions"
-commit = "d040117"
-lean = "sha256:061379c1f0411141"
-text = "sha256:47c9097b39a8fcc7"
-reviewer = "Claude Opus 5.5"
-```
+stage = "full"
+commit = "e00da4b4"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:dd281e3d8032ec91"
+run = "brief 0005 stage 5, ship R3 (#29); the mixed-angle companions and their steps, written by Claude, read also by GPT-6 Astra (Codex); lines 105, 119 and 241 of Prop16.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 23ac78ba"
+text = "sha256:809acb7745556361"
 
-III.16's mixed angles have since been stated: [its current record](III/16.toml) has full
-scope, lists `"III.16 semicircle"`, `"III.16 remaining"` and `"III.16 acute"` as
-companions, and carries `mixed-angles-local` where this example carries
-`mixed-angles-omitted`, which no record now carries. The example above remains the fixture
-from commit d040117.
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
+```
 
 At d040117, I.40 was restricted: the theorem took the two bases end to end.
 

@@ -98,7 +98,7 @@ stage = "full"
 commit = "95b0f2c5c"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:4657e9f22c9cdec1"
-run = "brief 0005 stage 5, ship R3 (#29); lines 40, 144 and 177 of Prop33.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c"
+run = "brief 0005 stage 5, ship R3 (#29); lines 40, 144 and 177 of Prop33.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the unused declarations, by Claude Opus 5.5, reader R3-337-r2, at e00da4b4; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card 478, ship XS, from git and record evidence, added without a restamp: main Prop33 proof by OpenAI Codex (b5653d739); lines 40, 144 and 177 are Codex's code (b5653d739), their bullets joined by 908ad2065, which names no writer; cross-family reading: R3-337-r2, Claude Opus 5.5, read in full at e00da4b4 (382bed6b9, 24 October 2026), with the record as it now stands, before the two drops of 95b0f2c5c, written by Claude (66e7fb506) and read by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c (66e7fb506, 24 October 2026)"
 text = "sha256:4b4301cc7b44f731"
 
 [review.items]
