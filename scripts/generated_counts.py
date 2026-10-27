@@ -314,11 +314,11 @@ PRINT_AXIOMS = re.compile(r"#print\s+axioms")
 OPTION_WRAPPED_AXIOM_PIN = re.compile(
     rf"(?m)^[ \t]*set_option\s+{IDENTIFIER.pattern}{NAME_END}"
     rf"(?:(?!^[ \t]*set_option\b)[\s\S])*?\bin\s*{AXIOM_PIN.pattern}")
-LOCAL_OPTION_HEADER = re.compile(
-    rf"(?m)^[ \t]*set_option\s+{IDENTIFIER.pattern}{NAME_END}\s+(?:\S+\s+)?in\b")
+SET_OPTION_COMMAND = re.compile(
+    rf"(?<![\w.'!?₀-₉])set_option\s+{IDENTIFIER.pattern}{NAME_END}"
+    rf"\s+(?P<value>\S+)(?P<local>\s+in\b)?")
 LEAN_SCOPE_OPEN = re.compile(r"^[ \t]*(?:section|namespace)(?:[ \t]+.*)?$")
 LEAN_SCOPE_END = re.compile(r"^[ \t]*end(?:[ \t]+.*)?$")
-PERSISTENT_OPTION = re.compile(r"^[ \t]*set_option\b(?!.*\bin\b)")
 SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
 # table it may hold.
@@ -327,6 +327,7 @@ RULES_HEADER = "| Theorem under `Elements.Tacit` | System E label | Derivation a
 RULES_DELIMITER = "|---|---|---|"
 RULE_CELL = r"(?:\\.|[^|\\])*"
 RULE_ROW = re.compile(rf"\|\s*`({IDENTIFIER.pattern})`\s*\|{RULE_CELL}\|{RULE_CELL}\|")
+RULES_BOUNDARY = re.compile(r"^ {0,3}#{1,3}(?:[ \t]+|$)")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 LIST_MUTATORS = frozenset({"__delattr__", "__delitem__", "__iadd__", "__imul__", "__init__",
                            "__setattr__", "__setitem__", "append", "clear", "extend", "insert",
@@ -474,27 +475,28 @@ def superposition_dependency_checks(root):
 
 def persistent_option_pin(code):
     """Return the first axiom pin governed by a persistent set_option command."""
-    pins = iter(AXIOM_PIN.finditer(code))
-    pin = next(pins, None)
-    local_options = {code.count("\n", 0, match.start())
-                     for match in LOCAL_OPTION_HEADER.finditer(code)}
+    events = [(match.start(), "pin", match) for match in AXIOM_PIN.finditer(code)]
+    events.extend((match.start(), "option", match) for match in SET_OPTION_COMMAND.finditer(code)
+                  if match.group("local") is None)
     scopes = [False]
     offset = 0
-    for number, line in enumerate(code.splitlines(keepends=True)):
+    for line in code.splitlines(keepends=True):
         command = line.rstrip("\r\n")
         if LEAN_SCOPE_END.fullmatch(command):
+            events.append((offset, "end", None))
+        elif LEAN_SCOPE_OPEN.fullmatch(command):
+            events.append((offset, "open", None))
+        offset += len(line)
+    for _, kind, match in sorted(events, key=lambda event: event[0]):
+        if kind == "end":
             if len(scopes) > 1:
                 scopes.pop()
-        elif LEAN_SCOPE_OPEN.fullmatch(command):
+        elif kind == "open":
             scopes.append(False)
-        elif PERSISTENT_OPTION.match(command) and number not in local_options:
+        elif kind == "option":
             scopes[-1] = True
-        line_end = offset + len(line)
-        while pin is not None and pin.start() < line_end:
-            if any(scopes):
-                return pin
-            pin = next(pins, None)
-        offset = line_end
+        elif any(scopes):
+            return match
     return None
 
 
@@ -582,8 +584,7 @@ def rules_now_proved(root):
                 raise ValueError(f"{where}: expected the delimiter row {RULES_DELIMITER!r}")
             table = "rows"
             continue
-        heading = HEADING_LINE.match(line)
-        if heading and len(heading.group(1)) <= 3:
+        if RULES_BOUNDARY.match(line):
             break
         if FENCE.match(line) or "<!--" in without_markers(line) or UNDERLINE.fullmatch(line):
             raise ValueError(f"{where}: fenced code, a comment or an underline, which may hide "

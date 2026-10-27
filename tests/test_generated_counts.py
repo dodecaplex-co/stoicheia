@@ -290,6 +290,8 @@ def note : String := "#print axioms Elements.inString"
                  "a guarded pin under `set_option`"),
                 (original + "set_option pp.universes true\n#guard_msgs in\n"
                  "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
+                (original + "set_option pp.universes true #guard_msgs in "
+                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
                 (original + "section Outer\nset_option pp.universes true\n"
                  "section Inner\nend Inner\n#guard_msgs in\n"
                  "#print axioms Elements.third\nend Outer\n",
@@ -403,6 +405,14 @@ def note : String := "#print axioms Elements.inString"
             with self.subTest(prefix=prefix):
                 path.write_text(prefix + original)
                 self.assertEqual(counts.rules_now_proved(self.root), 3)
+
+    def test_rules_now_proved_stops_at_empty_atx_headings(self):
+        path = self.root / counts.FORMALIZATION
+        original = path.read_text()
+        for heading in ("#", " ##\t", "   ###   "):
+            with self.subTest(heading=heading):
+                path.write_text(original.replace("#### A later retirement", heading))
+                self.assertEqual(counts.rules_now_proved(self.root), 2)
 
     def test_rules_now_proved_requires_a_delimiter_immediately_after_a_header(self):
         path = self.root / counts.FORMALIZATION
