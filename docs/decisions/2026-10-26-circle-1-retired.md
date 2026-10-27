@@ -176,13 +176,14 @@
   came to 4,063,054 at P2's run; the three random searches draw again without the law and
   give 408,083, 408,046 and 407,697 where they gave 407,895, 408,049 and 407,637. The
   derived properties, Circle 1 among them since P1, keep their 9,895,990. The run also
-  rewrote the counts between MODEL.md's own markers.
+  rewrote the counts between MODEL.md's own markers. On 27 October 2026, with derived.py's
+  opening note left as main has it, the same command ran again at `d8c835de5cda`, and every
+  count above came out the same.
 
-  Each result file that run rewrites is approved in a sentence of its own. The angle and
-  area check's output, `tests/model/results/angle_che  Each file of results the run of 5ef38f3f wrote is approved here, one sentence apiece. For
+  Each file of results the run of d8c835de wrote is approved here, one sentence apiece. For
   Circle 1's retirement we approve `tests/model/results/angle_check.txt`, the checks of
   angles and areas. We approve `tests/model/results/exhaustive.txt` too, which enumerates
-  the grid in full without the retired law. As written at that commit,
+  the grid in full without the retired law. As written at d8c835de,
   `tests/model/results/grid_check.txt`, the second exact check of the grid, is approved.
   Written without Circle 1's hyperbolic law, `tests/model/results/hyperbolic.txt` is
   approved. With its fifteen weakened statements all caught,
@@ -192,4 +193,4 @@
   And the third seed's, `tests/model/results/search-seed3.txt`, is approved as redrawn.
   From the structured search after the retirement, `tests/model/results/structured.txt`
   is approved. Last, the summary table those runs give, `tests/model/results/summary.txt`,
-  is approved as 5ef38f3f wrote it.
+  is approved as d8c835de wrote it.
