@@ -194,6 +194,19 @@ one commit and runs safe_push.py against that origin:
   commit's own registry with the commit's own reader, alone, and refuses a reader that
   works only beside a module of its own; and an entry removed without a decisions entry
   naming it is refused, and with content it would judge, kept apart;
+- the workflows' contracts (#259): every job of every workflow is read as GitHub runs it,
+  a setting the model does not read refused, and each enforced job held to a contract of
+  its meaning, in any of the spellings the model reads alike (another, as "false" for
+  false, refuses), thirteen steps of logic by a digest of their lines, and three of them
+  also by their outcomes over their whole input tables, run under bash (a local run on
+  macOS's bash 3.2 may refuse a form CI's bash 5 accepts, failing closed); each weakening
+  of one, generated (a trigger, the job, a need, a step or a line dropped, a step added, a
+  failure suppressed, or a condition, a directory, a checkout or a timeout changed), is
+  refused; so is a workflow file in one of seven forms GitHub may read otherwise than PyYAML
+  (U+0085, U+2028 or U+2029, a % directive, a tag but the non-specific ! on a scalar, a
+  key <<, a key given twice, a flow collection over lines, and a link, anything else not
+  a regular file, or a folder of them that is a link), an if with text beside its ${{ }},
+  and a workflow without a contract;
 - replacement objects (#256), which git reads in place of the objects they replace while
   a push sends the originals: a token behind a clean stand-in, by `git replace` or in a
   folder GIT_REPLACE_REF_BASE names, is refused by the pre-push hook and by the
@@ -552,6 +565,617 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
     if commands != [RUN_CHECKS]:
         raise AssertionError("CI check job does not run the registry's checks exactly once")
     return commands
+
+
+# Every job of every workflow (#259), read as GitHub runs it: a workflow, a job or a step
+# with a setting this model does not read is refused, so that no new way to weaken a job
+# passes unread, and each enforced job is held to its contract (WORKFLOW_CONTRACTS).
+WORKFLOW_KEYS = frozenset({"name", "on", "permissions", "env", "defaults", "jobs"})
+JOB_KEYS = frozenset({"name", "runs-on", "permissions", "needs", "if", "continue-on-error",
+                      "timeout-minutes", "env", "defaults", "strategy", "outputs",
+                      "environment", "concurrency", "uses", "steps"})
+STEP_KEYS = frozenset({"name", "id", "uses", "with", "run", "if", "env", "shell",
+                       "working-directory", "continue-on-error"})
+# Line breaks to PyYAML, which reads YAML 1.1, and text to YAML 1.2 and to bash: PyYAML
+# may read two settings, or two commands, where YAML 1.2 reads one.
+FOREIGN_BREAKS = "\x85\N{LINE SEPARATOR}\N{PARAGRAPH SEPARATOR}"
+
+
+class WorkflowLoader(yaml.SafeLoader):
+    """A workflow's YAML with YAML 1.2's meanings where PyYAML would give YAML 1.1's: `on`
+    is a key and `no` a word, and a plain scalar is null, true, false, a decimal integer
+    with no leading zero, a decimal with a point, or else a string (036, which YAML 1.2
+    reads as 36, among them, so it matches no contract's number). Refused, since GitHub
+    may read them otherwise: a % directive; a tag, verbatim or not, but the non-specific !
+    written alone on a scalar, which makes it a string, as YAML 1.2 reads it; a key <<,
+    which YAML 1.1 reads as a merge; a key given twice in one mapping, which PyYAML reads
+    as its last value; and a flow collection that spans lines, whose indentation PyYAML
+    does not check."""
+
+    def __init__(self, stream):
+        super().__init__(stream)
+        self.flow_lines = []  # The line of each flow collection open.
+
+    def fetch_directive(self):
+        raise yaml.scanner.ScannerError(None, None, "a % directive is refused",
+                                        self.get_mark())
+
+    def fetch_flow_collection_start(self, TokenClass):
+        self.flow_lines.append(self.line)
+        super().fetch_flow_collection_start(TokenClass)
+
+    def fetch_flow_collection_end(self, TokenClass):
+        if self.flow_lines and self.flow_lines.pop() != self.line:
+            raise yaml.scanner.ScannerError(None, None, "a flow collection that spans lines "
+                                            "is refused", self.get_mark())
+        super().fetch_flow_collection_end(TokenClass)
+
+    def scan_tag(self):
+        if self.peek(1) == "<":
+            raise yaml.scanner.ScannerError(None, None, "a verbatim tag is refused",
+                                            self.get_mark())
+        return super().scan_tag()
+
+    def compose_node(self, parent, index):
+        event = self.peek_event()
+        tag = getattr(event, "tag", None)  # An alias has none.
+        if tag not in (None, "!") or tag == "!" and not isinstance(event, yaml.ScalarEvent):
+            raise yaml.composer.ComposerError(None, None, f"the tag {tag} is refused",
+                                              event.start_mark)
+        if tag == "!":
+            event.tag = "tag:yaml.org,2002:str"
+        return super().compose_node(parent, index)
+
+    def construct_mapping(self, node, deep=False):
+        if any(isinstance(key, yaml.ScalarNode) and key.value == "<<" for key, _ in node.value):
+            raise yaml.constructor.ConstructorError(None, None, "a key << is refused",
+                                                    node.start_mark)
+        mapping = super().construct_mapping(node, deep=deep)
+        if len(mapping) != len(node.value):
+            raise yaml.constructor.ConstructorError(None, None, "a key is given twice",
+                                                    node.start_mark)
+        return mapping
+
+
+WorkflowLoader.yaml_implicit_resolvers = {}
+for _tag, _pattern, _first in (("null", r"~|null|Null|NULL|", ["~", "n", "N", ""]),
+                               ("bool", r"true|True|TRUE|false|False|FALSE", list("tTfF")),
+                               ("int", r"[-+]?(?:0|[1-9][0-9]*)", list("-+0123456789")),
+                               ("float", r"[-+]?(?:[0-9]+\.[0-9]*|\.[0-9]+)",
+                                list("-+.0123456789"))):
+    WorkflowLoader.add_implicit_resolver(f"tag:yaml.org,2002:{_tag}",
+                                         re.compile(rf"^(?:{_pattern})$"), _first)
+
+
+def load_workflow(text: str, place: str):
+    """A workflow file's text, read by WorkflowLoader, or refused where GitHub might read it
+    otherwise: a character of FOREIGN_BREAKS, or a form WorkflowLoader refuses."""
+    breaks = sorted(f"U+{ord(c):04X}" for c in set(FOREIGN_BREAKS) & set(text))
+    try:
+        if breaks:
+            raise yaml.YAMLError(f"it holds {', '.join(breaks)}, a line break to PyYAML and "
+                                 "none to YAML 1.2")
+        return yaml.load(text, Loader=WorkflowLoader)
+    except yaml.YAMLError as exc:
+        raise AssertionError(f"{place} may be read otherwise by GitHub: {exc}") from None
+
+
+def read_workflows(root: Path) -> dict[str, object]:
+    """Each .yml or .yaml file of root's .github/workflows/, by its name, read raw; one that
+    is a symbolic link, or not a regular file, refused, and so is either folder as a link,
+    since GitHub reads the tree's entry, which may not be the text read here."""
+    paths = [path for path in sorted((root / ".github/workflows").iterdir())
+             if path.suffix.lower() in (".yml", ".yaml")]
+    if odd := [path.name for path in paths if path.is_symlink() or not path.is_file()] + [
+            str(path.relative_to(root)) for path in (root / ".github", root / ".github/workflows")
+            if path.is_symlink()]:
+        raise AssertionError(f"{', '.join(odd)}: a symbolic link or not a regular file, which "
+                             "GitHub may read otherwise")
+    return {path.name: load_workflow(path.read_text(encoding="utf-8"), path.name)
+            for path in paths}
+
+
+def setting_meaning(mapping, keys: frozenset[str], place: str) -> dict:
+    """A workflow's, a job's or a step's settings, any not in `keys` refused; an `if`
+    without the ${{ }} GitHub reads it without, and refused if ${{ or }} stands anywhere
+    else in it, as text beside the expression makes it a string, which is always true;
+    and no continue-on-error that is false, GitHub's default."""
+    if not isinstance(mapping, dict):
+        raise AssertionError(f"{place} is not a mapping")
+    if unknown := sorted(map(str, set(mapping) - keys)):
+        raise AssertionError(f"{place} has a setting the model does not read: "
+                             f"{', '.join(unknown)}")
+    meaning = {key: value for key, value in mapping.items()
+               if not (key == "continue-on-error" and value is False)}
+    if isinstance(meaning.get("if"), str):
+        condition = meaning["if"]
+        if condition.startswith("${{") and condition.endswith("}}"):
+            condition = condition[3:-2]
+        if "${{" in condition or "}}" in condition:
+            raise AssertionError(f"{place} has an if with text outside its ${{{{ }}}}")
+        meaning["if"] = condition.strip()
+    return meaning
+
+
+def workflow_meaning(workflow, place: str) -> dict:
+    """A workflow's meaning (setting_meaning): its triggers as a mapping of each event to its
+    filters, None for none, however written; each job's, the jobs it needs as a sorted
+    tuple; and each step's, without its name, which is shown and never run, and with its
+    run as its lines, split at line feeds alone, as bash splits them."""
+    meaning = setting_meaning(workflow, WORKFLOW_KEYS, place)
+    events = meaning.get("on")
+    if isinstance(events, (str, list)):
+        events = dict.fromkeys([events] if isinstance(events, str) else events)
+    if not isinstance(events, dict) or not isinstance(meaning.get("jobs"), dict):
+        raise AssertionError(f"{place} has no mapping of its triggers or of its jobs")
+    meaning["on"] = {event: filters or None for event, filters in events.items()}
+    jobs = meaning["jobs"] = {name: setting_meaning(job, JOB_KEYS, f"{place} job {name}")
+                              for name, job in meaning["jobs"].items()}
+    for name, job in jobs.items():
+        needs = [job["needs"]] if isinstance(job.get("needs"), str) else job.get("needs", [])
+        if not isinstance(needs, list) or not all(isinstance(need, str) for need in needs) \
+                or not isinstance(job.get("steps", []), list):
+            raise AssertionError(f"{place} job {name} needs what is not a job, or has no "
+                                 "list of steps")
+        if "needs" in job:
+            job["needs"] = tuple(sorted(needs))
+        if "steps" in job:
+            job["steps"] = tuple(setting_meaning(step, STEP_KEYS, f"{place} job {name} step {n}")
+                                 for n, step in enumerate(job["steps"], 1))
+        for n, step in enumerate(job.get("steps", ()), 1):
+            step.pop("name", None)
+            if not isinstance(step.get("run", ""), str):
+                raise AssertionError(f"{place} job {name} step {n} runs no text")
+            if "run" in step:
+                step["run"] = tuple(step["run"].removesuffix("\n").split("\n"))
+    return meaning
+
+
+@dataclass(frozen=True)
+class Script:
+    """A contract's run of a step of logic, held by the first 128 bits of the SHA-256 of
+    its lines (script_digest): a lock on its text, not a statement of what it does. A
+    change to any line, a message's too, changes them, and the refusal gives the digest of
+    the lines found."""
+    digest: str
+
+
+def script_digest(lines: tuple[str, ...]) -> str:
+    return hashlib.sha256("\n".join(lines).encode()).hexdigest()[:32]
+
+
+@dataclass(frozen=True)
+class Table(Script):
+    """A Script whose contract also says what its lines do, as evidence beside the lock: for
+    each row of its `inputs` (each variable of its environment, with its values), the exit
+    status and the lines of GITHUB_OUTPUT that `outcome` gives the row (table_difference)."""
+    inputs: tuple
+    outcome: object
+
+    def rows(self) -> list[dict]:
+        return [dict(zip(dict(self.inputs), values))
+                for values in itertools.product(*dict(self.inputs).values())]
+
+
+TABLE_DIFFERENCES = {}  # A run's lines and its Table: table_difference, so each runs once.
+
+
+def table_difference(lines: tuple[str, ...], table: Table) -> str | None:
+    """The first row of `table` in which the run's `lines`, run as GitHub runs a step with
+    no shell named, `bash -e` over a file of them, with the row and GITHUB_OUTPUT alone as
+    its environment, ends otherwise than its outcome says; None if none does. It shows
+    what the lines do over the table, not that they read nothing else: that is for the
+    review of a change to them, which changes their digest."""
+    if (lines, table) not in TABLE_DIFFERENCES:
+        from concurrent.futures import ThreadPoolExecutor
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp, "step.sh")
+            script.write_text("\n".join(lines) + "\n")
+
+            def run(numbered: tuple[int, dict]) -> tuple:
+                number, row = numbered
+                output = Path(tmp, str(number))
+                output.write_text("")
+                status = subprocess.run([shutil.which("bash"), "-e", str(script)],
+                                        stdin=subprocess.DEVNULL, capture_output=True,
+                                        timeout=60, env={"GITHUB_OUTPUT": str(output), **row})
+                return row, (status.returncode, tuple(output.read_text().splitlines()))
+
+            with ThreadPoolExecutor(8) as pool:
+                TABLE_DIFFERENCES[lines, table] = next((
+                    f"with {row}, exit {got[0]} and output {list(got[1])}, not exit "
+                    f"{table.outcome(row)[0]} and output {list(table.outcome(row)[1])}"
+                    for row, got in pool.map(run, enumerate(table.rows()))
+                    if got != table.outcome(row)), None)
+                pool.shutdown(cancel_futures=True)
+    return TABLE_DIFFERENCES[lines, table]
+
+
+def contract_differences(found, wanted, place: str) -> list[str]:
+    """Where `found`, a meaning, differs from `wanted`, its contract: type for type, so that
+    0 is not false nor "30" 30, a Script matching the lines whose digest it holds, and a
+    Table each row's outcome too."""
+    if isinstance(wanted, Script):
+        digest = script_digest(found) if isinstance(found, tuple) else None
+        problems = [] if digest == wanted.digest else [f"{place}: {digest}, not {wanted.digest}"]
+        if isinstance(wanted, Table) and digest and (rows := table_difference(found, wanted)):
+            problems.append(f"{place}: {rows}")
+        return problems
+    if type(found) is not type(wanted):
+        return [f"{place}: {found!r}, not {wanted!r}"]
+    if isinstance(wanted, dict):
+        return [f"{place} {key}: {'not in the contract' if key in found else 'missing'}"
+                for key in sorted(set(found) ^ set(wanted), key=str)] + [
+            difference for key in wanted if key in found
+            for difference in contract_differences(found[key], wanted[key], f"{place} {key}")]
+    if isinstance(wanted, (list, tuple)) and len(found) != len(wanted):
+        return [f"{place}: {len(found)} items, not {len(wanted)}"]
+    if isinstance(wanted, (list, tuple)):
+        return [difference for number, pair in enumerate(zip(found, wanted), 1)
+                for difference in contract_differences(*pair, f"{place} {number}")]
+    return [] if found == wanted else [f"{place}: {found!r}, not {wanted!r}"]
+
+
+def hold_to_contracts(workflows: dict[str, object]) -> None:
+    """Hold each workflow, read raw (read_workflows), to its contract: every workflow has
+    one and every contract a workflow; each enforced job means what its contract says, no
+    more and no less; and each other job is one its contract names, with its reason, and
+    holds the settings named beside it."""
+    problems = [f"{name}: a workflow with no contract"
+                for name in workflows if name not in WORKFLOW_CONTRACTS]
+    for name, contract in WORKFLOW_CONTRACTS.items():
+        if name not in workflows:
+            problems.append(f"{name}: a contract with no workflow")
+            continue
+        found = workflow_meaning(workflows[name], name)
+        jobs = {job: {**found["jobs"].get(job, {}), **spec[1]} if isinstance(spec, tuple)
+                else spec for job, spec in contract["jobs"].items()}
+        problems += contract_differences(found, {**contract, "jobs": jobs}, name)
+    if problems:
+        raise AssertionError("the workflows differ from their contracts:\n" + "\n".join(problems))
+
+
+def when(condition: str, *steps: dict) -> tuple[dict, ...]:
+    """`steps`, each run only when `condition` holds."""
+    return tuple({**step, "if": condition} for step in steps)
+
+
+# The contracts (#259): what each enforced job means, as workflow_meaning reads it, written
+# here so that a change to a job's meaning changes its contract with it, where review sees
+# it. The cadence's report, which acts on others' results and checks nothing, is named with
+# its reason and the settings held of it; the model reads it all the same. Each Script and
+# each Table is a step of logic, what it does said above it.
+CHECKOUT = {"uses": "actions/checkout@v5", "with": {"persist-credentials": False}}
+HISTORY = {"uses": "actions/checkout@v5", "with": {"fetch-depth": 0, "persist-credentials": False}}
+AFTER = {"uses": HISTORY["uses"], "with": {**HISTORY["with"], "ref": "${{ github.event.after }}"}}
+PUSH = {"GH_TOKEN": "${{ github.token }}", "REPOSITORY": "${{ github.repository }}",
+        "BEFORE": "${{ github.event.before }}", "AFTER": "${{ github.event.after }}"}
+RESULTS = ("success", "failure", "cancelled", "skipped", "")
+CLASSES = ("R0", "R1", "R2", "R3", "R4", "R5")
+
+
+def lane(digest: str, full, **inputs) -> Table:
+    """A lane step, its lines' digest and, over the risk job's result, its class (R0 to R5,
+    or R6, r5 or none) and `inputs`: red, writing nothing, unless the risk job succeeded and
+    `full` gives the row True or False; then full=true or full=false."""
+    return Table(digest,
+                 (("RESULT", RESULTS), ("CLASS", (*CLASSES, "R6", "r5", "")), *inputs.items()),
+                 lambda row: (1, ()) if row["RESULT"] != "success" or full(row) is None
+                 else (0, (f"full={str(full(row)).lower()}",)))
+
+
+PYTHON = {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}}
+ELAN = {"run": ELAN_INSTALL}
+BUILD = {"run": ("lake build", "lake env lean Certificate/Facts.lean")}
+NEGATIVE_TESTS = {"run": ("python3 scripts/negative_tests.py",)}
+YAML_INSTALL = {"run": ("python3 -m pip install -r scripts/requirements-test_safe_push.txt",)}
+LANE = "steps.lane.outputs.full == 'true'"  # Units.LANE_CONDITION
+RISK = {"RESULT": "${{ needs.risk.result }}", "CLASS": "${{ needs.risk.outputs.class }}"}
+GROUP, NOT_GROUP = "github.event_name == 'merge_group'", "github.event_name != 'merge_group'"
+GROUP_ENV = {"GH_TOKEN": "${{ github.token }}", "REPOSITORY": "${{ github.repository }}",
+             "GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
+             "GROUP_BASE": "${{ github.event.merge_group.base_sha }}",
+             "STOICHEIA_REVERT_BOT": "${{ vars.STOICHEIA_REVERT_BOT }}"}
+READS = {"contents": "read", "pull-requests": "read", "actions": "read", "issues": "read"}
+# The formal model after its checkout, in CI's formal-model job and the cadence's
+# formal-model-kernel: the lock, Mathlib's cache, the build in model/ and the kernel's check.
+FORMAL_MODEL = (
+    ELAN, {"run": ("grep -v '^#' model/lock.sha256 | shasum -a 256 -c -",)},
+    {"uses": "actions/cache@v5",
+     "with": {"path": "model/.lake/packages\n~/.cache/mathlib\n",
+              "key": "formal-model-packages-${{ runner.os }}-"
+                     "${{ hashFiles('model/lake-manifest.json') }}"}},
+    {"working-directory": "model", "run": ("lake exe cache get",)},
+    {"working-directory": "model", "run": ("lake build",)},
+    {"run": ("python3 scripts/check_model_kernel.py --self-test",
+             "python3 scripts/check_model_kernel.py")})
+WORKFLOW_CONTRACTS = {
+    "ci.yml": {
+        "name": "CI", "on": {"pull_request": None, "merge_group": None, "workflow_call": None},
+        "permissions": {"contents": "read"},
+        "jobs": {
+            "risk": {
+                "runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                "timeout-minutes": 10,
+                "outputs": {"class": "${{ steps.classify.outputs.class }}",
+                            "formal_model": "${{ steps.classify.outputs.formal_model }}"},
+                "steps": (HISTORY, {
+                    "id": "classify",
+                    "env": {"EVENT": "${{ github.event_name }}", "REF": "${{ github.ref }}",
+                            "BASE_REF": "${{ github.base_ref }}",
+                            "HEAD_SHA": "${{ github.event.pull_request.head.sha }}",
+                            "RELEASE": "${{ contains(github.event.pull_request.labels.*.name,"
+                                       " 'release') }}"},
+                    # R5, but for a pull request into main, unlabelled release, checked out
+                    # as GitHub's merge, which main's scripts/risk.py classifies if it has one.
+                    "run": Script("436fd10e4d811be19ea01e7bdbb7300d")})},
+            "check": {"runs-on": "ubuntu-latest", "steps": (
+                CHECKOUT, PYTHON, ELAN, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
+                {"run": (RUN_CHECKS,)})},
+            "negative": {
+                "needs": ("risk",), "if": "always()", "runs-on": "ubuntu-latest", "steps": (
+                    # Full for R3 to R5, not for R0 to R2; else, or if the risk job did not
+                    # succeed, red.
+                    {"id": "lane", "env": RISK, "run": lane(
+                        "ab845bc546996a52ffbbe227cb9ec3ae",
+                        lambda row: row["CLASS"] in CLASSES[3:] if row["CLASS"] in CLASSES
+                        else None)},
+                    *when(LANE, CHECKOUT, PYTHON, ELAN, BUILD, NEGATIVE_TESTS))},
+            "model": {"runs-on": "ubuntu-latest", "steps": (
+                CHECKOUT, PYTHON, {"run": ("python3 -I tests/model/run.py --fast",)},
+                {"run": ("python3 -I tests/model/results_check.py",)})},
+            "formal-model": {
+                "needs": ("risk",), "if": "always()", "runs-on": "ubuntu-latest",
+                "timeout-minutes": 30, "steps": (
+                    # Full for R4, R5 and formal_model true, not for R0 to R3 with it false;
+                    # else, or if the risk job did not succeed, red.
+                    {"id": "lane",
+                     "env": {**RISK, "FORMAL_MODEL": "${{ needs.risk.outputs.formal_model }}"},
+                     "run": lane(
+                         "862fb01750843f2c10e590fb48c47ef0",
+                         lambda row: row["CLASS"] in CLASSES[4:] or {
+                             "true": True, "false": False}.get(row["FORMAL_MODEL"])
+                         if row["CLASS"] in CLASSES else None,
+                         FORMAL_MODEL=("true", "false", ""))},
+                    *when(LANE, CHECKOUT, *FORMAL_MODEL))},
+            "acceptance": {
+                "runs-on": "ubuntu-latest", "timeout-minutes": 60,
+                "env": {"ACCEPTANCE_GATE": "ratchet"}, "steps": (
+                    HISTORY, PYTHON, ELAN,
+                    # MAIN_SHA, main for the event and an ancestor of the checkout, or red.
+                    {"run": Script("bd4d63c2ad732ea90703d4fb48a71770")},
+                    {"run": ("python3 -I tests/test_check_acceptance.py",)},
+                    {"run": ("lake build", "lake build Audit",
+                             "lake env lean Certificate/Facts.lean")},
+                    # The checklist's verdicts: red for a status above 1, or above 0 where
+                    # the gate is full, and for a gate neither ratchet nor full.
+                    {"run": Script("8ec6343e948147054abf7d2b2e3aaae4")},
+                    *when("env.ACCEPTANCE_GATE == 'ratchet'",
+                          # Main's verdicts, at MAIN_SHA with these checks: red above status 1.
+                          {"run": Script("7005c73c6b4e1cdfa1d2fffb9e9aa1d2")},
+                          {"run": ('python3 scripts/check_acceptance.py --compare'
+                                   ' "$RUNNER_TEMP/acceptance/main.json"'
+                                   ' "$RUNNER_TEMP/acceptance/verdicts.json"',)}),
+                    {"if": "always()", "uses": "actions/upload-artifact@v5",
+                     "with": {"name": "acceptance", "path": "${{ runner.temp }}/acceptance/"}})},
+            "queue-integrity": {
+                "runs-on": "ubuntu-latest", "timeout-minutes": 20, "permissions": READS,
+                "steps": (
+                    HISTORY, PYTHON,
+                    *when(NOT_GROUP, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
+                          {"run": ("python3 -I tests/test_check_queue.py",
+                                   "python3 -I tests/test_check_train.py",
+                                   "python3 -I tests/test_auto_revert.py")}),
+                    # The group judged by its base's check_queue.py, or red if it has none.
+                    {"if": GROUP, "env": GROUP_ENV,
+                     "run": Script("78503063a56c338cbe24f7705c7deb52")})},
+            "queue-gaps": {
+                "needs": ("acceptance",), "if": "always()", "runs-on": "ubuntu-latest",
+                "timeout-minutes": 75, "permissions": READS, "steps": (
+                    {"env": {"ACCEPTANCE_RESULT": "${{ needs.acceptance.result }}"},
+                     "run": ('test "$ACCEPTANCE_RESULT" = success',)},
+                    *when(GROUP, HISTORY, PYTHON, {
+                        "env": {"GH_TOKEN": "${{ github.token }}",
+                                "REPOSITORY": "${{ github.repository }}",
+                                "RUN_ID": "${{ github.run_id }}"},
+                        "run": ('gh run download "$RUN_ID" --repo "$REPOSITORY" --name'
+                                ' acceptance --dir "$RUNNER_TEMP/acceptance"',
+                                'test -s "$RUNNER_TEMP/acceptance/verdicts.json"')}, {
+                        # The gap tests' plan, by the base's check_queue.py, or red without it.
+                        "env": {**GROUP_ENV, "ACCEPTANCE_VERDICTS":
+                                "${{ runner.temp }}/acceptance/verdicts.json"},
+                        "run": Script("6f217d2f3f62f9455f4412866c0818ac")}, {
+                        "working-directory": PIP_DIRECTORY,
+                        "run": ('python3 -I -m pip install -r'
+                                ' "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"',)}, {
+                        "env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}"},
+                        "run": ('test "$(git rev-parse HEAD)" = "$GROUP_HEAD"',
+                                'python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan'
+                                ' "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"')}))}}},
+    "post-merge.yml": {
+        "name": "Post-merge", "on": {"push": {"branches": ["main"]}},
+        "permissions": {"contents": "read"},
+        "jobs": {
+            "integration": {"permissions": READS, "uses": "./.github/workflows/ci.yml"},
+            "revert": {
+                "needs": ("integration",), "if": "failure()", "runs-on": "ubuntu-latest",
+                "environment": "auto-revert",
+                "permissions": {"contents": "write", "issues": "write", "actions": "read",
+                                "pull-requests": "read"},
+                "env": {**PUSH, "RUN_ID": "${{ github.run_id }}",
+                        "RUN_URL": "${{ github.server_url }}/${{ github.repository }}"
+                                   "/actions/runs/${{ github.run_id }}"},
+                "steps": (AFTER, {
+                    # The failed jobs of this attempt, read from GitHub, in a file it names,
+                    # and whether they could be read.
+                    "if": "always()", "id": "failed", "shell": "bash",
+                    "env": {"RUN_ATTEMPT": "${{ github.run_attempt }}"},
+                    "run": Script("ad3b617a315711f8a2bc284db278465c")}, {
+                    # The previous main's scripts/auto_revert.py, if its post-merge run
+                    # succeeded; else none, and why.
+                    "if": "always()", "id": "trusted", "shell": "bash",
+                    "run": Script("a583381e2808cc8aa43889e694d93c6f")}, {
+                    "if": "always() && steps.trusted.outputs.script != ''"
+                          " && steps.failed.outputs.readable == 'true'",
+                    "env": {"GITHUB_TOKEN": "${{ github.token }}",
+                            "STOICHEIA_REVERT_APP_ID": "${{ secrets.STOICHEIA_REVERT_APP_ID }}",
+                            "STOICHEIA_REVERT_APP_KEY": "${{ secrets.STOICHEIA_REVERT_APP_KEY }}",
+                            "TRUSTED_SCRIPT": "${{ steps.trusted.outputs.script }}",
+                            "FAILED_JOBS": "${{ steps.failed.outputs.path }}"},
+                    "run": ('python3 -I "$TRUSTED_SCRIPT" --before "$BEFORE" --after "$AFTER" \\',
+                            '  --repo "$REPOSITORY" --run-url "$RUN_URL" --failed-jobs'
+                            ' "$(cat "$FAILED_JOBS")"')}, {
+                    # Else an issue labelled blocks-release and main-red, by shell alone,
+                    # naming the push's trains and failed jobs; then red.
+                    "if": "always() && (steps.trusted.outputs.script == ''"
+                          " || steps.failed.outputs.readable != 'true')", "shell": "bash",
+                    "env": {"FAILED_JOBS": "${{ steps.failed.outputs.path }}",
+                            "TRUST_FAILURE": "${{ steps.trusted.outputs.reason }}"},
+                    "run": Script("1cb0190d4a4cf0f7197096ed2aece92f")})},
+            "clear": {
+                "needs": ("integration",), "if": "needs.integration.result == 'success'",
+                "runs-on": "ubuntu-latest",
+                "permissions": {"contents": "read", "actions": "read", "issues": "write"},
+                "env": {**PUSH, "GITHUB_TOKEN": "${{ github.token }}",
+                        "RUNS_URL": "${{ github.server_url }}/${{ github.repository }}"
+                                    "/actions/runs"},
+                # main-red lifted from each open issue whose After is this push or before
+                # it, while main's tip is this push; if main has moved on, nothing.
+                "steps": (AFTER, {"shell": "bash",
+                                  "run": Script("14d2173eabf07dbf2c70ebda4e1c99c3")})}}},
+    "release-gate.yml": {
+        "name": "Release gate", "permissions": {},
+        "on": {"pull_request": {"types": ["opened", "synchronize", "reopened", "labeled",
+                                          "unlabeled", "ready_for_review"]}},
+        "jobs": {"release-gate": {
+            "if": "contains(github.event.pull_request.labels.*.name, 'release')",
+            "runs-on": "ubuntu-latest",
+            "permissions": {"issues": "read", "pull-requests": "read", "contents": "read"},
+            "steps": ({"uses": "actions/checkout@v5",
+                       "with": {"persist-credentials": False,
+                                "ref": "${{ github.event.pull_request.base.sha }}"}}, PYTHON,
+                      {"env": {"GH_TOKEN": "${{ github.token }}"},
+                       "run": ("python3 scripts/check_release_gate.py"
+                               ' --repo "${{ github.repository }}"',)})}}},
+    "safe-push-tests.yml": {
+        "name": "Safe-push tests", "permissions": {},
+        "on": {"schedule": [{"cron": "17 */6 * * *"}], "workflow_dispatch": None},
+        "jobs": {
+            "safe-push-shards": {
+                "runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                "timeout-minutes": 60,
+                "strategy": {"fail-fast": False, "matrix": {"shard": [1, 2, 3, 4, 5, 6, 7, 8]}},
+                "steps": (HISTORY, PYTHON, YAML_INSTALL, {"run": (
+                    "set -o pipefail", "python3 scripts/test_safe_push.py --shard"
+                    " ${{ matrix.shard }}/${{ strategy.job-total }}"
+                    ' --ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json" 2>&1'
+                    ' | tee "$RUNNER_TEMP/test_safe_push-${{ matrix.shard }}.log"')},
+                    *when("always()", {
+                        "uses": "actions/upload-artifact@v5",
+                        "with": {"name": "safe-push-ran-${{ matrix.shard }}",
+                                 "path": "${{ runner.temp }}/ran-${{ matrix.shard }}.json",
+                                 "if-no-files-found": "error", "retention-days": 35,
+                                 "overwrite": True}}, {
+                        "uses": "actions/upload-artifact@v5",
+                        "with": {"name": "test_safe_push-log-${{ matrix.shard }}",
+                                 "path": "${{ runner.temp }}/test_safe_push-"
+                                         "${{ matrix.shard }}.log",
+                                 "if-no-files-found": "ignore", "retention-days": 35,
+                                 "overwrite": True}}))},
+            "safe-push-tests": {
+                "needs": ("safe-push-shards",), "if": "always()", "runs-on": "ubuntu-latest",
+                "permissions": {"contents": "read"}, "timeout-minutes": 10, "steps": (
+                    HISTORY, PYTHON, {**YAML_INSTALL, "id": "install"},
+                    {"id": "fetch", "uses": "actions/download-artifact@v5",
+                     "with": {"pattern": "safe-push-ran-*",
+                              "path": "${{ runner.temp }}/safe-push-ran"}},
+                    {"id": "cover", "if": "always() && steps.install.outcome == 'success'",
+                     "run": ("python3 scripts/test_safe_push.py --cover"
+                             ' "$RUNNER_TEMP/safe-push-ran"',)},
+                    # Red unless the shards succeeded and the proof passed.
+                    {"id": "verdict", "if": "always()",
+                     "env": {"SHARDS": "${{ needs.safe-push-shards.result }}",
+                             "COVER": "${{ steps.cover.outcome }}"},
+                     "run": Table("464d7f98a3394f2e76a2af39e0023866",
+                                  (("SHARDS", RESULTS), ("COVER", RESULTS)), lambda row: (
+                                      0 if row["SHARDS"] == row["COVER"] == "success" else 1,
+                                      ()))})},
+            "negative-tests": {"runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                               "timeout-minutes": 120,
+                               "steps": (CHECKOUT, PYTHON, ELAN, BUILD, NEGATIVE_TESTS)},
+            "formal-model-kernel": {"runs-on": "ubuntu-latest", "timeout-minutes": 60,
+                                    "permissions": {"contents": "read"},
+                                    "steps": (CHECKOUT, *FORMAL_MODEL)},
+            "report": ("it opens or updates an issue on the others' results, checking "
+                       "nothing; CadenceReport runs its step",
+                       {"permissions": {"issues": "write"}, "concurrency": {
+                           "group": "safe-push-tests-report", "cancel-in-progress": False}})}}}
+
+
+def weakenings(workflows: dict[str, object]) -> list[tuple[str, object]]:
+    """Each weakening of an enforced job, as (label, edit), the edit changing in place a copy
+    of the workflows read raw: a trigger, the job, a job it needs, a step or a line of a run
+    dropped; a step added first; the job or a step set to continue on error, or given
+    another if or none; a longer timeout; another workflow called; a run made `true`, run
+    elsewhere, or with its failure suppressed by `|| true`, `set +e` or a last `exit 0`; a
+    checkout of another ref or history, or keeping its token; and, of a job named with its
+    reason, another value of a setting held of it."""
+    def settings(mapping) -> dict:
+        return {"set to continue on error": lambda m: m.update({"continue-on-error": True}),
+                "given another if": lambda m: m.update({"if": "github.event_name == 'other'"}),
+                **({"without its if": lambda m: m.pop("if")} if "if" in mapping else {})}
+
+    def ending(step, text):
+        step.update(run=step["run"].rstrip("\n") + text)
+
+    cases = []
+    for name, workflow in workflows.items():
+        cases += [(f"{name}: without its {event} trigger",
+                   lambda w, n=name, e=event: w[n]["on"].pop(e)) for event in workflow["on"]]
+        for job_id, spec in WORKFLOW_CONTRACTS[name]["jobs"].items():
+            job, where = workflow["jobs"][job_id], f"{name} job {job_id}"
+            if isinstance(spec, tuple):
+                cases += [(f"{where}: given another {key}", lambda w, n=name, j=job_id, k=key:
+                           w[n]["jobs"][j].update({k: "other"})) for key in spec[1]]
+                continue
+            needs = [job["needs"]] if isinstance(job.get("needs"), str) else job.get("needs", [])
+            steps = job.get("steps", [])
+            cases.append((f"{where}: dropped", lambda w, n=name, j=job_id: w[n]["jobs"].pop(j)))
+            edits = {**settings(job), "given a longer timeout": lambda j: j.update(
+                         {"timeout-minutes": j.get("timeout-minutes", 360) + 1}),
+                     **{f"without its need of {need}": lambda j, rest=[n for n in needs
+                                                                       if n != need]:
+                        j.update(needs=rest) for need in needs},
+                     **({"calling another workflow": lambda j: j.update(uses="./other.yml")}
+                        if "uses" in job else {}),
+                     **({"with a step added first": lambda j: j["steps"].insert(
+                         0, {"run": "true"})} if steps else {}),
+                     **{f"without its step {i}": lambda j, i=i: j["steps"].pop(i - 1)
+                        for i in range(1, len(steps) + 1)}}
+            cases += [(f"{where}: {label}", lambda w, n=name, j=job_id, e=edit: e(w[n]["jobs"][j]))
+                      for label, edit in edits.items()]
+            for i, step in enumerate(steps, 1):
+                edits = settings(step)
+                if "run" in step:
+                    lines = step["run"].removesuffix("\n").split("\n")
+                    edits.update({
+                        "made true": lambda s: s.update(run="true"),
+                        "suppressed by || true": lambda s: ending(s, " || true"),
+                        "suppressed by set +e": lambda s: s.update(run="set +e\n" + s["run"]),
+                        "suppressed by a last exit 0": lambda s: ending(s, "\nexit 0"),
+                        "run elsewhere": lambda s: s.update({"working-directory": "elsewhere"}),
+                        **{f"without its line {k}": lambda s, k=k, lines=lines: s.update(
+                            run="\n".join(lines[:k - 1] + lines[k:]))
+                           for k in range(1, len(lines) + 1)}})
+                if str(step.get("uses")).startswith("actions/checkout@"):
+                    edits.update({f"checking out {label}": lambda s, change=change: s.setdefault(
+                        "with", {}).update(change) for label, change in (
+                            ("another ref", {"ref": "refs/heads/other"}),
+                            ("another history", {"fetch-depth": 2}),
+                            ("keeping its token", {"persist-credentials": True}))})
+                cases += [(f"{where} step {i}: {label}", lambda w, n=name, j=job_id, i=i, e=edit:
+                           e(w[n]["jobs"][j]["steps"][i - 1])) for label, edit in edits.items()]
+    return cases
 
 
 def with_branch(args) -> tuple:
@@ -12468,6 +13092,213 @@ class Units(unittest.TestCase):
             for job, step in checkouts:
                 with self.subTest(workflow=name, job=job):
                     self.assertIs(step.get("with", {}).get("persist-credentials"), False)
+
+    def test_every_workflow_job_keeps_its_contract(self):
+        # #259: every job of every workflow is read, each enforced job means what its
+        # contract says, and a setting the model does not read refuses in any workflow, job
+        # or first step, enforced or not; so does a workflow with no contract, a .yaml among
+        # them, and a contract with no workflow.
+        workflows = read_workflows(SOURCE)
+        hold_to_contracts(workflows)
+        places = [(name,) for name in workflows]
+        for name, workflow in workflows.items():
+            for job, spec in workflow["jobs"].items():
+                places.append((name, "jobs", job))
+                if "steps" in spec:
+                    places.append((name, "jobs", job, "steps", 0))
+        for place in places:
+            with self.subTest(place=place):
+                changed = target = copy.deepcopy(workflows)
+                for key in place:
+                    target = target[key]
+                target.update(unread=True)
+                with self.assertRaisesRegex(AssertionError, "the model does not read: unread"):
+                    hold_to_contracts(changed)
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copytree(SOURCE / ".github/workflows", Path(tmp) / ".github/workflows")
+            (Path(tmp) / ".github/workflows/ci.yaml").write_text("on: push\njobs: {}\n")
+            with self.assertRaisesRegex(AssertionError, "ci.yaml: a workflow with no contract"):
+                hold_to_contracts(read_workflows(Path(tmp)))
+        with self.assertRaisesRegex(AssertionError, "release-gate.yml: a contract with no"):
+            hold_to_contracts({k: v for k, v in workflows.items() if k != "release-gate.yml"})
+
+    def test_every_weakening_of_an_enforced_job_breaks_its_contract(self):
+        # #259's mutation regressions, generated for every enforced job (weakenings): each
+        # changes its workflow, and the contracts refuse it: a step held by a Table, by its
+        # digest where no row changes.
+        workflows = read_workflows(SOURCE)
+        cases = weakenings(workflows)
+        self.assertEqual(len(dict(cases)), len(cases))
+        enforced = {f"{name} job {job}" for name, contract in WORKFLOW_CONTRACTS.items()
+                    for job, spec in contract["jobs"].items() if not isinstance(spec, str)}
+        self.assertLessEqual(enforced, {label.split(":")[0].split(" step ")[0]
+                                        for label, _ in cases})
+        for label, edit in cases:
+            with self.subTest(label):
+                weakened = copy.deepcopy(workflows)
+                edit(weakened)
+                self.assertNotEqual(weakened, workflows)
+                with self.assertRaises(AssertionError):
+                    hold_to_contracts(weakened)
+
+    def test_a_step_of_logic_is_held_by_what_it_does(self):
+        # The lane steps of CI's negative and formal-model jobs and the cadence's verdict
+        # are run under bash over their whole input tables, and each ends every row as its
+        # contract says; any edit of one is refused by its digest, and the negative lane
+        # made to pass when the risk job did not succeed by the first row it changes too.
+        # A reworded message, || true, and a branch on the event's name, which the table
+        # does not give, change no row, and are refused by the digest alone.
+        workflows = read_workflows(SOURCE)
+        rows = [len(step["run"].rows()) for contract in WORKFLOW_CONTRACTS.values()
+                for spec in contract["jobs"].values() if isinstance(spec, dict)
+                for step in spec.get("steps", ()) if isinstance(step.get("run"), Table)]
+        self.assertEqual(rows, [45, 135, 25])
+        first = 'if [ "$RESULT" != success ]; then'
+        row = (r"with \{'RESULT': 'failure', 'CLASS': 'R0'\}, exit 0 and output \[\], "
+               r"not exit 1")
+        for old, new, changes_a_row in (
+                ("the negative tests cannot pass", "no negative test can pass", False),
+                ('cannot pass"\n  exit 1', 'cannot pass"\n  exit 0', True),
+                ("\nesac", "\nesac || true", False),
+                (first, "# GITHUB_EVENT_NAME= is set by GitHub\n"
+                        f'[ "$GITHUB_EVENT_NAME" != merge_group ] || exit 0\n{first}', False)):
+            with self.subTest(new):
+                changed = copy.deepcopy(workflows)
+                step = changed["ci.yml"]["jobs"]["negative"]["steps"][0]
+                self.assertIn(old, step["run"])
+                step["run"] = step["run"].replace(old, new)
+                with self.assertRaisesRegex(AssertionError, r"negative steps 1 run: [0-9a-f]{32}, "
+                                            "not ab845bc546996a52ffbbe227cb9ec3ae") as refused:
+                    hold_to_contracts(changed)
+                self.assertEqual(bool(re.search(row, str(refused.exception))), changes_a_row)
+
+    def test_a_rewriting_that_keeps_the_meaning_keeps_the_contracts(self):
+        # Flow style with the keys sorted, each collection on one line, and every string
+        # double-quoted, hold.
+        workflows = read_workflows(SOURCE)
+        ci = (SOURCE / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+        class Quoted(yaml.SafeDumper):
+            """Every string double-quoted, keys among them."""
+            quoted = staticmethod(lambda value: True)
+
+        class Flowing(Quoted):
+            """A string double-quoted if it holds a line break, so that it keeps to its line."""
+            quoted = staticmethod(lambda value: "\n" in value)
+
+        Quoted.add_representer(str, lambda dumper, value: dumper.represent_scalar(
+            "tag:yaml.org,2002:str", value, style='"' if dumper.quoted(value) else None))
+        for options in ({"Dumper": Flowing, "default_flow_style": True, "sort_keys": True,
+                         "width": 10**6}, {"Dumper": Quoted, "sort_keys": False}):
+            with self.subTest(options=options):
+                texts = {name: yaml.dump(doc, **{"Dumper": yaml.SafeDumper, **options})
+                         for name, doc in workflows.items()}
+                self.assertNotEqual(texts["ci.yml"], ci)
+                hold_to_contracts({name: load_workflow(text, name)
+                                   for name, text in texts.items()})
+        # And spelt otherwise: each if within ${{ }}, a need alone as a list, continue-on-error
+        # false, GitHub's default, on each job that runs steps and on each step, and CI's
+        # triggers as a list.
+        spelt = copy.deepcopy(workflows)
+        spelt["ci.yml"]["on"] = list(spelt["ci.yml"]["on"])
+        for job in (job for workflow in spelt.values() for job in workflow["jobs"].values()):
+            if isinstance(job.get("needs"), str):
+                job["needs"] = [job["needs"]]
+            for mapping in (job, *job["steps"]) if "steps" in job else ():
+                mapping["continue-on-error"] = False
+                if "if" in mapping:
+                    mapping["if"] = "${{ " + mapping["if"] + " }}"
+        hold_to_contracts(spelt)
+
+    def test_a_workflow_github_could_read_otherwise_is_refused(self):
+        # The two reviews of the attempt of 21 October, and of this one: each edit of ci.yml
+        # leaves its jobs as they were to PyYAML, which reads YAML 1.1, a run's lines split
+        # by str.splitlines, as normalized_check_job splits them, while GitHub may read it
+        # otherwise. As file text, each refuses: by the loader or, read with YAML 1.2's
+        # meanings, by the contract; so does a workflow that is a symbolic link, or not a
+        # regular file, and an if with text outside its ${{ }}.
+        workflows = read_workflows(SOURCE)
+        ci = (SOURCE / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+        def as_read_before(text):
+            jobs = yaml.safe_load(text)["jobs"]
+            for step in (step for job in jobs.values() for step in job.get("steps", ())):
+                if "run" in step:
+                    step["run"] = step["run"].splitlines()
+            return jobs
+
+        def edited(*pairs):
+            changed = ci
+            for old, new in pairs:
+                self.assertIn(old, changed)
+                changed = changed.replace(old, new, 1)
+            return changed
+
+        kernel, timeout = "kernel.py --self-test\n", "timeout-minutes: 30"
+        token = "persist-credentials"
+        checkout = "with:\n          persist-credentials: false\n"
+        anchored = (checkout, "with: &a\n          persist-credentials: false\n")
+        cases = [*((f"U+{ord(c):04X} for a line feed", edited((kernel, kernel[:-1] + c)),
+                    f"U\\+{ord(c):04X}") for c in FOREIGN_BREAKS),
+                 ("!!bool no", edited((f"{token}: false", f"{token}: !!bool no")), "tag"),
+                 ("!!int 036", edited((timeout, "timeout-minutes: !!int 036")), "tag"),
+                 ("{!!merge <<: *a}", edited(anchored, (checkout, "with: {!!merge <<: *a}\n")),
+                  "tag"),
+                 ("{<<: *a}", edited(anchored, (checkout, "with: {<<: *a}\n")),
+                  "a key << is refused"),
+                 ("a % directive", "%YAML 1.1\n---\n" + ci, "directive is refused"),
+                 ("!<!> 30", edited((timeout, "timeout-minutes: !<!> 30")), "verbatim"),
+                 ("a key given twice", edited(("run: python3 -I tests/model/", "run: 'true'\n"
+                                               "        run: python3 -I tests/model/")),
+                  "a key is given twice"),
+                 ("036", edited((timeout, "timeout-minutes: 036")), "'036', not 30"),
+                 ("no", edited((f"{token}: false", f"{token}: no")), "'no', not False"),
+                 ("! 30", edited((timeout, "timeout-minutes: ! 30")), "'30', not 30"),
+                 ("! on a mapping", edited((checkout, checkout.replace(":", ": !", 1))),
+                  "the tag ! is refused"),
+                 ("! on a sequence", edited(("    steps:\n", "    steps: !\n")),
+                  "the tag ! is refused"),
+                 ("a flow mapping over lines", edited((checkout, f"with: {{{token}: false,\n}}\n")),
+                  "spans lines"),
+                 ("a flow sequence over lines", edited((
+                     "  pull_request:\n  merge_group:\n  workflow_call:\n",
+                     "  [pull_request, merge_group,\nworkflow_call]\n")), "spans lines")]
+        for label, text, refusal in cases:
+            with self.subTest(label):
+                self.assertEqual(as_read_before(text), as_read_before(ci))
+                with self.assertRaisesRegex(AssertionError, refusal):
+                    hold_to_contracts({**workflows, "ci.yml": load_workflow(text, "ci.yml")})
+        # The non-specific tag on a string reads as that string.
+        hold_to_contracts({**workflows, "ci.yml": load_workflow(edited(
+            ("runs-on: ubuntu-latest", "runs-on: ! ubuntu-latest")), "ci.yml")})
+        # Text beside an if's ${{ }} makes it a string, which GitHub reads as true.
+        for condition in ("${{ always() }} ", "${{ always() }} && ${{ false }}"):
+            with self.subTest(condition):
+                changed = copy.deepcopy(workflows)
+                changed["ci.yml"]["jobs"]["negative"]["if"] = condition
+                with self.assertRaisesRegex(AssertionError, "an if with text outside its"):
+                    hold_to_contracts(changed)
+        # A link to the same text, and a folder, in post-merge.yml's place; and the folder of
+        # workflows as a link to a copy.
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copytree(SOURCE / ".github/workflows", Path(tmp) / ".github/workflows")
+            entry = Path(tmp) / ".github/workflows/post-merge.yml"
+            entry.rename(Path(tmp) / "post-merge.yml")
+            entry.symlink_to("../../post-merge.yml")
+            self.assertEqual(entry.read_text(), (SOURCE / ".github/workflows/post-merge.yml")
+                             .read_text())
+            with self.assertRaisesRegex(AssertionError, "post-merge.yml: a symbolic link or"):
+                read_workflows(Path(tmp))
+            entry.unlink()
+            entry.mkdir()
+            with self.assertRaisesRegex(AssertionError, "post-merge.yml: a symbolic link or"):
+                read_workflows(Path(tmp))
+            folder = Path(tmp) / ".github/workflows"
+            shutil.rmtree(folder)
+            shutil.copytree(SOURCE / ".github/workflows", Path(tmp) / "copy")
+            folder.symlink_to("../copy")
+            with self.assertRaisesRegex(AssertionError, ".github/workflows: a symbolic link"):
+                read_workflows(Path(tmp))
 
     def flagged(self, line: str) -> list[str]:
         return [f.rule for f in safe_push.scan_text("x", 1, line)]
