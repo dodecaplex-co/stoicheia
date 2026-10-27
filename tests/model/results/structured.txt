@@ -1,11 +1,11 @@
 # structured: structured search, 100,000 samples per axiom or derived property
 # command: python3 -I tests/model/structured.py 100000 11
 # seeds: 11
-# commit: 442989248536c1a64c0cd47dea59930867865f33 (harness files as committed)
-# harness sha256: fab1bb768c2ffafbe64e2370e6a82f23ddedec6705a87d3629c3d44ccb4bc2b7
+# commit: 242da9a7f107db357aef3cac0e822ece4399f69c (harness files as committed)
+# harness sha256: 287b66d2a0c3a7ecd6f3eceeb085f88fe21e9920f573a6774b35b0ecd92d79d4
 # python: 3.14.2 (CPython, Darwin arm64)
-# date: 2026-10-25
-# time: 90.6 s
+# date: 2026-10-26
+# time: 92.7 s
 
 axiom / derived property                  samples      hyp   cex
 Postulate4                                 100000    14711     0
@@ -28,7 +28,7 @@ angle_eq_of_same_rays                      100000     8676     0
 area_add_of_between                        100000    55499     0
 derived.between_of_area_add                100000    56023     0
 area_congruent                             100000    94050     0
-between_of_inside_chord                    100000    37732     0
+derived.between_of_inside_chord            100000    37732     0
 derived.inside_of_between                  100000    39272     0
 derived.outside_of_between                 100000    47802     0
 circles_meet_same_side                     100000    40033     0

@@ -28,7 +28,9 @@ it, put to the script's own patterns and functions:
 * the wording cases: render.py names the rules of an overlap that a proof leaves unused
   as "does not use" for one, "neither … nor" for two and "none of" for more, and words
   III.24's application of one segment to another by `placement` only from what its
-  facts.json entry shows, read afresh for each root;
+  facts.json entry shows, read afresh for each root; and a summary of tacit rules names
+  the entries attached to a proposition in the order facts.json attaches them, the porism
+  first, under every hash seed;
 * the figure cases: render.py's caption under Euclid's figure says "Drawn for one case"
   before the case the record's [figure] names, "Drawn for every case" where the record
   says `every_case`, or "Drawn for some of its cases" where it says `some_cases`, and
@@ -2281,7 +2283,8 @@ class Modern(unittest.TestCase):
 
 class Wording(unittest.TestCase):
     """render.py's words that facts.json decides: which of an overlap's rules the proof
-    uses, and III.24's application of one segment to another by `placement`."""
+    uses, III.24's application of one segment to another by `placement`, and the order in
+    which a summary of tacit rules names the entries attached to a proposition."""
 
     def test_overlap_use_names_the_unused_rules_plainly(self):
         four = {"rule": "Tacit.a", "also": ["Tacit.b", "Tacit.c", "Tacit.d"], "kind": "gives"}
@@ -2333,6 +2336,46 @@ class Wording(unittest.TestCase):
                 (root / "facts.json").write_text(json.dumps(facts))
                 with patch.object(render, "ROOT", root):
                     self.assertEqual(render.content_wording().get(old, old), want)
+
+    @staticmethod
+    def entry(ref, axioms, **fields):
+        """A proved entry of facts.json whose proof calls each of `axioms` itself."""
+        return {"ref": ref, "status": "proved", "axioms": list(axioms), "cites": [],
+                "common_notions": [], "own_axioms": list(axioms), "inherited": {}, **fields}
+
+    def test_attached_entries_are_named_in_one_order_under_every_hash_seed(self):
+        """A summary of tacit rules names the entries that bring in rules of their own in
+        the order facts.json attaches them, the porism first, whatever PYTHONHASHSEED is
+        (#539): it sorted a set of them, and on one train's facts III.25's page named two
+        companions one way under seeds 1 and 2 and the other way under 0, 3, 4 and 5."""
+        p = self.entry("III.99", ["Tacit.a"])
+        attached = [self.entry("III.99 kind", ["Tacit.a", "Tacit.b"]),
+                    self.entry("III.99 complete", ["Tacit.c"]),
+                    self.entry("III.99 Por.", ["Tacit.d"], kind="porism")]
+        want = ("<summary>The 1 tacit rule beneath this proof, and 3 more beneath its porism "
+                "and <code>Prop99.kind</code> and <code>Prop99.complete</code></summary>")
+        code = ("import json, sys\n"
+                "sys.path.insert(0, sys.argv[1])\n"
+                "import render\n"
+                "p, attached = json.loads(sys.argv[2])\n"
+                "refs = {'props': [], 'Post.': [], 'Def.': [], 'C.N.': []}\n"
+                "print(render.rests_on(p, {}, 2, 'III', refs, [(a, refs) for a in attached]))\n")
+        scripts = Path(__file__).resolve().parent.parent / "scripts"
+        # -I would ignore PYTHONHASHSEED, as -E does: -P and -s keep the rest of its
+        # isolation, and no other PYTHON variable reaches the child.
+        env = {k: v for k, v in os.environ.items() if not k.startswith("PYTHON")}
+        pages = defaultdict(list)
+        for seed in range(8):
+            result = subprocess.run(
+                [sys.executable, "-P", "-s", "-c", code, str(scripts), json.dumps([p, attached])],
+                capture_output=True, text=True, timeout=60,
+                env={**env, "PYTHONHASHSEED": str(seed)})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            pages[result.stdout].append(seed)
+        self.assertEqual(len(pages), 1, "the seeds render different pages: " + "; ".join(
+            f"{seeds}: {page[page.find('<summary>'):page.find('</summary>')]}"
+            for page, seeds in pages.items()))
+        self.assertIn(want, next(iter(pages)))
 
 
 class LeanPartsNames(unittest.TestCase):

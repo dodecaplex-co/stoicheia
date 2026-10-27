@@ -170,4 +170,10 @@
 # (#129), joined the vocabulary: only the statements of III.20 and its companion III.20
 # circumference reach it; the 48 axioms and every word already locked are unchanged, byte
 # for byte, so MODEL.md's account stands as it was.
-9265a082f7114a20b41ae39690f326a61827250f477e80aad8e8fd99c159e0cb  Certificate/axioms.lock
+#
+# Renewed on 26 October 2026, when the rule that a radius is not nothing,
+# Tacit.radius_ne_zero, joined the axioms by the owner's decision of 25 October 2026 (#473):
+# 49 axioms, the other 48 and the 268 words of the vocabulary unchanged, byte for byte. Its
+# law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
+# counts, in the same change; run.py --full --write rewrites the results.
+14c6fbccbbc751909a65cb6c2a299e69a22b93b69f9d07e07903ccdd8f407733  Certificate/axioms.lock

@@ -828,7 +828,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         summary = f"The {len(tacit)} {rules} beneath this proof" + (
             ", counting those of the propositions it cites" if cited else "")
         if only:
-            marks = sorted(set(only.values()), key=lambda m: m != "porism")
+            marks = sorted(dict.fromkeys(only.values()), key=lambda m: m != "porism")
             where = " and ".join("its porism" if m == "porism" else m for m in marks)
             # Inside <summary>, Markdown's backticks are not read: write <code>.
             where = re.sub(r"`([^`]+)`", r"<code>\1</code>", where)
