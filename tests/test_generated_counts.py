@@ -236,7 +236,10 @@ def note : String := "#print axioms Elements.inString"
         mutations = self.root / counts.MUTATIONS
         original_mutations = mutations.read_text()
         for suffix in ("from model import M as shadow\n",
-                       "report(M=len(M))\n"):
+                       "report(M=len(M))\n",
+                       "seen = M.count(('first', None))\n",
+                       "count = M.count\n",
+                       "supports_append = M.append is not None\n"):
             with self.subTest(reader="mutations", suffix=suffix):
                 mutations.write_text(original_mutations + suffix)
                 self.assertEqual(counts.model_statement_mutations(self.root), 2)

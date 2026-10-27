@@ -482,10 +482,11 @@ def model_statement_mutations(root):
                                  "one mutation")
             appends.append(call.func)
     # As for the screen's CIRCLE: the assignment and the module-level appends after it are
-    # the only bindings of M and the only calls through it. What reaches the list by another
-    # name is left to the review of tests/, a protected path.
+    # the only bindings or changes of M; reads through it are permitted. What reaches the
+    # list by another name is left to the review of tests/, a protected path.
     refuse_other_bindings(tree, MUTATIONS, "M", {tree.body[start].targets[0], *appends}, start,
-                          "its one assignment and the module-level appends after it")
+                          "its one assignment and the module-level appends after it",
+                          mutating_methods=LIST_MUTATORS)
     return len(appends)
 
 
