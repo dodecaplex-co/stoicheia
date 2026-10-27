@@ -92,13 +92,14 @@
   Every audit lemma and every `#guard_msgs` stays. The overlap screen's list of circle
   rules, `CIRCLE` in `Audit/screen.py`, drops Circle 1, as it dropped Circle 3 when that
   rule was retired, and keeps nine names, so that the screen no longer stops on that name,
-  as it must on any name the certificate does not hold as an axiom; it still stops in its
-  pass over the definitions until its lists take the 18 words of train C6a (#416), as its
-  own note says. Whether the radius rule joins the list is left to the screen's owner
-  (#416). The certificate's expectation that III.2's axioms exclude Circle 1 can no longer
-  fail, as its reason, written while the rule was an axiom, already says: once Circle 1 is
-  proved after III.2, its name is in no entry's axioms, and Lean keeps III.2 off it, since
-  it admits no circular proof.
+  as it must on any name the certificate does not hold as an axiom; whether it then runs
+  to the end turns on its pass over the definitions, which on this train's tree stops on
+  words it reaches that no list names, the 18 of train C6a among them, as its own note and
+  the overlaps report say (#416). Whether the radius rule joins the list is left to the
+  screen's owner (#416). The certificate's expectation that III.2's axioms exclude Circle
+  1 can no longer fail, as its reason, written while the rule was an axiom, already says:
+  once Circle 1 is proved after III.2, its name is in no entry's axioms, and Lean keeps
+  III.2 off it, since it admits no circular proof.
 
   The formal model follows its generator: `Check/Write.lean` wrote `Model/Laws.lean`, 48
   laws reaching 152 words, `Check/Laws.lean` and `Model/Assembly.lean` again, without
