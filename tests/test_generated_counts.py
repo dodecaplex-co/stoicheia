@@ -196,6 +196,14 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_function_globals(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text()
+                        + '\nfor rule in CIRCLE:\n'
+                          '    (lambda: None).__globals__["CIRCLE"].append("Postulate1")\n')
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
     def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
         path = self.root / counts.SUPERPOSITION
         original = path.read_text()
@@ -258,6 +266,12 @@ def note : String := "#print axioms Elements.inString"
         path = self.root / counts.SUPERPOSITION
         path.write_text(path.read_text()
                         + "\n#guard_msgs in #print axioms Elements.third\n")
+        self.assertEqual(counts.superposition_dependency_checks(self.root), 3)
+
+    def test_superposition_dependency_checks_count_multiline_commands(self):
+        path = self.root / counts.SUPERPOSITION
+        path.write_text(path.read_text()
+                        + "\n#print\n axioms Elements.third\n")
         self.assertEqual(counts.superposition_dependency_checks(self.root), 3)
 
     def test_screen_and_superposition_words_fill_markers(self):
