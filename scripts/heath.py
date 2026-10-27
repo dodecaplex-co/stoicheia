@@ -750,11 +750,14 @@ REGIONS = {
 MARKER_WORDS = {"README.md": "scope", "docs/PROGRAM.md": "status", "docs/WORKFLOW.md": "checks"}
 LINE_MARKERS = ("docs/PROGRAM.md", "docs/WORKFLOW.md")
 # An inline count (generated_counts.py): what begins a comment that looks like one of its
-# markers, its opener and its closer; render.py writes its value, between them.
+# markers, its opener and its closer; render.py writes its value, between them. A value is
+# read up to the first newline or count comment, never past one, as generated_counts.markers
+# reads it, and so in linear time: a long line of openers with no closer is read once.
 COUNT_START = re.compile(r"<!--\s*(?:/\s*)?count\b", re.I)
 COUNT_OPEN = re.compile(r"<!-- count:([A-Za-z0-9]+(?:[-:][A-Za-z0-9]+)*) -->")
 COUNT_CLOSE = "<!-- /count -->"
-COUNT_VALUE = re.compile(f"({COUNT_OPEN.pattern})[^\\n]*?({re.escape(COUNT_CLOSE)})")
+COUNT_VALUE = re.compile(f"({COUNT_OPEN.pattern})(?:[^<\\n]|<(?!(?i:!--\\s*(?:/\\s*)?count\\b)))*"
+                         f"({re.escape(COUNT_CLOSE)})")
 
 
 class RegionError(ValueError):

@@ -1963,7 +1963,7 @@ class QueueTests(unittest.TestCase):
         self.nodes().clear()
         group = self.merge(self.base, self.train(1, {TEXT: "A reviewed line.\n"}), 1)
         for old, new, code, message in (
-                ("Prose by hand.", "Prose, edited.", 1, "checkout has source changes"),
+                ("Prose by hand.", "Prose, edited.", 1, "the part of README.md written by hand"),
                 ("Row.", "Row, regenerated.", 0, "queue: PASS")):
             with self.subTest(new=new):
                 self.checkout(group)
