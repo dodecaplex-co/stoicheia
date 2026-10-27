@@ -12,7 +12,7 @@ note = "`Prop14.general` uses `Prop14` for two straight lines not through the ce
 [[passage]]
 at = "For let the centre of the circle ABDC be taken"
 kind = "given"
-note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; Heath's reference here is III.1, but with E given a call of III.1 would do no work, and the proof takes no centre. The companion is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that a diameter is at no distance from the centre (Definition III.4, extended to that case). Both `Prop14` and `Prop14.general` inherit `Tacit.exists_centre` through `foot_between`, the proved Circle 1 theorem and III.2, although E itself is given rather than constructed from that tacit rule."
+note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; Heath's reference here is III.1, but with E given a call of III.1 would do no work, and the proof takes no centre. The companion is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that a diameter is at no distance from the centre (Definition III.4, extended to that case). Neither `Prop14` nor `Prop14.general` takes a centre itself; since 26 October 2026 both rest on `Tacit.exists_centre`, `Prop14` through `foot_between`, whose Circle 1 is now proved from III.2, which takes its centre from that rule, and `Prop14.general` through `Prop14`, which it cites."
 
 [[passage]]
 at = "from E let EF, EG be drawn"

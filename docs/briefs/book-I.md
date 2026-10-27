@@ -78,7 +78,7 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
-  Intersections rule lets a proof take a point where they do. Forty rules are now theorems
+  Intersections rule lets a proof take a point where they do. Forty-one rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given by its outline (`Outline`, in

@@ -19,19 +19,19 @@
   ([its entry](2026-10-25-circle-1-bookzero.md)).
 
   What moved. The axiom leaves `Elements/Foundations/Tacit/Diagram.lean`, whose module text
-  now says that Circle 1 is proved after III.2 with Circle 2 and Circle 3, and whose section
-  on circles says that all four of System E's circle rules are proved. The theorem
+  now says that Circle 1 is proved after III.2 with Circle 2 and Circle 3, and whose
+  section on circles says that all four of System E's circle rules are proved. The theorem
   `_root_.Elements.Tacit.between_of_inside_chord` stands in `Prop02.lean` after
-  `Prop2.within`, first among the rules that III.2 gives back. Its proof: the point A within
-  is neither B nor C, which are on the circle (Generalities 4), so of the three points one is
-  between the other two (Between 6); were B or C between the others, it would be between a
-  point on the circle and a point within it, and so within the circle by `Prop2.within`, not
-  on it. It keeps the axiom's name and exact type, its binder names and its implicit binders
-  included. Outside the repository, a scratch file printed the axiom's binders before the
-  change and the theorem's after it, A, B, C, L and α implicit and hA, hB, hC, hAin, hBon,
-  hCon and hBC explicit, with no universe parameter, and the two printed types were the
-  same; another checked by `rfl` that the theorem's type is the type the lock printed for
-  the axiom.
+  `Prop2.within`, first among the rules that III.2 gives back. Its proof: the point A
+  within is neither B nor C, which are on the circle (Generalities 4), so of the three
+  points one is between the other two (Between 6); were B or C between the others, it would
+  be between a point on the circle and a point within it, and so within the circle by
+  `Prop2.within`, not on it. It keeps the axiom's name and exact type, its binder names and
+  its implicit binders included. Outside the repository, a scratch file printed the axiom's
+  binders before the change and the theorem's after it, A, B, C, L and α implicit and hA,
+  hB, hC, hAin, hBon, hCon and hBC explicit, with no universe parameter, and the two
+  printed types were the same; another checked by `rfl` that the theorem's type is the type
+  the lock printed for the axiom.
 
   Every later call compiles unchanged, for every caller already imports `Prop02.lean`,
   directly or through `Elements/BookIII/Feet.lean`. Of the 32 calls, 26 stay. Six, where
@@ -40,39 +40,41 @@
   Between 6 and the radius rule: the three in `Prop14.general`, one each in
   `Prop15.le_diameter` and `Prop15.nearer`, and one in `Prop36.through_centre`. No record
   and no commentary describes those steps by Circle 1, and each change spares an entry a
-  citation it would otherwise gain: III.14 general, III.15 le_diameter and, through
-  `Prop36.through_centre`, III.37 would cite III.2, and III.15 le_diameter would rest on
-  `exists_centre`, which its record says it does not. The calls kept at a centre are those
-  that records or commentary describe as Circle 1, in III.7, III.11, III.13, III.20, III.28,
-  III.35 and III.36; the others are in `Prop24.angle_type`, `Prop29.size`, III.29 and
-  `angleAtCentre.size`, where the change would make a record stale and spare no entry a
-  citation, and in `Arc.measure_eq_iff`, which no entry uses, so that it would gain
-  nothing. `Prop35.lean` and `Prop36.lean`, whose proofs name the theorem and reached its
-  file only through `Feet.lean`, now import `Prop02.lean` directly, as section 6 of
-  `docs/FORMALIZATION.md` asks. `foot_between`, which uses the theorem at the foot of a
+  citation it would otherwise gain: III.14 general, III.15 le_diameter, III.15 nearer and,
+  through `Prop36.through_centre`, III.37 would cite III.2, and III.15 le_diameter would
+  rest on `exists_centre`, which its record says it does not. The calls kept at a centre
+  are those that records or commentary describe as Circle 1, in III.7, III.11, III.13,
+  III.20, III.28, III.35 and III.36; the others are in `Prop24.angle_type`, `Prop29.size`,
+  III.29 and `angleAtCentre.size`, where the change would make a record stale and spare no
+  entry a citation, and in `Arc.measure_eq_iff`, which no entry uses, so that it would gain
+  nothing. `Prop35.lean` and `Prop36.lean`, whose proofs name the theorem, did not import
+  its file directly but reached it through other files, `Feet.lean` and
+  `Circumferences.lean` among them; they now import `Prop02.lean` directly, as section 6
+  of `docs/FORMALIZATION.md` asks. `foot_between`, which uses the theorem at the foot of a
   perpendicular, adds `[III. 2]` to its docstring's citations, and the module note of
   `Feet.lean` says the rule is now proved.
 
   What it proves, read from `facts.json` after `lake build` and
-  `lake env lean Certificate/Facts.lean`. The certificate has 48 axioms and the 268 words of
-  the vocabulary, as before. `proved_rules` holds Circle 1, resting on III.2's 43 axioms,
-  and `proved_rule_cites` gives it III.2 alone. Of the 149 entries, 99 propositions, three
-  porisms and 47 companions, none rests on Circle 1 as an axiom. Just before this change,
-  at 8362dd77, 37 rested on it in total, the first III.7 (23 propositions, no porism and 14
-  companions), 23 through their own proofs and the proved rules beneath them (16, 0 and 7),
-  and 17 proofs named it themselves (11, 0 and 6). Now 36 entries use the proved rule,
-  counting the entries they cite (23, 0 and 13), as their `proved_rules` show, and 19 use it
-  through their own proofs and the lemmas beneath them (15, 0 and 4), as a scratch file that
-  walks the proof terms as the certificate's walk does found: III.7, III.8, III.11, III.13,
-  III.14, III.15, III.20, III.22, III.24, III.26 to III.29, III.35 and III.36, and the
-  companions III.20 special, III.24 equalCircles, III.24 equalMeasure and III.31 less. Each
-  of the 19 cites III.2, and III.14, III.35 and III.36 cite it for the first time; 40
-  entries cite III.2 where 37 did. Every other entry's axioms are as they were, Circle 1
-  apart, except that III.14 and its companion III.14 general now rest on `exists_centre`,
-  which III.2 takes its centre from: 55 entries rest on it (29, 0 and 26) where 53 did,
-  and through their own proofs 48 (28, 0 and 20) where 46 did, III.11 and III.14 joining,
-  since Generalities 4, beneath the new theorem, takes its centre from the rule. No
-  proposition's, porism's or companion's statement, no definition and no `--` line changes.
+  `lake env lean Certificate/Facts.lean`. The certificate has 48 axioms and the 268 words
+  of the vocabulary, as before. `proved_rules` holds Circle 1, resting on III.2's 43
+  axioms, and `proved_rule_cites` gives it III.2 alone. Of the 149 entries, 99
+  propositions, three porisms and 47 companions, none rests on Circle 1 as an axiom. Just
+  before this change, at 8362dd77, 37 rested on it in total, the first III.7 (23
+  propositions, no porism and 14 companions), 23 through their own proofs and the proved
+  rules beneath them (16, 0 and 7), and 17 proofs named it themselves (11, 0 and 6). Now 36
+  entries use the proved rule, counting the entries they cite (23, 0 and 13), as their
+  `proved_rules` show, and 19 use it through their own proofs and the lemmas beneath them
+  (15, 0 and 4), as a scratch file that walks the proof terms as the certificate's walk
+  does found: III.7, III.8, III.11, III.13, III.14, III.15, III.20, III.22, III.24, III.26
+  to III.29, III.35 and III.36, and the companions III.20 special, III.24 equalCircles,
+  III.24 equalMeasure and III.31 less. Each of the 19 cites III.2, and III.14, III.35 and
+  III.36 cite it for the first time; 40 entries cite III.2 where 37 did. Every other
+  entry's axioms are as they were, Circle 1 apart, except that III.14 and its companion
+  III.14 general now rest on `exists_centre`, which III.2 takes its centre from: 55 entries
+  rest on it (29, 0 and 26) where 53 did, and through their own proofs 48 (28, 0 and 20)
+  where 46 did, III.11 and III.14 joining, since Generalities 4, beneath the new theorem,
+  takes its centre from the rule. No proposition's, porism's or companion's statement, no
+  definition and no `--` line changes.
 
   A use before III.2 is refused. Facts.lean's walk goes on through every Tacit theorem it
   meets, so an entry that used Circle 1 would cite III.2, and the check on later citations
@@ -82,16 +84,19 @@
   `check_fidelity.py` failed with "II.14: cites III.2, which does not come before it",
   beside the expectation that II.14 cites no III.2.
 
-  The audits stay, and say what they now show. Nine pins lose Circle 1 and gain nothing:
-  in `Audit/Overlaps.lean` those of `III_26_any`, `III_27_any`, `III_24_measure` and
+  The audits stay, and say what they now show. Nine pins lose Circle 1 and gain nothing: in
+  `Audit/Overlaps.lean` those of `III_26_any`, `III_27_any`, `III_24_measure` and
   `III_30_measure`, whose prose stays true, and in `Audit/Crossing.lean` those of
   `III_5_today`, `III_11_today`, `III_13_today`, `cut_point` and `CirclesCut.of_meet`,
   whose prose now says that Circle 1 is proved after III.2 and cannot appear in a list.
-  Every audit lemma and every `#guard_msgs` stays. This change removes Circle 1 from
-  `Audit/screen.py`'s `CIRCLE` list, leaving nine names and avoiding rejection of that
-  retired axiom. The
-  certificate's expectation that III.2's axioms exclude Circle 1 can no longer fail, and
-  its reason, written while the rule was an axiom, is restated in a later change.
+  Every audit lemma and every `#guard_msgs` stays. The overlap screen's list of circle
+  rules, `CIRCLE` in `Audit/screen.py`, drops Circle 1, as it dropped Circle 3 when that
+  rule was retired, and keeps nine names; so the screen, which stops on a name the
+  certificate does not hold as an axiom, does not stop. Whether the radius rule joins the
+  list is left to the screen's owner (#416). The certificate's expectation that III.2's
+  axioms exclude Circle 1 can no longer fail, as its reason, written while the rule was an
+  axiom, already says: once Circle 1 is proved after III.2, its name is in no entry's
+  axioms, and Lean keeps III.2 off it, since it admits no circular proof.
 
   The formal model follows its generator: `Check/Write.lean` wrote `Model/Laws.lean`, 48
   laws reaching 152 words, `Check/Laws.lean` and `Model/Assembly.lean` again, without
@@ -104,29 +109,33 @@
   assembly gathers. The model builds, and `check_model_kernel.py` replays all 55 of its
   compiled modules. The numerical harness drops Circle 1's law and keeps checking its
   predicate as `derived.between_of_inside_chord`. The kind `'chord'` of `gs_cm` in
-  `hyperbolic.py`, which only that law drew from, stays with its comment, since a harness
-  may change here only in the laws that move with their axioms; a change of its own can
-  take them out. The counts go from 49 axioms to 48, and from 43 tacit rules to 42.
+  `hyperbolic.py`, which only that law drew from, stays. Only the kind's code had to stay:
+  the guard, `laws_move_with_axioms` in `scripts/safe_push.py`, compares a harness's code
+  outside its laws with main's and leaves comments out, as the correction of 25 October
+  2026 says ([its entry](2026-10-25-circle-3-retired-wording.md)). The kind's comment,
+  which names the law the file no longer has, stays with it for now; both go in a later
+  change, P5 of #477. The counts go from 49 axioms to 48, and from 43 tacit rules to 42.
 
   What it does not prove. Circle 1 is proved from III.2, so it is not independent of III.2,
   and no proof before III.2 may use it. The steps the later propositions take from it are
   the same steps, now argued from III.2; their routes, as their records give them, do not
   change. The records of III.2, III.14, III.15, III.35 and III.36 are stale for their Lean,
-  and those of III.7, III.8, III.11, III.13, III.14, III.15, III.20, III.22, III.24, III.28,
-  III.31 and III.35 for their text, until a reader of the other family reads and stamps
-  them.
+  and those of III.7, III.8, III.11, III.13, III.14, III.15, III.20, III.22, III.24,
+  III.28, III.31 and III.35 for their text, until a reader of the other family reads and
+  stamps them.
 
   This entry approves the change to `Certificate/axioms.lock`, which loses the one line of
   `Tacit.between_of_inside_chord` and gains none, 48 axioms with 268 words.
 
-  This entry approves the change to `Elements/Foundations/Tacit/Diagram.lean`, from which the
-  axiom of Circle 1 goes, its module text now saying where the circle rules are proved.
+  This entry approves the change to `Elements/Foundations/Tacit/Diagram.lean`, from which
+  the axiom of Circle 1 goes, its module text now saying where the circle rules are proved.
 
   This entry approves the change to `model/lock.sha256`, renewed to the hash of the lock
-  without Circle 1, with a paragraph dated 26 October 2026 on what moved in the formal model.
+  without Circle 1, with a paragraph dated 26 October 2026 on what moved in the formal
+  model.
 
-  This entry approves the change to `tests/model/lock.sha256`, renewed to the same hash, with
-  a paragraph dated 26 October 2026 on what moved in the numerical harness.
+  This entry approves the change to `tests/model/lock.sha256`, renewed to the same hash,
+  with a paragraph dated 26 October 2026 on what moved in the numerical harness.
 
   This entry approves the change to `tests/model/laws.toml`, whose line naming the law of
   `Tacit.between_of_inside_chord` goes, and no other.
@@ -137,24 +146,27 @@
   This entry approves the change to `tests/model/hyperbolic.py`, from which Circle 1's
   hyperbolic law goes in the same way, its kind of `gs_cm` and every other line kept.
 
-  This entry approves the change to `tests/model/derived.py`, one clause of its opening note,
-  which said that Circle 1 is still an axiom and now says that its retirement followed.
+  This entry approves the change to `tests/model/derived.py`, one clause of its opening
+  note, which said that Circle 1 is still an axiom and now says that its retirement
+  followed.
 
-  This entry approves the change to `tests/model/MODEL.md`, whose prose now counts forty-one
-  former axioms, places Circle 1 among them and gives its reason in the section on circles.
+  This entry approves the change to `tests/model/MODEL.md`, whose prose now counts
+  forty-one former axioms, places Circle 1 among them and gives its reason in the section
+  on circles.
 
   This entry approves the change to `model/Model/Audit.lean`, two comments only, which now
   count 41 retired rules and 48 locked laws, with every audit, guard and pin kept.
 
-  This entry approves the change to `Audit/Overlaps.lean`, four pins regenerated from Lean's
-  report, each without Circle 1 and with nothing added, and no other line.
+  This entry approves the change to `Audit/Overlaps.lean`, four pins regenerated from
+  Lean's report, each without Circle 1 and with nothing added, and no other line.
 
   This entry approves the change to `Audit/Crossing.lean`, five pins regenerated without
   Circle 1, and two comments made true now that Circle 1 is a theorem after III.2.
 
   This entry approves the change to `Audit/screen.py`, whose `CIRCLE` list drops Circle 1,
-  leaving nine names, so that the screen does not stop on a name that is no longer an axiom,
-  and whose account of its runs names this retirement and the counts of the lock it leaves.
+  leaving nine names, so that the screen does not stop on a name that is no longer an
+  axiom, and whose account of its runs names this retirement and the counts of the lock it
+  leaves.
 
   The numerical model's results were written again on this harness:
   `python3 -I tests/model/run.py --full --write` ran at commit `5ef38f3f2a55`, this train's
@@ -162,9 +174,9 @@
   mutations of 15 caught, and in the hyperbolic plane only Postulate 5 failing, as it must.
   Configurations meeting an axiom's hypotheses in the plane come to 4,063,299, where they
   came to 4,063,054 at P2's run; the three random searches draw again without the law and
-  give 408,083, 408,046 and 407,697 where they gave 407,895, 408,049 and 407,637. The derived
-  properties, Circle 1 among them since P1, keep their 9,895,990. The run also rewrote the
-  counts between MODEL.md's own markers.
+  give 408,083, 408,046 and 407,697 where they gave 407,895, 408,049 and 407,637. The
+  derived properties, Circle 1 among them since P1, keep their 9,895,990. The run also
+  rewrote the counts between MODEL.md's own markers.
 
   Each result file that run rewrites is approved in a sentence of its own. The angle and
   area check's output, `tests/model/results/angle_check.txt`, is approved. The full grid
