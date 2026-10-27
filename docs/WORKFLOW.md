@@ -1521,8 +1521,10 @@ the reverts changed the decisions record, one commit whose tree keeps
 `docs/decisions/` and the decisions page as at `after`, as above. Nothing else may
 differ, so a revert that takes a train's lines off the page, or changes it in any other
 way, refuses, and so does one built on a later main, or through any other commit. The
-commits' messages are not read. The job that clears `main-red` runs no repository code
-at all.
+commits' messages are not read. The `clear` job, which clears `main-red` after a run
+that passed, runs no repository code at all; the revert job, which can also remove it
+when main has moved on ("Out of a red main", below), runs no repository code but the
+previous main's script.
 
 The revert job is one of the named run's own jobs, so the revert's group can be judged
 while that run is still in progress. The judge then reads the run again every 15

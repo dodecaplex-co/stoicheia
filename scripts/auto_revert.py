@@ -59,9 +59,10 @@ from pathlib import Path
 from urllib.parse import unquote
 
 
-# These are safe_push.py's protected paths, PROTECTED then PROTECTED_JUDGED, in its order.
-# This copy keeps the trusted script independent of the checkout. The tests compare it
-# with that policy, so a train that changes safe_push's list changes this one too.
+# These are safe_push.py's protected paths, PROTECTED and PROTECTED_JUDGED; their order
+# decides nothing, since protected() asks only whether any entry matches. This copy keeps
+# the trusted script independent of the checkout. The tests compare what the two protect,
+# so a train that changes safe_push's list changes this one too.
 PROTECTED = (
     "scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
     "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
