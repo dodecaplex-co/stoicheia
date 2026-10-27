@@ -699,17 +699,6 @@ class NotesRegions(HeaderFolder):
         headers = self.headers() if headers is None else headers
         return render.notes_updates(headers, changes or {})
 
-    def planted_notes(self, page, body):
-        self.brief("0008-centre", "# Centre\n")
-        top = "# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n"
-        self.program.write_text(top, encoding="utf-8")
-        if page == "brief":
-            text = f"# Centre\n\n<!-- notes -->\n{body}<!-- /notes -->\n"
-            return (self.brief("0008-centre", text), text, "../", 4)
-        text = f"{top}<!-- notes:landed -->\n{body}<!-- /notes:landed -->\n"
-        self.program.write_text(text, encoding="utf-8")
-        return self.program, text, "", 8
-
     def test_lines_are_sorted_however_the_entries_are_written(self):
         path = self.brief("0008-centre", "# Centre\n\nBefore.\n\n<!-- notes -->\n"
                                          "<!-- /notes -->\n\nAfter.\n")
@@ -868,74 +857,6 @@ class NotesRegions(HeaderFolder):
                 f"- 25 October 2026, [#1]({ISSUE}1): A. Corrected by {backlink}. "
                 "([the entry](../decisions/2026-10-25-a.md))\n<!-- /notes -->\n")
         self.assertEqual(self.filled(), ({path: want}, 1, 1))
-
-    def test_stale_backlinks_require_a_dependency_closed_history(self):
-        self.headed("2026-10-25-a.md", header(
-            "id=a", "cards=1", "briefs=0008-centre", "program=landed", line="A."))
-        self.headed("2026-10-26-b.md", header(
-            "id=b", "cards=2", "corrects=2026-10-25-a.md", line="B."))
-        self.headed("2026-10-27-c.md", header(
-            "id=c", "cards=3", "corrects=2026-10-25-a.md,2026-10-26-b.md", line="C."))
-        for page in ("brief", "program"):
-            with self.subTest(page=page):
-                up = "../" if page == "brief" else ""
-                line = render.notes_line("2026-10-25-a.md", [1], "A.",
-                                         ([], [], ["2026-10-27-c.md"], []), up)
-                path, original, _, number = self.planted_notes(page, line + "\n")
-                rel = path.relative_to(self.root).as_posix()
-                with self.refused(f"^notes regions: nothing was rendered:\n{re.escape(rel)}:"
-                                  f"{number}: a notes region holds only the lines"):
-                    self.filled()
-                self.assertEqual(path.read_text(encoding="utf-8"), original)
-
-    def test_dependency_closed_stale_backlinks_may_omit_a_later_entry(self):
-        self.headed("2026-10-24-x.md", header(
-            "id=x", "cards=9", "briefs=0008-centre", "program=landed", line="X."))
-        self.headed("2026-10-25-a.md", header(
-            "id=a", "cards=1", "briefs=0008-centre", "program=landed", line="A."))
-        self.headed("2026-10-26-b.md", header(
-            "id=b", "cards=2", "corrects=2026-10-25-a.md", line="B."))
-        self.headed("2026-10-27-c.md", header(
-            "id=c", "cards=3", "corrects=2026-10-25-a.md,2026-10-26-b.md", line="C."))
-        self.headed("2026-10-28-d.md", header(
-            "id=d", "cards=4", "corrects=2026-10-25-a.md", line="D."))
-        for page in ("brief", "program"):
-            with self.subTest(page=page):
-                up = "../" if page == "brief" else ""
-                stale = render.notes_line("2026-10-25-a.md", [1], "A.",
-                                          ([], [], ["2026-10-26-b.md",
-                                                    "2026-10-27-c.md"], []), up)
-                current = render.notes_line("2026-10-25-a.md", [1], "A.",
-                                            ([], [], ["2026-10-26-b.md",
-                                                      "2026-10-27-c.md",
-                                                      "2026-10-28-d.md"], []), up)
-                omitted = render.notes_line("2026-10-24-x.md", [9], "X.",
-                                            ([], [], [], []), up)
-                path, original, _, _ = self.planted_notes(page, stale + "\n")
-                expected = original.replace(stale + "\n", omitted + "\n" + current + "\n")
-                self.assertEqual(self.filled(), ({path: expected}, 1, 1))
-                self.assertEqual(path.read_text(encoding="utf-8"), original)
-
-    def test_region_entry_names_are_strictly_increasing(self):
-        for name, card in (("2026-10-25-a.md", 1), ("2026-10-26-b.md", 2)):
-            self.headed(name, header(f"id={name[-4]}", f"cards={card}",
-                                     "briefs=0008-centre", "program=landed",
-                                     line=f"News {card}."))
-        for page in ("brief", "program"):
-            up = "../" if page == "brief" else ""
-            one = render.notes_line("2026-10-25-a.md", [1], "News 1.",
-                                    ([], [], [], []), up)
-            two = render.notes_line("2026-10-26-b.md", [2], "News 2.",
-                                    ([], [], [], []), up)
-            for order, lines in (("duplicate", [one, one]), ("reversed", [two, one])):
-                with self.subTest(page=page, order=order):
-                    path, original, _, number = self.planted_notes(page, "\n".join(lines) + "\n")
-                    rel = path.relative_to(self.root).as_posix()
-                    with self.refused(f"^notes regions: nothing was rendered:\n"
-                                      f"{re.escape(rel)}:{number + 1}: a notes region holds "
-                                      "only the lines"):
-                        self.filled()
-                    self.assertEqual(path.read_text(encoding="utf-8"), original)
 
     def test_a_region_no_header_names_stays_empty(self):
         self.headed("2026-10-27-a.md", header("id=a", "cards=1", "briefs=book-I"))

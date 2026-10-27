@@ -952,9 +952,8 @@ train and group as unreadable.
   `scripts/negative/count_markers.py`, and the file-only regressions without a build.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
   file in `docs/decisions/`, a bad header line in an entry, a bad notes marker in a brief
-  or in PROGRAM.md, and a notes region whose lines are not current or legitimately stale
-  generated output, or are duplicated or out of name order (section 10, "Decision
-  entries"), before it writes. So CI's `check` job and the pre-flight refuse it.
+  or in PROGRAM.md, and a notes region holding a line it does not write (section 10,
+  "Decision entries") before it writes, so CI's `check` job and the pre-flight refuse it.
   `tests/test_decision_entries.py` tests those refusals, and the notes `render.py` fills,
   without Lean, and `negative_tests.py` runs it after the count regressions, before
   planting, with `--counts-only` too.
@@ -1732,18 +1731,12 @@ out of its place stops the render. Between a region's markers `render.py` writes
 for each entry whose header names the brief, or the section, in name order: the date, the
 cards, the news, a sentence for the entries it corrects or reverts and one for every entry
 whose header corrects or reverts it, whatever that entry names, each linked, and a link to
-the entry. Before replacing a region, `render.py` accepts its current output or legitimate
-stale output from a feasible earlier render. Every existing line must agree with its
-entry's cards and news and with every correction or revert that the entry names. A stale
-line may omit a backlink added by a later entry, but the entries its links require form a
-feasible history, closed transitively over the headed entries they correct or revert; it
-cannot name a later backlink while omitting a dependency that must already have existed.
-The region holds every entry for that page required by that history, once and in name
-order. A line of any other form, a duplicate or reversed entry, text written by hand or a
-blank line stops the render, naming the file and the line, so that a misplaced marker never
-swallows text; a new region's two markers stand on consecutive lines. Where no markers
-stand, it writes nothing. Since an entry is never edited, a brief or a section of the list
-that an entry names is never renamed or removed while an entry names it.
+the entry. A region holds those lines and nothing else: a line of any other form between
+its markers, text written by hand or a blank line, stops the render, naming the file and
+the line, so that a misplaced marker never swallows text; a new region's two markers stand
+on consecutive lines. Where no markers stand, it writes nothing. Since an entry is never
+edited, a brief or a section of the list that an entry names is never renamed or removed
+while an entry names it.
 
 A brief or PROGRAM.md cannot quote a notes marker as it is: inline it is refused, and on a
 line of its own, even in a code fence, it is a live marker. To show one there, write
