@@ -304,6 +304,10 @@ def note : String := "#print axioms Elements.inString"
                 (original + "#check Nat namespace Active set_option pp.universes true "
                  "#guard_msgs in #print axioms Elements.third end Active\n",
                  "a guarded pin under `set_option`"),
+                (original + "section Outer\nset_option pp.universes true\nmutual\n"
+                 "def mutualFirst : Nat := 1\ndef mutualSecond : Nat := 2\nend\n"
+                 "#guard_msgs in #print axioms Elements.third\nend Outer\n",
+                 "a guarded pin under `set_option`"),
                 (original + "#print axioms Elements.third\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms.foo\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms' Elements.third\n", unguarded),
@@ -333,6 +337,9 @@ def note : String := "#print axioms Elements.inString"
                  "end Earlier #guard_msgs in #print axioms Elements.third\n", 3),
                 (original + "#check Nat namespace Earlier set_option pp.universes true "
                  "end Earlier #guard_msgs in #print axioms Elements.third\n", 3),
+                (original + "section Earlier\nset_option pp.universes true\nmutual\n"
+                 "def mutualFirst : Nat := 1\ndef mutualSecond : Nat := 2\nend\n"
+                 "end Earlier\n#guard_msgs in #print axioms Elements.third\n", 3),
                 (original + "set_option\n  pp.universes\n  true\n  in\n#check Nat\n"
                  "#guard_msgs in\n#print axioms Elements.third\n", 3),
                 (original + "#guard_msgs in -- a remark\n#print\n  axioms Elements.third\n", 3)):

@@ -314,7 +314,8 @@ PRINT_AXIOMS = re.compile(r"#print\s+axioms")
 SET_OPTION_COMMAND = re.compile(
     rf"(?<![\w.'!?₀-₉])set_option\s+{IDENTIFIER.pattern}{NAME_END}"
     rf"\s+(?P<value>\S+)(?P<local>\s+in\b)?")
-LEAN_SCOPE_OPEN = re.compile(rf"(?<![\w.'!?₀-₉])(?:section|namespace){NAME_END}")
+LEAN_SCOPE_OPEN = re.compile(
+    rf"(?<![\w.'!?₀-₉])(?P<kind>section|namespace|mutual){NAME_END}")
 LEAN_SCOPE_END = re.compile(rf"(?<![\w.'!?₀-₉])end{NAME_END}")
 SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
@@ -480,18 +481,18 @@ def optioned_axiom_pin(code):
     events = [(match.start(), "pin", match) for match in AXIOM_PIN.finditer(code)]
     events.extend((match.start(), "option", match) for match in options
                   if match.group("local") is None)
-    events.extend((match.start(), "open", None) for match in LEAN_SCOPE_OPEN.finditer(code))
+    events.extend((match.start(), "open", match) for match in LEAN_SCOPE_OPEN.finditer(code))
     events.extend((match.start(), "end", None) for match in LEAN_SCOPE_END.finditer(code))
-    scopes = [False]
+    scopes = [("root", False)]
     for _, kind, match in sorted(events, key=lambda event: event[0]):
         if kind == "end":
             if len(scopes) > 1:
                 scopes.pop()
         elif kind == "open":
-            scopes.append(False)
+            scopes.append((match.group("kind"), False))
         elif kind == "option":
-            scopes[-1] = True
-        elif any(scopes):
+            scopes[-1] = (scopes[-1][0], True)
+        elif any(optioned for _, optioned in scopes):
             return match
     return None
 
