@@ -10,12 +10,14 @@ tokens, labels, pull requests and queue requests for assertions.
 
 from __future__ import annotations
 
-import ast
 import base64
 import contextlib
 import copy
 import io
+import itertools
 import json
+import os
+import re
 import socket
 import subprocess
 import sys
@@ -61,6 +63,315 @@ def workflow_step(filename: str, name: str) -> str:
     while end < len(lines) and (not lines[end].strip() or lines[end].startswith("          ")):
         end += 1
     return textwrap.dedent("\n".join(lines[start + 1:end])) + "\n"
+
+
+# A key of a YAML block mapping, and the value after it on its line, if any.
+YAML_KEY = re.compile(r"([A-Za-z_][A-Za-z0-9_-]*):(?: +(.*))?")
+
+
+def unread(line: str) -> AssertionError:
+    return AssertionError(f"A workflow form this test does not read: {line!r}")
+
+
+def yaml_block(lines: list[str], at: int, indent: int) -> tuple[dict | list, int]:
+    """The block mapping, or list of mappings, whose entries start at column `indent` from
+    lines[at], and the index of the line after it. Only the forms the workflows use are
+    read: plain scalars, as text, `|` blocks and blocks of their own; any other form fails
+    the test rather than being read as it was."""
+    block = None
+    while at < len(lines):
+        line = lines[at]
+        text = line.lstrip(" ")
+        depth = len(line) - len(text)
+        if not text or text.startswith("#"):
+            at += 1
+            continue
+        if depth < indent:
+            break
+        if depth > indent:
+            raise unread(line)
+        if text.startswith("- "):
+            block = [] if block is None else block
+            if not isinstance(block, list):
+                raise unread(line)
+            # The item's first key stands after its dash: read the item as a mapping.
+            lines[at] = " " * (indent + 2) + text[2:]
+            item, at = yaml_block(lines, at, indent + 2)
+            if not isinstance(item, dict):
+                raise unread(line)
+            block.append(item)
+            continue
+        block = {} if block is None else block
+        match = YAML_KEY.fullmatch(text.rstrip(" "))
+        if not isinstance(block, dict) or not match or match[1] in block:
+            raise unread(line)
+        key, value = match[1], match[2]
+        at += 1
+        if value == "|":
+            # Its lines less the first one's indentation, and one final line feed.
+            body = []
+            while at < len(lines) and (not lines[at].strip()
+                                       or lines[at].startswith(" " * (depth + 1))):
+                body.append(lines[at])
+                at += 1
+            while body and not body[-1].strip():
+                body.pop()
+            first = next((row for row in body if row.strip()), "")
+            margin = len(first) - len(first.lstrip(" "))
+            if not first or any(row.strip() and not row.startswith(" " * margin)
+                                for row in body):
+                raise unread(line)
+            block[key] = "\n".join(row[margin:] for row in body) + "\n"
+        elif value is None:
+            inner = at
+            while inner < len(lines) and (not lines[inner].strip()
+                                          or lines[inner].lstrip(" ").startswith("#")):
+                inner += 1
+            following = lines[inner] if inner < len(lines) else ""
+            nested = len(following) - len(following.lstrip(" "))
+            if not following or nested <= depth:
+                raise unread(line)
+            block[key], at = yaml_block(lines, inner, nested)
+        elif (value[0] in "'\"[]{}>|*&!%@`#,?:-" or ": " in value or " #" in value
+              or value.endswith(":")):
+            raise unread(line)
+        else:
+            block[key] = value
+    if block is None:
+        raise unread(lines[at - 1] if at else "")
+    return block, at
+
+
+def workflow_job(filename: str, name: str) -> dict:
+    """A job of a workflow, as yaml_block reads it. A key this test does not model, at the
+    workflow's top (an env or defaults, say) or the job's, which could change how its
+    steps run, fails the test; so does a line break other than a line feed, which YAML
+    readers do not all read alike."""
+    text = (ROOT / ".github/workflows" / filename).read_text(encoding="utf-8")
+    if re.search("[\r\x85\u2028\u2029]", text):
+        raise AssertionError(f"{filename} has a line break this test does not read")
+    lines = text.split("\n")
+    top = {line.split(":")[0] for line in lines if line[:1] not in ("", " ", "#")}
+    job, end = yaml_block(lines, lines.index(f"  {name}:") + 1, 4)
+    if (top - {"name", "on", "permissions", "jobs"} or not isinstance(job, dict)
+            or set(job) - {"needs", "if", "runs-on", "environment", "permissions", "env",
+                           "steps"}
+            or end < len(lines) and not re.fullmatch(r"  [A-Za-z_][A-Za-z0-9_-]*:", lines[end])):
+        raise AssertionError(f"{filename}: the job {name} has a form this test does not model")
+    return job
+
+
+def job_step(job: dict, name: str) -> dict:
+    steps = [step for step in job["steps"] if step.get("name") == name]
+    if len(steps) != 1:
+        raise AssertionError(f"The job has {len(steps)} steps named {name!r}")
+    return steps[0]
+
+
+# The tokens of an if, as post-merge.yml writes one.
+CONDITION = re.compile(r"\s*(always\(\)|success\(\)|failure\(\)|cancelled\(\)|'(?:[^']|'')*'"
+                       r"|steps\.[A-Za-z_][A-Za-z0-9_-]*\.outputs\.[A-Za-z_][A-Za-z0-9_-]*"
+                       r"|&&|\|\||==|!=|[()])")
+
+
+def condition(text: str | None, outputs: dict, status: str) -> bool:
+    """Whether a step or job whose if is `text` runs, as Actions decides it, given the
+    steps' outputs so far ({id: {name: value}}; one never set reads as '', as in Actions)
+    and the status so far, "success", "failure" or "cancelled": the job's, for a step, or
+    that of the jobs it needs, for a job. Only the four status functions, outputs, '…'
+    strings, == and != between strings (without regard to case), &&, || and parentheses
+    are read; any other form fails the test. Without a status function, success() is
+    implied, as Actions implies it."""
+    tokens, at = [], 0
+    while (text or "")[at:].strip():
+        match = CONDITION.match(text, at)
+        if not match:
+            raise AssertionError(f"A condition this test does not read: {text!r}")
+        tokens.append(match[1])
+        at = match.end()
+    if not tokens:
+        return status == "success"
+    tokens.append("")
+    position = 0
+
+    def take(*expected):
+        nonlocal position
+        if expected and tokens[position] not in expected:
+            raise AssertionError(f"A condition this test does not read: {text!r}")
+        position += 1
+        return tokens[position - 1]
+
+    def operand():
+        token = take()
+        if token == "(":
+            value = either()
+            take(")")
+            return value
+        if token.endswith("()"):
+            return token in ("always()", status + "()")
+        if token.startswith("'"):
+            return token[1:-1].replace("''", "'")
+        if token.startswith("steps."):
+            _, step, _, name = token.split(".")
+            return outputs.get(step, {}).get(name, "")
+        raise AssertionError(f"A condition this test does not read: {text!r}")
+
+    def comparison():
+        left = operand()
+        if tokens[position] not in ("==", "!="):
+            return left
+        same, right = take() == "==", operand()
+        if not isinstance(left, str) or not isinstance(right, str):
+            raise AssertionError(f"A condition this test does not read: {text!r}")
+        return (left.lower() == right.lower()) == same
+
+    # Each, as in Actions, gives the operand that decides it.
+    def both():
+        value = comparison()
+        while tokens[position] == "&&":
+            take()
+            right = comparison()
+            if value:
+                value = right
+        return value
+
+    def either():
+        value = both()
+        while tokens[position] == "||":
+            take()
+            right = both()
+            if not value:
+                value = right
+        return value
+
+    result = bool(either())
+    take("")
+    if any(token.endswith("()") for token in tokens):
+        return result
+    return status == "success" and result
+
+
+def expressions(text: str, values: dict) -> str:
+    """`text` with each ${{ … }} given its value, as Actions substitutes it; an expression
+    not in `values` fails the test."""
+    def value(match):
+        if match[1] not in values:
+            raise AssertionError(f"An expression this test does not know: {match[0]}")
+        return values[match[1]]
+
+    result = re.sub(r"\$\{\{\s*(.*?)\s*\}\}", value, text)
+    if "${{" in result:
+        raise AssertionError(f"An unclosed expression: {text!r}")
+    return result
+
+
+def run_step(job: dict, step: dict, values: dict, runner: Path, cwd: Path, path: str):
+    """Run a step of a Linux job as Actions runs it: the job's env and then the step's,
+    each expression in them and in run given its value, and run written to a file that
+    the step's shell runs (`bash -e` when it names none, and bash with pipefail, without
+    profile or rc files, for `shell: bash`). Returns the process and whether its exit
+    fails the job. A step key or shell this does not model fails the test."""
+    shells = {None: ["bash", "-e"],
+              "bash": ["bash", "--noprofile", "--norc", "-eo", "pipefail"]}
+    keep_going = step.get("continue-on-error", "false")
+    if (set(step) - {"name", "id", "if", "env", "shell", "run", "continue-on-error"}
+            or step.get("shell") not in shells or keep_going not in ("true", "false")
+            or job.get("runs-on") != "ubuntu-latest"):
+        raise AssertionError(f"A step this test does not model: {step}")
+    env = {"PATH": path, "HOME": str(runner), "RUNNER_TEMP": str(runner)}
+    for scope in (job.get("env", {}), step.get("env", {})):
+        env.update({key: expressions(text, values) for key, text in scope.items()})
+    script = runner / "step.sh"
+    script.write_text(expressions(step["run"], values), encoding="utf-8")
+    result = subprocess.run([*shells[step.get("shell")], str(script)], cwd=cwd, env=env,
+                            text=True, capture_output=True, check=False)
+    return result, result.returncode != 0 and keep_going == "false"
+
+
+# A stand-in for python3 and gh on the runner's PATH: it records each call, its name, its
+# arguments and its environment, as a line of `calls`; python3 exits with the code in the
+# file `exit` beside it, and gh answers the calls the revert job's fallback makes.
+RECORDER = '''\
+import json
+import os
+import sys
+from pathlib import Path
+
+calls = Path({calls!r})
+name, args, root = Path(sys.argv[0]).name, sys.argv[1:], "repos/{slug}"
+with calls.open("a", encoding="utf-8") as out:
+    out.write(json.dumps([name, args, dict(os.environ)]) + "\\n")
+if name == "python3":
+    sys.exit(int(calls.with_name("exit").read_text()))
+if args == ["api", "--paginate", root + "/labels?per_page=100", "--jq", ".[].name"]:
+    print("blocks-release\\nmain-red")
+elif args == ["api", root + "/pulls/11", "--jq", ".title"]:
+    print("Train 11")
+elif args[:4] == ["api", "--method", "POST", root + "/issues"]:
+    print("Opened issue #1000")
+else:
+    sys.exit("Unexpected gh operation: " + repr(args))
+'''
+
+# Small Markdown files, each of the forms the link reading decides, which auto_revert.py
+# and check_links.py must read alike.
+LINK_CASES = {
+    "schemes-and-plain": (
+        "[web](https://example.invalid/a) [mail](mailto:a@example.invalid) [svn](svn+ssh://h/x)"
+        " [drive](C:/x) [root](/README.md) [host](//host/x) [up](../x.md) [here](#top)\n"
+    ),
+    "fences": (
+        "[before](a.md)\n```\n[in backticks](b.md)\n```\n~~~\n[in tildes](c.md)\n# Fenced\n~~~\n"
+        "````python\n[four](d.md)\n```\n[still code](e.md)\n````\n"
+        "   ```\n[indented three](f.md)\n   ```\n    ```\n[indented four](g.md)\n"
+        "~~~\n[tildes](h.md)\n```\n[backticks close no tildes](i.md)\n~~~\n"
+        "```\n[a close with text](j.md)\n``` text\n[still in](k.md)\n```\n[after](l.md)\n"
+        "``two backticks are no fence``\n[after two](m.md)\n~~two tildes are none~~\n"
+        "[after tildes](n.md)\n"
+    ),
+    "headings": (
+        "# One\n## Two ##\n### Three ###   \n#### *Emphasis* and `code`\n"
+        "##### [Linked](x.md) heading\n###### Six\n####### Seven\n#No space\n#\n"
+        "    # Indented four\n   # Indented three\n#\tTabbed\n"
+        "Setext one\n===\n\nSetext two\n---\n\n- Item\n---\n\n> Quote\n---\n\n1. Number\n---\n"
+        "\nRepeated\n===\n\n# Repeated\n## Repeated\n"
+        "Escaped \\# and \\_under\\_\n===\n\n# Ελληνικά, digits 42 & signs!\n"
+        "Three spaces\n   ===\n\nFour spaces\n    ===\n\nTrailing\n===  \n\nTabbed\n---\t\n"
+    ),
+    "comments": (
+        "<!-- [one line](a.md) -->[after a comment](b.md)\n"
+        "<!--\n[two lines](c.md)\n# Hidden\n<a name=\"hidden\"></a>\n-->\n"
+        "<!-- unclosed [x](d.md)\n[visible](e.md)\n"
+    ),
+    "link-text": (
+        "[plain](a.md) [nested [brackets] inside](b.md) [two [deep [no]]](c.md)\n"
+        "\\[escaped open](d.md) [escaped \\] close](e.md) [escaped \\[ open](f.md)\n"
+        "![image](g.png) [empty]() [spaced]( h.md ) [angle](<i j.md>) [unclosed](<k.md\n"
+        "[parens](l(m).md) [title](n.md \"Title\") [code `[x](o.md)`](p.md)\n"
+        "`[in a span](q.md)` ``[double ` span](r.md)`` [after spans](s.md)\n"
+        "[a](t.md)[b](u.md) [label][ref] [gap] (v.md)\n"
+    ),
+    "references": (
+        "[label]: a.md\n[spaced]:   b.md \"Title\"\n[angle]: <c d.md>\n   [three]: e.md\n"
+        "    [four]: f.md\n[esc\\]aped]: g.md\n[]: h.md\n[tab]:\ti.md\n[none]:\n"
+        "[a]: j.md [k](k.md)\n"
+    ),
+    "html": (
+        "<a href=\"a.md\">a</a> <img src='b.png'> <a HREF=\"c.md\">c</a>\n"
+        "<a href = \"d.md?x=1&amp;y=2#part\">d</a> <a data-href=\"e.md\">e</a>\n"
+        "<a title=\"x\" href=\"f.md\">f</a> <a href=g.md>g</a> `<a href=\"h.md\">`\n"
+        "<a name=\"one\"></a> <span id='two'></span> <p ID=\"upper\"> <a NAME=\"upper\">\n"
+        "<a name=\"amp&amp;ersand\"></a> <a data-id=\"data\"></a> <a id=\"\"></a>\n"
+        "1 < 2 and <3 href=\"i.md\"> `<a id=\"code\">`\n"
+        "<a xhref=\"z.md\">x</a> <a xid=\"x-id\"></a> <a xname=\"x-name\"></a>\n"
+    ),
+    "line-ends": "[crlf](a.md)\r\n# Heading\r\nSetext\r\n---\r\n[cr](b.md)\r# After\r",
+}
+# Anchors of a link to a file or folder, which auto_revert.resolves and
+# check_links.check_anchor must decide alike: lines of a file, headings of Markdown.
+LINE_ANCHORS = ("L1", "L3", "L4", "L0", "L1-L3", "L2-L2", "L3-L1", "L1-L4", "L1C2",
+                "L1C2-L3C4", "L2C1-L3", "L1-L3C9", "L01", "l1", "L1-", "L1-3", "LL1", "L",
+                "1", "L1C", "C1", "L1-L2-L3", "L1 ", "folder", "Folder", "a-part")
 
 
 class GitHub:
@@ -559,22 +870,40 @@ class AutoRevert(unittest.TestCase):
 
     def test_the_link_reading_is_check_links_own(self):
         # The trusted script imports no repository code, so it holds a copy of
-        # check_links.py's reading: the two must read every link and anchor alike.
+        # check_links.py's reading: the two must read every link and anchor alike, in the
+        # real pages and in small files of each form the reading decides.
         import check_links
-        for name in ("SCHEME", "LINE_ANCHOR", "FENCE", "ATX", "SETEXT", "COMMENT",
-                     "LINK_TEXT", "REF_DEF", "HTML_URL", "HTML_ANCHOR"):
-            with self.subTest(pattern=name):
-                self.assertEqual(getattr(ar, name).pattern, getattr(check_links, name).pattern)
-                self.assertEqual(getattr(ar, name).flags, getattr(check_links, name).flags)
-        for path in ("docs/briefs/0002-decisions.md", "docs/WORKFLOW.md", "README.md",
-                     "docs/STYLE.md", "CONTRIBUTING.md"):
-            with self.subTest(path=path):
-                text = ar.markdown((ROOT / path).read_bytes())
-                self.assertEqual(list(ar.links(text)), list(check_links.links(ROOT / path)))
-                self.assertEqual(ar.anchors(text), check_links.anchors(ROOT / path))
-        for target in ("../x.md", "https://example.invalid", "//host/x", "mailto:a", "",
-                       " #top", "C:/x"):
-            self.assertEqual(ar.relative(target), check_links.relative(target), target)
+        corpus = self.directory / "links"
+        corpus.mkdir()
+        pages = [ROOT / path for path in ("docs/briefs/0002-decisions.md", "docs/WORKFLOW.md",
+                                          "README.md", "docs/STYLE.md", "CONTRIBUTING.md")]
+        for name, text in LINK_CASES.items():
+            (corpus / f"{name}.md").write_bytes(text.encode("utf-8"))
+            pages.append(corpus / f"{name}.md")
+        for path in pages:
+            with self.subTest(path=path.name):
+                text = ar.markdown(path.read_bytes())
+                self.assertEqual(list(ar.links(text)), list(check_links.links(path)))
+                self.assertEqual(ar.anchors(text), check_links.anchors(path))
+        for target in ("../x.md", "https://example.invalid", "HTTPS://x", "//host/x",
+                       "mailto:a", "", " ", " #top", "#top", "C:/x", "a+b.c-d:x",
+                       "svn+ssh://h/x", "1abc:x", "-a:x", ".a:x", "a_b:x", "x/y:z", "é:x",
+                       "\tdocs/x.md", "data:text/plain,x", "ab"):
+            self.assertEqual(ar.relative(target), check_links.relative(target), repr(target))
+        # Lines of a file, by #L anchors, and headings of a folder's README.md.
+        for name, text in (("three.txt", "One.\nTwo.\nThree.\n"), ("unended.txt", "One.\nTwo."),
+                           ("empty.txt", ""), ("folder/README.md", "# Folder\n\n## A part\n"),
+                           ("bare/x.txt", "x\n")):
+            self.write(f"lines/{name}", text)
+        self.commit("Files for line anchors")
+        tree, cache = ar.tree_entries(self.repo, "HEAD"), {}
+        for path in ("three.txt", "unended.txt", "empty.txt", "folder", "folder/README.md",
+                     "bare"):
+            for anchor in LINE_ANCHORS:
+                with self.subTest(path=path, anchor=anchor):
+                    self.assertEqual(
+                        ar.resolves(self.repo, tree, f"lines/{path}", anchor, cache),
+                        check_links.check_anchor(self.repo / "lines" / path, anchor) is None)
 
     def test_reverts_read_merge_attributes_from_before(self):
         # Never from the tree being reverted, which the failed push wrote.
@@ -684,6 +1013,151 @@ class AutoRevert(unittest.TestCase):
         self.assert_issue_only(status)
         self.assertIn("Main has moved", self.body())
 
+    RUNS = (f"/repos/{SLUG}/actions/workflows/post-merge.yml/runs?head_sha={{}}"
+            "&event=push&branch=main&per_page=100&page={}")
+    HOW = ("Once main's tip has a post-merge run that passed, re-run that run's clear job: "
+           "it removes main-red from every open issue whose After main's tip contains "
+           "(docs/WORKFLOW.md, \"Out of a red main\").")
+
+    def tip_runs(self, sha, *pages, total=None):
+        """GitHub's pages of post-merge runs at sha, each a list of runs."""
+        total = sum(len(page) for page in pages) if total is None else total
+        for number, runs in enumerate(pages, 1):
+            self.api.pages["GET", self.RUNS.format(sha, number)] = {
+                "total_count": total, "workflow_runs": runs}
+
+    @classmethod
+    def finished(cls, number, sha, conclusion="success"):
+        return cls.run_of(number, sha, status="completed", conclusion=conclusion)
+
+    def slow_failure(self):
+        """A push, after, whose run fails slowly, and a later push on it, main's tip, whose
+        own run passed, and cleared, before after's issue existed."""
+        after = self.train()
+        return after, self.train(12, text="A later train.\n")
+
+    def run_moved_on(self, after, *, env=None, tips=None, broken=None):
+        self.api.issues, self.api.deleted, self.api.calls = {}, [], []
+        self.api.tip_reads, self.api.broken = list(tips or []), broken
+        return self.run_revert(after=after, env=env)
+
+    def test_a_failure_recorded_after_main_moved_on_and_passed_is_cleared(self):
+        after, later = self.slow_failure()
+        self.tip_runs(later, [self.finished(7, later, "failure"), self.finished(9, later)])
+        cleared = (f"Main has moved on from {after} to {later}, which contains it, and its "
+                   f"latest post-merge run, 9, https://github.com/{SLUG}/actions/runs/9, "
+                   "completed with success: main-red was removed from this issue; "
+                   "blocks-release and the issue remain.")
+        for name, env in (("revert attempted", None),
+                          ("issue only", {"GITHUB_TOKEN": WORKFLOW_TOKEN})):
+            with self.subTest(name):
+                status, output = self.run_moved_on(after, env=env)
+                self.assertEqual(status, 1, output)
+                self.assertEqual(self.api.deleted, [1000])
+                self.assertIn(cleared, self.body())
+                self.assertIn(cleared, output)
+                self.assertEqual(self.pushes, [])
+                self.assertIsNone(self.api.pr)
+                # Only after the issue opened, and with main's tip read again just before.
+                calls = [(method, path) for method, path, _, _ in self.api.calls]
+                removal = calls.index(("DELETE", f"/repos/{SLUG}/issues/1000/labels/main-red"))
+                self.assertLess(calls.index(("POST", f"/repos/{SLUG}/issues")), removal)
+                self.assertEqual(calls[removal - 1], ("GET", f"/repos/{SLUG}/git/ref/heads/main"))
+                self.assertEqual(calls[removal + 1][0], "PATCH")
+        # While main's tip is still the failed push, a later push's clear will see the
+        # issue: nothing is read for it here, and the issue says nothing of it.
+        status, output = self.run_moved_on(after, env={"GITHUB_TOKEN": WORKFLOW_TOKEN},
+                                           tips=[after])
+        self.assert_issue_only(status)
+        self.assertEqual(self.api.deleted, [])
+        self.assertNotIn("moved on", self.body())
+        self.assertFalse(any("/actions/" in path or method == "PATCH"
+                             for method, path, _, _ in self.api.calls))
+
+    def test_the_tip_s_latest_run_is_read_across_every_page(self):
+        after, later = self.slow_failure()
+        early = [self.finished(n, later) for n in range(1, 101)]
+        for last, removed in (("failure", []), ("success", [1000])):
+            with self.subTest(last=last):
+                self.api.pages = {}
+                self.tip_runs(later, early, [self.finished(101, later, last)])
+                status, output = self.run_moved_on(after, env={"GITHUB_TOKEN": WORKFLOW_TOKEN})
+                self.assertEqual(status, 1, output)
+                self.assertEqual(self.api.deleted, removed)
+
+    def test_a_failure_recorded_after_main_moved_on_keeps_main_red_without_evidence(self):
+        after, later = self.slow_failure()
+        self.git("switch", "-c", "side", self.before)
+        self.write("chapter.txt", "A side revision.\n")
+        self.commit("A side revision")
+        side = self.rev()
+        self.git("switch", "main")
+        self.write("notes.txt", "The newest main.\n")
+        self.commit("The newest main")
+        newest = self.rev()
+        passed = [self.finished(9, later)]
+        unreadable = f"the post-merge runs at {later} could not be read"
+        cases = {
+            "its latest run failed": (
+                [later], [self.finished(9, later), self.finished(11, later, "failure")],
+                {}, "its latest post-merge run, 11, has not completed with success"),
+            "its latest run is in progress": (
+                [later], [self.finished(9, later),
+                          self.run_of(11, later, status="in_progress", conclusion=None)],
+                {}, "its latest post-merge run, 11, has not completed with success"),
+            "it has no run yet": ([later], [], {}, f"no post-merge run at {later} can be read yet"),
+            "its runs are refused": ([later], passed, {"broken": "/actions/"}, unreadable),
+            "its runs have no list": ([later], None, {}, unreadable),
+            "its runs miscount": ([later], passed, {"total": 2}, unreadable),
+            "a run has no conclusion": (
+                [later], [{k: v for k, v in self.finished(9, later).items() if k != "conclusion"}],
+                {}, unreadable),
+            "a run is another commit's": ([later], [self.finished(9, "c" * 40)], {}, unreadable),
+            "a run is another workflow's": (
+                [later], [dict(self.finished(9, later), path=".github/workflows/ci.yml")], {},
+                unreadable),
+            "the tip does not contain after": (
+                [side], [self.finished(9, side)], {},
+                f"{side} could not be shown to contain {after}"),
+            "the tip is unknown here": (
+                ["f" * 40], [self.finished(9, "f" * 40)], {},
+                f"{'f' * 40} could not be shown to contain {after}"),
+            "main moves again before the removal": (
+                [later, newest], passed, {},
+                f"main moved again, to {newest}, before the label could be removed"),
+            "the removal is refused": (
+                [later], passed, {"broken": "DELETE"}, "GitHub did not confirm the removal"),
+        }
+        for name, (tips, runs, extra, reason) in cases.items():
+            with self.subTest(name):
+                self.api.pages = {}
+                if runs is None:
+                    self.api.pages["GET", self.RUNS.format(tips[0], 1)] = {
+                        "total_count": 1, "workflow_runs": None}
+                else:
+                    self.tip_runs(tips[0], runs, total=extra.get("total"))
+                fault = extra.get("broken")
+                status, output = self.run_moved_on(
+                    after, env={"GITHUB_TOKEN": WORKFLOW_TOKEN}, tips=tips,
+                    broken=fault and (lambda method, path, token, data, fault=fault:
+                                      fault == method or fault in path))
+                self.assertEqual(status, 1, output)
+                self.assertEqual(self.api.deleted, [])
+                stays = f"Main has moved on from {after} to {tips[0]}, and main-red stays: "
+                self.assertIn(f"{stays}{reason}. {self.HOW}", self.body())
+                self.assertNotIn("main-red was removed", self.body())
+
+    def test_a_failure_whose_main_tip_cannot_be_read_keeps_main_red(self):
+        after = self.train()
+        for tip in ("", None, "b" * 39):
+            with self.subTest(tip=tip):
+                status, output = self.run_moved_on(
+                    after, env={"GITHUB_TOKEN": WORKFLOW_TOKEN}, tips=[tip])
+                self.assertEqual(status, 1, output)
+                self.assertEqual(self.api.deleted, [])
+                self.assertIn(f"Main's tip could not be read to see whether main has moved on "
+                              f"from {after}, and main-red stays. {self.HOW}", self.body())
+
     def test_graphql_errors_never_count_as_enqueued(self):
         self.train()
 
@@ -751,27 +1225,36 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(env["GIT_CONFIG_KEY_0"], "http.https://github.com/.extraheader")
         self.assertNotIn(APP_TOKEN, self.git("config", "--local", "--list"))
 
-    def test_protected_paths_match_safe_push_without_importing_it(self):
+    def test_protected_paths_are_safe_push_s(self):
         # The duplicated protected-path policy is an explicit contract: the trusted
-        # script cannot import the failed revision's safe_push.py to classify it.
-        tree = ast.parse((ROOT / "scripts/safe_push.py").read_text(encoding="utf-8"))
-        values = {}
-        for node in tree.body:
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id in {
-                            "PROTECTED", "PROTECTED_JUDGED", "KIND_LABELS", "DECISIONS"}:
-                        values[target.id] = ast.literal_eval(node.value)
-        self.assertEqual(ar.PROTECTED, values["PROTECTED"] + values["PROTECTED_JUDGED"])
-        self.assertEqual(ar.KINDS, set(values["KIND_LABELS"]))
-        # So is the decisions page, which a revert keeps.
-        self.assertEqual(ar.DECISIONS, values["DECISIONS"])
-        for prefix in values["PROTECTED"] + values["PROTECTED_JUDGED"]:
-            self.assertTrue(ar.protected(prefix + "example.py" if prefix.endswith("/")
-                                         else prefix))
-            self.assertFalse(ar.protected("unprotected/" + prefix))
-        self.assertFalse(ar.protected("scripts-lookalike/example.py"))
-        self.assertFalse(ar.protected("lean-toolchain.notes"))
+        # script cannot import the failed revision's safe_push.py to classify a path.
+        # This test can, as it imports check_links above: the two must decide alike every
+        # prefix of either and the paths at its edges.
+        import safe_push
+        prefixes = set(safe_push.PROTECTED) | set(ar.PROTECTED)
+        corpus = {"", "/", ".", "example.py", "unprotected/example.py", "docs/WORKFLOW.md",
+                  safe_push.DECISIONS, "Elements/BookI/Prop01.lean", "model/README.md"}
+        for prefix in prefixes:
+            bare = prefix.rstrip("/")
+            corpus |= {prefix, bare, bare + "/", prefix + "a/b.py", bare + ".notes",
+                       bare + "-lookalike/x.py", bare[:-1], "unprotected/" + prefix,
+                       prefix.upper(), "./" + prefix, "/" + prefix, " " + prefix, prefix + " "}
+        for path in sorted(corpus):
+            with self.subTest(path=path):
+                self.assertEqual(ar.protected(path), safe_push.is_protected(path))
+        # And the decision each prefix's edge must have, so that an error made alike in
+        # both still fails: its own files are protected; the same path under another
+        # folder, and a name that only begins alike, are not.
+        for prefix in prefixes:
+            with self.subTest(prefix=prefix):
+                self.assertTrue(ar.protected(prefix + "a/b.py" if prefix.endswith("/")
+                                             else prefix))
+                self.assertFalse(ar.protected("unprotected/" + prefix))
+                self.assertFalse(ar.protected(prefix.rstrip("/") + "-lookalike/x.py"))
+        # The kinds, and the decisions record a revert keeps, are safe_push's.
+        self.assertEqual(ar.KINDS, set(safe_push.KIND_LABELS))
+        self.assertEqual(ar.DECISIONS, safe_push.DECISIONS)
+        self.assertEqual(ar.ENTRIES + "/", safe_push.ENTRIES)
 
     def run_clear(self, *extra):
         output = io.StringIO()
@@ -1358,6 +1841,111 @@ class AutoRevert(unittest.TestCase):
             with self.subTest(before=before):
                 self.assertEqual(self.run_trusted_extraction(before), "")
                 self.assert_fallback_issue("previous main commit is invalid")
+
+    RECORD = "Record the failure and enqueue the revert"
+    FALLBACK = "Open the issue when the trusted script or failed jobs are unavailable"
+
+    def test_workflow_records_a_failure_as_actions_runs_the_revert_job(self):
+        # The revert job's last two steps, as post-merge.yml holds them, run as Actions
+        # runs them, with stand-ins for python3 and gh that record each call.
+        job = workflow_job("post-merge.yml", "revert")
+        record, fallback = job_step(job, self.RECORD), job_step(job, self.FALLBACK)
+        # The job runs when integration failed, and only then: its if reads the status of
+        # the jobs it needs, and a job that needs none starts with the run, at success.
+        for result in ("success", "failure", "cancelled"):
+            status = result if job.get("needs") == "integration" else "success"
+            self.assertEqual(condition(job.get("if"), {}, status), result == "failure", result)
+        # Exactly one of the two steps runs, whatever the earlier steps left, and whether
+        # or not one of them failed.
+        for script, readable, status in itertools.product(
+                ("/runner/auto-revert.abc123", ""), ("true", "false", ""),
+                ("success", "failure", "cancelled")):
+            outputs = {"trusted": {"script": script}, "failed": {"readable": readable}}
+            with self.subTest(script=script, readable=readable, status=status):
+                runs = condition(record.get("if"), outputs, status)
+                self.assertEqual(runs, bool(script) and readable == "true")
+                self.assertEqual(condition(fallback.get("if"), outputs, status), not runs)
+        merge = self.train()
+        runner = self.directory / "runner"
+        (runner / "bin").mkdir(parents=True)
+        calls = runner / "calls"
+        for name in ("python3", "gh"):
+            stand_in = runner / "bin" / name
+            stand_in.write_text(f"#!{sys.executable}\n"
+                                + RECORDER.format(calls=str(calls), slug=SLUG), encoding="utf-8")
+            stand_in.chmod(0o755)
+        path = f"{runner / 'bin'}:{os.environ['PATH']}"
+        jobs = runner / "failed-jobs"
+        jobs.write_text("integration / check: failure\nintegration / model: failure\n",
+                        encoding="utf-8")
+        trusted, run_url = runner / "auto-revert.abc123", f"https://github.com/{SLUG}/actions/runs/99"
+        # The App's secrets are the auto-revert environment's alone (WORKFLOW, section 10).
+        secrets = {"secrets.STOICHEIA_REVERT_APP_ID": "1234",
+                   "secrets.STOICHEIA_REVERT_APP_KEY": self.key}
+        if job.get("environment") != "auto-revert":
+            secrets = dict.fromkeys(secrets, "")
+        values = {"github.token": WORKFLOW_TOKEN, "github.repository": SLUG,
+                  "github.event.before": self.before, "github.event.after": merge,
+                  "github.run_id": "99", "github.server_url": "https://github.com",
+                  "steps.trusted.outputs.script": str(trusted),
+                  "steps.trusted.outputs.reason": "", "steps.failed.outputs.path": str(jobs),
+                  **secrets}
+
+        def made():
+            return [json.loads(line) for line in calls.read_text(encoding="utf-8").splitlines()]
+
+        for code in (0, 1, 2, 3):
+            with self.subTest(exit=code):
+                calls.write_text("", encoding="utf-8")
+                (runner / "exit").write_text(str(code), encoding="utf-8")
+                result, fails = run_step(job, record, values, runner, self.repo, path)
+                self.assertEqual([call[:2] for call in made()], [["python3", [
+                    "-I", str(trusted), "--before", self.before, "--after", merge,
+                    "--repo", SLUG, "--run-url", run_url, "--failed-jobs",
+                    "integration / check: failure\nintegration / model: failure"]]],
+                    result.stderr)
+                env = made()[0][2]
+                self.assertEqual({key: env.get(key) for key in (
+                    "GITHUB_TOKEN", "STOICHEIA_REVERT_APP_ID", "STOICHEIA_REVERT_APP_KEY")},
+                    {"GITHUB_TOKEN": WORKFLOW_TOKEN, "STOICHEIA_REVERT_APP_ID": "1234",
+                     "STOICHEIA_REVERT_APP_KEY": self.key})
+                self.assertEqual(sorted(key for key, value in env.items()
+                                        if value in (WORKFLOW_TOKEN, self.key)),
+                                 ["GH_TOKEN", "GITHUB_TOKEN", "STOICHEIA_REVERT_APP_KEY"])
+                # The script's exit is the step's, and any but 0 fails the job.
+                self.assertEqual(result.returncode, code, result.stderr)
+                self.assertEqual(fails, code != 0)
+        # The fallback, run in a state that runs it: it opens the issue with gh and the
+        # job's token alone, and fails the job.
+        reason = "No post-merge run was found for the previous main."
+        values.update({"steps.trusted.outputs.script": "",
+                       "steps.trusted.outputs.reason": reason})
+        calls.write_text("", encoding="utf-8")
+        result, fails = run_step(job, fallback, values, runner, self.repo, path)
+        self.assertEqual((result.returncode, fails), (1, True), result.stderr)
+        self.assertEqual([call[0] for call in made()], ["gh"] * 3)
+        self.assertTrue(all(call[2].get("GH_TOKEN") == WORKFLOW_TOKEN
+                            and self.key not in call[2].values() for call in made()))
+        opened = made()[-1][1]
+        self.assertEqual(opened[:4], ["api", "--method", "POST", f"repos/{SLUG}/issues"])
+        payload = json.loads(Path(opened[opened.index("--input") + 1]).read_text())
+        self.assertEqual(payload["title"], f"Main integration failed at {merge[:12]}")
+        self.assertEqual(payload["labels"], ["blocks-release", "main-red"])
+        for text in (f"Before: {self.before}\nAfter: {merge}\n",
+                     f"- #11: Train 11 (merge {merge})\n", "integration / model: failure\n",
+                     f"Failed run: 99\nRun: {run_url}\n", reason,
+                     "Issue only; no automatic revert or pull request was attempted."):
+            self.assertIn(text, payload["body"])
+
+    def test_the_condition_reader_refuses_every_other_form(self):
+        # So that a changed condition fails the test above rather than being misread.
+        for text in ("!cancelled()", "${{ always() }}", "always() &&", "(always()",
+                     "'a' == 'a' == 'a'", "'a' 'b'", "always() == 'true'",
+                     "github.event_name == 'push'", "steps.trusted.outputs.script != \"\"",
+                     "always() and true", "steps.trusted.outputs", "always() || 'x' <= 'y'"):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(AssertionError, "does not read"):
+                    condition(text, {}, "success")
 
 
 if __name__ == "__main__":

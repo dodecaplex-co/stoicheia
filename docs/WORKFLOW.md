@@ -1588,7 +1588,18 @@ revert made by hand, as for a train that changed `.github/workflows/`; it keeps 
 decisions record, and mends each link on it that the revert would break, as
 `check_links.py` names them ("Auto-revert", above). Once it is on
 main, its own post-merge run decides: a passing run at the new tip clears `main-red`,
-and a failing one is a failed push like any other.
+and a failing one is a failed push like any other. A slow run's failure can be recorded
+after a later push's run has passed and cleared, which would leave main paused although
+its tip is green. So, unless it enqueues a revert, `auto_revert.py` then reads main's tip
+afresh. While the tip is still the failed push, it changes nothing more: a later push's
+run that passes clears the issue as any other. When main has moved on, it removes
+`main-red` from the issue it opened, naming the run, if the tip contains the issue's
+`After`, the tip's latest post-merge run (every page read) completed with success, and
+main still names that tip just before the removal. When main has moved on, or its tip
+cannot be read, and the label stays, the issue says how to clear it, the way that also
+clears an issue the fallback opened: once main's tip has a post-merge run that passed,
+re-run that run's `clear` job, which removes the label from every open `main-red` issue
+whose `After` main's tip contains.
 
 **Turning it on.** The queue remains off until the owner enables it, and not before the
 owner has chosen the authenticated source for the pre-flight's evidence that rule (b)
