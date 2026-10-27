@@ -117,6 +117,14 @@ circumference, taken twice.
 decision to add none for Book III is superseded by the approved rule `Tacit.exists_centre`,
 which gives every circle a centre ([brief 0008](0008-centre.md), approved 18 October).
 
+**26 October 2026, the radius rule.** A second rule of ours has joined `exists_centre`: a
+circle's radius is not nothing (`Tacit.radius_ne_zero`), added by the owner's decision of
+25 October 2026 ([its decisions entry](../decisions/2026-10-25-radius-rule.md)). It is a
+rule for Book Zero, not one added for Book III's sake, but Book III's proofs rest on it:
+every positive length in the edition now comes from it, and III.5 and III.6 rest on it in
+place of Diagram-segment 2 and Circle 1, which neither now rests on
+([the entry for that move](../decisions/2026-10-25-book-zero-radius-rule.md)).
+
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. It is the angle the circumference subtends at the centre when it is less than
