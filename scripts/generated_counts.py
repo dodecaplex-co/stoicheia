@@ -311,9 +311,6 @@ FORMALIZATION = "docs/FORMALIZATION.md"
 # code must be one, or the file is refused rather than miscounted.
 AXIOM_PIN = re.compile(rf"#guard_msgs\s+in\s*#print\s+axioms\s+{IDENTIFIER.pattern}{NAME_END}")
 PRINT_AXIOMS = re.compile(r"#print\s+axioms")
-OPTION_WRAPPED_AXIOM_PIN = re.compile(
-    rf"(?m)^[ \t]*set_option\s+{IDENTIFIER.pattern}{NAME_END}"
-    rf"(?:(?!^[ \t]*set_option\b)[\s\S])*?\bin\s*{AXIOM_PIN.pattern}")
 SET_OPTION_COMMAND = re.compile(
     rf"(?<![\w.'!?₀-₉])set_option\s+{IDENTIFIER.pattern}{NAME_END}"
     rf"\s+(?P<value>\S+)(?P<local>\s+in\b)?")
@@ -460,10 +457,7 @@ def superposition_dependency_checks(root):
     if quotation := SYNTAX_QUOTATION.search(code):
         raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quotation.start()) + 1}: "
                          "a syntax quotation, whose commands are not run")
-    if wrapped := OPTION_WRAPPED_AXIOM_PIN.search(code):
-        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, wrapped.start()) + 1}: "
-                         "a guarded pin under `set_option`, not a bare top-level guard")
-    if optioned := persistent_option_pin(code):
+    if optioned := optioned_axiom_pin(code):
         raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, optioned.start()) + 1}: "
                          "a guarded pin under `set_option`, not a bare top-level guard")
     pins = len(AXIOM_PIN.findall(code))
@@ -473,10 +467,18 @@ def superposition_dependency_checks(root):
     return pins
 
 
-def persistent_option_pin(code):
-    """Return the first axiom pin governed by a persistent set_option command."""
+def optioned_axiom_pin(code):
+    """Return the first axiom pin governed by a local or persistent set_option command."""
+    options = list(SET_OPTION_COMMAND.finditer(code))
+    for option in options:
+        if option.group("local") is not None:
+            position = option.end()
+            while position < len(code) and code[position].isspace():
+                position += 1
+            if pin := AXIOM_PIN.match(code, position):
+                return pin
     events = [(match.start(), "pin", match) for match in AXIOM_PIN.finditer(code)]
-    events.extend((match.start(), "option", match) for match in SET_OPTION_COMMAND.finditer(code)
+    events.extend((match.start(), "option", match) for match in options
                   if match.group("local") is None)
     scopes = [False]
     offset = 0

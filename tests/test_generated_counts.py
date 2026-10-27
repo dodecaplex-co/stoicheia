@@ -282,6 +282,8 @@ def note : String := "#print axioms Elements.inString"
                  "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
                 (original + "set_option pp.universes true in #guard_msgs in "
                  "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
+                (original + "#print Nat set_option pp.universes true in #guard_msgs in "
+                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
                 (original + "set_option pp.universes true /- a remark -/ in\n"
                  "-- another remark\n#guard_msgs in\n#print axioms Elements.third\n",
                  "a guarded pin under `set_option`"),
