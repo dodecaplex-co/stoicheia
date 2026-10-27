@@ -981,6 +981,23 @@ def main(argv):
                 pr["raw_labels"] = s["watch_raw_labels"]
             if s.get("watch_omit_labels"):
                 pr["omit_labels"] = True
+            # While CI is followed, each once, as the world may change during CI (#557):
+            # "watch_main": a sha, origin's main moved to it, as another merge would move
+            # it; "watch_head": a sha, origin's branch of the pull request moved to it, as a
+            # push to the branch would move it; "watch_write": {path: text}, each file
+            # written, as code run as the user could write it; "watch_git": a list of git
+            # commands, each run where gh is run (the clone), as such code could run them.
+            for command in s.pop("watch_git", []):
+                subprocess.run(["git", *command], check=True)
+            if "watch_main" in s:
+                subprocess.run(["git", "update-ref", "refs/heads/main", s.pop("watch_main")],
+                               cwd=ORIGIN, check=True)
+            if "watch_head" in s:
+                subprocess.run(["git", "update-ref", "refs/heads/" + pr["headRefName"],
+                                s.pop("watch_head")], cwd=ORIGIN, check=True)
+            for path, text in s.pop("watch_write", {}).items():
+                with open(path, "w") as f:
+                    f.write(text)
             save(s)
             kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
@@ -4339,6 +4356,311 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertIn("the pull request has no label for its kind", out)
         self.assertEqual(self.origin_branch(), second)
+
+
+class Land(Edge):
+    """#557, --land: the push, CI and the merge in one run. The pre-flight's record, kept
+    in memory and never read from a file, stands in for the merge's step 4, even for a
+    head that changes the checks, only while the head GitHub has is the commit pushed (else
+    refused), origin/main has not moved and no cache served origin/main's pass; the disk is
+    never read for it, and a separate --merge keeps its rule. Each test asserts the exit
+    and what is on origin, as Merge's do."""
+
+    CHECK = "scripts/notes_check.py"
+    MEMORY = "in this run's pre-flight, its record kept in memory, never read from a file"
+    AGAIN = "so the full checks run again, not the record"
+    FULL_PATH = "full local checks: internal test flag, local origin"
+
+    def check_change(self) -> str:
+        """A head that changes the checks, as Merge's test that a record never stands in
+        for one makes it."""
+        return self.commit("A change", {self.CHECK: "print('a new check')\n",
+                                        **self.decision(f"`{self.CHECK}` is added for the test.")})
+
+    def guide_change(self) -> str:
+        """A head of R3 that changes no check and no protected path (Merge.opened_r3's): a
+        record of it, read from a file, a separate --merge would let stand in."""
+        return self.commit("A change to the guide to the checks", {"docs/WORKFLOW.md": (
+            self.text("docs/WORKFLOW.md") + "\nA line for the test.\n")})
+
+    def body(self) -> Path:
+        """The body, final at the push, since nothing comes between it and the merge: the
+        template, which the pre-flight fills, completed as the coordinator completes it."""
+        path = TMP / "land-body.md"
+        path.write_text(ticked(self.text(safe_push.TEMPLATE)))
+        return path
+
+    def land(self) -> subprocess.CompletedProcess:
+        return self.safe_push("--body-file", str(self.body()), "--ready", "--land")
+
+    def merge_part(self, out: str) -> str:
+        """What the merge the run goes on to prints, after the push's summary."""
+        mark = "safe_push: merge of pull request #1 from"
+        self.assertIn(mark, out)
+        return out[out.index(mark):]
+
+    def test_check_changing_head_lands_in_one_run_with_step_4_from_memory(self):
+        # The case #557 is for: a head that changes the checks lands in one run, the record
+        # kept in memory standing in for the merge's step 4, never run again there.
+        sha = self.check_change()
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        main = self.origin_main()
+        self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", main).split()[1:],
+                         [BASE, sha], "not a merge commit of main and the head")
+        self.assertEqual(len(self.merges()), 1)
+        merged = self.merge_part(out)
+        self.assertEqual(self.guard(merged, "pre-flight"), "ok", merged)
+        self.assertIn(f"{sha[:12]} checked against origin/main {BASE[:12]} {self.MEMORY}: the "
+                      "secret scan and the guards run again; the full checks are not "
+                      "repeated", merged)
+        self.assertNotIn(self.AGAIN, out)
+        self.assertNotIn(self.FULL_PATH, merged)
+        # The scan and the guards ran again at the merge.
+        for name in ("secrets", "statements", "protected paths", "paths"):
+            self.assertEqual(self.guard(merged, name), "ok", f"{name}:\n{merged}")
+
+    def test_main_moving_during_ci_runs_the_full_checks(self):
+        # origin/main moves during CI to the head's first commit, which the merge's
+        # preconditions accept: the record kept in memory is of another main and stands in
+        # for nothing, so the merge's step 4 takes the full path (under the internal test
+        # flag, its skip). The body's summary, of the old main, then refuses the merge, as
+        # it refuses a separate --merge's: nothing merges, and the run exits 3, pushed.
+        c1 = self.good_commit()
+        c2 = self.check_change()
+        self.set_gh(lambda s: s.update(watch_main=c1))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        merged = self.merge_part(out)
+        self.assertEqual(self.guard(merged, "pre-flight"), "note", merged)
+        self.assertIn(f"origin/main moved from {BASE[:12]} to {c1[:12]} during CI, so the record "
+                      "kept in memory is of another main and stands in for nothing: the full "
+                      "checks run now", merged)
+        self.assertIn(self.FULL_PATH, merged)
+        self.assertNotIn(self.MEMORY, merged)
+        self.assertEqual(self.guard(merged, "body"), "FAIL", merged)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), c1)
+        self.assertEqual(self.origin_branch(), c2)
+        # origin/main moves to a commit the head does not hold: refused, nothing merged.
+        self.setUp()
+        side = self.side_commit()
+        sha = self.check_change()
+        self.set_gh(lambda s: s.update(watch_main=side))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn(f"origin/main ({side[:12]}) is not an ancestor of #1's head", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), side)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_head_changed_during_ci_is_refused(self):
+        # The run merges only the commit it pushed: a head moved during CI, here to a
+        # descendant of it, is refused, never checked again in its place.
+        sha = self.check_change()
+        later = git(WORK, "commit-tree", f"{sha}^{{tree}}", "-p", sha, "-m",
+                    "A commit pushed during CI").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{later}:refs/heads/later")
+        self.set_gh(lambda s: s.update(watch_head=later))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn(f"the head of #1 moved from {sha[:12]} to {later[:12]} during CI; "
+                      "nothing is merged: run the pre-flight on the new head", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), later)
+
+    def test_origin_changed_during_ci_is_refused(self):
+        # The merge's fresh fetch is of the origin the push read before any of the commit's
+        # code ran: the clone's origin pointed during CI at a copy, where main would never
+        # be seen to move, is refused, and nothing is merged.
+        sha = self.check_change()
+        url = git(WORK, "remote", "get-url", "origin").strip()
+        elsewhere = TMP / "origin-copy.git"
+        shutil.rmtree(elsewhere, ignore_errors=True)
+        git(TMP, "clone", "--quiet", "--bare", str(ORIGIN), str(elsewhere))
+        self.addCleanup(shutil.rmtree, elsewhere, ignore_errors=True)
+        self.addCleanup(git, WORK, "remote", "set-url", "origin", url)
+        self.set_gh(lambda s: s.update(watch_git=[["remote", "set-url", "origin",
+                                                   str(elsewhere)]]))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn(f"origin's URL changed during the run, from {url} to {elsewhere}; "
+                      "nothing is merged", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_harness_changed_during_ci_is_refused_never_handed_over(self):
+        # origin/main moves during CI to a commit that changes safe_push.py: the merge's
+        # harness is refused, never handed over, since a hand-over would run the push's
+        # arguments, and so the whole push, again.
+        path = "scripts/safe_push.py"
+        c1 = self.commit("A comment in the harness", {
+            path: self.text(path) + "\n# A comment for the test.\n",
+            **self.decision(f"`{path}` gains a comment, for the test.")})
+        c2 = self.good_commit()
+        self.set_gh(lambda s: s.update(watch_main=c1))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("origin/main's harness is no longer the one this run started with", out)
+        self.assertNotIn("running origin/main's in its place", out)
+        self.assertEqual(out.count("safe_push: push of"), 1, out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), c1)
+        self.assertEqual(self.origin_branch(), c2)
+
+    def test_forged_record_on_disk_changes_nothing(self):
+        # During CI a record is written where a separate --merge would read it. One that
+        # stands in for nothing does not stop the record kept in memory standing in.
+        sha = self.check_change()
+        forged = {"sha": sha, "base": BASE, "branch": BRANCH, "full": True, "time": "forged",
+                  "harness": "origin/main's", "harness_blob": "0" * 40,
+                  "steps": [["2", "secrets", "ok", 0.1], ["4", "lake build", "ok", 1.0]],
+                  "notes": [["forged", "a note of the forged record"]], "protected": [],
+                  "statements": []}
+        path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
+        self.set_gh(lambda s: s.update(watch_write={str(path): json.dumps(forged)}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("watch_write", self.gh_state(), "the record was not forged")
+        merged = self.merge_part(out)
+        self.assertIn(self.MEMORY, merged)
+        self.assertNotIn("is not of the full checks by origin/main's harness", out)
+        self.assertNotIn("forged", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+        # origin/main moves during CI, and a record a separate --merge would let stand in
+        # (origin/main's harness, full, every step ok) is written for the new main: the
+        # full checks still run, so the file was never read.
+        self.setUp()
+        c1 = self.good_commit()
+        c2 = self.guide_change()
+        accepted = dict(forged, sha=c2, base=c1, notes=[],
+                        harness_blob=safe_push.blob_id(SAFE_PUSH.read_bytes()))
+        path = LOG.parent / "preflight" / f"{c2}-{c1}.json"
+        self.set_gh(lambda s: s.update(watch_main=c1,
+                                       watch_write={str(path): json.dumps(accepted)}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        merged = self.merge_part(out)
+        self.assertIn(f"origin/main moved from {BASE[:12]} to {c1[:12]} during CI", merged)
+        self.assertIn(self.FULL_PATH, merged)
+        self.assertNotIn("forged", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), c1)
+        # The same file, put back, a separate --merge does read, and lets stand in.
+        path.write_text(json.dumps(accepted))
+        r = self.safe_push("--merge", "1", "--dry-run")
+        self.assertIn(f"{c2[:12]} checked against origin/main {c1[:12]} (forged)", r.stdout,
+                      r.stdout + r.stderr)
+        self.assertEqual(self.origin_main(), c1)
+
+    def test_separate_merge_still_reruns_for_a_check_changing_head(self):
+        # The regression: pushed without --land, a check-changing head's merge, a separate
+        # --merge, runs the full checks again rather than trust the record, a file.
+        sha = self.check_change()
+        r = self.safe_push("--body-file", str(self.body()), "--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("safe_push: merge of", r.stdout)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        r = self.safe_push("--merge", "1")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn(self.AGAIN, out)
+        self.assertIn(self.FULL_PATH, out)
+        self.assertNotIn(self.MEMORY, out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_land_needs_ready_and_refuses_dry_run_and_merge(self):
+        # The parser's rules: a usage error, exit 2, and nothing pushed or asked of GitHub.
+        self.check_change()
+        neither = "--land pushes and merges in one run: it takes neither --merge nor --dry-run"
+        needs = "--land needs --branch and --ready"
+        for args, why in ((["--branch", BRANCH, "--label", "docs", "--land"], needs),
+                          (["--land"], needs),
+                          (["--branch", BRANCH, "--label", "docs", "--ready", "--land",
+                            "--dry-run"], neither),
+                          (["--merge", "1", "--land"], neither),
+                          (["--merge", "1", "--dry-run", "--land"], neither)):
+            with self.subTest(args=args):
+                r = subprocess.run([sys.executable, str(SAFE_PUSH), "--_test-skip-checks", *args],
+                                   cwd=WORK, env=clean_env(), capture_output=True, text=True)
+                self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+                self.assertIn(why, r.stderr)
+        self.assertIsNone(self.origin_branch())
+        self.assertEqual(self.gh_state()["calls"], [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_ci_failing_merges_nothing(self):
+        # CI fails: the run exits 3, as a push does, and goes on to no merge.
+        sha = self.check_change()
+        failing = [dict(c, bucket="fail", state="FAILURE") for c in PASSING]
+        self.set_gh(lambda s: s["checks"].update({sha: failing}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("CI did not pass for the pull request. Nothing is merged", out)
+        self.assertNotIn("safe_push: merge of", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_cache_hit_does_not_stand_in(self):
+        # When origin/main's pass of step 4 came from the main-checks cache, a file, the
+        # record kept in memory stands in for nothing. The cache needs a sandbox and step 4
+        # in full, which the internal test flag skips, so merge_main is called here, in
+        # this process, with what --land would hand it: the pre-flight's own record, from
+        # its run without --land, and `cached` True.
+        sha = self.check_change()
+        r = self.safe_push("--body-file", str(self.body()), "--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        record = json.loads((LOG.parent / "preflight" / f"{sha}-{BASE}.json").read_text())
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, clean_env(), clear=True), \
+                mock.patch.object(safe_push, "HARNESS", safe_push.HARNESS), \
+                mock.patch.object(safe_push, "HARNESS_BLOB", None), \
+                contextlib.redirect_stdout(out):
+            code = safe_push.merge_main(WORK, 1, False, True,
+                                        held=safe_push.Held(sha, BASE, record, True, git(
+                                            WORK, "remote", "get-url", "origin").strip()))
+        text = out.getvalue()
+        self.assertEqual(code, 0, text)
+        self.assertEqual(self.guard(text, "pre-flight"), "note", text)
+        self.assertIn("origin/main's pass of step 4 was taken from the main-checks cache, a "
+                      "file, so the record kept in memory does not stand in for it: the full "
+                      "checks run now", text)
+        self.assertIn(self.FULL_PATH, text)
+        self.assertNotIn(self.MEMORY, text)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_cache_hit_is_marked_in_memory(self):
+        # main_checks marks a hit in this run's memory, which --land's Held reads; a miss
+        # leaves it unmarked. Nothing is read from or written to a cache here: the key's
+        # fields and the entry are stand-ins.
+        sha = self.check_change()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        for entry, hit in ((None, False), ({"written": "earlier"}, True)):
+            with self.subTest(hit=hit), mock.patch.object(safe_push, "CACHE_HIT", False), \
+                    mock.patch.object(safe_push, "CACHE", TMP / "no-cache"), \
+                    mock.patch.object(safe_push, "main_checks_fields",
+                                      lambda *args: ({"for": "the test"}, "")), \
+                    mock.patch.object(safe_push, "read_entry",
+                                      lambda *args: (entry, "no entry for the test")), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                found = safe_push.main_checks(ctx, WORK, [("A", self.CHECK)],
+                                              safe_push.Report(), [])
+                self.assertEqual(found.hit, hit)
+                self.assertIs(safe_push.CACHE_HIT, hit)
+        self.assertEqual(self.origin_main(), BASE)
 
 
 # --------------------------------------------------------------------------------------
@@ -8038,9 +8360,11 @@ class HandOver(Edge):
     def test_launcher_runs_origin_mains_copy(self):
         # The checkout's copy never hands over, and does not scan; a token is planted. The
         # launcher runs origin/main's copy, which refuses it.
-        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report)"
-                             " -> None:\n", "def harness(repo, base, rep):\n    return None\n\n\n"
-                             "def _unused(repo, base: str, rep: Report) -> None:\n")
+        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report,"
+                             " hand_over: bool = True) -> None:\n",
+                             "def harness(repo, base, rep, hand_over=True):\n    return None\n\n\n"
+                             "def _unused(repo, base: str, rep: Report, hand_over: bool = True)"
+                             " -> None:\n")
         lame = lame.replace("def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
                             "def _unused_scan(", 1)
         self.commit("A harness that judges itself, and a token", {
@@ -8122,9 +8446,11 @@ class HandOver(Edge):
         # Issue #256: origin/main's safe_push.py replaced by a copy that never hands over
         # and does not scan. The launcher copies out and runs origin/main's own, which
         # refuses the token.
-        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report)"
-                             " -> None:\n", "def harness(repo, base, rep):\n    return None\n\n\n"
-                             "def _unused(repo, base: str, rep: Report) -> None:\n")
+        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report,"
+                             " hand_over: bool = True) -> None:\n",
+                             "def harness(repo, base, rep, hand_over=True):\n    return None\n\n\n"
+                             "def _unused(repo, base: str, rep: Report, hand_over: bool = True)"
+                             " -> None:\n")
         lame = lame.replace("def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
                             "def _unused_scan(", 1)
         theirs = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py").strip()
