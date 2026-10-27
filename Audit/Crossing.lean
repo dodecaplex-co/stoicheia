@@ -129,7 +129,8 @@ end Audit
 These lists include Diagram-segment 2. They check the bridges' dependencies, separately
 from the lists for III.5 and III.6 below, whose proofs cite neither Diagram-segment 2 nor
 Circle 4, which is now a theorem proved from I.7 using Diagram-segment 2 (19 October 2026),
-though the proved rules they use rest on Diagram-segment 2 (below). The bridge through III.7
+and since 26 October 2026 rest on neither, through the proved rules they use or otherwise
+(below). The bridge through III.7
 and III.8 uses III.2 (`Prop2.within`) to order the points on the straight line through the
 centres, which `CirclesCut.cut_point` takes from the rule. Two of the lists pin the
 theorems `Elements.CirclesCut.cut_point` and `Elements.CirclesCut.of_meet`, which this file
@@ -186,6 +187,7 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -238,6 +240,7 @@ info: 'Audit.III_6_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -290,6 +293,7 @@ info: 'Audit.III_11_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -342,6 +346,7 @@ info: 'Audit.III_13_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -394,6 +399,7 @@ info: 'Elements.CirclesCut.cut_point' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -446,6 +452,7 @@ info: 'Elements.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -498,6 +505,7 @@ info: 'Audit.within_point' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -507,13 +515,18 @@ info: 'Audit.within_point' depends on axioms: [propext,
 
 /-! ## What III.5 and III.6 rest on
 
-The pins from the staged proofs followed them home. They now list Definition I.15,
-Postulates 1 and 3 and 18 tacit rules, the same for each. Diagram-segment 2
-(`Elements.Tacit.circle_eq`) is among them: the proofs do not cite it, but since the second
-axiom retirement (proved on 19 October 2026) the proved rules they use, such as
-`centre_inside` beneath Book Zero's `ne_of_centre_of_on`, rest on it and on Postulate 3, to
-show that a radius is never nothing (`RuleProofs.Circle.radius_ne_zero`). So the pins no
-longer show that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
+The pins from the staged proofs followed them home. Since 26 October 2026 they list
+Definition I.15, Postulates 1 and 3 and 12 tacit rules for III.5, and 16 for III.6, whose
+`centre_inside`, for contact without, adds Points 8, Intersections 4, `len_symm` and
+`lt_trans`. Our radius rule (`Elements.Tacit.radius_ne_zero`) is among them, and neither
+Diagram-segment 2 (`Elements.Tacit.circle_eq`) nor Circle 1
+(`Elements.Tacit.between_of_inside_chord`) is. From the second axiom retirement (proved on
+19 October 2026) until then, the proved rules the proofs use, such as `centre_inside`
+beneath Book Zero's `ne_of_centre_of_on`, rested on both, and on Postulate 3, to show that a
+radius is never nothing (`RuleProofs.Circle.radius_ne_zero`); that lemma now takes it from
+the radius rule, and Postulate 3 enters through Metric 1, proved from the rule, and, for
+III.6, through `RuleProofs.Circle.length_pos` beneath `centre_inside`. So the pins
+show again that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
 check the names of these two declarations' axioms, and the build fails if an admitted proof
 (`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, proved after III.2,
 cannot appear here; the certificate shows that neither proof uses them, for neither cites
@@ -530,21 +543,15 @@ info: 'Elements.BookIII.Prop5' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
- Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
- Elements.Tacit.len_symm,
- Elements.Tacit.line_circle_between,
  Elements.Tacit.line_circle_beyond,
  Elements.Tacit.lt_irrefl,
- Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero]
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.radius_ne_zero]
 -/
 #guard_msgs in
 #print axioms Elements.BookIII.Prop5
@@ -559,10 +566,7 @@ info: 'Elements.BookIII.Prop6' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
- Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
@@ -573,7 +577,8 @@ info: 'Elements.BookIII.Prop6' depends on axioms: [propext,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero]
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.radius_ne_zero]
 -/
 #guard_msgs in
 #print axioms Elements.BookIII.Prop6

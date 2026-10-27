@@ -1,8 +1,8 @@
 # search-seed3: random search, 20,000 samples per axiom
 # command: python3 -I tests/model/search.py 20000 3
 # seeds: 3
-# commit: 3a2ba2364a3a79a6fdf904e1e731826d2661fc1c (harness files as committed)
-# harness sha256: 39910f14220a517dcf9ac2a15799d60c531328b88e9f5a024cf5c60eb5d78b73
+# commit: c6515f8dacfc66b5b8792aa56662b79c19cb5213 (harness files as committed)
+# harness sha256: 86467974688f85ceb3a2f2e177dce427cda36d09b5d200acd69bdfefee6eab08
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-26
 # time: 7.5 s

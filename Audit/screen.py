@@ -34,8 +34,9 @@ lists every definition of the edition that their types reach, through the bodies
 definitions (Triangle reaches Collinear; Rectangle reaches Parallelogram, AreParallel and
 Parallel; Apart.area reaches Magnitude.sum), and the screen stops if one is in none of the
 lists below. The definitions Lean makes for itself, to compile a definition by cases or by
-recursion (`InOrder.match_1`, `segments._f`), and the fields of a structure
-(`Apart.pieces`), are followed but not listed: the first are unfolded with the definition
+recursion (`InOrder.match_1`, `segments._f`, and the recursor `MixedAngle.casesOn`, which
+the matcher of `MixedAngle.vertex` calls), and the fields of a structure (`Apart.pieces`,
+`Arc.circle`), are followed but not listed: the first are unfolded with the definition
 they serve, and `grind` reads a field as it is. Each listed definition is given to `grind`
 in one of three ways.
   - DEFS, the phrases (SameSideOf, Triangle, Collinear, Parallelogram, ...) and the words
@@ -44,24 +45,40 @@ in one of three ways.
     given with its triangles, `Rectilineal.area` and `Apart.area`): unfolded to their
     bodies, those defined by cases or by recursion one case at a time, by the equations
     Lean proves for them. The restricted rule's `primitives` interpretation is unfolded
-    here too: it assigns the edition's words to the pure calculus's fields.
-  - CHOSEN, the magnitudes Lean chooses (`circumference`, `standing`, `rect`) and the
-    order "not greater": by what the definition says of them and nothing more, as a lemma
-    proved from Lean's choice alone (`Classical.epsilon_spec`), in the preamble of every
-    file. Unfolded to `Classical.epsilon` alone, a chosen magnitude gives `grind` nothing to
-    reason with. What the lemma leaves out stays unsearched: that two descriptions choose
-    the same magnitude when they hold of the same things, and, for `circumference` and
-    `standing`, that every point of the circle gives the same angle, which is III.21 (so a
-    statement whose proof needs it, as the catalogue's near misses of the measure do, is
-    not found here, and is not a rule's overlap).
+    here too: it assigns the edition's words to the pure calculus's fields. So are Book
+    III's words: the region within an angle, a mixed angle's vertex, region and form, and
+    the comparisons of angles near a vertex (`WithinAngle`, `MixedAngle.region`,
+    `MixedAngle.WellFormed`, `LocallyLess`, `MixedAngle.Exceeds`, ...); an arc drawn, its
+    points and its segment's, its kinds, its measure and the placing of one segment on
+    another (`Arc.Drawn`, `OnArc`, `InSegment`, `Arc.Less`, `Arc.measure`, `Places`,
+    `Arc.Congruent`, ...); and the foot of a perpendicular (`Foot`). `Arc.measure` unfolds
+    to the circumference it names, which CHOSEN gives. So too are the words of a figure
+    given by its outline (brief 0013): its sides, the boundary and inside of a contour and
+    of the figure, the rays that count the crossings, and the triangles that cover or
+    divide a region (`Figures.sides`, `Figures.LoopInside`, `Figures.Outline.Region`,
+    `Figures.Divides`, ...), with the counts of crossings and of contours
+    (`Figures.crossingCount`, `Figures.Outline.depth`), each the length of a list.
+  - CHOSEN, the magnitudes Lean chooses (`circumference`, `standing`, `rect`, and the area
+    of a figure given by its outline, `Figures.Outline.area`) and the order "not greater":
+    by what the definition says of them and nothing more, as a lemma proved from Lean's
+    choice alone (`Classical.epsilon_spec`), in the preamble of every file. Unfolded to
+    `Classical.epsilon` alone, a chosen magnitude gives `grind` nothing to reason with. What
+    the lemma leaves out stays unsearched: that two descriptions choose the same magnitude
+    when they hold of the same things; for `circumference` and `standing`, that every point
+    of the circle gives the same angle, which is III.21 (so a statement whose proof needs
+    it, as the catalogue's near misses of the measure do, is not found here, and is not a
+    rule's overlap); and for `Outline.area`, that every division of the figure gives it
+    (`area_eq`), which its lemma does not say: it says only that some division does.
   - CARRIERS, the kinds of magnitude and their sum, order and zero: the words the axioms
     are stated in, left as they are.
 A word that names a new kind of thing, with rules of formation of its own, is not an
 abbreviation to unfold, and the pass does not list it: the figure of triangles fitted
-together (`Fitted`, defined by induction), and the figures given with their triangles
-(`Rectilineal`, `Apart`, structures). `grind` takes them as they are: it does not reason by
-induction on `Fitted`, and draws on a figure's fields only where a rule or the goal names
-them. So a companion of I.45 or II.14 whose proof needs that is not found here.
+together (`Fitted`, defined by induction); the figures given with their triangles
+(`Rectilineal`, `Apart`, structures); the mixed angle (`MixedAngle`, a type of two kinds);
+the arc (`Arc`, a structure); and the figure given by its outline (`Figures.Outline`, a
+structure). `grind` takes them as they are: it does not reason by induction on `Fitted`,
+and draws on a figure's fields only where a rule or the goal names them. So a companion of
+I.45 or II.14 whose proof needs that is not found here.
 The restricted superposition rule is also a structure, `Superposition.Rule`. Its field
 requires a represented derivation; `grind` does not build that derivation or open the
 field of itself. Unfolding `primitives` supplies its interpretation, not placement
@@ -137,15 +154,29 @@ rule to finish: `circle_eq` makes the two circles one, and only Generalities 4
 run of III.2, III.5 and III.6, by a copy of the screen kept to them, closed none of 690
 tries. The screen checks that the rows of KNOWN, below, still close by a rule, and says so
 when one does not. KNOWN still names III.5, and is stale until a check change gives the
-screen a new canary, tracked in issue #160. And, already on main, the screen cannot
-run until DEFS takes the 18 words train C6a introduced, so the run on the restated
-readings is still to be made: its pass over the definitions stops on them, for none of
-the lists below names them (also in issue #160). They are `Arc.Congruent`,
-`Arc.Drawn`, `Arc.measure`, `InSegment`, `LocallyLess`, `LocallyWithin`,
-`MixedAngle.Exceeds`, `MixedAngle.FallsShort`, `MixedAngle.WellFormed`,
+screen a new canary, tracked in issue #416.
+
+From train C6a until this change (issue #416), the screen could not run: its pass over the
+definitions stopped on words that none of the lists named, 37 of them at cf1591f14, so
+the run on the restated readings was not made. The statements of train C6a reach 18 of
+them (`Arc.Congruent`, `Arc.Drawn`, `Arc.measure`, `InSegment`, `LocallyLess`,
+`LocallyWithin`, `MixedAngle.Exceeds`, `MixedAngle.FallsShort`, `MixedAngle.WellFormed`,
 `MixedAngle.casesOn`, `MixedAngle.region`, `MixedAngle.vertex`, `NearVertexOpen`, `OnArc`,
-`OnSideOrLine`, `Places`, `Surrounds` and `WithinAngle`.
-No run of this screen on the restated statements is recorded here.
+`OnSideOrLine`, `Places`, `Surrounds` and `WithinAngle`), those of train C6b four more
+(`Arc.Less`, `Arc.Semicircle`, `Arc.Greater` and `Foot`), and the outline companions of
+I.45 and II.14 (22 October 2026) fifteen more, thirteen words of `Figures` and the phrases
+`OnFiniteLine` and `OnOrInsideTriangle`. They are placed now, as "What is unfolded" says:
+36 in DEFS and CHOSEN, and `MixedAngle.casesOn`, a recursor Lean makes for itself,
+followed and not listed. Run on the statements of cf1591f14 (26 October 2026), the pass
+reached 84 definitions, every one of them listed, and the 18,200 attempts over the 140
+statements (99 propositions, three porisms and 38 companions) made 31,360 tries (4,900
+were left with no rule `grind` takes). 86 ran out of time and were tried again; 8 ran out
+again, all of them III.34 from Postulate 4, alone or in its family, Postulates, with at
+most one more family, as before. No try closed, bare or with rules, so no statement closed,
+and the screen reported III.5 lost and exited 1: on this revision it finds no statement
+that an axiom closes. The canary is still to be settled, by a check change of its own
+(issue #416). Until then no run of this screen on the restated statements is recorded in
+RECORD, since --write records only a run that ends with every known row closed by a rule.
 
 usage (from the repository root, after `lake build`):
     python3 -I Audit/screen.py OUTDIR [--jobs N] [--write]
@@ -230,16 +261,30 @@ CIRCLE = """Definition15 Postulate3 Tacit.exists_centre Tacit.between_of_inside_
 Tacit.circles_meet Tacit.line_circle_between Tacit.line_circle_beyond
 Tacit.circles_meet_same_side Tacit.exists_point_inside_circle Tacit.circle_eq""".split()
 
-# The phrases, and the words for "any number", unfolded in every attempt.
+# The phrases, and the words for "any number", unfolded in every attempt. Then Book III's
+# words for mixed angles and their regions, and for arcs, segments and their placing (train
+# C6a), those defined by cases on a mixed angle (`MixedAngle.vertex`, `.region`,
+# `.WellFormed`) by their equations, and the arc's measure to the circumference it names;
+# the kinds of arc and the foot of a perpendicular (train C6b); and the words of a figure
+# given by its outline (brief 0013): its sides, boundary, inside, region and division, with
+# the counts of crossings and of contours, each the length of a list.
 DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet CirclesCut
 LineMeetsCircle CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet Collinear
 Triangle OnRay InsideTriangle Equilateral IsRightAngle IsObtuse IsAcute Square Parallel
 AreParallel Parallelogram Rectangle EqualCircles Contain quadArea sq InOrder segments endOf
-triples Magnitude.sum Rectilineal.area Apart.area primitives""".split()
+triples Magnitude.sum Rectilineal.area Apart.area primitives
+WithinAngle MixedAngle.vertex MixedAngle.region MixedAngle.WellFormed LocallyWithin Surrounds
+NearVertexOpen LocallyLess MixedAngle.Exceeds MixedAngle.FallsShort Arc.Drawn OnSideOrLine
+OnArc InSegment Arc.measure Places Arc.Congruent
+Arc.Less Arc.Semicircle Arc.Greater Foot OnFiniteLine OnOrInsideTriangle Figures.sides
+Figures.Covers Figures.Divides Figures.LoopBoundary Figures.GoodRay Figures.RayCrosses
+Figures.crossingCount Figures.LoopInside Figures.Outline.Boundary Figures.Outline.depth
+Figures.Outline.Inside Figures.Outline.Region""".split()
 
 # The chosen magnitudes, and the order "not greater", each given by its lemma in SPECS.
 CHOSEN = {"circumference": "Screen.circumference_spec", "standing": "Screen.standing_spec",
-          "rect": "Screen.rect_spec", "instLEMagnitude": "Screen.le_iff"}
+          "rect": "Screen.rect_spec", "Figures.Outline.area": "Screen.outline_area_spec",
+          "instLEMagnitude": "Screen.le_iff"}
 
 # The words the axioms are stated in, left as they are.
 CARRIERS = """Magnitude Length Angle Area instAddMagnitude instLTMagnitude
@@ -249,7 +294,7 @@ instOfNatMagnitudeOfNatNat""".split()
 # reports itself broken. III.2 and III.6 left with the second axiom retirement, which made
 # the rules that closed them theorems. III.5 is stale on this revision: the restated III.5
 # needs Generalities 4, a theorem now, and the screen tries axioms alone, so it no longer
-# closes. It stays until a check change gives the screen a new canary (issue #160).
+# closes. It stays until a check change gives the screen a new canary (issue #416).
 KNOWN = ["BookIII.Prop5"]
 
 # What each chosen definition says, proved from Lean's choice alone; nothing else.
@@ -278,6 +323,14 @@ theorem standing_spec {α : Circle} {X B A C : Point} (hX : OnCircle X α)
 theorem rect_spec {A B C D : Point} {x : Area} (h : Contain ‖A B‖ ‖C D‖ x) :
     Contain ‖A B‖ ‖C D‖ (rect A B C D) :=
   Classical.epsilon_spec ⟨x, h⟩
+
+/-- `Outline.area`: if some triangles divide the figure's region, the area is the sum of
+the triangles of some such division. -/
+theorem outline_area_spec {F : Figures.Outline} {R : Apart} (h : Figures.Divides F.Region R) :
+    ∃ R' : Apart, Figures.Divides F.Region R' ∧ R'.area = F.area :=
+  Classical.epsilon_spec
+    (p := fun a : Area => ∃ R : Apart, Figures.Divides F.Region R ∧ R.area = a)
+    ⟨_, R, h, rfl⟩
 
 /-- `≤`: "not greater". -/
 theorem le_iff {k : Kind} {a b : Magnitude k} : a ≤ b ↔ ¬ b < a := Iff.rfl
@@ -319,6 +372,17 @@ CONTROLS = [
     "∀ {a b : Length}, Magnitude.sum [a, b] = a + (b + 0)",
     "∀ {R : Rectilineal}, R.area = Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)",
     "∀ {R : Apart}, R.area = Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)",
+    "∀ {A B S : Point} {α : Circle}, (MixedAngle.ofSegment A B α S).vertex = A",
+    "∀ {A B S P : Point} {α : Circle}, (MixedAngle.ofSegment A B α S).region P → "
+    "InsideCircle P α",
+    "∀ {a : Arc} {P : Point}, OnArc P a → InSegment P a",
+    "∀ {a : Arc} {A E F G : Point}, OnCircle A a.circle → OppositeSidesOf A a.K a.B a.C → "
+    "(∀ X, OnCircle X a.circle → OppositeSidesOf X a.K a.B a.C → ∠ a.B X a.C = ∠ E F G) → "
+    "a.measure = ∠ E F G + ∠ E F G",
+    "∀ {F : Figures.Outline} {R : Apart} {x : Area}, Figures.Divides F.Region R → "
+    "(∀ R' : Apart, Figures.Divides F.Region R' → R'.area = x) → F.area = x",
+    "∀ {A B C : Point}, Figures.sides [A, B, C] = segments [A, B, C, A]",
+    "∀ {X Q : Point}, Figures.crossingCount [] X Q = 0",
 ]
 
 HEAD = ("import Elements\nopen Elements Elements.Tacit\nset_option maxErrors 1000000\n\n"
@@ -328,7 +392,9 @@ HEAD = ("import Elements\nopen Elements Elements.Tacit\nset_option maxErrors 100
 # The pass before the attempts: every definition of the edition that the roots' types
 # reach, through the bodies of definitions; and every listed name the edition lacks. The
 # definitions Lean makes for itself (a name with a part that begins `_`, as `segments._f`;
-# the matchers, as `InOrder.match_1`) and the fields of structures are followed, not listed.
+# the matchers, as `InOrder.match_1`; the recursors Lean makes for a type, as
+# `MixedAngle.casesOn`, which the matcher `MixedAngle.vertex.match_1` calls) and the fields
+# of structures are followed, not listed.
 REACH = """import Lean
 import Elements
 open Lean
@@ -350,7 +416,8 @@ run_cmd do
     seen := seen.insert n
     if let some (ConstantInfo.defnInfo d) := env.find? n then
       if (`Elements).isPrefixOf n then
-        unless n.isInternal || Meta.isMatcherCore env n || env.isProjectionFn n do
+        unless n.isInternal || Meta.isMatcherCore env n || isAuxRecursor env n ||
+            env.isProjectionFn n do
           Lean.logInfo m!"screen-def {n}"
         todo := todo ++ d.value.getUsedConstants ++ d.type.getUsedConstants
 
