@@ -2559,6 +2559,9 @@ def watch_checks(*args, **kwargs):
         # marks a hit, which the internal test flag never reaches; --land's Held reads it.
         safe_push.CACHE_HIT = True
     result = real_watch(*args, **kwargs)
+    if action == "change-origin-summary-interrupt":
+        subprocess.run(["git", "remote", "set-url", "origin", target], cwd=args[0].repo,
+                       check=True)
     if action == "stray-cache":
         # A cache and its sandbox still set once CI is followed, as --main-checks-cache
         # leaves them (the sandbox a profile that allows everything): the merge of --land
@@ -2590,7 +2593,8 @@ def merge_preconditions(*args, **kwargs):
 def summary(rep, mode, *args):
     # "summary-interrupt:<mode>": an interruption as that run's summary ("push" or
     # "merge") is written, outside the merge's own try.
-    if action == f"summary-interrupt:{mode}":
+    if action == f"summary-interrupt:{mode}" or \
+            (action == "change-origin-summary-interrupt" and mode == "merge"):
         raise KeyboardInterrupt("a test interruption")
     return real_summary(rep, mode, *args)
 def refreshed(body, parts):
@@ -4553,6 +4557,26 @@ class Land(Edge):
                       "nothing is merged", merged)
         self.assertIsNone(self.guard(merged, "fetch"), merged)
         self.assertEqual(git(WORK, "rev-parse", "refs/remotes/origin/main").strip(), BASE)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_pre_merge_refusal_summary_interruption_reports_nothing_merged(self):
+        sha = self.check_change()
+        url = git(WORK, "remote", "get-url", "origin").strip()
+        elsewhere = TMP / "origin-summary-copy.git"
+        shutil.rmtree(elsewhere, ignore_errors=True)
+        git(TMP, "clone", "--quiet", "--bare", str(ORIGIN), str(elsewhere))
+        self.addCleanup(shutil.rmtree, elsewhere, ignore_errors=True)
+        self.addCleanup(git, WORK, "remote", "set-url", "origin", url)
+        r = self.driven_land("change-origin-summary-interrupt", str(elsewhere))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn(f"origin's URL changed during the run, from {url} to {elsewhere}; "
+                      "nothing is merged", out)
+        self.assertIn("Pushed, CI green; stopped before the merge: interrupted (a test "
+                      "interruption). Nothing is merged: run `git safe-push --merge 1`.", out)
+        self.assertNotIn("It may have merged", out)
         self.assertEqual(self.merges(), [])
         self.assertEqual(self.origin_main(), BASE)
         self.assertEqual(self.origin_branch(), sha)

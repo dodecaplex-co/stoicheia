@@ -7160,7 +7160,21 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
             result = f"interrupted ({e or 'Ctrl-C'})" + ("; merged" if done else "")
             code = 3 if done else 1
             print(f"\nInterrupted: {result}.")
-    summary(rep, mode, sha, base, result, "")
+    if held is None:
+        summary(rep, mode, sha, base, result, "")
+    else:
+        try:
+            summary(rep, mode, sha, base, result, "")
+        except (Exception, KeyboardInterrupt) as e:
+            why = f"interrupted ({e or 'Ctrl-C'})" if isinstance(e, KeyboardInterrupt) \
+                else f"{type(e).__name__}: {e}"
+            if merging:
+                print(f"\nPushed; the merge stopped: {why}. It may have merged: look with "
+                      f"`gh pr view {number}` before anything else.")
+            else:
+                print(f"\nPushed, CI green; stopped before the merge: {why}. Nothing is "
+                      f"merged: run `git safe-push --merge {number}`.")
+            return 3
     return code
 
 
