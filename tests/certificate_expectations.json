@@ -25,7 +25,6 @@
         "Tacit.between_cases",
         "Tacit.between_of_inside_chord",
         "Tacit.between_symm",
-        "Tacit.circle_eq",
         "Tacit.circles_meet",
         "Tacit.circles_meet_same_side",
         "Tacit.exists_point",
@@ -45,13 +44,14 @@
         "Tacit.not_lt_zero",
         "Tacit.not_on_line_of_same_side",
         "Tacit.pasch2",
+        "Tacit.radius_ne_zero",
         "Tacit.same_ray_of_angle_eq_zero",
         "Tacit.same_side_trans",
         "Tacit.superposition"
       ],
       "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 38},
-      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre: since the second retirement, 38 tacit rules, counted separately from III.1's construction. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the pin on the porism's proved_rules, below, can (#168). The proof neither calls III.1 nor uses exists_centre."
+      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre: since the second retirement, 38 tacit rules, counted separately from III.1's construction. Since Book Zero came to rest on the radius rule (#473), radius_ne_zero stands among them where circle_eq stood, and the count is unchanged. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the pin on the porism's proved_rules, below, can (#168). The proof neither calls III.1 nor uses exists_centre."
     },
     {
       "ref": "III.1",
