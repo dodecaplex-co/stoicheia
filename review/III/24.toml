@@ -57,10 +57,10 @@ note = "Like Heath's, this figure draws the last supposition the text refutes: t
 
 [review]
 stage = "full"
-commit = "95b0f2c5c"
+commit = "5afb1d6a4"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:03095adc821c7267"
-run = "brief 0005 stage 5, ship R3 (#29); the companions and helpers half_lt, angle_type, isosceles, equalCircles, image and equalMeasure, written by Codex, read also by Claude Opus 5.5; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card 478, ship XS, from git and record evidence, added without a restamp: the main theorem's restated proof is Claude's (3c414208f calls Claude the family that wrote it); half_lt, angle_type, isosceles and equalCircles are Codex's (8c47d9d0c), and image and equalMeasure (cbf2dd775, which names no writer) are among the companions and helpers that 3c414208f and the clause above give as Codex's; so GPT-6 Astra (Codex), reader C7-bind423-read, who read it in full at 95b0f2c5c (66e7fb506, 24 October 2026), with the Lean and record as they now stand, is the other family's reader of the main theorem"
+lean = "sha256:e3aeae8aa5850aae"
+run = "brief 0005 stage 5, ship R3 (#29); the companions and helpers half_lt, angle_type, isosceles, equalCircles, image and equalMeasure, written by Codex, read also by Claude Opus 5.5; card #423, ship C7: re-read in full after six unused bindings were dropped (the drops written by Claude) by GPT-6 Astra (Codex), reader C7-bind423-read, at 95b0f2c5c; card 478, ship XS, from git and record evidence, added without a restamp: the main theorem's restated proof is Claude's (3c414208f calls Claude the family that wrote it); half_lt, angle_type, isosceles and equalCircles are Codex's (8c47d9d0c), and image and equalMeasure (cbf2dd775, which names no writer) are among the companions and helpers that 3c414208f and the clause above give as Codex's; so GPT-6 Astra (Codex), reader C7-bind423-read, who read it in full at 95b0f2c5c (66e7fb506, 24 October 2026), with the Lean and record as they now stand, is the other family's reader of the main theorem; card #129, ship ER: read again after its call of III.20 became Prop20.special, by GPT-6 Astra (Codex)"
 text = "sha256:079e00fa3a158af9"
 
 [review.items]

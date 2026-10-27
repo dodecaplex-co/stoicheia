@@ -54,9 +54,10 @@ Book III is about circles, and most of its words need no Lean word of their own:
 * No proposition of Book III uses a sector (Definition 10).
 
 The others are here: equal circles; a straight line touching a circle; circles touching
-one another, inside or outside; circles cutting one another; a circumference, compared
-with a circumference; and the
-angles of III.16 and III.31, contained by a straight line and a circumference.
+one another, inside or outside, read of the whole circles and, as Heath prefers, at the
+point of contact; circles cutting one another; a circumference, compared
+with a circumference; the angle at the centre standing on a circumference, of any size; and
+the angles of III.16 and III.31, contained by a straight line and a circumference.
 
 **Mixed angles.** III.16 compares the angle of the semicircle, and the remaining angle
 between the circumference and the straight line that touches it, with any acute
@@ -82,7 +83,11 @@ measures a circumference by the angle that stands on it at the circumference
 (Definition 9), taken twice: the circumference `BKC` is `∠ B A C + ∠ B A C`, for a point
 `A` of the circle on the other side of `BC` from `K`. That is the angle it subtends at the
 centre when it is less than a semicircle (III.20); a semicircle is two right angles, and
-the whole circle four.
+the whole circle four. Our angles are less than two right angles, so the angle at the
+centre standing on a circumference, `angleAtCentre`, is a word of its own, read as Euclid
+draws it in III.20's first figure: it may be two right angles or more, a reading made after
+Heath's notes and not Euclid's, and every circumference is its angle at the centre
+(III.20's companion `Prop20.circumference`).
 
 The measure carries no radius. In one circle, or in equal circles, two circumferences
 are equal exactly when their measures are, and that is all Euclid ever asks of them; in
@@ -159,6 +164,33 @@ def TouchesExternally (α β : Circle) (C : Point) : Prop :=
 one within the other, or externally. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
+
+/-- **Near C, every point has the property `p`.** Every point within some circle about C
+has it. This says "near the point" with a circle about it, as Euclid would draw one (Post.
+3), and with no numbers, as `LocallyWithin`, below, says "near the vertex". It is
+`Surrounds p C`, its arguments in the other order. -/
+def Touching.Near (C : Point) (p : Point → Prop) : Prop :=
+  ∃ γ : Circle, Centre C γ ∧ ∀ P : Point, InsideCircle P γ → p P
+
+/-- **Definition III.3**, contact within, read at the point, as Heath prefers. The circles
+`α` and `β` touch one another internally at C, `β` within `α`: they meet at C, they are two
+circles, and near C no point of `β` falls outside `α`. The whole-circle definition,
+`TouchesInternally`, asks it of every point of `β`. -/
+def TouchesInternallyAt (α β : Circle) (C : Point) : Prop :=
+  OnCircle C α ∧ OnCircle C β ∧ α ≠ β ∧
+    Touching.Near C (fun P => OnCircle P β → ¬ OutsideCircle P α)
+
+/-- **Definition III.3**, contact without, read at the point. The circles `α` and `β` touch
+one another externally at C: they meet at C, and near C no point is within both. The
+whole-circle definition, `TouchesExternally`, asks it of every point. -/
+def TouchesExternallyAt (α β : Circle) (C : Point) : Prop :=
+  OnCircle C α ∧ OnCircle C β ∧
+    Touching.Near C (fun P => InsideCircle P α → ¬ InsideCircle P β)
+
+/-- **Definition III.3**, read at the point. The circles `α` and `β` touch one another at C,
+internally, one within the other, or externally. -/
+def CirclesTouchAt (α β : Circle) (C : Point) : Prop :=
+  TouchesInternallyAt α β C ∨ TouchesInternallyAt β α C ∨ TouchesExternallyAt α β C
 
 /-! ### Definition III.7: the angle of a segment, and the angle of contact -/
 
@@ -281,6 +313,19 @@ so equal measures are equal circumferences only in one circle or in equal circle
 noncomputable def circumference (α : Circle) (B K C : Point) : Angle :=
   Classical.epsilon fun x =>
     ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧ x = ∠ B A C + ∠ B A C
+
+/-- **The angle at the centre standing on the circumference BKC.** Let E be the centre
+of the circle α, and AEF a diameter whose ends lie on opposite sides of BC, F on the side
+of K. The diameter divides the angle at the centre standing on the circumference BKC into
+the angles BEF and FEC, as in Euclid's first figure for III.20, and the angle at the
+centre is the two together. When E lies beyond BC, on K's side, it is what is left when
+the angle BEC is taken from four right angles (`angleAtCentre.reflex`), and so greater
+than two right angles (`angleAtCentre.reflex_gt`). Lean chooses one such diameter
+(`Classical.epsilon`), as `circumference` chooses one angle; `angleAtCentre.diameter`
+shows that every such diameter gives the same angle. -/
+noncomputable def angleAtCentre (α : Circle) (B K C : Point) : Angle :=
+  Classical.epsilon fun x => ∃ E A F : Point, Centre E α ∧ OnCircle A α ∧ OnCircle F α ∧
+    Between A E F ∧ OppositeSidesOf A K B C ∧ SameSideOf F K B C ∧ x = ∠ B E F + ∠ F E C
 
 /-- **Definition III.9.** The circumference on which the angle `BAC` stands: the part of
 the circle `α` that the straight lines `AB`, `AC` cut off, from `B` to `C` on the side of

@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "`Prop14.outline` and `Prop14.outline_side` cover any outline; `Prop14` takes two triangles unchecked; other forms cover checked divisions, sums or rectangles."
+note = "`Prop14.outline` and `Prop14.outline_side` take a figure by its boundary; `Prop14` takes two triangles unchecked; the rest, lists of triangles or a rectangle."
 companions = ["II.14 outline", "II.14 outline_side", "II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:31d611e6d2d47392"
 
@@ -35,7 +35,7 @@ note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives
 at = "With centre G and distance one of the straight lines GB, GF"
 kind = "helper"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), now proved from Postulate 3 and `circle_eq`, with the radius nonzero, in `Elements/Figure/RuleBase.lean`, puts F on it because GF equals GB."
+note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), which Book Zero proves from Postulate 3 and `circle_eq` for a radius that is not nothing, puts F on it because GF equals GB."
 
 [[passage]]
 at = "let DE be produced to H"
@@ -57,18 +57,18 @@ note = "Euclid takes the right angle HEG for granted when he applies I.47. The L
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
-note = "The main theorem takes its two triangles unchecked and returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. The other side forms return a side in the same way: `Prop14.outline_side`, `Prop14.apart`, `Prop14.figure`, `Prop14.fan`, and the constructions `Prop14.rectangle` and `Prop14.sum`. `Prop14.outline` and `Prop14.square` draw the square, a parallelogram with its four corners. The main theorem is an area-sum theorem: it takes A₁A₂A₄ and A₄A₂A₃ unchecked, and they may overlap. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. `Prop14.outline` and `Prop14.outline_side` take the figure by its outline alone (`Figures.Outline`), as in I.45, with no division supplied; the older companions take a figure given with a checked division into triangles, and square those triangles together: triangles that lie apart, allowing a figure with a hole (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Their sum is the figure's area too, the same for every division."
+note = "The main theorem is an area-sum theorem: it takes its two triangles, A₁A₂A₄ and A₄A₂A₃, unchecked, so that they may overlap, and returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. The other side forms return a side in the same way: `Prop14.outline_side`, `Prop14.apart`, `Prop14.figure`, `Prop14.fan`, and the constructions `Prop14.rectangle` and `Prop14.sum`. `Prop14.outline` and `Prop14.square` draw the square, a parallelogram with its four corners. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. `Prop14.outline` and `Prop14.outline_side` take the figure by its outline alone (`Figures.Outline`), as in I.45, with no division supplied; the older companions take a figure given with a checked division into triangles, and square those triangles together: triangles that lie apart, allowing a figure with a hole (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`)."
 
 [figure]
 case = "BE greater than ED, and A four-sided with no diagonal drawn, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "0ea9ae62"
+commit = "a973c8726"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:be972fd23a351f2e"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, readers F2-w2m1cx at 84a78856 and F2-w2m1cx2 at 0ea9ae62, after its findings were applied"
-text = "sha256:98a1fa0c0c498bb2"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, readers F2-w2m1cx at 84a78856 and F2-w2m1cx2 at 0ea9ae62, after its findings were applied; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x)"
+text = "sha256:408bacaa276c8ed6"
 
 [review.items]
 statement = "pass"
