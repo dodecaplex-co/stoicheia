@@ -1158,6 +1158,204 @@ class CircleRuleTests(unittest.TestCase):
                                          facts)
 
 
+class RetiredRulePlantTests(unittest.TestCase):
+    """scripts/negative/retired_rule_used.py in a temporary tree, with its build, its
+    certificate and check_fidelity.py stood in for (#168): the plant passes only when the
+    pin on III.2's proved_rules, and no pin on its axioms, refuses the use, and the source,
+    facts.json and the build files come back however a step ends."""
+
+    rule = "Tacit.centre_unique"
+    head = "    ∀ E : Point, Between A E B → InsideCircle E ABC := by\n"
+    name = f"{rule} in III.2's proof, its axioms unchanged"
+    # What check_fidelity.py prints for the pin on III.2's proved_rules (expectation 4 here,
+    # as setUp writes them), for the pin on III.1's (expectation 2) and for a pin on III.2's
+    # axioms (expectation 3); only the first may speak.
+    pin = (f"✗ III.2: its proved_rules should not include {rule} "
+           "(tests/certificate_expectations.json, expectation 4: .)\n")
+    other_pin = (f"✗ III.1: its proved_rules should not include {rule} "
+                 "(tests/certificate_expectations.json, expectation 2: .)\n")
+    axioms_pin = (f"✗ III.2: its axioms should not include {rule} "
+                  "(tests/certificate_expectations.json, expectation 3: .)\n")
+    commands = (("lake", "build"), ("lake", "env", "lean", "Certificate/Facts.lean"),
+                (sys.executable, "scripts/check_fidelity.py"), ("lake", "build"))
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[], refusals=[]))
+        self.output = self.enterContext(redirect_stdout(io.StringIO()))
+        self.source = self.root / "Elements/BookIII/Prop02.lean"
+        self.facts = self.root / "facts.json"
+        self.olean = self.root / ".lake/build/lib/lean/Elements/BookIII/Prop02.olean"
+        self.pins = self.root / "tests/certificate_expectations.json"
+        for path in (self.source, self.olean, self.pins):
+            path.parent.mkdir(parents=True, exist_ok=True)
+        self.source.write_text("theorem Prop2 :\n" + self.head + "  intro E hAEB\n")
+        self.facts.write_text(self.certificate([]))
+        self.olean.write_bytes(b"olean original")
+        # The first reads facts.json's top level and has no `ref`, as the real file's do.
+        self.pins.write_text(json.dumps({"expectations": [
+            {"field": "construction_rules", "includes": ["Postulate1"], "why": "."},
+            {"ref": "III.1", "field": "proved_rules", "excludes": [self.rule], "why": "."},
+            {"ref": "III.2", "field": "axioms", "excludes": [self.rule], "why": "."},
+            {"ref": "III.2", "field": "proved_rules", "excludes": [self.rule], "why": "."}]}))
+        self.saved = {p: p.read_bytes() for p in (self.source, self.facts, self.olean)}
+
+    def certificate(self, rules, axioms=("Postulate1",), cites=("I.5",)):
+        return json.dumps({"propositions": [
+            {"ref": "III.2", "axioms": list(axioms), "cites": list(cites),
+             "proved_rules": rules}]})
+
+    def fake(self, axioms=("Postulate1",), cites=("I.5",), verdict=None, stage=None,
+             interrupt=None):
+        """A run in which the planted III.2 builds, the certificate records the rule with
+        `axioms` and `cites`, and check_fidelity.py gives `verdict`, its exit code and
+        output (by default it fails, naming the pin on III.2's proved_rules alone). The
+        planted build or the certificate, as `stage` names, fails or, when `interrupt`,
+        is interrupted; with no `stage`, the build after restoration does so, when
+        `interrupt` is not None."""
+        returncode, stdout = verdict or (1, self.pin)
+        calls = []
+
+        def ends(cmd):
+            self.olean.write_bytes(b"incomplete")
+            if interrupt:
+                raise KeyboardInterrupt(f"{cmd} interrupted")
+            return subprocess.CompletedProcess(cmd, 1, "", f"{cmd} failed")
+
+        def run(*cmd):
+            calls.append(cmd)
+            planted = self.source.read_bytes() != self.saved[self.source]
+            if cmd == ("lake", "build") and not planted:
+                # The restoration build, with the source and facts.json back.
+                self.assertEqual(self.facts.read_bytes(), self.saved[self.facts])
+                if stage is None and interrupt is not None:
+                    return ends(cmd)
+                self.olean.write_bytes(b"olean rebuilt")
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            self.assertTrue(planted)
+            self.assertEqual(self.source.read_text(), self.saved[self.source].decode().replace(
+                self.head, f"{self.head}  have _retired := @Elements.{self.rule}\n"))
+            if cmd == ("lake", "build"):
+                if stage == "build":
+                    return ends(cmd)
+                self.olean.write_bytes(b"olean planted")
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            if cmd == ("lake", "env", "lean", "Certificate/Facts.lean"):
+                if stage == "certificate":
+                    return ends(cmd)
+                self.facts.write_text(self.certificate([self.rule], axioms, cites))
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            self.assertEqual(cmd, (sys.executable, "scripts/check_fidelity.py"))
+            return subprocess.CompletedProcess(cmd, returncode, stdout, "")
+        return calls, run
+
+    def planted(self, run, interrupted=False):
+        with patch.object(negative, "run", side_effect=run):
+            if interrupted:
+                with self.assertRaises(KeyboardInterrupt):
+                    plant("retired_rule_used")()
+            else:
+                plant("retired_rule_used")()
+
+    def assert_restored(self, olean=b"olean rebuilt"):
+        self.assertEqual(self.source.read_bytes(), self.saved[self.source])
+        self.assertEqual(self.facts.read_bytes(), self.saved[self.facts])
+        self.assertEqual(self.olean.read_bytes(), olean)
+
+    def test_the_pin_on_proved_rules_names_it_and_the_tree_is_restored(self):
+        calls, run = self.fake()
+        self.planted(run)
+        self.assertEqual(tuple(calls), self.commands)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(negative.refusals, [f"{self.name}: caught"])
+        self.assertIn(f"✓ {self.name}: caught", self.output.getvalue())
+        self.assert_restored()
+
+    def test_a_check_that_does_not_name_the_pin_alone_is_not_caught(self):
+        """The plant reports one failure, "not caught", when check_fidelity.py passes or
+        fails without naming the pin on III.2's proved_rules, names another entry's pin, or
+        names a pin on III.2's axioms; the tree is restored each time."""
+        for case, verdict, reason in (
+                ("passes silently", (0, ""), "missing"),
+                ("passes, naming the pin", (0, self.pin), None),
+                ("fails silently", (1, ""), "missing"),
+                ("names III.1's pin alone", (1, self.other_pin), "missing"),
+                ("names the pin on its axioms alone", (1, self.axioms_pin), "missing"),
+                ("names both pins", (1, self.pin + self.axioms_pin), "wrongly says"),
+                ("names the rule under another expectation",
+                 (1, self.pin.replace("expectation 4:", "expectation 5:")), "missing")):
+            with self.subTest(case):
+                negative.failures.clear()
+                negative.refusals.clear()
+                start = len(self.output.getvalue())
+                calls, run = self.fake(verdict=verdict)
+                self.planted(run)
+                self.assertEqual(tuple(calls), self.commands)
+                self.assertEqual(negative.refusals, [])
+                self.assertEqual(len(negative.failures), 1, negative.failures)
+                self.assertTrue(negative.failures[0].startswith(
+                    f"{self.name}: not caught" + (f" ({reason} " if reason else "")),
+                    negative.failures[0])
+                self.assertNotIn(f"✓ {self.name}", self.output.getvalue()[start:])
+                self.assert_restored()
+
+    def test_a_plant_that_changes_the_axioms_or_cites_fails(self):
+        for field, changed in (("axioms", {"axioms": ("Postulate1", "Tacit.circle_eq")}),
+                               ("cites", {"cites": ("I.5", "I.7")})):
+            with self.subTest(field=field):
+                negative.failures.clear()
+                calls, run = self.fake(**changed)
+                self.planted(run)
+                self.assertEqual(tuple(calls), self.commands)
+                self.assertEqual(negative.failures, [
+                    f"{self.name}: {self.rule} changed III.2's {field}, so the plant no longer "
+                    "shows what only proved_rules can; update this test"])
+                self.assert_restored()
+
+    def test_a_failed_or_interrupted_step_restores_the_tree(self):
+        # The planted build or the certificate ends early: nothing after it runs, and the
+        # restoration build puts the build files back.
+        for stage, reached, step in (
+                ("build", 1, "III.2 built with a retired rule in its proof"),
+                ("certificate", 2, "the certificate with a retired rule in III.2")):
+            for interrupt in (False, True):
+                with self.subTest(stage=stage, interrupt=interrupt):
+                    negative.failures.clear()
+                    self.olean.write_bytes(self.saved[self.olean])
+                    calls, run = self.fake(stage=stage, interrupt=interrupt)
+                    self.planted(run, interrupted=interrupt)
+                    self.assertEqual(tuple(calls),
+                                     self.commands[:reached] + (("lake", "build"),))
+                    if not interrupt:
+                        self.assertEqual(negative.failures, [f"{step}: exit 1"])
+                    self.assert_restored()
+
+    def test_a_failed_or_interrupted_restoration_build_restores_the_outputs(self):
+        for interrupt in (False, True):
+            with self.subTest(interrupt=interrupt):
+                negative.failures.clear()
+                self.olean.write_bytes(self.saved[self.olean])
+                calls, run = self.fake(interrupt=interrupt)
+                self.planted(run, interrupted=interrupt)
+                self.assertEqual(tuple(calls), self.commands)
+                if not interrupt:
+                    self.assertEqual(negative.failures, ["the restored III.2 builds: exit 1"])
+                self.assert_restored(olean=self.saved[self.olean])
+
+    def test_without_one_pin_on_iii2_s_proved_rules_nothing_is_planted(self):
+        for pins in ([], [{"ref": "III.2", "field": "proved_rules", "excludes": [self.rule],
+                           "why": "."}] * 2):
+            with self.subTest(pins=len(pins)):
+                negative.failures.clear()
+                self.pins.write_text(json.dumps({"expectations": pins}))
+                with patch.object(negative, "run", side_effect=AssertionError("ran")):
+                    plant("retired_rule_used")()
+                self.assertEqual(negative.failures, [
+                    f"{self.name}: expected one pin keeping {self.rule} from III.2's "
+                    f"proved_rules, found {len(pins)}; update this test"])
+                self.assertEqual(self.source.read_bytes(), self.saved[self.source])
+
+
 class AbsentTrackedFileTests(unittest.TestCase):
     """A commit adds a check and its test (and a note beside them), and the pre-flight's
     pass with origin/main's checks (scripts/safe_push.py, step 4, base_copies) unlinks
