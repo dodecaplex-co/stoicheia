@@ -2,11 +2,10 @@
 - **Decision entries carry a header line, and `render.py` compiles the notes of the briefs
   and of PROGRAM.md from it (checks,
   [#577](https://github.com/jackChallis/stoicheia/issues/577)).** The coordinator's orders
-  of 27 October 2026 assign card #577 under the plan the owner approved on 27 October 2026.
-  The orders give the plan's aim as each thing said once, in a file of its own, with its
-  restatements compiled. Trains have kept adding a dated status paragraph to a brief, each
-  at the same spot (brief 0008 holds six), and the same news again in PROGRAM.md, so two
-  trains in flight collide there.
+  of 27 October 2026 assign card #577. The orders give the plan's aim as each thing said
+  once, in a file of its own, with its restatements compiled. Trains have kept adding a
+  dated status paragraph to a brief, each at the same spot (brief 0008 holds six), and the
+  same news again in PROGRAM.md, so two trains in flight collide there.
   Each train already writes an entry of its own in this folder, and entries never collide.
   So an entry now says, in a header line, what it is news for, and `render.py` writes the
   notes of the briefs and of PROGRAM.md from those headers.
@@ -86,7 +85,7 @@
 
   This entry approves the changes to [`docs/WORKFLOW.md`](../WORKFLOW.md) that describe
   the header and the notes regions in section 10, add them to what section 8 checks, and
-  add the regions to the integrator's files, a table of the shared hand-written files and
-  their subject owners, and what the landing lane's intake refuses, to section 4.
+  add the regions to the integrator's files and a table of the shared hand-written files
+  and their subject owners to section 4.
 
   No Lean file, statement, definition, lock, record, brief or `--` line changes.

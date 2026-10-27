@@ -3005,7 +3005,7 @@ def decision_entries():
 ENTRY_KEYS = ("id", "cards", "briefs", "program", "corrects", "reverts", "line")
 ENTRY_REQUIRED = ("id", "cards", "line")
 ENTRY_LISTS = ("cards", "briefs", "program", "corrects", "reverts")
-ENTRY_START = re.compile(r"<!--\s*entry\b", re.I)
+ENTRY_START = re.compile(r"<!--\s*entry", re.I)
 ENTRY_OPEN = "<!-- entry:"
 ENTRY_KEY = re.compile(r"([^= ]+)=")
 ENTRY_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
@@ -3214,19 +3214,28 @@ def notes_line(name, cards, news, linked, up):
             + f" ([the entry]({up}decisions/{name}))")
 
 
-def notes_lines(headers, named, up):
-    """The lines of a notes region (notes_line): one for each of `named`, the entries whose
-    headers name it, in name order, which is date order. The entries that correct or
-    revert an entry are read from every header of `headers`, whatever it names, so that a
-    correction is shown wherever the entry it corrects is."""
+def notes_relationships(headers):
+    """The four relationship lists for every headed entry, in NOTES_VERBS order, including
+    the entries that correct or revert it from every header."""
     by = {"corrects": {}, "reverts": {}}
     for other, header in headers.items():
         for key, named_by in by.items():
             for name in header[key]:
                 named_by.setdefault(name, []).append(other)
+    return {name: tuple(sorted(items) for items in
+                        (header["corrects"], header["reverts"],
+                         by["corrects"].get(name, []), by["reverts"].get(name, [])))
+            for name, header in headers.items()}
+
+
+def notes_lines(headers, named, up, relationships=None):
+    """The lines of a notes region (notes_line): one for each of `named`, the entries whose
+    headers name it, in name order, which is date order. The entries that correct or
+    revert an entry are read from every header of `headers`, whatever it names, so that a
+    correction is shown wherever the entry it corrects is."""
+    relationships = relationships or notes_relationships(headers)
     return [notes_line(name, headers[name]["cards"], headers[name]["line"],
-                       (headers[name]["corrects"], headers[name]["reverts"],
-                        by["corrects"].get(name, []), by["reverts"].get(name, [])), up)
+                       relationships[name], up)
             for name in sorted(named)]
 
 
@@ -3246,12 +3255,14 @@ def notes_form(up):
                       rf"\(\[the entry\]\({up}decisions/(?P<name>{name})\)\)")
 
 
-def notes_rendered(line, up):
+def notes_rendered(line, up, headers, named, relationships):
     """Whether `line` is a line notes_line writes on a page whose way to docs/ is `up`:
     read into its parts (notes_form), its news is news an entry may give (news_fault),
     with no character an entry may not hold (invisible), it names no card or entry twice,
     and written again from its parts it is the same line, so that its date is its entry's
-    and its cards and entries stand in order."""
+    and its cards and entries stand in order. Its entry names this region, its cards, news
+    and direct relationships match its header, and its backlinks are present in the
+    relationship graph; a stale line may omit backlinks added by later entries."""
     match = notes_form(up).fullmatch(line)
     if (match is None or news_fault(match["news"])
             or any(invisible(char) for char in match["news"])):
@@ -3265,7 +3276,14 @@ def notes_rendered(line, up):
         again = notes_line(match["name"], cards, match["news"], linked, up)
     except ValueError:  # a name whose date is no day of the calendar
         return False
-    return again == line
+    if again != line or match["name"] not in named:
+        return False
+    header = headers[match["name"]]
+    actual = relationships[match["name"]]
+    return (cards == sorted(header["cards"]) and match["news"] == header["line"]
+            and linked[0] == actual[0] and linked[1] == actual[1]
+            and set(linked[2]).issubset(actual[2])
+            and set(linked[3]).issubset(actual[3]))
 
 
 def notes_updates(headers, changes):
@@ -3277,14 +3295,15 @@ def notes_updates(headers, changes):
     is, and a region no header names is left empty, its two markers on consecutive lines.
     Every page's markers are read (generated_counts.notes_regions) before anything is
     written, the decisions page's among them, which may hold none, and every line between
-    them must be a line render.py writes (notes_rendered), so that a misplaced marker never
-    swallows text written by hand: a fault in any stops the render, naming each page's
-    faults, the first line of each region that holds another."""
+    them must have the provenance of a line render.py wrote (notes_rendered), so that a
+    misplaced marker never swallows text written by hand: a fault in any stops the render,
+    naming each page's faults, the first line of each region that holds another."""
     rels = [(ROOT / "docs" / "briefs" / f"{stem}.md").relative_to(ROOT)
             for stem in brief_stems()]
     if os.path.lexists(ROOT / generated_counts.PROGRAM_PAGE):
         rels.append(generated_counts.PROGRAM_PAGE)
     filled, errors, regions, pages = {}, [], 0, 0
+    relationships = notes_relationships(headers)
     for rel in rels:
         path = ROOT / rel
         try:
@@ -3295,10 +3314,13 @@ def notes_updates(headers, changes):
             continue
         up = "" if rel == generated_counts.PROGRAM_PAGE else "../"
         for region in found:
+            named = [name for name, header in headers.items()
+                     if (region.section in header["program"] if region.section
+                         else rel.stem in header["briefs"])]
             first = text.count("\n", 0, region.body_start) + 1
             lines = text[region.body_start:region.body_end].split("\n")[:-1]
             stray = next((number for number, line in enumerate(lines, first)
-                          if not notes_rendered(line, up)), None)
+                          if not notes_rendered(line, up, headers, named, relationships)), None)
             if stray is not None:
                 errors.append(printable_text(
                     f"{rel}:{stray}: a notes region holds only the lines render.py writes, "
@@ -3309,7 +3331,8 @@ def notes_updates(headers, changes):
             named = [name for name, header in headers.items()
                      if (region.section in header["program"] if region.section
                          else rel.stem in header["briefs"])]
-            body = "".join(line + "\n" for line in notes_lines(headers, named, up))
+            body = "".join(line + "\n" for line in
+                           notes_lines(headers, named, up, relationships))
             new = new[:region.body_start] + body + new[region.body_end:]
         regions, pages = regions + len(found), pages + bool(found)
         if new != text:

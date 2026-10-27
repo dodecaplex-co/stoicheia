@@ -629,6 +629,11 @@ def note : String := "#print axioms Elements.inString"
             with self.subTest(fault="unclosed", check=check):
                 self.assertEqual(self.scan([path], check=check),
                                  ({}, [f"{path}:5: unclosed notes marker"]))
+        self.write(path, f"# Brief\n\n{marker} words.\n\n<!-- notes_typo -->\n")
+        for check in (False, True):
+            with self.subTest(fault="suffix", check=check):
+                self.assertEqual(self.scan([path], check=check),
+                                 ({}, [f"{path}:5: malformed notes marker"]))
 
     def test_malformed_and_unknown_markers_name_the_line(self):
         bad = ("<!-- count:vocabulary -->3", "<!-- /count -->",

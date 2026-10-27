@@ -684,7 +684,7 @@ PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)
 # PROGRAM_NOTES, between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`. Each
 # marker stands on a line of its own. The decisions page, dated history, holds none.
 # The spaces are taken possessively, so a long run of them costs one pass, not a square.
-NOTES_START = re.compile(r"<!--\s*+/?\s*+notes\b", re.I)
+NOTES_START = re.compile(r"<!--\s*+/?\s*+notes", re.I)
 NOTES_MARKER = re.compile(r"<!-- (/?)notes(?::([a-z0-9]+(?:-[a-z0-9]+)*))? -->")
 # The sections of PROGRAM.md that may hold notes: a fixed vocabulary, not PROGRAM's
 # headings, so that renaming a heading can never break an entry, which is never edited.

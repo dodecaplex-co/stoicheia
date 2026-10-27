@@ -212,11 +212,6 @@ for one sends it to that owner through the coordinator.
 | `docs/reports/overlaps.md` and the gap catalogues, `docs/reports/gaps-book-*.md` | the ship doing Book III's circle-rules work |
 | `tests/certificate_expectations.json` | the ship whose train changes the certificate |
 
-The landing lane's intake, the coordinator's tooling outside this repository, refuses a
-train whose change to a hand-written file conflicts with an unlanded train's change to it;
-no check in this repository makes that refusal. Such a train is built on the other's posted
-head, or waits until it lands.
-
 ### File names
 
 Every tracked path keeps one standard, which the owner asked for on
