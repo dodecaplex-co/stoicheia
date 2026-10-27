@@ -212,6 +212,12 @@
       "why": "III.6 does not rest on superposition (#75)."
     },
     {
+      "ref": "III.10",
+      "field": "own_axioms",
+      "excludes": ["Tacit.line_circle_beyond"],
+      "why": "III.10's own Lean does not call Intersections 5 (#476). The argument needs only a second point of each perpendicular, never where it meets the circle, so Postulate 2 produces them. Intersections 5 stays among III.10's inherited axioms, through Prop2.triangle and Book Zero lemmas, so this pin reads own_axioms only."
+    },
+    {
       "ref": "I.4",
       "field": "common_notions",
       "includes": ["C.N. 4"],
