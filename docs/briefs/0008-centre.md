@@ -113,6 +113,15 @@ declaration, record or lock changes.
   the construction, 39 of them tacit rules. The certificate is where the current counts are
   read.
 
+*Status, 26 October 2026, for #59:* the notes above and the frozen text below are kept as
+written. Step 7 is done: `[tag.centre-given]` has left `review/terms.toml`, by the
+decisions entry `docs/decisions/2026-10-26-centre-given-retired.md`, and no record carries
+the tag. III.1's axioms expectation in `tests/certificate_expectations.json` now names
+`Tacit.exists_centre` beside its count of 39 tacit rules, so that another rule cannot take
+its place unnoticed. With step 7, all seven steps of section 6's order of work have
+landed, and nothing is left of the "Still to do under #59" lists above. No statement,
+declaration, record or lock changes.
+
 *Status, 26 October 2026, for #473:* the notes above and the frozen text below are kept as
 written, and this note corrects one claim of the note of 19 October 2026 at the head of the
 brief and brings one claim of section 7 up to date. No statement, declaration, record or
