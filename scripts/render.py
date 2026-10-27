@@ -574,10 +574,14 @@ def figure_note(record):
     record's `[figure]`, whose keys review/SCHEMA.md defines: its `case`, as "Drawn for one
     case: D between C and B, as in Heath's figure." (one full stop, whether or not the case
     ends with its own), or as "Drawn for every case: …" where `every_case` is true, the
-    figure drawing every case the theorem covers (III.25's three side by side); then its
-    `note`. Nothing when the record gives neither."""
+    figure drawing every case the theorem covers (III.25's three side by side), or as
+    "Drawn for some of its cases: …" where `some_cases` is true, the figure drawing more
+    than one case but not every one (III.35's two of Euclid's, and none of Simson's); then
+    its `note`. Nothing when the record gives neither."""
     figure = (record or {}).get("figure") or {}
-    lead = "Drawn for every case" if figure.get("every_case") else "Drawn for one case"
+    lead = ("Drawn for every case" if figure.get("every_case")
+            else "Drawn for some of its cases" if figure.get("some_cases")
+            else "Drawn for one case")
     said = ([f"{lead}: {figure['case'].rstrip('.')}."] if figure.get("case") else [])
     return " ".join(said + ([figure["note"]] if figure.get("note") else []))
 
