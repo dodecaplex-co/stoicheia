@@ -340,7 +340,7 @@ import types
 import unicodedata
 from collections import Counter
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import heath  # noqa: E402  (the contracts: parse_ref, prop_key, theorem_span)
@@ -4354,12 +4354,6 @@ class Preflight(NamedTuple):
     short: bool = False         # step 4 left to CI for the change's class
 
 
-class HarnessSnapshot(NamedTuple):
-    safe_push: bytes
-    heath: bytes
-    train: bytes | None
-
-
 def short_path(ctx, risk: Risk, g: Guarded, rep: Report) -> bool:
     """Whether step 4 is left to CI: for a change of R0 to R2 by origin/main's risk.py,
     which changes no check input nor any protected path but judged content (beyond_low).
@@ -4379,9 +4373,7 @@ def short_path(ctx, risk: Risk, g: Guarded, rep: Report) -> bool:
 
 
 def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
-                 checked: dict | None = None, train_body: str | None = None,
-                 trusted_harness: HarnessSnapshot | None = None,
-                 revalidate: Callable[[], None] | None = None) -> Preflight:
+                 checked: dict | None = None, train_body: str | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     The class `risk` (risk_class) is reported at the head of step 4: for R0 to R2 the full
     checks are skipped (short_path), CI running the rest of section 8's sequence before the
@@ -4403,10 +4395,8 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
             g = guards(ctx, wt, rep, logs)
-            if revalidate is not None:
-                revalidate()
             if train_body is not None:
-                train_check(ctx, train_body, rep, trusted_harness)
+                train_check(ctx, train_body, rep)
             rep.heading("4. The full local checks (docs/WORKFLOW.md, section 8)")
             rep.add("4", "class", "ok", f"{risk.cls}, {risk.why}", risk.seconds)
             short = short_path(ctx, risk, g, rep)
@@ -4429,8 +4419,6 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                     rep.add("4", "full local checks", "skip", "internal test flag, local origin")
                 else:
                     full_checks(ctx, wt, parent, g.check_inputs, rep, logs, checks)
-            if revalidate is not None:
-                revalidate()
     return Preflight(g.statements, g.protected, short)
 
 
@@ -4451,8 +4439,6 @@ class Context(NamedTuple):
     remote_branch: str | None = None    # the branch on origin before the push
     queue: bool = False
     harness_sha: str | None = None     # origin/main's tip, before queue_base changes base
-    trusted_harness: HarnessSnapshot | None = None
-    pinned_origin: str | None = None
 
 
 def is_local(url: str) -> bool:
@@ -4468,10 +4454,8 @@ def github_slug(url: str) -> str | None:
     return f"{m.group(1)}/{m.group(2)}" if m else None
 
 
-def remote_refs(repo, *args, remote: str = "origin") -> dict[str, str]:
-    command = ("ls-remote", "origin", *args) if remote == "origin" else \
-        ("ls-remote", "--", remote, *args)
-    out = git(repo, *command)
+def remote_refs(repo, *args) -> dict[str, str]:
+    out = git(repo, "ls-remote", "origin", *args)
     refs = {}
     for line in out.splitlines():
         sha, _, ref = line.partition("\t")
@@ -4613,36 +4597,6 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
     os.execve(PY, [PY, str(path), *ARGV], env)
 
 
-def harness_snapshot(repo: Path, base: str) -> HarnessSnapshot:
-    safe_source = show_bytes(repo, base, "scripts/safe_push.py")
-    heath_source = show_bytes(repo, base, "scripts/heath.py")
-    if safe_source is None or heath_source is None:
-        raise Refusal("origin/main's safe_push.py or heath.py could not be read")
-    return HarnessSnapshot(safe_source, heath_source, harness_train(repo, base))
-
-
-def land_state_unchanged(repo: Path, origin: str, harness_snapshot: HarnessSnapshot) -> None:
-    current_origin = git(repo, "remote", "get-url", "origin", check=False).strip()
-    if current_origin != origin:
-        raise Refusal(f"origin's URL changed during the run, from {origin} to "
-                      f"{current_origin}; nothing is merged: set it back, then --merge")
-    here = Path(__file__).resolve().parent
-    current = HarnessSnapshot(
-        (here / "safe_push.py").read_bytes(),
-        (here / "heath.py").read_bytes(),
-        (here / "check_train.py").read_bytes() if (here / "check_train.py").exists()
-        else None)
-    same = (current.safe_push, current.heath) == \
-        (harness_snapshot.safe_push, harness_snapshot.heath) and \
-        (current.train is None or current.train == harness_snapshot.train)
-    if not same:
-        raise Refusal("this copy of safe_push.py, heath.py or check_train.py on disk no "
-                      "longer matches origin/main's: it was rewritten since the run "
-                      "started, or origin/main's predates running from origin/main; the "
-                      "merge of --land runs no other copy, so nothing is merged: run "
-                      "--merge")
-
-
 def body_input(args) -> str | None:
     """--body-file's text, read once, as UTF-8, before the checks: the train check, the
     dry run's body and the pull request's body are all that same text."""
@@ -4663,8 +4617,7 @@ def train_input(ctx: Context, body: str | None) -> str | None:
     return body
 
 
-def train_check(ctx: Context, body: str, rep: Report,
-                trusted_harness: HarnessSnapshot | None = None) -> None:
+def train_check(ctx: Context, body: str, rep: Report) -> None:
     """Run origin/main's train checker on the commit and the body. While origin/main has
     none, every train is refused: no commit's own copy ever runs in its place. In queue
     mode the base compared against is the newest commit of main's chain that the head
@@ -4678,17 +4631,13 @@ def train_check(ctx: Context, body: str, rep: Report,
             # the commit's code may have written the harness's directory under the sandbox.
             raise Refusal("the train check cannot run once the main-checks cache's sandbox "
                           "is set")
-        source = trusted_harness.train if trusted_harness is not None else \
-            harness_train(ctx.repo, ctx.harness_sha or ctx.base)
+        source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
         if source is None:
             raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
                           "checked: land the train checker first, then the train")
         here = Path(__file__).resolve().parent
-        safe_source = trusted_harness.safe_push if trusted_harness is not None else \
-            (here / "safe_push.py").read_bytes()
-        heath_source = trusted_harness.heath if trusted_harness is not None else \
-            (here / "heath.py").read_bytes()
-        path = harness_copy(safe_source, heath_source, source)
+        path = harness_copy((here / "safe_push.py").read_bytes(),
+                            (here / "heath.py").read_bytes(), source)
         spec = importlib.util.spec_from_file_location("check_train", path / "check_train.py")
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
@@ -4764,14 +4713,11 @@ def gh_ready(gh: tuple, repo, test_mode: bool) -> None:
         raise Refusal("gh is not logged in to github.com (`gh auth login`)")
 
 
-def fetch_base(repo, origin: str, test_mode: bool, rep: Report,
-               remote: str = "origin") -> str:
+def fetch_base(repo, origin: str, test_mode: bool, rep: Report) -> str:
     if test_mode and not is_local(origin):
         raise Refusal("the internal test flag works only against a local origin")
     t = time.time()
-    command = ["git", "fetch", "origin"] if remote == "origin" else \
-        ["git", "fetch", "--", remote, "+refs/heads/*:refs/remotes/origin/*"]
-    r = run(command, repo)
+    r = run(["git", "fetch", "origin"], repo)
     if r.returncode != 0:
         raise Refusal(f"`git fetch origin` failed: {r.stderr.strip()}")
     rep.add("1", "fetch", "ok", f"git fetch origin ({origin})", time.time() - t)
@@ -6180,8 +6126,7 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
     if held is not None and origin != held.origin:
         raise Refusal(f"origin's URL changed during the run, from {held.origin} to "
                       f"{origin}; nothing is merged: set it back, then --merge")
-    base = fetch_base(repo, origin, test_mode, rep,
-                      remote=held.origin if held is not None else "origin")
+    base = fetch_base(repo, origin, test_mode, rep)
     # Before the harness is compared or anything judged against the new main. Run on, the
     # full checks would take about 36 minutes, and then the body's summary, of the old
     # main, refuses the merge, or these preconditions refuse it for a main the head lacks.
@@ -6197,15 +6142,12 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report,
                       "origin/main in first if the head lacks it), then --merge; in a merge "
                       "queue, --merge alone")
     harness(repo, base, rep, hand_over=held is None)
-    trusted_harness = harness_snapshot(repo, base) if held is not None else None
     slug = "test/stoicheia" if test_mode else github_slug(origin)
     if not slug:
         raise Refusal(f"origin ({origin}) is not on GitHub: there is no pull request to merge")
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
-    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base,
-                  trusted_harness=trusted_harness,
-                  pinned_origin=held.origin if held is not None else None)
+    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base)
     queued = queue_enabled(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
@@ -6397,21 +6339,10 @@ class MergeUnknown(Refusal):
     nothing on main is known to be the merge (issue #42)."""
 
 
-def landing_remote(ctx: Context) -> str:
-    if ctx.pinned_origin is None:
-        return "origin"
-    current = git(ctx.repo, "remote", "get-url", "origin", check=False).strip()
-    if current != ctx.pinned_origin:
-        raise Refusal(f"origin's URL changed during the run, from {ctx.pinned_origin} to "
-                      f"{current}; nothing is merged: set it back, then --merge")
-    return ctx.pinned_origin
-
-
 def main_unmoved(ctx: Context) -> None:
     """The last look at main before the merge: --match-head-commit pins the head, not the
     base, so origin/main must still be the base checked."""
-    remote = landing_remote(ctx)
-    now = remote_refs(ctx.repo, "refs/heads/main", remote=remote).get("refs/heads/main")
+    now = remote_refs(ctx.repo, "refs/heads/main").get("refs/heads/main")
     if now != ctx.base:
         raise Refusal(f"origin/main moved from {ctx.base[:12]} to {str(now)[:12]}: run "
                       "--merge again")
@@ -6489,10 +6420,7 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
     is known to be the merge, so MergeUnknown, and no revert is advised: it would name
     origin/main's last commit in place of the merge (issue #42). Returns the merge commit,
     or None when origin could not be read."""
-    remote = landing_remote(ctx)
-    command = ["git", "fetch", "origin"] if remote == "origin" else \
-        ["git", "fetch", "--", remote, "+refs/heads/*:refs/remotes/origin/*"]
-    r = run(command, ctx.repo)
+    r = run(["git", "fetch", "origin"], ctx.repo)
     if r.returncode != 0:
         rep.add("5", "main", "FAIL", f"not checked: `git fetch origin` failed after the merge: "
                 f"{r.stderr.strip()}")
@@ -6517,7 +6445,7 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
         rep.add("5", "main", "FAIL", f"{commit[:12]}, on origin/main ({main[:12]}), has parents "
                 f"{', '.join(p[:12] for p in parents)}, and "
                 f"{'the' if same_tree else 'not the'} tree checked")
-    gone = not remote_refs(ctx.repo, f"refs/heads/{ctx.branch}", remote=landing_remote(ctx))
+    gone = not remote_refs(ctx.repo, f"refs/heads/{ctx.branch}")
     rep.add("5", "branch", "ok" if gone else "note",
             f"{ctx.branch} deleted on origin" if gone else f"{ctx.branch} is still on origin")
     return commit
@@ -6799,12 +6727,7 @@ def verify_queue_merge(ctx: Context, number: int, view: dict, rep: Report) -> st
     oid = merged.get("oid") if isinstance(merged, dict) else None
     if not isinstance(oid, str) or not FULL_OID.fullmatch(oid):
         raise Refusal(f"GitHub names no full merge commit for queued #{number}")
-    remote = landing_remote(ctx)
-    if remote == "origin":
-        git(ctx.repo, "fetch", "origin")
-    else:
-        git(ctx.repo, "fetch", "--", remote,
-            "+refs/heads/*:refs/remotes/origin/*")
+    git(ctx.repo, "fetch", "origin")
     main = rev_parse(ctx.repo, "refs/remotes/origin/main^{commit}")
     if not main or rev_parse(ctx.repo, f"{oid}^{{commit}}") is None \
             or not git_ok(ctx.repo, "merge-base", "--is-ancestor", oid, main):
@@ -6827,8 +6750,7 @@ def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode:
             rep.add("4", "enqueue", "skip", f"dry run: would enqueue #{number}, head {ctx.sha}")
             result, code = "passed every gate (dry run, not queued)", 0
         else:
-            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep,
-                             remote=landing_remote(ctx))
+            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep)
             main_health(ctx._replace(base=tip), rep, body)
             view = queue_view(ctx, number)
             if view["state"] != "OPEN":
@@ -7138,11 +7060,8 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
                     "run again; the full checks are not repeated")
         logs = logs_dir(ctx.sha)
         train_body = merge_train_input(ctx, view)
-        revalidate = None if held is None else \
-            lambda: land_state_unchanged(repo, held.origin, ctx.trusted_harness)
         pre = check_commit(ctx, rep, logs, test_mode, risk, checked=checked,
-                           train_body=train_body, trusted_harness=ctx.trusted_harness
-                           if held is not None else None, revalidate=revalidate)
+                           train_body=train_body)
         record = make_record(ctx, pre, rep, full=not test_mode and checked is None,
                              risk=risk, checked=checked)
         save_record(record)
@@ -7197,8 +7116,6 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
         view = current_view
         labels = current_labels
         kind = next((k for k in KIND_LABELS if k in labels), None)
-        if revalidate is not None:
-            revalidate()
         rep.heading("4. Merge")
         if ctx.queue:
             return queue_main(ctx, number, rep, dry_run, test_mode, view.get("body"))
