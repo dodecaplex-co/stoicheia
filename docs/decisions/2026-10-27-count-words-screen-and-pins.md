@@ -1,8 +1,8 @@
 - **Four count words, for the screen's rules about circles, the superposition audit's
   dependency checks, the model's planted mutations and the rules now proved (checks,
   [#576](https://github.com/jackChallis/stoicheia/issues/576)).**
-  The coordinator's orders of 27 October 2026 assign card #576, under the plan for shared
-  files that the owner approved that day. As the orders give the plan's aim, each thing is
+  The coordinator’s orders of 27 October 2026 assign card #576. As the orders give the
+  plan's aim, each thing is
   said once, and its restatements are compiled from it. Four counts in prose restate what
   a file says exactly, and have been retyped by hand when the file changed. So
   [`scripts/generated_counts.py`](../../scripts/generated_counts.py) gains a count word for
@@ -16,7 +16,7 @@
     arguments; it must name no rule twice, and only axioms of
     [`Certificate/axioms.lock`](../../Certificate/axioms.lock), since the prose counts how
     many of the certificate's axioms are in the list. Every other binding of the name is
-    refused (an assignment of any kind, a target, a `def`, a parameter or keyword argument,
+    refused (an assignment of any kind, a target, a `def`, a parameter,
     an import, a `global`, a pattern's capture or `**rest`, and a star import after the
     assignment), as is every store through it and every call of a method that changes a
     list, as `CIRCLE.append`; a read, as `len(CIRCLE)` or `CIRCLE.index(…)`, counts. What
