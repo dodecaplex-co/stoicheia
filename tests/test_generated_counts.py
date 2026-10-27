@@ -227,6 +227,7 @@ def note : String := "#print axioms Elements.inString"
                        "report(CIRCLE=len(CIRCLE))\n",
                        "seen = CIRCLE.count('Postulate3')\n",
                        "count = CIRCLE.count\n",
+                       "supports_append = CIRCLE.append is not None\n",
                        "globals().update(CIRCLE=RULES)\n"):
             with self.subTest(reader="screen", suffix=suffix):
                 screen.write_text(original_screen + suffix)
@@ -287,6 +288,12 @@ def note : String := "#print axioms Elements.inString"
                 (original + "set_option\n  pp.universes\n\n  true\n  in\n"
                  "#guard_msgs in\n#print axioms Elements.third\n",
                  "a guarded pin under `set_option`"),
+                (original + "set_option pp.universes true\n#guard_msgs in\n"
+                 "#print axioms Elements.third\n", "a guarded pin under `set_option`"),
+                (original + "section Outer\nset_option pp.universes true\n"
+                 "section Inner\nend Inner\n#guard_msgs in\n"
+                 "#print axioms Elements.third\nend Outer\n",
+                 "a guarded pin under `set_option`"),
                 (original + "#print axioms Elements.third\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms.foo\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms' Elements.third\n", unguarded),
@@ -306,6 +313,12 @@ def note : String := "#print axioms Elements.inString"
                 (original.replace("\n", "\r\n"), 2),
                 (original + "#guard_msgs in #print axioms Elements.third\n", 3),
                 (original + "#guard_msgs in#print axioms Elements.third\n", 3),
+                (original + "section Earlier\nset_option pp.universes true\nend Earlier\n"
+                 "#guard_msgs in\n#print axioms Elements.third\n", 3),
+                (original + "namespace Earlier\nset_option pp.universes true\nend Earlier\n"
+                 "#guard_msgs in\n#print axioms Elements.third\n", 3),
+                (original + "set_option\n  pp.universes\n  true\n  in\n#check Nat\n"
+                 "#guard_msgs in\n#print axioms Elements.third\n", 3),
                 (original + "#guard_msgs in -- a remark\n#print\n  axioms Elements.third\n", 3)):
             with self.subTest(text=text):
                 path.write_bytes(text.encode())
@@ -385,6 +398,7 @@ def note : String := "#print axioms Elements.inString"
         path = self.root / counts.FORMALIZATION
         original = path.read_text()
         for prefix in ("<!-- an earlier comment -->\n",
+                       "<!--\n```text -->\n",
                        "```text\nan earlier example\n```\n"):
             with self.subTest(prefix=prefix):
                 path.write_text(prefix + original)

@@ -314,6 +314,11 @@ PRINT_AXIOMS = re.compile(r"#print\s+axioms")
 OPTION_WRAPPED_AXIOM_PIN = re.compile(
     rf"(?m)^[ \t]*set_option\s+{IDENTIFIER.pattern}{NAME_END}"
     rf"(?:(?!^[ \t]*set_option\b)[\s\S])*?\bin\s*{AXIOM_PIN.pattern}")
+LOCAL_OPTION_HEADER = re.compile(
+    rf"(?m)^[ \t]*set_option\s+{IDENTIFIER.pattern}{NAME_END}\s+(?:\S+\s+)?in\b")
+LEAN_SCOPE_OPEN = re.compile(r"^[ \t]*(?:section|namespace)(?:[ \t]+.*)?$")
+LEAN_SCOPE_END = re.compile(r"^[ \t]*end(?:[ \t]+.*)?$")
+PERSISTENT_OPTION = re.compile(r"^[ \t]*set_option\b(?!.*\bin\b)")
 SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
 # table it may hold.
@@ -354,6 +359,9 @@ def refuse_other_bindings(tree, path, name, kept, start, outside, mutating_metho
     refusal to the methods it names. A star import is refused after tree.body[start], the
     statement that binds the name, since one before it is overridden by that binding."""
     alias_names = {}
+    called_attributes = {node.func for node in ast.walk(tree)
+                         if isinstance(node, ast.Call)
+                         and isinstance(node.func, ast.Attribute)}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             alias_names.update({alias: alias.asname or alias.name.split(".")[0]
@@ -378,7 +386,8 @@ def refuse_other_bindings(tree, path, name, kept, start, outside, mutating_metho
                 changed = (not isinstance(node.ctx, ast.Load)
                            or (isinstance(node, ast.Attribute)
                                and (mutating_methods is None
-                                    or node.attr in mutating_methods)))
+                                    or (node.attr in mutating_methods
+                                        and node in called_attributes))))
             elif isinstance(node, ast.keyword):
                 changed = False
             else:
@@ -453,11 +462,40 @@ def superposition_dependency_checks(root):
     if wrapped := OPTION_WRAPPED_AXIOM_PIN.search(code):
         raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, wrapped.start()) + 1}: "
                          "a guarded pin under `set_option`, not a bare top-level guard")
+    if optioned := persistent_option_pin(code):
+        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, optioned.start()) + 1}: "
+                         "a guarded pin under `set_option`, not a bare top-level guard")
     pins = len(AXIOM_PIN.findall(code))
     if pins != len(PRINT_AXIOMS.findall(code)):
         raise ValueError(f"{SUPERPOSITION}: a `#print axioms` that is not a guarded pin of one "
                          "name, a bare `#guard_msgs in` then `#print axioms <name>`")
     return pins
+
+
+def persistent_option_pin(code):
+    """Return the first axiom pin governed by a persistent set_option command."""
+    pins = iter(AXIOM_PIN.finditer(code))
+    pin = next(pins, None)
+    local_options = {code.count("\n", 0, match.start())
+                     for match in LOCAL_OPTION_HEADER.finditer(code)}
+    scopes = [False]
+    offset = 0
+    for number, line in enumerate(code.splitlines(keepends=True)):
+        command = line.rstrip("\r\n")
+        if LEAN_SCOPE_END.fullmatch(command):
+            if len(scopes) > 1:
+                scopes.pop()
+        elif LEAN_SCOPE_OPEN.fullmatch(command):
+            scopes.append(False)
+        elif PERSISTENT_OPTION.match(command) and number not in local_options:
+            scopes[-1] = True
+        line_end = offset + len(line)
+        while pin is not None and pin.start() < line_end:
+            if any(scopes):
+                return pin
+            pin = next(pins, None)
+        offset = line_end
+    return None
 
 
 def model_statement_mutations(root):
@@ -503,6 +541,7 @@ def rules_now_proved(root):
     for line in lines:
         enclosed.append(comment or fence is not None)
         marker = FENCE.match(line)
+        marker_visible = not comment
         if fence is not None:
             if (marker and marker.group(1)[0] == fence[0]
                     and len(marker.group(1)) >= len(fence)
@@ -523,7 +562,7 @@ def rules_now_proved(root):
                     break
                 comment = True
                 position = opening + 4
-        if not comment and marker:
+        if marker_visible and marker:
             fence = marker.group(1)
     starts = []
     for i, line in enumerate(lines):
