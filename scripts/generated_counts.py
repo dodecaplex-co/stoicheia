@@ -314,8 +314,8 @@ PRINT_AXIOMS = re.compile(r"#print\s+axioms")
 SET_OPTION_COMMAND = re.compile(
     rf"(?<![\w.'!?₀-₉])set_option\s+{IDENTIFIER.pattern}{NAME_END}"
     rf"\s+(?P<value>\S+)(?P<local>\s+in\b)?")
-LEAN_SCOPE_OPEN = re.compile(r"^[ \t]*(?:section|namespace)(?:[ \t]+.*)?$")
-LEAN_SCOPE_END = re.compile(r"^[ \t]*end(?:[ \t]+.*)?$")
+LEAN_SCOPE_OPEN = re.compile(rf"(?<![\w.'!?₀-₉])(?:section|namespace){NAME_END}")
+LEAN_SCOPE_END = re.compile(rf"(?<![\w.'!?₀-₉])end{NAME_END}")
 SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
 # table it may hold.
@@ -480,15 +480,9 @@ def optioned_axiom_pin(code):
     events = [(match.start(), "pin", match) for match in AXIOM_PIN.finditer(code)]
     events.extend((match.start(), "option", match) for match in options
                   if match.group("local") is None)
+    events.extend((match.start(), "open", None) for match in LEAN_SCOPE_OPEN.finditer(code))
+    events.extend((match.start(), "end", None) for match in LEAN_SCOPE_END.finditer(code))
     scopes = [False]
-    offset = 0
-    for line in code.splitlines(keepends=True):
-        command = line.rstrip("\r\n")
-        if LEAN_SCOPE_END.fullmatch(command):
-            events.append((offset, "end", None))
-        elif LEAN_SCOPE_OPEN.fullmatch(command):
-            events.append((offset, "open", None))
-        offset += len(line)
     for _, kind, match in sorted(events, key=lambda event: event[0]):
         if kind == "end":
             if len(scopes) > 1:
