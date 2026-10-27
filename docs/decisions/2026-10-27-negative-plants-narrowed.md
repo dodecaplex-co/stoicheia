@@ -4,9 +4,9 @@
   #581 is the coordinator's record of it. The aim is a faster landing lane with every fault
   still caught. An independent map of the plants found almost none redundant: the time goes
   in how often the suite runs, eleven times by its count for a train that changes a check,
-  before any retry, and in a few slow plants. This train makes two of the slowest faster
-  and drops the one plant whose fault another plant already plants, keeping its fixture.
-  The checks the plants run (`check_fidelity.py`, `check_style.py` and
+  before any retry or merge-queue run, and in a few slow plants. This train makes two of
+  the slowest faster and drops the one plant whose fault another plant already plants,
+  keeping its fixture. The checks the plants run (`check_fidelity.py`, `check_style.py` and
   `tests/test_certificate.py`) do not change, no expected refusal is loosened, and no fault
   case or control is dropped.
 
@@ -22,12 +22,12 @@
   the copy eighteen times: once unplanted, once for each of its thirteen faults, and once
   for each of its four setext headings. It now copies, from Git's tracked files as before,
   only the two files it plants (`CONTRIBUTING.md` and `NOTICE`), the two texts the style
-  checker reads in any tree (`README.md` and `docs/reading.md`), and the scripts at the top
-  of `scripts/`, among them the checker and the modules it imports, the rest only because
-  they stand beside them. The eighteen runs and their expected lines are unchanged. One
-  thing is added: the unplanted copy must pass, so that a checker unable to run on the copy
-  cannot pass the four headings by failing as the baseline failed. The style check of the
-  whole tree, S23 among its rules, runs in the check registry.
+  checker reads in any tree (`README.md` and `docs/reading.md`), and the Python scripts at
+  the top of `scripts/`, among them the checker and the modules it imports, the rest only
+  because they stand beside them. The eighteen runs and their expected lines are unchanged.
+  One thing is added: the unplanted copy must pass, so that a checker unable to run on the
+  copy cannot pass the four headings by failing as the baseline failed. The style check of
+  the whole tree, S23 among its rules, runs in the check registry.
 
   `native_decide.py` planted `theorem planted_native : 2 + 2 = 4 := by native_decide` in
   I.16's file and wanted `check_fidelity.py` to name its file and line;
@@ -38,7 +38,7 @@
   the same run of the check, which must name I.16's file and the line; and
   `native_decide.py` goes.
 
-  Each narrowed plant was checked against a mutation of what it tests, through the
+  Each changed plant was checked against a mutation of what it tests, through the
   runner: with the transformer case taken out of `tests/test_certificate.py`, the
   certificate plant fails; with S23's scan emptied, all thirteen marker faults go uncaught
   and the plant fails; with S23 refusing every seven-equals line, the four headings fail;
@@ -46,22 +46,23 @@
   it; and with the search for `native_decide` taken out of `check_fidelity.py`, the I.16
   case goes uncaught with the others.
 
-  The whole suite, run on one machine at a similar load, first at main as it stood
+  The whole suite, run on one machine at a similar load average, first at main as it stood
   (bef94c2c7) and then with this change on the same commit, took 926 seconds for 48 plants
   and then 601 for 47. Of the difference, the certificate plant gives 158 seconds (177 to
   19), the markers plant 91 (94 to 3) and the dropped plant 3. The other 73 seconds are the
-  load, not the change: the untouched plants took 16 seconds less in all, none of them more
+  load, not the change: the other plants took 17 seconds less in all, none of them more
   than three seconds either way, and the regressions and checks around the plants 56
   seconds less; and the first run shared the machine with the mutation checks above, the
   second did not. CI's negative job took 902 and 913 seconds on two runs before this
-  change, the suite's own step 798 and 806; its time after is this change's own run in CI.
+  change, the suite's own step 798 and 806; its time after is to come from this change's
+  own run in CI, and goes on #581.
 
   This entry approves the change to `scripts/negative/certificate_constructor_counting.py`,
   whose two runs are now of `CommonNotion4Tests` alone.
 
   This entry approves the change to `scripts/negative/merge_conflict_markers.py`, which
-  copies only the files it plants, the two texts its checker always reads and the scripts
-  at the top of `scripts/`, and requires the unplanted copy to pass.
+  copies only the files it plants, the two texts its checker always reads and the Python
+  scripts at the top of `scripts/`, and requires the unplanted copy to pass.
 
   This entry approves the change to `scripts/negative/forbidden_commands.py`, which plants
   a `native_decide` in I.16's file too.

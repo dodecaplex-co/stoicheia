@@ -257,7 +257,7 @@ def plant() -> None:
         nt.expect_failure("a native_decide in I.16's file", result,
                           caught(proposition, native, "native_decide"))
     finally:
-        if kept is not None:
+        if kept is not None and (nt.ROOT / proposition).read_bytes() != kept:
             (nt.ROOT / proposition).write_bytes(kept)
         for root, saved in roots.items():
             root.write_text(saved)

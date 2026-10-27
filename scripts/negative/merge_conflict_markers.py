@@ -1,15 +1,15 @@
 """Without a build, in a temporary copy without Git of the two tracked files it plants,
 CONTRIBUTING.md and NOTICE, of the two the style check reads in any tree, README.md and
-docs/reading.md, and of the tracked scripts at the top of scripts/: opening, base and
-closing merge markers, a middle between outer markers, and a lone middle in a non-Markdown
-file, comment, fence or after a completed heading, indented code or link reference
-definition (on one line or two) each fail S23 of `check_style.py --no-lean` with their
-file, line and kind. Setext headings, including several lines and one after a comment
+docs/reading.md, and of the tracked Python scripts at the top of scripts/: opening, base
+and closing merge markers, a middle between outer markers, and a lone middle in a
+non-Markdown file, comment, fence or after a completed heading, indented code or link
+reference definition (on one line or two) each fail S23 of `check_style.py --no-lean` with
+their file, line and kind. Setext headings, including several lines and one after a comment
 containing a fence, leave the unplanted copy's result unchanged, and that result is a pass,
 so a check unable to run on the copy, failing alike with a heading and without, is not
-taken for one that accepts the headings. Symlinks are not copied.
-This runs before the plants that build. The style check on the whole tree, S23 among its
-rules, runs in the check registry.
+taken for one that accepts the headings. Symlinks are not copied. This runs before the
+plants that build. The style check on the whole tree, S23 among its rules, runs in the
+check registry.
 """
 
 import re
@@ -23,8 +23,8 @@ import negative_tests as nt
 BUILDS = False
 
 # The copy: the two files planted, the two texts the style check reads whatever the tree
-# holds, and the scripts at the top of scripts/, check_style.py and the modules it imports
-# among them.
+# holds, and the Python scripts at the top of scripts/, check_style.py and the modules it
+# imports among them.
 PLANTED = ("CONTRIBUTING.md", "NOTICE")
 READ_ALWAYS = ("README.md", "docs/reading.md")
 SCRIPT = re.compile(r"scripts/[^/]+\.py")
