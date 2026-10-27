@@ -175,6 +175,19 @@ def note : String := "#print axioms Elements.inString"
                 with self.assertRaisesRegex(ValueError, counts.SCREEN):
                     counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_wildcard_imports(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text() + "\nfrom shadow import *\n")
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
+    def test_screen_circle_rules_refuse_reflective_namespace_access(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text()
+                        + '\nglobals()["CIRCLE"].append("Postulate1")\n')
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
     def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
         path = self.root / counts.SUPERPOSITION
         original = path.read_text()
@@ -216,6 +229,13 @@ def note : String := "#print axioms Elements.inString"
         path.write_bytes(original.replace(b"\n", b"\r\n"))
         self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
         path.write_bytes(b"-- comment\r#print axioms Elements.hidden\n")
+        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
+            counts.superposition_dependency_checks(self.root)
+
+    def test_superposition_dependency_checks_refuse_command_quotations(self):
+        path = self.root / counts.SUPERPOSITION
+        path.write_text(path.read_text()
+                        + "\n`(command|\n #print axioms Elements.fake)\n")
         with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
             counts.superposition_dependency_checks(self.root)
 
