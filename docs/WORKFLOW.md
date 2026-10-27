@@ -958,9 +958,10 @@ train and group as unreadable.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
   file in `docs/decisions/`, a bad header line in an entry, a bad notes marker in a brief
   or in PROGRAM.md, and a notes region holding a line it does not write (section 10,
-  "Decision entries") before it writes, so CI's `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
-  refusals, and the notes `render.py` fills, without Lean, and `negative_tests.py` runs it
-  after the count regressions, before planting, with `--counts-only` too.
+  "Decision entries") before it writes, so CI's `check` job and the pre-flight refuse it.
+  `tests/test_decision_entries.py` tests those refusals, and the notes `render.py` fills,
+  without Lean, and `negative_tests.py` runs it after the count regressions, before
+  planting, with `--counts-only` too.
 - **The risk classes are tested without Lean.** `tests/test_risk.py` checks the table of
   `scripts/risk.py`: the first rule that matches wins, a path no rule names is R5, and a
   change takes its highest class. It runs `--diff` on a repository of its own (an empty
