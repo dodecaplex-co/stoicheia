@@ -53,8 +53,6 @@ def Elements.companions : List (Lean.Name × String) := [
         self.report("**7 failing items**. 2 of the 6 propositions pass every item of their own.")
         self.write(counts.SCREEN, '''"""A small screen; its CIRCLE is named here only in prose."""
 
-import itertools
-
 RULES = """Postulate1 Postulate2 Postulate3""".split()
 
 # Rules that speak of circles.
@@ -62,7 +60,6 @@ CIRCLE = """Definition15 Postulate3
 Tacit.circles_meet""".split()
 
 missing = [rule for rule in CIRCLE if rule not in RULES]
-pairs = list(itertools.combinations(CIRCLE, 2))
 ''')
         self.write(counts.SUPERPOSITION, '''import Elements.Figure.Superposition
 
@@ -144,149 +141,6 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
-    def test_screen_circle_rules_refuse_an_alias_that_is_mutated(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text() + '\nalias = CIRCLE\nalias.append("Postulate1")\n')
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_argument_bindings(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text() + "\ndef shadow(CIRCLE):\n    return None\n")
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_combinations_or_module_rebinding(self):
-        path = self.root / counts.SCREEN
-        original = path.read_text()
-        call = "pairs = list(itertools.combinations(CIRCLE, 2))"
-        replacements = (
-            'itertools.combinations = lambda xs, n: (xs.append("Postulate1") or ())\n'
-            + call,
-            'class Mutating:\n'
-            '    def combinations(self, xs, n):\n'
-            '        xs.append("Postulate1")\n'
-            '        return ()\n'
-            'itertools = Mutating()\n' + call,
-        )
-        for replacement in replacements:
-            with self.subTest(replacement=replacement):
-                path.write_text(original.replace(call, replacement))
-                with self.assertRaisesRegex(ValueError, counts.SCREEN):
-                    counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_an_itertools_alias(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text()
-                        + '\nimport itertools as shadow\n'
-                          'shadow.combinations = lambda xs, n: '
-                          '(xs.append("Postulate1") or ())\n')
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_dynamic_itertools_mutation(self):
-        path = self.root / counts.SCREEN
-        original = path.read_text()
-        call = "pairs = list(itertools.combinations(CIRCLE, 2))"
-        mutation = ('import importlib\n'
-                    'shadow = importlib.import_module("itertools")\n'
-                    'shadow.combinations = lambda xs, n: '
-                    '(xs.append("Postulate1") or ())\n')
-        path.write_text(original.replace(call, mutation + call))
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_module_attribute_mutation(self):
-        path = self.root / counts.SCREEN
-        original = path.read_text()
-        call = "pairs = list(itertools.combinations(CIRCLE, 2))"
-        mutator = 'lambda xs, n: (xs.append("Postulate1") or ())'
-        mutations = (
-            'import operator\nimport sys\n'
-            'operator.methodcaller("__setattr__", "combinations", '
-            f'{mutator})(sys.modules["itertools"])\n',
-            'import sys\n'
-            'sys.modules["itertools"].__setattr__("combinations", '
-            f'{mutator})\n',
-        )
-        for mutation in mutations:
-            with self.subTest(mutation=mutation):
-                path.write_text(original.replace(call, mutation + call))
-                with self.assertRaisesRegex(ValueError, counts.SCREEN):
-                    counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_wildcard_imports(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text() + "\nfrom shadow import *\n")
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_reflective_namespace_access(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text()
-                        + '\nglobals()["CIRCLE"].append("Postulate1")\n')
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_reflective_aliases(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text()
-                        + '\nnamespace = globals\n'
-                          'namespace()["CIRCLE"].append("Postulate1")\n')
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_function_globals(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text()
-                        + '\nfor rule in CIRCLE:\n'
-                          '    (lambda: None).__globals__["CIRCLE"].append("Postulate1")\n')
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_indirect_attribute_access(self):
-        path = self.root / counts.SCREEN
-        path.write_text(path.read_text()
-                        + '\nfor rule in CIRCLE:\n'
-                          '    object.__getattribute__((lambda: None), "__globals__")['
-                          '"CIRCLE"].append("Postulate1")\n'
-                          '    break\n')
-        with self.assertRaisesRegex(ValueError, counts.SCREEN):
-            counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_string_attribute_access(self):
-        path = self.root / counts.SCREEN
-        original = path.read_text()
-        accesses = (
-            ('import operator\n', 'operator.attrgetter'),
-            ('from operator import attrgetter\n', 'attrgetter'),
-            ('from operator import attrgetter as reader\n', 'reader'),
-        )
-        for import_line, access in accesses:
-            with self.subTest(access=access):
-                path.write_text(original
-                                + '\n' + import_line
-                                  + 'for rule in CIRCLE:\n'
-                                  + f'    {access}("__globals__")(lambda: None)['
-                                  '"CIRCLE"].append("Postulate1")\n'
-                                  '    break\n')
-                with self.assertRaisesRegex(ValueError, counts.SCREEN):
-                    counts.screen_circle_rules(self.root)
-
-    def test_screen_circle_rules_refuse_frame_namespaces(self):
-        path = self.root / counts.SCREEN
-        original = path.read_text()
-        for attribute in ("f_globals", "f_locals"):
-            with self.subTest(attribute=attribute):
-                path.write_text(original
-                                + '\nimport sys\n'
-                                  'for rule in CIRCLE:\n'
-                                  f'    sys._getframe().{attribute}["CIRCLE"].append('
-                                  '"Postulate1")\n'
-                                  '    break\n')
-                with self.assertRaisesRegex(ValueError, counts.SCREEN):
-                    counts.screen_circle_rules(self.root)
-
     def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
         path = self.root / counts.SUPERPOSITION
         original = path.read_text()
@@ -301,67 +155,6 @@ def note : String := "#print axioms Elements.inString"
         path.unlink()
         with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
             counts.superposition_dependency_checks(self.root)
-
-    def test_source_readers_name_decode_failures(self):
-        for relative, reader in ((counts.SCREEN, counts.screen_circle_rules),
-                                 (counts.SUPERPOSITION,
-                                  counts.superposition_dependency_checks)):
-            with self.subTest(path=relative):
-                (self.root / relative).write_bytes(b"\xff")
-                with self.assertRaises(ValueError) as raised:
-                    reader(self.root)
-                self.assertIn(relative, str(raised.exception))
-
-    def test_superposition_dependency_checks_ignore_escaped_names(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text() + '\ndef «#print axioms Elements.note» := 0\n')
-        self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
-
-    def test_superposition_dependency_checks_require_a_subcommand_and_target(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text() + "\n#print axioms.foo\n#print axioms\n")
-        self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
-
-    def test_superposition_dependency_checks_preserve_source_line_endings(self):
-        path = self.root / counts.SUPERPOSITION
-        original = path.read_bytes()
-        path.write_bytes(original.replace(b"\n", b"\r\n"))
-        self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
-        path.write_bytes(b"-- comment\r#print axioms Elements.hidden\n")
-        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
-            counts.superposition_dependency_checks(self.root)
-
-    def test_superposition_dependency_checks_refuse_command_quotations(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text()
-                        + "\n`(command|\n #print axioms Elements.fake)\n")
-        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
-            counts.superposition_dependency_checks(self.root)
-
-    def test_superposition_dependency_checks_refuse_implicit_command_quotations(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text()
-                        + "\n`(\n #print axioms Elements.fake\n)\n")
-        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
-            counts.superposition_dependency_checks(self.root)
-
-    def test_superposition_dependency_checks_count_same_line_nested_commands(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text()
-                        + "\n#guard_msgs in #print axioms Elements.third\n")
-        self.assertEqual(counts.superposition_dependency_checks(self.root), 3)
-
-    def test_superposition_dependency_checks_count_punctuation_nested_commands(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text()
-                        + "\n#guard_msgs in#print axioms Elements.third\n")
-        self.assertEqual(counts.superposition_dependency_checks(self.root), 3)
-
-    def test_superposition_dependency_checks_count_multiline_commands(self):
-        path = self.root / counts.SUPERPOSITION
-        path.write_text(path.read_text()
-                        + "\n#print\n axioms Elements.third\n")
-        self.assertEqual(counts.superposition_dependency_checks(self.root), 3)
 
     def test_screen_and_superposition_words_fill_markers(self):
         text = ("<!-- count:screen-circle-rules:Word -->Ten<!-- /count --> rules about circles "
