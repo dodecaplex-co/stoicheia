@@ -306,8 +306,8 @@ SUPERPOSITION = "Audit/Superposition.lean"
 PRINT_AXIOMS = re.compile(r"#print[ \t\r\n]+axioms\s+(?=[^\W\d])")
 ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 SYNTAX_QUOTATION = re.compile(r"`[ \t\r\n]*\(")
-REFLECTIVE_NAMES = {"__builtins__", "delattr", "eval", "exec", "getattr", "globals",
-                    "locals", "setattr", "vars"}
+REFLECTIVE_NAMES = {"__builtins__", "__getattribute__", "delattr", "eval", "exec",
+                    "getattr", "globals", "locals", "setattr", "vars"}
 
 
 def source_text(root, path):
@@ -375,6 +375,9 @@ def screen_circle_rules(root):
                 or (isinstance(node, ast.alias)
                     and node.name.split(".")[-1] in REFLECTIVE_NAMES)):
             raise ValueError(f"{SCREEN}:{node.lineno}: reflective namespace access is forbidden")
+        if (isinstance(node, ast.alias) and node.name == "itertools"
+                and node is not itertools_import):
+            raise ValueError(f"{SCREEN}:{node.lineno}: itertools is imported more than once")
         bindings = bound_names(node)
         if "itertools" in bindings and node is not itertools_import:
             raise ValueError(f"{SCREEN}:{node.lineno}: itertools is rebound outside its import")

@@ -175,6 +175,15 @@ def note : String := "#print axioms Elements.inString"
                 with self.assertRaisesRegex(ValueError, counts.SCREEN):
                     counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_an_itertools_alias(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text()
+                        + '\nimport itertools as shadow\n'
+                          'shadow.combinations = lambda xs, n: '
+                          '(xs.append("Postulate1") or ())\n')
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
     def test_screen_circle_rules_refuse_wildcard_imports(self):
         path = self.root / counts.SCREEN
         path.write_text(path.read_text() + "\nfrom shadow import *\n")
@@ -201,6 +210,16 @@ def note : String := "#print axioms Elements.inString"
         path.write_text(path.read_text()
                         + '\nfor rule in CIRCLE:\n'
                           '    (lambda: None).__globals__["CIRCLE"].append("Postulate1")\n')
+        with self.assertRaisesRegex(ValueError, counts.SCREEN):
+            counts.screen_circle_rules(self.root)
+
+    def test_screen_circle_rules_refuse_indirect_attribute_access(self):
+        path = self.root / counts.SCREEN
+        path.write_text(path.read_text()
+                        + '\nfor rule in CIRCLE:\n'
+                          '    object.__getattribute__((lambda: None), "__globals__")['
+                          '"CIRCLE"].append("Postulate1")\n'
+                          '    break\n')
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
