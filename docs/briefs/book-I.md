@@ -203,7 +203,7 @@ many books in front of us."), 31 more rules became
 theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
 `CirclePoints.lean`, proved that day. On 24 October 2026 Circle 3 followed, proved after
 III.2 in `Elements/BookIII/Prop02.lean`, with Circle 2, Points 9 and Intersection 2 moved
-beside it. With our own rules that every
+beside it, and on 26 October 2026 Circle 1, proved there too. With our own rules that every
 circle has a centre and, from 25 October 2026, that its radius is not nothing, the lock
 now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
 
