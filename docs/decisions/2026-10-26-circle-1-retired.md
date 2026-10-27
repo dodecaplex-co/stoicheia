@@ -146,9 +146,9 @@
   This entry approves the change to `tests/model/search.py`, from which the function for
   Circle 1's law goes, with the blank lines after it, the rest of the file untouched.
 
-  With Circle 1 retired, its law in the hyperbolic plane leaves `tests/model/hyperbolic.py`
-  as its plane law leaves search.py, and that change is approved; the kind `gs_cm` and
-  every other line of the file stay.
+  This entry approves removing Circle 1's hyperbolic law from `tests/model/hyperbolic.py`,
+  together with its following blank lines; the `'chord'` kind of `gs_cm` and every other
+  line stay.
 
   This entry approves the change to `tests/model/MODEL.md`, whose prose now counts
   forty-one former axioms, places Circle 1 among them and gives its reason in the section
@@ -163,10 +163,9 @@
   This entry approves the change to `Audit/Crossing.lean`, five pins regenerated without
   Circle 1, and two comments made true now that Circle 1 is a theorem after III.2.
 
-  This entry approves the change to `Audit/screen.py`, whose `CIRCLE` list drops Circle 1,
-  leaving nine names, so that the screen does not stop on a name that is no longer an
-  axiom, and whose account of its runs names this retirement and the counts of the lock it
-  leaves.
+  For `Audit/screen.py`, this entry approves removing Circle 1 from `CIRCLE`, leaving nine
+  names, so that the screen does not stop on a name that is no longer an axiom, and
+  revising the account of its runs to record the retirement and the resulting lock counts.
 
   The numerical model's results were written again on this harness:
   `python3 -I tests/model/run.py --full --write` ran at commit `5ef38f3f2a55`, this train's
