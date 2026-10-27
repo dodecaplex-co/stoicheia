@@ -309,14 +309,16 @@ FORMALIZATION = "docs/FORMALIZATION.md"
 # A dependency check as the audit pins one: a bare `#guard_msgs in`, then `#print axioms`
 # and one name, ended as check_superposition_pins ends a name. Every `#print axioms` in the
 # code must be one, or the file is refused rather than miscounted.
-AXIOM_PIN = re.compile(rf"#guard_msgs\s+in\s+#print\s+axioms\s+{IDENTIFIER.pattern}{NAME_END}")
+AXIOM_PIN = re.compile(rf"#guard_msgs\s+in\s*#print\s+axioms\s+{IDENTIFIER.pattern}{NAME_END}")
 PRINT_AXIOMS = re.compile(r"#print\s+axioms")
+SYNTAX_QUOTATION = re.compile(r"`\(")
 # The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
 # table it may hold.
 RULES_PROVED = "### Rules now proved"
 RULES_HEADER = "| Theorem under `Elements.Tacit` | System E label | Derivation and home |"
 RULES_DELIMITER = "|---|---|---|"
-RULE_ROW = re.compile(rf"\|\s*`({IDENTIFIER.pattern})`\s*\|.*\|")
+RULE_CELL = r"(?:\\.|[^|\\])*"
+RULE_ROW = re.compile(rf"\|\s*`({IDENTIFIER.pattern})`\s*\|{RULE_CELL}\|{RULE_CELL}\|")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 
 
@@ -344,6 +346,13 @@ def refuse_other_bindings(tree, path, name, kept, start, outside):
     """Refuse, with its line, each node of `tree` but those `kept` that binds `name`, or
     stores or calls through it; a star import is refused after tree.body[start], the
     statement that binds the name, since one before it is overridden by that binding."""
+    alias_names = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            alias_names.update({alias: alias.asname or alias.name.split(".")[0]
+                                for alias in node.names})
+        elif isinstance(node, ast.ImportFrom):
+            alias_names.update({alias: alias.asname or alias.name for alias in node.names})
     for index, statement in enumerate(tree.body):
         for node in ast.walk(statement):
             through = node.value if isinstance(node, (ast.Attribute, ast.Subscript)) else None
@@ -355,11 +364,13 @@ def refuse_other_bindings(tree, path, name, kept, start, outside):
                                      "bound may bind it again")
                 changed = False
             elif isinstance(node, ast.alias):
-                changed = name in (node.name, node.asname or node.name.split(".")[0])
+                changed = alias_names[node] == name
             elif isinstance(node, ast.Name):
                 changed = node.id == name and not isinstance(node.ctx, ast.Load)
             elif isinstance(through, ast.Name) and through.id == name:
                 changed = isinstance(node, ast.Attribute) or not isinstance(node.ctx, ast.Load)
+            elif isinstance(node, ast.keyword):
+                changed = False
             else:
                 changed = name in (getattr(node, "name", None), getattr(node, "arg", None),
                                    getattr(node, "rest", None), *getattr(node, "names", ()))
@@ -383,7 +394,7 @@ def screen_circle_rules(root):
             and isinstance(value.func.value.value, str)):
         raise ValueError(f"{SCREEN}: CIRCLE is not a string literal split with no arguments")
     # That assignment must be the file's only binding of the name: another, at any depth
-    # (augmented, annotated, in a loop, a def, a parameter or keyword argument, an import, a
+    # (augmented, annotated, in a loop, a def, a parameter, an import, a
     # `global`, a pattern's capture or **rest, or a star import after it), an attribute of
     # it, as CIRCLE.append, or a store or deletion through it is refused, rather than
     # counted as if the literal were the list the screen uses. What reaches the list by
@@ -425,6 +436,9 @@ def superposition_dependency_checks(root):
     if (quoted := code.find("«")) >= 0:
         raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quoted) + 1}: a «…» name, "
                          "whose text is read as code")
+    if quotation := SYNTAX_QUOTATION.search(code):
+        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quotation.start()) + 1}: "
+                         "a syntax quotation, whose commands are not run")
     pins = len(AXIOM_PIN.findall(code))
     if pins != len(PRINT_AXIOMS.findall(code)):
         raise ValueError(f"{SUPERPOSITION}: a `#print axioms` that is not a guarded pin of one "
@@ -471,7 +485,40 @@ def rules_now_proved(root):
     for span in reversed(markers(text, FORMALIZATION)):
         text = text[:span.value_start] + text[span.value_end:]
     lines = text.split("\n")
-    starts = [i for i, line in enumerate(lines) if line.rstrip() == RULES_PROVED]
+    enclosed, comment, fence = [], False, None
+    for line in lines:
+        enclosed.append(comment or fence is not None)
+        marker = FENCE.match(line)
+        if fence is not None:
+            if (marker and marker.group(1)[0] == fence[0]
+                    and len(marker.group(1)) >= len(fence)
+                    and not line[marker.end():].strip()):
+                fence = None
+            continue
+        position = 0
+        while True:
+            if comment:
+                end = line.find("-->", position)
+                if end < 0:
+                    break
+                comment = False
+                position = end + 3
+            else:
+                opening = line.find("<!--", position)
+                if opening < 0:
+                    break
+                comment = True
+                position = opening + 4
+        if not comment and marker:
+            fence = marker.group(1)
+    starts = []
+    for i, line in enumerate(lines):
+        if line.rstrip() != RULES_PROVED:
+            continue
+        if enclosed[i]:
+            raise ValueError(f"{FORMALIZATION}:{i + 1}: {RULES_PROVED!r} is inside a comment "
+                             "or fenced code")
+        starts.append(i)
     if len(starts) != 1:
         raise ValueError(f"{FORMALIZATION}: expected one heading {RULES_PROVED!r}")
     names, table = {}, None
@@ -500,8 +547,8 @@ def rules_now_proved(root):
         else:
             row = RULE_ROW.fullmatch(line.rstrip())
             if row is None:
-                raise ValueError(f"{where}: a row whose first cell is not one theorem's name "
-                                 "in backticks")
+                raise ValueError(f"{where}: a row that is not exactly three cells with one "
+                                 "theorem's name in backticks")
             if row[1] in names:
                 raise ValueError(f"{where}: `{row[1]}` is named twice, first at line "
                                  f"{names[row[1]]}")

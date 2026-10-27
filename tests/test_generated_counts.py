@@ -202,7 +202,6 @@ def note : String := "#print axioms Elements.inString"
                 (original + "def attempts(facts, CIRCLE=RULES):\n    return facts\n", bound),
                 (original + "check = lambda CIRCLE: CIRCLE\n", bound),
                 (original + "def widen(**CIRCLE):\n    return None\n", bound),
-                (original + "globals().update(CIRCLE=RULES)\n", bound),
                 (original + "match RULES:\n    case {**CIRCLE}:\n        pass\n", bound),
                 (original + "match RULES:\n    case [*CIRCLE]:\n        pass\n", bound),
                 (original + "try:\n    pass\nexcept ValueError as CIRCLE:\n    pass\n", bound),
@@ -217,6 +216,25 @@ def note : String := "#print axioms Elements.inString"
             with self.subTest(text=text[:200]):
                 path.write_text(text)
                 self.assertRefused(counts.screen_circle_rules, counts.SCREEN, phrase)
+
+    def test_source_list_readers_allow_nonbinding_mentions(self):
+        screen = self.root / counts.SCREEN
+        original_screen = screen.read_text()
+        for suffix in ("from rules import CIRCLE as shadow\n",
+                       "import CIRCLE.rules as shadow\n",
+                       "report(CIRCLE=len(CIRCLE))\n",
+                       "globals().update(CIRCLE=RULES)\n"):
+            with self.subTest(reader="screen", suffix=suffix):
+                screen.write_text(original_screen + suffix)
+                self.assertEqual(counts.screen_circle_rules(self.root), 3)
+
+        mutations = self.root / counts.MUTATIONS
+        original_mutations = mutations.read_text()
+        for suffix in ("from model import M as shadow\n",
+                       "report(M=len(M))\n"):
+            with self.subTest(reader="mutations", suffix=suffix):
+                mutations.write_text(original_mutations + suffix)
+                self.assertEqual(counts.model_statement_mutations(self.root), 2)
 
     def test_screen_circle_rules_read_the_file_as_python_does(self):
         path = self.root / counts.SCREEN
@@ -253,6 +271,8 @@ def note : String := "#print axioms Elements.inString"
                 (original + "theorem «#print axioms Elements.third» : True := trivial\n",
                  "a «…» name"),
                 (original + "def «unclosed", "a «…» name"),
+                (original + "`(command| #guard_msgs in #print axioms Elements.fake)\n",
+                 "a syntax quotation"),
                 (original + "#print axioms Elements.third\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms.foo\n", unguarded),
                 (original + "#guard_msgs in\n#print axioms' Elements.third\n", unguarded),
@@ -271,6 +291,7 @@ def note : String := "#print axioms Elements.inString"
         for text, expected in (
                 (original.replace("\n", "\r\n"), 2),
                 (original + "#guard_msgs in #print axioms Elements.third\n", 3),
+                (original + "#guard_msgs in#print axioms Elements.third\n", 3),
                 (original + "#guard_msgs in -- a remark\n#print\n  axioms Elements.third\n", 3)):
             with self.subTest(text=text):
                 path.write_bytes(text.encode())
@@ -313,14 +334,17 @@ def note : String := "#print axioms Elements.inString"
         original = path.read_text()
         row = "| `third_rule` | Circle 1 | Proved in `Circles.lean`. |"
         later = "#### A later retirement"
-        not_one = "a row whose first cell is not one theorem's name in backticks"
+        not_one = "a row that is not exactly three cells with one theorem's name in backticks"
         hides = "fenced code, a comment or an underline"
+        enclosed = "is inside a comment or fenced code"
         for text, phrase in (
                 (original.replace("### Rules now proved", "### Rules proved"),
                  "expected one heading"),
                 (original + "\n### Rules now proved\n", "expected one heading"),
                 (original.replace("`third_rule` |", "`third_rule`, `fourth_rule` |"), not_one),
                 (original.replace("| `third_rule` |", "| third_rule |"), not_one),
+                (original.replace(row, "| `third_rule` | only one other cell |"), not_one),
+                (original.replace(row, row[:-1] + "| surplus |"), not_one),
                 (original.replace("| `third_rule` |",
                                   "| <!-- count:companions -->`fake_rule`<!-- /count --> |"),
                  not_one),
@@ -336,10 +360,21 @@ def note : String := "#print axioms Elements.inString"
                  "expected the delimiter row"),
                 (original.replace(later, "```\n| `fourth_rule` | x | y |\n```"), hides),
                 (original.replace(later, "<!--\n| `fourth_rule` | x | y |\n-->"), hides),
-                (original.replace(later, "A later retirement\n---"), hides)):
+                (original.replace(later, "A later retirement\n---"), hides),
+                ("<!--\n" + original + "\n-->\n", enclosed),
+                ("```text\n" + original + "\n```\n", enclosed)):
             with self.subTest(text=text):
                 path.write_text(text)
                 self.assertRefused(counts.rules_now_proved, counts.FORMALIZATION, phrase)
+
+    def test_rules_now_proved_allows_closed_enclosures_before_the_section(self):
+        path = self.root / counts.FORMALIZATION
+        original = path.read_text()
+        for prefix in ("<!-- an earlier comment -->\n",
+                       "```text\nan earlier example\n```\n"):
+            with self.subTest(prefix=prefix):
+                path.write_text(prefix + original)
+                self.assertEqual(counts.rules_now_proved(self.root), 3)
 
     def test_rules_now_proved_never_rest_on_a_marker_value(self):
         path = self.root / counts.FORMALIZATION
