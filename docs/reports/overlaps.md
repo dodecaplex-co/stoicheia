@@ -19,7 +19,7 @@ day ("Please do both. 79 is rather large with so many books in front of us."), h
 theorems, again with their names and exact types unchanged, among them
 Generalities 3 and 4 (`centre_inside`, `inside_not_on`) and the rules of Diagram-segments 3
 and 4 that give III.5's other short proofs (`on_circle_of_len_eq`, `len_lt_of_inside`). The
-lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules, `exists_centre`
+lock now holds <!-- count:axioms -->49<!-- /count --> axioms, including <!-- count:tacit-rules -->43<!-- /count --> tacit rules, `exists_centre`
 among them. The current table reflects this change too.
 
 24 October 2026: Circle 3 (`outside_of_between`), the last assumption that gave III.2 at
@@ -519,10 +519,11 @@ construction is given the fact, and never sees a circle. Book Zero kept its own 
 Triangle.of_onCircle, exists_onCircle_oppositeSidesOf and exists_onCircle_sameSideOf,
 stated for a circle with no centre given, which nothing used, until they were taken
 out on 24 October 2026 (#294; [below](#a-separate-piece-of-work)). `Staging/Routes/`
-now holds three Lean files, #129's; their theorems rest on neither Circle 2 nor Circle 3
+is gone, for the last of its theorems, #129's, have left it for `Elements/`; they rest on
+neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
-those three Book Zero lemmas, and the same holds of the theorems that have left it for
-`Elements/`. The staged III.1's construction called Circle 2 to put D
+those three Book Zero lemmas, as the theorems that left it before do not. The staged
+III.1's construction called Circle 2 to put D
 within the circle until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean`
 as `Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which
 held it, was retired later that day. Since `Prop2.within` is Circle 2 with no supplied
@@ -734,9 +735,10 @@ the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`, `Arc.measure`,
 issue #160; until then the run on the restated readings, above, cannot be made. The
 outline companions of I.45 and II.14 also reach definitions in none of the screen's lists,
 such as `Figures.Outline.area`, which their statements name; the screen stops on these too
-until they are listed. The screen now tries the <!-- count:axioms -->48<!-- /count -->
+until they are listed. The screen now tries the <!-- count:axioms -->49<!-- /count -->
 axioms of the certificate, 10 of them
-about circles with `Tacit.exists_centre`, and unfolds, budgets and leaves out rules as the
+in its list of rules about circles, `Tacit.exists_centre` among them (the radius rule of 25
+October 2026 is not in that list), and unfolds, budgets and leaves out rules as the
 revised screen does. No run of it on the restated statements is recorded yet.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a

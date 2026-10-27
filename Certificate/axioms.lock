@@ -15,7 +15,7 @@
 #
 #     python3 scripts/check_fidelity.py --write-lock
 
-[axioms]  # 48
+[axioms]  # 49
 "Definition15" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Elements.OnCircle C α → Eq (Elements.len A B) (Elements.len A C)"
 "Postulate1" = "∀ (A B : Elements.Point), Ne A B → Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (Elements.OnLine B L)"
 "Postulate2" = "∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L → Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Elements.Between B C A) (Not (Membership.mem avoid A)))"
@@ -61,11 +61,12 @@
 "Tacit.not_on_line_of_same_side" = "∀ {A B : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Not (Elements.OnLine A L)"
 "Tacit.on_line_of_area_eq_zero" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.OnLine A L → Elements.OnLine B L → Ne A B → Eq (Elements.area A B C) 0 → Elements.OnLine C L"
 "Tacit.pasch2" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C → Elements.OnLine A L → Not (Elements.OnLine B L) → Elements.SameSide B C L"
+"Tacit.radius_ne_zero" = "∀ {A B : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Ne (Elements.len A B) 0"
 "Tacit.same_ray_of_angle_eq_zero" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Ne A B → Ne A C → Elements.OnLine A L → Elements.OnLine B L → Eq (Elements.ang B A C) 0 → And (Elements.OnLine C L) (Not (Elements.Between B A C))"
 "Tacit.same_side_trans" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Elements.SameSide A C L → Elements.SameSide B C L"
 "Tacit.superposition" = "Elements.Superposition.Rule Elements.primitives"
 
-[vocabulary]  # 267
+[vocabulary]  # 268
 "Angle" = "def : Type := Elements.Magnitude Elements.Kind.angle"
 "Apart" = "structure : Type"
 "Apart.area" = "def : Elements.Apart → Elements.Area := fun (R : Elements.Apart) => Elements.Magnitude.sum (List.map (fun (t : Prod Elements.Point (Prod Elements.Point Elements.Point)) => Elements.area (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) (Elements.Apart.pieces R))"
@@ -309,6 +310,7 @@
 "Triangle" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Not (Elements.Collinear A B C)"
 "WithinAngle" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (B A C P : Elements.Point) => And (Elements.SameSideOf P C A B) (Elements.SameSideOf P B A C)"
 "ang" = "opaque : Elements.Point → Elements.Point → Elements.Point → Elements.Angle"
+"angleAtCentre" = "def : Elements.Circle → Elements.Point → Elements.Point → Elements.Point → Elements.Angle := fun (α : Elements.Circle) (B K C : Elements.Point) => Classical.epsilon fun (x : Elements.Angle) => Exists fun (E : Elements.Point) => Exists fun (A : Elements.Point) => Exists fun (F : Elements.Point) => And (Elements.Centre E α) (And (Elements.OnCircle A α) (And (Elements.OnCircle F α) (And (Elements.Between A E F) (And (Elements.OppositeSidesOf A K B C) (And (Elements.SameSideOf F K B C) (Eq x (HAdd.hAdd (Elements.ang B E F) (Elements.ang F E C))))))))"
 "area" = "opaque : Elements.Point → Elements.Point → Elements.Point → Elements.Area"
 "circumference" = "def : Elements.Circle → Elements.Point → Elements.Point → Elements.Point → Elements.Angle := fun (α : Elements.Circle) (B K C : Elements.Point) => Classical.epsilon fun (x : Elements.Angle) => Exists fun (A : Elements.Point) => And (Elements.OnCircle A α) (And (Elements.OppositeSidesOf A K B C) (Eq x (HAdd.hAdd (Elements.ang B A C) (Elements.ang B A C))))"
 "endOf" = "def : Elements.Point → List Elements.Point → Elements.Point := fun (B : Elements.Point) (x : List Elements.Point) => List.brecOn (motive := fun (x : List Elements.Point) => Elements.Point → Elements.Point) x Elements.endOf._f B"
