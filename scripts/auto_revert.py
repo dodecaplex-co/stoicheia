@@ -648,6 +648,8 @@ def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
 
 
 def github_is_ancestor(api: GitHub, ancestor: str, descendant: str) -> bool:
+    """Whether GitHub's comparison shows `descendant` ahead of `ancestor` and not behind
+    it; any answer that cannot be read so is no."""
     try:
         data = api.call("GET", f"{api.root}/compare/{ancestor}...{descendant}")
     except Exception:
@@ -706,7 +708,8 @@ def clear_moved_on(api: GitHub, repo: str, after: str, number: int) -> str:
     just opened: "" while main's tip is still `after`, since a later push's clear will
     see the issue. A later push's run may have passed, and cleared, before the issue
     existed, so the label comes off here, but only on evidence read now: main's tip
-    contains `after`, the tip's latest post-merge run, by id with every page read,
+    contains `after`, by GitHub's comparison (this job's checkout, of `after`, cannot
+    hold a later tip), the tip's latest post-merge run, by id with every page read,
     completed with success, and main names that tip still just before the removal.
     Otherwise the label stays, and the issue says how to clear it."""
     try:
