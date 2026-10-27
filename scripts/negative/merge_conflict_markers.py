@@ -1,12 +1,18 @@
-"""Without a build, in a temporary copy of the tracked files without Git: opening, base and
-closing merge markers, a middle between outer markers, and a lone middle in a non-Markdown
-file, comment, fence or after a completed heading, indented code or link reference
-definition (on one line or two) each fail S23 of `check_style.py --no-lean` with their
-file, line and kind. Setext headings, including several lines and one after a comment
-containing a fence, leave the unplanted copy's result unchanged. Symlinks are not copied.
-This runs before the plants that build, and preserves any existing findings.
+"""Without a build, in a temporary copy without Git of the two tracked files it plants,
+CONTRIBUTING.md and NOTICE, of the two the style check reads in any tree, README.md and
+docs/reading.md, and of the tracked Python scripts at the top of scripts/: opening, base
+and closing merge markers, a middle between outer markers, and a lone middle in a
+non-Markdown file, comment, fence or after a completed heading, indented code or link
+reference definition (on one line or two) each fail S23 of `check_style.py --no-lean` with
+their file, line and kind. Setext headings, including several lines and one after a comment
+containing a fence, leave the unplanted copy's result unchanged, and that result is a pass,
+so a check unable to run on the copy, failing alike with a heading and without, is not
+taken for one that accepts the headings. Symlinks are not copied. This runs before the
+plants that build. The style check on the whole tree, S23 among its rules, runs in the
+check registry.
 """
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -16,11 +22,18 @@ import negative_tests as nt
 
 BUILDS = False
 
+# The copy: the two files planted, the two texts the style check reads whatever the tree
+# holds, and the Python scripts at the top of scripts/, check_style.py and the modules it
+# imports among them.
+PLANTED = ("CONTRIBUTING.md", "NOTICE")
+READ_ALWAYS = ("README.md", "docs/reading.md")
+SCRIPT = re.compile(r"scripts/[^/]+\.py")
+
 
 def plant() -> None:
     """Plant raw marker lines in copies of tracked text, with no Git or Lean needed
-    by the check. Compare the harmless heading with the baseline, so an existing
-    marker elsewhere cannot masquerade as a refusal of the planted heading.
+    by the check. The unplanted copy must pass, and each harmless heading must leave
+    its result unchanged.
     """
     listing, names = nt.tracked_names()
     if listing.returncode != 0:
@@ -31,15 +44,17 @@ def plant() -> None:
         return
     with tempfile.TemporaryDirectory(prefix="stoicheia-markers-") as tmp:
         root = Path(tmp)
-        nt.copy_marker_files(root, names)
+        nt.copy_marker_files(root, [name for name in names if name in PLANTED + READ_ALWAYS
+                                    or SCRIPT.fullmatch(name)])
 
         def check() -> subprocess.CompletedProcess:
             return subprocess.run([sys.executable, "scripts/check_style.py", "--no-lean"],
                                   cwd=root, capture_output=True, text=True)
 
         baseline = check()
-        markdown = "CONTRIBUTING.md"
-        non_markdown = "NOTICE"
+        if not nt.expect_success("the style check on the unplanted copy", baseline):
+            return
+        markdown, non_markdown = PLANTED
         cases = [
             ("opening", markdown, ["<" * 7 + " ours"], [(0, "opening")]),
             ("base", markdown, ["|" * 7 + " base"], [(0, "base")]),
