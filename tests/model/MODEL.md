@@ -1,6 +1,6 @@
 # The model behind the axioms
 
-Stoicheia's proofs rest on <!-- count:axioms -->48<!-- /count --> axioms: Postulates 1 to 5, Definition 15, and <!-- count:tacit-rules -->42<!-- /count --> tacit
+Stoicheia's proofs rest on <!-- count:axioms -->49<!-- /count --> axioms: Postulates 1 to 5, Definition 15, and <!-- count:tacit-rules -->43<!-- /count --> tacit
 rules, most of them the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, ["A
 formal system for Euclid's *Elements*"](https://doi.org/10.1017/S1755020309990098), 2009).
 Lean checks that
@@ -9,18 +9,18 @@ at once. If they could not, every certificate would be worthless, because anythi
 from a contradiction.
 
 This page gives the reasons for thinking they can. It reads the words in the ordinary
-plane, goes through the <!-- count:axioms -->48<!-- /count --> axioms one at a time, says why each one holds there, and shows
+plane, goes through the <!-- count:axioms -->49<!-- /count --> axioms one at a time, says why each one holds there, and shows
 the numbers from the programs in this folder that test each one against the plane. It
 does the same in the hyperbolic plane, where Postulate 5 fails and every other axiom
 passes the tests. It ends with [the formal model](#the-formal-model), in which Lean checks
-that the ordinary plane satisfies every one of the <!-- count:axioms -->48<!-- /count -->, and with [what the evidence shows,
+that the ordinary plane satisfies every one of the <!-- count:axioms -->49<!-- /count -->, and with [what the evidence shows,
 and what it does not](#what-this-shows-and-what-it-does-not).
 
 ## The plane
 
 The words Euclid leaves undefined are `opaque` in Lean
 ([Words.lean](../../Elements/Foundations/Words.lean)): Lean knows nothing of them but what
-the axioms say. So any reading of the words that makes all <!-- count:axioms -->48<!-- /count --> axioms true is a model.
+the axioms say. So any reading of the words that makes all <!-- count:axioms -->49<!-- /count --> axioms true is a model.
 Here is ours.
 
 | Word | In the plane |
@@ -57,7 +57,7 @@ hypotheses keep out the cases the conventions cannot fix.
 The programs take an axiom, build configurations of points, lines and circles, keep those
 that satisfy its hypotheses, and check its conclusion. Where the conclusion says that a
 point exists, the program constructs one and checks it. The exhaustive and structured
-harnesses also run 40 predicates independently as retained derived properties. They
+harnesses also run 41 predicates independently as retained derived properties. They
 preserve the existing numerical checks and configurations for those laws, but do not
 depend on the corresponding declarations remaining in the axiom registry.
 
@@ -69,13 +69,15 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps 40 numerical predicates under names beginning
-  `derived.`, one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
-  proved after III.2 since 24 October 2026, among them.
+- **[derived.py](derived.py)** keeps 41 numerical predicates under names beginning
+  `derived.`: one for each of the 40 retired rules, Circle 3's (`outside_of_between`),
+  proved after III.2 since 24 October 2026, among them; and Circle 1's
+  (`between_of_inside_chord`), still an axiom, with preparation for its retirement after
+  III.2 tracked in #477.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
-  predicates in all: 36 axiom laws and the 40 retained derived properties, with degenerate
+  predicates in all: 35 axiom laws and the 41 retained derived properties, with degenerate
   configurations included.
-- **[structured.py](structured.py)** builds the hypotheses of 17 axiom laws and all 40
+- **[structured.py](structured.py)** builds the hypotheses of 16 axiom laws and all 41
   retained derived properties on purpose, where chance rarely meets them (three straight
   lines through one point, a right angle, two circles through a common point), over a
   large lattice and over fractions.
@@ -107,9 +109,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `442989248536`, 2026-10-25, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `242da9a7f107`, 2026-10-26, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,098,108** configurations met an axiom's hypotheses (1,217,675 in the search, 2,247,172 exhaustive, 633,261 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 500,226 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **4,063,054** configurations met an axiom's hypotheses (1,223,581 in the search, 2,243,944 exhaustive, 595,529 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 511,547 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -141,28 +143,29 @@ In the plane: **4,098,108** configurations met an axiom's hypotheses (1,217,675 
 | `Tacit.not_on_line_of_same_side` | 315 | 45,192 | · | 4,389 |
 | `Tacit.same_side_trans` | 211 | 724,792 | 33,327 | 5,113 |
 | `Tacit.pasch2` | 318 | 3,872 | 8,435 | 1,401 |
-| `Tacit.between_of_inside_chord` | 239 | 3,228 | 37,732 | 8,315 |
+| `Tacit.between_of_inside_chord` | 239 | · | · | 8,315 |
 | `Tacit.lines_meet_of_opposite_sides` | 14 | 26,248 | 39,362 | 4,460 |
 | `Tacit.circles_meet` | 1,313 | 10,668 | 1,587 | 2,555 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
 | `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
-| `Tacit.angle_symm` | 15,588 | 14,400 | · | 6,996 |
+| `Tacit.radius_ne_zero` | 6,375 | · | · | 11,393 |
+| `Tacit.angle_symm` | 15,398 | 14,400 | · | 6,991 |
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_congruent` | 54,727 | 375,479 | 94,050 | 10,764 |
-| `Tacit.len_add_of_between` | 4,805 | 304 | · | 9,878 |
-| `Tacit.circle_eq` | 788 | 2,448 | 27,089 | 4,415 |
-| `Tacit.angle_eq_zero_of_same_ray` | 15,206 | 1,208 | · | 2,827 |
-| `Tacit.same_ray_of_angle_eq_zero` | 15,115 | 1,208 | · | 2,728 |
-| `Tacit.angle_add_of_inside` | 5 | 77,960 | 24,987 | 3,773 |
-| `Tacit.angle_eq_of_same_rays` | 6,977 | 60,032 | 8,676 | 4,150 |
-| `Tacit.area_eq_zero_of_on_line` | 24,891 | 2,112 | · | 4,680 |
-| `Tacit.on_line_of_area_eq_zero` | 24,727 | 2,112 | · | 4,668 |
-| `Tacit.area_add_of_between` | 23 | 6,176 | 55,499 | 8,515 |
-| `Tacit.superposition` | 112 | 363,888 | 71,970 | 8,691 |
+| `Tacit.area_congruent` | 54,707 | 375,479 | 94,050 | 10,822 |
+| `Tacit.len_add_of_between` | 4,768 | 304 | · | 9,863 |
+| `Tacit.circle_eq` | 822 | 2,448 | 27,089 | 4,354 |
+| `Tacit.angle_eq_zero_of_same_ray` | 15,210 | 1,208 | · | 2,725 |
+| `Tacit.same_ray_of_angle_eq_zero` | 15,092 | 1,208 | · | 2,729 |
+| `Tacit.angle_add_of_inside` | 3 | 77,960 | 24,987 | 3,756 |
+| `Tacit.angle_eq_of_same_rays` | 6,916 | 60,032 | 8,676 | 4,197 |
+| `Tacit.area_eq_zero_of_on_line` | 24,858 | 2,112 | · | 4,713 |
+| `Tacit.on_line_of_area_eq_zero` | 24,602 | 2,112 | · | 4,658 |
+| `Tacit.area_add_of_between` | 19 | 6,176 | 55,499 | 8,450 |
+| `Tacit.superposition` | 100 | 363,888 | 71,970 | 8,755 |
 
-Separately, **9,855,030** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **9,895,990** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -171,6 +174,7 @@ Separately, **9,855,030** configurations met a retained derived property's hypot
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
 | `derived.outside_of_between` | 281,664 | 47,802 |
+| `derived.between_of_inside_chord` | 3,228 | 37,732 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
@@ -356,11 +360,21 @@ disc.
 |---|---|
 | `len_self` | The distance from a point to itself is 0. |
 | `len_symm` | Distance is symmetric. |
+| `radius_ne_zero` | A circle of the plane has a positive radius, and a point on it is at that distance from the centre, so it is some distance away. |
 | `angle_symm` | The angle between two rays does not depend on their order (and the convention keeps it so even with a repeated point). |
 | `angle_le_two_right` | Angles lie in [0, π], and π is `∟ + ∟`. |
 | `area_degenerate` | A triangle with a repeated corner has no area. |
 | `area_rotate` | The area of a triangle does not depend on which corner is named first. |
 | `area_congruent` | The three sides fix the area (Heron's formula), so the angle hypotheses are more than the plane needs. |
+
+`radius_ne_zero` is a rule of our own, not System E's, joined by the owner's decision of 25
+October 2026 ([#473](https://github.com/jackChallis/stoicheia/issues/473)): every circle
+Euclid draws has a centre and a distance (Postulate 3), so its radius is something. In the
+hyperbolic plane too a circle is drawn about its centre through another point, and so has a
+positive radius. When it joined, the other laws gave it already: Book Zero proved the same
+statement from Circle 1 and `circle_eq` (`RuleProofs.Circle.radius_ne_zero`, in
+[RuleBase.lean](../../Elements/Figure/RuleBase.lean)). It was assumed so that Book Zero's
+positive lengths could rest on it in their place, and so on neither of those rules (#473).
 
 ### From the figure to magnitudes, and back
 
@@ -412,7 +426,7 @@ fails without that guard.
 ## The hyperbolic plane
 
 The book's certificates say which proofs use Postulate 5. They do not say, by themselves,
-that the other <!-- count:axioms-but-postulate-5 -->47<!-- /count --> axioms could not do its work in disguise: a proof avoiding the named
+that the other <!-- count:axioms-but-postulate-5 -->48<!-- /count --> axioms could not do its work in disguise: a proof avoiding the named
 Postulate 5 might still lean on some other rule just as strong. Astra's review asked for
 the way to settle that, a model of the other axioms in which Postulate 5 fails, and
 [hyperbolic.py](hyperbolic.py) tests such a model numerically, which supports the answer
@@ -456,7 +470,7 @@ there is no Lean proof of the hyperbolic model here. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
-**What it shows.** It supports, numerically, that none of the other <!-- count:axioms-but-postulate-5 -->47<!-- /count --> axioms carries the
+**What it shows.** It supports, numerically, that none of the other <!-- count:axioms-but-postulate-5 -->48<!-- /count --> axioms carries the
 parallel postulate in disguise. If every one of them does hold in the hyperbolic plane,
 as the hand arguments say, then whatever follows from them without Postulate 5 is true
 there, and a statement that fails there, such as I.32's "the three interior angles of the
@@ -486,7 +500,7 @@ as Astra advised, with our thanks. The model has four parts.
    states the same words as the fields of a Lean structure, `Signature`, the carriers of
    the magnitudes with their zero, addition and order among them, and the laws as a
    proposition about any such structure, `Laws`, with Postulate 5 apart from the other
-   <!-- count:axioms-but-postulate-5 -->47<!-- /count -->. A Lean program generates the laws from the elaborated declarations themselves, not
+   <!-- count:axioms-but-postulate-5 -->48<!-- /count -->. A Lean program generates the laws from the elaborated declarations themselves, not
    from their printed text, and every build checks the translation: taken back to the
    library's words, each law is compared with the library's declaration, by the kernel
    and expression by expression. The four pure modules
@@ -502,13 +516,13 @@ as Astra advised, with our thanks. The model has four parts.
    distance, the area by a determinant, and `∟` as π/2. One care: Mathlib's unoriented
    angle is π/2 when a point is repeated, and our reading needs 0 there, so the plane's
    angle is Mathlib's only when both arms are nonzero.
-3. **Every law of the lock proved in the plane**, degenerate cases included: all <!-- count:axioms -->48<!-- /count -->, each
+3. **Every law of the lock proved in the plane**, degenerate cases included: all <!-- count:axioms -->49<!-- /count -->, each
    a theorem of its own. The hardest were taken first, since they might have reshaped the
    representation: where circles meet, and on which side; angle addition, both ways; the
    side on which Postulate 5's lines meet; restricted superposition, from placement by
    isometry and reflection, its kept side by Postulate 1, and `Rule.of_placement`; the area
    rules; and the finite `avoid` lists. `superposition_placement` proves the supporting
-   placement construction; it is not a second locked law. The generator gathers the <!-- count:axioms -->48<!-- /count --> into
+   placement construction; it is not a second locked law. The generator gathers the <!-- count:axioms -->49<!-- /count --> into
    `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
    and `model_exists : ∃ S : Signature, Laws S` follows. Every build checks that nothing
    in the model imports an `Elements` module other than the four pure ones, retains the
@@ -538,7 +552,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   ([#73](https://github.com/jackChallis/stoicheia/issues/73)). So the axioms cannot
   contradict one another unless those foundations do.
 - **The interpretation** is the reading of the words above, with a short argument for
-  each of the <!-- count:axioms -->48<!-- /count --> axioms and many configurations tested against each, exactly wherever
+  each of the <!-- count:axioms -->49<!-- /count --> axioms and many configurations tested against each, exactly wherever
   the coordinates allow. The formal model makes the same reading in Lean and proves each
   law there, so that the axioms can all be true together no longer rests on these
   arguments and tests alone.
@@ -546,7 +560,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   checks, and on the axioms being the ones this page and the formal model were checked
   against, which [lock.sha256](lock.sha256) and
   [model/lock.sha256](../../model/lock.sha256) pin.
-- **Non-derivability is not proved.** That the other <!-- count:axioms-but-postulate-5 -->47<!-- /count --> axioms cannot give Postulate 5,
+- **Non-derivability is not proved.** That the other <!-- count:axioms-but-postulate-5 -->48<!-- /count --> axioms cannot give Postulate 5,
   and that a statement failing in the hyperbolic plane cannot be proved without it, rest
   on the numerical hyperbolic check [above](#the-hyperbolic-plane) until a hyperbolic
   model is built in Lean. A test can find a counterexample but cannot show that there is
@@ -596,7 +610,7 @@ the model follows the axiom in the same pull request as the Lean:
    own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
    or restated so that its law reads other letters, that program must drop or re-key the
    law first, in a pull request of its own, before the axiom moves. That preparation is
-   already complete for the 40 predicates in [derived.py](derived.py): both programs
+   already complete for the 41 predicates in [derived.py](derived.py): both programs
    call their `derived.` names, and `run.py` requires each report independently of the
    axiom registry.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with

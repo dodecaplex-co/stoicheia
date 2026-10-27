@@ -90,6 +90,14 @@ superseded: predicates for regions near a vertex now serve the mixed-angle compa
 Contact read locally, at the point of contact, and its equivalence to the whole-circle
 reading have not been formalised.
 
+**25 October 2026, local contact formalised (#126).** The sentence above is overtaken:
+contact at the point of contact is now defined beside the whole-circle reading
+(`TouchesInternallyAt`, `TouchesExternallyAt` and `CirclesTouchAt`, with `Touching.Near`,
+in `Elements/Foundations/DefinitionsIII.lean`), and III.13's companions prove the two
+readings the same for any two circles (`Prop13.circlesTouch_iff`;
+[decision entry](../decisions/2026-10-25-routes-iii-touching.md)). Book III's statements
+keep the whole-circle reading.
+
 **19 October 2026, contact within.** The whole-circle reading remains ours. The point
 of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
 passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through
@@ -287,6 +295,24 @@ III.23–III.37:
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
 
+**26 October 2026, the angle at the centre (#129).** The table stands, and beside it now
+stand the word `angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`, the angle at
+the centre standing on a circumference, which may be two right angles or more, and its
+bridge theorems before III.20 in `Elements/BookIII/Prop20.lean`: `angleAtCentre.diameter`
+(every diameter with its ends on opposite sides of the base gives the same angle),
+`angleAtCentre.congr` (the same for every point naming the side), `angleAtCentre.within`
+(the angle BEC when the centre E lies beyond the base), `angleAtCentre.semicircle` (two
+right angles when E is on it), `angleAtCentre.reflex` (with the angle BEC, four right
+angles when E is on the circumference's side), `angleAtCentre.reflex_gt` (then greater
+than two right angles) and `angleAtCentre.size` (less, two right angles or greater, as E
+lies). III.20's companion `Prop20.circumference` proves from III.20, with III.2 and
+without III.21, that every circumference is its angle at the centre, whatever its size.
+`Circumference.centre` keeps its statement, the case where the centre lies beyond the
+circumference and its angle at the centre is the rectilineal angle BGC; it is proved from
+`Circumference.eq` (III.21) and III.20's companion `Prop20.special`, the statement III.20
+had before #129, so its row still adds III.20 and III.21
+([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
+
 **Porisms.** Two porisms are cited by later propositions, and are theorems of their
 own, after their propositions: `Prop1.porism` (the centre lies on a straight line
 bisecting a straight line in the circle at right angles; III.9, III.10) and
@@ -382,9 +408,19 @@ worth naming. The first mate's report has a note on every statement.
   statement covers both of Euclid's cases, drawn in his one figure, the centre within the
   angle `BAC` and outside the angle `BDC`, and the case he leaves out, the centre on one
   of the arms.
+
+  **26 October 2026, the angle at the centre of any size (#129).** The bullet above is
+  overtaken: III.20 now speaks of the angle at the centre standing on the circumference,
+  of any size (`angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`), which may
+  be two right angles or more, our reading after Heath's notes, not Euclid's; the statement
+  described above is its companion `Prop20.special`
+  ([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 - **III.21** is said of any segment. Euclid's proof covers the segment greater than a
   semicircle; Heath gives Simson's for the rest (vol. 2, pp. 49–50), and III.22 and Book IV
   need every segment.
+
+  **26 October 2026 (#129).** Our proof of III.21 now follows Euclid's argument in every
+  segment, by III.20 of any size; Simson's proof is no longer used.
 - **III.22** takes a quadrilateral in the circle as four points of it with the straight line
   `BD` (joining opposite corners) separating `A` from `C`; that `AC` separates `B` from `D`
   follows.
