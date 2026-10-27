@@ -53,6 +53,8 @@ def Elements.companions : List (Lean.Name × String) := [
         self.report("**7 failing items**. 2 of the 6 propositions pass every item of their own.")
         self.write(counts.SCREEN, '''"""A small screen; its CIRCLE is named here only in prose."""
 
+import itertools
+
 RULES = """Postulate1 Postulate2 Postulate3""".split()
 
 # Rules that speak of circles.
@@ -60,6 +62,7 @@ CIRCLE = """Definition15 Postulate3
 Tacit.circles_meet""".split()
 
 missing = [rule for rule in CIRCLE if rule not in RULES]
+pairs = list(itertools.combinations(CIRCLE, 2))
 ''')
         self.write(counts.SUPERPOSITION, '''import Elements.Figure.Superposition
 
@@ -153,6 +156,25 @@ def note : String := "#print axioms Elements.inString"
         with self.assertRaisesRegex(ValueError, counts.SCREEN):
             counts.screen_circle_rules(self.root)
 
+    def test_screen_circle_rules_refuse_combinations_or_module_rebinding(self):
+        path = self.root / counts.SCREEN
+        original = path.read_text()
+        call = "pairs = list(itertools.combinations(CIRCLE, 2))"
+        replacements = (
+            'itertools.combinations = lambda xs, n: (xs.append("Postulate1") or ())\n'
+            + call,
+            'class Mutating:\n'
+            '    def combinations(self, xs, n):\n'
+            '        xs.append("Postulate1")\n'
+            '        return ()\n'
+            'itertools = Mutating()\n' + call,
+        )
+        for replacement in replacements:
+            with self.subTest(replacement=replacement):
+                path.write_text(original.replace(call, replacement))
+                with self.assertRaisesRegex(ValueError, counts.SCREEN):
+                    counts.screen_circle_rules(self.root)
+
     def test_superposition_dependency_checks_refuse_an_unreadable_file(self):
         path = self.root / counts.SUPERPOSITION
         original = path.read_text()
@@ -182,6 +204,20 @@ def note : String := "#print axioms Elements.inString"
         path = self.root / counts.SUPERPOSITION
         path.write_text(path.read_text() + '\ndef «#print axioms Elements.note» := 0\n')
         self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
+
+    def test_superposition_dependency_checks_require_a_subcommand_and_target(self):
+        path = self.root / counts.SUPERPOSITION
+        path.write_text(path.read_text() + "\n#print axioms.foo\n#print axioms\n")
+        self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
+
+    def test_superposition_dependency_checks_preserve_source_line_endings(self):
+        path = self.root / counts.SUPERPOSITION
+        original = path.read_bytes()
+        path.write_bytes(original.replace(b"\n", b"\r\n"))
+        self.assertEqual(counts.superposition_dependency_checks(self.root), 2)
+        path.write_bytes(b"-- comment\r#print axioms Elements.hidden\n")
+        with self.assertRaisesRegex(ValueError, counts.SUPERPOSITION):
+            counts.superposition_dependency_checks(self.root)
 
     def test_screen_and_superposition_words_fill_markers(self):
         text = ("<!-- count:screen-circle-rules:Word -->Ten<!-- /count --> rules about circles "

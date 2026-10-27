@@ -303,18 +303,39 @@ def acceptance_passing(root):
 
 SCREEN = "Audit/screen.py"
 SUPERPOSITION = "Audit/Superposition.lean"
-PRINT_AXIOMS = re.compile(r"(?m)^[ \t]*#print[ \t]+axioms\b")
+PRINT_AXIOMS = re.compile(r"(?m)^[ \t]*#print[ \t]+axioms\s+(?=[^\W\d])")
 ESCAPED_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
 def source_text(root, path):
     """Read a source file a count parses, refusing it by name if it cannot be read."""
     try:
-        return repository_path(root, path).read_text()
+        return repository_path(root, path).read_bytes().decode("utf-8")
     except UnicodeError as error:
         raise ValueError(f"{path}: cannot decode the file") from error
     except OSError as error:
         raise ValueError(f"{path}: cannot read the file ({error.strerror})") from error
+
+
+def bound_names(node):
+    """Names bound by one AST node without following Python execution."""
+    if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+        return {node.id}
+    if isinstance(node, ast.arg):
+        return {node.arg}
+    if isinstance(node, ast.alias):
+        return {node.asname or node.name.split(".")[0]}
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return {node.name}
+    if isinstance(node, (ast.Global, ast.Nonlocal)):
+        return set(node.names)
+    if isinstance(node, ast.ExceptHandler):
+        return {node.name} if node.name else set()
+    if isinstance(node, (ast.MatchAs, ast.MatchStar)):
+        return {node.name} if node.name else set()
+    if isinstance(node, ast.MatchMapping):
+        return {node.rest} if node.rest else set()
+    return set()
 
 
 def screen_circle_rules(root):
@@ -333,11 +354,33 @@ def screen_circle_rules(root):
             and isinstance(value.func.value, ast.Constant)
             and isinstance(value.func.value.value, str)):
         raise ValueError(f"{SCREEN}: CIRCLE is not a string literal split with no arguments")
+    itertools_imports = [name for node in tree.body if isinstance(node, ast.Import)
+                         for name in node.names
+                         if name.name == "itertools" and name.asname is None]
+    if len(itertools_imports) != 1:
+        raise ValueError(f"{SCREEN}: expected one module-level import of itertools")
+    itertools_import = itertools_imports[0]
     parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
     for node in ast.walk(tree):
-        if isinstance(node, ast.Name):
-            if node.id != "CIRCLE" or node is target:
-                continue
+        bindings = bound_names(node)
+        if "itertools" in bindings and node is not itertools_import:
+            raise ValueError(f"{SCREEN}:{node.lineno}: itertools is rebound outside its import")
+        if isinstance(node, ast.Name) and node.id == "itertools":
+            member = parents[node]
+            call = parents.get(member)
+            read_only = (isinstance(node.ctx, ast.Load)
+                         and isinstance(member, ast.Attribute)
+                         and member.value is node
+                         and member.attr == "combinations"
+                         and isinstance(member.ctx, ast.Load)
+                         and isinstance(call, ast.Call)
+                         and call.func is member)
+            if not read_only:
+                raise ValueError(f"{SCREEN}:{node.lineno}: itertools escapes its read-only use")
+        if "CIRCLE" in bindings and node is not target:
+            raise ValueError(f"{SCREEN}:{node.lineno}: CIRCLE is bound or changed "
+                             "outside its one assignment")
+        if isinstance(node, ast.Name) and node.id == "CIRCLE" and node is not target:
             parent = parents[node]
             read_only = (
                 isinstance(node.ctx, ast.Load)
@@ -349,26 +392,9 @@ def screen_circle_rules(root):
                          and isinstance(parent.func.value, ast.Name)
                          and parent.func.value.id == "itertools"
                          and parent.func.attr == "combinations")))
-            changed = not read_only
-        elif isinstance(node, ast.arg):
-            changed = node.arg == "CIRCLE"
-        elif isinstance(node, ast.alias):
-            changed = (node.asname or node.name.split(".")[0]) == "CIRCLE"
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            changed = node.name == "CIRCLE"
-        elif isinstance(node, (ast.Global, ast.Nonlocal)):
-            changed = "CIRCLE" in node.names
-        elif isinstance(node, ast.ExceptHandler):
-            changed = node.name == "CIRCLE"
-        elif isinstance(node, (ast.MatchAs, ast.MatchStar)):
-            changed = node.name == "CIRCLE"
-        elif isinstance(node, ast.MatchMapping):
-            changed = node.rest == "CIRCLE"
-        else:
-            changed = False
-        if changed:
-            raise ValueError(f"{SCREEN}:{node.lineno}: CIRCLE is bound or changed "
-                             "outside its one assignment")
+            if not read_only:
+                raise ValueError(f"{SCREEN}:{node.lineno}: CIRCLE is bound or changed "
+                                 "outside its one assignment")
     names = value.func.value.value.split()
     if len(names) != len(set(names)):
         raise ValueError(f"{SCREEN}: CIRCLE names a rule twice")
@@ -381,12 +407,17 @@ def superposition_dependency_checks(root):
     # it locally. read_lean reads a comment or a string that never closes on to the end of
     # the file without counting it unsure, so a line of code is set after the end: it is
     # blanked only when something the file opens is left open.
-    from check_fidelity import read_lean
+    from check_fidelity import LONE_CR, read_lean
 
-    code, unsure = read_lean(source_text(root, SUPERPOSITION) + "\nend")
+    source = source_text(root, SUPERPOSITION)
+    if LONE_CR.search(source):
+        raise ValueError(f"{SUPERPOSITION}: contains an isolated carriage return")
+    code, unsure = read_lean(source + "\nend")
     if unsure or not code.endswith("\nend"):
         raise ValueError(f"{SUPERPOSITION}: cannot read every comment and string for certain")
-    plain = ESCAPED_NAME.sub(lambda match: re.sub(r"[^\n]", " ", match[0]), code)
+    plain = ESCAPED_NAME.sub(
+        lambda match: "x" + re.sub(r"[^\n]", " ", match[0][1:])
+        if match[0].endswith("»") else re.sub(r"[^\n]", " ", match[0]), code[:-4])
     return len(PRINT_AXIOMS.findall(plain))
 
 
