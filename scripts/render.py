@@ -17,10 +17,11 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`, and each notes region,
-                       between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`
+                       between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`:
+                       a line for each decision entry whose header names the section
     docs/briefs/       only a brief's notes region, between `<!-- notes -->` and
                        `<!-- /notes -->`, where it has one: a line for each decision
-                       entry whose header names the brief (or the PROGRAM section)
+                       entry whose header names the brief
     docs/WORKFLOW.md   only section 8's first command block, between `<!-- checks -->`
                        and `<!-- /checks -->`: CI's `check` job's sequence, from the
                        registry of checks, one file per check in `checks/`

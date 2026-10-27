@@ -952,8 +952,9 @@ train and group as unreadable.
   `scripts/negative/count_markers.py`, and the file-only regressions without a build.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
   file in `docs/decisions/`, a bad header line in an entry, a bad notes marker in a brief
-  or in PROGRAM.md, and a notes region holding a line it does not write (section 10,
-  "Decision entries") before it writes, so CI's `check` job and the pre-flight refuse it.
+  or in PROGRAM.md, and a notes region holding anything but a generated line for one of
+  its entries, with a legitimate stale backlink omission allowed (section 10, "Decision
+  entries"), before it writes, so CI's `check` job and the pre-flight refuse it.
   `tests/test_decision_entries.py` tests those refusals, and the notes `render.py` fills,
   without Lean, and `negative_tests.py` runs it after the count regressions, before
   planting, with `--counts-only` too.
@@ -1731,12 +1732,15 @@ out of its place stops the render. Between a region's markers `render.py` writes
 for each entry whose header names the brief, or the section, in name order: the date, the
 cards, the news, a sentence for the entries it corrects or reverts and one for every entry
 whose header corrects or reverts it, whatever that entry names, each linked, and a link to
-the entry. A region holds those lines and nothing else: a line of any other form between
-its markers, text written by hand or a blank line, stops the render, naming the file and
-the line, so that a misplaced marker never swallows text; a new region's two markers stand
-on consecutive lines. Where no markers stand, it writes nothing. Since an entry is never
-edited, a brief or a section of the list that an entry names is never renamed or removed
-while an entry names it.
+the entry. Before replacing a region, `render.py` checks each current line against its
+entry's header and relationships. The cards, news, corrections and reverts must match; a
+stale line may omit backlinks added by later entries. A line of any other form, text
+written by hand or a blank line stops the render, naming the file and the line, so that a
+misplaced marker never swallows text. Duplicate valid lines, or valid lines out of name
+order, are accepted and rewritten in name order, so that a merge of trains can heal. A
+new region's two markers stand on consecutive lines. Where no markers stand, it writes
+nothing. Since an entry is never edited, a brief or a section of the list that an entry
+names is never renamed or removed while an entry names it.
 
 A brief or PROGRAM.md cannot quote a notes marker as it is: inline it is refused, and on a
 line of its own, even in a code fence, it is a live marker. To show one there, write
