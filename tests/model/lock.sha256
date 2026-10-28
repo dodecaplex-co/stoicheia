@@ -159,4 +159,28 @@
 # Renewed on 25 October 2026, when LocallyEqual joined the vocabulary (#130): only the
 # statement of the companion III.18 contact_locallyEqual reaches it; the 48 axioms and every
 # word already locked are unchanged, byte for byte, so MODEL.md's account stands as it was.
-261c05ae808e4f507e8fad0e92cc4738be4c1d9d3edba4574014cc8cf24bbc73  Certificate/axioms.lock
+#
+# Renewed on 25 October 2026, when the four words of Definition III.3 read at the point of
+# contact (#126), Touching.Near, TouchesInternallyAt, TouchesExternallyAt and CirclesTouchAt,
+# joined the vocabulary: only the statements of III.13's companions touchesInternally_iff,
+# touchesExternally_iff and circlesTouch_iff reach them; the 48 axioms and every word
+# already locked are unchanged, byte for byte, so MODEL.md's account stands as it was.
+#
+# Renewed on 26 October 2026, when angleAtCentre, the angle at the centre of any size
+# (#129), joined the vocabulary: only the statements of III.20 and its companion III.20
+# circumference reach it; the 48 axioms and every word already locked are unchanged, byte
+# for byte, so MODEL.md's account stands as it was.
+#
+# Renewed on 26 October 2026, when the rule that a radius is not nothing,
+# Tacit.radius_ne_zero, joined the axioms by the owner's decision of 25 October 2026 (#473):
+# 49 axioms, the other 48 and the 268 words of the vocabulary unchanged, byte for byte. Its
+# law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
+# counts, in the same change; run.py --full --write rewrites the results.
+#
+# Renewed on 26 October 2026, when Circle 1, Tacit.between_of_inside_chord, became a
+# theorem, proved after III.2 by the owner's decision of 25 October 2026 (#477): 48 axioms,
+# the lock less that one line, with 268 words of vocabulary; every other axiom and every
+# word is unchanged, byte for byte. Its law leaves laws.toml, search.py and hyperbolic.py,
+# and derived.py keeps checking it as derived.between_of_inside_chord; run.py --full
+# --write rewrites the results and MODEL.md's counts in the same change.
+eb108425cdf0acaee7d08a62af018aa84f2941877f98f10144bf17b1c15e0fe5  Certificate/axioms.lock

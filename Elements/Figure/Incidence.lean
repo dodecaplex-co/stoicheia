@@ -19,11 +19,12 @@ variable {A B C D E F : Point} {L M N : Line} {α β : Circle}
 
 namespace RuleProofs.Order
 
-/-- An interior centre differs from every point on its circumference. -/
+/-- A centre differs from every point on its circumference: a radius is not nothing (the
+radius rule). -/
 theorem ne_of_centre_of_on (hA : Centre A α) (hC : OnCircle C α) : C ≠ A := by
   intro h
   subst h
-  exact inside_not_on (centre_inside hA) hC
+  exact RuleProofs.Circle.radius_ne_zero hA hC (len_self _)
 
 end RuleProofs.Order
 
@@ -230,56 +231,60 @@ theorem Tacit.between_of_between_right (h₁ : Between A B C) (h₂ : Between B 
   · exact False.elim (not_between_lengths (between_symm h₁)
       (Elements.Tacit.between_of_between_left (between_symm hADB) h₂))
 
-namespace RuleProofs.Intersections
+/-- A point between the centre and a point on the circle is within it. It is nearer the
+centre than that point is, as the part is less than the whole, and so nearer than the
+circumference by Definition I.15 and the transfer rules. This proof uses no proposition
+and none of Circle 1, Circle 2 and Circle 3. -/
+theorem InsideCircle.of_between_centre {O P : Point} (hO : Centre O α)
+    (hP : OnCircle P α) (h : Between O C P) : InsideCircle C α := by
+  exact inside_of_len_lt hO hP (len_lt_of_between h)
 
-/-- A point between an interior point and a circumference point is interior, by Circle 1 and a
-crossing from inside. -/
-theorem inside_between_inside_on {A B C : Point} {L : Line} {α : Circle}
-    (hAL : OnLine A L) (hBL : OnLine B L) (hCL : OnLine C L)
-    (hA : InsideCircle A α) (hB : OnCircle B α) (hACB : Between A C B) :
-    InsideCircle C α := by
-  apply Classical.byContradiction
-  intro hn
-  have hCnoton : ¬ OnCircle C α := by
-    intro hC
-    exact not_between_of_between hACB
-      (between_of_inside_chord hAL hCL hBL hA hC hB
-        (ne_of_between (between_symm hACB)).symm)
-  obtain ⟨X, hX, hXL, hAXC⟩ := line_circle_between hA hAL ⟨hn, hCnoton⟩ hCL
-  have hAXB := between_of_between_left hACB hAXC
-  exact not_between_of_between hAXB
-    (between_of_inside_chord hAL hXL hBL hA hX hB
-      (ne_of_between (between_symm hAXB)).symm)
+/-- A point between the centre and a point within the circle is within it, when a point
+of the circle is given. The nearer point is nearer than the point within, which is nearer
+than the circumference by Definition I.15 and the transfer rules. This proof uses no
+proposition and none of Circle 1, Circle 2 and Circle 3. -/
+theorem InsideCircle.of_between_centre_of_inside {O P R : Point} (hO : Centre O α)
+    (hR : OnCircle R α) (hP : InsideCircle P α) (h : Between O C P) : InsideCircle C α := by
+  exact inside_of_len_lt hO hR
+    (lt_trans (len_lt_of_between h) (len_lt_of_inside hO hR hP))
 
-end RuleProofs.Intersections
+/-- Two circles cut one another if the first, whose centre O is given, passes through a point A
+inside the second, and a point B outside the second is inside or on the first. (Intersection 4,
+in LeanEuclid's corrected form, for a circle with a centre given) O is within the first circle.
+If O is on the second circle, it is the point within the first that Intersection 5 asks for.
+If O is within the second, the straight line from O to B leaves the second circle between
+them; if outside, the straight line from A to O does. Either crossing lies between the centre
+and a point on or within the first circle, so within it, and Intersection 5 applies. This
+proof uses no proposition, and neither Circle 1 nor our rule that every circle has a centre. -/
+theorem circles_meet_of_centre {O : Point} (hO : Centre O α) (hAα : OnCircle A α)
+    (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :
+    CirclesMeet α β := by
+  have hOα := centre_inside hO
+  by_cases hOβ_on : OnCircle O β
+  · exact circles_meet hAα hOα hAβ hOβ_on
+  by_cases hOβ_in : InsideCircle O β
+  · have hOB : O ≠ B := fun e => hBβ.1 (e ▸ hOβ_in)
+    obtain ⟨L, hOL, hBL⟩ := Postulate1 O B hOB
+    obtain ⟨X, hXβ, _, hOXB⟩ := line_circle_between hOβ_in hOL hBβ hBL
+    have hXα : InsideCircle X α := by
+      rcases hBα with hBα | hBα
+      · exact InsideCircle.of_between_centre_of_inside hO hAα hBα hOXB
+      · exact InsideCircle.of_between_centre hO hBα hOXB
+    exact circles_meet hAα hXα hAβ hXβ
+  · have hAO : A ≠ O := fun e => hOβ_in (e ▸ hAβ)
+    obtain ⟨L, hAL, hOL⟩ := Postulate1 A O hAO
+    obtain ⟨X, hXβ, _, hAXO⟩ := line_circle_between hAβ hAL ⟨hOβ_in, hOβ_on⟩ hOL
+    exact circles_meet hAα (InsideCircle.of_between_centre hO hAα (between_symm hAXO)) hAβ hXβ
 
 /-- Two circles cut one another if the first passes through a point A inside the second, and a
 point B outside the second is inside or on the first. (Intersection 4, in LeanEuclid's
-corrected form) A crossing of the second circle lies inside the first, giving the two
-witnesses for Intersection 5. -/
+corrected form) Take the centre of the first circle, by our rule that every circle has one
+(`exists_centre`), and the lemma above applies. -/
 theorem Tacit.circles_meet_of_on_inside_outside (hAα : OnCircle A α)
     (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :
     CirclesMeet α β := by
-  have meet_of_inside_outside : ∀ O : Point, InsideCircle O α → OutsideCircle O β →
-      CirclesMeet α β := by
-    intro O hOα hOβ
-    have hAO : A ≠ O := fun e => hOβ.1 (e ▸ hAβ)
-    obtain ⟨L, hAL, hOL⟩ := Postulate1 A O hAO
-    obtain ⟨C, hCβ, hCL, hACO⟩ := line_circle_between hAβ hAL hOβ hOL
-    have hCα := RuleProofs.Intersections.inside_between_inside_on hOL hAL hCL hOα hAα (between_symm hACO)
-    exact circles_meet hAα hCα hAβ hCβ
-  rcases hBα with hBα | hBα
-  · exact meet_of_inside_outside B hBα hBβ
-  · obtain ⟨O, hOα, _⟩ := exists_point_inside_circle α []
-    by_cases hOβ : InsideCircle O β
-    · have hOB : O ≠ B := fun e => hBβ.1 (e ▸ hOβ)
-      obtain ⟨L, hOL, hBL⟩ := Postulate1 O B hOB
-      obtain ⟨C, hCβ, hCL, hOCB⟩ := line_circle_between hOβ hOL hBβ hBL
-      have hCα := RuleProofs.Intersections.inside_between_inside_on hOL hBL hCL hOα hBα hOCB
-      exact circles_meet hAα hCα hAβ hCβ
-    · by_cases hOon : OnCircle O β
-      · exact circles_meet hAα hOα hAβ hOon
-      · exact meet_of_inside_outside O hOα ⟨hOβ, hOon⟩
+  obtain ⟨O, hO⟩ := exists_centre α
+  exact circles_meet_of_centre hO hAα hBα hAβ hBβ
 
 /-- Let a point be taken on the other side of L from B. (Points 6) Produce the line from B
 through a point of L; Pasch 3 separates its endpoints. -/

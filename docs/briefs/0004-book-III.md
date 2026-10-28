@@ -90,6 +90,14 @@ superseded: predicates for regions near a vertex now serve the mixed-angle compa
 Contact read locally, at the point of contact, and its equivalence to the whole-circle
 reading have not been formalised.
 
+**25 October 2026, local contact formalised (#126).** The sentence above is overtaken:
+contact at the point of contact is now defined beside the whole-circle reading
+(`TouchesInternallyAt`, `TouchesExternallyAt` and `CirclesTouchAt`, with `Touching.Near`,
+in `Elements/Foundations/DefinitionsIII.lean`), and III.13's companions prove the two
+readings the same for any two circles (`Prop13.circlesTouch_iff`;
+[decision entry](../decisions/2026-10-25-routes-iii-touching.md)). Book III's statements
+keep the whole-circle reading.
+
 **19 October 2026, contact within.** The whole-circle reading remains ours. The point
 of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
 passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through
@@ -108,6 +116,14 @@ circumference, taken twice.
 **19 October 2026, circumferences.** No axiom is added for circumferences. The earlier
 decision to add none for Book III is superseded by the approved rule `Tacit.exists_centre`,
 which gives every circle a centre ([brief 0008](0008-centre.md), approved 18 October).
+
+**26 October 2026, the radius rule.** A second rule of ours has joined `exists_centre`: a
+circle's radius is not nothing (`Tacit.radius_ne_zero`), added by the owner's decision of
+25 October 2026 ([its decisions entry](../decisions/2026-10-25-radius-rule.md)). It is a
+rule for Book Zero, not one added for Book III's sake, but Book III's proofs rest on it:
+every positive length in the edition now comes from it, and III.5 and III.6 rest on it in
+place of Diagram-segment 2 and Circle 1, which neither now rests on
+([the entry for that move](../decisions/2026-10-25-book-zero-radius-rule.md)).
 
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
@@ -259,6 +275,14 @@ in equal circles and of one kind, are one), which adds I.7; and, from stage 4,
 from a point), which add I.12 and I.17. The file imports Book II's
 ground, so every proposition of Book III has `rect`, `sq` and `BookI.Prop47.sq`.
 
+**26 October 2026, `foot_between` (#477).** `foot_between` has moved, with its name and type,
+to a ground of its own after III.2, `Elements/BookIII/Feet.lean`, which III.14, III.15,
+III.35 and III.36 import. Its last step is Circle 1, and Circle 1 is to be proved after
+III.2, by the owner's decision of 25 October 2026
+([the entry for this move](../decisions/2026-10-25-circle-1-bookzero.md)); III.1 and III.2
+import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
+unchanged; the rest of `Squares.lean` stands as it says.
+
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
@@ -286,6 +310,24 @@ III.23–III.37:
 `Circumference.semicircle` proves of circumferences, by Euclid's own argument, what III.31
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
+
+**26 October 2026, the angle at the centre (#129).** The table stands, and beside it now
+stand the word `angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`, the angle at
+the centre standing on a circumference, which may be two right angles or more, and its
+bridge theorems before III.20 in `Elements/BookIII/Prop20.lean`: `angleAtCentre.diameter`
+(every diameter with its ends on opposite sides of the base gives the same angle),
+`angleAtCentre.congr` (the same for every point naming the side), `angleAtCentre.within`
+(the angle BEC when the centre E lies beyond the base), `angleAtCentre.semicircle` (two
+right angles when E is on it), `angleAtCentre.reflex` (with the angle BEC, four right
+angles when E is on the circumference's side), `angleAtCentre.reflex_gt` (then greater
+than two right angles) and `angleAtCentre.size` (less, two right angles or greater, as E
+lies). III.20's companion `Prop20.circumference` proves from III.20, with III.2 and
+without III.21, that every circumference is its angle at the centre, whatever its size.
+`Circumference.centre` keeps its statement, the case where the centre lies beyond the
+circumference and its angle at the centre is the rectilineal angle BGC; it is proved from
+`Circumference.eq` (III.21) and III.20's companion `Prop20.special`, the statement III.20
+had before #129, so its row still adds III.20 and III.21
+([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 
 **Porisms.** Two porisms are cited by later propositions, and are theorems of their
 own, after their propositions: `Prop1.porism` (the centre lies on a straight line
@@ -382,9 +424,19 @@ worth naming. The first mate's report has a note on every statement.
   statement covers both of Euclid's cases, drawn in his one figure, the centre within the
   angle `BAC` and outside the angle `BDC`, and the case he leaves out, the centre on one
   of the arms.
+
+  **26 October 2026, the angle at the centre of any size (#129).** The bullet above is
+  overtaken: III.20 now speaks of the angle at the centre standing on the circumference,
+  of any size (`angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`), which may
+  be two right angles or more, our reading after Heath's notes, not Euclid's; the statement
+  described above is its companion `Prop20.special`
+  ([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 - **III.21** is said of any segment. Euclid's proof covers the segment greater than a
   semicircle; Heath gives Simson's for the rest (vol. 2, pp. 49–50), and III.22 and Book IV
   need every segment.
+
+  **26 October 2026 (#129).** Our proof of III.21 now follows Euclid's argument in every
+  segment, by III.20 of any size; Simson's proof is no longer used.
 - **III.22** takes a quadrilateral in the circle as four points of it with the straight line
   `BD` (joining opposite corners) separating `A` from `C`; that `AC` separates `B` from `D`
   follows.

@@ -574,10 +574,14 @@ def figure_note(record):
     record's `[figure]`, whose keys review/SCHEMA.md defines: its `case`, as "Drawn for one
     case: D between C and B, as in Heath's figure." (one full stop, whether or not the case
     ends with its own), or as "Drawn for every case: …" where `every_case` is true, the
-    figure drawing every case the theorem covers (III.25's three side by side); then its
-    `note`. Nothing when the record gives neither."""
+    figure drawing every case the theorem covers (III.25's three side by side), or as
+    "Drawn for some of its cases: …" where `some_cases` is true, the figure drawing more
+    than one case but not every one (III.35's two of Euclid's, and none of Simson's); then
+    its `note`. Nothing when the record gives neither."""
     figure = (record or {}).get("figure") or {}
-    lead = "Drawn for every case" if figure.get("every_case") else "Drawn for one case"
+    lead = ("Drawn for every case" if figure.get("every_case")
+            else "Drawn for some of its cases" if figure.get("some_cases")
+            else "Drawn for one case")
     said = ([f"{lead}: {figure['case'].rstrip('.')}."] if figure.get("case") else [])
     return " ".join(said + ([figure["note"]] if figure.get("note") else []))
 
@@ -824,7 +828,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         summary = f"The {len(tacit)} {rules} beneath this proof" + (
             ", counting those of the propositions it cites" if cited else "")
         if only:
-            marks = sorted(set(only.values()), key=lambda m: m != "porism")
+            marks = sorted(dict.fromkeys(only.values()), key=lambda m: m != "porism")
             where = " and ".join("its porism" if m == "porism" else m for m in marks)
             # Inside <summary>, Markdown's backticks are not read: write <code>.
             where = re.sub(r"`([^`]+)`", r"<code>\1</code>", where)
@@ -2074,22 +2078,43 @@ def index(book, count, titles, facts, records):
 
 FRONT_LEAN_I = {
     "Definitions": {
-        1: "`Point`", 2: "`Line`", 3: "`Line`", 4: "`Line`", 5: "none", 6: "none", 7: "none",
-        8: "`∠ A B C`", 9: "`∠ A B C`",
+        1: "`Point`",
+        2: "none for a line in general, curved or straight: `Line` is the straight line of "
+           "Def. I.4, and the curved lines are the circumference of a `Circle` (`OnCircle`) "
+           "and its arcs (`Arc`, Def. III.6)",
+        3: "none for a line in general: `Line`, the straight line of Def. I.4, is whole and "
+           "without ends, and a finite straight line AB is given by its ends, the points A "
+           "and B",
+        4: "`Line`", 5: "none", 6: "none", 7: "none",
+        8: "`∠ A B C`, the rectilineal angle of Def. I.9, and `MixedAngle`, an angle contained "
+           "by a straight line and a circumference (Def. III.7; III.16, III.31); no Lean word "
+           "is every plane angle",
+        9: "`∠ A B C`",
         10: "`IsRightAngle`, with Postulate 4", 11: "`IsObtuse`", 12: "`IsAcute`",
-        13: "none",
-        14: "none: the Lean names each kind of figure (`Triangle`, `quadArea`, `Circle`, "
-            "segments) and has no general word",
+        13: "`Figures.Outline.Boundary`, the boundary of a figure given by its outline, its "
+            "contours outer and inner, in the proofs for I.45 and II.14; no Lean word is the "
+            "boundary of anything",
+        14: "`Figures.Outline`, a figure contained by straight lines, with one boundary or "
+            "more, and `Apart`, one given with triangles that lie apart (I.45, II.14); of "
+            "figures with a curved boundary, `Circle`, and a segment by its arc (`Arc`, Def. "
+            "III.6); no Lean word is every figure",
         15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`",
         17: "a straight line AD with the centre E between its ends on the circle: "
             "`Between A E D`, with `Centre E ABCD`, `OnCircle A ABCD`, `OnCircle D ABCD` (III.15); "
             "that it bisects the circle is said of the circumference, each side two right "
-            "angles (`Circumference.semicircle`). Book I uses the word of a parallelogram "
-            "(I.34): its diameter AC cuts `quadArea A B C D` into two triangles",
-        18: "a segment (Def. III.6) on a diameter: in III.31 the base BC passes through E "
-            "(`Between B E C`), the circle's centre, which Euclid calls the semicircle's too; "
-            "the semicircle's circumference is two right angles (`Circumference.semicircle`)",
-        19: "`Triangle`; four-sided, `quadArea`; multilateral, none",
+            "angles (`BookIII.Circumference.semicircle`). Book I uses the word of a "
+            "parallelogram (I.34): its diameter AC cuts the parallelogram ABCD into two "
+            "triangles, whose areas together are `quadArea A B C D`",
+        18: "a segment (Def. III.6) on a diameter, `Arc.Semicircle`: its centre on the "
+            "straight line of its base (\"III.25 kind\"); in III.31 the base BC passes "
+            "through E (`Between B E C`), the circle's centre, which Euclid calls the "
+            "semicircle's too; the semicircle's circumference is two right angles "
+            "(`BookIII.Circumference.semicircle`)",
+        19: "`Figures.Outline`, a figure given by its straight sides, and `Rectilineal` and "
+            "`Apart`, one given with the triangles it is cut into (I.45, II.14); trilateral, "
+            "`Triangle`; quadrilateral and multilateral, no word of their own: each is a "
+            "`Figures.Outline`, and `quadArea A B C D` measures a four-sided figure by its "
+            "two triangles",
         20: "`Equilateral`; `Isosceles` is defined, but no statement or proof uses it: I.5 and "
             "I.6 say that the two sides are equal; scalene, none",
         21: "`RightAngledTriangle` is defined, but no statement or proof uses it: I.47 says "
@@ -2097,8 +2122,9 @@ FRONT_LEAN_I = {
             "`IsObtuse` angle (II.12); of an acute-angled triangle, II.13 asks `IsAcute` only "
             "of the two angles at the ends of the side on which the perpendicular falls",
         22: "`Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus, "
-            "none; rhomboid, `Parallelogram` (I.34), which counts the others too; a trapezium "
-            "(I.35), `quadArea`",
+            "none; rhomboid, `Parallelogram` (I.34), which counts the others too; a trapezium, "
+            "by its area alone (I.35): `quadArea A B C D`, the areas together of the two "
+            "triangles its diameter AC cuts it into",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
@@ -2135,8 +2161,8 @@ FRONT_LEAN_III = {
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
 # Euclid's definitions include words with no Lean partner, such as Definition III.10's
 # sector, so every front page says only that the Lean proofs never use those words.
-# Helpers such as `Prop1.figure` are named for the diagram: Definition I.14's figure has
-# no Lean partner either.
+# Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14's
+# figure.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
@@ -2532,21 +2558,29 @@ def certificate(facts, docs, records):
 
 
 # README.md is generated in part: each book's completion summary stands between
-# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand".
-SCOPE_MARKERS = generated_counts.README_SCOPE_MARKERS
+# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand". The
+# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, the one
+# account of them (#578), and each page is filled through heath.fill.
+SCOPE_MARKERS = heath.REGIONS["README.md"]
+
+
+def fill_regions(path, text, write):
+    """heath.fill, with a fault in the markers as SystemExit naming the file and the
+    fault: render.py writes between markers only where heath.regions finds each region
+    once and whole, and main() fills the three pages before it writes anything."""
+    try:
+        return heath.fill(path, text, write)
+    except heath.RegionError as error:
+        raise SystemExit(f"{error}; render.py writes between these markers, so nothing "
+                         "was rendered") from None
 
 
 def readme(text, facts, records):
     """README.md's text with every book's summary filled in between its markers; the
-    rest of the file is left as it is."""
-    def fill(m):
-        book = m.group(2)
-        if book not in BOOKS:
-            return m.group(0)
-        summary = book_summary(book, facts, records,
-                               lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md")
-        return m.group(1) + summary + m.group(4)
-    return SCOPE_MARKERS.sub(fill, text)
+    rest of the file is left as it is. SystemExit unless it holds one region for each
+    book, well formed (heath.regions)."""
+    return fill_regions("README.md", text, lambda book, body: book_summary(
+        book, facts, records, lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md"))
 
 
 # docs/PROGRAM.md is generated in part: its status table, one row for each book, stands
@@ -2555,7 +2589,7 @@ def readme(text, facts, records):
 # file of the edition holds, from docs/program.toml, kept by hand.
 PROGRAM = ROOT / "docs" / "PROGRAM.md"
 PROGRAM_TOML = ROOT / "docs" / "program.toml"
-STATUS_MARKERS = generated_counts.PROGRAM_STATUS_MARKERS
+STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 PROGRAM_STAGES = ("brief", "statements", "proofs", "voice", "records", "acceptance",
                   "released")
 PROGRAM_KEYS = {"stage", "outside", "tag", "release"}
@@ -2604,18 +2638,17 @@ def load_program():
 def record_current(ref, record, facts):
     """Do a record's stamps still match the statements in facts.json, its Lean file and
     its own text (review/SCHEMA.md)? check_fidelity.py fails when they do not; the status
-    table counts them. A record with no `text` stamp yet counts as current, as the check
-    only names it (docs/WORKFLOW.md, section 6)."""
+    table counts them. A record with no `text` stamp is not current, as one with no
+    fingerprint or `lean` is not, and check_fidelity.py fails it."""
     r = heath.parse_ref(ref)
     try:
         want = heath.review_fingerprint({"propositions": list(facts.values())}, ref)
     except KeyError:
         return False
-    text = record["review"].get("text")
     return (record["statement"].get("fingerprint") == want and
             record["review"].get("lean") == heath.file_hash(heath.lean_path(r.book, r.n)) and
-            (text is None
-             or text == heath.text_hash(heath.review_path(r.book, r.n).read_text())))
+            record["review"].get("text")
+            == heath.text_hash(heath.review_path(r.book, r.n).read_text()))
 
 
 def propositions_cell(book, count, facts):
@@ -2691,19 +2724,17 @@ def status_table(facts, records, program):
 
 def program_page(text, facts, records, program):
     """PROGRAM.md's text with the status table filled in between its markers; the rest
-    of the file is left as it is."""
-    if not STATUS_MARKERS.search(text):
-        raise SystemExit("docs/PROGRAM.md has lost its <!-- status --> and <!-- /status --> "
-                         "markers, between which render.py writes the status table")
-    table = status_table(facts, records, program)
-    return STATUS_MARKERS.sub(lambda m: m.group(1) + "\n" + table + "\n\n" + m.group(3), text,
-                              count=1)
+    of the file is left as it is. SystemExit unless it holds one status region, well
+    formed (heath.regions)."""
+    return fill_regions("docs/PROGRAM.md", text, lambda name, body: "\n" + status_table(
+        facts, records, program) + "\n\n")
 
 
 # docs/WORKFLOW.md is generated in part: section 8's first command block, CI's `check`
 # job's sequence, stands between `<!-- checks -->` and `<!-- /checks -->`, written from the
-# registry of checks, one file per check in checks/ (scripts/registry.py, whose MARKERS and
-# section8_block these are). The rest of the page is written by hand.
+# registry of checks, one file per check in checks/ (scripts/registry.py, whose
+# section8_block this is; the markers are heath.REGIONS's). The rest of the page is written
+# by hand.
 WORKFLOW = ROOT / "docs" / "WORKFLOW.md"
 
 
@@ -2717,13 +2748,10 @@ def load_checks():
 
 def workflow_page(text, checks):
     """WORKFLOW.md's text with section 8's first command block written between its
-    markers from the registry's entries; the rest of the file is left as it is."""
-    if len(registry.MARKERS.findall(text)) != 1:
-        raise SystemExit("docs/WORKFLOW.md must hold one <!-- checks --> and <!-- /checks --> "
-                         "pair, between which render.py writes section 8's first command "
-                         "block from the registry of checks")
-    block = registry.section8_block(checks)
-    return registry.MARKERS.sub(lambda m: m.group(1) + block + m.group(3), text, count=1)
+    markers from the registry's entries; the rest of the file is left as it is.
+    SystemExit unless it holds one checks region, well formed (heath.regions)."""
+    return fill_regions("docs/WORKFLOW.md", text,
+                        lambda name, body: registry.section8_block(checks))
 
 
 DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
@@ -3232,6 +3260,16 @@ def main() -> None:
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
+    # The pages generated in part are filled before anything is written, each on the text
+    # its count markers leave it: so a fault in their markers (heath.regions), or in
+    # docs/program.toml, still renders nothing, as a fault in the counts or the registry
+    # does, and each is written after the pages written whole, as before.
+    readme_path = ROOT / "README.md"
+    parts = {readme_path: readme(changes.get(readme_path, read_text(readme_path)), facts,
+                                 records),
+             PROGRAM: program_page(changes.get(PROGRAM, read_text(PROGRAM)), facts, records,
+                                   load_program()),
+             WORKFLOW: workflow_page(changes.get(WORKFLOW, read_text(WORKFLOW)), checks)}
     for path, text in changes.items():
         write_text(path, text)
     for book, (count, titles) in BOOKS.items():
@@ -3245,19 +3283,9 @@ def main() -> None:
     write_text(ROOT / "book" / "names.md", names_page(facts, records))
     write_text(ROOT / "CERTIFICATE.md", certificate(facts, docs, records))
     write_text(ROOT / "GRAPH.md", graph(facts))
-    path = ROOT / "README.md"
-    text = read_text(path)
-    filled = readme(text, facts, records)
-    if filled != text:
-        write_text(path, filled)
-    text = read_text(PROGRAM)
-    filled = program_page(text, facts, records, load_program())
-    if filled != text:
-        write_text(PROGRAM, filled)
-    text = read_text(WORKFLOW)
-    filled = workflow_page(text, checks)
-    if filled != text:
-        write_text(WORKFLOW, filled)
+    for path, filled in parts.items():
+        if filled != read_text(path):
+            write_text(path, filled)
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
           "scope summaries, PROGRAM.md's status table and WORKFLOW.md's check sequence")
 

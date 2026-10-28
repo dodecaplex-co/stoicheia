@@ -981,6 +981,23 @@ def main(argv):
                 pr["raw_labels"] = s["watch_raw_labels"]
             if s.get("watch_omit_labels"):
                 pr["omit_labels"] = True
+            # While CI is followed, each once, as the world may change during CI (#557):
+            # "watch_main": a sha, origin's main moved to it, as another merge would move
+            # it; "watch_head": a sha, origin's branch of the pull request moved to it, as a
+            # push to the branch would move it; "watch_write": {path: text}, each file
+            # written, as code run as the user could write it; "watch_git": a list of git
+            # commands, each run where gh is run (the clone), as such code could run them.
+            for command in s.pop("watch_git", []):
+                subprocess.run(["git", *command], check=True)
+            if "watch_main" in s:
+                subprocess.run(["git", "update-ref", "refs/heads/main", s.pop("watch_main")],
+                               cwd=ORIGIN, check=True)
+            if "watch_head" in s:
+                subprocess.run(["git", "update-ref", "refs/heads/" + pr["headRefName"],
+                                s.pop("watch_head")], cwd=ORIGIN, check=True)
+            for path, text in s.pop("watch_write", {}).items():
+                with open(path, "w") as f:
+                    f.write(text)
             save(s)
             kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
@@ -2485,8 +2502,9 @@ class GeneratedPages(Edge):
         self.assertEqual(self.guard(r.stdout, "generated pages"), "ok", r.stdout)
 
 
-# Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
-# something happens at a chosen moment: origin's main moves, or an interruption.
+# Runs safe_push in a subprocess with some of its functions wrapped, so that something
+# happens at a chosen moment: origin's main moves, an interruption or a crash, a planted
+# note, or the cache's state set.
 DRIVER = r"""
 import json, os, re, subprocess, sys
 sys.path.insert(0, sys.argv[1])
@@ -2536,7 +2554,49 @@ def watch_checks(*args, **kwargs):
         raise KeyboardInterrupt("a test interruption")
     if action == "watch-fail":
         raise RuntimeError("gh went away")
-    return real_watch(*args, **kwargs)
+    if action == "cache-hit":
+        # origin/main's pass marked as taken from the main-checks cache, as main_checks
+        # marks a hit, which the internal test flag never reaches; --land's Held reads it.
+        safe_push.CACHE_HIT = True
+    result = real_watch(*args, **kwargs)
+    if action == "change-origin-summary-interrupt":
+        subprocess.run(["git", "remote", "set-url", "origin", target], cwd=args[0].repo,
+                       check=True)
+    if action == "stray-cache":
+        # A cache and its sandbox still set once CI is followed, as --main-checks-cache
+        # leaves them (the sandbox a profile that allows everything): the merge of --land
+        # must run with neither.
+        safe_push.CACHE = safe_push.Path(target)
+        safe_push.SANDBOX = "(version 1)(allow default)"
+    return result
+real_check_commit, real_preconditions = safe_push.check_commit, safe_push.merge_preconditions
+real_summary = safe_push.summary
+def check_commit(*args, **kwargs):
+    if action == "stray-cache":
+        print(f"  driver: check_commit with CACHE {safe_push.CACHE} and SANDBOX "
+              f"{safe_push.SANDBOX}", flush=True)
+    result = real_check_commit(*args, **kwargs)
+    # "plant-note:<stage>:<name>": a note in the run's report once its checks are done, as
+    # a check failing with origin/main's copies leaves one (or keep_apart its "pinned
+    # values"), which step 4, skipped by the internal test flag, never could here.
+    if action.startswith("plant-note:"):
+        _, stage, name = action.split(":", 2)
+        args[1].add(stage, name, "note", "planted by the test")
+    return result
+def merge_preconditions(*args, **kwargs):
+    # The merge's first step, crashing or interrupted.
+    if action == "merge-start-fail":
+        raise RuntimeError("a test crash")
+    if action == "merge-start-interrupt":
+        raise KeyboardInterrupt("a test interruption")
+    return real_preconditions(*args, **kwargs)
+def summary(rep, mode, *args):
+    # "summary-interrupt:<mode>": an interruption as that run's summary ("push" or
+    # "merge") is written, outside the merge's own try.
+    if action == f"summary-interrupt:{mode}" or \
+            (action == "change-origin-summary-interrupt" and mode == "merge"):
+        raise KeyboardInterrupt("a test interruption")
+    return real_summary(rep, mode, *args)
 def refreshed(body, parts):
     result = real_refreshed(body, parts)
     if action == "edit-after-unfinished-comparison":
@@ -2576,6 +2636,9 @@ safe_push.watch_checks = watch_checks
 safe_push.refreshed = refreshed
 safe_push.gh_json = gh_json
 safe_push.gh_run = gh_run
+safe_push.check_commit = check_commit
+safe_push.merge_preconditions = merge_preconditions
+safe_push.summary = summary
 sys.exit(safe_push.main(sys.argv[5:]))
 """
 
@@ -4339,6 +4402,519 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertIn("the pull request has no label for its kind", out)
         self.assertEqual(self.origin_branch(), second)
+
+
+class Land(Edge):
+    """#557, --land: the push, CI and the merge in one run. A head that is not the commit
+    pushed, origin's URL changed, origin/main moved or the copy of the harness on disk
+    rewritten during CI is refused; a note for the security review holds the merge.
+    Otherwise the pre-flight's record, kept in memory and never read from a file, stands
+    in for the merge's step 4, even for a head that changes the checks, while no cache
+    served origin/main's pass; the disk is never read for it, and a separate --merge keeps
+    its rule. Each test asserts the exit and what is on origin, as Merge's do."""
+
+    CHECK = "scripts/notes_check.py"
+    MEMORY = "in this run's pre-flight, its record kept in memory, never read from a file"
+    AGAIN = "so the full checks run again, not the record"
+    FULL_PATH = "full local checks: internal test flag, local origin"
+
+    def check_change(self) -> str:
+        """A head that changes the checks, as Merge's test that a record never stands in
+        for one makes it."""
+        return self.commit("A change", {self.CHECK: "print('a new check')\n",
+                                        **self.decision(f"`{self.CHECK}` is added for the test.")})
+
+    def guide_change(self) -> str:
+        """A head of R3 that changes no check and no protected path (Merge.opened_r3's): a
+        record of it, read from a file, a separate --merge would let stand in."""
+        return self.commit("A change to the guide to the checks", {"docs/WORKFLOW.md": (
+            self.text("docs/WORKFLOW.md") + "\nA line for the test.\n")})
+
+    def body(self) -> Path:
+        """The body, final at the push, since nothing comes between it and the merge: the
+        template, which the pre-flight fills, completed as the coordinator completes it."""
+        path = TMP / "land-body.md"
+        path.write_text(ticked(self.text(safe_push.TEMPLATE)))
+        return path
+
+    def land(self, env=None, script=SAFE_PUSH) -> subprocess.CompletedProcess:
+        return self.safe_push("--body-file", str(self.body()), "--ready", "--land", env=env,
+                              script=script)
+
+    def driven_land(self, action: str, target: str = "") -> subprocess.CompletedProcess:
+        """--land, with DRIVER's `action` playing what happens at a chosen moment."""
+        args = with_branch(("--body-file", str(self.body()), "--ready", "--land"))
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action,
+                               str(ORIGIN), target, "--_test-skip-checks", *args], cwd=WORK,
+                              env=clean_env(), capture_output=True, text=True)
+
+    def merge_part(self, out: str) -> str:
+        """What the merge the run goes on to prints, after the push's summary."""
+        mark = "safe_push: merge of pull request #1 from"
+        self.assertIn(mark, out)
+        return out[out.index(mark):]
+
+    def test_check_changing_head_lands_in_one_run_with_step_4_from_memory(self):
+        # The case #557 is for: a head that changes the checks lands in one run, the record
+        # kept in memory standing in for the merge's step 4, never run again there.
+        sha = self.check_change()
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        main = self.origin_main()
+        self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", main).split()[1:],
+                         [BASE, sha], "not a merge commit of main and the head")
+        self.assertEqual(len(self.merges()), 1)
+        merged = self.merge_part(out)
+        self.assertEqual(self.guard(merged, "pre-flight"), "ok", merged)
+        self.assertIn(f"{sha[:12]} checked against origin/main {BASE[:12]} {self.MEMORY}: the "
+                      "secret scan and the guards run again; the full checks are not "
+                      "repeated", merged)
+        self.assertNotIn(self.AGAIN, out)
+        self.assertNotIn(self.FULL_PATH, merged)
+        # The scan and the guards ran again at the merge.
+        for name in ("secrets", "statements", "protected paths", "paths"):
+            self.assertEqual(self.guard(merged, name), "ok", f"{name}:\n{merged}")
+
+    def assertMovedMainRefused(self, r, moved: str, head: str):
+        """Refused as soon as the merge's fetch shows origin/main moved to `moved`: before
+        the harness is compared, and before anything is judged against the new main."""
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        merged = self.merge_part(out)
+        self.assertIn(f"origin/main moved from {BASE[:12]} to {moved[:12]} during CI; nothing "
+                      "is merged, nor judged against the new main: run the pre-flight again "
+                      "against it (`git safe-push --branch <name>`, merging origin/main in "
+                      "first if the head lacks it), then --merge; in a merge queue, --merge "
+                      "alone", merged)
+        self.assertEqual(self.guard(merged, "fetch"), "ok", merged)
+        self.assertIsNone(self.guard(merged, "harness"), merged)
+        self.assertIsNone(self.guard(merged, "pull request"), merged)
+        self.assertNotIn(self.FULL_PATH, merged)
+        self.assertNotIn("is not an ancestor", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), moved)
+        self.assertEqual(self.origin_branch(), head)
+        return out
+
+    def test_main_moving_during_ci_is_refused(self):
+        # origin/main moves during CI to the head's first commit. Run on, the full checks
+        # would run, and then the body's summary, of the old main, refuse the merge; and
+        # the harness would be compared with a copy on disk the commit's code could have
+        # rewritten. So it is refused at once, nothing merged, and the run exits 3, pushed.
+        c1 = self.good_commit()
+        c2 = self.check_change()
+        self.set_gh(lambda s: s.update(watch_main=c1))
+        self.assertMovedMainRefused(self.land(), c1, c2)
+        # origin/main moves to a commit the head does not hold: refused the same way, before
+        # the preconditions would refuse it for a main the head lacks.
+        self.setUp()
+        side = self.side_commit()
+        sha = self.check_change()
+        self.set_gh(lambda s: s.update(watch_main=side))
+        self.assertMovedMainRefused(self.land(), side, sha)
+
+    def test_head_changed_during_ci_is_refused(self):
+        # The run merges only the commit it pushed: a head moved during CI, here to a
+        # descendant of it, is refused, never checked again in its place.
+        sha = self.check_change()
+        later = git(WORK, "commit-tree", f"{sha}^{{tree}}", "-p", sha, "-m",
+                    "A commit pushed during CI").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{later}:refs/heads/later")
+        self.set_gh(lambda s: s.update(watch_head=later))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn(f"the head of #1 moved from {sha[:12]} to {later[:12]} during CI; "
+                      "nothing is merged: run the pre-flight on the new head", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), later)
+
+    def test_origin_changed_during_ci_is_refused(self):
+        # The merge fetches only from the origin whose URL the push read before any of the
+        # commit's code ran: the clone's origin pointed during CI at a copy, where main
+        # would never be seen to move, is refused before any fetch, and nothing is merged.
+        sha = self.check_change()
+        url = git(WORK, "remote", "get-url", "origin").strip()
+        elsewhere = TMP / "origin-copy.git"
+        shutil.rmtree(elsewhere, ignore_errors=True)
+        git(TMP, "clone", "--quiet", "--bare", str(ORIGIN), str(elsewhere))
+        self.addCleanup(shutil.rmtree, elsewhere, ignore_errors=True)
+        self.addCleanup(git, WORK, "remote", "set-url", "origin", url)
+        # The copy's main is another commit, which a fetch from it would bring to the
+        # clone's origin/main.
+        other = git(WORK, "commit-tree", f"{BASE}^{{tree}}", "-p", BASE, "-m",
+                    "Main as the copy has it").strip()
+        git(WORK, "push", "--quiet", "--no-verify", str(elsewhere), f"{other}:refs/heads/main")
+        self.set_gh(lambda s: s.update(watch_git=[["remote", "set-url", "origin",
+                                                   str(elsewhere)]]))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        merged = self.merge_part(out)
+        self.assertIn(f"origin's URL changed during the run, from {url} to {elsewhere}; "
+                      "nothing is merged", merged)
+        self.assertIsNone(self.guard(merged, "fetch"), merged)
+        self.assertEqual(git(WORK, "rev-parse", "refs/remotes/origin/main").strip(), BASE)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_pre_merge_refusal_summary_interruption_reports_nothing_merged(self):
+        sha = self.check_change()
+        url = git(WORK, "remote", "get-url", "origin").strip()
+        elsewhere = TMP / "origin-summary-copy.git"
+        shutil.rmtree(elsewhere, ignore_errors=True)
+        git(TMP, "clone", "--quiet", "--bare", str(ORIGIN), str(elsewhere))
+        self.addCleanup(shutil.rmtree, elsewhere, ignore_errors=True)
+        self.addCleanup(git, WORK, "remote", "set-url", "origin", url)
+        r = self.driven_land("change-origin-summary-interrupt", str(elsewhere))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn(f"origin's URL changed during the run, from {url} to {elsewhere}; "
+                      "nothing is merged", out)
+        self.assertIn("Pushed, CI green; stopped before the merge: interrupted (a test "
+                      "interruption). Nothing is merged: run `git safe-push --merge 1`.", out)
+        self.assertNotIn("It may have merged", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_harness_changed_during_ci_is_refused_never_handed_over(self):
+        # origin/main moves during CI to a commit that changes safe_push.py: refused as a
+        # moved main, before its harness is compared with the copy on disk, and never
+        # handed over, since a hand-over would run the push's arguments, and so the whole
+        # push, again.
+        path = "scripts/safe_push.py"
+        c1 = self.commit("A comment in the harness", {
+            path: self.text(path) + "\n# A comment for the test.\n",
+            **self.decision(f"`{path}` gains a comment, for the test.")})
+        c2 = self.good_commit()
+        self.set_gh(lambda s: s.update(watch_main=c1))
+        out = self.assertMovedMainRefused(self.land(), c1, c2)
+        self.assertNotIn("running origin/main's in its place", out)
+        self.assertEqual(out.count("safe_push: push of"), 1, out)
+        # origin/main stays, but the copy of the harness that runs, on disk, is rewritten
+        # during CI, as code left running by the commit could rewrite it: refused, never
+        # handed over; and so too in a run that was handed over (STOICHEIA_HARNESS set, as
+        # the hand-over sets it), which is refused before the variable is read. The copy
+        # is the test's own, so no other test's harness changes.
+        for handed in (False, True):
+            with self.subTest(handed_over=handed):
+                self.setUp()
+                sha = self.good_commit()
+                folder = TMP / "land-harness"
+                shutil.rmtree(folder, ignore_errors=True)
+                shutil.copytree(UNDER_TEST, folder)
+                self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
+                running = folder / "safe_push.py"
+                rewritten = running.read_text() + "\n# Rewritten during CI, for the test.\n"
+                self.set_gh(lambda s: s.update(watch_write={str(running): rewritten}))
+                env = dict(clean_env(), STOICHEIA_HARNESS="origin/main") if handed else None
+                r = self.land(env=env, script=running)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertEqual(running.read_text(), rewritten, "the copy was not rewritten")
+                merged = self.merge_part(out)
+                self.assertIn("this copy of safe_push.py, heath.py or check_train.py on "
+                              "disk no longer matches origin/main's: it was rewritten since "
+                              "the run started, or origin/main's predates running from "
+                              "origin/main; the merge of --land runs no other copy, so "
+                              "nothing is merged: run --merge", merged)
+                self.assertIsNone(self.guard(merged, "harness"), merged)
+                self.assertNotIn("STOICHEIA_HARNESS says", out)
+                self.assertNotIn("running origin/main's in its place", out)
+                self.assertEqual(out.count("safe_push: push of"), 1, out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+                self.assertEqual(self.origin_branch(), sha)
+
+    def test_accepted_forged_record_on_disk_changes_nothing(self):
+        # Main unmoved: a record a separate --merge would let stand in (origin/main's
+        # harness, full, every step ok), written during CI where that merge would read it.
+        # --land never reads it: the record kept in memory stands in, and the forged note,
+        # which the gates would print for a record that stood in, is nowhere.
+        sha = self.check_change()
+        forged = {"sha": sha, "base": BASE, "branch": BRANCH, "full": True, "time": "forged",
+                  "harness": "origin/main's",
+                  "harness_blob": safe_push.blob_id(SAFE_PUSH.read_bytes()),
+                  "steps": [["2", "secrets", "ok", 0.1], ["4", "lake build", "ok", 1.0]],
+                  "notes": [["forged", "a note of the forged record"]], "protected": [],
+                  "statements": []}
+        with mock.patch.object(safe_push, "HARNESS_BLOB", forged["harness_blob"]):
+            self.assertIsNotNone(safe_push.checks_record(
+                forged, True, safe_push.Risk("R5", "for the test")), "not a record that stands in")
+        path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
+        self.set_gh(lambda s: s.update(watch_write={str(path): json.dumps(forged)}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertNotIn("watch_write", self.gh_state(), "the record was not forged")
+        self.assertEqual(r.returncode, 0, out)
+        merged = self.merge_part(out)
+        self.assertIn(self.MEMORY, merged)
+        self.assertNotIn("forged", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_forged_record_on_disk_changes_nothing(self):
+        # During CI a record is written where a separate --merge would read it. One that
+        # stands in for nothing does not stop the record kept in memory standing in.
+        sha = self.check_change()
+        forged = {"sha": sha, "base": BASE, "branch": BRANCH, "full": True, "time": "forged",
+                  "harness": "origin/main's", "harness_blob": "0" * 40,
+                  "steps": [["2", "secrets", "ok", 0.1], ["4", "lake build", "ok", 1.0]],
+                  "notes": [["forged", "a note of the forged record"]], "protected": [],
+                  "statements": []}
+        path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
+        self.set_gh(lambda s: s.update(watch_write={str(path): json.dumps(forged)}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("watch_write", self.gh_state(), "the record was not forged")
+        merged = self.merge_part(out)
+        self.assertIn(self.MEMORY, merged)
+        self.assertNotIn("is not of the full checks by origin/main's harness", out)
+        self.assertNotIn("forged", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+        # origin/main moves during CI, and a record a separate --merge would let stand in
+        # (origin/main's harness, full, every step ok) is written for the new main: the
+        # moved main is refused, and the file is never read.
+        self.setUp()
+        c1 = self.good_commit()
+        c2 = self.guide_change()
+        accepted = dict(forged, sha=c2, base=c1, notes=[],
+                        harness_blob=safe_push.blob_id(SAFE_PUSH.read_bytes()))
+        path = LOG.parent / "preflight" / f"{c2}-{c1}.json"
+        self.set_gh(lambda s: s.update(watch_main=c1,
+                                       watch_write={str(path): json.dumps(accepted)}))
+        out = self.assertMovedMainRefused(self.land(), c1, c2)
+        self.assertNotIn("forged", out)
+        # The same file, still there, a separate --merge does read, and lets stand in.
+        self.assertEqual(json.loads(path.read_text()), accepted)
+        r = self.safe_push("--merge", "1", "--dry-run")
+        self.assertIn(f"{c2[:12]} checked against origin/main {c1[:12]} (forged)", r.stdout,
+                      r.stdout + r.stderr)
+        self.assertEqual(self.origin_main(), c1)
+
+    def test_separate_merge_still_reruns_for_a_check_changing_head(self):
+        # The regression: pushed without --land, a check-changing head's merge, a separate
+        # --merge, runs the full checks again rather than trust the record, a file.
+        sha = self.check_change()
+        r = self.safe_push("--body-file", str(self.body()), "--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("safe_push: merge of", r.stdout)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        r = self.safe_push("--merge", "1")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn(self.AGAIN, out)
+        self.assertIn(self.FULL_PATH, out)
+        self.assertNotIn(self.MEMORY, out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_land_needs_ready_and_refuses_dry_run_and_merge(self):
+        # The parser's rules: a usage error, exit 2, and nothing pushed or asked of GitHub.
+        self.check_change()
+        neither = "--land pushes and merges in one run: it takes neither --merge nor --dry-run"
+        needs = "--land needs --branch and --ready"
+        for args, why in ((["--branch", BRANCH, "--label", "docs", "--land"], needs),
+                          (["--land"], needs),
+                          (["--branch", BRANCH, "--label", "docs", "--ready", "--land",
+                            "--dry-run"], neither),
+                          (["--merge", "1", "--land"], neither),
+                          (["--merge", "1", "--dry-run", "--land"], neither)):
+            with self.subTest(args=args):
+                r = subprocess.run([sys.executable, str(SAFE_PUSH), "--_test-skip-checks", *args],
+                                   cwd=WORK, env=clean_env(), capture_output=True, text=True)
+                self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+                self.assertIn(why, r.stderr)
+        self.assertIsNone(self.origin_branch())
+        self.assertEqual(self.gh_state()["calls"], [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_ci_failing_merges_nothing(self):
+        # CI fails: the run exits 3, as a push does, and goes on to no merge.
+        sha = self.check_change()
+        failing = [dict(c, bucket="fail", state="FAILURE") for c in PASSING]
+        self.set_gh(lambda s: s["checks"].update({sha: failing}))
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("CI did not pass for the pull request. Nothing is merged", out)
+        self.assertNotIn("safe_push: merge of", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_cache_hit_does_not_stand_in(self):
+        # When origin/main's pass of step 4 came from the main-checks cache, a file, the
+        # record kept in memory stands in for nothing. The cache needs a sandbox and step 4
+        # in full, which the internal test flag skips, so merge_main is called here, in
+        # this process, with what --land would hand it: the pre-flight's own record, from
+        # its run without --land, and `cached` True.
+        sha = self.check_change()
+        r = self.safe_push("--body-file", str(self.body()), "--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        record = json.loads((LOG.parent / "preflight" / f"{sha}-{BASE}.json").read_text())
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, clean_env(), clear=True), \
+                mock.patch.object(safe_push, "HARNESS", safe_push.HARNESS), \
+                mock.patch.object(safe_push, "HARNESS_BLOB", None), \
+                contextlib.redirect_stdout(out):
+            code = safe_push.merge_main(WORK, 1, False, True,
+                                        held=safe_push.Held(sha, BASE, record, True, git(
+                                            WORK, "remote", "get-url", "origin").strip()))
+        text = out.getvalue()
+        self.assertEqual(code, 0, text)
+        self.assertEqual(self.guard(text, "pre-flight"), "note", text)
+        self.assertIn("origin/main's pass of step 4 was taken from the main-checks cache, a "
+                      "file, so the record kept in memory does not stand in for it: the full "
+                      "checks run now", text)
+        self.assertIn(self.FULL_PATH, text)
+        self.assertNotIn(self.MEMORY, text)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_cache_hit_is_marked_in_memory(self):
+        # main_checks marks a hit in this run's memory, which --land's Held reads; a miss
+        # leaves it unmarked. Nothing is read from or written to a cache here: the key's
+        # fields and the entry are stand-ins.
+        sha = self.check_change()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        for entry, hit in ((None, False), ({"written": "earlier"}, True)):
+            with self.subTest(hit=hit), mock.patch.object(safe_push, "CACHE_HIT", False), \
+                    mock.patch.object(safe_push, "CACHE", TMP / "no-cache"), \
+                    mock.patch.object(safe_push, "main_checks_fields",
+                                      lambda *args: ({"for": "the test"}, "")), \
+                    mock.patch.object(safe_push, "read_entry",
+                                      lambda *args: (entry, "no entry for the test")), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                found = safe_push.main_checks(ctx, WORK, [("A", self.CHECK)],
+                                              safe_push.Report(), [])
+                self.assertEqual(found.hit, hit)
+                self.assertIs(safe_push.CACHE_HIT, hit)
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_a_cache_hit_in_the_run_reaches_the_merge(self):
+        # The wiring of the two tests above: a hit marked in this run's memory before CI
+        # is followed reaches the merge, whose record kept in memory then stands in for
+        # nothing, and step 4 takes the full path (under the internal test flag, its skip).
+        sha = self.check_change()
+        r = self.driven_land("cache-hit")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        merged = self.merge_part(out)
+        self.assertEqual(self.guard(merged, "pre-flight"), "note", merged)
+        self.assertIn("origin/main's pass of step 4 was taken from the main-checks cache, a "
+                      "file, so the record kept in memory does not stand in for it: the full "
+                      "checks run now", merged)
+        self.assertIn(self.FULL_PATH, merged)
+        self.assertNotIn(self.MEMORY, merged)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_the_merge_runs_without_the_cache_or_its_sandbox(self):
+        # A cache and its sandbox still set once CI is followed are dropped before the
+        # merge, which runs as a separate --merge runs, taking neither.
+        sha = self.check_change()
+        r = self.driven_land("stray-cache", str(TMP / "stray-cache"))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        merged = self.merge_part(out)
+        self.assertEqual(merged.count("driver: check_commit with"), 1, merged)
+        self.assertIn("driver: check_commit with CACHE None and SANDBOX None", merged)
+        self.assertIn(self.MEMORY, merged)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_merge_stopped_after_the_push_is_exit_3(self):
+        # Pushed with CI green, a run whose merge crashes or is interrupted never exits 1,
+        # "refused", nor dies by the signal: it exits 3, and says whether it may have
+        # merged. The interruptions outside the merge's own try (its summary, or the push's)
+        # are the wrapper's to catch; one inside it, merge_main's.
+        stopped = "Pushed; the merge stopped: {}. It may have merged: look with " \
+            "`gh pr view 1` before anything else."
+        interrupted = "interrupted (a test interruption)"
+        for action, said, merges in (
+                ("merge-start-fail", stopped.format("RuntimeError: a test crash"), 0),
+                ("merge-start-interrupt", f"Interrupted: {interrupted}. Nothing is merged: "
+                 "run `git safe-push --merge 1`.", 0),
+                ("summary-interrupt:merge", stopped.format(interrupted), 1),
+                ("summary-interrupt:push", "Pushed, CI green; stopped before the merge: "
+                 f"{interrupted}. Nothing is merged: run `git safe-push --merge 1`.", 0)):
+            with self.subTest(action=action):
+                self.setUp()
+                sha = self.check_change()
+                r = self.driven_land(action)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn(said, out)
+                self.assertEqual(len(self.merges()), merges, out)
+                if merges:
+                    self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+                else:
+                    self.assertEqual(self.origin_main(), BASE)
+                    self.assertEqual(self.origin_branch(), sha)
+                if action == "summary-interrupt:push":
+                    self.assertNotIn("safe_push: merge of", out)
+
+    def test_short_head_lands_in_one_run_its_record_from_memory(self):
+        # A head of R0 to R2: its pre-flight left the full checks to CI, and the record kept
+        # in memory, short, stands in at the merge while the class is still of R0 to R2.
+        sha = self.good_commit()
+        r = self.land()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        merged = self.merge_part(out)
+        self.assertEqual(self.guard(merged, "pre-flight"), "ok", merged)
+        self.assertRegex(merged, rf"{sha[:12]} checked against origin/main {BASE[:12]} "
+                         rf"{re.escape(self.MEMORY)}, its class (R[0-2]) then and \1 now: the "
+                         r"secret scan and the guards run again; the full checks stay with "
+                         r"CI, as for any change of R0 to R2")
+        self.assertNotIn(self.FULL_PATH, merged)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_note_for_the_security_review_holds_the_merge(self):
+        # The pre-flight noted origin/main's checks failing on the head, for the security
+        # review: with the body final at the push and the merge at once, no review would
+        # read the note first, so the run merges nothing and says so, exit 3. The internal
+        # test flag skips step 4, so DRIVER plants the note when the checks are done.
+        for stage, name in (("4", "lake build" + safe_push.BASE_PASS), ("3", "pinned values")):
+            with self.subTest(note=name):
+                self.setUp()
+                sha = self.check_change()
+                r = self.driven_land(f"plant-note:{stage}:{name}")
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertEqual(self.guard(out, name), "note", out)
+                self.assertIn("CI is green, but the pre-flight noted origin/main's checks "
+                              f"failing on the head ({name}), for the security review, which "
+                              "must read the notes before a separate merge: nothing is "
+                              "merged. Record that review in #1, then run `git safe-push "
+                              "--merge 1`.", out)
+                self.assertNotIn("safe_push: merge of", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+                self.assertEqual(self.origin_branch(), sha)
+
+    def test_the_notes_that_hold_the_merge_are_keep_aparts(self):
+        # review_notes reads origin/main's failures as keep_apart reads them, through one
+        # function (base_pass_failures): at step 3 or 4, a stale page never (FRESHNESS),
+        # and keep_apart's own "pinned values" note.
+        passed = safe_push.BASE_PASS
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            for stage, name, outcome in (("3", "fidelity" + passed, "note"),
+                                         ("3", "generated pages" + passed, "note"),
+                                         ("4", safe_push.EMPTY_CHECK + passed, "note"),
+                                         ("4", "lake build" + passed, "ok"),
+                                         ("4", "lake build" + passed, "note"),
+                                         ("2", "secrets" + passed, "note"),
+                                         ("4", "a note of another kind", "note"),
+                                         ("3", "pinned values", "note")):
+                rep.add(stage, name, outcome)
+        self.assertEqual(safe_push.review_notes(rep),
+                         ["fidelity" + passed, "lake build" + passed, "pinned values"])
+        self.assertEqual(safe_push.base_pass_failures(rep, "4"), ["lake build"])
+        self.assertEqual(safe_push.review_notes(safe_push.Report()), [])
 
 
 # --------------------------------------------------------------------------------------
@@ -8038,9 +8614,11 @@ class HandOver(Edge):
     def test_launcher_runs_origin_mains_copy(self):
         # The checkout's copy never hands over, and does not scan; a token is planted. The
         # launcher runs origin/main's copy, which refuses it.
-        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report)"
-                             " -> None:\n", "def harness(repo, base, rep):\n    return None\n\n\n"
-                             "def _unused(repo, base: str, rep: Report) -> None:\n")
+        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report,"
+                             " hand_over: bool = True) -> None:\n",
+                             "def harness(repo, base, rep, hand_over=True):\n    return None\n\n\n"
+                             "def _unused(repo, base: str, rep: Report, hand_over: bool = True)"
+                             " -> None:\n")
         lame = lame.replace("def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
                             "def _unused_scan(", 1)
         self.commit("A harness that judges itself, and a token", {
@@ -8122,9 +8700,11 @@ class HandOver(Edge):
         # Issue #256: origin/main's safe_push.py replaced by a copy that never hands over
         # and does not scan. The launcher copies out and runs origin/main's own, which
         # refuses the token.
-        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report)"
-                             " -> None:\n", "def harness(repo, base, rep):\n    return None\n\n\n"
-                             "def _unused(repo, base: str, rep: Report) -> None:\n")
+        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report,"
+                             " hand_over: bool = True) -> None:\n",
+                             "def harness(repo, base, rep, hand_over=True):\n    return None\n\n\n"
+                             "def _unused(repo, base: str, rep: Report, hand_over: bool = True)"
+                             " -> None:\n")
         lame = lame.replace("def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
                             "def _unused_scan(", 1)
         theirs = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py").strip()
@@ -12001,7 +12581,7 @@ class Units(unittest.TestCase):
             self.assertEqual(entry.section8.split("#", 1)[0].strip(),
                              FRESHNESS_COMMAND if entry.empty else entry.name)
         workflow = (root / "docs/WORKFLOW.md").read_text()
-        regions = registry.MARKERS.findall(workflow)
+        regions = safe_push.heath.REGIONS["docs/WORKFLOW.md"].findall(workflow)
         self.assertEqual(len(regions), 1, "section 8's block stands between one pair of markers")
         self.assertEqual(regions[0][1], registry.section8_block(entries))
         # The region is section 8's first command block, as before.
@@ -12112,17 +12692,47 @@ class Units(unittest.TestCase):
 
     def test_the_generated_region_is_the_registrys(self):
         # safe_push's guards read section 8's block as generated (GENERATED_REGIONS), the
-        # region render.py writes between registry.py's markers, and nothing else.
+        # region render.py writes between the markers heath.REGIONS gives, and nothing else.
         workflow = (SOURCE / "docs/WORKFLOW.md").read_text()
         self.assertIn("docs/WORKFLOW.md", safe_push.GENERATED)
         pattern = safe_push.GENERATED_REGIONS["docs/WORKFLOW.md"]
+        markers = safe_push.heath.REGIONS["docs/WORKFLOW.md"]
         self.assertEqual([m.group(0) for m in pattern.finditer(workflow)],
-                         [m.group(0) for m in registry.MARKERS.finditer(workflow)])
+                         [m.group(0) for m in markers.finditer(workflow)])
         # A block changed between the markers changes no hand-written part of the page.
-        changed = registry.MARKERS.sub(lambda m: m.group(1) + "```sh\nlake build\n```\n"
-                                       + m.group(3), workflow)
+        changed = markers.sub(lambda m: m.group(1) + "```sh\nlake build\n```\n" + m.group(3),
+                              workflow)
         self.assertNotEqual(changed, workflow)
-        self.assertEqual(pattern.sub("", changed), pattern.sub("", workflow))
+        self.assertEqual(safe_push.heath.outside("docs/WORKFLOW.md", changed),
+                         safe_push.heath.outside("docs/WORKFLOW.md", workflow))
+
+    def test_a_region_deleted_with_its_markers_touches_the_hand_written_rest(self):
+        # #578: generated_parts reads what render.py writes as the regions' bodies
+        # (heath.bodies) and the rest as the file with those bodies emptied and the markers
+        # kept (heath.outside). A commit that deletes README.md's Book III region, markers
+        # and all, so touches the rest, written by hand, where before #578, with each region
+        # taken out whole, markers and all, it touched only what render.py writes.
+        readme = (SOURCE / "README.md").read_text()
+        three = next(m for m in safe_push.heath.REGIONS["README.md"].finditer(readme)
+                     if m.group(2) == "III")
+        deleted = readme[:three.start()] + readme[three.end():]
+        before = re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S)
+        self.assertEqual(before.sub("", readme), before.sub("", deleted))
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "generated parts test")
+            git(repo, "config", "user.email", "generated-parts-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            (repo / "README.md").write_text(readme)
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-q", "-m", "README.md as it stands")
+            base = git(repo, "rev-parse", "HEAD").strip()
+            (repo / "README.md").write_text(deleted)
+            git(repo, "commit", "-q", "-am", "Book III's region deleted with its markers")
+            sha = git(repo, "rev-parse", "HEAD").strip()
+            self.assertEqual(safe_push.generated_parts(repo, base, sha, "README.md"),
+                             (True, True))
 
     def test_path_checks_are_read_from_checks(self):
         # #186, a looser path check: keep_apart's rule names the two path commands as the

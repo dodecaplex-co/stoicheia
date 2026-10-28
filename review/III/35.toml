@@ -17,7 +17,7 @@ note = "Euclid takes AE, EC, DE and EB to be equal without giving a reason. The 
 at = "Next let AC, DB not be through the centre"
 kind = "case"
 helper = "Prop35.cut"
-note = "Euclid next takes neither straight line through the centre; the Lean also takes AC through F with E distinct from F, covering both of Simson's intermediate cases, according as AC cuts DB at right angles or not. In that branch `Prop35.cut` applies II.5, for which Heath prints no reference at this transition, after `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, put F between A and C; `Definition15`, the assumed rule for equal radii, gives the equal halves."
+note = "Euclid next takes neither straight line through the centre; the Lean also takes AC through F with E distinct from F, covering both of Simson's intermediate cases, according as AC cuts DB at right angles or not. In that branch `Prop35.cut` applies II.5, for which Heath prints no reference at this transition, after `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, put F between A and C; `Definition15`, the assumed rule for equal radii, gives the equal halves."
 
 [[passage]]
 at = "let the centre of ABCD be taken, and let it be F"
@@ -35,7 +35,7 @@ note = "Euclid draws FG and FH perpendicular to AC and DB; the Lean draws FG by 
 at = "Then, since a straight line GF through the centre"
 kind = "helper"
 helper = "foot_between"
-note = "Euclid reads G between A and C from the figure. The Lean uses `foot_between`: I.17 and I.19, for which Heath prints no reference here, make FG shorter than a radius, and `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), proved in `Elements/Figure/Incidence.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, put G within the circle and between the ends."
+note = "Euclid reads G between A and C from the figure. The Lean uses `foot_between`: I.17 and I.19, for which Heath prints no reference here, make FG shorter than a radius, and `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), proved in `Elements/Figure/Incidence.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, put G within the circle and between the ends."
 
 [[passage]]
 at = "Since, then, the straight line AC has been cut into equal parts at G"
@@ -64,11 +64,11 @@ case = "both straight lines through the centre E (left), and neither through F w
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:98c7b45c9b798d58"
-run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4"
-text = "sha256:7e44a79852ba3a4f"
+commit = "689ab169f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:1b58ca0173e357fb"
+run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
+text = "sha256:1a89d572bbbbacf7"
 
 [review.items]
 statement = "pass"
