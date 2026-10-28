@@ -618,9 +618,7 @@ def number_word(n):
                     + ((" and " if rest < 100 else " ") + number_word(rest) if rest else ""))
 
 
-START = re.compile(r"<!--\s*/?\s*count\b", re.I)
-OPEN = re.compile(r"<!-- count:([A-Za-z0-9]+(?:[-:][A-Za-z0-9]+)*) -->")
-CLOSE = "<!-- /count -->"
+START, OPEN, CLOSE = heath.COUNT_START, heath.COUNT_OPEN, heath.COUNT_CLOSE
 
 
 @dataclass(frozen=True)
@@ -666,7 +664,8 @@ def markers(text, path):
 
 def whole_output(path):
     """Whether render.py owns the whole Markdown file."""
-    return path.parts[0] == "book" or path.as_posix() in {"CERTIFICATE.md", "GRAPH.md"}
+    return any(path.as_posix() == name or name.endswith("/") and path.as_posix().startswith(name)
+               for name in heath.GENERATED_WHOLE)
 
 
 def historical(path):
@@ -678,9 +677,8 @@ def historical(path):
                               or re.fullmatch(r"gaps-book-[IVX]+\.md", path.name)))))
 
 
-README_SCOPE_MARKERS = re.compile(
-    r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
-PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+README_SCOPE_MARKERS = heath.REGIONS["README.md"]
+PROGRAM_STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 
 # The notes regions, which render.py fills from the decision entries' header lines
 # (docs/WORKFLOW.md, section 10, "Decision entries"). A brief holds one at most, between
@@ -780,16 +778,15 @@ def notes_regions(text, path):
 
 
 def partial_output_region(path, text, span):
-    """Name a renderer-owned region containing a count marker, if there is one. A brief's
-    or PROGRAM.md's notes markers are read by notes_regions, which raises ValueError for
-    a fault in them."""
+    """Name a renderer-owned region containing a count marker, if there is one: a region
+    of heath.REGIONS, or a notes region. A brief's or PROGRAM.md's notes markers are read
+    by notes_regions, which raises ValueError for a fault in them."""
     regions = []
-    if path == Path("README.md"):
-        regions = [(region.start(), region.end(), "README.md scope region")
-                   for region in README_SCOPE_MARKERS.finditer(text)]
-    elif path == PROGRAM_PAGE:
-        regions = [(region.start(), region.end(), "docs/PROGRAM.md status region")
-                   for region in PROGRAM_STATUS_MARKERS.finditer(text)]
+    pattern = heath.REGIONS.get(path.as_posix())
+    if pattern is not None:
+        regions = [(region.start(), region.end(),
+                    f"{path.as_posix()} {heath.MARKER_WORDS[path.as_posix()]} region")
+                   for region in pattern.finditer(text)]
     if notes_page(path):
         regions += [(region.start, region.end,
                      f"{Path(path).as_posix()} notes"
