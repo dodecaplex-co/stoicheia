@@ -7,6 +7,7 @@ fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "euclid"
+note = "Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"
