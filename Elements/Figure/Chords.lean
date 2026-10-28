@@ -8,7 +8,7 @@ side of its circumference (`Arc`, in `Foundations/DefinitionsIII.lean`, which sa
 Only the side names a segment: points on one side of the base name the same segment, and a
 congruence carries over to them by the same map (`Arc.congr_side`,
 `Arc.Congruent.congr_side`). III.26 and III.28 name their circumferences by points that need
-not be on the circle, and use the last.
+not be on the circle; III.28 uses the last for two diameters, as `Arcs.lean` does.
 
 The facts about the points of a segment that rest on III.2 come after it: that a point of
 the straight line through two points of a circle is on the circle exactly when it is one of
