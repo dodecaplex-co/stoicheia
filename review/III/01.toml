@@ -1,7 +1,7 @@
 # review/III/01.toml
 [statement]
 scope = "full"
-note = "Constructs D, C, E, F; `Prop1.of_circle` takes A, B; porism unchanged. Provisional: `Prop1.midpoint_inside` is unproved."
+note = "Given A, B on the circle, constructs D, C, E, F as Euclid does and proves F its centre; `Prop1.of_circle` takes A, B itself; the porism keeps its given centre."
 companions = ["III.1 of_circle"]
 fingerprint = "sha256:d2246e211a57259d"
 
@@ -11,7 +11,7 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.exists_centre"
 kind = "step"
-note = "Definitions I.15 and I.16 presuppose that the given circle has a centre. The direct use of `exists_centre` in III.1 now supplies only G under the supposition that the constructed F is not the centre; the reductio proves G = F and returns F. The former construction use has been replaced by the unproved obligation `Prop1.midpoint_inside`, not by a completed derivation. The rule also remains in inherited facts, including `inside_not_on`; this change does not eliminate the foundational overlap."
+note = "Our foundations assume that every circle has a centre, as Definitions I.15 and I.16 presuppose. The rule supplies two steps, and neither supplies a point the construction returns. In the reductio it is the supposed centre G, taken under the supposition that the constructed F is not the centre; the argument proves G = F and returns F. In `Prop1.midpoint_inside` it gives a centre for the proof that D is within the circle, by III.2's argument in `Prop1.within`. The rule gives bare existence; `Prop1.of_circle` gives Euclid's construction for any circle, first taking two of its points, A and B."
 
 [[passage]]
 at = "Let a straight line AB be drawn through it at random"
@@ -23,7 +23,7 @@ note = "A and B are the given distinct circumference points; `Prop1.of_circle` t
 at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
 kind = "helper"
 helper = "Prop1.perpendicular_chord"
-note = "I.11 draws the perpendicular, and Intersections 5 finds C and then E. Its required evidence that D is within the circle is isolated in `Prop1.midpoint_inside`, the remaining sorry: the existing `Prop1.within` needs a centre, and III.2 cannot be cited here because it obtains its centre from III.1."
+note = "I.11 draws the perpendicular, and Intersections 5, the rule we assume as System E's, finds C and then E through D. Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes (Heath, vol. 2, p. 7). III.2 cannot be cited, since it takes its centre from III.1, so `Prop1.midpoint_inside` takes a centre from `exists_centre` for this proof alone, and `Prop1.within` gives III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
 
 [[passage]]
 at = "let CE be bisected at F"

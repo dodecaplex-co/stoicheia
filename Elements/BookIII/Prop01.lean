@@ -111,14 +111,16 @@ theorem Prop1.equal_adjacent {A B D G : Point} (hDAG : Triangle D A G)
     (angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm)
 
 /-- D must be within the circle before the perpendicular through it can be produced to
-the circumference. This is the unproved obligation in the construction without a chosen
-centre. `Prop1.within` proves it from a given centre, but obtaining that centre from
-`exists_centre` would restore the construction's former dependence on that witness.
-III.2 cannot supply the step: it obtains its centre from III.1. -/
+the circumference. Euclid takes it from his figure; III.2 cannot supply it, since III.2
+takes its centre from III.1. We take it by `Prop1.within` from the centre that a circle
+has by Definitions I.15 and 16 (`exists_centre`), the same centre Euclid's reductio
+supposes when it says "let G be the centre". That centre is used for this step only and
+is not the point the construction finds. -/
 theorem Prop1.midpoint_inside {A B D : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hADB : Between A D B) (hAD : ‖A D‖ = ‖D B‖) :
     InsideCircle D ABC := by
-  sorry
+  obtain ⟨G, hG⟩ := exists_centre ABC
+  exact Prop1.within hG hA hB hADB hAD
 
 /-- From an interior point D of AB, draw DC at right angles to AB [I.11] and produce
 it through to E (Intersections 5). This step receives the interior-point evidence;
@@ -158,8 +160,8 @@ theorem Prop1.perpendicular_chord {A B D : Point} {ABC : Circle}
 
 /-- Euclid's construction for III.1 receives a circle and two points A, B of it.
 AB is bisected at D [I.10]; DC is drawn at right angles to AB and through to E;
-and CE is bisected at F [I.10]. Its interior-point obligation is isolated in
-`Prop1.midpoint_inside`, still unproved without choosing a centre. The same three
+and CE is bisected at F [I.10]. That D is within the circle, which Euclid takes from
+his figure, is `Prop1.midpoint_inside`. The same three
 steps appear separately under Heath's sentences in `Prop1`. -/
 theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hAB : A ≠ B) :
