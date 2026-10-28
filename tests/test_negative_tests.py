@@ -2533,6 +2533,8 @@ class WorkerOptionTests(unittest.TestCase):
         self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[]))
         self.enterContext(patch.object(negative, "run", side_effect=lambda *cmd:
                                        subprocess.CompletedProcess(cmd, 0, "", "")))
+        self.enterContext(patch.object(negative, "worker_status", side_effect=lambda tree:
+                                       subprocess.CompletedProcess((), 0, "", "")))
         self.workers = self.enterContext(patch.object(negative, "run_workers", return_value=3))
         self.enterContext(patch.dict(os.environ))
         self.output = self.enterContext(redirect_stdout(io.StringIO()))
@@ -2880,6 +2882,34 @@ class WorkerTests(unittest.TestCase):
                 finally:
                     self.env.clear()
                     self.env.update(saved)
+
+    def test_status_configuration_cannot_hide_a_dirty_worker(self):
+        """The repository hides untracked files from ordinary status, but a file left in a
+        worker still appears in its closing diagnostic and fails the run."""
+        self.commit(a_one=PASSES, b_two=LEAVES)
+        self.git("config", "status.showUntrackedFiles", "no")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        message = "worker 2's tree did not return to its entry Git status"
+        self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", result.stdout)
+        self.assertFalse((self.root / "left-by-b_two").exists())
+
+    def test_global_quote_configuration_does_not_change_worker_snapshot(self):
+        """A global core.quotePath=false and an existing non-ASCII untracked filename do
+        not make an identical worker tree differ from the source tree."""
+        self.commit(a_one=PASSES, b_two=PASSES)
+        notes = self.root / "notes"
+        notes.mkdir()
+        non_ascii = notes / "café.txt"
+        non_ascii.write_text("unchanged\n")
+        config = self.tmp / "quote.config"
+        config.write_text("[core]\n\tquotePath = false\n")
+        self.env["GIT_CONFIG_GLOBAL"] = str(config)
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_one", "b_two"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+        self.assertEqual(non_ascii.read_text(), "unchanged\n")
 
     def test_no_worker_s_tree_is_left(self):
         """After a run that passes, one that fails and one with a crash, as after every run

@@ -1043,6 +1043,12 @@ def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, cwd=tree, env=worker_env(), capture_output=True, text=True)
 
 
+def worker_status(tree: Path) -> subprocess.CompletedProcess:
+    """A configuration-invariant Git status snapshot for the parallel run."""
+    return in_tree(tree, "git", "-c", "core.quotePath=true", "status", "--porcelain=v1",
+                   "--untracked-files=all")
+
+
 def linked(root: Path) -> Path | None:
     """The first entry under `root` that is a symbolic link, or a file with a second name."""
     for folder, folders, files in os.walk(root):
@@ -1101,7 +1107,7 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
         if shared is not None:
             return (f"could not be made: {shared.relative_to(tree)} is a symbolic link or has "
                     "a second name; a worker's build shares nothing"), ""
-    status = in_tree(tree, "git", "status", "--porcelain")
+    status = worker_status(tree)
     if status.returncode != 0 or status.stdout != entry:
         return "does not match the tree under test", status.stdout + status.stderr
     return None
@@ -1292,7 +1298,7 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
                 if tail:
                     print(tail, end="" if tail.endswith("\n") else "\n")
             try:
-                after = in_tree(tree, "git", "status", "--porcelain")
+                after = worker_status(tree)
             except OSError as error:
                 message = (f"worker {k}'s tree did not return to its entry Git status "
                            f"({type(error).__name__}: {error})")
@@ -1321,9 +1327,11 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
     the run is a worker's."""
     # First of all: the restoration regressions load the real plants' folder, so a file
     # that a plant's file writes as it loads, there or here, shows at the close.
-    before = run("git", "status", "--porcelain")
+    parallel_before = worker_status(ROOT) if report is not None or workers > 1 else None
+    before = parallel_before if report is not None else run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
+    parallel = False
     ran = total = 0
     try:
         # A worker leaves the regressions to the run that made it, which ran them first.
@@ -1335,7 +1343,10 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
                 expected = len(chosen)
                 count = min(workers, expected)
                 if count > 1:
-                    ran = run_workers(chosen, count, before.stdout, sources)
+                    parallel = True
+                    assert parallel_before is not None
+                    if expect_success("entry Git status", parallel_before):
+                        ran = run_workers(chosen, count, parallel_before.stdout, sources)
                 else:
                     for plant in chosen:
                         if report is None:
@@ -1362,9 +1373,12 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
     finally:
         original = sys.exception()
         try:
-            after = run("git", "status", "--porcelain")
+            canonical = report is not None or parallel
+            reference = parallel_before if canonical else before
+            assert reference is not None
+            after = worker_status(ROOT) if canonical else run("git", "status", "--porcelain")
             if expect_success("final Git status", after):
-                if after.stdout != before.stdout:
+                if after.stdout != reference.stdout:
                     message = "the working tree did not return to its entry Git status"
                     failures.append(message)
                     print(f"✗ {message}:")
