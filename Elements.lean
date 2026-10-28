@@ -142,6 +142,7 @@ import Elements.BookIII.Prop05
 import Elements.BookIII.Prop06
 import Elements.BookIII.Prop07
 import Elements.BookIII.Prop08
+import Elements.BookIII.Cutting
 import Elements.BookIII.Prop09
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop11

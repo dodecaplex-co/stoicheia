@@ -6,6 +6,8 @@ import Elements.BookI.Prop13
 import Elements.BookI.Prop17
 import Elements.BookIII.Prop01
 import Elements.BookIII.Prop02
+import Elements.BookIII.Prop05
+import Elements.BookIII.Cutting
 
 /-!
 # Book III, Proposition 10
@@ -152,11 +154,12 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle}
   obtain rfl : P' = P := hmeet P' hP'_AC hP'_NO
   -- therefore the two circles ABC, DEF which cut one another have the same centre P: which is
   -- impossible. [III. 5]
-  /- Heath's bracket gives III.5. `Prop5` asks that the circles cut one another, each
-     passing within the other, and this statement gives only three common points, so it
-     cannot serve. Heath states under III.5 what does: circles with one centre and one
-     common point coincide altogether, here P and B (`circle_eq`). -/
-  exact hne (circle_eq hP hP' hB₁ hB₂ rfl)
+  /- Euclid's circles cut one another by his supposition; ours, as Heath reads the proof
+     (vol. 2, p. 23), are given only common points. That two different circles meeting at
+     two points cut one another, each passing within the other, is proved after III.8
+     (`CirclesCut.of_meet`), here for B and G. Then III.5 (`Prop5`) forbids their having
+     the one centre P. -/
+  exact Prop5 (CirclesCut.of_meet hne ⟨B, G, hBG, hB₁, hB₂, hG₁, hG₂⟩) ⟨hP, hP'⟩
   -- Therefore etc.
   -- Q. E. D.
 
