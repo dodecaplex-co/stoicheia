@@ -84,8 +84,9 @@ which catches a worker that ended without its `finally` (os._exit, a signal). In
 the run interrupts each worker still running and waits for it (stop), and in its `finally`
 it removes every worker's tree with `git worktree remove --force --force`, with SIGINT
 ignored, each whatever became of those before it; one that Git cannot remove is deleted,
-with a note that its record in the repository's worktree list stays until Git prunes it.
-The run never runs `git worktree prune`, which would prune other trees' records too. As
+with a note that its record in the repository's worktree list stays until Git prunes it;
+a tree, or the workers' directory, still there after that fails the run, naming it. The
+run never runs `git worktree prune`, which would prune other trees' records too. As
 with a plant's restoration (below), a forced kill defeats this: a run ended by SIGKILL, or
 by a signal Python does not turn into an exception, leaves its workers running and their
 trees registered.
@@ -1166,7 +1167,8 @@ def remove(trees: list[Path], base: Path) -> None:
     reports and logs: SIGINT ignored throughout, and the previous handler put back after,
     so that an interruption leaves none of them; each removal whatever became of those
     before it. A tree that Git cannot remove is deleted, with a note that its record stays
-    until Git prunes it: never `git worktree prune`, which would prune other trees' too."""
+    until Git prunes it: never `git worktree prune`, which would prune other trees' too. A
+    tree, or `base`, still there after that fails the run, naming it."""
     previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
     try:
         for k, tree in enumerate(trees, 1):
@@ -1180,10 +1182,20 @@ def remove(trees: list[Path], base: Path) -> None:
             except Exception as error:
                 why = f"{type(error).__name__}: {error}"
             shutil.rmtree(tree, ignore_errors=True)
+            if tree.exists():
+                message = (f"worker {k}'s tree {tree} could not be removed ({why}) nor "
+                           "deleted; remove it, and then its record (git worktree remove)")
+                failures.append(message)
+                print(f"✗ {message}")
+                continue
             print(f"note: git worktree remove could not remove worker {k}'s tree ({why}); "
                   f"{tree} was deleted, and its record in the repository's worktree list "
                   "stays until Git prunes it")
         shutil.rmtree(base, ignore_errors=True)
+        if base.exists():
+            message = f"the workers' directory {base} could not be deleted; remove it"
+            failures.append(message)
+            print(f"✗ {message}")
     finally:
         signal.signal(signal.SIGINT, previous)
 

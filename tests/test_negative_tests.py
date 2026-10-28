@@ -3034,6 +3034,39 @@ class WorkerTests(unittest.TestCase):
                 self.assertNotIn(f"worktree {trees[1]}\n", listed)
                 self.assertIn(f"worktree {elsewhere}\n", listed)
 
+    def test_a_tree_neither_git_nor_deletion_removes_fails_the_run(self):
+        """Git fails to remove the first tree and deleting it fails too, as for a folder
+        that may not be written: the run fails, naming the tree, not claiming it deleted;
+        the second tree is removed all the same, and the run's directory, which still
+        holds the first, fails too."""
+        self.commit(a_one=PASSES)
+        base, trees = self.trees("kept")
+        real, delete = negative.run, shutil.rmtree
+
+        def fails(*cmd):
+            if str(trees[0]) in cmd:
+                return subprocess.CompletedProcess((), 128, "", "fatal: planted\n")
+            return real(*cmd)
+
+        def keeps(path, *args, **kwargs):
+            if Path(path) not in (trees[0], base):
+                delete(path, *args, **kwargs)
+        output = io.StringIO()
+        try:
+            with patch.object(negative, "run", fails), \
+                    patch.object(negative.shutil, "rmtree", keeps), redirect_stdout(output):
+                negative.remove(trees, base)
+            self.assertEqual(negative.failures, [
+                f"worker 1's tree {trees[0]} could not be removed (exit 128: fatal: planted) "
+                "nor deleted; remove it, and then its record (git worktree remove)",
+                f"the workers' directory {base} could not be deleted; remove it"])
+            self.assertNotIn("was deleted", output.getvalue())
+            self.assertTrue(trees[0].exists())
+            self.assertFalse(trees[1].exists())
+        finally:
+            self.git("worktree", "remove", "--force", "--force", str(trees[0]))
+            delete(base, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()
