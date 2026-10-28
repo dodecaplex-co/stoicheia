@@ -1897,3 +1897,13 @@ ship C7's train P3 ([#477](https://github.com/jackChallis/stoicheia/issues/477))
 audit pin holds unchanged. No entry's axioms change; the five entries cite III.1 through
 the shared step `Prop1.of_circle`, and Heath's references with no call fall from six to
 three. The reading of #131's section above, that such a call does no work, is overtaken.
+
+28 October 2026. After ship C7's train P3
+([#477](https://github.com/jackChallis/stoicheia/issues/477)), III.2 too takes its centre
+under Heath's "[III. 1]" by III.1's construction, through `Prop1.of_circle`, which is now
+listed as III.1's companion, with a certificate entry of its own
+([decision entry](../decisions/2026-10-28-iii2-centre.md)); its route is `euclid`. III.8's
+last step now goes by Euclid's two orders in every case, I.21 for the convex circumference
+and I.24 for the concave, and a point of contact, which ends both orders, is never the
+nearer (`Prop8.contact_last`); its route is `euclid`. III.26, III.28 and III.29 remain
+`modified`, and their records say why.
