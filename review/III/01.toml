@@ -77,16 +77,16 @@ note = "Like Heath's, this figure draws the impossible supposition: G, off CE, a
 
 [review]
 stage = "full"
-commit = "1c21c147b"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:0e1ec727c51d825b"
-run = "brief 0005 stage 5, ship R3 (#29); Prop1.within, Prop1.of_circle and the step by I.13 in Prop1.perpendicular, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #547, ship ER: III.1 of_circle registered as a companion, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:97d638c649469f73"
+commit = "d06d39e33"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:53040be4c931de2d"
+run = "brief 0005 stage 5, ship R3 (#29); Prop1.within, Prop1.of_circle and the step by I.13 in Prop1.perpendicular, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #547, ship ER: III.1 of_circle registered as a companion, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: III.1's construction set out under Heath's sentences and the reductio on the constructed F, skeleton by GPT-6 Astra (Codex), its one step and the fixes by Claude, from an earlier reader's findings and wording, read in full by Claude Opus 5.5"
+text = "sha256:c7dc71f8d71732f8"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "pass"
+representations = "n/a"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
