@@ -74,49 +74,51 @@
   `scripts/check_train.py`, took any letter beyond a commit as a completed review, so
   "Findings will be added later at <sha>" passed. It now reads each `/code-review` and
   `/security-review` cell three times: as written, as a reader sees it, and as a reader
-  sees it with the inline Markdown markers (`*`, `_`, `` ` `` and `~`) taken out, each
-  with Unicode's default-ignorable characters dropped, the Hangul fillers among them, so
-  markup or an invisible letter inside a word (`w<i></i>ill`, `w*i*ll`, `not<i></i>
-  required`, `n*o*t required`) cannot hide the word from all three at once: one reading or
-  another reads it whole. In each reading the cell must give a verdict in the same clause
-  as a commit it names, a clause ending at every semicolon, exclamation mark, line end and
-  line break a reader sees (`<br>`, `<p>`), at the full stops of other scripts, at every
-  question mark but one that begins a link's query (`?pr=2`), and at every full stop but
-  one between two letters or digits, inside a name or a number ("Claude Opus 5.5",
-  `SCHEMA.md`), so `Started at <sha>; CI passed`, `Started at <sha>. CI passed` and
-  `Started at <sha>!CI passed` refuse, while a full stop with no space after it before a
-  word (`<sha>.CI passed`) ends no clause. The verdicts are pass, passes or passed;
-  approve, approves or approved; fixed, resolved or stamped; "found no", "found nothing",
-  "nothing found", "skipped nothing" and "nothing blocking"; no findings or defects, or a
-  number of them; and, on `/security-review`, "not required". A verdict is none after a
-  negation, modal or hedge among the three words before it in its phrase ("may have
-  passed", "almost passed", "didnt pass"), as a noun ("a first pass", "two passes"),
-  struck through (`~~passed~~`), or followed at once by a word saying the review is
-  unfinished ("passed (partial)"); and it does not stand when the 60 characters read
+  sees it with the inline Markdown markers (`*`, `_`, `` ` ``, `~` and a link's brackets)
+  taken out, each with Unicode's default-ignorable characters dropped, the Hangul fillers
+  among them, so HTML tags, emphasis, code, strikethrough, a link or an invisible letter
+  inside a word (`w<i></i>ill`, `w*i*ll`, `pen[d](#x)ing`, `not<i></i> required`, `n*o*t
+  required`) cannot hide the word from all three at once: one reading or another reads it
+  whole. In each reading the cell must give a verdict in the same clause as a commit it
+  names, a clause ending at every semicolon, exclamation mark, line end and `<br>` and
+  HTML block tag (`<p>`, `<div>`, `<li>` and the like), at five other scripts' full stops,
+  at every question mark but one before a name and `=`, as in a link's query (`?pr=2`),
+  and at every full stop but one between two letters or digits, inside a name or a number
+  ("Claude Opus 5.5", `SCHEMA.md`), so `Started at <sha>; CI passed`, `Started at <sha>.
+  CI passed` and `Started at <sha>!CI passed` refuse, while a full stop with no space
+  after it before a word (`<sha>.CI passed`) ends no clause. The verdicts are pass, passes
+  or passed; approve, approves or approved; fixed, resolved or stamped; "found no", "found
+  nothing", "nothing found", "skipped nothing" and "nothing blocking"; no findings or
+  defects, or a number of them; and, on `/security-review`, "not required". A verdict is
+  none after a negation, modal or hedge among the three words before it in its phrase
+  ("may have passed", "almost passed", "didnt pass"), as a noun ("a first pass", "two
+  passes"), struck through (`~~passed~~`), or followed at once by a word saying the review
+  is unfinished ("passed (partial)"); and it does not stand when the 60 characters read
   before it end inside its phrase before three whole words of it, since the third word
-  back is then unread. The clause's commit may be any the cell names; with a
-  repository, the cell must also name one of the member's own, though not necessarily in
-  that clause. As a second layer, words that say a review is still to come, in progress or
-  provisional refuse anywhere in the cell: "will", "yet", "outstanding", "in progress",
-  "so far", "to follow", "to be reported", "to do", "not started", "not finished", "not
-  reviewed", "unreviewed", "unread", "preliminary", "provisional", "continues", "resumes",
+  back is then unread, or when the 20 read after it end inside a run of spaces or other
+  separators. The clause's commit may be any the cell names; with a repository, the cell
+  must also name one of the member's own, though not necessarily in that clause. As a
+  second layer, words that say a review is still to come, in progress or provisional
+  refuse anywhere in the cell: "will", "yet", "outstanding", "in progress", "so far", "to
+  follow", "to be reported", "to do", "not started", "not finished", "not reviewed",
+  "unreviewed", "unread", "preliminary", "provisional", "continues", "resumes",
   "tomorrow", "next week", "for now", "still running", "in principle" and their like,
   "later" where it says when, "after the merge" but not "after the merge of main", and a
-  question mark that does not begin a link's query; and the lists are read in a fourth
-  reading too, as written with Unicode's other invisible characters kept as separators, so
-  that one of them between two words ("review", U+2065, "pending") joins them in no
-  reading. Two are narrowed where a real completed cell needs it: "yet" but not "does not
-  yet exist", and "unread" only after "still", "is", "remains" and their like, since "the
-  records were unread" and "#240 unread" are findings. "Follows", "deferred",
-  "incomplete", "unfinished", "partial", "interim", "not yet", "not done", "to be done"
-  and their like refuse in a phrase that also names the review, a finding, a verdict or
-  the rest, so "the full review follows" refuses and "the deferred hardening is filed as
-  #221" and "#116's interim texts" do not. The commit is still read where a reader sees
-  it, and must be one of the member's own; a member that changes a protected path may not
-  say "not required" in its security cell in any reading. Every cell that the first review
-  of the 21 October attempt listed refuses, and so does every cell that the review of 27
-  October lists as passing this train's first fix; with main's copy of the check, the new
-  tests give 301 failures and 28 errors.
+  question mark that no name and `=` follow; and the lists are read in a fourth reading
+  too, as written with Unicode's other invisible characters kept as separators, so that
+  one of them between two words ("review", U+2065, "pending"), which the other readings
+  drop, does not join them in every reading. Two are narrowed where a real completed cell
+  needs it: "yet" but not "does not yet exist", and "unread" only after "still", "is",
+  "remains" and their like, since "the records were unread" and "#240 unread" are
+  findings. "Follows", "deferred", "incomplete", "unfinished", "partial", "interim", "not
+  yet", "not done", "to be done" and their like refuse in a phrase that also names the
+  review, a finding, a verdict or the rest, so "the full review follows" refuses and "the
+  deferred hardening is filed as #221" and "#116's interim texts" do not. The commit is
+  still read where a reader sees it, and must be one of the member's own; a member that
+  changes a protected path may not say "not required" in its security cell in any reading.
+  Every cell that the first review of the 21 October attempt listed refuses, and so does
+  every cell that the review of 27 October lists as passing this train's first fix; with
+  main's copy of the check, the new tests give 301 failures and 28 errors.
 
   Of the 395 distinct `/code-review` and `/security-review` cells of the coordinator's 211
   fed and rejected train files, none the check refused is accepted, and eleven it accepted

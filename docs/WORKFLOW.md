@@ -1152,48 +1152,49 @@ pre-flight leaves the train.
 
 The train's `--body-file`, required on a dry run and on every update too, has the usual
 pull request sections and two more, `Members` and `What is new`. `Members` is a table
-with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
-one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
-head merged. Each `/code-review` and `/security-review` cell names the commit its review
-read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not in an HTML tag or
-comment, or a link's destination), with the findings, and that commit must
-be one of the member's own: the member's head, or an ancestor of it not on origin/main,
-named unambiguously by digits that begin its name (as `git rev-parse --verify
-<digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
-digits in the cell, a coordinator's commit or a run's, may stand beside it. A cell that
-is only a placeholder ("not run", "awaiting review", "skipped" and their like) refuses,
-and so does one that holds, anywhere, in any case and beside the member's commit too,
-"pending", "TBD", "to come", "not needed" or "N/A" ("Pending items: none" among them);
-a finding that merely begins with another placeholder's words ("To do so, ...", "Later
-commits ...") does not. `/security-review` may instead say "Not required", and only
-if no protected path changed, read against every merge base of
-the member with origin/main; a member that changes a protected path must name its
-commit there, and its cell may not say "Not required" anywhere, in any case or
-spelling. Beyond that, the cells are the coordinator's words, read three times: as
-written, as a reader sees them, and as a reader sees them with the inline Markdown
-markers (`*`, `_`, `` ` `` and `~`) taken out, each with Unicode's default-ignorable
-characters (a Hangul filler among them) dropped, so that markup or an invisible letter
-inside a word (`w*i*ll`, `pen<i></i>ding`) cannot hide the word from all three at once.
-In each reading a cell must give a verdict that stands as one (passed, approved, fixed,
-no findings or a number of them, and their like, and on `/security-review` "not
-required") in the same clause as a commit it names. A clause ends at every `;`, `!`,
-line end and line break a reader sees (`<br>`, `<p>`), at every `?` but one that begins
-a link's query, and at every `.` but one between two letters or digits, inside a name
-or a number (`SCHEMA.md`, `5.5`), so `Started at <commit>; CI passed` refuses. A
-verdict that is negated,
-hedged, used as a noun, struck through or followed at once by a word saying the review
-is unfinished is none ("may have passed", "a first pass", `~~passed~~`, "passed
-(partial)"). As a second layer, a cell refuses if any reading says, anywhere, that the
-review is still to come, in progress or provisional ("will", "yet", "outstanding", "to
-follow", "to be reported", "unreviewed", "preliminary", "for now", "later" saying when,
-a question mark that does not begin a link's query, and their like), in those readings
-or in a fourth that keeps Unicode's other invisible characters as separators, or says, in a phrase that names the review, a finding, a
-verdict or the rest, that it is deferred, incomplete, partial, interim or not yet done.
-A rule read from prose cannot list every way of saying that a review is not done ("PASS
-if CI is green" still passes): the cells are written by the coordinator's crews, and
-each is read by the lane as well. The check imposes no prose length. `/no-mistakes` says
-`passed at <head>` for that same member head, or `not run: <reason>`, with at least
-five words giving the reason.
+with the columns `Branch`, `Head`, `/code-review`, `/security-review` and
+`/no-mistakes`, one row per member. `Head` is 12 to 40 lower-case hexadecimal digits
+naming the member head merged. Each `/code-review` and `/security-review` cell names the
+commit its review read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not
+in an HTML tag or comment, or a link's destination), with the findings, and that commit
+must be one of the member's own: the member's head, or an ancestor of it not on
+origin/main, named unambiguously by digits that begin its name (as `git rev-parse
+--verify <digits>^{commit}` resolves them; a ref whose name is hex digits does not
+count). Other digits in the cell, a coordinator's commit or a run's, may stand beside
+it. A cell that is only a placeholder ("not run", "awaiting review", "skipped" and their
+like) refuses, and so does one that holds, anywhere, in any case and beside the member's
+commit too, "pending", "TBD", "to come", "not needed" or "N/A" ("Pending items: none"
+among them); a finding that merely begins with another placeholder's words ("To do so,
+...", "Later commits ...") does not. `/security-review` may instead say "Not required",
+and only if no protected path changed, read against every merge base of the member with
+origin/main; a member that changes a protected path must name its commit there, and its
+cell may not say "Not required" anywhere, in any case or spelling. Beyond that, the
+cells are the coordinator's words, read three times: as written, as a reader sees them,
+and as a reader sees them with the inline Markdown markers (`*`, `_`, `` ` ``, `~` and a
+link's brackets) taken out, each with Unicode's default-ignorable characters (a Hangul
+filler among them) dropped, so that HTML tags, emphasis, code, strikethrough, a link or
+an invisible letter inside a word (`w*i*ll`, `pen<i></i>ding`, `pen[d](#x)ing`) cannot
+hide the word from all three at once. In each reading a cell must give a verdict that
+stands as one (passed, approved, fixed, no findings or a number of them, and their like,
+and on `/security-review` "not required") in the same clause as a commit it names. A
+clause ends at every `;`, `!`, line end, `<br>` and HTML block tag (`<p>`, `<div>`,
+`<li>` and the like), at five other scripts' full stops, at every `?` but one before a
+name and `=`, as in a link's query, and at every `.` but one between two letters or
+digits, inside a name or a number (`SCHEMA.md`, `5.5`), so `Started at <commit>; CI
+passed` refuses. A verdict that is negated, hedged, used as a noun, struck through or
+followed at once by a word saying the review is unfinished is none ("may have passed",
+"a first pass", `~~passed~~`, "passed (partial)"). As a second layer, a cell refuses if
+any reading says, anywhere, that the review is still to come, in progress or provisional
+("will", "yet", "outstanding", "to follow", "to be reported", "unreviewed",
+"preliminary", "for now", "later" saying when, a question mark that no name and `=`
+follow, and their like), in those readings or in a fourth that keeps Unicode's other
+invisible characters as separators, or says, in a phrase that names the review, a
+finding, a verdict or the rest, that it is deferred, incomplete, partial, interim or not
+yet done. A rule read from prose cannot list every way of saying that a review is not
+done ("PASS if CI is green" still passes): the cells are written by the coordinator's
+crews, and each is read by the lane as well. The check imposes no prose length.
+`/no-mistakes` says `passed at <head>` for that same member head, or `not run:
+<reason>`, with at least five words giving the reason.
 
 `What is new` says `None.` or gives bullet lines of these forms:
 

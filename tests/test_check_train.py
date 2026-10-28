@@ -499,6 +499,9 @@ class TrainChecks(Repository):
                  f"{own}: PASS; review\u2065pending.", f"{own}: PASS; findings\u2065tbd.",
                  f"{own}: PASS; findings\U000E0002to come.", f"{own}: PASS; x\ufff0n/a",
                  f"Did {own} pass?Unknown.",
+                 f"{own}: PASS; findings pen[d](#x)ing.", f"{own}: PASS; w[i](#x)ll be added.",
+                 f"{own}: PASS; [pen](#x)ding.", f"{own}: PASS; to [co](#x)me.",
+                 f"{own}: PASS; review [incom](#x)plete.",
                  f"Findings will be added later at {own}",
                  f"A first pass over {own}; the full review follows.",
                  f"{own}: PASS, with findings to be reported after the merge",
@@ -665,7 +668,9 @@ class TrainChecks(Repository):
                      "~a" * (size // 2), "passed. " * (size // 8),
                      "abcdef1 passed; " * (size // 16), "pass ~" * (size // 6),
                      "\N{HANGUL FILLER}" * size, "\U000e0100" * size,
-                     "passed (" + " " * size + "x", "pass in" + " " * size + "x"):
+                     "passed (" + " " * size + "x", "pass in" + " " * size + "x",
+                     "<p " * (size // 3), "<p" * (size // 2), "<br " * (size // 4),
+                     "[a](" * (size // 4)):
             with self.subTest(cell=cell[:12]):
                 self.assertGreaterEqual(len(cell), size - 200)
                 started = time.perf_counter()
@@ -685,6 +690,7 @@ class TrainChecks(Repository):
                      f"Security reader at {member}: PASS; n*o*t required.",
                      f"Security reader at {member}: PASS; no`t` required.",
                      f"Security reader at {member}: PASS; ~~not~~ required.",
+                     f"Security reader at {member}: PASS; n[o](#x)t required.",
                      f"Security reader at {member}: PASS; not\N{HANGUL FILLER}required."):
             with self.subTest(cell=cell):
                 self.refused("/security-review says Not required for protected paths",
@@ -901,11 +907,17 @@ class TrainChecks(Repository):
                 self.refused("/security-review gives no visible review verdict",
                              text=body([row]))
 
-    def test_a_negation_three_long_words_back_unseats_a_verdict(self):
+    def test_a_look_around_cut_short_unseats_a_verdict(self):
         # The look-back reads 60 characters; a negation beyond them, still among the three
         # words before the verdict, leaves it unread, so the verdict does not stand.
         long = "x" * 70
         for cell in (f"1a2b3c4: not {long} fully passed.", f"1a2b3c4: never {long} passed."):
+            with self.subTest(refused=cell[:24]):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.refused("/code-review gives no visible review verdict", text=body([row]))
+        # Likewise after it: the 20 characters read there must not end inside separators.
+        for cell in ("1a2b3c4: passed" + " " * 21 + "(partial).",
+                     "1a2b3c4: passed" + " " * 40 + "(partial)."):
             with self.subTest(refused=cell[:24]):
                 row = dict(self.row, code_review=self.own(cell, self.member))
                 self.refused("/code-review gives no visible review verdict", text=body([row]))
@@ -937,15 +949,24 @@ class TrainChecks(Repository):
                      "Started at 1a2b3c4\N{ARABIC FULL STOP} CI passed.",
                      "Lens A at 1a2b3c4: started<br>Lens B: PASS",
                      "Lens A at 1a2b3c4: started<br/>Lens B: PASS",
-                     "Lens A at 1a2b3c4: started<p>Lens B: PASS"):
+                     "Lens A at 1a2b3c4: started<p>Lens B: PASS",
+                     'Lens A at 1a2b3c4: started<br class="x">Lens B: PASS',
+                     "Lens A at 1a2b3c4: started<br/ >Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<div>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<hr>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<ul><li>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<h4>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<blockquote>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<dd>Lens B: PASS"):
             with self.subTest(refused=cell):
                 row = dict(self.row, code_review=self.own(cell, self.member))
                 self.refused("/code-review gives no visible review verdict or findings "
                              "beyond the reviewed commit: it must say the review is done "
                              "(pass, approved, fixed, no findings, a number of findings), "
                              "not negated, in the clause that names the commit, which ends "
-                             "at every ';', '!', '?' and <br>, and at every '.' but one "
-                             "between two letters or digits (SCHEMA.md, 5.5)",
+                             "at every ';', '!', <br> and block tag, every '?' but one "
+                             "before a name and '=' (as in a link's query), and every '.' "
+                             "but one between two letters or digits (SCHEMA.md, 5.5)",
                              text=body([row]))
 
     def test_review_cells_must_name_a_commit_of_the_member_s_own_history(self):

@@ -42,16 +42,17 @@ PLACEHOLDER = re.compile(
 # Words that say a review is absent, incomplete or still to come, which a review cell may
 # not hold anywhere, beside the member's commit too: in any case, with any separators
 # between words, through character references, compatibility forms and invisible marks,
-# and in each of the cell's readings (_readings, and _kept), so markup inside a word
-# ("w<i></i>ill", "w*i*ll", "pen**d**ing") cannot hide it from all at once: one reading
-# or another reads it whole. They are a second layer,
+# and in each of the cell's readings (_readings, and _kept), so that HTML tags, emphasis,
+# code, strikethrough or a link inside a word ("w<i></i>ill", "w*i*ll", "pen**d**ing",
+# "pen[d](#x)ing") cannot hide it from all of them: one reading or another reads it
+# whole. They are a second layer,
 # under the verdict that must stand beside the commit (CLAUSE), since a rule read from
 # prose cannot list every way of saying that a review is not done. "To do" counts but
 # not "to do so", "later" where it says when, not which ("Later commits" pass), "yet"
 # but not "yet exist" ("checks/ does not yet exist" passes), "unread" after "still",
 # "is" and their like ("the records were unread" passes), "after the merge" but not
-# "after the merge of main", and a question mark unless it begins a link's query
-# ("?pr=2"). Each repeated part is followed by a character it cannot take, so no
+# "after the merge of main", and a question mark unless a name and "=" follow it, as in
+# a link's query ("?pr=2"). Each repeated part is followed by a character it cannot take, so no
 # match backtracks over more than one run of separators.
 LATER_WHEN = ("at", "on", "in", "by", "today", "tonight", "tomorrow", "this", "next",
               "when", "once", "after", "with", "for", "if", "and", "or", "but")
@@ -121,16 +122,20 @@ PASS_NOUN = frozenset((
 WORD = re.compile(r"(?<![^\W_])[^\W_]+")
 SEPARATORS = re.compile(r"[\W_]*")
 # A clause, in which a review cell's verdict must stand beside the commit it is for
-# ("Started at <sha>; CI passed" gives none), ends at every semicolon, line end and line
-# break a reader sees (<br>, <p>), every exclamation mark, every question mark but one
-# that begins a link's query ("?pr=2"), the full stops of other scripts, and every full
-# stop but one between two letters or digits, inside a name or a number ("SCHEMA.md",
-# "Claude Opus 5.5"), which reviewers' cells name beside their commits.
-CLAUSE = re.compile(r"[;\n!\u3002\uff61\u0589\u06d4\u0964]|<br\s*/?>|</?p\b[^>]*>|"
+# ("Started at <sha>; CI passed" gives none), ends at every semicolon, line end, <br>
+# and HTML block tag (each drawn on a line of its own), every exclamation mark, every
+# question mark but one before a name and "=", as in a link's query ("?pr=2"), five
+# other scripts' full stops, and every full stop but one between two letters or digits,
+# inside a name or a number ("SCHEMA.md", "Claude Opus 5.5"), which reviewers' cells
+# name beside their commits. A tag's pattern takes no "<" or ">", so it stays linear.
+CLAUSE = re.compile(r"[;\n!\u3002\uff61\u0589\u06d4\u0964]|<br\b[^<>]*>|"
+                    r"</?(?:p|div|hr|li|ul|ol|h[1-6]|blockquote|dl|dd|dt|table|tr|td|th|"
+                    r"pre|details|summary)\b[^<>]*>|"
                     r"\?(?![\w-]+=)|(?<![^\W_])\.|\.(?![^\W_])")
-# The inline Markdown markers, of emphasis, code and strikethrough, which a reader of the
-# rendered cell does not see, inside a word ("w*i*ll", "to co`m`e") or at its edges.
-MARKERS = re.compile(r"[*_`~]")
+# The inline Markdown markers, of emphasis, code, strikethrough and a link's text, which
+# a reader of the rendered cell does not see, inside a word ("w*i*ll", "to co`m`e",
+# "pen[d](#x)ing", its destination already cut) or at its edges.
+MARKERS = re.compile(r"[*_`~\[\]]")
 # Unicode's default-ignorable characters that are no format characters or marks (the
 # Hangul fillers among them), which _fold drops with those.
 IGNORED = dict.fromkeys(c for low, high in IGNORABLE for c in range(low, high + 1))
@@ -296,7 +301,8 @@ def _fold(text: str, ignored: bool = True) -> str:
 def _kept(cell: str) -> str:
     """A fourth reading for the word lists: as written, with the default-ignorable
     characters that are no format characters or marks kept, as separators, so that one
-    of them between two words ("review" U+2065 "pending") joins them in no reading."""
+    of them between two words ("review" U+2065 "pending"), which the other readings drop,
+    does not join them in every reading."""
     return _fold(html.unescape(cell), ignored=False)
 
 
@@ -371,7 +377,8 @@ def _stands(text: str, match: re.Match) -> bool:
     (partial)", "PASS, incomplete"). Only the 60 characters before it and the 20 after
     are read, so a cell of many verdicts is still read in linear time; when those 60 cut
     a phrase before three whole words of it, the verdict does not stand, since the third
-    word back is unread."""
+    word back is unread, and likewise when the 20 after it end inside a run of
+    separators."""
     begin = max(0, match.start() - 60)
     capped = begin > 0
     for end in PHRASE.finditer(text, begin, match.start()):
@@ -382,6 +389,8 @@ def _stands(text: str, match: re.Match) -> bool:
     words = [w.encode("ascii", "ignore").decode() for w in found[-3:]]
     said = match.group()
     after = SEPARATORS.match(text, match.end(), match.end() + 20).end()
+    if after == match.end() + 20 and SEPARATORS.match(text, after, after + 1).end() > after:
+        return False  # The 20 end inside a run of separators, so what follows is unread.
     return not any(w in NEGATIONS for w in words) and not (words and (
         said == "pass" and words[-1] in PASS_NOUN
         or said == "passes" and re.fullmatch(COUNT, words[-1]))) \
@@ -448,8 +457,10 @@ def _evidence(rows: list[dict]) -> list[str]:
                                     "must say the review is done (pass, approved, fixed, "
                                     "no findings, a number of findings), not negated, in "
                                     "the clause that names the commit, which ends at every "
-                                    "';', '!', '?' and <br>, and at every '.' but one "
-                                    "between two letters or digits (SCHEMA.md, 5.5)")
+                                    "';', '!', <br> and block tag, every '?' but one before "
+                                    "a name and '=' (as in a link's query), and every '.' "
+                                    "but one between two letters or digits (SCHEMA.md, "
+                                    "5.5)")
         evidence = row["no_mistakes"]
         if match := PASSED.fullmatch(evidence):
             checked = match.group(1)
