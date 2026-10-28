@@ -33,6 +33,7 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import heath  # noqa: E402
 import render  # noqa: E402
 import safe_push  # noqa: E402
 
@@ -764,9 +765,9 @@ class NotesRegions(HeaderFolder):
 
     def test_the_program_regions(self):
         # PROGRAM.md's sections are `landed` alone, in the list render.py and the regions'
-        # reader share.
+        # reader, heath.py, share.
         self.assertEqual(render.PROGRAM_NOTES, ("landed",))
-        self.assertIs(render.PROGRAM_NOTES, render.generated_counts.PROGRAM_NOTES)
+        self.assertIs(render.PROGRAM_NOTES, heath.PROGRAM_NOTES)
         top = "# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n### Landed\n\n"
         stale = (f"- 20 October 2026, [#6]({ISSUE}6): Stale news, replaced. "
                  "([the entry](decisions/2026-10-20-stale.md))")
@@ -791,7 +792,7 @@ class NotesRegions(HeaderFolder):
             f"{top}<!-- notes:landed -->\n{stale}\n<!-- /notes:landed -->\n\n### Later\n\n"
             "<!-- notes:later -->\n<!-- /notes:later -->\n", encoding="utf-8")
         with (mock.patch.object(render, "PROGRAM_NOTES", ("landed", "later")),
-              mock.patch.object(render.generated_counts, "PROGRAM_NOTES", ("landed", "later"))):
+              mock.patch.object(heath, "PROGRAM_NOTES", ("landed", "later"))):
             self.headed("2026-10-26-one.md", header("id=one", "cards=7", "program=later",
                                                     line="One news."))
             self.headed("2026-10-27-both.md", header("id=both", "cards=8", "briefs=book-I",
@@ -929,7 +930,7 @@ class NotesRegions(HeaderFolder):
             path.write_text("# Again as it was.\n", encoding="utf-8")
         # A region closed by another section's marker: `later` stands in for a section a
         # later card adds.
-        with (mock.patch.object(render.generated_counts, "PROGRAM_NOTES", ("landed", "later")),
+        with (mock.patch.object(heath, "PROGRAM_NOTES", ("landed", "later")),
               self.subTest(path="docs/PROGRAM.md", sections="landed, later")):
             self.program.write_text("<!-- notes:landed -->\n<!-- /notes:later -->\n",
                                     encoding="utf-8")
@@ -1074,6 +1075,170 @@ class NotesRegions(HeaderFolder):
                     write.assert_not_called()
                     facts.assert_not_called()
                 self.assertEqual({path: path.read_bytes() for path in paths}, before)
+
+
+class HeathReadsTheNotes(EntryFolder):
+    """heath.py's one account of the generated regions reads the notes regions as it reads
+    the others, in docs/PROGRAM.md beside its status region and in a brief: a hand edit
+    inside a notes body is generated (heath.bodies) and leaves the part written by hand as
+    it was (heath.outside); a marker deleted or bent is refused (heath.regions) and seen;
+    and heath.fill names each region to its write and refuses a write that reaches outside
+    a notes body. safe_push.py, which reads docs/PROGRAM.md through them, sees a changed
+    notes body as a generated change, and reads a brief as written by hand whole."""
+
+    PAGES = {
+        "docs/PROGRAM.md": ("# Programme\n\n<!-- status -->\n| table |\n<!-- /status -->\n\n"
+                            "### Landed\n\n<!-- notes:landed -->\n- One.\n- Two.\n"
+                            "<!-- /notes:landed -->\n\nAfter.\n"),
+        "docs/briefs/0008-centre.md": ("# Centre\n\nBefore.\n\n<!-- notes -->\n- One.\n- Two.\n"
+                                       "<!-- /notes -->\n\nAfter.\n"),
+    }
+    NAMES = {"docs/PROGRAM.md": ["status", "notes:landed"],
+             "docs/briefs/0008-centre.md": ["notes"]}
+
+    def test_every_byte_is_generated_or_written_by_hand(self):
+        for path, text in self.PAGES.items():
+            with self.subTest(path=path):
+                found = heath.regions(path, text)
+                self.assertEqual([m["name"] for m in found], self.NAMES[path])
+                bodies = heath.bodies(path, text)
+                self.assertEqual([name for name, _ in bodies], self.NAMES[path])
+                self.assertEqual(bodies[-1][1], "- One.\n- Two.\n")
+                hand = text
+                for m in reversed(found):
+                    hand = hand[:m.start("body")] + hand[m.end("body"):]
+                self.assertEqual(heath.outside(path, text), hand)
+                self.assertEqual(len(hand) + sum(len(body) for _, body in bodies), len(text))
+        # REGIONS is as it was: its keys the three files, none a folder, and PROGRAM.md's
+        # pattern finds the status region alone.
+        self.assertEqual(list(heath.REGIONS),
+                         ["README.md", "docs/PROGRAM.md", "docs/WORKFLOW.md"])
+        program = self.PAGES["docs/PROGRAM.md"]
+        self.assertEqual([m.group(2) for m in heath.REGIONS["docs/PROGRAM.md"].finditer(program)],
+                         ["| table |\n"])
+        # The decisions page holds no region, and refuses any notes marker; a file that is
+        # neither a brief nor a file of REGIONS has no region.
+        brief = self.PAGES["docs/briefs/0008-centre.md"]
+        for path in ("docs/briefs/0002-decisions.md", "docs/notes.md", "docs/briefs/a/b.md"):
+            with self.subTest(path=path):
+                self.assertEqual((heath.bodies(path, brief), heath.outside(path, brief)),
+                                 ([], brief))
+        with self.assertRaisesRegex(heath.RegionError, "^docs/briefs/0002-decisions.md:5: "
+                                                       "notes markers are forbidden in dated "
+                                                       "history$"):
+            heath.regions("docs/briefs/0002-decisions.md", brief)
+        self.assertEqual(heath.regions("docs/notes.md", brief), [])
+
+    def test_a_hand_edit_inside_a_notes_body_is_generated(self):
+        for path, text in self.PAGES.items():
+            for edited in (text.replace("- Two.\n", ""),
+                           text.replace("- One.", "- Changed by hand."),
+                           text.replace("- One.\n- Two.\n", "")):
+                with self.subTest(path=path, edited=edited):
+                    self.assertEqual([m["name"] for m in heath.regions(path, edited)],
+                                     self.NAMES[path])
+                    self.assertEqual(heath.outside(path, edited), heath.outside(path, text))
+                    self.assertNotEqual(heath.bodies(path, edited), heath.bodies(path, text))
+                    # Written back with the bodies before the edit, the page is as it was.
+                    before = dict(heath.bodies(path, text))
+                    self.assertEqual(heath.fill(path, edited, lambda name, body: before[name]),
+                                     text)
+
+    def test_a_marker_deleted_or_bent_is_refused_and_seen(self):
+        program, brief = self.PAGES["docs/PROGRAM.md"], self.PAGES["docs/briefs/0008-centre.md"]
+        landed = "<!-- notes:landed -->\n- One.\n- Two.\n<!-- /notes:landed -->\n"
+        opener, closer = "<!-- notes:landed -->", "<!-- /notes:landed -->"
+        cases = {
+            "docs/PROGRAM.md": (
+                ("the opener deleted", program.replace(opener + "\n", "")),
+                ("the closer deleted", program.replace(closer + "\n", "")),
+                ("the opener bent", program.replace(opener, "<!-- notes:Landed -->")),
+                ("the opener unspaced", program.replace(opener, "<!--notes:landed-->")),
+                ("the opener indented", program.replace(opener, " " + opener)),
+                ("a word after the closer", program.replace(closer, closer + " by hand")),
+                ("the opener bare", program.replace("notes:landed", "notes")),
+                ("a section not in the list", program.replace("notes:landed", "notes:later")),
+                ("the region moved inside the status region",
+                 program.replace(landed, "").replace("<!-- status -->\n",
+                                                     "<!-- status -->\n" + landed)),
+                ("a status closer's text after a line of the notes",
+                 program.replace("- One.\n", "- One. <!-- /status -->\n")),
+            ),
+            "docs/briefs/0008-centre.md": (
+                ("the opener deleted", brief.replace("<!-- notes -->\n", "")),
+                ("the closer deleted", brief.replace("<!-- /notes -->\n", "")),
+                ("the opener bent", brief.replace("<!-- notes -->", "<!-- Notes -->")),
+                ("a near miss", brief.replace("<!-- notes -->", "<!-- notes_typo -->")),
+                ("the opener named", brief.replace("notes -->", "notes:landed -->")),
+                ("text before the opener",
+                 brief.replace("<!-- notes -->", "Text <!-- notes -->")),
+                ("the region doubled", brief + "<!-- notes -->\n<!-- /notes -->\n"),
+                ("a marker's text after a line of the notes",
+                 brief.replace("- One.\n", "- One. <!-- notes\n")),
+            ),
+        }
+        for path, edits in cases.items():
+            for what, edited in edits:
+                with self.subTest(path=path, edit=what):
+                    self.assertNotEqual(edited, self.PAGES[path])
+                    with self.assertRaisesRegex(heath.RegionError, f"^{re.escape(path)}"):
+                        heath.regions(path, edited)
+                    self.assertNotEqual(heath.outside(path, edited),
+                                        heath.outside(path, self.PAGES[path]))
+                    written = []
+                    with self.assertRaises(heath.RegionError):
+                        heath.fill(path, edited, lambda name, body: written.append(name) or body)
+                    self.assertEqual(written, [])
+
+    def test_fill_names_each_region_and_refuses_a_write_reaching_outside_a_notes_body(self):
+        for path, text in self.PAGES.items():
+            with self.subTest(path=path):
+                written = []
+                self.assertEqual(heath.fill(path, text,
+                                            lambda name, body: written.append(name) or body),
+                                 text)
+                self.assertEqual(written, self.NAMES[path])
+                new = heath.fill(path, text, lambda name, body: (
+                    "- New.\n" if name.startswith("notes") else body))
+                self.assertEqual(new, text.replace("- One.\n- Two.\n", "- New.\n"))
+                self.assertEqual(heath.outside(path, new), heath.outside(path, text))
+                closer = ("<!-- /notes:landed -->" if path == "docs/PROGRAM.md"
+                          else "<!-- /notes -->")
+                # One closes the region early, with prose after it; one puts a marker's text
+                # in the body, which `outside` keeps whole, as written by hand.
+                for after in (f"{closer}\nProse.\n", "- A line. <!-- notes -->\n"):
+                    with (self.subTest(after=after),
+                          self.assertRaisesRegex(heath.RegionError, "reaches outside them")):
+                        heath.fill(path, text, lambda name, body: (
+                            body + after if name.startswith("notes") else body))
+
+    def test_safe_push_reads_program_notes_bodies_as_generated(self):
+        # safe_push.generated_parts reads docs/PROGRAM.md, a key of heath.REGIONS, through
+        # heath.bodies and heath.outside: a changed notes body is a generated change and not
+        # one written by hand; a marker bent or prose changed is written by hand.
+        path, text = "docs/PROGRAM.md", self.PAGES["docs/PROGRAM.md"]
+        commits = {}
+        for name, version in (("base", text),
+                              ("notes", text.replace("- Two.\n", "- Two.\n- Three.\n")),
+                              ("marker", text.replace("<!-- /notes:landed -->",
+                                                      "<!-- /notes:landed --> by hand")),
+                              ("prose", text.replace("After.", "Later."))):
+            (self.root / path).write_text(version, encoding="utf-8")
+            self.git("add", path)
+            self.git("-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                     "commit", "-q", "-m", name)
+            commits[name] = self.git("rev-parse", "HEAD").stdout.decode().strip()
+        base = commits["base"]
+        self.assertEqual(safe_push.generated_parts(self.root, base, commits["notes"], path),
+                         (True, False))
+        self.assertTrue(safe_push.generated_parts(self.root, base, commits["marker"], path)[1])
+        self.assertEqual(safe_push.generated_parts(self.root, base, commits["prose"], path),
+                         (False, True))
+        # A brief stays written by hand whole, until safe_push.py reads its notes regions:
+        # no brief is under what safe_push.py takes for generated.
+        self.assertIs(safe_push.heath, heath)
+        self.assertFalse(safe_push.under("docs/briefs/0008-centre.md", safe_push.GENERATED))
+        self.assertFalse(safe_push.under("docs/briefs/", safe_push.GENERATED))
 
 
 class RenderFillsTheNotes(unittest.TestCase):

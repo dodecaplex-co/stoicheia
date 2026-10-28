@@ -57,26 +57,43 @@
   every page renders today as it did. A bad marker, or a count marker inside a region,
   stops the render before it writes.
 
+  The notes regions are part of `heath.py`'s one account of the generated regions, which
+  card #578 gives: `heath.notes` reads them, with every refusal above, and
+  `heath.regions`, `heath.outside`, `heath.bodies` and `heath.fill` read them with the
+  others, so that `render.py`, `generated_counts.py` and every reader of those agree on
+  them. `render.py` fills each page through `heath.fill`, which refuses a write that
+  would change a byte outside a region's body. The pre-flight reads PROGRAM.md through
+  that account already, so it reads a line `render.py` writes into PROGRAM.md's notes as
+  generated. It reads the briefs' notes regions only after a later change to
+  `safe_push.py`: no folder is a key of `heath.REGIONS`, whose files it reads as
+  generated in part, so until then it reads a brief as written by hand whole.
+
   Old entries are not given headers: `render.py` checks a header where one stands and
   requires none, and WORKFLOW asks every new entry for one. The markers come with card
-  #579's migrations; this change places none. Until card #578 teaches the pre-flight the
-  notes regions, a line `render.py` writes into a brief is read by the pre-flight as a new
-  hand-written line there, which counts as an approval where it names a statement; so no
-  notes marker is placed before #578 lands.
+  #579's migrations; this change places none. Until that later change to `safe_push.py`,
+  a line `render.py` writes into a brief is read by the pre-flight as a new hand-written
+  line there, which counts as an approval where it names a statement; so no notes marker
+  is placed in a brief before that change lands.
 
   This entry approves the change to [`scripts/render.py`](../../scripts/render.py) that
   reads and checks each entry's header and fills the notes regions after every check has
-  passed, refusing a region that holds a line it does not write.
+  passed, through `heath.fill`, refusing a region that holds a line it does not write.
+
+  This entry approves the change to [`scripts/heath.py`](../../scripts/heath.py) that
+  adds the notes regions' reader beside the other regions (`REGIONS`, whose files and
+  patterns stay as they are), reads the notes regions in `regions`, `outside`, `bodies`
+  and `fill`, and checks them on today's PROGRAM.md and a brief with a region put in.
 
   This entry approves the change to
-  [`scripts/generated_counts.py`](../../scripts/generated_counts.py) that adds the notes
-  regions' reader, kept beside the other regions' patterns, and refuses a count marker
-  inside a notes region.
+  [`scripts/generated_counts.py`](../../scripts/generated_counts.py) that refuses a count
+  marker inside a notes region, read by `heath.notes`.
 
   This entry approves the change to
   [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py) that tests the
   header, each of its refusals, the notes lines, their markers and the lines a region may
-  hold, and a whole render, which changes no file until markers are planted.
+  hold, `heath.py`'s reading of a notes region as of the others, and the pre-flight's of
+  PROGRAM.md's notes as generated, and a whole render, which changes no file until
+  markers are planted.
 
   This entry approves the change to
   [`tests/test_generated_counts.py`](../../tests/test_generated_counts.py) that refuses a

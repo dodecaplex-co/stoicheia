@@ -1708,7 +1708,7 @@ characters at most:
   history;
 - `program`, the sections of PROGRAM.md it is news for, from a fixed list,
   `PROGRAM_NOTES`, which `render.py` and the regions' reader in
-  `scripts/generated_counts.py` share, rather than PROGRAM's headings, so that a heading
+  `scripts/heath.py` share, rather than PROGRAM's headings, so that a heading
   may be renamed. The list is `landed` alone: entries are only ever added, so a region of
   them only grows, as a record of what landed does. A section whose items leave it, as
   PROGRAM's open items do, needs a way for an entry to close an earlier entry's item,

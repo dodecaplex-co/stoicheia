@@ -2566,8 +2566,9 @@ def certificate(facts, docs, records):
 
 # README.md is generated in part: each book's completion summary stands between
 # `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand". The
-# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, the one
-# account of them (#578), and each page is filled through heath.fill.
+# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, and the
+# notes regions of docs/PROGRAM.md and the briefs heath.notes's, the one account of them
+# (#578, #577), and each page is filled through heath.fill.
 SCOPE_MARKERS = heath.REGIONS["README.md"]
 
 
@@ -2731,11 +2732,12 @@ def status_table(facts, records, program):
 
 
 def program_page(text, facts, records, program):
-    """PROGRAM.md's text with the status table filled in between its markers; the rest
-    of the file is left as it is. SystemExit unless it holds one status region, well
-    formed (heath.regions)."""
-    return fill_regions("docs/PROGRAM.md", text, lambda name, body: "\n" + status_table(
-        facts, records, program) + "\n\n")
+    """PROGRAM.md's text with the status table filled in between its markers, and each
+    notes region as notes_updates filled it; the rest of the file is left as it is.
+    SystemExit unless it holds one status region, and its notes regions, well formed
+    (heath.regions)."""
+    return fill_regions("docs/PROGRAM.md", text, lambda name, body: (
+        "\n" + status_table(facts, records, program) + "\n\n" if name == "status" else body))
 
 
 # docs/WORKFLOW.md is generated in part: section 8's first command block, CI's `check`
@@ -2999,9 +3001,9 @@ def decision_entries():
 
 # The header line an entry may begin with, its line 1 (docs/WORKFLOW.md, section 10,
 # "Decision entries"): what the entry is news for, from which render.py compiles the notes
-# regions of the briefs and of PROGRAM.md (generated_counts.notes_regions). Its keys stand
-# in the order of ENTRY_KEYS, each once at most, separated by single spaces; `id`, `cards`
-# and `line` are required:
+# regions of the briefs and of PROGRAM.md (heath.notes). Its keys stand in the order of
+# ENTRY_KEYS, each once at most, separated by single spaces; `id`, `cards` and `line` are
+# required:
 #
 #   <!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]]
 #        [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]]
@@ -3017,9 +3019,9 @@ ENTRY_CARD = re.compile(r"[1-9][0-9]*")
 ENTRY_LINE_LIMIT = 300
 # The longest header read: a longer line 1 is refused before it is parsed.
 ENTRY_HEADER_LIMIT = 2000
-# The sections of PROGRAM.md that may hold notes (generated_counts.py, beside the reader
-# of the regions, which every tool that reads them shares).
-PROGRAM_NOTES = generated_counts.PROGRAM_NOTES
+# The sections of PROGRAM.md that may hold notes (heath.py, beside the reader of the
+# regions, which every tool that reads them shares).
+PROGRAM_NOTES = heath.PROGRAM_NOTES
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
           "September", "October", "November", "December")
 
@@ -3290,6 +3292,15 @@ def notes_rendered(line, up, headers, named, relationships):
             and set(linked[3]).issubset(actual[3]))
 
 
+def notes_named(headers, rel, name):
+    """The entries whose headers name the notes region `name` of the page `rel`: in
+    PROGRAM.md, a section's ("notes:landed" names `landed`), and in a brief ("notes"),
+    the brief's."""
+    section = name.partition(":")[2]
+    return [entry for entry, header in headers.items()
+            if (section in header["program"] if section else rel.stem in header["briefs"])]
+
+
 def notes_updates(headers, changes):
     """The briefs and PROGRAM.md with their notes regions filled, each region with the
     lines (notes_lines) of the entries whose headers name it, the brief or the PROGRAM
@@ -3297,32 +3308,33 @@ def notes_updates(headers, changes):
     count markers leave it (`changes`, generated_counts.updates); then the number of
     regions and the number of pages that hold one. A page without markers is left as it
     is, and a region no header names is left empty, its two markers on consecutive lines.
-    Every page's markers are read (generated_counts.notes_regions) before anything is
-    written, the decisions page's among them, which may hold none, and every line between
-    them must have the provenance of a line render.py wrote (notes_rendered), so that a
-    misplaced marker never swallows text written by hand: a fault in any stops the render,
-    naming each page's faults, the first line of each region that holds another."""
+    Every page's notes markers are read (heath.notes) before anything is written, the
+    decisions page's among them, which may hold none, and every line between them must
+    have the provenance of a line render.py wrote (notes_rendered), so that a misplaced
+    marker never swallows text written by hand; a page that holds a region is then filled
+    through heath.fill, which reads all its regions (heath.regions) and refuses a write
+    that reaches outside a body. A fault in any stops the render, naming each page's
+    faults, the first line of each region that holds another."""
     rels = [(ROOT / "docs" / "briefs" / f"{stem}.md").relative_to(ROOT)
             for stem in brief_stems()]
-    if os.path.lexists(ROOT / generated_counts.PROGRAM_PAGE):
-        rels.append(generated_counts.PROGRAM_PAGE)
+    program = (ROOT / "docs" / "PROGRAM.md").relative_to(ROOT)
+    if os.path.lexists(ROOT / program):
+        rels.append(program)
     filled, errors, regions, pages = {}, [], 0, 0
     relationships = notes_relationships(headers)
     for rel in rels:
         path = ROOT / rel
         try:
             text = changes[path] if path in changes else read_text(path)
-            found = generated_counts.notes_regions(text, rel)
+            found = heath.notes(rel.as_posix(), text)
         except (ValueError, OSError) as error:
             errors.append(printable_text(str(error)))
             continue
-        up = "" if rel == generated_counts.PROGRAM_PAGE else "../"
+        up, faults = "" if rel == program else "../", len(errors)
         for region in found:
-            named = [name for name, header in headers.items()
-                     if (region.section in header["program"] if region.section
-                         else rel.stem in header["briefs"])]
-            first = text.count("\n", 0, region.body_start) + 1
-            lines = text[region.body_start:region.body_end].split("\n")[:-1]
+            named = notes_named(headers, rel, region["name"])
+            first = text.count("\n", 0, region.start("body")) + 1
+            lines = region["body"].split("\n")[:-1]
             stray = next((number for number, line in enumerate(lines, first)
                           if not notes_rendered(line, up, headers, named, relationships)), None)
             if stray is not None:
@@ -3330,15 +3342,20 @@ def notes_updates(headers, changes):
                     f"{rel}:{stray}: a notes region holds only the lines render.py writes, "
                     "and this is not one; move the text written by hand, or the marker, so "
                     "that the region does not swallow it"))
-        new = text
-        for region in reversed(found):
-            named = [name for name, header in headers.items()
-                     if (region.section in header["program"] if region.section
-                         else rel.stem in header["briefs"])]
-            body = "".join(line + "\n" for line in
-                           notes_lines(headers, named, up, relationships))
-            new = new[:region.body_start] + body + new[region.body_end:]
         regions, pages = regions + len(found), pages + bool(found)
+        if not found or len(errors) > faults:
+            continue
+
+        def write(name, body):
+            if not name.startswith("notes"):
+                return body
+            return "".join(line + "\n" for line in notes_lines(
+                headers, notes_named(headers, rel, name), up, relationships))
+        try:
+            new = heath.fill(rel.as_posix(), text, write)
+        except heath.RegionError as error:
+            errors.append(printable_text(str(error)))
+            continue
         if new != text:
             filled[path] = new
     if errors:

@@ -600,10 +600,11 @@ print(marker.name)
 
     def test_markers_in_notes_regions_are_refused(self):
         # render.py replaces a notes region's text, so a count marker there is refused, in
-        # a brief and in each of PROGRAM.md's regions; one outside them is filled. PROGRAM's
-        # sections are `landed` alone; a second, `later`, stands in for one a later card
-        # adds, so that a marker in the second of two regions is found too.
-        self.assertEqual(counts.PROGRAM_NOTES, ("landed",))
+        # a brief and in each of PROGRAM.md's regions; one outside them is filled. The
+        # regions are read as heath.py reads them (heath.notes). PROGRAM's sections are
+        # `landed` alone; a second, `later`, stands in for one a later card adds, so that a
+        # marker in the second of two regions is found too.
+        self.assertEqual(counts.heath.PROGRAM_NOTES, ("landed",))
         marker = "<!-- count:vocabulary -->3<!-- /count -->"
         status = "<!-- status -->\nGenerated status.\n<!-- /status -->\n"
         cases = (
@@ -623,7 +624,7 @@ print(marker.name)
             line = text.count("\n", 0, counts.START.search(text).start()) + 1
             for check in (False, True):
                 with (self.subTest(path=path, text=text, check=check),
-                      patch.object(counts, "PROGRAM_NOTES", sections)):
+                      patch.object(counts.heath, "PROGRAM_NOTES", sections)):
                     changes, errors = self.scan([path], check=check)
                     self.assertEqual(changes, {})
                     self.assertEqual(errors, [f"{path}:{line}: count marker 'vocabulary' is "
