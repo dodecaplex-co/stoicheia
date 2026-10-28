@@ -78,9 +78,7 @@ theorem Prop34 {A B C D : Point} (h : Parallelogram A C D B) :
   -- and BC is common,
   have hBC_CB : ‖B C‖ = ‖C B‖ := len_symm B C
   -- the two sides AB, BC are equal to the two sides DC, CB respectively;
-  have : ‖A B‖ = ‖D C‖ ∧ ‖B C‖ = ‖C B‖ := ⟨hAB_DC, hBC_CB⟩
   -- and the angle ABC is equal to the angle BCD;
-  have : ∠ A B C = ∠ D C B := hB
   -- therefore the base AC is also equal to DB,
   /- I.4 takes the corner of the given angle first: BAC and CDB, as in I.33. -/
   obtain ⟨hAC_DB', hBAC_CDB_area, -, -⟩ := Prop4 hABC.bac hDCB.bac hBA_CD hBC_CB hB

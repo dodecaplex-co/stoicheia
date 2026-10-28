@@ -24,9 +24,8 @@ note = "Euclid assumes he can find F on BD near enough to B that AF remains less
 
 [[passage]]
 at = "and let the straight lines FC, GB be joined"
-kind = "carried"
-note = "The Lean joins FC and GB by Postulate 1, as Euclid asks. The later steps use lengths, angles, triangles and areas named by their points and do not use either joined line; the lines are named here only to carry out this sentence."
-unused = ["FC", "GB"]
+kind = "given"
+note = "In the Lean a straight line between two points is named by its ends: FC and GB are sides of the triangles AFC and AGB, so nothing is drawn for the joins, and Postulate 1, which Heath cites, is not called for them."
 
 [[passage]]
 at = "and they contain a common angle"
@@ -37,7 +36,7 @@ note = "Euclid reads B between A and F and C between A and G from the figure, gi
 [[passage]]
 at = "and the triangle AFC is equal to the triangle AGB"
 kind = "carried"
-note = "The Lean proves that the triangle AFC equals the triangle AGB here, as Euclid states it; the later steps use the base FC and the angles that I.4 gives, and do not use it again."
+note = "The Lean proves that the triangle AFC equals the triangle AGB here, as Euclid states it. Neither his proof nor ours uses it again: both go on with the base FC and the angles that I.4 gives."
 unused = ["this"]
 
 [[passage]]
@@ -54,7 +53,7 @@ note = "BC is one straight line, the base of both triangles, so nothing is prove
 [[passage]]
 at = "therefore the triangle BFC is also equal to the triangle CGB"
 kind = "carried"
-note = "The Lean proves that the triangle BFC equals the triangle CGB here, as Euclid states it; the later steps use only the angles that I.4 gives, and do not use it again."
+note = "The Lean proves that the triangle BFC equals the triangle CGB here, as Euclid states it. Neither his proof nor ours uses it again: both go on with only the angles that I.4 gives."
 unused = ["this"]
 
 [[passage]]
@@ -71,11 +70,11 @@ note = "Euclid identifies FBC and GCB with the angles under the base. The Lean u
 
 [review]
 stage = "full"
-commit = "f2195c72"
+commit = "2e30aceba"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:2734cd741f1edefc"
-run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72"
-text = "sha256:34b0e8970449a515"
+lean = "sha256:7c9da2c7d0546a76"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba"
+text = "sha256:09692a475b618a5b"
 
 [review.items]
 statement = "pass"
