@@ -81,8 +81,8 @@ every point is within it (`inside_of_between`, Circle 2). With both points on th
 that is III.2. This is Astra's proof from the outside review. Until 24 October 2026 it was
 an overlap proof, from Circle 2 proved from Circle 3, an assumption. Both rules are now
 proved from III.2, after it, so this derivation uses III.2 and establishes no independent
-overlap. Our III.2 follows Euclid, by I.5, I.16 and I.19, takes its centre from the rule,
-and uses neither Circle 2 nor Circle 3. -/
+overlap. Our III.2 follows Euclid, by I.5, I.16 and I.19, takes its centre by III.1's
+construction (`Prop1.of_circle`), and uses neither Circle 2 nor Circle 3. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 

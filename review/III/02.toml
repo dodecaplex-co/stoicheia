@@ -5,8 +5,7 @@ note = "Every point strictly between two points of the circle is within it, AB t
 fingerprint = "sha256:a05b6db601f15015"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but for the centre D: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, a rule we assume, for the proof needs the centre alone."
+kind = "euclid"
 
 [[passage]]
 at = "For suppose it does not, but, if possible, let it fall outside"
@@ -15,9 +14,9 @@ note = "That DE is less than DB does not need the supposition, so the Lean prove
 
 [[passage]]
 at = "let the centre of the circle ABC be taken"
-kind = "different"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre D by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes D from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E."
+kind = "helper"
+helper = "Prop1.of_circle"
+note = "Euclid takes the centre D by III.1 (Heath's reference), and so does the Lean: `Prop1.of_circle` takes two points of the circle, the ends of a straight line drawn through it at random, and runs III.1 on them, its construction and its proof that the point found is the centre; the proof keeps the centre alone, as Euclid does."
 
 [[passage]]
 at = "and let DFE be drawn through"

@@ -3,6 +3,7 @@ import Elements.BookI.Prop45
 import Elements.BookI.Prop47
 import Elements.BookII.Prop01
 import Elements.BookII.Prop14
+import Elements.BookIII.Prop01
 import Elements.BookIII.Prop07
 import Elements.BookIII.Prop08
 import Elements.BookIII.Prop13
@@ -53,6 +54,7 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookII.Prop14.fan, "II.14 fan"),
   (``Elements.BookII.Prop14.outline, "II.14 outline"),
   (``Elements.BookII.Prop14.outline_side, "II.14 outline_side"),
+  (``Elements.BookIII.Prop1.of_circle, "III.1 of_circle"),
   (``Elements.BookIII.Prop7.general, "III.7 general"),
   (``Elements.BookIII.Prop8.general, "III.8 general"),
   (``Elements.BookIII.Prop13.touchesInternally_iff, "III.13 touchesInternally_iff"),

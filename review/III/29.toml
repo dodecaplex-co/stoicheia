@@ -5,7 +5,7 @@ fingerprint = "sha256:88bb35fd9003b0a0"
 
 [route]
 kind = "modified"
-note = "Euclid's argument where the circumferences are less than semicircles; when they are semicircles, BC and EF are diameters, and when greater, his argument runs on the circumferences that remain."
+note = "Euclid's argument where the circumferences are less than semicircles; when they are semicircles, BC and EF are diameters, and when greater, his argument runs on the circumferences that remain. The route stays so for this release, a deliberate limitation, as in III.26 and III.28: Euclid treats circumferences as magnitudes in their own right, and ours are measured by twice the angle standing on them; a theory of arc magnitudes of its own, a change of representation, is left for a later release."
 
 [representation]
 tags = ["angle-measure"]

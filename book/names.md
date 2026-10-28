@@ -113,6 +113,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 |---|---|---|---|---|---|
 | ✅ | [III.1](III/01.md) The centre of a given circle | `Elements.BookIII.Prop1` | [`Elements.BookIII.Prop01`](../Elements/BookIII/Prop01.lean) | whole | [what it rests on](III/01.md#what-it-rests-on) |
 | ✅ | &emsp;[III.1 Por.](III/01.md#porism) | `Elements.BookIII.Prop1.porism` | [`Elements.BookIII.Prop01`](../Elements/BookIII/Prop01.lean) |  | [what it rests on](III/01.md#what-it-rests-on) |
+| ✅ | &emsp;[III.1 of_circle](III/01.md#of_circle) | `Elements.BookIII.Prop1.of_circle` | [`Elements.BookIII.Prop01`](../Elements/BookIII/Prop01.lean) |  | [what it rests on](III/01.md#what-it-rests-on) |
 | ✅ | [III.2](III/02.md) The straight line joining two points falls within the circle | `Elements.BookIII.Prop2` | [`Elements.BookIII.Prop02`](../Elements/BookIII/Prop02.lean) | whole | [what it rests on](III/02.md#what-it-rests-on) |
 | ✅ | [III.3](III/03.md) Through the centre, to bisect is to cut at right angles | `Elements.BookIII.Prop3` | [`Elements.BookIII.Prop03`](../Elements/BookIII/Prop03.lean) | whole | [what it rests on](III/03.md#what-it-rests-on) |
 | ✅ | [III.4](III/04.md) Straight lines not through the centre do not bisect one another | `Elements.BookIII.Prop4` | [`Elements.BookIII.Prop04`](../Elements/BookIII/Prop04.lean) | whole | [what it rests on](III/04.md#what-it-rests-on) |

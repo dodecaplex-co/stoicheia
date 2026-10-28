@@ -5,7 +5,7 @@ fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
 kind = "modified"
-note = "For non-diameters, Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]. For diameters, the measures are those of semicircles, and congruence follows from Prop28.right and III.24."
+note = "For non-diameters, Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]. For diameters, the measures are those of semicircles, and congruence follows from Prop28.right and III.24. The route stays so for this release, a deliberate limitation: Euclid subtracts and compares the circumferences as magnitudes, which our measure, twice the angle standing on a circumference, cannot follow without a theory of arc magnitudes of its own, a change of representation left for a later release."
 
 [representation]
 tags = ["angle-measure"]
