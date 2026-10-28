@@ -9,7 +9,7 @@ kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names. C and O are points of the perpendiculars produced beyond K and L, not their meetings with the circle: the straight lines AC and NO they name are Euclid's."
+note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names. C and O are points of the perpendiculars besides K and L, not their meetings with the circle: the straight lines AC and NO they name are Euclid's."
 
 [[passage]]
 at = "For, if possible, let the circle ABC cut the circle DEF"
@@ -27,7 +27,7 @@ note = "Euclid bisects BH and BG without a reference from Heath here. The Lean j
 at = "and from K, L let KC, LM be drawn at right angles"
 kind = "helper"
 helper = "BookI.Prop11"
-note = "Euclid draws the perpendiculars and carries them through the circle; the Lean draws them by I.11 and produces each beyond its foot by Postulate 2 (`produce`), to C and to O, with no reference from Heath for these constructions. The argument needs only a second point of each perpendicular, never where it meets the circle, so A and E are not named. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and N and M need no further construction."
+note = "Euclid draws the perpendiculars and carries them through the circle; the Lean draws them by I.11 and produces them by Postulate 2 (`produce`): the one at K beyond the point I.11 gives it on G's side of BH, to C, and the one at L beyond L, to O, with no reference from Heath for these constructions. The argument needs only a second point of each perpendicular, never where it meets the circle, so A and E are not named. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, makes BLO right on the other side of L; LM and NO name the same straight line, and N and M need no further construction."
 
 [[passage]]
 at = "Then, since in the circle ABC a straight line AC"
@@ -56,7 +56,7 @@ note = "Euclid invokes the same argument for DEF without writing it out. The Lea
 at = "therefore the two circles ABC, DEF which cut one another"
 kind = "helper"
 helper = "CirclesCut.of_meet"
-note = "Euclid's circles cut one another by his supposition; ours, as Heath reads the proof (vol. 2, p. 23), are given only common points, and `Prop5` asks that circles cut, each passing within the other. `CirclesCut.of_meet`, proved after III.8 from III.7 and III.8, with `circle_eq` to tell the two centres apart, shows that two different circles meeting at two points, here B and G, cut one another, and III.5 then forbids their one centre P."
+note = "Euclid's circles cut one another by his supposition; ours, as Heath reads the proof (vol. 2, p. 23), are given only common points, and `Prop5` asks that circles cut, each passing within the other. `CirclesCut.of_meet`, proved after III.8 from III.7 and III.8, with III.2 to order the points and `circle_eq` to tell the two centres apart, shows that two different circles meeting at two points, here B and G, cut one another, and III.5 then forbids their one centre P."
 
 [figure]
 note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no second circle can."
