@@ -4,8 +4,8 @@ note = "Equal circumferences read as equal in measure and congruent; \"the great
 fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
-kind = "euclid"
-note = "Equal radii and bases give equal central angles by I.8; III.26 gives the equal lesser circumferences, and subtraction gives the greater, in measure by Common Notion 3 and in congruence by restricting the same application of the whole circles (`Prop26.remainder`). The diameter case is within the statement but is the trivial omitted case Heath discusses (vol. 2, p. 60), declared as a case: I.20 makes both chords diameters, and right angles in the semicircles with III.24 realise their equality as congruence. It falls under the route rule for trivial cases left to the reader."
+kind = "modified"
+note = "Euclid's argument where AB and DE are not diameters: equal radii and bases give equal angles at the centres by I.8, III.26 gives the equal less circumferences, and subtraction gives the greater, in measure by Common Notion 3 and in congruence by restricting the same application of the whole circles (`Prop26.remainder`). Two diameters are a case of his statement that his proof does not in terms cover (Heath, vol. 2, p. 60): there are no triangles AKB, DLE for I.8. The Lean argues it another way: I.20 makes DE a diameter with AB, and the right angle in each semicircle (`Prop28.right`) with III.24 makes the semicircles congruent."
 
 [representation]
 tags = ["angle-measure"]
@@ -18,8 +18,8 @@ note = "Euclid takes K and L as centres and joins the radii. The hypothesis that
 
 [[passage]]
 at = "the radii are also equal"
-kind = "case"
-note = "If K is on AB, both chords are diameters and all four circumferences are semicircles, the elementary case Heath leaves to the reader (vol. 2, p. 60). `Prop28.diameter` uses I.20 to rule out a non-diameter equal to a diameter; `Prop28.right` gives right angles in the semicircles, and III.24 gives their congruence. Otherwise `Prop28.sides` and `Prop28.beyond` place each centre across its chord from the lesser circumference, as Euclid's figure requires. These helpers use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here, as for I.20 and III.24."
+kind = "different"
+note = "If K is on AB, both straight lines are diameters and the four circumferences semicircles, a case Euclid's proof does not in terms cover and Heath supplies by III.15 and the equal circles (vol. 2, p. 60). The Lean argues it another way: `Prop28.diameter` uses I.20 to make DE a diameter, `Circumference.semicircle` gives the measures, and `Prop28.right` gives the right angle in each semicircle, so that III.24 makes them congruent. Otherwise `Prop28.sides` and `Prop28.beyond` place each centre across its straight line from the less circumference, as Euclid's figure has it. These helpers use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here, as for I.20 and III.24."
 
 [[passage]]
 at = "But equal angles stand on equal circumferences"
