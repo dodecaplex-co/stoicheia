@@ -245,6 +245,16 @@ stands as follows, and no statement changes:
 - III.4 and III.8 apply their universal geometric conditions to the centre obtained
   through `exists_centre`, with no existence hypothesis.
 
+**28 October 2026, #547.** The convention above is overtaken. Under Heath's "[III. 1]",
+III.2, III.4, III.8 and III.17 now take their centres by III.1's construction, through
+`Prop1.of_circle`, which is now III.1's companion, by the owner's decision of 26 October
+2026 recorded on [#547](https://github.com/jackChallis/stoicheia/issues/547)
+([the entry of that day](../decisions/2026-10-26-centre-by-iii1.md) and
+[the entry for III.2](../decisions/2026-10-28-iii2-centre.md)). III.2's route is now
+`euclid`. So is III.8's: its last step goes by Euclid's two orders in every case, and a
+point of contact, which ends both orders, is never the nearer (`Prop8.contact_last`).
+III.26, III.28 and III.29 remain `modified`, and their records say why.
+
 ## Where the facts live
 
 The rule is Books I and II's: a fact that needs no proposition goes in Book Zero; one that
