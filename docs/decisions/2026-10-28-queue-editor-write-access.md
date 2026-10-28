@@ -24,8 +24,8 @@
   [GitHub's documentation](https://docs.github.com/en/rest/collaborators/collaborators#get-repository-permissions-for-a-user)).
   It refuses the entry unless each reads `admin` or `write`, the permission GitHub
   reports for the admin, maintain and write roles. A read that fails, an answer for
-  another account or giving a permission GitHub does not give, a login not of GitHub's
-  shape, or a last editor that GraphQL names as neither a person nor a bot, is
+  another account or one giving a permission GitHub does not give, a login not of
+  GitHub's shape, or a last editor whose GraphQL type is neither `User` nor `Bot`, is
   unreadable, and refuses; a bot's authorship or edit is refused, as before. No editor
   between the author and the last is read: the two of them vouch for the whole body.
   The automatic revert is judged as before: its author must be the revert App, and its
@@ -33,8 +33,9 @@
 
   The queue's trial (#606) gains the case: a group whose entry's body was last edited by
   an account without write access is refused, after edits through the web page and
-  through the API, one of them after a writer's edit, so that the trial shows GitHub
-  naming the last editor as the judge reads it.
+  through the API, one of them after a writer's edit, with the queue answer's `editor`
+  recorded after each edit, so that the trial shows GitHub naming the last editor as the
+  judge reads it (the refusal itself may name the author).
 
   This entry approves the change to `scripts/check_queue.py`, which reads the
   permissions and refuses as above, and whose docstring says so.

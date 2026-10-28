@@ -1153,8 +1153,8 @@ class QueueTests(unittest.TestCase):
 
     def test_writers_pass(self):
         # The owner's account, admin, wrote the pull request and last edited its body; then
-        # a maintainer, or a custom role built on write, whose permission GitHub gives as
-        # write, last edited it.
+        # a maintainer, whose permission GitHub gives as write, last edited it; the judge
+        # reads the permission alone, never the role's name (queue-writer, say).
         self.assertEqual(self.snapshot["permissions"]["fixture"]["permission"], "admin")
         self.edited_by("fixture")
         self.verdict(self.cli(), 0, "queue: PASS")
