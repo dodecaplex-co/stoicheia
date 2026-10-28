@@ -553,7 +553,8 @@ class RestorationTests(unittest.TestCase):
         original = (REPO / "Certificate/Facts.lean").read_bytes()
         self.write(source, original)
         def interrupted(*cmd):
-            self.assertEqual(cmd, (sys.executable, "-I", "tests/test_certificate.py"))
+            self.assertEqual(cmd, (sys.executable, "-I", "tests/test_certificate.py",
+                                   "CommonNotion4Tests"))
             self.assertIn(b"Derives.len_congr", source.read_bytes())
             self.assertNotIn(b"used.contains coincidenceStep", source.read_bytes())
             raise KeyboardInterrupt("certificate test interrupted")
