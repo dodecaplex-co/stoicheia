@@ -6,14 +6,14 @@ companions = ["III.17 general"]
 fingerprint = "sha256:105a583195d3f19f"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but for the centre E: Euclid takes it, and Heath's reference is III.1; the Lean takes it from `Tacit.exists_centre`, the rule that every circle has a centre, for the proof needs the centre alone. Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
+kind = "euclid"
+note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
 
 [[passage]]
 at = "For let the centre E of the circle be taken"
-kind = "different"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre E, and Heath's reference is III.1. The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes E from `Tacit.exists_centre`, the rule that every circle has a centre."
+kind = "helper"
+helper = "Prop1.of_circle"
+note = "Euclid takes the centre E, and Heath's reference is III.1; the Lean takes it by III.1 too: `Prop1.of_circle` takes two points of the circle, the ends of a straight line drawn through it at random, and runs III.1 on them, its construction and its proof that the point found is the centre; the proof keeps the centre alone, as Euclid does. `Prop17.general` takes its centre in the same way when A is on the circle."
 
 [[passage]]
 at = "let AE be joined, and with centre E"
@@ -50,16 +50,16 @@ case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "07416606e"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:d3e631b8a21c8016"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x)"
-text = "sha256:58cad1b7b984ce61"
+commit = "3888f1b86"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:8cfdbc1d8db78bea"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); cards #547 and #381, ship ER: the centre by III.1's construction (Prop1.of_circle), written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:e622102a107660b1"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
