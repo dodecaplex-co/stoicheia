@@ -1089,6 +1089,35 @@ def file_digest(path) -> bytes:
     return digest.digest()
 
 
+def tree_state(root: Path) -> tuple:
+    source = os.fsencode(root)
+    try:
+        info = os.lstat(source)
+    except FileNotFoundError:
+        return ("absent",)
+    entries = []
+
+    def visit(path: bytes, relative: bytes, details) -> None:
+        if stat.S_ISLNK(details.st_mode):
+            value = ("link", details.st_mode, os.readlink(path))
+        elif stat.S_ISREG(details.st_mode):
+            value = ("file", details.st_mode, file_digest(path))
+        elif stat.S_ISDIR(details.st_mode):
+            value = ("directory", details.st_mode)
+        else:
+            value = ("other", details.st_mode)
+        entries.append((relative, value))
+        if stat.S_ISDIR(details.st_mode):
+            with os.scandir(path) as scanned:
+                children = sorted((entry.name, entry.path, entry.stat(follow_symlinks=False))
+                                  for entry in scanned)
+            for name, child, child_info in children:
+                visit(child, os.path.join(relative, name), child_info)
+
+    visit(source, b"", info)
+    return tuple(entries)
+
+
 def copied_state() -> tuple | None:
     listed = listed_files()
     if listed.returncode != 0:
@@ -1116,7 +1145,7 @@ def copied_state() -> tuple | None:
         index = ROOT / resolved.stdout.strip()
         shared = tuple((path.name, file_digest(path))
                        for path in sorted(index.parent.glob("sharedindex.*")))
-        return names, tuple(paths), file_digest(index), shared
+        return names, tuple(paths), file_digest(index), shared, tree_state(ROOT / ".lake")
     except OSError:
         return None
 
@@ -1133,13 +1162,44 @@ def bound_worker_env(tree: Path, folder: Path) -> dict[str, str]:
     folder.mkdir()
     launcher = folder / "git"
     launcher.write_text(
-        '#!/bin/sh\n'
-        'here=$(pwd -P) || exit $?\n'
-        'case "$here/" in\n'
-        '  "$STOICHEIA_NEGATIVE_TREE/"*)\n'
-        '    exec "$STOICHEIA_NEGATIVE_GIT" "--work-tree=$STOICHEIA_NEGATIVE_TREE" "$@" ;;\n'
-        '  *) exec "$STOICHEIA_NEGATIVE_GIT" "$@" ;;\n'
-        'esac\n', encoding="utf-8")
+        '#!/usr/bin/env python3\n'
+        'import os\n'
+        'import sys\n'
+        '\n'
+        'args = sys.argv[1:]\n'
+        'cwd = os.path.realpath(os.getcwd())\n'
+        'explicit = any(name in os.environ for name in '
+        '("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR"))\n'
+        'i = 0\n'
+        'while i < len(args):\n'
+        '    arg = args[i]\n'
+        '    if arg == "-C":\n'
+        '        i += 1\n'
+        '        if i >= len(args):\n'
+        '            break\n'
+        '        cwd = os.path.realpath(os.path.join(cwd, args[i]))\n'
+        '    elif arg.startswith("-C") and len(arg) > 2:\n'
+        '        cwd = os.path.realpath(os.path.join(cwd, arg[2:]))\n'
+        '    elif arg in ("--git-dir", "--work-tree"):\n'
+        '        explicit = True\n'
+        '        i += 1\n'
+        '    elif arg.startswith(("--git-dir=", "--work-tree=")) or arg == "--bare":\n'
+        '        explicit = True\n'
+        '    elif arg in ("-c", "--config-env", "--namespace", "--super-prefix"):\n'
+        '        i += 1\n'
+        '    elif arg == "--" or not arg.startswith("-"):\n'
+        '        break\n'
+        '    i += 1\n'
+        'tree = os.path.realpath(os.environ["STOICHEIA_NEGATIVE_TREE"])\n'
+        'try:\n'
+        '    inside = os.path.commonpath((cwd, tree)) == tree\n'
+        'except ValueError:\n'
+        '    inside = False\n'
+        'git = os.environ["STOICHEIA_NEGATIVE_GIT"]\n'
+        'command = [git]\n'
+        'if inside and not explicit:\n'
+        '    command.append("--work-tree=" + tree)\n'
+        'os.execv(git, command + args)\n', encoding="utf-8")
     launcher.chmod(0o755)
     env["STOICHEIA_NEGATIVE_GIT"] = git
     env["STOICHEIA_NEGATIVE_TREE"] = str(tree)

@@ -2710,18 +2710,34 @@ CHECKS_BOUND_GIT = ('import os\n'
                     '           if name not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",\n'
                     '                           "GIT_CONFIG_NOSYSTEM")}}\n'
                     '    with tempfile.TemporaryDirectory() as tmp:\n'
-                    '        initialized = subprocess.run(["git", "init", "-q"], cwd=tmp,\n'
+                    '        fixture = os.path.join(tmp, "fixture")\n'
+                    '        os.mkdir(fixture)\n'
+                    '        initialized = subprocess.run(["git", "init", "-q"], cwd=fixture,\n'
                     '                                     env=env, capture_output=True, text=True)\n'
-                    '        top = subprocess.run(["git", "rev-parse", "--show-toplevel"],\n'
-                    '                             cwd=tmp, env=env, capture_output=True, text=True)\n'
+                    '        top = subprocess.run(["git", "-C", tmp, "-C", "fixture",\n'
+                    '                              "rev-parse", "--show-toplevel"], cwd=nt.ROOT,\n'
+                    '                             env=env, capture_output=True, text=True)\n'
+                    '        absolute = subprocess.run(["git", "-C", "scripts", "-C", fixture,\n'
+                    '                                   "rev-parse", "--show-toplevel"],\n'
+                    '                                  cwd=nt.ROOT, env=env, capture_output=True,\n'
+                    '                                  text=True)\n'
+                    '        explicit = subprocess.run(\n'
+                    '            ["git", "--git-dir=" + os.path.join(fixture, ".git"),\n'
+                    '             "--work-tree=" + fixture, "rev-parse", "--show-toplevel"],\n'
+                    '            cwd=nt.ROOT, env=env, capture_output=True, text=True)\n'
                     '    if (checked.returncode == 0\n'
                     '            and checked.stdout == " M tracked-by-git\\n"\n'
-                    '            and initialized.returncode == 0 and top.returncode == 0\n'
-                    '            and os.path.realpath(top.stdout.strip()) == os.path.realpath(tmp)):\n'
+                    '            and initialized.returncode == 0\n'
+                    '            and all(result.returncode == 0\n'
+                    '                    for result in (top, absolute, explicit))\n'
+                    '            and all(os.path.realpath(result.stdout.strip())\n'
+                    '                    == os.path.realpath(fixture)\n'
+                    '                    for result in (top, absolute, explicit))):\n'
                     '        nt.refused("{name}: caught")\n'
                     '    else:\n'
                     '        print("{name}: Git read the wrong tree", repr(checked.stdout),\n'
-                    '              repr(top.stdout), checked.stderr, top.stderr)')
+                    '              repr(top.stdout), repr(absolute.stdout), repr(explicit.stdout),\n'
+                    '              checked.stderr, top.stderr, absolute.stderr, explicit.stderr)')
 
 
 def corrupts(change):
@@ -3372,6 +3388,30 @@ class WorkerTests(unittest.TestCase):
                 self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
                 self.assertEqual(workers.stderr, alone.stderr)
                 self.assertEqual(target.read_text(), expected)
+
+    def test_lake_import_mutation_uses_the_serial_path(self):
+        """An import-time append within the ignored build clone gives multiple requested
+        workers the already-loaded one-worker verdict from the same initial bytes."""
+        probe = self.root / ".lake/build/probe"
+        initial = "initial\n"
+        expected = initial + "loaded\n"
+        probe.write_text(initial)
+        before = ('(nt.ROOT / ".lake/build/probe").write_text('
+                  '(nt.ROOT / ".lake/build/probe").read_text() + "loaded\\n")')
+        body = ('contents = (nt.ROOT / ".lake/build/probe").read_text()\n'
+                f'    if contents == {expected!r}:\n'
+                '        nt.refused("{name}: caught")\n'
+                '    else:\n'
+                '        print("{name}: imported more than once", repr(contents))')
+        self.commit(before={"b_reads": before}, a_reads=body, b_reads=body)
+        alone = self.suite()
+        probe.write_text(initial)
+        workers = self.suite("--workers", "2")
+        self.assertEqual(workers.returncode, alone.returncode,
+                         workers.stdout + workers.stderr + alone.stdout + alone.stderr)
+        self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+        self.assertEqual(workers.stderr, alone.stderr)
+        self.assertEqual(probe.read_text(), expected)
 
     def test_a_run_s_directory_inside_a_work_tree_fails_the_run(self):
         """TMPDIR inside another repository's work tree, where a fixture meant to have no
