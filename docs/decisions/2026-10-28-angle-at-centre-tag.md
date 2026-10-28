@@ -5,19 +5,19 @@
   disagree with the records that carry them (the table of tags and records in
   [the limitations review](../reports/limitations-01.md) gives the records), and that
   III.20's record has no tag for its reading of the angle at the centre. This change
-  answers them, in two pull requests: this one, to the terms list and the renderer, lands
-  first; III.20's record, which takes up the new tag, and the tag
-  cell of [FORMALIZATION](../FORMALIZATION.md)'s row for the angle at the centre follow,
-  because a check input changed with the record it judges is refused at landing.
+  answers them, in two pull requests. This one, to the terms list and the renderer, lands
+  first. III.20's record, which takes up the new tag, and the tag cell of
+  [FORMALIZATION](../FORMALIZATION.md)'s row for the angle at the centre follow, because a
+  check input changed with the record it judges is refused at landing.
 
   III.20 reads the angle at the centre as `angleAtCentre`, the angles BEF and FEC
   together, so that it may be two right angles or more. That reading is ours, made after
   Heath's notes on III.20 and III.21. The new tag, `angle-at-centre`, is a representation
   with no badge, for on Euclid's own figures the angle it names is his angle BEC. The word
   `angleAtCentre` came into `Elements/` by
-  [the entry for #129](2026-10-25-routes-iii-centre.md), and the reading of touching at the point by
-  [the entry for #126](2026-10-25-routes-iii-touching.md), both of 25 October 2026; this
-  entry approves only what the terms list and the front page say of them.
+  [the entry for #129](2026-10-25-routes-iii-centre.md), and the reading of touching at
+  the point by [the entry for #126](2026-10-25-routes-iii-touching.md), both of 25 October
+  2026; this entry approves only what the terms list and the front page say of them.
 
   Five meanings change with it:
 
