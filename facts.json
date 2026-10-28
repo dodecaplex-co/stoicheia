@@ -82316,7 +82316,7 @@
       "file": "Elements/Figure/Lines.lean"}],
     "Tacit.len_symm":
     [{"name": "BookIII.Prop14.diameter_sum",
-      "line": 144,
+      "line": 143,
       "file": "Elements/BookIII/Prop14.lean"},
      {"name": "collinear_of_between",
       "line": 38,
@@ -82371,7 +82371,7 @@
       "file": "Elements/Figure/Lines.lean"}],
     "Definition15":
     [{"name": "BookIII.Prop14.diameter_sum",
-      "line": 144,
+      "line": 143,
       "file": "Elements/BookIII/Prop14.lean"},
      {"name": "between_of_centre_chord",
       "line": 148,
