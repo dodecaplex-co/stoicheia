@@ -3178,11 +3178,11 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), "")
 
     def test_workers_answer_the_run_s_interrupt_whatever_sigint_it_inherited(self):
-        """A run started with SIGINT ignored, as a background job is, passes the ignore to
-        its workers. Left by an exception once both have started, it still interrupts the
-        one that sleeps, whose `finally` restores its tree, well inside its sleep; and no
-        tree is left. Run in process; a later wait for a worker fails the test after 30 s
-        rather than wait out the sleep."""
+        """A run started with SIGINT ignored, as a background job of a non-interactive shell
+        is, would pass the ignore to its workers. Left by an exception once both have
+        started, it still interrupts the one that sleeps, whose `finally` restores its tree,
+        well inside its sleep; and no tree is left. Run in process; a later wait for a
+        worker fails the test after 30 s rather than wait out the sleep."""
         self.commit(a_one=PASSES, b_two=SLEEPS)
         chosen = [negative.Plant(name, self.root / f"scripts/negative/{name}.py", "", False,
                                  lambda: None)
