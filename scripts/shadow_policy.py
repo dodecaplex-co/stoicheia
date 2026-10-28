@@ -51,8 +51,9 @@ the copy of the workflow GitHub runs is the pushed commit's; nothing here is sig
 (protected signing is the next train); and the pre-flight runs T's own code, its checks and
 its Lean, as the same user in the same job, so a hostile T could change what this driver
 reads or writes after it. So a verdict is evidence that main's policy, run in CI, agrees
-with the local pre-flight on honest work, not a defence against a hostile commit. Standard
-library and Git only; Python 3.11 or later.
+with the local pre-flight on honest work, not a defence against a hostile commit. `judge`
+and `plant` use the Python standard library and Git only; `self-test` also uses PyYAML from
+the pinned test requirements. Python 3.11 or later.
 """
 
 from __future__ import annotations
@@ -1011,9 +1012,17 @@ def real_text(module, scenario, logs: Path) -> tuple[int, str, list[tuple]]:
 
 
 def matrix_plants(text: str) -> list[str] | None:
-    """The plants of the workflow's matrix, a flow list on one line, `plant: [a, b]`."""
-    found = re.findall(r"(?m)^\s*plant:\s*\[([^\]\n]*)\]\s*$", text)
-    return [p.strip() for p in found[0].split(",") if p.strip()] if len(found) == 1 else None
+    """The plants at jobs.plants.strategy.matrix.plant in workflow YAML."""
+    import yaml
+
+    try:
+        document = yaml.safe_load(text)
+        plants = document["jobs"]["plants"]["strategy"]["matrix"]["plant"]
+    except (KeyError, TypeError, yaml.YAMLError):
+        return None
+    if not isinstance(plants, list) or not all(isinstance(plant, str) for plant in plants):
+        return None
+    return plants
 
 
 def self_test() -> int:
@@ -1094,6 +1103,14 @@ def self_test() -> int:
     except OSError as e:
         listed = f"unreadable: {e}"
     check("the workflow's plant matrix", listed, list(PLANTS))
+    block_list = "\n".join(f"          - {name}" for name in PLANTS)
+    check("the workflow's plant matrix as a block list", matrix_plants(
+        "jobs:\n  plants:\n    strategy:\n      matrix:\n        plant:\n" + block_list + "\n"),
+        list(PLANTS))
+    unrelated = ", ".join(PLANTS)
+    check("an unrelated plant list is not the workflow's matrix", matrix_plants(
+        f"plant: [{unrelated}]\njobs:\n  plants:\n    strategy:\n      matrix:\n"
+        "        unrelated: true\n"), None)
     check("the plants' changes", list(CHANGES), list(PLANTS))
     for name, plant in PLANTS.items():
         check(f"the plant {name}'s expectation", expectation_problems(name, plant), [])

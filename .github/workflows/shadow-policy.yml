@@ -46,8 +46,8 @@ jobs:
   self-test:
     # The driver's offline cases: its reading of the pre-flight's report, in the format of
     # safe_push.py's Report and summary() and as the checkout's own copies print it, its
-    # planted misreadings, each an error, and its plants against this file's matrix. No
-    # Lean, no network, seconds.
+    # planted misreadings, each an error, and its plants against this file's matrix. Its
+    # pinned YAML parser is its only added dependency; no Lean, seconds.
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -60,6 +60,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install the pinned YAML parser for the workflow matrix case
+        working-directory: ${{ runner.temp }}
+        run: |
+          python3 -I -m pip install --only-binary :all: -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
+
       - name: The driver's offline cases
         run: python3 -I scripts/shadow_policy.py self-test
 
@@ -67,7 +72,6 @@ jobs:
     # Main's pre-flight on the push to main: about the local step 4 and a cold build, on
     # GitHub's runners, holding no landing. It fails unless the verdict is passed.
     if: github.event_name == 'push'
-    needs: self-test
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -211,7 +215,6 @@ jobs:
     # on demand on main. Four of the six run Lean; at most three run at once, since the
     # account's limit of concurrent jobs is shared with CI.
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
-    needs: self-test
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
