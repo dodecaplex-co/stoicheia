@@ -38,6 +38,5 @@
   and the meanings of `touching-whole-circles`, `redundant-hypothesis`, `angle-measure`,
   `mixed-angles-local` and `segment-with-circle`.
 
-  This entry approves the change to `scripts/render.py`: in `content_wording_at`, the test
-  `at_point` and the sentences it adds to the row of Definition III.3 on Book III's front
-  page.
+  This entry approves the change to `scripts/render.py`: in `content_wording_at`, the
+  `at_point` test and its added sentences for Definition III.3 on Book III's front page.
