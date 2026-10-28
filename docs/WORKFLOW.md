@@ -1346,11 +1346,12 @@ body's block, which is a declaration (rule (b), below), and a block typed to be
 consistent with the repository passes it: main's judge cannot tell it from a real one.
 So whoever can edit the body is trusted not to type a block for a pre-flight that did
 not run: anyone with write access to the repository, and the pull request's own author,
-whom GitHub lets edit its body. Only an account with write access can queue an entry,
-and the judge refuses one whose head is not in this repository, or that a bot queued or
-last edited, but for the automatic revert, whose body is the App's and is read only for
-its two lines (below). The queue must not be turned on before both are held. Its four
-rules are:
+whom GitHub lets edit its body, even after a writer has queued it. Only an account with
+write access can queue an entry. The judge refuses one whose head is not in this
+repository, the automatic revert included, and, but for that revert, one that a bot
+wrote, queued, last edited or last renamed; the revert's author must be the App, and its
+body is read only for its two lines, each checked against GitHub's record of the failed
+push (below). The queue must not be turned on before both are held. Its four rules are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
@@ -1681,9 +1682,9 @@ workflow, `ci.yml` included, has a passing job named `queue-integrity` or `queue
 while main's fails is held. The second: the pre-flight's evidence authenticated, which
 rule (b) asks for, and which write access to the pull request does by the owner's
 decision until #574's signatures replace it. So the queue may be turned on once the
-ruleset is imported and that trial passes. The coordinator holds these
-steps: add the merge queue rule for main, keep merge commits and enable "only merge
-non-failing pull requests"; require `check`, `model`, `negative`, `formal-model`,
+ruleset is imported and that trial (#606) passes. The coordinator holds these steps: add
+the merge queue rule for main, keep merge commits and enable "only merge non-failing
+pull requests"; require `check`, `model`, `negative`, `formal-model`,
 `acceptance` and `queue-tests`, and never `queue-integrity` or `queue-gaps`, which the
 organization ruleset requires by their file; set the queue's status check timeout to 150
 minutes: `acceptance`'s limit of 60 minutes, then a budget of 75 for `queue-gaps`'

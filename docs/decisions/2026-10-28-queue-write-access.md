@@ -17,33 +17,39 @@
   #603). So until #574's signed evidence lands, write access to the pull request is
   what vouches for the block: whoever can edit the body is trusted not to type a block
   for a pre-flight that did not run. That is anyone with write access to the repository,
-  and the pull request's own author, whom GitHub lets edit its body. Only an account
-  with write access can queue an entry, and the judge already refuses one whose head is
-  not in this repository, or that a bot queued, last edited or last renamed, but for the
-  automatic revert, whose body is the App's and is read only for its `Reverts:` and
-  `Failed run:` lines (WORKFLOW section 10). Today every pull request here is opened
-  by the owner's account, which the project's tools push as, and its entries are to be
-  queued from it, so the choice trusts the agents that work under it not to type a block
-  by hand. When #574 lands, the
-  judge checks CI's signature on the evidence instead, and that train changes rule (b).
+  and the pull request's own author, whom GitHub lets edit its body, even after a writer
+  has queued it. The card put the route as trusting the owner's account and the revert
+  App alone; but GitHub lets anyone who can read the repository open a pull request
+  between two of its branches, and the judge refuses only a bot's edit of the body, so
+  the route trusts such an author too. Only an account with write access can queue an
+  entry. The judge refuses one whose head is not in this repository, the automatic
+  revert included, and, but for that revert, one that a bot wrote, queued, last edited
+  or last renamed; the revert's author must be the revert App, and its body is read only
+  for its `Reverts:` and `Failed run:` lines, each checked against GitHub's record of the
+  failed push (WORKFLOW section 10). Today every pull request here is opened by the
+  owner's account, which the project's tools push as, and its entries are to be queued
+  from it, so the choice trusts the agents that work under it not to type a block by
+  hand. When #574 lands, the judge checks CI's signature on the evidence instead, and
+  that train changes rule (b).
 
   So the queue may be turned on once #602 has landed, the owner has imported its ruleset
   (the owner's step 1), and the queue's trial on real merge groups
   ([#606](https://github.com/dodecaplex-co/stoicheia/issues/606)) has passed: the trial
-  is what shows the first requirement holding, and this entry is the second.
+  is what shows the first requirement holding, and this entry records what holds the
+  second.
 
-  The second ruling is TS's trust assumption 3. A merge group's own `ci.yml` runs
-  `check`, `negative`, `model`, `formal-model` and `acceptance`, a group can edit that
-  file, and the branch ruleset matches those checks by name alone. The coordinator put
-  two routes to the owner: require `ci.yml` from main too, by file, as `queue-judge.yml`
-  is, so that no change to CI would run before it lands; or #574's signer, under which
-  CI signs the checks it ran and the judge verifies them. On 28 October 2026 (about
-  04:55 Pacific) the owner chose, of those two, "Use #574's signer later" (the
-  coordinator's record: #605). So no ruleset changes for it now, changes to CI keep
-  running on their own pull requests before they land, and #605 waits on #574. Until
-  then GitHub does not hold a group that edits one of those jobs to pass: the change's
-  review and its pre-flight are what stand in the way. This ruling changes no file but
-  this entry.
+  The second ruling answers #605. A merge group's own `ci.yml` runs `check`, `negative`,
+  `model`, `formal-model`, `acceptance` and `queue-tests`; a group can edit that file,
+  and the branch ruleset matches those checks by name alone (`queue-tests` among them
+  once the queue is on). The coordinator put two routes to the owner: require `ci.yml`
+  from main too, by file, as `queue-judge.yml` is, at the cost that no change to CI
+  would then run before it lands; or #574's signer, under which CI signs the checks it
+  ran and the judge verifies them. On 28 October 2026 (about 04:55 Pacific) the owner
+  chose, of those two, "Use #574's signer later" (the coordinator's record: #605). So no
+  ruleset changes for it now, changes to CI keep running on their own pull requests
+  before they land, and #605 waits on #574. Until then GitHub does not hold a group that
+  edits one of those jobs to pass: the change's review and its pre-flight are what stand
+  in the way. This ruling changes no file but this entry.
 
   This entry approves the change to `docs/WORKFLOW.md`, whose section 10 now says that
   write access to the pull request vouches for the pre-flight block until #574's
