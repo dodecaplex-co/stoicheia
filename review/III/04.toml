@@ -5,14 +5,13 @@ note = "\"Not through the centre\" is said of every centre of the circle, and B 
 fingerprint = "sha256:fed861dbbfcf4968"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but for the centre F: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, the rule that every circle has a centre, for the proof needs the centre alone."
+kind = "euclid"
 
 [[passage]]
 at = "let the centre of the circle ABCD be taken"
-kind = "different"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes F from `Tacit.exists_centre`, the rule that every circle has a centre, and \"not through the centre\", said of every centre, puts F off AC and BD, so that FE can be joined."
+kind = "helper"
+helper = "Prop1.of_circle"
+note = "Euclid takes the centre F by III.1 (Heath's reference), and so does the Lean: `Prop1.of_circle` takes two points of the circle, the ends of a straight line drawn through it at random, and runs III.1 on them, its construction and its proof that the point found is the centre; the proof keeps the centre alone, as Euclid does. \"Not through the centre\", said of every centre, puts F off AC and BD, so that FE can be joined."
 
 [[passage]]
 at = "therefore the angle FEA is equal to the angle FEB"
@@ -36,16 +35,16 @@ note = "Like Heath's, Euclid's figure accompanies the impossible supposition tha
 
 [review]
 stage = "full"
-commit = "07416606e"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:2c64030c978122c6"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the closing comparison, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x)"
-text = "sha256:7d0fb62e9dd92804"
+commit = "3888f1b86"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:65259797414bf63b"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the closing comparison, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); cards #547 and #381, ship ER: the centre by III.1's construction (Prop1.of_circle), written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:5593755d75f2165c"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
