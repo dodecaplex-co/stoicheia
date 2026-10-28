@@ -213,7 +213,8 @@ UNGUARDED = frozenset({"__warningregistry__"})
 WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
 WITHHELD = frozenset({"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
                       "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-                      "GIT_NAMESPACE", "GIT_PREFIX", "LEAN_PATH", WORKERS})
+                      "GIT_NAMESPACE", "GIT_PREFIX", "GIT_CEILING_DIRECTORIES",
+                      "LEAN_PATH", WORKERS})
 TIMES = Path("tests", "negative_times.json")
 TIME_LINE = re.compile(r"  ([a-z][a-z0-9_]*): (\d+\.\d+)s \(including restoration\)")
 TIMES_ABOUT = ("Seconds each plant of scripts/negative_tests.py took, restoration included, "

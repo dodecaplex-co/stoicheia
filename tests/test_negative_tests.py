@@ -2930,13 +2930,15 @@ class WorkerTests(unittest.TestCase):
 
     def test_a_run_s_directory_inside_a_work_tree_fails_the_run(self):
         """TMPDIR inside another repository's work tree, where a fixture meant to have no
-        repository above it would find one: the run fails before it makes any worker,
-        naming its directory and TMPDIR, and no plant runs."""
+        repository above it would find one: even when GIT_CEILING_DIRECTORIES would hide
+        that repository, the run fails before it makes any worker, naming its directory
+        and TMPDIR, and no plant runs."""
         inside = self.tmp / "checkout/tmp"
         inside.mkdir(parents=True)
         subprocess.run(["git", "init", "-q"], cwd=inside.parent, env=self.env, check=True)
         self.commit(a_one=PASSES, b_two=PASSES)
         self.env["TMPDIR"] = str(inside)
+        self.env["GIT_CEILING_DIRECTORIES"] = str(inside.parent)
         result = self.suite("--workers", "2")
         self.assertEqual(result.returncode, 1, result.stdout)
         message = (rf"the run's directory {re.escape(str(inside))}/stoicheia-negative-\w+ is "
