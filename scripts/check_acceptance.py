@@ -18,10 +18,20 @@ the verdicts beside it; it changes nothing else.
                                                    no check run: whether every item that
                                                    passes in MAIN passes in PR, two files
                                                    that --json wrote (P10 and E6 aside)
+    python3 scripts/check_acceptance.py --check-current
+                                                   no check run: whether the report HEAD
+                                                   holds is current, for a release
 
-Run it on a built tree, as CI's `check` job leaves one: after `lake build`, `lake build
-Audit` and `lake env lean Certificate/Facts.lean`, with `lake` on the PATH, Python 3.11 or
-later, and the history of the commits the records name (a full clone, not a shallow one).
+Run it on a built tree, as CI's `acceptance` job builds one: after `lake build`, `lake
+build Audit` and `lake env lean Certificate/Facts.lean`, with `lake` on the PATH, Python
+3.11 or later, and the history of the commits the records name (a full clone, not a
+shallow one). Before any check runs, and before it writes anything, it asks Lake whether
+Elements and Audit are built and current (`lake build --no-build Elements Audit`); when
+Lake says not, by its exit 3, it says why and what to build, and exits 2, for the Lean it
+asks is the build's, not the sources'. When Lake cannot answer (any other exit, a `lake`
+that cannot be started, or no answer in ten minutes) it says so, and exits 2 as well.
+When there is no `lake` to run at all, it goes on, and each check that needs Lean says
+that it could not ask it.
 It reuses the checks it stands on rather than restating them: `check_fidelity.py`'s
 functions, in this process, and `check_style.py`, `check_links.py`, `check_kernel.py`,
 `heath.py` and the model tests, each run as CI runs it, its findings sorted by the
@@ -33,8 +43,9 @@ follows Patrick Massot's `leanblueprint checkdecls`, which checks that every dec
 blueprint names exists in the project; we are grateful for the idea.
 
 In checking mode it exits 0 only when every item passes and every check ran; 1 otherwise,
-the report written either way; 2 when it cannot begin (no facts.json, say). Standard
-library only.
+the report written either way; 2 when it cannot begin (no facts.json, or a build that
+Lake does not find current, say), with no report or verdicts written. Standard library
+only.
 
 With --compare it runs no check, and reads two files of verdicts that one copy of this
 script wrote with --json: main's, then the pull request's. It exits 0 when every item that
@@ -44,6 +55,17 @@ verdicts, or the two were written by different copies of it, which would not jud
 P10 and E6 turning into a fail are listed and not held (STAGING_ITEMS): they read Staging/
 alone, and staging a statement before its proof is the workflow's own way in. CI's
 `acceptance` job in `.github/workflows/ci.yml` runs it on every pull request.
+
+With --check-current it runs no check, needs no Lean and writes nothing. It reads the
+report as HEAD holds it, through git, and exits 0 when that report is current: its
+revision a commit that HEAD descends from and differs from in nothing but the report, a
+run of every item on files as committed, and the worktree without any change, staged,
+unstaged or untracked, the report's own included, and with no file the index marks as one
+git does not compare with it. Git's replacements are not read. It exits 1 when it is not,
+naming each reason, and 2 when it cannot begin: not a git checkout, no report at HEAD, or
+one that is not this script's (not UTF-8, no generated marker on its first line, or no
+Revision or Run line). It reads the report, not the run that wrote it. It is a release
+step (docs/WORKFLOW.md, section 10, step 10), not one of CI's.
 """
 
 from __future__ import annotations
@@ -51,6 +73,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -207,9 +230,11 @@ def captured(fn, *args):
     return value, found
 
 
-def run(cmd: list[str], timeout: int = 1800) -> subprocess.CompletedProcess:
+def run(cmd: list[str], timeout: int = 1800,
+        env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
     try:
-        return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
+        return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout,
+                              env=env)
     except (OSError, subprocess.TimeoutExpired) as e:
         return subprocess.CompletedProcess(cmd, 127, "", str(e))
 
@@ -928,6 +953,13 @@ def check_book_record(book: str) -> None:
 # that begins with a letter is a name S12 puts to Lean (issue #178).
 REVISION_DIGITS = 12
 
+# The report's first line, and its lines of the revision and the run, which --check-current
+# reads back (`report` writes them).
+GENERATED = "<!-- Generated by scripts/check_acceptance.py. Do not edit by hand. -->"
+REVISION_LINE = re.compile(r"(?m)^- \*\*Revision:\*\* (.*)\.$")
+RUN_LINE = re.compile(r"(?m)^- \*\*Run:\*\* (.*)$")
+EVERY_ITEM = "every item."
+
 
 def revision(output: Path, *more: Path) -> str:
     """The commit whose files were read, with REVISION_DIGITS digits: HEAD, or, while
@@ -948,7 +980,7 @@ def revision(output: Path, *more: Path) -> str:
             pass
     commit = head.stdout.strip()
     while True:
-        changed = run(["git", "diff", "--name-only", f"{commit}^", commit])
+        changed = run(["git", "diff", "--name-only", "--no-renames", f"{commit}^", commit])
         parent = run(["git", "rev-parse", short, f"{commit}^"])
         if changed.returncode or parent.returncode or not changed.stdout.split() \
                 or not set(changed.stdout.split()) <= reports:
@@ -975,8 +1007,7 @@ def report(output: Path, facts: dict, quick: bool, more: tuple = ()) -> str:
     total = len(failures)
     props = [ref for _, _, ref in refs()]
     clean = [r for r in props if not any(w == r for w, _ in failures)]
-    out = ["<!-- Generated by scripts/check_acceptance.py. Do not edit by hand. -->",
-           "# Acceptance of Books I–III: the report", "",
+    out = [GENERATED, "# Acceptance of Books I–III: the report", "",
            "What [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) finds "
            "against [the acceptance checklist](../ACCEPTANCE.md), item by item: for each of "
            "the 99 propositions, for each book and for the edition as a whole. A [machine] "
@@ -987,7 +1018,7 @@ def report(output: Path, facts: dict, quick: bool, more: tuple = ()) -> str:
            f"- **Lean:** facts.json as Lean {facts.get('lean_version', '?')} wrote it.",
            "- **Run:** " + ("`--quick`: the kernel replay (E1) and the model tests (E4) were "
                             "not run, and a check not run is not a pass."
-                            if quick else "every item."), "",
+                            if quick else EVERY_ITEM), "",
            "## Summary", ""]
     if total == 0 and not not_run:
         out += ["**No failures.** Every item of the checklist passes.", ""]
@@ -1216,6 +1247,165 @@ def compare(before_path: Path, after_path: Path) -> int:
 
 
 # ---------------------------------------------------------------------------------------
+# The build, asked of Lake before any check runs.
+
+# The Lean that B2 and E2 ask, and that the checks this script runs read, is what `lake
+# build` left, not the sources. `--no-build` asks Lake whether that is current: Lake decides
+# what is stale by its traces, the hashes of each module's sources and imports, not by file
+# times; and it builds nothing, for the checker changes nothing.
+CURRENT_BUILD = ["lake", "build", "--no-build", "Elements", "Audit"]
+# Lake's exit when --no-build finds a target it would have to build (its noBuildCode); any
+# other failure, a toolchain or lakefile it cannot load, say, exits otherwise.
+STALE_BUILD = 3
+BUILD_TIMEOUT = 600
+
+
+def build_problem() -> str | None:
+    """Why the build is not one to check, with Lake's exit and the last lines it printed:
+    Lake does not find Elements and Audit built and current (exit 3), or cannot answer
+    whether they are (any other exit), or there is a `lake` that cannot be started, or it
+    does not answer in time. None when it finds them current, and when there is no `lake`
+    to run at all, for then each check that needs Lean says that it could not ask it, as
+    before Lake was asked."""
+    asked = f"`{' '.join(CURRENT_BUILD)}`"
+    try:
+        done = subprocess.run(CURRENT_BUILD, cwd=ROOT, capture_output=True, encoding="utf-8",
+                              errors="replace", timeout=BUILD_TIMEOUT)
+    except FileNotFoundError:
+        return None
+    except OSError as e:
+        return (f"{asked} could not be started ({e}), so whether the build is current "
+                "cannot be told.")
+    except subprocess.TimeoutExpired:
+        return (f"{asked} did not answer in {BUILD_TIMEOUT} seconds, so whether the build is "
+                "current cannot be told.")
+    if done.returncode == 0:
+        return None
+    said = tail(done.stdout + done.stderr, 6)
+    printed = (" Lake printed:" + "".join(f"\n  {line}" for line in said.splitlines())
+               if said else "")
+    if done.returncode == STALE_BUILD:
+        return (f"{asked} exits {STALE_BUILD}: Lake does not find Elements and Audit built "
+                "and current with their sources, so the Lean the checks would ask is not "
+                "theirs." + printed)
+    return (f"{asked} exits {done.returncode}: Lake could not answer whether the build is "
+            "current (a toolchain or lakefile problem, say), so whether the Lean the checks "
+            "would ask is theirs cannot be told." + printed)
+
+
+# ---------------------------------------------------------------------------------------
+# The committed report, at a release (--check-current). Every pull request's job has the
+# build and the run, but only the release candidate is held to committing the regenerated
+# report (docs/WORKFLOW.md, section 10, step 10), so this is a release step and not a check
+# of every pull request: on an ordinary pull request CI's ratchet recomputes the verdicts.
+# HEAD is compared with the report's revision tree to tree, not by revision()'s walk of
+# first parents, so that the check holds on main's merge of the release too, which differs
+# from its first parent in all that the release changed, but, when main has not moved,
+# from the candidate in nothing but the report.
+
+def check_current() -> int:
+    """--check-current: 0 when the report HEAD holds is current, 1 when it is not, each
+    reason named, and 2 when it cannot begin. It reads git alone, and the report as HEAD
+    holds it, not the working copy's; git's replacements (`git replace`) are not read, so
+    that no other commit can stand in for the revision, and a file the index marks as one
+    git does not compare with the worktree (assume-unchanged or skip-worktree, say) is a
+    reason, so that no change is hidden from `git status`."""
+    rel = REPORT.relative_to(ROOT).as_posix()
+    env = {**os.environ, "GIT_NO_REPLACE_OBJECTS": "1"}
+
+    def git(*args: str) -> subprocess.CompletedProcess:
+        return run(["git", *args], env=env)
+
+    def cannot(why: str) -> int:
+        print(f"✗ acceptance: --check-current cannot begin: {why}")
+        return 2
+
+    def listed(items: list[str], most: int = 8) -> str:
+        return ", ".join(items[:most]) + (f" and {len(items) - most} more"
+                                          if len(items) > most else "")
+
+    head = git("rev-parse", "--verify", "--quiet", "HEAD^{commit}")
+    # Files git ignores, by .gitignore or .git/info/exclude alike, are not counted.
+    status = git("status", "--porcelain", "--untracked-files=all")
+    # Each tracked file with its tag: H, save one the index marks otherwise.
+    tags = git("ls-files", "-v")
+    if head.returncode != 0 or status.returncode != 0 or tags.returncode != 0:
+        return cannot("this is not a git checkout with a commit at HEAD")
+    head = head.stdout.strip()
+    try:
+        shown = subprocess.run(["git", "cat-file", "blob", f"HEAD:{rel}"], cwd=ROOT,
+                               capture_output=True, timeout=60, env=env)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return cannot(f"git could not be asked for HEAD's {rel}: {e}")
+    if shown.returncode != 0:
+        return cannot(f"HEAD holds no {rel}: generate the report and commit it")
+    try:
+        text = shown.stdout.decode("utf-8")
+    except UnicodeDecodeError:
+        return cannot(f"HEAD's {rel} is not UTF-8, so not a report this script writes")
+    header = text.split("\n## ", 1)[0]
+    revisions, runs = REVISION_LINE.findall(header), RUN_LINE.findall(header)
+    unread = ("its first line is not the generated marker"
+              if text.split("\n", 1)[0] != GENERATED else
+              "it has no Revision line, or more than one" if len(revisions) != 1 else
+              "it has no Run line, or more than one" if len(runs) != 1 else None)
+    if unread:
+        return cannot(f"HEAD's {rel} is not a report this script writes: {unread}")
+
+    reasons = []
+    m = re.fullmatch(r"`([0-9a-f]{7,40})`(, with changes not yet committed)?", revisions[0])
+    if not m:
+        reasons.append(f"it names no commit: its revision is \"{revisions[0]}\"")
+    else:
+        digits = m.group(1)
+        if m.group(2):
+            reasons.append(f"it is a run on `{digits}` with changes not yet committed, so not "
+                           "on that commit's files")
+        found = git("rev-parse", "--verify", "--quiet", f"{digits}^{{commit}}")
+        full = found.stdout.strip() if found.returncode == 0 else ""
+        if not full.startswith(digits):
+            reasons.append(f"its revision `{digits}` is not one commit of this repository")
+        elif git("merge-base", "--is-ancestor", full, head).returncode != 0:
+            reasons.append(f"its revision `{digits}` is not in the history of HEAD")
+        else:
+            diff = git("diff", "--name-only", "--no-renames", full, head, "--")
+            other = [path for path in diff.stdout.splitlines() if path != rel]
+            if diff.returncode != 0:
+                reasons.append(f"git could not compare HEAD with its revision `{digits}`")
+            elif other:
+                reasons.append(f"HEAD differs from its revision `{digits}` in more than the "
+                               "report: " + listed(other))
+    if runs[0] != EVERY_ITEM:
+        reasons.append("it is a `--quick` run: the kernel replay (E1) and the model tests "
+                       "(E4) were not run" if runs[0].startswith("`--quick`") else
+                       f"it is not a run of every item: its Run line says \"{runs[0]}\"")
+    changes = [line[3:] + (" (untracked)" if line.startswith("??") else "")
+               for line in status.stdout.splitlines() if line.strip()]
+    if changes:
+        reasons.append("the worktree has changes not committed, and the report is held to the "
+                       "committed state alone: " + listed(changes))
+    marked = [line[2:] for line in tags.stdout.splitlines() if line and line[:2] != "H "]
+    if marked:
+        reasons.append("the index marks files that git does not compare with the worktree, "
+                       "or that are unmerged (assume-unchanged or skip-worktree, say), so they "
+                       "cannot be shown to have no change: " + listed(marked) + "; clear the "
+                       "marks (`git update-index --no-assume-unchanged --no-skip-worktree`)")
+    if reasons:
+        print(f"✗ acceptance: the report HEAD holds, {rel}, is not current:")
+        for why in reasons:
+            print(f"  {why}")
+        print("Regenerate it on a freshly built tree at the commit to be released, with "
+              "nothing uncommitted (`lake build`, `lake build Audit`, `lake env lean "
+              "Certificate/Facts.lean`, then `python3 scripts/check_acceptance.py`), and "
+              "commit it by itself (docs/WORKFLOW.md, section 10, step 10).")
+        return 1
+    print(f"✓ acceptance: the report HEAD holds is current: a run of every item on "
+          f"`{digits}`, from which HEAD differs in nothing but the report, and the worktree "
+          "has no change")
+    return 0
+
+
+# ---------------------------------------------------------------------------------------
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -1231,11 +1421,25 @@ def main(argv=None) -> int:
                         help="run no check: exit 1 when an item that passes in MAIN does "
                              "not pass in PR, save a staging item's fail (P10, E6), two "
                              "files that --json wrote")
+    parser.add_argument("--check-current", action="store_true",
+                        help="run no check, and need no Lean: exit 1 when the report HEAD "
+                             "holds is not current, for a release")
     args = parser.parse_args(argv)
+    if args.check_current:
+        if args.compare or args.quick or args.json or args.output != REPORT:
+            parser.error("--check-current runs no check, and takes no other option")
+        return check_current()
     if args.compare:
         if args.quick or args.json or args.output != REPORT:
             parser.error("--compare runs no check, and takes no other option")
         return compare(*args.compare)
+
+    problem = build_problem()
+    if problem:
+        print(f"✗ acceptance: cannot begin: {problem}\nBuild the tree and compute the "
+              "certificate first, then run the checklist again: `lake build`, `lake build "
+              "Audit`, then `lake env lean Certificate/Facts.lean`.")
+        return 2
 
     facts_path = ROOT / "facts.json"
     if not facts_path.exists():

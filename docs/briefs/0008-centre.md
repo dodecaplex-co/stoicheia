@@ -144,6 +144,13 @@ lock changes.
   `Arc.eq_of_aligned` and by the proof of Circle 4 after I.7, each to conclude that two
   circles with one centre and a common point are one.
 
+*Status, 27 October 2026, for #477:* the notes above and the frozen text below are kept as
+written, and this note brings one count of the note for #59 up to date. Since Book Zero and
+III.1's own proof stopped using Circle 1 (`between_of_inside_chord`,
+[the entry for that move](../decisions/2026-10-25-circle-1-bookzero.md)), III.1's axioms
+expectation in `tests/certificate_expectations.json` counts 38 tacit rules where that note
+gives 39, and it still names `Tacit.exists_centre`; the porism's counts 37.
+
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
 while the frozen text is retained as history.*

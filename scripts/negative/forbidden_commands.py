@@ -3,8 +3,10 @@ prefix by which the scan knows one, and an axiom declared twice, once after anot
 on the same line, planted in a new file of each folder the scan reads, `Elements/`,
 `Staging/` (in a folder of its own), `Audit/`, `model/Model/` and `model/Check/`, with
 `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and `Audit.lean`,
-`model/Model.lean` and `model/Check.lean`, and a new Book Zero file that imports a
-proposition: `check_fidelity.py` must catch each on its own line, naming its file and line.
+`model/Model.lean` and `model/Check.lean`, a new Book Zero file that imports a
+proposition, and a `native_decide` in a theorem added to a proposition's own file, I.16's
+(`Elements/BookI/Prop16.lean`), inside its namespace: `check_fidelity.py` must catch each
+on its own line, naming its file and line.
 Some of the commands stand after a string, a raw string or a character literal holding
 `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, so the scan must read
 Lean's literals as Lean does; a string whose braces Lean could read as code is caught too.
@@ -165,12 +167,17 @@ PLANTED_FILES = (("Elements", "Elements/Planted.lean"),
 BOOK_ZERO = ("Elements/Figure/Planted.lean", 2, "-- Planted by scripts/negative_tests.py: "
              "the import below must be caught.\nimport Elements.BookI.Prop01\n")
 
+# A proposition's own file, the end of its namespace, and the theorem planted before it.
+PROPOSITION = ("Elements/BookI/Prop16.lean", "\nend Elements.BookI",
+               "\n/-- Planted by scripts/negative_tests.py. -/\n"
+               "theorem planted_native : 2 + 2 = 4 := by native_decide\n")
+
 
 def plant() -> None:
     """Every forbidden command, and an axiom declared twice, once after another command
     on the same line, in a new file of each folder `check_fidelity.py` scans, `#exit` at
-    the end of each root file, and a Book Zero file importing a proposition. Each must be
-    caught, by its file and line."""
+    the end of each root file, a Book Zero file importing a proposition, and a
+    `native_decide` in I.16's file. Each must be caught, by its file and line."""
     header = ["/-! Planted by scripts/negative_tests.py: forbidden commands must be caught. -/",
               ""]
     body = [("axiom", "example : True := trivial axiom planted_inline : True"),
@@ -194,6 +201,8 @@ def plant() -> None:
     allowed: list[str] = []
     planted: list[Path] = []          # files, then the folders made for them
     roots: dict[Path, str] = {}
+    proposition, end, theorem = PROPOSITION
+    kept: bytes | None = None         # the proposition's file as it was
     try:
         for tree, rel in PLANTED_FILES:
             path = nt.ROOT / rel
@@ -235,13 +244,21 @@ def plant() -> None:
         assert not (nt.ROOT / figure).exists(), f"{figure} exists; update this test"
         (nt.ROOT / figure).write_text(text)
         planted.insert(0, nt.ROOT / figure)
+        kept = (nt.ROOT / proposition).read_bytes()
+        nt.replace_once(proposition, end, theorem + end)
+        changed = (nt.ROOT / proposition).read_text()
+        native = changed[:changed.index("by native_decide")].count("\n") + 1
         result = nt.fidelity()
         for tree, messages in wanted.items():
             nt.expect_failure(f"every forbidden command and an axiom in {tree}/ and {tree}.lean",
                               result, *messages, unwanted=tuple(allowed))
         nt.expect_failure("a proposition imported by Book Zero", result,
                           f"{figure}:{line}: Book Zero must not import a proposition")
+        nt.expect_failure("a native_decide in I.16's file", result,
+                          caught(proposition, native, "native_decide"))
     finally:
+        if kept is not None and (nt.ROOT / proposition).read_bytes() != kept:
+            (nt.ROOT / proposition).write_bytes(kept)
         for root, saved in roots.items():
             root.write_text(saved)
         for path in planted:

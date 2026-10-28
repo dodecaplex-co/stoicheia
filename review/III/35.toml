@@ -64,10 +64,10 @@ case = "both straight lines through the centre E (left), and neither through F w
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:98c7b45c9b798d58"
-run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4"
+commit = "71146bf3f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:fe46df34c8b70861"
+run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f"
 text = "sha256:7e44a79852ba3a4f"
 
 [review.items]
