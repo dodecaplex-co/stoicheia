@@ -184,6 +184,8 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import argparse
+import base64
+import binascii
 import hashlib
 import inspect
 import io
@@ -1069,11 +1071,7 @@ def captured_descriptors():
         finally:
             os.close(saved[0])
             os.close(saved[1])
-        captured[:] = (
-            captured[0].decode(sys.stdout.encoding or "utf-8",
-                               sys.stdout.errors or "strict"),
-            captured[1].decode(sys.stderr.encoding or "utf-8",
-                               sys.stderr.errors or "strict"))
+        captured[:] = bytes(captured[0]), bytes(captured[1])
         if problems and active is None:
             raise problems[0]
 
@@ -1087,9 +1085,11 @@ def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], li
     print(heading, flush=True)
     with captured_descriptors() as captured:
         run_plant(plant, sources, changes, show_heading=False)
+    heading_bytes = (heading + "\n").encode(sys.stdout.encoding or "utf-8",
+                                             sys.stdout.errors or "strict")
     report["plants"].append({"name": plant.name,
-                             "output": heading + "\n" + captured[0],
-                             "stderr": captured[1],
+                             "output": base64.b64encode(heading_bytes + captured[0]).decode(),
+                             "stderr": base64.b64encode(captured[1]).decode(),
                              "failures": failures[start:]})
     report["taken"].update(range(start, len(failures)))
 
@@ -1111,8 +1111,13 @@ def worker_env() -> dict[str, str]:
     variables that name the configuration files the run reads, the four of safe_push.py's
     CONFIG_FILE_VARIABLES, are kept (#430), and with them any conditional include those
     files hold (the docstring)."""
-    return {name: value for name, value in os.environ.items()
-            if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
+    env = {name: value for name, value in os.environ.items()
+           if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
+    for name in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+        value = env.get(name)
+        if value and not os.path.isabs(value):
+            env[name] = os.path.abspath(ROOT / value)
+    return env
 
 
 def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
@@ -1371,12 +1376,22 @@ def well_formed(report) -> bool:
     not missing."""
     def strings(value) -> bool:
         return isinstance(value, list) and all(isinstance(s, str) for s in value)
+
+    def encoded(value) -> bool:
+        if not isinstance(value, str):
+            return False
+        try:
+            base64.b64decode(value, validate=True)
+        except (binascii.Error, ValueError):
+            return False
+        return True
+
     return (isinstance(report, dict) and {"plants", "failures", "status"} <= report.keys()
             and strings(report["failures"])
             and (report["status"] is None or type(report["status"]) is int)
             and isinstance(report["plants"], list)
             and all(isinstance(p, dict) and isinstance(p.get("name"), str)
-                    and isinstance(p.get("output"), str) and isinstance(p.get("stderr"), str)
+                    and encoded(p.get("output")) and encoded(p.get("stderr"))
                     and strings(p.get("failures"))
                     for p in report["plants"]))
 
@@ -1398,6 +1413,9 @@ def read_report(path: Path, names: list[str], code: int) -> tuple[list[dict], li
     if not well_formed(report):
         return [], [], crashed + ["its report is not in the form a worker writes"]
     plants, own = report["plants"], report["failures"]
+    for plant in plants:
+        plant["output"] = base64.b64decode(plant["output"])
+        plant["stderr"] = base64.b64decode(plant["stderr"])
     given = [p["name"] for p in plants]
     if given != names[:len(given)]:
         crashed.append(f"its report names {', '.join(given) or 'no plant'}, not its plants "
@@ -1536,10 +1554,12 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
                                worker.returncode)
                    for k, (share, worker) in enumerate(zip(shares, workers), 1)]
         outputs = {p["name"]: p for plants, _, _ in reports for p in plants}
+        sys.stdout.flush()
+        sys.stderr.flush()
         for plant in chosen:
             if plant.name in outputs:
-                sys.stdout.write(outputs[plant.name]["output"])
-                sys.stderr.write(outputs[plant.name]["stderr"])
+                write_descriptor(1, outputs[plant.name]["output"])
+                write_descriptor(2, outputs[plant.name]["stderr"])
                 for failure in outputs[plant.name]["failures"]:
                     sources[len(failures)] = f"{plant.name} ({shown(plant.path)}):"
                     failures.append(failure)

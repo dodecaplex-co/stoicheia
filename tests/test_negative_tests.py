@@ -2649,6 +2649,14 @@ WRITES_SUBPROCESS_OUTPUT = (
     '"import os; os.write(1, b\'{name} child stdout\\\\n\'); "'
     '"os.write(2, b\'{name} child stderr\\\\n\')"], check=True)\n'
     '    nt.refused("{name}: caught")')
+WRITES_NON_UTF8 = (
+    'import sys\n'
+    '    sys.stdout.flush()\n'
+    '    sys.stderr.flush()\n'
+    '    subprocess.run([sys.executable, "-c", '
+    '"import os; os.write(1, b\'{name} child stdout \' + bytes([255]) + b\'\\\\n\'); "'
+    '"os.write(2, b\'{name} child stderr \' + bytes([255]) + b\'\\\\n\')"], check=True)\n'
+    '    nt.refused("{name}: caught")')
 MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", ""))'
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
@@ -2806,6 +2814,7 @@ if __name__ == "__main__":
     raise SystemExit(0)
 '''
 TIME = re.compile(r"\d+\.\d\ds \(including restoration\)")
+TIME_BYTES = re.compile(rb"\d+\.\d\ds \(including restoration\)")
 
 
 class WorkerTests(unittest.TestCase):
@@ -2861,6 +2870,12 @@ class WorkerTests(unittest.TestCase):
         self.assert_no_worker_left()
         return result
 
+    def suite_bytes(self, *args):
+        result = subprocess.run([sys.executable, "scripts/negative_tests.py", *args],
+                                cwd=self.root, env=self.env, capture_output=True, timeout=300)
+        self.assert_no_worker_left()
+        return result
+
     def assert_no_worker_left(self):
         self.assertEqual(list(self.tmp.glob("stoicheia-negative-*")), [])
         self.assertEqual(self.git("worktree", "list", "--porcelain").count("worktree "), 1)
@@ -2911,6 +2926,25 @@ class WorkerTests(unittest.TestCase):
         self.assertIn("The plants in 2 workers, dealt in turn", lines[0])
         self.assertEqual(lines[1:3], ["  worker 1: a_one\n", "  worker 2: b_two\n"])
         self.assertEqual("".join(lines[3:]), alone.stderr)
+
+    def test_non_utf8_subprocess_output_is_replayed_as_bytes(self):
+        """Successful workers preserve non-UTF-8 bytes from inherited stdout and stderr,
+        in stable plant order and on the same descriptors as a one-worker run."""
+        self.commit(a_one=WRITES_NON_UTF8, b_two=WRITES_NON_UTF8)
+        alone = self.suite_bytes()
+        workers = self.suite_bytes("--workers", "2")
+        self.assertEqual(workers.returncode, alone.returncode,
+                         workers.stdout + workers.stderr + alone.stdout + alone.stderr)
+        self.assertEqual(TIME_BYTES.sub(b"", workers.stdout),
+                         TIME_BYTES.sub(b"", alone.stdout))
+        for name in (b"a_one", b"b_two"):
+            self.assertEqual(alone.stdout.count(name + b" child stdout \xff\n"), 1)
+        self.assertEqual(alone.stderr,
+                         b"a_one child stderr \xff\nb_two child stderr \xff\n")
+        lines = workers.stderr.splitlines(keepends=True)
+        self.assertIn(b"The plants in 2 workers, dealt in turn", lines[0])
+        self.assertEqual(lines[1:3], [b"  worker 1: a_one\n", b"  worker 2: b_two\n"])
+        self.assertEqual(b"".join(lines[3:]), alone.stderr)
 
     def test_a_plant_that_misses_its_change_fails_the_run_in_any_worker(self):
         """As the first plant of a worker's share and as the last."""
@@ -3043,6 +3077,28 @@ class WorkerTests(unittest.TestCase):
                 finally:
                     self.env.clear()
                     self.env.update(saved)
+
+    def test_relative_git_config_files_keep_source_resolution(self):
+        """Relative global and system configuration paths retain the source cwd's meaning
+        in workers, so status settings give serial and parallel runs the same verdict."""
+        hidden = self.root / "relative-config-hidden"
+        for source in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+            with self.subTest(source=source):
+                self.commit(a_one=PASSES, b_two=PASSES)
+                config = self.tmp / f"{source.lower()}-relative.config"
+                config.write_text("[status]\n\tshowUntrackedFiles = no\n")
+                hidden.write_text("hidden by the source configuration\n")
+                saved = self.env.copy()
+                self.env[source] = os.path.relpath(config, self.root)
+                if source == "GIT_CONFIG_SYSTEM":
+                    self.env["GIT_CONFIG_NOSYSTEM"] = "0"
+                try:
+                    self.assertEqual(self.git("status", "--porcelain"), "")
+                    self.assertEqual(self.one_worker_s_verdict(), 0)
+                finally:
+                    self.env.clear()
+                    self.env.update(saved)
+                    hidden.unlink()
 
     def test_nested_fixture_repository_keeps_its_own_work_tree(self):
         """Git invoked by cwd or -C in a repository nested below a worker keeps that
@@ -3502,7 +3558,7 @@ class WorkerTests(unittest.TestCase):
                    "c_no_status": 'del report["status"]',
                    "d_no_name": 'del report["plants"][0]["name"]',
                    "e_no_output": 'del report["plants"][0]["output"]',
-                   "f_stderr_as_list": 'report["plants"][0]["stderr"] = []',
+                   "f_stderr_not_base64": 'report["plants"][0]["stderr"] = "*"',
                    "g_no_plant_failures": 'del report["plants"][0]["failures"]',
                    "h_status_as_text": 'report["status"] = str(report["status"])'}
         self.commit(i_whole=PASSES, **{name: corrupts(change) for name, change in changes.items()})
