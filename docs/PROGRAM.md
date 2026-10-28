@@ -69,7 +69,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48, 47 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 and 27 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
