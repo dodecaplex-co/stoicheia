@@ -83,10 +83,11 @@ worker's tree whose Git status, read once the worker has ended, is not the entry
 which catches a worker that ended without its `finally` (os._exit, a signal). Interrupted,
 the run interrupts each worker still running and waits for it (stop), and in its `finally`
 it removes every worker's tree with `git worktree remove --force --force`, with SIGINT
-ignored, each whatever became of those before it; one that Git cannot remove is deleted,
-with a note that its record in the repository's worktree list stays until Git prunes it;
-a tree, or the workers' directory, still there after that fails the run, naming it. The
-run never runs `git worktree prune`, which would prune other trees' records too. As
+ignored, each successfully registered tree whatever became of those before it; one that
+Git cannot remove fails the run, even when its directory can be deleted, because its
+record remains in the repository's worktree list; a tree, or the workers' directory,
+still there after that fails the run too, naming it. The run never runs `git worktree
+prune`, which would prune other trees' records too. As
 with a plant's restoration (below), a forced kill defeats this: a run ended by SIGKILL, or
 by a signal Python does not turn into an exception, leaves its workers running and their
 trees registered.
@@ -1044,7 +1045,7 @@ def linked(root: Path) -> Path | None:
     return None
 
 
-def make_worker(tree: Path, entry: str) -> tuple[str, str] | None:
+def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, str] | None:
     """Make a worker's tree at `tree` (the docstring): None when its Git status is `entry`,
     the tree's entry status; else what is wrong, to follow "worker k's tree", and what to
     show with it."""
@@ -1052,13 +1053,15 @@ def make_worker(tree: Path, entry: str) -> tuple[str, str] | None:
     if added.returncode != 0:
         return f"could not be made: git worktree add: exit {added.returncode}", (
             added.stdout + added.stderr)
+    registered.append(tree)
     listed = subprocess.run(("git", "ls-files", "-z", "--cached", "--others",
                              "--exclude-standard"), cwd=ROOT, capture_output=True)
     if listed.returncode != 0:
         return f"could not be made: git ls-files: exit {listed.returncode}", (
             listed.stderr.decode(errors="replace"))
     try:
-        for name in dict.fromkeys(name.decode() for name in listed.stdout.split(b"\0") if name):
+        for name in dict.fromkeys(os.fsdecode(name) for name in listed.stdout.split(b"\0")
+                                  if name):
             source, target = ROOT / name, tree / name
             if source.is_symlink() or source.is_file():
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -1163,18 +1166,16 @@ def stop(workers: list[subprocess.Popen]) -> None:
 
 
 def remove(trees: list[Path], base: Path) -> None:
-    """Remove the workers' trees, each with Git's record of it, then `base`, with their
-    reports and logs: SIGINT ignored throughout, and the previous handler put back after,
-    so that an interruption leaves none of them; each removal whatever became of those
-    before it. A tree that Git cannot remove is deleted, with a note that its record stays
-    until Git prunes it: never `git worktree prune`, which would prune other trees' too. A
-    tree, or `base`, still there after that fails the run, naming it."""
+    """Remove the successfully registered workers' trees, each with Git's record of it,
+    then `base`, with their reports and logs: SIGINT ignored throughout, and the previous
+    handler put back after, so that an interruption leaves none of them; each removal
+    whatever became of those before it. A tree that Git cannot remove fails the run even
+    when its directory is deleted: never `git worktree prune`, which would prune other
+    trees' records too. A tree, or `base`, still there fails the run too, naming it."""
     previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
     try:
         for k, tree in enumerate(trees, 1):
             try:
-                if not tree.exists():
-                    continue
                 removed = run("git", "worktree", "remove", "--force", "--force", str(tree))
                 if removed.returncode == 0:
                     continue
@@ -1188,9 +1189,11 @@ def remove(trees: list[Path], base: Path) -> None:
                 failures.append(message)
                 print(f"✗ {message}")
                 continue
-            print(f"note: git worktree remove could not remove worker {k}'s tree ({why}); "
-                  f"{tree} was deleted, and its record in the repository's worktree list "
-                  "stays until Git prunes it")
+            message = (f"worker {k}'s tree {tree} could not be removed ({why}); its "
+                       "directory was deleted, but its record remains in the repository's "
+                       "worktree list")
+            failures.append(message)
+            print(f"✗ {message}")
         shutil.rmtree(base, ignore_errors=True)
         if base.exists():
             message = f"the workers' directory {base} could not be deleted; remove it"
@@ -1222,6 +1225,7 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
               f"{', '.join(p.name for p in share)}", file=sys.stderr)
     base = Path(tempfile.mkdtemp(prefix="stoicheia-negative-")).resolve()
     trees = [base / f"worker-{k}" for k in range(1, count + 1)]
+    registered: list[Path] = []
     workers: list[subprocess.Popen] = []
     try:
         # A failure or "false" is the good answer: no repository above the workers' trees.
@@ -1236,7 +1240,7 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
             print(f"✗ {message}")
             return 0
         for k, tree in enumerate(trees, 1):
-            fault = make_worker(tree, entry)
+            fault = make_worker(tree, entry, registered)
             if fault is not None:
                 message, shown_with = f"worker {k}'s tree {fault[0]}", fault[1]
                 failures.append(message)
@@ -1291,7 +1295,7 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
         try:
             stop(workers)
         finally:
-            remove(trees, base)
+            remove(registered, base)
 
 
 def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,

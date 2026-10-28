@@ -18,6 +18,7 @@ run on a throwaway repository, as a script, with small plants that need no Lean.
 """
 
 import ast
+import errno
 import importlib.util
 import io
 import json
@@ -2627,6 +2628,7 @@ MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", "")
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
 LEAVES_AND_EXITS = '(nt.ROOT / "left-by-{name}").write_text("")\n    import os\n    os._exit(0)'
+DELETES_TREE_AND_EXITS = 'import shutil\n    shutil.rmtree(nt.ROOT)\n    import os\n    os._exit(0)'
 SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
 # It refuses only when a changed tracked file and an untracked one hold the bytes they hold
 # in the tree under test, which it finds through Git's common directory.
@@ -2654,6 +2656,14 @@ SCRUBBED = ('import os\n'
             '        print("{name} sees", ", ".join(seen))\n'
             '    else:\n'
             '        nt.refused("{name}: caught")')
+READS_NON_UTF8 = ('import os\n'
+                  '    path = os.fsencode(nt.ROOT) + b"/notes/untracked-\\xff.txt"\n'
+                  '    with open(path, "rb") as file:\n'
+                  '        contents = file.read()\n'
+                  '    if contents == b"untracked non-UTF-8 name\\x00contents":\n'
+                  '        nt.refused("{name}: caught")\n'
+                  '    else:\n'
+                  '        print("{name}: wrong contents", repr(contents))')
 
 
 def corrupts(change):
@@ -2700,6 +2710,7 @@ class WorkerTests(unittest.TestCase):
     def setUp(self):
         self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
         self.tmp = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.enterContext(patch.object(negative, "failures", []))
         self.env = {k: v for k, v in os.environ.items()
                     if not k.startswith(("GIT_", "PYTHON", "LAKE")) and k != "LEAN_PATH"}
         self.env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
@@ -2848,6 +2859,33 @@ class WorkerTests(unittest.TestCase):
         self.assert_no_worker_left()
         self.assertEqual(self.git("status", "--porcelain"), "")
 
+    def test_a_missing_worker_tree_s_registration_is_removed(self):
+        """A worker deletes its own tree and exits: the run fails, and cleanup still removes
+        that worker's registration as well as the other worker's tree and registration."""
+        self.commit(a_one=PASSES, b_two=DELETES_TREE_AND_EXITS)
+        result = self.suite("--workers", "2")
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_an_untracked_non_utf8_filename_is_preserved(self):
+        """Each worker receives an untracked filename that is not UTF-8, with its bytes and
+        contents unchanged, and its plant observes that copy."""
+        self.commit(a_reads=READS_NON_UTF8, b_reads=READS_NON_UTF8)
+        notes = self.root / "notes"
+        notes.mkdir()
+        raw = os.fsencode(notes) + b"/untracked-\xff.txt"
+        try:
+            descriptor = os.open(raw, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except OSError as error:
+            if error.errno == errno.EILSEQ:
+                self.skipTest("the filesystem refuses non-UTF-8 filenames")
+            raise
+        with os.fdopen(descriptor, "wb") as file:
+            file.write(b"untracked non-UTF-8 name\x00contents")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_reads", "b_reads"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+
     def test_a_worker_s_tree_is_the_tree_under_test(self):
         """Not just its commit: a change staged, a change not, a tracked file deleted and an
         untracked one, a symbolic link and an executable file; and a clone of `.lake`, each
@@ -2885,6 +2923,7 @@ class WorkerTests(unittest.TestCase):
             result = self.suite("--workers", "2")
             self.assertEqual(result.returncode, 1, result.stdout)
             self.assertIn("✗ worker 1's tree does not match the tree under test:\n", result.stdout)
+            self.assertNotIn("worker 2's tree", result.stdout)
             self.assertNotIn("(scripts/negative/", result.stdout)
             self.assertIn("the working tree did not return to its entry Git status",
                           result.stdout)
@@ -2999,10 +3038,10 @@ class WorkerTests(unittest.TestCase):
         self.assert_no_worker_left()
         self.assertIs(signal.getsignal(signal.SIGINT), signal.default_int_handler)
 
-    def test_a_tree_git_cannot_remove_is_deleted_with_a_note(self):
+    def test_a_tree_git_cannot_remove_fails_after_its_directory_is_deleted(self):
         """Git fails to remove the first tree, or the command raises: its directory is
-        deleted, the run says that Git's record of it stays, and the second tree is removed
-        all the same. No record is pruned, not even one whose tree is not the run's."""
+        deleted but the run fails because Git's record stays, and the second tree is
+        removed all the same. No record is pruned, not even one outside the run."""
         elsewhere = self.tmp / "elsewhere"
         self.commit(a_one=PASSES)
         self.git("worktree", "add", "--detach", str(elsewhere), "HEAD")
@@ -3012,6 +3051,7 @@ class WorkerTests(unittest.TestCase):
                  "exit 128: fatal: planted"),
                 ("raise", OSError("planted"), "OSError: planted")):
             with self.subTest(label):
+                negative.failures.clear()
                 base, trees = self.trees(label)
                 real = negative.run
 
@@ -3024,10 +3064,11 @@ class WorkerTests(unittest.TestCase):
                 output = io.StringIO()
                 with patch.object(negative, "run", fails), redirect_stdout(output):
                     negative.remove(trees, base)
-                self.assertEqual(output.getvalue(), (
-                    f"note: git worktree remove could not remove worker 1's tree ({why}); "
-                    f"{trees[0]} was deleted, and its record in the repository's worktree "
-                    "list stays until Git prunes it\n"))
+                message = (f"worker 1's tree {trees[0]} could not be removed ({why}); its "
+                           "directory was deleted, but its record remains in the repository's "
+                           "worktree list")
+                self.assertEqual(negative.failures, [message])
+                self.assertEqual(output.getvalue(), f"✗ {message}\n")
                 self.assertFalse(base.exists())
                 listed = self.git("worktree", "list", "--porcelain")
                 self.assertIn(f"worktree {trees[0]}\n", listed)
