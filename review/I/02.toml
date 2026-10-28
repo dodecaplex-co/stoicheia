@@ -45,10 +45,10 @@ case = "A apart from B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b58079e0"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "20d14b0a3"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:51c22d0c078729c6"
-run = "brief 0005 stage 5, ship F2 wave-two re-read; card 478, ship XS, from git and record evidence, added without a restamp: Claude's proof (2480e78a4, by README's account of the crew); cross-family readings: Aw2-reader-e, an independent Codex reader, read the record in full at 251129b (0b1357054, 19 October 2026), with the Lean and every sentence as they now stand and an [overlap] block since removed (f5bccaa4c); GPT-6 Astra (Codex), ship S3's independent reader, read it in full at bd86a7b6 (bb895f532, stamped again at ee8f4e21c, 20 October 2026), with the Lean as it now stands, before the note at 'and again, with centre D' took the wording of 812af95a5 (written by Codex sailor Aw2-prose-2); the record as merged at f564f82da was read whole only by Claude Opus 5.5, reader F2-w2stampA, at b58079e0"
+run = "brief 0005 stage 5, ship F2 wave-two re-read; card 478, ship XS, from git and record evidence, added without a restamp: Claude's proof (2480e78a4, by README's account of the crew); cross-family readings: Aw2-reader-e, an independent Codex reader, read the record in full at 251129b (0b1357054, 19 October 2026), with the Lean and every sentence as they now stand and an [overlap] block since removed (f5bccaa4c); GPT-6 Astra (Codex), ship S3's independent reader, read it in full at bd86a7b6 (bb895f532, stamped again at ee8f4e21c, 20 October 2026), with the Lean as it now stands, before the note at 'and again, with centre D' took the wording of 812af95a5 (written by Codex sailor Aw2-prose-2); the record as merged at f564f82da was read whole only by Claude Opus 5.5, reader F2-w2stampA, at b58079e0; card 478, ship AU: main Prop02 proof by Claude (2480e78a4, by README's account of the crew); record drafted by Codex (2e8aa679d), its second-circle note in the words of Codex sailor Aw2-prose-2 (812af95a5); later Lean edits (8d3780c22, ff7054aa5), lettering (2dee939bf), reading prose (fe30d3f3c) and provenance (5cd675432) in commits naming no writer beyond their Claude Opus 5.5 co-author line; read in full by GPT-6 Astra (Codex), a reader of the other family from the main proof's writer, reader AU-r478-I2, independent re-read at 20d14b0a3"
 text = "sha256:cb2679dd1b46ee25"
 
 [review.items]
