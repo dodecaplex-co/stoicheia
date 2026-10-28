@@ -31,7 +31,7 @@ note = "The triangles ABD and FBC, which I.4 takes below, are named by their cor
 at = "let the angle ABC be added to each"
 kind = "helper"
 helper = "Prop47.within"
-note = "Euclid reads off his figure that C lies within the angle DBA and A within FBC; the Lean finds the reason in I.17 and I.13, with the squares standing outward. One case also rests on Metric 5 (`Tacit.angle_le_two_right`), that no angle exceeds two right angles: it rules out AD crossing BC beyond B, which would make the angle ABD greater than two right angles. The rule is a consequence of I.13, which Euclid could have used for the step, and the overlap catalogue lists it as supplying this step of I.47's proof."
+note = "Euclid reads off his figure that C lies within the angle DBA and A within FBC; the Lean finds the reason in I.17 and I.13, with the squares standing outward. One case rules out AD crossing BC beyond B, which would make the angle ABD greater than two right angles; I.13 forbids it, through its bound for an angle of a triangle (`Prop13.angle_lt_two_right`)."
 
 [[passage]]
 at = "therefore the base AD is equal to the base FC"

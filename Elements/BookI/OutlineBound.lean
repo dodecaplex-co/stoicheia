@@ -39,17 +39,6 @@ produced past it, takes its two ends to the far side of every point within the a
 make there; so finitely many points lie on one side of some straight line, and, seen from a
 point beyond it, within one angle. -/
 
-/-- **An angle of a triangle is less than two right angles.** Produce AC beyond C to E: the
-angle ABE is greater than the angle ABC, and no angle exceeds two right angles. -/
-theorem angle_lt_two_right {A B C : Point} (h : Triangle A B C) : ∠ A B C < ∟ + ∟ := by
-  obtain ⟨E, hACE⟩ := produce h.ne₁₃
-  obtain ⟨L, hA, hC⟩ := Postulate1 A C h.ne₁₃
-  have hEAB : Triangle E A B := Triangle.of_line (on_line_of_between hACE hA hC) hA
-    (ne_of_between_ends hACE).symm (h.acb.off_line hA hC)
-  rw [angle_symm h.ne₁₂ h.ne₂₃.symm]
-  exact mag_lt_of_lt_of_le (angle_lt_of_between hEAB (between_symm hACE))
-    (angle_le_two_right E B A)
-
 /-- Finitely many points of a straight line lie between two of its points. A point beyond the
 two ends so far replaces the nearer end. -/
 theorem line_span {ℓ : Line} : ∀ xs : List Point, (∀ X ∈ xs, OnLine X ℓ) →
@@ -316,7 +305,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
   have hsum₁ : ∠ V P O + ∠ P O B < ∟ + ∟ := by
     have hadd : ∠ B O C = ∠ B O P + ∠ P O C := angle_add_of_within hPC hPB
     rw [angle_symm hVP hOP, hcopy, angle_symm hOP.symm hOB.symm, add_comm (∠ P O C), ← hadd]
-    exact angle_lt_two_right hBOC
+    exact BookI.Prop13.angle_lt_two_right hBOC
   /- Postulate 5: the arm PV meets OB, at B₂. -/
   obtain ⟨B₂, hB₂V, hB₂B, hB₂side⟩ :=
     Postulate5 hV_V hP_V hP_P hO_P hO_B hB_B hOP.symm hVB hsum₁
@@ -364,7 +353,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
       (SameSideOf.of_line hPW' hPℓ hW'ℓ (same_side_symm (pasch2 (between_symm hOB₂B₁) hB₁ℓ hB₂ℓ)))
       (SameSideOf.of_line hPB₂ hP_K hB₂_K hOW')
     rw [← hang₂, ← hadd]
-    exact angle_lt_two_right (Triangle.of_line hW'ℓ hPℓ hPW'.symm hB₂ℓ)
+    exact BookI.Prop13.angle_lt_two_right (Triangle.of_line hW'ℓ hPℓ hPW'.symm hB₂ℓ)
   /- Postulate 5: B₁P produced meets OC, at C₂. -/
   obtain ⟨C₂, hC₂ℓ, hC₂C, hC₂side⟩ :=
     Postulate5 hW'ℓ hPℓ hP_P hO_P hO_C hC_C hOP.symm hW'c hsum₂
