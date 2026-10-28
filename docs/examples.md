@@ -71,8 +71,9 @@ argument.
   answers, one on each side, which is the proposition's point.
 
 III.8 is a second example of the kind: its helpers are De Morgan's two assumptions, named as
-his, and where Euclid's "which was proved impossible" does not cover a third straight line
-the Lean compares the angles at the centre instead, and the mishnah says so.
+his. Beyond the reach of Euclid's "which was proved impossible", the Lean joins his convex
+and concave orders for points on different circumferences; only a point of contact is
+compared by the angles at the centre, and the mishnah says so.
 
 ## An area proof: II.4
 

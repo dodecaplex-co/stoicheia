@@ -13,7 +13,7 @@ note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC b
 at = "For from the centre E let EH, EK be drawn"
 kind = "helper"
 helper = "foot_between"
-note = "The statement supplies EH and EK; `foot_between` supplies the order F, K, G that Euclid reads from the figure. Its proof uses I.17 and I.19, for which Heath prints no reference here, and then `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "The statement supplies EH and EK; `foot_between` supplies the order F, K, G that Euclid reads from the figure. Its proof uses I.17 and I.19, for which Heath prints no reference here, and then `Tacit.between_of_inside_chord`, System E's Circle 1, which is proved from III.2."
 
 [[passage]]
 at = "Then, since BC is nearer to the centre and FG more remote"
@@ -55,11 +55,11 @@ case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
 stage = "full"
-commit = "1870c96d1"
+commit = "689ab169f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:6fa68d250cf0263b"
-run = "card #131, ship ER: its note re-read after III.1's call was dropped; axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #32, ship PF: read in full after the idle fact that K is off MN was dropped (the drop written by Claude), by GPT-6 Astra (Codex), reader PF-r1, at 835333748; card 478, ship XS, from git and record evidence, added without a restamp: main Prop15 proof by OpenAI Codex (a737ce0b5); cross-family reading: R3-337-r4, Claude Opus 5.5, read in full at e00da4b4 (f798c65e8, 24 October 2026), with the record as it now stands, before the drop of 835333748, written by Claude (b9a0f68d2) and read by GPT-6 Astra (Codex), reader PF-r1, at 835333748 (b9a0f68d2, 25 October 2026); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1"
-text = "sha256:a66bf9f203859542"
+lean = "sha256:666155285ca26cc9"
+run = "card #131, ship ER: its note re-read after III.1's call was dropped; axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #32, ship PF: read in full after the idle fact that K is off MN was dropped (the drop written by Claude), by GPT-6 Astra (Codex), reader PF-r1, at 835333748; card 478, ship XS, from git and record evidence, added without a restamp: main Prop15 proof by OpenAI Codex (a737ce0b5); cross-family reading: R3-337-r4, Claude Opus 5.5, read in full at e00da4b4 (f798c65e8, 24 October 2026), with the record as it now stands, before the drop of 835333748, written by Claude (b9a0f68d2) and read by GPT-6 Astra (Codex), reader PF-r1, at 835333748 (b9a0f68d2, 25 October 2026); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f"
+text = "sha256:c288ebe61d2e6cd1"
 
 [review.items]
 statement = "pass"

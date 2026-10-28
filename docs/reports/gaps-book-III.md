@@ -27,7 +27,9 @@ centre and one radius make one circle (`circle_eq`, Diagram-segment 2) showed it
 straight line through two supposed centres, produced beyond each to the circle, would make
 the radius from one of them less than itself (Definition I.15); until 26 October 2026 the
 proof used Circle 1 (#477). A point within a circle, on a straight line that
-meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
+meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1);
+it is proved after III.2, from it, since 26 October 2026, and where the point within is
+the centre Book Zero proves it without III.2 (`between_of_centre_chord`).
 System E's Circle 2, that between two points on or within a circle every point is within
 it (`inside_of_between`), and its Circle 3 (`outside_of_between`), each of which gives
 III.2 at once, are proved after III.2, from it, since 24 October 2026; our III.1 and III.2
@@ -54,7 +56,7 @@ they share that cite Books I and II live in
 straight lines (`BookI.Prop46.sq`). The perpendicular from the centre to a straight line
 in the circle falls between its ends (`foot_between`) in
 [`Feet.lean`](../../Elements/BookIII/Feet.lean), after III.2, for its last step is Circle
-1, which is to be proved after III.2. Those that cite III.20–III.22
+1, proved after III.2. Those that cite III.20–III.22
 live in [`Circumferences.lean`](../../Elements/BookIII/Circumferences.lean), and are what
 Euclid takes for granted of circumferences, which we measure by twice the angle
 standing on them: a circumference is twice the angle at any point of the other segment
@@ -117,7 +119,7 @@ references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call bes
 - "As De Morgan points out, there are here two assumptions similar to that tacitly made in the proof of III. 7, namely that K falls within the triangle DLM and E outside the triangle DFM" (vol. 2, p. 20). The first is I.21's figure, the second gives I.24 its greater angle at M. We prove both as in III.7 (`Prop8.within`, `Prop8.outside`): where DK crosses the radius ML, or DE the radius MF, the crossing is within the circle, and so between the two points where that straight line meets the circle (Circle 1).
 - Our statement compares DA and DG with every point of the circle, and a point on DA itself makes no triangle for I.20. It is A or G (`Prop8.on_diameter`), and the part DG is less than the whole DA.
 - "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. This rule is now proved in `Elements/Figure/RuleBase.lean` by comparing lengths on the straight line from the centre through the point, with our radius rule (`radius_ne_zero`) and Postulate 3; until 26 October 2026 it was proved from Postulate 3 and `circle_eq`. Definition I.15 gives only the other half: that a point of the circle is a radius away.
-- "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle. Our proof takes Euclid's step where the convex order reaches, and the concave order for two points of the concave circumference, a case his figure leaves aside. Only where neither order reaches, the two points on different circumferences or one a point of contact, does it compare the angles at M: by I.24, unequal angles there give unequal straight lines from D.
+- "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle. Our proof takes Euclid's step where the convex order reaches, the concave order for two points of the concave circumference, and the two orders together for a point on each, through the second point where the straight line making the greater angle with DA meets the circle, which is on the other circumference: cases his figure leaves aside. Only where neither order reaches, one of the two points a point of contact, does it compare the angles at M: by I.24, unequal angles there give unequal straight lines from D.
 - Across DA, as in III.7, the companion `Prop8.general` compares through the partner on the other side, which Euclid's I.4 step at M makes equally inclined to DA; that it is in the same class, the convex or the concave circumference, is a step of its own (`Prop8.partner`), from the partners of the points of the circle beyond it or before it.
 
 ## III.9
@@ -234,7 +236,7 @@ references to III.1, in III.2, III.4, III.8, III.14 and III.17, have no call bes
 ## III.27
 - "Let the angle BGK be constructed equal to the angle EHF [I. 23]": I.23 gives the ray, not K on the circle. K is laid off on it at the distance GB (`OnRay.exists_len_eq`), and the proved Diagram-segment 3 puts it on the circle (`on_circle_of_len_eq`, proved from our radius rule and Postulate 3, as in III.8).
 - "Therefore BK is also equal to BC, the less to the greater" takes the part BK to be less than the whole BC. Our proof measures each circumference, the centre lying beyond it, by its angle at the centre (`Circumference.centre`), so that BK is less because the angle BGK is.
-- "And the angle at A is half of the angle BGC ... [III. 20]" holds where the angles at the circumference are acute. Heath: "the remarks about the method of treating the different cases apply here also" (vol. 2, p. 59). Our statement asks for angles of any size, as IV.11 needs. Our proof reaches the obtuse ones by the circumferences that remain, on which acute angles stand, and III.22, as III.26 does for the remaining segments; the right ones are angles in semicircles, read off the measure of the circumference (`Prop24.angle_type`).
+- "And the angle at A is half of the angle BGC ... [III. 20]" holds where the angles at the circumference are acute. Heath: "the remarks about the method of treating the different cases apply here also" (vol. 2, p. 59). Our statement asks for angles of any size, as IV.11 needs. Our proof halves, in every case, the angle at the centre standing on BC, of any size (`angleAtCentre`), by III.20. Where the angles at A and D are right, the angles at the centres are each two right angles (`angleAtCentre.semicircle`); where they are obtuse, the reductio runs on the angles BGC, EHF, which stand on the circumferences that remain, and the angles at the centres are what remains of four right angles (`angleAtCentre.reflex`).
 - Euclid argues one case of the inequality; the reductio is written once and used with the circles exchanged, as in I.26.
 
 ## III.28

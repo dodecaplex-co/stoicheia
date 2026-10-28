@@ -2558,21 +2558,29 @@ def certificate(facts, docs, records):
 
 
 # README.md is generated in part: each book's completion summary stands between
-# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand".
-SCOPE_MARKERS = generated_counts.README_SCOPE_MARKERS
+# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand". The
+# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, the one
+# account of them (#578), and each page is filled through heath.fill.
+SCOPE_MARKERS = heath.REGIONS["README.md"]
+
+
+def fill_regions(path, text, write):
+    """heath.fill, with a fault in the markers as SystemExit naming the file and the
+    fault: render.py writes between markers only where heath.regions finds each region
+    once and whole, and main() fills the three pages before it writes anything."""
+    try:
+        return heath.fill(path, text, write)
+    except heath.RegionError as error:
+        raise SystemExit(f"{error}; render.py writes between these markers, so nothing "
+                         "was rendered") from None
 
 
 def readme(text, facts, records):
     """README.md's text with every book's summary filled in between its markers; the
-    rest of the file is left as it is."""
-    def fill(m):
-        book = m.group(2)
-        if book not in BOOKS:
-            return m.group(0)
-        summary = book_summary(book, facts, records,
-                               lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md")
-        return m.group(1) + summary + m.group(4)
-    return SCOPE_MARKERS.sub(fill, text)
+    rest of the file is left as it is. SystemExit unless it holds one region for each
+    book, well formed (heath.regions)."""
+    return fill_regions("README.md", text, lambda book, body: book_summary(
+        book, facts, records, lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md"))
 
 
 # docs/PROGRAM.md is generated in part: its status table, one row for each book, stands
@@ -2581,7 +2589,7 @@ def readme(text, facts, records):
 # file of the edition holds, from docs/program.toml, kept by hand.
 PROGRAM = ROOT / "docs" / "PROGRAM.md"
 PROGRAM_TOML = ROOT / "docs" / "program.toml"
-STATUS_MARKERS = generated_counts.PROGRAM_STATUS_MARKERS
+STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 PROGRAM_STAGES = ("brief", "statements", "proofs", "voice", "records", "acceptance",
                   "released")
 PROGRAM_KEYS = {"stage", "outside", "tag", "release"}
@@ -2716,19 +2724,17 @@ def status_table(facts, records, program):
 
 def program_page(text, facts, records, program):
     """PROGRAM.md's text with the status table filled in between its markers; the rest
-    of the file is left as it is."""
-    if not STATUS_MARKERS.search(text):
-        raise SystemExit("docs/PROGRAM.md has lost its <!-- status --> and <!-- /status --> "
-                         "markers, between which render.py writes the status table")
-    table = status_table(facts, records, program)
-    return STATUS_MARKERS.sub(lambda m: m.group(1) + "\n" + table + "\n\n" + m.group(3), text,
-                              count=1)
+    of the file is left as it is. SystemExit unless it holds one status region, well
+    formed (heath.regions)."""
+    return fill_regions("docs/PROGRAM.md", text, lambda name, body: "\n" + status_table(
+        facts, records, program) + "\n\n")
 
 
 # docs/WORKFLOW.md is generated in part: section 8's first command block, CI's `check`
 # job's sequence, stands between `<!-- checks -->` and `<!-- /checks -->`, written from the
-# registry of checks, one file per check in checks/ (scripts/registry.py, whose MARKERS and
-# section8_block these are). The rest of the page is written by hand.
+# registry of checks, one file per check in checks/ (scripts/registry.py, whose
+# section8_block this is; the markers are heath.REGIONS's). The rest of the page is written
+# by hand.
 WORKFLOW = ROOT / "docs" / "WORKFLOW.md"
 
 
@@ -2742,13 +2748,10 @@ def load_checks():
 
 def workflow_page(text, checks):
     """WORKFLOW.md's text with section 8's first command block written between its
-    markers from the registry's entries; the rest of the file is left as it is."""
-    if len(registry.MARKERS.findall(text)) != 1:
-        raise SystemExit("docs/WORKFLOW.md must hold one <!-- checks --> and <!-- /checks --> "
-                         "pair, between which render.py writes section 8's first command "
-                         "block from the registry of checks")
-    block = registry.section8_block(checks)
-    return registry.MARKERS.sub(lambda m: m.group(1) + block + m.group(3), text, count=1)
+    markers from the registry's entries; the rest of the file is left as it is.
+    SystemExit unless it holds one checks region, well formed (heath.regions)."""
+    return fill_regions("docs/WORKFLOW.md", text,
+                        lambda name, body: registry.section8_block(checks))
 
 
 DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
@@ -3257,6 +3260,16 @@ def main() -> None:
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
+    # The pages generated in part are filled before anything is written, each on the text
+    # its count markers leave it: so a fault in their markers (heath.regions), or in
+    # docs/program.toml, still renders nothing, as a fault in the counts or the registry
+    # does, and each is written after the pages written whole, as before.
+    readme_path = ROOT / "README.md"
+    parts = {readme_path: readme(changes.get(readme_path, read_text(readme_path)), facts,
+                                 records),
+             PROGRAM: program_page(changes.get(PROGRAM, read_text(PROGRAM)), facts, records,
+                                   load_program()),
+             WORKFLOW: workflow_page(changes.get(WORKFLOW, read_text(WORKFLOW)), checks)}
     for path, text in changes.items():
         write_text(path, text)
     for book, (count, titles) in BOOKS.items():
@@ -3270,19 +3283,9 @@ def main() -> None:
     write_text(ROOT / "book" / "names.md", names_page(facts, records))
     write_text(ROOT / "CERTIFICATE.md", certificate(facts, docs, records))
     write_text(ROOT / "GRAPH.md", graph(facts))
-    path = ROOT / "README.md"
-    text = read_text(path)
-    filled = readme(text, facts, records)
-    if filled != text:
-        write_text(path, filled)
-    text = read_text(PROGRAM)
-    filled = program_page(text, facts, records, load_program())
-    if filled != text:
-        write_text(PROGRAM, filled)
-    text = read_text(WORKFLOW)
-    filled = workflow_page(text, checks)
-    if filled != text:
-        write_text(WORKFLOW, filled)
+    for path, filled in parts.items():
+        if filled != read_text(path):
+            write_text(path, filled)
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
           "scope summaries, PROGRAM.md's status table and WORKFLOW.md's check sequence")
 
