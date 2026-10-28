@@ -1,17 +1,17 @@
 # exhaustive: every configuration on small grids
 # command: python3 -I tests/model/exhaustive.py
 # seeds: 7 (for area_congruent's isometries)
-# commit: c6515f8dacfc66b5b8792aa56662b79c19cb5213 (harness files as committed)
-# harness sha256: 86467974688f85ceb3a2f2e177dce427cda36d09b5d200acd69bdfefee6eab08
+# commit: d8c835de5cda8f3d77c6f2d6a1457fe3a7f7a2c8 (harness files as committed)
+# harness sha256: dd6848493582c0fb7a4bd1ae73e99e9733743a5fa6d57751b374e1fadecd334b
 # python: 3.14.2 (CPython, Darwin arm64)
-# date: 2026-10-26
-# time: 112.7 s
+# date: 2026-10-27
+# time: 111.5 s
 
 grid 25 pts, 140 lines; circle grid 81 pts, 72 circles
 axiom / derived property                    configs  hyp held    cex
 Postulate1                                      625       600      0     0.0s
 Postulate4                                   390625      1072      0     0.2s
-Postulate5                                   345600    144984      0     2.4s
+Postulate5                                   345600    144984      0     2.6s
 Postulate2                                      940       600      0     0.0s
 Postulate3                                      625       600      0     0.0s
 between_symm                                  15625       304      0     0.0s
@@ -24,21 +24,21 @@ derived.not_between_of_between_between       390625       560      0     0.2s
 derived.on_line_of_between                  2187500       304      0     1.2s
 derived.on_line_of_between_ends             2187500       304      0     1.2s
 between_cases                               2187500       912      0     1.0s
-same_side_trans                             2187500    724792      0     1.6s
-derived.same_side_or                        2187500    595104      0     2.5s
-derived.pasch1                              2187500     17160      0     1.4s
-pasch2                                      2187500      3872      0     1.6s
-derived.pasch3                              2187500      3856      0     1.4s
+same_side_trans                             2187500    724792      0     1.7s
+derived.same_side_or                        2187500    595104      0     2.0s
+derived.pasch1                              2187500     17160      0     1.3s
+pasch2                                      2187500      3872      0     1.3s
+derived.pasch3                              2187500      3856      0     1.3s
 derived.same_side_symm                        87500     45192      0     0.1s
 not_on_line_of_same_side                      87500     45192      0     0.0s
 derived.same_side_refl                         3500      3160      0     0.0s
 derived.pasch4                                41372      3552      0     0.0s
 lines_meet_of_opposite_sides                 131600     26248      0     0.1s
 line_unique                                  117100       600      0     0.0s
-derived.triple_incidence1                   1335532     77960      0     1.9s
-derived.triple_incidence2                   1335532     77960      0     1.9s
-derived.triple_incidence3                  33388300    315152      0    44.7s
-angle_add_of_inside                          885100     77960      0     1.3s
+derived.triple_incidence1                   1335532     77960      0     1.8s
+derived.triple_incidence2                   1335532     77960      0     2.1s
+derived.triple_incidence3                  33388300    315152      0    45.4s
+angle_add_of_inside                          885100     77960      0     1.0s
 derived.inside_of_angle_add                  885100     77960      0     1.2s
 derived.adjacent_eq_of_right                  76300      1072      0     0.1s
 angle_eq_of_same_rays                        372988     60032      0     0.5s
@@ -53,7 +53,7 @@ on_line_of_area_eq_zero                       23500      2112      0     0.0s
 area_degenerate                                 625       625      0     0.0s
 area_rotate                                   15625     15625      0     0.0s
 derived.area_swap                             15625     15625      0     0.0s
-area_congruent                               531441    375479      0     1.9s
+area_congruent                               531441    375479      0     1.7s
 derived.eq_of_len_eq_zero                       625        25      0     0.0s
 len_self                                         25        25      0     0.0s
 len_symm                                        625       625      0     0.0s
@@ -63,18 +63,18 @@ derived.centre_inside                          5832        72      0     0.0s
 derived.inside_not_on                          5832      1260      0     0.0s
 Definition15                                 268272      2448      0     0.1s
 derived.on_circle_of_len_eq                  268272      2448      0     0.1s
-derived.inside_of_len_lt                    8470728      5776      0     3.3s
-derived.len_lt_of_inside                    8470728      5776      0     3.0s
+derived.inside_of_len_lt                    8470728      5776      0     3.2s
+derived.len_lt_of_inside                    8470728      5776      0     3.2s
 circle_eq                                    156816      2448      0     0.1s
 derived.between_of_inside_chord               44924      3228      0     0.1s
 derived.inside_of_between                    857088     76104      0     2.3s
-derived.outside_of_between                  1399680    281664      0     3.6s
+derived.outside_of_between                  1399680    281664      0     3.5s
 derived.not_same_side_of_circles_meet         53976      1704      0     0.0s
 circles_meet_same_side                       802816    216488      0     1.0s
 derived.circles_meet_opposite_side           802816    216488      0     1.0s
 derived.circles_meet_of_on_inside_outside    2309472     49616      0     1.7s
 circles_meet                                 156816     10668      0     0.1s
-derived.line_meets_circle_of_opposite_sides   22578464   6161192      0    23.7s
+derived.line_meets_circle_of_opposite_sides   22578464   6161192      0    23.0s
 derived.line_meets_circle_of_inside          109728     30204      0     0.0s
 line_circle_between                          398880     44088      0     0.3s
 line_circle_beyond                           398880     80320      0     0.3s

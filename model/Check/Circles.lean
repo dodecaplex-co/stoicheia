@@ -94,8 +94,8 @@ run_cmd (Check.Generator.comparePlanted ``Model.Hand.on_circle_of_len_eq_circles
   ``Elements.Tacit.on_circle_of_len_eq)
 example (S : Model.Signature) : Model.Hand.radius_ne_zero S =
     Model.Law.Tacit.radius_ne_zero S := rfl
-example (S : Model.Signature) : Model.Hand.between_of_inside_chord S =
-    Model.Law.Tacit.between_of_inside_chord S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.between_of_inside_chord
+  ``Elements.Tacit.between_of_inside_chord)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_between
   ``Elements.Tacit.inside_of_between)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.outside_of_between

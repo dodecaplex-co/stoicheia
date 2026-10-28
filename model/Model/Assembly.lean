@@ -8,7 +8,6 @@ public import Model.Euclidean.Areas
 public import Model.Euclidean.Avoidance
 public import Model.Euclidean.Centre
 public import Model.Euclidean.CircleBasics
-public import Model.Euclidean.CircleRules
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Circles
 public import Model.Euclidean.Incidence
@@ -34,7 +33,7 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-All 49 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
+All 48 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
 `model_exists` follows from it.
 -/
 
@@ -65,7 +64,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   area_eq_zero_of_on_line := Euclidean.area_eq_zero_of_on_line
   area_rotate := Euclidean.area_rotate
   between_cases := Euclidean.between_cases
-  between_of_inside_chord := Euclidean.between_of_inside_chord
   between_symm := Euclidean.between_symm
   circle_eq := Euclidean.circle_eq
   circles_meet := Euclidean.circles_meet

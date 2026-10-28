@@ -176,4 +176,11 @@
 # 49 axioms, the other 48 and the 268 words of the vocabulary unchanged, byte for byte. Its
 # law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
 # counts, in the same change; run.py --full --write rewrites the results.
-14c6fbccbbc751909a65cb6c2a299e69a22b93b69f9d07e07903ccdd8f407733  Certificate/axioms.lock
+#
+# Renewed on 26 October 2026, when Circle 1, Tacit.between_of_inside_chord, became a
+# theorem, proved after III.2 by the owner's decision of 25 October 2026 (#477): 48 axioms,
+# the lock less that one line, with 268 words of vocabulary; every other axiom and every
+# word is unchanged, byte for byte. Its law leaves laws.toml, search.py and hyperbolic.py,
+# and derived.py keeps checking it as derived.between_of_inside_chord; run.py --full
+# --write rewrites the results and MODEL.md's counts in the same change.
+eb108425cdf0acaee7d08a62af018aa84f2941877f98f10144bf17b1c15e0fe5  Certificate/axioms.lock
