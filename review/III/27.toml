@@ -1,15 +1,16 @@
 [statement]
 scope = "full"
-note = "Angles at the circumferences of any size, and at the centres where they stand on BC; since our measure carries no radius, it holds in any two circles."
+note = "Angles at the circumferences of any size, and at the centres where they stand on BC; `Prop27.of_congruent` takes the circumferences to be congruent."
+companions = ["III.27 of_congruent"]
 fingerprint = "sha256:76827ffe8edda107"
 
 [route]
 kind = "modified"
-note = "Euclid's reductio for the angles at the centres, and his halving by III.20 at A and D in every case: where the angles at A and D are acute, of the angles BGC, EHF, by III.20's companion `Prop20.special`; where they are right or obtuse, of the angles at the centres standing on BC and EF, two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's, by III.20 itself. Where the angles at A and D are obtuse, the angles at the centres are greater than two right angles, which I.23 does not construct and III.26's statement does not speak of, so the reductio runs on the angles BGC, EHF, which stand on the circumferences that remain, and the angles at the centres are what remains when those are taken from four right angles."
+note = "Euclid's reductio for the angles at the centres, and his halving by III.20 at A and D in every case: where the angles at A and D are acute, of the angles BGC, EHF, by III.20's companion `Prop20.special`; where they are right or obtuse, of the angles at the centres standing on BC and EF, two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's, by III.20 itself. Where the angles at A and D are obtuse, the angles at the centres are greater than two right angles, which I.23 does not construct and III.26's statement does not speak of, so the reductio runs on the angles BGC, EHF, which stand on the circumferences that remain, and the angles at the centres are what remains when those are taken from four right angles. The companion `Prop27.of_congruent` passes from congruent circumferences to equal measures by III.24's companion `Prop24.equalMeasure`, and then applies `Prop27`, so its route is the one above."
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]
-note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
+note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. In `Prop27.of_congruent` the circumferences are congruent, and congruent circumferences already lie in equal circles (`Prop24.image`, `Prop24.equalCircles`): the hypothesis is redundant there too, kept as Euclid's setting and used through III.26. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [[passage]]
 at = "and on the straight line BG, and at the point G on it"

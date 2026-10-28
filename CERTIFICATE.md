@@ -186,8 +186,10 @@ What the proofs show:
 | ✅ | &emsp;[III.25 of_circle](book/III/25.md#of_circle) |  |  |  | III.2, III.25, III.25 complete | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 3 | 28 |
 | ✅ | [III.26](book/III/26.md) | whole† | Euclid's, one step changed | I.4, III.24 | I.4, I.13, III.2, III.20, III.21, III.22, III.24, III.24 equalMeasure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 6 | 29 |
 | ✅ | [III.27](book/III/27.md) | whole† | Euclid's, one step changed | I.23, III.20, III.26 | I.5, I.13, I.23, I.32, III.2, III.20, III.20 special, III.21, III.22, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 30 |
+| ✅ | &emsp;[III.27 of_congruent](book/III/27.md#of_congruent) |  |  |  | III.24 equalMeasure, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 30 |
 | ✅ | [III.28](book/III/28.md) | whole† | Euclid's, two steps changed | I.8, III.26 | I.5, I.8, I.20, I.32, III.2, III.20 special, III.21, III.22, III.24, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 6 | 29 |
 | ✅ | [III.29](book/III/29.md) | whole† | Euclid's, two steps changed | I.4, III.27 | I.4, I.5, I.32, III.2, III.20 special, III.21, III.22, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 30 |
+| ✅ | &emsp;[III.29 of_congruent](book/III/29.md#of_congruent) |  |  |  | III.24 equalMeasure, III.29 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 0 |
 | ✅ | [III.30](book/III/30.md) | whole† | Euclid's | I.4, III.28 | I.4, I.10, I.11, I.17, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 11 | 24 |
 | ✅ | &emsp;[III.30 halves](book/III/30.md#halves) |  |  |  | I.6, I.17, I.32, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 13 | 21 |
 | ✅ | [III.31](book/III/31.md) | whole | Euclid's | I.5, I.17, I.32, III.22 | I.5, I.17, I.32, III.2, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 10 | 25 |
