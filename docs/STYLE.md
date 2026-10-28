@@ -483,7 +483,9 @@ justification in his form, as a `--` line would: "subtracted from each [C.N. 1, 
 `thirteenbookseu02heibgoog`, where page N is leaf N + 20; volume 2 (Books III–IX) is
 `thirteenbookseu00heibgoog`, where page N is leaf N + 12. Page N's image is
 `https://archive.org/download/<id>/page/n<leaf>.jpg`, and the OCR text, flattened, is what
-a quotation is first checked against. The page image decides.
+a quotation is first checked against. The page image decides. Every file of `heath/` was read
+line by line against its leaves on 28 October 2026; the record of that reading, with each
+leaf's checksum, is [Heath's text against the scans](reports/heath-against-scans.md).
 
 **Quoting Heath.**
 
