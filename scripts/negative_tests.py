@@ -197,9 +197,10 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import threading
 import types
 from collections.abc import Callable
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
 from typing import NamedTuple
@@ -815,7 +816,7 @@ def load_plants(folder: Path | None = None) -> tuple[list[Plant], list[str]]:
 
 
 def run_plant(plant: Plant, sources: dict[int, str],
-              changes: Callable[[], list[str]]) -> None:
+              changes: Callable[[], list[str]], show_heading: bool = True) -> None:
     """Run one plant, named before and timed after. Fail it, by its name, if its plant()
     raises SystemExit; if it changes a shared name (`changes`, from guard, which puts the
     name back) or the failures or refusals recorded before it, which only grow (put back
@@ -824,7 +825,8 @@ def run_plant(plant: Plant, sources: dict[int, str],
     `sources` gains the plant's heading for each failure it added, by its index in
     `failures`."""
     path = shown(plant.path)
-    print(f"{plant.name} ({path})")
+    if show_heading:
+        print(f"{plant.name} ({path})")
     failed, caught = len(failures), len(refusals)
     recorded = failures[:], refusals[:]
     started = perf_counter()
@@ -1011,18 +1013,69 @@ def write_times(log: Path) -> int:
     return 0
 
 
-class Tee(io.TextIOBase):
-    """Text written to `stream`, and a copy of it kept."""
+def write_descriptor(descriptor: int, data: bytes) -> None:
+    remaining = memoryview(data)
+    while remaining:
+        written = os.write(descriptor, remaining)
+        if written == 0:
+            raise OSError("write returned no bytes")
+        remaining = remaining[written:]
 
-    def __init__(self, stream):
-        self.stream, self.copy = stream, io.StringIO()
 
-    def write(self, text: str) -> int:
-        self.copy.write(text)
-        return self.stream.write(text)
+@contextmanager
+def captured_descriptors():
+    sys.stdout.flush()
+    sys.stderr.flush()
+    captured = [bytearray(), bytearray()]
+    problems = []
+    saved = os.dup(1), os.dup(2)
+    pipes = os.pipe(), os.pipe()
 
-    def flush(self) -> None:
-        self.stream.flush()
+    def relay(source: int, target: int, copy: bytearray) -> None:
+        try:
+            while block := os.read(source, 64 * 1024):
+                copy.extend(block)
+                write_descriptor(target, block)
+        except BaseException as error:
+            problems.append(error)
+        finally:
+            os.close(source)
+
+    relays = [threading.Thread(target=relay, args=(pipe[0], descriptor, copy), daemon=True)
+              for pipe, descriptor, copy in zip(pipes, saved, captured)]
+    for thread in relays:
+        thread.start()
+    try:
+        try:
+            os.dup2(pipes[0][1], 1)
+            os.dup2(pipes[1][1], 2)
+        finally:
+            os.close(pipes[0][1])
+            os.close(pipes[1][1])
+        yield captured
+    finally:
+        active = sys.exception()
+        try:
+            try:
+                sys.stdout.flush()
+                sys.stderr.flush()
+            finally:
+                try:
+                    os.dup2(saved[0], 1)
+                finally:
+                    os.dup2(saved[1], 2)
+            for thread in relays:
+                thread.join()
+        finally:
+            os.close(saved[0])
+            os.close(saved[1])
+        captured[:] = (
+            captured[0].decode(sys.stdout.encoding or "utf-8",
+                               sys.stdout.errors or "strict"),
+            captured[1].decode(sys.stderr.encoding or "utf-8",
+                               sys.stderr.errors or "strict"))
+        if problems and active is None:
+            raise problems[0]
 
 
 def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], list[str]],
@@ -1030,12 +1083,13 @@ def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], li
     """run_plant, in a worker: what the plant prints is printed and kept, and `report`
     gains it with the failures the plant added, noting their places in `failures`."""
     start = len(failures)
-    output = Tee(sys.stdout)
-    errors = Tee(sys.stderr)
-    with redirect_stdout(output), redirect_stderr(errors):
-        run_plant(plant, sources, changes)
-    report["plants"].append({"name": plant.name, "output": output.copy.getvalue(),
-                             "stderr": errors.copy.getvalue(),
+    heading = f"{plant.name} ({shown(plant.path)})"
+    print(heading, flush=True)
+    with captured_descriptors() as captured:
+        run_plant(plant, sources, changes, show_heading=False)
+    report["plants"].append({"name": plant.name,
+                             "output": heading + "\n" + captured[0],
+                             "stderr": captured[1],
                              "failures": failures[start:]})
     report["taken"].update(range(start, len(failures)))
 

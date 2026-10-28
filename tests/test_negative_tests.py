@@ -2641,9 +2641,14 @@ if __name__ == "__main__":
 '''
 # The bodies of the throwaway plants' plant(), "{name}" the plant's name.
 PASSES = 'print("{name} plants its change")\n    nt.refused("{name}: caught")'
-WRITES_STDERR = ('import sys\n'
-                 '    print("{name} diagnostic", file=sys.stderr)\n'
-                 '    nt.refused("{name}: caught")')
+WRITES_SUBPROCESS_OUTPUT = (
+    'import sys\n'
+    '    sys.stdout.flush()\n'
+    '    sys.stderr.flush()\n'
+    '    subprocess.run([sys.executable, "-c", '
+    '"import os; os.write(1, b\'{name} child stdout\\\\n\'); "'
+    '"os.write(2, b\'{name} child stderr\\\\n\')"], check=True)\n'
+    '    nt.refused("{name}: caught")')
 MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", ""))'
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
@@ -2890,15 +2895,18 @@ class WorkerTests(unittest.TestCase):
                     "  ✗ c_three: not caught\n" if missing else
                     "4 of 4 plants run\n✓ every planted change was caught\n"), alone.stdout)
 
-    def test_successful_plants_stderr_is_replayed_in_stable_order(self):
-        """Successful workers preserve each plant's stderr in the stable plant order;
-        their documented plan is the only additional stderr beside a one-worker run."""
-        self.commit(a_one=WRITES_STDERR, b_two=WRITES_STDERR)
+    def test_successful_subprocess_output_is_replayed_in_stable_order(self):
+        """Successful workers preserve inherited stdout and stderr in the stable plant
+        order; their documented plan is the only addition beside a one-worker run."""
+        self.commit(a_one=WRITES_SUBPROCESS_OUTPUT, b_two=WRITES_SUBPROCESS_OUTPUT)
         alone = self.suite()
         workers = self.suite("--workers", "2")
         self.assertEqual(workers.returncode, alone.returncode,
                          workers.stdout + workers.stderr + alone.stdout + alone.stderr)
-        self.assertEqual(alone.stderr, "a_one diagnostic\nb_two diagnostic\n")
+        self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+        for name in ("a_one", "b_two"):
+            self.assertEqual(alone.stdout.count(f"{name} child stdout\n"), 1)
+        self.assertEqual(alone.stderr, "a_one child stderr\nb_two child stderr\n")
         lines = workers.stderr.splitlines(keepends=True)
         self.assertIn("The plants in 2 workers, dealt in turn", lines[0])
         self.assertEqual(lines[1:3], ["  worker 1: a_one\n", "  worker 2: b_two\n"])
