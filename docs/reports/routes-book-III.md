@@ -1373,8 +1373,9 @@ file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls ei
 `Prop1.of_circle`'s own call of III.1.
 `lake build Audit` then failed on eleven pins and on no other, and each was renewed from
 Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
-`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
-`Audit.CirclesCut.of_meet` and `Audit.within_point`; in `Audit/Overlaps.lean`, those of
+`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, of the crossing bridge
+and its step (since 26 October 2026 `Elements.CirclesCut.of_meet` and
+`Elements.CirclesCut.cut_point`, pinned there still) and of `Audit.within_point`; in `Audit/Overlaps.lean`, those of
 `Audit.III_26_any`, `Audit.III_27_any`, `Audit.III_24_measure` and
 `Audit.III_30_measure`. Each lost one name, `Tacit.exists_point_same_side`, and gained
 none. The pin of `Audit/Centre.lean` holds unchanged.
