@@ -1085,6 +1085,7 @@ class QueueTests(unittest.TestCase):
                 self.snapshot = saved
 
     def test_a_person_s_edit_is_allowed(self):
+        # someone is a writer (setUp); a person without write access refuses (below).
         self.nodes()[0]["pullRequest"]["editor"] = {"__typename": "User", "login": "someone"}
         self.verdict(self.cli(), 0, "queue: PASS")
 

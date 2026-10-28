@@ -146,7 +146,8 @@ be turned on until both are held.
 
 The judge refuses an ordinary queued entry whose author, or whose body's last editor,
 lacks write, maintain or admin access to the repository, so the trust rests on writers
-alone.
+alone (docs/decisions/2026-10-28-queue-editor-write-access.md); a permission it cannot
+read is unreadable.
 
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
@@ -193,8 +194,7 @@ SUBJECT = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
 # characters. No other string is put into an endpoint (write_access).
 LOGIN = re.compile(r"(?=[A-Za-z0-9-]{1,39}\Z)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
 # The permissions GitHub's REST answer gives an account on a repository, its legacy base
-# roles (maintain reads write, triage read, and a custom role the base role it is built
-# on), and those that may write to it.
+# roles (maintain reads write and triage read), and those that may write to it.
 PERMISSIONS = ("admin", "write", "read", "none")
 WRITERS = ("admin", "write")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July",
