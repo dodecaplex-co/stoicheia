@@ -53,17 +53,18 @@ symbolic link or have a second name, since a plant that builds writes there. So 
 pre-flight's pass with origin/main's checks it lacks the files the commit adds while its
 index lists them, as the tree does. Its Git status must be the tree's entry status, or the
 run fails before any plant runs: each is the one-worker bracket's `git status --porcelain`,
-bound to its tree with `--work-tree`. It runs its own copy of this file in its own tree,
-its share given by `--plant`, its output to a log of its own. It, and every Git command
-the run runs for its workers, has the run's environment but for the variables that name a
-repository or a part of one (its work tree, index, object store, grafts, shallow file,
-replace refs or namespace), carry Git settings inline or name `git config`'s file, set a
-ceiling on Git's search for a repository, or name a build, and STOICHEIA_NEGATIVE_WORKERS
-(WITHHELD and WITHHELD_PREFIXES), lest a worker read another tree's index or build, or its
-Git act on another tree. It keeps the variables that name or shut out the configuration
-files the run reads (GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM, GIT_CONFIG_NOSYSTEM and
-GIT_ATTR_NOSYSTEM, the four of scripts/safe_push.py's CONFIG_FILE_VARIABLES, #430), so
-that a worker and the tree under test read the same configuration files. Those files can
+bound to its tree with `--work-tree` and given the caller's inline Git configuration. It
+runs its own copy of this file in its own tree, its share given by `--plant`, its output to
+a log of its own. It, and every Git command the run runs for its workers except those
+status snapshots, has the run's environment but for the variables that name a repository
+or a part of one (its work tree, index, object store, grafts, shallow file, replace refs or
+namespace), carry Git settings inline or name `git config`'s file, set a ceiling on Git's
+search for a repository, or name a build, and STOICHEIA_NEGATIVE_WORKERS (WITHHELD and
+WITHHELD_PREFIXES), lest a worker read another tree's index or build, or its Git act on
+another tree. It keeps the variables that name or shut out the configuration files the run
+reads (GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM, GIT_CONFIG_NOSYSTEM and GIT_ATTR_NOSYSTEM,
+the four of scripts/safe_push.py's CONFIG_FILE_VARIABLES, #430), so that a worker and the
+tree under test read the same configuration files. Those files can
 still tell them apart: a conditional include keyed on a repository's path (`includeIf
 "gitdir:…"`) can give a worker's tree settings the tree under test lacks, `status` ones
 among them, and so a different verdict. Like a plant's file (below), configuration written
