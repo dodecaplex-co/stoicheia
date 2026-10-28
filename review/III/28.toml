@@ -4,8 +4,8 @@ note = "Equal circumferences read as equal in measure and congruent; \"the great
 fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
-kind = "modified"
-note = "Provisional subtraction skeleton, with the statement unchanged. For non-diameters, equal radii and bases give equal central angles by I.8, and III.26 gives the equal lesser circumferences. Common Notion 3 gives the remaining measures; Prop26.remainder restricts a common application of the whole circles to the remaining segments and arcs, but depends on the unproved Prop26.extend. This replaces the former separate III.20/III.24 argument for the greater segments, without claiming the replacement complete. In the diameter case there are no triangles for I.8 or ordinary central angles for III.26's first clause: Prop28.right and III.24 still supply congruence. Heath's subtraction is at vol. 2, pp. 59–60; both the missing extension and this diameter case remain disclosed, and the route stays modified."
+kind = "euclid"
+note = "Equal radii and bases give equal central angles by I.8; III.26 gives the equal lesser circumferences, and subtraction gives the greater, in measure by Common Notion 3 and in congruence by restricting the same application of the whole circles (`Prop26.remainder`). The diameter case is within the statement but is the trivial omitted case Heath discusses (vol. 2, p. 60), declared as a case: I.20 makes both chords diameters, and right angles in the semicircles with III.24 realise their equality as congruence. It falls under the route rule for trivial cases left to the reader."
 
 [representation]
 tags = ["angle-measure"]
@@ -18,8 +18,8 @@ note = "Euclid takes K and L as centres and joins the radii. The hypothesis that
 
 [[passage]]
 at = "the radii are also equal"
-kind = "different"
-note = "Euclid's figure has the centre K off AB, on C's side. If K is on AB, AB and DE are diameters and the four circumferences semicircles; the angle at the centre of each semicircle is two right angles (`angleAtCentre.semicircle`), but the proof obtains congruence from the right angle in each semicircle (`Prop28.right`) and III.24; `Prop28.beyond` shows K is not on G's side; `Prop28.sides` sorts the positions, `Prop28.diameter` uses I.20, and `Prop28.right` through `Prop24.angle_type`, `Prop28.beyond`, `Circumference.semicircle` and `Prop2.sameSide` use I.5, I.32, III.2, III.20, III.21 and III.22, for which, as for I.20 and III.24, Heath prints no references here; the placing of the centres between the diameter's ends uses `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, and the sum of the radii uses `Tacit.len_add_of_between` (System E, Diagram-segment 1), a rule we assume."
+kind = "case"
+note = "If K is on AB, both chords are diameters and all four circumferences are semicircles, the elementary case Heath leaves to the reader (vol. 2, p. 60). `Prop28.diameter` uses I.20 to rule out a non-diameter equal to a diameter; `Prop28.right` gives right angles in the semicircles, and III.24 gives their congruence. Otherwise `Prop28.sides` and `Prop28.beyond` place each centre across its chord from the lesser circumference, as Euclid's figure requires. These helpers use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here, as for I.20 and III.24."
 
 [[passage]]
 at = "But equal angles stand on equal circumferences"
@@ -37,7 +37,7 @@ note = "Euclid subtracts the equal lesser circumferences from the equal whole ci
 at = "therefore the circumference ACB which remains"
 kind = "helper"
 helper = "Prop26.remainder"
-note = "The remaining measures are equal by Common Notion 3. Prop26.remainder now takes the congruence hless.2 proved by III.26 and restricts the common application of the whole circles to the complementary segments ACB, DFE. The restriction is proved; the whole-circle extension Prop26.extend remains unproved in this skeleton. No second use of III.24 to prove similarity of these remaining segments is made in the non-diameter branch."
+note = "Common Notion 3 gives the remaining measures. The congruence of the lesser segments supplied by III.26 extends to one application of the whole disks and circumferences (`Prop26.extend`); restricting it to the complementary closed sides gives the congruent greater segments and arcs. This is the same subtraction as in III.26, with the common bases retained."
 
 [figure]
 case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"

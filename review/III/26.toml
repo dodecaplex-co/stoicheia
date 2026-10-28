@@ -5,7 +5,7 @@ fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
-note = "Provisional subtraction skeleton, with the statement unchanged. The radii and I.4 give the equal bases, III.24 gives the equal segments, Prop24.equalMeasure their measures, and Common Notion 3 the equal remaining measures. Prop26.remainder proves the congruence of the complements by restricting a common application of the whole disks and circumferences; its whole-circle extension, Prop26.extend, remains unproved. Arc.Congruent controls a map only on the given segment and arc, not on their complements (DefinitionsIII.lean). Thus the congruence step under Heath's subtraction (vol. 2, pp. 56–57) is an explicit obligation, not a completed repair. The former III.22/III.24 proof of the remainders has been removed. Diameter and reflex cases at I.4 remain as before: diameters are sums of radii, and reflex angles require taking what remains of four right angles. The route remains modified pending the extension and review of those cases."
+note = "For obtuse angles at the circumferences, III.20 gives reflex central angles and I.4 takes the ordinary angles remaining from four right angles, an additional argument for a case within the statement (Heath, vol. 2, pp. 56–57, discussion on p. 57). For right inscribed angles the bases are diameters, each the sum of two radii. The subtraction of the remaining circumferences follows Euclid: Common Notion 3 gives equal measures, and `Prop26.extend` extends the given segment congruence to one application of the whole circles, which `Prop26.remainder` restricts to the remaining segments and arcs."
 
 [representation]
 tags = ["angle-measure"]
@@ -19,8 +19,8 @@ note = "Euclid's figure has the centres on A's and D's sides, where the angles a
 
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
-kind = "case"
-note = "In Euclid's figure I.4 gives the bases from the angles BGC, EHF (`angleAtCentre.within`). Two cases his figure leaves aside are taken as well: where the angles at the centres are two right angles, G is on BC and H on EF, there are no triangles for I.4, and BC and EF are diameters, each two radii (`Tacit.len_add_of_between`, System E, Diagram-segment 1, a rule we assume); where they are greater, the angles BGC, EHF are what remains of four right angles (`angleAtCentre.reflex`), equal by Common Notion 3, and I.4 applies to them."
+kind = "different"
+note = "In Euclid's figure I.4 applies to the angles BGC, EHF. For obtuse inscribed angles, the central angles are reflex: Common Notion 3 removes them from four right angles before I.4 applies, a different argument within the statement (Heath, vol. 2, p. 57). When the inscribed angles are right, the bases are diameters, each the sum of two equal radii."
 
 [[passage]]
 at = "therefore the segment BAC is equal to EDF"
@@ -38,7 +38,7 @@ note = "Euclid subtracts the equal segment circumferences from the equal whole c
 at = "therefore the circumference BKC which remains is equal to the circumference ELF"
 kind = "helper"
 helper = "Prop26.remainder"
-note = "The measures follow Common Notion 3. For congruence, Prop26.remaining_side identifies the complementary closed side as the complement of the removed open side, so the common map of the whole disks and circumferences restricts onto both remaining figures, keeping distances and the base endpoints. This restriction is proved in Prop26.remainder. The required map is the one unproved obligation, Prop26.extend; the existing Arc.Congruent witness has no guarantees outside the original segment. A proof of the extension belongs with III.24's moved-circle and application lemmas, before III.26; the placement policy permits that machinery there, while the later Arc.congruent_iff would be circular. No axiom or change of statement is proposed."
+note = "Common Notion 3 gives the equal measures. For congruence, `Prop26.extend` extends the given map radially from a small circle inside the segment, using I.2, I.4, I.8 and I.20; the reverse construction makes it onto, and III.9 identifies the image of the centre. Definition I.15 and the radius rules carry the disks and circumferences across, while collinearity and betweenness preserve the sides of the chord. Restricting that same map to the complementary closed sides gives both remaining figures, including their bases, as Euclid's subtraction requires (Heath, vol. 2, pp. 56–57)."
 
 [[passage]]
 at = "Therefore etc."

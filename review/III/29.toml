@@ -6,7 +6,7 @@ fingerprint = "sha256:b15027ff1b86720a"
 
 [route]
 kind = "modified"
-note = "III.27 now precedes I.4 in every branch. In the main theorem it takes equal measures; the companion Prop29.of_congruent calls Prop27.of_congruent directly on the given congruence. For lesser circumferences III.27's central-angle conclusion and the equal radii feed I.4, as in Heath (vol. 2, p. 60). For all sizes, III.27's inscribed-angle conclusion and III.20 give equal extended angles at the centres; Prop26.alike places both centres alike. At I.4, semicircles require adding the equal radii because their centres and endpoints are collinear; greater circumferences require subtracting the equal reflex angles from four right angles before I.4. These departures remain, so the route stays modified. III.27 itself still uses its declared case distinctions and measure bridge; the companion does not remove that transitive dependency. The bodies of III.29 and its companion contain no sorry, but their dependency through III.27 and III.26 reaches the pending Prop26.extend."
+note = "Euclid's I.4 argument uses the ordinary central angles standing on lesser circumferences (Heath, vol. 2, p. 60). For greater circumferences, III.27 first gives equal inscribed angles, III.20 doubles them to reflex central angles, and Common Notion 3 removes those from four right angles before I.4. That is an additional argument for a case within the statement, so the route is modified. Semicircles give diameters, each the sum of two equal radii, the elementary case Heath discusses on p. 61. The companion takes the given congruence through `Prop27.of_congruent` and then follows the same argument."
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]
@@ -21,25 +21,25 @@ note = "Euclid's figure puts A and D on the circles beyond BC and EF from G and 
 [[passage]]
 at = "For let the centres of the circles be taken"
 kind = "given"
-note = "The given equal circles supply K and L. The case distinction is now postponed to I.4, after III.27 has given the equal angles; no diameter branch is discharged at this sentence."
+note = "The hypothesis that the circles are equal supplies K and L through `EqualCircles`; the radii are named by their ends."
 
 [[passage]]
 at = "Now, since the circumference BGC is equal to the circumference EHF"
 kind = "helper"
 helper = "standing_eq_circumference"
-note = "The given equal measures of BGC, EHF become equal standing circumferences at the already chosen points A, D, by standing_eq_circumference. Prop27 takes precisely this equality at the next sentence. The companion instead supplies the given congruence directly to Prop27.of_congruent."
+note = "The given equal measures of BGC, EHF become equal standing circumferences at A and D, by `standing_eq_circumference`. III.27 takes this equality at the next sentence; the companion instead supplies the given congruence to `Prop27.of_congruent`."
 
 [[passage]]
 at = "the angle BKC is also equal to the angle ELF"
 kind = "different"
 helper = "Prop20"
-note = "Prop27 gives both equal inscribed angles and, when the centres lie on A's and D's sides, equal rectilineal central angles. Its central-angle conclusion supplies Heath's case. To cover all sizes, III.20 doubles its inscribed-angle conclusion to give equal angleAtCentre values. These may be straight or reflex, while the angles in I.4 are angles of noncollinear triangles; the conversion is explicit at that later step. The companion uses Prop27.of_congruent for the same two conclusions."
+note = "III.27 supplies Euclid's ordinary central angles for lesser circumferences. To cover greater circumferences as well, its inscribed-angle conclusion is doubled by III.20 to compare reflex central angles, which must be subtracted from four right angles before I.4 applies (Heath, vol. 2, p. 60). The companion obtains the same conclusions from `Prop27.of_congruent`."
 
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
-kind = "case"
+kind = "different"
 helper = "Prop26.alike"
-note = "Equal extended central angles put the centres alike by Prop26.alike. For lesser circumferences, III.27 supplies the rectilineal angles and I.4 applies. For semicircles the endpoints and centre are collinear, so len_add_of_between adds the two equal radii. For greater circumferences, angleAtCentre.reflex and Common Notion 3 give equal rectilineal angles as remainders of four right angles, and I.4 applies. These cases remain necessary under the full statement; an independent magnitude for arcs would not make a diameter a triangle."
+note = "`Prop26.alike` puts the centres in matching cases. For lesser circumferences, III.27's ordinary angles and the equal radii give the bases by I.4. For greater circumferences, `angleAtCentre.reflex` and Common Notion 3 supply the ordinary angles by subtraction before I.4, an additional step within the statement (Heath, vol. 2, p. 60). For semicircles, adding the equal radii gives equal diameters, the elementary case discussed on p. 61."
 
 [figure]
 case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC and EF from G and H"

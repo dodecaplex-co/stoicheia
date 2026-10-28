@@ -19,9 +19,9 @@ Each clause concludes that the circumferences are equal in measure and congruent
 (`Arc.Congruent`): equal circumferences are read as in III.26, which says more than Heath's
 words. The proof follows Euclid's route where it can: the angles AKB, DLE at the centres are
 equal [I. 8], so the less circumferences are equal in measure and congruent [III. 26], and
-the greater are equal in measure as the remainders [C.N. 3]. The congruence of the greater circumferences now uses the same subtraction,
-`Prop26.remainder`; it depends on the unproved whole-circle extension `Prop26.extend`.
-Equal measures alone cannot supply that extension. And when AB
+the greater are equal in measure as the remainders [C.N. 3]. Their congruence follows by
+restricting the same application of the whole circles to the remaining segments
+(`Prop26.remainder`). When AB
 passes through the centre, the four circumferences are semicircles. The angle at the centre
 of each is two right angles (`angleAtCentre.semicircle`), but there are no triangle angles
 AKB, DLE for III.26's central-angle clause to use; the angle in each semicircle is right
@@ -164,8 +164,7 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have hgreater : circumference ABC A C B = circumference DEF D F E :=
     CommonNotion3 (hw₁.trans hw₂.symm) hless.1
   /- Restrict the common application of the whole circles to the complements of the
-     lesser segments (`Prop26.remainder`). The extension of that application to the
-     whole circles remains an explicit obligation in `Prop26.extend`. -/
+     lesser segments (`Prop26.remainder`), using the extension proved in `Prop26.extend`. -/
   have hACB : Arc.Congruent ⟨ABC, A, B, C⟩ ⟨DEF, D, E, F⟩ :=
     Prop26.remainder hA hB hD hE hCG.symm hFH.symm hless.2
   -- Therefore etc.
