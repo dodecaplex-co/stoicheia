@@ -465,7 +465,7 @@ LEAN_CACHE = {"path": "~/.elan/toolchains",
 # (ANY_VALUE: any). The checkout may only leave its token out of the checkout's git config
 # (persist-credentials: false, the boolean itself): that changes no commit and no file
 # the checks read, and takes a power away; the cache may only be the toolchains'; any
-# other value, or any other input, is unmodeled.
+# other value, or any other input, is unmodelled.
 ANY_VALUE = object()
 SETUP_ACTIONS = {"actions/checkout@v5": {"persist-credentials": False},
                  "actions/setup-python@v5": {"python-version": ANY_VALUE},
@@ -12920,6 +12920,17 @@ class Units(unittest.TestCase):
                     job["steps"].insert(job["steps"].index(elan), step)
             return move
 
+        def move_cache_after_install(workflow, job):
+            cache = step_using(job, "actions/cache@v5")
+            job["steps"].remove(cache)
+            job["steps"].insert(job["steps"].index(step_running(job, ELAN_INSTALL[0])) + 1,
+                                cache)
+
+        def cache_with(**inputs):
+            def change(workflow, job):
+                step_using(job, "actions/cache@v5")["with"].update(inputs)
+            return change
+
         cases = (
             ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
             ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
@@ -12950,6 +12961,20 @@ class Units(unittest.TestCase):
              "setup sequence differs"),
             ("missing elan install", lambda workflow, job: job["steps"].pop(3),
              "setup prefix is incomplete"),
+            # The toolchains' cache (#594): there, before the install, with its path and key
+            # exactly and nothing more.
+            ("no toolchains' cache",
+             lambda workflow, job: job["steps"].remove(step_using(job, "actions/cache@v5")),
+             "setup sequence differs"),
+            ("the cache after the install", move_cache_after_install,
+             "setup sequence differs"),
+            ("the cache of the whole checkout", cache_with(path="."), unmodeled),
+            ("the cache with restore-keys",
+             cache_with(**{"restore-keys": "lean-toolchains-"}), unmodeled),
+            ("the cache keyed on lean-toolchain alone",
+             cache_with(key="lean-toolchains-${{ runner.os }}-"
+                            "${{ hashFiles('lean-toolchain') }}"), unmodeled),
+            ("the cache's path as a list", cache_with(path=[LEAN_CACHE["path"]]), unmodeled),
             ("checkout of another ref",
              lambda workflow, job: step_using(job, "actions/checkout@v5").update(
                  {"with": {"ref": "other"}}), unmodeled),

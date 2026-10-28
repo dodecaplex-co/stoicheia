@@ -74,8 +74,10 @@ for file in "${files[@]}"; do
         echo "install_lean: $name restored from the cache; nothing downloaded for it"
         continue
     fi
-    # A try stopped part way may leave part of a toolchain behind, so GitHub's copy is
-    # taken whenever no try succeeded, and replaces whatever is there.
+    # elan unpacks into <dir>.tmp, under <dir>.lock, and renames the whole into place, so a
+    # try stopped part way leaves no part of a toolchain in <dir> but may leave those two
+    # beside it. GitHub's copy is taken whenever no try succeeded; it replaces whatever is
+    # in <dir> and removes the two, so that the cache saves the toolchain alone.
     installed=no
     for try in 1 2 3; do
         if timeout -k 10 90 elan toolchain install "$name"; then
@@ -95,7 +97,7 @@ for file in "${files[@]}"; do
         zstd -dc "$work/lean.tar.zst" | tar -xf - -C "$unpacked"
         [ -x "$unpacked/lean-$version-linux/bin/lean" ] ||
             fail "GitHub's copy of $name has no bin/lean"
-        rm -rf "$dir"
+        rm -rf "$dir" "${dir%.*}.tmp" "${dir%.*}.lock"
         mv "$unpacked/lean-$version-linux" "$dir"
         rm -rf "$unpacked" "$work/lean.tar.zst"
         echo "install_lean: $name taken from GitHub's copy"
