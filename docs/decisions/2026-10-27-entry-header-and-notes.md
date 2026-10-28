@@ -58,7 +58,7 @@
   stops the render before it writes.
 
   The notes regions are part of `heath.py`'s one account of the generated regions, which
-  card #578 gives: `heath.notes` reads them, with every refusal above, and
+  card #578 gives: `heath.notes` reads them, with every marker refusal above, and
   `heath.regions`, `heath.outside`, `heath.bodies` and `heath.fill` read them with the
   others, so that `render.py`, `generated_counts.py` and every reader of those agree on
   them. `render.py` fills each page through `heath.fill`, which refuses a write that
