@@ -1,4 +1,4 @@
-name: Release gate
+name: Release gate (PR copy)
 
 on:
   pull_request:
@@ -8,30 +8,8 @@ permissions: {}
 
 jobs:
   release-gate:
-    # Unfinished work may land with its issue, but holds the release until it is closed.
-    # Ordinary pull requests skip this job; label changes run no heavy CI jobs here.
-    # safe_push's merge gate is the authority, reading the issues again at the merge;
-    # this job shows the hold on the release pull request. It runs main's copy of the
-    # script, from the base commit, but GitHub reads this workflow file from the pull
-    # request, which could change it: the job is a signal, not the gate.
-    # GitHub's contains() compares label names case-insensitively.
-    if: contains(github.event.pull_request.labels.*.name, 'release')
+    # Trial only (PR #591, never merged): the pull request's own copy, made to fail, to see
+    # which copy the organization's required-workflow rule enforces.
     runs-on: ubuntu-latest
-    permissions:
-      issues: read
-      pull-requests: read
-      contents: read
     steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.base.sha }}
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Check no unfinished work holds the release
-        run: python3 scripts/check_release_gate.py --repo "${{ github.repository }}"
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - run: echo "the pull request's copy ran"; exit 1
