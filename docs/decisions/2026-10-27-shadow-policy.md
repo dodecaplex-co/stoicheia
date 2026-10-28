@@ -1,6 +1,6 @@
 - **Main's checking policy runs in CI as a shadow, on each push to main, beside the local
   pre-flight, which it replaces nowhere (tooling,
-  [#574](https://github.com/jackChallis/stoicheia/issues/574)).** The pre-flight's step 4 is
+  [#574](https://github.com/dodecaplex-co/stoicheia/issues/574)).** The pre-flight's step 4 is
   not only a repeat of CI. It runs every check twice when a change touches the checks' inputs,
   once with origin/main's copies put in place and once with the commit's own, and `keep_apart`
   refuses a commit that weakens a check together with what the check would catch, while it
@@ -40,3 +40,7 @@
     the landing tool's and CI's, as scripts/run_checks.py is, so it is R5.
   - scripts/risk.py: classes scripts/shadow_policy.py R5, beside scripts/run_checks.py.
   - tests/test_risk.py: a row for it among the paths a broader, lighter rule also matches.
+  - scripts/test_safe_push.py: the workflow's contract among the workflow contracts of #259,
+    which refuse a workflow with none. No ruleset requires its jobs and no landing reads their
+    verdict, so each is named with its reason, and held to where it runs, its time limit and
+    when it runs, so that the hour's run stays off pull requests.

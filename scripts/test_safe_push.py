@@ -1119,7 +1119,26 @@ WORKFLOW_CONTRACTS = {
             "report": ("it opens or updates an issue on the others' results, checking "
                        "nothing; CadenceReport runs its step",
                        {"permissions": {"issues": "write"}, "concurrency": {
-                           "group": "safe-push-tests-report", "cancel-in-progress": False}})}}}
+                           "group": "safe-push-tests-report", "cancel-in-progress": False}})}},
+    # The shadow of main's checking policy (#574, train 1): no ruleset requires it and no
+    # landing reads its verdict, so its jobs are named with their reasons; held of each, where
+    # it runs, its limit and when it runs, so that the hour's run stays off pull requests.
+    "shadow-policy.yml": {
+        "name": "Shadow policy", "permissions": {"contents": "read"},
+        "on": {"push": {"branches": ["main"]},
+               "pull_request": {"paths": [".github/workflows/shadow-policy.yml",
+                                          "scripts/shadow_policy.py"]},
+               "workflow_dispatch": None},
+        "jobs": {
+            "self-test": ("it tests the shadow's driver on report texts, gating nothing",
+                          {"runs-on": "ubuntu-latest", "timeout-minutes": 10}),
+            "policy": ("it keeps main's pre-flight verdict on a push to main as an artifact, "
+                       "gating nothing", {"if": "github.event_name == 'push'",
+                                          "runs-on": "ubuntu-latest", "timeout-minutes": 180}),
+            "plants": ("it checks the driver's planted cases, gating nothing",
+                       {"if": "github.event_name == 'pull_request' || (github.event_name == "
+                              "'workflow_dispatch' && github.ref == 'refs/heads/main')",
+                        "runs-on": "ubuntu-latest", "timeout-minutes": 180})}}}
 
 
 def weakenings(workflows: dict[str, object]) -> list[tuple[str, object]]:
