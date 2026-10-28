@@ -199,7 +199,7 @@ import sys
 import tempfile
 import types
 from collections.abc import Callable
-from contextlib import contextmanager, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
 from time import perf_counter
 from typing import NamedTuple
@@ -1030,10 +1030,12 @@ def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], li
     """run_plant, in a worker: what the plant prints is printed and kept, and `report`
     gains it with the failures the plant added, noting their places in `failures`."""
     start = len(failures)
-    tee = Tee(sys.stdout)
-    with redirect_stdout(tee):
+    output = Tee(sys.stdout)
+    errors = Tee(sys.stderr)
+    with redirect_stdout(output), redirect_stderr(errors):
         run_plant(plant, sources, changes)
-    report["plants"].append({"name": plant.name, "output": tee.copy.getvalue(),
+    report["plants"].append({"name": plant.name, "output": output.copy.getvalue(),
+                             "stderr": errors.copy.getvalue(),
                              "failures": failures[start:]})
     report["taken"].update(range(start, len(failures)))
 
@@ -1159,17 +1161,23 @@ def bound_worker_env(tree: Path, folder: Path) -> dict[str, str]:
     git = shutil.which("git", path=env.get("PATH"))
     if git is None:
         return env
+    identified = subprocess.run((git, "rev-parse", "--absolute-git-dir"), cwd=tree, env=env,
+                                capture_output=True, text=True)
+    if identified.returncode != 0:
+        return env
     folder.mkdir()
     launcher = folder / "git"
     launcher.write_text(
         '#!/usr/bin/env python3\n'
         'import os\n'
+        'import subprocess\n'
         'import sys\n'
         '\n'
         'args = sys.argv[1:]\n'
         'cwd = os.path.realpath(os.getcwd())\n'
         'explicit = any(name in os.environ for name in '
         '("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR"))\n'
+        'subcommand = None\n'
         'i = 0\n'
         'while i < len(args):\n'
         '    arg = args[i]\n'
@@ -1187,21 +1195,29 @@ def bound_worker_env(tree: Path, folder: Path) -> dict[str, str]:
         '        explicit = True\n'
         '    elif arg in ("-c", "--config-env", "--namespace", "--super-prefix"):\n'
         '        i += 1\n'
-        '    elif arg == "--" or not arg.startswith("-"):\n'
+        '    elif arg == "--":\n'
+        '        if i + 1 < len(args):\n'
+        '            subcommand = args[i + 1]\n'
+        '        break\n'
+        '    elif not arg.startswith("-"):\n'
+        '        subcommand = arg\n'
         '        break\n'
         '    i += 1\n'
-        'tree = os.path.realpath(os.environ["STOICHEIA_NEGATIVE_TREE"])\n'
-        'try:\n'
-        '    inside = os.path.commonpath((cwd, tree)) == tree\n'
-        'except ValueError:\n'
-        '    inside = False\n'
         'git = os.environ["STOICHEIA_NEGATIVE_GIT"]\n'
+        'same = False\n'
+        'if not explicit and subcommand not in ("clone", "init"):\n'
+        '    found = subprocess.run([git, "rev-parse", "--absolute-git-dir"], cwd=cwd,\n'
+        '                           env=os.environ, capture_output=True, text=True)\n'
+        '    if found.returncode == 0:\n'
+        '        same = (os.path.realpath(found.stdout.strip())\n'
+        '                == os.path.realpath(os.environ["STOICHEIA_NEGATIVE_GIT_DIR"]))\n'
         'command = [git]\n'
-        'if inside and not explicit:\n'
-        '    command.append("--work-tree=" + tree)\n'
+        'if same:\n'
+        '    command.append("--work-tree=" + os.environ["STOICHEIA_NEGATIVE_TREE"])\n'
         'os.execv(git, command + args)\n', encoding="utf-8")
     launcher.chmod(0o755)
     env["STOICHEIA_NEGATIVE_GIT"] = git
+    env["STOICHEIA_NEGATIVE_GIT_DIR"] = identified.stdout.strip()
     env["STOICHEIA_NEGATIVE_TREE"] = str(tree)
     env["PATH"] = str(folder) + os.pathsep + env.get("PATH", os.defpath)
     return env
@@ -1306,7 +1322,8 @@ def well_formed(report) -> bool:
             and (report["status"] is None or type(report["status"]) is int)
             and isinstance(report["plants"], list)
             and all(isinstance(p, dict) and isinstance(p.get("name"), str)
-                    and isinstance(p.get("output"), str) and strings(p.get("failures"))
+                    and isinstance(p.get("output"), str) and isinstance(p.get("stderr"), str)
+                    and strings(p.get("failures"))
                     for p in report["plants"]))
 
 
@@ -1468,6 +1485,7 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
         for plant in chosen:
             if plant.name in outputs:
                 sys.stdout.write(outputs[plant.name]["output"])
+                sys.stderr.write(outputs[plant.name]["stderr"])
                 for failure in outputs[plant.name]["failures"]:
                     sources[len(failures)] = f"{plant.name} ({shown(plant.path)}):"
                     failures.append(failure)

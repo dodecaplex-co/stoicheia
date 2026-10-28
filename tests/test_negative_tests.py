@@ -2641,6 +2641,9 @@ if __name__ == "__main__":
 '''
 # The bodies of the throwaway plants' plant(), "{name}" the plant's name.
 PASSES = 'print("{name} plants its change")\n    nt.refused("{name}: caught")'
+WRITES_STDERR = ('import sys\n'
+                 '    print("{name} diagnostic", file=sys.stderr)\n'
+                 '    nt.refused("{name}: caught")')
 MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", ""))'
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
@@ -2738,6 +2741,32 @@ CHECKS_BOUND_GIT = ('import os\n'
                     '        print("{name}: Git read the wrong tree", repr(checked.stdout),\n'
                     '              repr(top.stdout), repr(absolute.stdout), repr(explicit.stdout),\n'
                     '              checked.stderr, top.stderr, absolute.stderr, explicit.stderr)')
+CHECKS_NESTED_GIT = ('import os\n'
+                     '    import tempfile\n'
+                     '    from pathlib import Path\n'
+                     '    with tempfile.TemporaryDirectory(dir=nt.ROOT) as tmp:\n'
+                     '        fixture = Path(tmp)\n'
+                     '        subprocess.run(["git", "init", "-q"], cwd=fixture, check=True)\n'
+                     '        tracked = fixture / "tracked"\n'
+                     '        tracked.write_text("committed\\n")\n'
+                     '        subprocess.run(["git", "add", "tracked"], cwd=fixture, check=True)\n'
+                     '        subprocess.run(["git", "-c", "user.name=test", "-c",\n'
+                     '                        "user.email=test@example.invalid", "commit", "-q",\n'
+                     '                        "-m", "fixture"], cwd=fixture, check=True)\n'
+                     '        tracked.write_text("changed\\n")\n'
+                     '        direct = subprocess.run(["git", "status", "--porcelain"],\n'
+                     '                                cwd=fixture, capture_output=True, text=True)\n'
+                     '        selected = subprocess.run(["git", "-C", str(fixture), "status",\n'
+                     '                                   "--porcelain"], cwd=nt.ROOT,\n'
+                     '                                  capture_output=True, text=True)\n'
+                     '        print("nested cwd:", repr(direct.stdout))\n'
+                     '        print("nested -C:", repr(selected.stdout))\n'
+                     '    if (direct.returncode == selected.returncode == 0\n'
+                     '            and direct.stdout == selected.stdout == " M tracked\\n"):\n'
+                     '        nt.refused("{name}: caught")\n'
+                     '    else:\n'
+                     '        print("{name}: nested Git read the wrong tree", direct.stderr,\n'
+                     '              selected.stderr)')
 
 
 def corrupts(change):
@@ -2860,6 +2889,20 @@ class WorkerTests(unittest.TestCase):
                     "1 negative-test failure(s):\nc_three (scripts/negative/c_three.py):\n"
                     "  ✗ c_three: not caught\n" if missing else
                     "4 of 4 plants run\n✓ every planted change was caught\n"), alone.stdout)
+
+    def test_successful_plants_stderr_is_replayed_in_stable_order(self):
+        """Successful workers preserve each plant's stderr in the stable plant order;
+        their documented plan is the only additional stderr beside a one-worker run."""
+        self.commit(a_one=WRITES_STDERR, b_two=WRITES_STDERR)
+        alone = self.suite()
+        workers = self.suite("--workers", "2")
+        self.assertEqual(workers.returncode, alone.returncode,
+                         workers.stdout + workers.stderr + alone.stdout + alone.stderr)
+        self.assertEqual(alone.stderr, "a_one diagnostic\nb_two diagnostic\n")
+        lines = workers.stderr.splitlines(keepends=True)
+        self.assertIn("The plants in 2 workers, dealt in turn", lines[0])
+        self.assertEqual(lines[1:3], ["  worker 1: a_one\n", "  worker 2: b_two\n"])
+        self.assertEqual("".join(lines[3:]), alone.stderr)
 
     def test_a_plant_that_misses_its_change_fails_the_run_in_any_worker(self):
         """As the first plant of a worker's share and as the last."""
@@ -2992,6 +3035,12 @@ class WorkerTests(unittest.TestCase):
                 finally:
                     self.env.clear()
                     self.env.update(saved)
+
+    def test_nested_fixture_repository_keeps_its_own_work_tree(self):
+        """Git invoked by cwd or -C in a repository nested below a worker keeps that
+        repository's work tree, giving the same status and verdict as a serial run."""
+        self.commit(a_checks=CHECKS_NESTED_GIT, b_checks=CHECKS_NESTED_GIT)
+        self.assertEqual(self.one_worker_s_verdict(), 0)
 
     def test_status_configuration_gives_one_worker_s_verdict(self):
         """The repository hides untracked files from its status, so one worker's bracket
@@ -3437,29 +3486,30 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(list(inside.iterdir()), [])
 
     def test_a_report_out_of_form_is_a_crash_and_the_others_are_read(self):
-        """Each of seven workers' reports lacks a field the run reads, or has one of the
-        wrong type, once the worker has written it: each worker crashed, and the eighth
+        """Each of eight workers' reports lacks a field the run reads, or has one of the
+        wrong type, once the worker has written it: each worker crashed, and the ninth
         worker's verdicts are read all the same."""
         changes = {"a_no_plants": 'del report["plants"]',
                    "b_no_failures": 'del report["failures"]',
                    "c_no_status": 'del report["status"]',
                    "d_no_name": 'del report["plants"][0]["name"]',
                    "e_no_output": 'del report["plants"][0]["output"]',
-                   "f_no_plant_failures": 'del report["plants"][0]["failures"]',
-                   "g_status_as_text": 'report["status"] = str(report["status"])'}
-        self.commit(h_whole=PASSES, **{name: corrupts(change) for name, change in changes.items()})
-        result = self.suite("--workers", "8")
+                   "f_stderr_as_list": 'report["plants"][0]["stderr"] = []',
+                   "g_no_plant_failures": 'del report["plants"][0]["failures"]',
+                   "h_status_as_text": 'report["status"] = str(report["status"])'}
+        self.commit(i_whole=PASSES, **{name: corrupts(change) for name, change in changes.items()})
+        result = self.suite("--workers", "9")
         self.assertEqual(result.returncode, 1, result.stdout)
         crashed = [f"worker {k} ({name}) crashed: its report is not in the form a worker writes"
                    for k, name in enumerate(changes, 1)]
         for message in crashed:
             self.assertIn(f"✗ {message}; its log ends:\n", result.stdout)
-        self.assertIn("\nh_whole (scripts/negative/h_whole.py)\nh_whole plants its change\n"
-                      "✓ h_whole: caught\n", result.stdout)
+        self.assertIn("\ni_whole (scripts/negative/i_whole.py)\ni_whole plants its change\n"
+                      "✓ i_whole: caught\n", result.stdout)
         self.assertTrue(result.stdout.endswith(
-            "8 negative-test failure(s):\noutside any plant:\n"
+            "9 negative-test failure(s):\noutside any plant:\n"
             + "".join(f"  ✗ {message}\n" for message in crashed)
-            + "  ✗ only 1 of the 8 plants chosen were run\n"), result.stdout)
+            + "  ✗ only 1 of the 9 plants chosen were run\n"), result.stdout)
 
     def test_a_worker_runs_without_the_variables_of_a_repository_or_a_build(self):
         """LEAN_PATH, a LAKE variable, GIT_NAMESPACE and the variable that gives the number
