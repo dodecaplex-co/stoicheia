@@ -491,6 +491,9 @@ def is_modeled_setup(step: WorkflowStep) -> bool:
     if step.uses is None:
         return step.run == ELAN_INSTALL
     allowed = SETUP_ACTIONS.get(step.uses)
+    if step.uses == "actions/cache@v5" and {
+            name for name, _ in step.inputs} != set(LEAN_CACHE):
+        return False
     return not step.run and allowed is not None and all(
         name in allowed and (allowed[name] is ANY_VALUE or (
             type(value) is type(allowed[name]) and value == allowed[name]))
@@ -12931,6 +12934,16 @@ class Units(unittest.TestCase):
                 step_using(job, "actions/cache@v5")["with"].update(inputs)
             return change
 
+        def cache_without(input_name):
+            def change(workflow, job):
+                step_using(job, "actions/cache@v5")["with"].pop(input_name)
+            return change
+
+        workflow = yaml.safe_load(source)
+        step_using(workflow["jobs"]["check"], "actions/cache@v5")["with"] = dict(LEAN_CACHE)
+        self.assertEqual(enforced_check_commands(normalized_check_job(
+            yaml.safe_dump(workflow, sort_keys=False))), [RUN_CHECKS])
+
         cases = (
             ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
             ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
@@ -12968,6 +12981,15 @@ class Units(unittest.TestCase):
              "setup sequence differs"),
             ("the cache after the install", move_cache_after_install,
              "setup sequence differs"),
+            ("the cache missing its with mapping",
+             lambda workflow, job: step_using(job, "actions/cache@v5").pop("with"),
+             unmodeled),
+            ("the cache with empty inputs",
+             lambda workflow, job: step_using(job, "actions/cache@v5").update(
+                 {"with": {}}),
+             unmodeled),
+            ("the cache missing its path", cache_without("path"), unmodeled),
+            ("the cache missing its key", cache_without("key"), unmodeled),
             ("the cache of the whole checkout", cache_with(path="."), unmodeled),
             ("the cache with restore-keys",
              cache_with(**{"restore-keys": "lean-toolchains-"}), unmodeled),
