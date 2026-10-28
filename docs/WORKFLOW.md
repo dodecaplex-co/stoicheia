@@ -398,6 +398,7 @@ ahead. On the integrated revision, run exactly what CI's `check` job runs, in it
 export PATH=$HOME/.elan/bin:$PATH
 python3 -I tests/test_check_paths.py
 python3 scripts/check_paths.py --self-test
+python3 -I tests/test_concurrent_checks.py
 lake build
 lake build Audit
 lake build Staging

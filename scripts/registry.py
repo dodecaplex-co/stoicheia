@@ -22,13 +22,19 @@ An entry holds these fields and no others:
     empty     true in place of `command`: `git status --porcelain` must print nothing,
               over the whole worktree
     section8  the line section 8's first command block shows for it
+    concurrent  true: the pre-flight may run the check beside the other concurrent checks
+              next to it in order (#608; checks/README.md says what it promises)
+    after     with `concurrent`: the names of earlier checks that must have ended before
+              this one starts, as a check's own test runs before its verdict
 
 `order`, `name`, `job` and `section8` are required, and exactly one of `command` and
-`empty`. The folder holds the entries, its README.md (which this reader passes over) and
-nothing else but a Finder .DS_Store, which it passes over too. A file of another name, a
-folder, a link, a file that is not UTF-8 TOML, an unknown or missing field, a value of the
-wrong kind, an unknown job, two entries of one name or one order, or no entry at all is an
-error naming the file: the registry is read whole or not at all.
+`empty`; `concurrent` and `after` may be left out. The folder holds the entries, its
+README.md (which this reader passes over) and nothing else but a Finder .DS_Store, which it
+passes over too. A file of another name, a folder, a link, a file that is not UTF-8 TOML,
+an unknown or missing field, a value of the wrong kind, an unknown job, `concurrent` other
+than true or with `empty`, `after` without `concurrent` or naming anything but an earlier
+check, two entries of one name or one order, or no entry at all is an error naming the
+file: the registry is read whole or not at all.
 
     python3 scripts/registry.py [ROOT]                     each entry, in order
     python3 scripts/registry.py --json [ROOT]              the same, as JSON
@@ -64,7 +70,7 @@ FOLDER = "checks"
 README = "README.md"
 PASSED_OVER = (README, ".DS_Store")
 ENTRY = re.compile(r"[0-9]+-[a-z0-9]+(?:-[a-z0-9]+)*\.toml")
-FIELDS = ("order", "name", "job", "command", "empty", "section8")
+FIELDS = ("order", "name", "job", "command", "empty", "section8", "concurrent", "after")
 REQUIRED = ("order", "name", "job", "section8")
 JOBS = ("check",)
 PYTHON = "python3"
@@ -91,6 +97,8 @@ class Entry:
     command: tuple[str, ...] | None     # None when `empty`
     empty: bool
     section8: str
+    concurrent: bool = False
+    after: tuple[str, ...] = ()         # earlier checks' names, with `concurrent` alone
 
     def argv(self, python: str = sys.executable) -> list[str]:
         """The command to run: `python` for a first word "python3", and for an `empty`
@@ -156,8 +164,22 @@ def entry(path: str, data: bytes) -> Entry:
         raise RegistryError(f"{path}: name must be {shown(expected)!r}, the "
                             + ("command's words joined by spaces" if command else
                                "name of the check that git status --porcelain prints nothing"))
+    concurrent = "concurrent" in fields
+    if concurrent and fields["concurrent"] is not True:
+        raise RegistryError(f"{path}: concurrent is true, or absent for a check that runs "
+                            "alone")
+    if concurrent and "empty" in fields:
+        raise RegistryError(f"{path}: the check with empty judges the whole worktree, and "
+                            "runs alone: it is never concurrent")
+    after = fields.get("after", [])
+    if "after" in fields and not concurrent:
+        raise RegistryError(f"{path}: after is for a concurrent check, which may otherwise "
+                            "start beside those it names")
+    if (not isinstance(after, list)
+            or not all(one_line(name) for name in after) or len(set(after)) != len(after)):
+        raise RegistryError(f"{path}: after must be a list of checks' names, each once")
     return Entry(path, order, fields["name"], fields["job"], command, "empty" in fields,
-                 fields["section8"])
+                 fields["section8"], concurrent, tuple(after))
 
 
 def ordered(files: dict[str, bytes]) -> list[Entry]:
@@ -182,7 +204,14 @@ def ordered(files: dict[str, bytes]) -> list[Entry]:
                 raise RegistryError(f"{e.path}: the {field} {shown(str(value))!r} is "
                                     f"{seen[value]}'s too")
             seen[value] = e.path
-    return sorted(entries, key=lambda e: e.order)
+    entries.sort(key=lambda e: e.order)
+    for at, e in enumerate(entries):
+        earlier = {before.name for before in entries[:at]}
+        for name in e.after:
+            if name not in earlier:
+                raise RegistryError(f"{e.path}: after names {shown(name)!r}, which is no "
+                                    "earlier check's name")
+    return entries
 
 
 def folder_files(root: Path) -> dict[str, bytes]:
@@ -274,7 +303,8 @@ def section8_block(entries: list[Entry]) -> str:
 def as_json(entries: list[Entry]) -> str:
     return json.dumps([{"name": e.name, "job": e.job, "order": e.order,
                         "command": list(e.command) if e.command else None,
-                        "empty": e.empty, "path": e.path} for e in entries], indent=1)
+                        "empty": e.empty, "concurrent": e.concurrent, "after": list(e.after),
+                        "path": e.path} for e in entries], indent=1)
 
 
 def main(argv: list[str]) -> int:

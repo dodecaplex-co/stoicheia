@@ -325,6 +325,7 @@ import platform
 # sandbox is set (run), not even when the run crashes there.
 import plistlib  # noqa: F401
 import posixpath
+import queue
 import re
 import secrets
 import shutil
@@ -333,6 +334,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import tomllib
 import traceback  # noqa: F401
@@ -611,6 +613,11 @@ CHECKS = [
 MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
+# The model job may run beside the registry's concurrent checks (#608): its harnesses write
+# nothing in the worktree but Python's ignored bytecode, read nothing another check writes,
+# and run one after another. Declared only beside a registry that declares a concurrent
+# check of its own (check_sequence), so that a registry without the field runs as before.
+MODEL_JOB_CONCURRENT = frozenset(name for name, _ in MODEL_JOB)
 # CI's `negative` job, in a second disposable worktree: negative_tests.py plants breaks
 # in the tree it runs in.
 NEGATIVE = [
@@ -717,25 +724,36 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     `file -b` from the PATH: environment), nor import a module but a builtin, which
     Python would look for first in the harness's own directory (so plistlib, and tomllib
     on a supported interpreter, which mac_ver and the allow-list imported late, are
-    imported with the rest at the top)."""
+    imported with the rest at the top). Its one sibling is start_check, which starts a
+    check of step 4's concurrent groups as this would run it (wrapped)."""
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
-    # off, by its environment and by its command line, lest the scan or the hand-over read
-    # a clean stand-in (#256). No command, git's or another's, gets one of the caller's
-    # variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS; only a name in
-    # `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE), passes (#357).
+    # off, by its environment and by its command line (wrapped), lest the scan or the
+    # hand-over read a clean stand-in (#256). No command, git's or another's, gets one of
+    # the caller's variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS;
+    # only a name in `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE),
+    # passes (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
-        cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
         env = without_replacements(env, keep)
     else:
         env = own_env(env, keep)
-    if SANDBOX is not None:
-        cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    cmd = wrapped(cmd)
     # A time limit only when one is given: the CI watch, among others, has none, and its
     # call carries none (tests/test_release_gate.py).
     limit = {} if timeout is None else {"timeout": timeout}
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
                           text=not binary, **limit)
+
+
+def wrapped(cmd):
+    """A command as run() and start_check start it: git's with replacements off by its
+    command line too, and every one under the sandbox while the main-checks cache is in
+    use."""
+    if cmd and os.path.basename(cmd[0]) == "git":
+        cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
+    if SANDBOX is not None:
+        cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    return cmd
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
@@ -3586,7 +3604,13 @@ def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
         r = run(cmd, cwd, env=tool_env())
         out, ok = (r.stdout or "") + (r.stderr or ""), r.returncode == 0
     log.write_text(out)
-    seconds = time.time() - t
+    return step_done(stage, name, out, ok, time.time() - t, log, rep, fail)
+
+
+def step_done(stage, name, out: str, ok: bool, seconds: float, log: Path, rep: Report,
+              fail: str) -> str:
+    """A step of the full checks reported, its log written: ok, or `fail` with the log
+    named and its tail, a Refusal when `fail` is FAIL; its output."""
     if ok:
         rep.add(stage, name, "ok", "", seconds)
         return out
@@ -3594,6 +3618,253 @@ def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
     if fail == "FAIL":
         raise Refusal(f"`{name}` failed on the commit")
     return out
+
+
+# Step 4's concurrent checks (#608). The registry declares a check `concurrent` when it
+# writes nothing in the worktree but ignored bytecode, reads nothing another check writes,
+# has no limit timed by the clock that a busy machine could fail, and does not itself fill
+# the machine (checks/README.md); MODEL_JOB_CONCURRENT declares the model job so. A group
+# is a run of such checks next to each other in order. Every other check runs alone, after
+# every earlier check has ended and before any later one starts, as before #608.
+CHECK_WORKERS = "STOICHEIA_CHECK_WORKERS"
+# The step that fails when a group's worktree differs after it: a concurrent check wrote it.
+TREE_GUARD = "concurrent checks left the tree as they found it"
+STOP_GRACE = 5      # seconds a stopped check's process group has between SIGTERM and SIGKILL
+
+
+def check_workers() -> tuple[int, str]:
+    """How many of a group's checks may run at once, and what the check list line says of
+    it. STOICHEIA_CHECK_WORKERS unset or empty is one, the run before #608, and the line
+    says nothing; a whole number from 1 is taken up to the cap, half this machine's cores
+    (at least one), so that yards, ships and other work still get their share, and the
+    line says the cap. Any other value is a Refusal naming it."""
+    text = os.environ.get(CHECK_WORKERS, "")
+    if not text:
+        return 1, ""
+    digits = text.lstrip("0")
+    if not (text.isascii() and text.isdigit() and digits):
+        raise Refusal(f"{CHECK_WORKERS} must be a whole number from 1, not {text[:40]!r}")
+    cores = os.cpu_count() or 1
+    cap = max(1, cores // 2)
+    # Compared by length first: int() refuses a string of 4,300 digits or more.
+    capped = len(digits) > len(str(cap)) or int(digits) > cap
+    workers = cap if capped else int(digits)
+    shown = text if len(text) <= 20 else text[:20] + "…"
+    return workers, (f"; the concurrent checks run up to {workers} at once ({CHECK_WORKERS}="
+                     f"{shown}, {'capped at' if capped else 'the cap'} {cap}, half this "
+                     f"machine's {cores} cores)")
+
+
+def start_check(cmd: list[str], cwd: Path) -> subprocess.Popen:
+    """A check of a concurrent group started as run_step's run() runs one: tool_env()'s
+    environment, rebuilt as run() builds it, and the command wrapped as run() wraps it;
+    its output captured as run() captures it, with no input, and in a session of its own,
+    so that stop_checks can reach its children with it: sweep's lake and lean, and
+    check_kernel's leanchecker, outlive a check stopped alone."""
+    if cmd and os.path.basename(cmd[0]) == "git":
+        env = without_replacements(tool_env())
+    else:
+        env = own_env(tool_env())
+    return subprocess.Popen(wrapped(cmd), cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            start_new_session=True)
+
+
+def signal_group(proc: subprocess.Popen, signum: int) -> None:
+    with contextlib.suppress(ProcessLookupError, PermissionError):
+        os.killpg(proc.pid, signum)
+
+
+def stop_checks(procs: list[subprocess.Popen]) -> None:
+    """Each check's process group sent SIGTERM, then SIGKILL once STOP_GRACE seconds have
+    passed, and each check waited for: so no check is left reading the worktree while the
+    pass cleans it (base_copies, at_commit) or removes it (worktree)."""
+    for proc in procs:
+        signal_group(proc, signal.SIGTERM)
+    deadline = time.monotonic() + STOP_GRACE
+    for proc in procs:
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            proc.wait(timeout=max(0.0, deadline - time.monotonic()))
+    for proc in procs:
+        signal_group(proc, signal.SIGKILL)
+        proc.wait()
+
+
+def on_disk(path: Path) -> tuple:
+    """What is at `path`: nothing, a link and its target, a file with its executable bit
+    and the SHA-256 of its bytes, or another kind of file."""
+    try:
+        st = os.lstat(path)
+        if stat.S_ISLNK(st.st_mode):
+            return ("link", os.readlink(path))
+        if not stat.S_ISREG(st.st_mode):
+            return ("kind", stat.S_IFMT(st.st_mode))
+        digest = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(2 ** 20), b""):
+                digest.update(chunk)
+        return ("file", bool(st.st_mode & 0o111), digest.hexdigest())
+    except FileNotFoundError:
+        return ("absent",)
+    except OSError as e:
+        return ("unreadable", e.errno)
+
+
+def tree_state(wt: Path) -> dict[str, tuple]:
+    """The worktree's state as git status sees it: each path that differs from the index,
+    or stands untracked (every untracked file, ignored ones left out), with git's two
+    letters for it and what is on disk there (on_disk), so that a file changed again, or
+    put back as the index holds it, shows too. git runs with its settings as at_commit asks
+    (DISK_AS_IS) and no optional lock, so it writes neither the worktree's index nor an
+    object; nothing is written."""
+    r = run(["git", "--no-optional-locks", *DISK_AS_IS, "status", "--porcelain", "-z",
+             "--untracked-files=all", "--no-renames"], wt, binary=True)
+    if r.returncode != 0:
+        raise Refusal(f"`git status` failed in the worktree {wt}, taking its state around "
+                      f"concurrent checks: {r.stderr.decode(errors='replace').strip()}")
+    state = {}
+    for record in r.stdout.split(b"\0"):
+        if record:
+            path = os.fsdecode(record[3:])
+            state[path] = (record[:2].decode(errors="replace"), on_disk(wt / path))
+    return state
+
+
+def tree_changes(before: dict[str, tuple], after: dict[str, tuple]) -> str:
+    """The paths whose state differs between two of tree_state's, with git's letters for
+    them after, as git status --porcelain prints them."""
+    changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
+    changes = [f"{after[p][0].strip()} {p}" if p in after else
+               f"{p} (no longer listed by git status)" for p in changed]
+    shown = ", ".join(printable_text(c) for c in changes[:8])
+    return shown + (f" and {len(changes) - 8} more" if len(changes) > 8 else "")
+
+
+def run_group(stage, group: list[tuple[str, list[str]]], where: Path, rep: Report,
+              logs: Path, first: int, label: str, fail: str,
+              after: dict[str, tuple[str, ...]], workers: int, cache=None) -> None:
+    """One group of concurrent checks, the first logged as `first`: started in registry
+    order, each in its own process (start_check), at most `workers` at once, and each only
+    once the checks its `after` names have ended; reported and logged in registry order,
+    each once every check before it has ended, with its own time and output, so the lines
+    and logs are those of the checks run one at a time. Where a failure fails the pass
+    (FAIL), none starts after one fails; every running check is waited for; and the steps
+    are reported up to the first failure in registry order, which refuses, as run_step
+    does. Where a failure is a note, every check runs, each reported in order, `cache`
+    collecting it. Left by any exception, a KeyboardInterrupt among them, the running
+    checks are stopped (stop_checks) before it goes on. Around the group, at every
+    `workers`, the worktree's state (tree_state): if the group changed it, the step
+    TREE_GUARD fails, naming the checks and the paths, as a note in a noting pass, which
+    then keeps the pass out of the main-checks cache."""
+    names = {name for name, _ in group}
+    before = tree_state(where)
+    waiting = list(group)           # not started, in registry order
+    running: dict[str, subprocess.Popen] = {}
+    ended: dict[str, tuple[bool, str, float]] = {}
+    finished: queue.Queue = queue.Queue()
+    readers: list[threading.Thread] = []
+    stopping, reported = False, 0
+
+    def ready(name: str) -> bool:
+        return all(earlier in ended for earlier in after.get(name, ()) if earlier in names)
+
+    def start(name: str, cmd: list[str]) -> None:
+        t = time.time()
+        proc = start_check(cmd, where)
+        running[name] = proc
+
+        def read() -> None:
+            try:
+                out, err = proc.communicate()
+                finished.put((name, ((out or "") + (err or ""), proc.returncode == 0,
+                                     time.time() - t)))
+            except BaseException as e:      # handed to the harness, as run() raises it
+                finished.put((name, e))
+        reader = threading.Thread(target=read, daemon=True)
+        reader.start()
+        readers.append(reader)
+
+    def receive() -> bool:
+        """One check's end, taken in; whether it failed. Waited for a second at a time, so
+        that a signal's handler (Ctrl-C's KeyboardInterrupt, _terminate's) runs between
+        waits: a lock waited on without a limit need not wake for one."""
+        while True:
+            try:
+                name, result = finished.get(timeout=1)
+                break
+            except queue.Empty:
+                continue
+        if isinstance(result, BaseException):
+            raise result
+        del running[name]
+        out, ok, seconds = result
+        ended[name] = (ok, out, seconds)
+        return not ok
+
+    try:
+        while True:
+            while (waiting and not stopping and len(running) < workers
+                   and ready(waiting[0][0])):
+                start(*waiting.pop(0))
+            while reported < len(group) and group[reported][0] in ended:
+                name = group[reported][0]
+                ok, out, seconds = ended[name]
+                log = logs / f"{first + reported:02d}{slug_of(name + label)}.log"
+                log.write_text(out)
+                reported += 1
+                try:
+                    out = step_done(stage, name + label, out, ok, seconds, log, rep, fail)
+                except Refusal:
+                    while running:
+                        receive()
+                    raise
+                if cache is not None:
+                    cache.collect(rep, out)
+            if reported == len(group):
+                break
+            if receive() and fail == "FAIL":
+                stopping = True
+    except BaseException:
+        stop_checks(list(running.values()))
+        raise
+    finally:
+        for reader in readers:
+            reader.join(timeout=STOP_GRACE)
+    now = tree_state(where)
+    if now == before:
+        return
+    rep.add(stage, TREE_GUARD + label, fail, f"the worktree differs after "
+            f"{', '.join(name for name, _ in group)}, each declared concurrent, which "
+            f"promises it writes nothing there but ignored bytecode (checks/README.md): "
+            f"{tree_changes(before, now)}")
+    if fail == "FAIL":
+        raise Refusal(f"`{TREE_GUARD}` failed on the commit")
+    if cache is not None:
+        cache.spoiled = cache.spoiled or f"the step {TREE_GUARD} failed in origin/main's pass"
+
+
+def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: str,
+                 excludes, first: int, plan: CheckList | None = None, cache=None) -> None:
+    """A pass's steps, each logged as `first` and its place: a check `plan` declares
+    concurrent with those beside it (run_group, at most plan.workers at once), and every
+    other alone (run_step), the steps of a list with no plan among them; `cache`, if
+    given, collecting each as it is reported."""
+    concurrent = plan.concurrent if plan is not None else frozenset()
+    at = 0
+    while at < len(steps):
+        end = at
+        while end < len(steps) and steps[end][0] in concurrent:
+            end += 1
+        if end > at:
+            run_group("4", steps[at:end], where, rep, logs, first + at + 1, label, fail,
+                      plan.after, plan.workers, cache)
+            at = end
+            continue
+        name, cmd = steps[at]
+        at += 1
+        out = run_step("4", name + label, cmd, where, rep, logs, first + at, fail, excludes)
+        if cache is not None:
+            cache.collect(rep, out)
 
 
 def copy_build(src: Path, dst: Path) -> None:
@@ -3610,6 +3881,9 @@ class CheckList(NamedTuple):
     steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
     why: str                                     # where they came from, for the step line
     built_in: bool = False                       # CHECKS: the revision holds no registry
+    concurrent: frozenset[str] = frozenset()     # the steps that may run in groups (#608)
+    after: dict[str, tuple[str, ...]] = {}       # each such step's earlier ones to wait for
+    workers: int = 1                             # at most this many at once (check_list)
 
 
 def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
@@ -3628,7 +3902,14 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
     `empty` entry, and only it, is named EMPTY_CHECK, and every other entry's name is its
     command's words joined by spaces, so that no command is ever named as a step whose
     failure FRESHNESS passes over. Step 3 reads the commit's own registry so too, `whose`
-    naming it (guard_registry)."""
+    naming it (guard_registry).
+
+    An entry's `concurrent` and `after` (#608), which a reader before them does not print,
+    are read as absent: concurrent false, after empty. Present, concurrent must be true or
+    false, and never the `empty` check's; after a list of names of earlier checks, and
+    only for a concurrent one. The model job is concurrent (MODEL_JOB_CONCURRENT) beside a
+    registry that declares a check concurrent, and runs alone beside one that declares
+    none, as every check did before #608."""
     def refuse(why: str):
         raise Refusal(f"{whose}'s registry of checks could not be read: {why}")
 
@@ -3679,6 +3960,8 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
     if not isinstance(entries, list):
         refuse(f"its {REGISTRY_READER} printed no list of checks")
     steps: list[tuple[str, list[str] | None]] = []
+    concurrent: set[str] = set()
+    after: dict[str, tuple[str, ...]] = {}
     for item in entries:
         name = item.get("name") if isinstance(item, dict) else None
         command, empty = (item.get("command"), item.get("empty")) if name else (None, None)
@@ -3701,6 +3984,18 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
             refuse(f"its {REGISTRY_READER} gives a command the name {name!r}, which only "
                    "the `empty` check may bear: a failure of a step of that name is "
                    "passed over when a check change is kept apart (FRESHNESS)")
+        alongside, waits = item.get("concurrent", False), item.get("after", [])
+        earlier = {before for before, _ in steps}
+        if (not isinstance(alongside, bool) or (empty and alongside)
+                or not isinstance(waits, list) or (waits and not alongside)
+                or not all(isinstance(w, str) and w in earlier for w in waits)):
+            refuse(f"its {REGISTRY_READER} gives {printable_text(name)[:200]} concurrent "
+                   f"{printable_text(str(alongside))[:20]} and after "
+                   f"{printable_text(str(waits))[:200]}: concurrent is true or false, never "
+                   "for the `empty` check, and after lists earlier checks of a concurrent one")
+        if alongside:
+            concurrent.add(name)
+            after[name] = tuple(waits)
         steps.append((name, None if empty else
                        [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
     if not steps:
@@ -3709,7 +4004,10 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
         refuse(f"its {REGISTRY_READER} gives two checks of one name")
     return CheckList(steps + MODEL_JOB, f"the {len(steps)} of {whose}'s registry, "
                      f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
-                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's",
+                     concurrent=frozenset(concurrent | (MODEL_JOB_CONCURRENT if concurrent
+                                                        else set())),
+                     after=after)
 
 
 def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
@@ -3753,46 +4051,52 @@ def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
                 "a later pre-flight will", time.time() - t)
 
 
-def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
-    """check_sequence for the commit, as a step line: ok with how many and from where, or
-    FAIL and a Refusal."""
+def check_list(ctx, rep: Report) -> CheckList:
+    """check_sequence for the commit, with the workers check_workers gives, as a step
+    line: ok with how many and from where, and the workers when STOICHEIA_CHECK_WORKERS
+    is set, or FAIL and a Refusal."""
     t = time.time()
     try:
         checks = check_sequence(ctx.repo, ctx.base)
+        workers, said = check_workers()
     except Refusal as e:
         rep.add("4", "check list", "FAIL", str(e), time.time() - t)
         raise
-    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}",
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}{said}",
             time.time() - t)
-    return checks.steps
+    return checks._replace(workers=workers)
 
 
 def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
-                sequence: list[tuple[str, list[str] | None]]) -> None:
+                sequence: CheckList | list[tuple[str, list[str] | None]]) -> None:
+    """Step 4's two loops on the commit: `sequence`, check_list's (a bare list of steps
+    runs each alone), in each pass in the worktree, then NEGATIVE in a second one."""
     def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
 
+    plan = sequence if isinstance(sequence, CheckList) else CheckList(list(sequence), "")
     # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
     # kept for it on a miss; keep_apart then reads its steps as it reads them run.
-    cache = main_checks(ctx, wt, inputs, rep, sequence) if CACHE is not None else None
+    cache = main_checks(ctx, wt, inputs, rep, plan.steps) if CACHE is not None else None
 
-    def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
+    def checks(steps, where: Path, label, fail, excludes, first: int,
+               declared: CheckList | None = None) -> None:
         if label == BASE_PASS and cache is not None and cache.hit:
             cache.replay(steps, first, rep, logs)
             return
-        for i, (name, cmd) in enumerate(steps, 1):
-            out = run_step("4", name + label, cmd, where, rep, logs, first + i, fail, excludes)
-            if label == BASE_PASS and cache is not None:
-                cache.collect(rep, out)
-        if label == BASE_PASS and cache is not None:
-            cache.save(rep)
+        kept = cache if label == BASE_PASS else None
+        run_sequence(steps, where, rep, logs, label, fail, excludes, first, declared, kept)
+        if kept is not None:
+            kept.save(rep)
 
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
-    # the worktree back before the worktree is removed.
+    # the worktree back before the worktree is removed. A group of concurrent checks
+    # stops or waits for every check it started before it lets such a refusal go
+    # (run_group), so none is still reading the worktree when it is put back.
     with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
         for label, fail, excludes in each:
-            checks(sequence, wt, label, fail, excludes, 10)
+            checks(plan.steps, wt, label, fail, excludes, 10, plan)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)

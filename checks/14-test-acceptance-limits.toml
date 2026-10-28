@@ -1,8 +1,10 @@
 # Check the limitations acceptance item P3 allows, case by case.
 # tests/test_acceptance_limits.py needs no Lean: it checks check_acceptance.py's list
 # against docs/ACCEPTANCE.md's table, and P3 on review records varied in memory.
+# Concurrent (#608): it reads the tree and writes nothing there but bytecode.
 order = 140
 name = "python3 -I tests/test_acceptance_limits.py"
 job = "check"
 command = ["python3", "-I", "tests/test_acceptance_limits.py"]
 section8 = "python3 -I tests/test_acceptance_limits.py"
+concurrent = true

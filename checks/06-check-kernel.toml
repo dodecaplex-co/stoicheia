@@ -2,8 +2,10 @@
 # and Lean's three. leanchecker --fresh replays the whole environment of Elements, Lean's
 # own included, through Lean's kernel; nanoda, written separately, checks the whole export.
 # --self-test withholds Postulate 5 and expects nanoda to fail on it.
+# Concurrent (#608): one kernel at a time, its export in a temporary folder; only bytecode.
 order = 60
 name = "python3 scripts/check_kernel.py --self-test"
 job = "check"
 command = ["python3", "scripts/check_kernel.py", "--self-test"]
 section8 = "python3 scripts/check_kernel.py --self-test"
+concurrent = true

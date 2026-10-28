@@ -27,11 +27,41 @@ hyphens. It holds these fields, and no others:
 | `command` | The command, as a list of words, run with no shell. A first word `python3` stands for the interpreter that runs the check. |
 | `empty` | `true`, in place of `command`: `git status --porcelain`, over the whole worktree, must print nothing. |
 | `section8` | The line section 8's command block shows for it. |
+| `concurrent` | `true`: the pre-flight may run the check beside the other concurrent checks next to it in order (below). |
+| `after` | With `concurrent` only: a list of earlier checks' names, each of which must have ended before this one starts. |
 
 `order`, `name`, `job` and `section8` are required, and exactly one of `command` and
-`empty`. No two files share a name or an order, and the folder holds nothing but the
-checks and this README, which the reader passes over, as it does a Finder `.DS_Store`. A
-comment (`#`) says what the check is for, as a CI step's name and comment did.
+`empty`; `concurrent` and `after` may be left out. No two files share a name or an order,
+and the folder holds nothing but the checks and this README, which the reader passes over,
+as it does a Finder `.DS_Store`. A comment (`#`) says what the check is for, as a CI step's
+name and comment did, and a line of it says why the check is concurrent or runs alone.
+
+## Concurrent checks
+
+`concurrent = true` is a promise about the check, and the reader accepts `true` alone. The
+check:
+
+- writes nothing in the worktree but Python's ignored bytecode (`__pycache__`);
+- reads nothing another check writes;
+- has no limit timed by the clock tight enough to fail when the machine is busy;
+- does not itself fill the machine.
+
+A check without the field runs alone: after every earlier check has ended, and before any
+later one starts. So every new check runs alone until a reviewed change declares it. The
+check with `empty` judges the whole worktree, and is never concurrent. `after` names a
+check's own test, so that a rule read wrongly stops the sequence before the check's
+verdict, as it did when they ran one after another.
+
+The pre-flight (`git safe-push`, step 4) runs concurrent checks that come next to each
+other in order as a group: up to `STOICHEIA_CHECK_WORKERS` of them at once, each in its
+own process, and never more than half the machine's cores. The variable unset or empty
+runs them one at a time. Their lines and logs come in the registry's order, each as it
+would be run alone, and a failure refuses at the first failing check in that order. Around
+each group, however many run at once, the pre-flight takes the worktree's state as `git
+status` sees it, untracked files with it and each listed file's bytes hashed, and a group
+that changes it fails the step "concurrent checks left the tree as they found it", naming
+its checks and the paths. CI's `scripts/run_checks.py` runs
+every check one after another, as before.
 
 ## Adding a check
 
@@ -42,8 +72,8 @@ comment (`#`) says what the check is for, as a CI step's name and comment did.
    commit the file and the regenerated block together.
 3. Name the new file, in a sentence of its own, in the train's decision entry, as for any
    protected path ([WORKFLOW, section 10](../docs/WORKFLOW.md#landing-work-pull-requests),
-   "Protected paths"). Removing a check, or changing its command, job or order, is the
-   same: one file, named in the entry.
+   "Protected paths"). Removing a check, or changing its command, job, order,
+   `concurrent` or `after`, is the same: one file, named in the entry.
 
 A change to `checks/` is of risk class R3, and touches neither `scripts/safe_push.py` nor
 the CI workflow. Its pull request's CI runs its own registry, the new check with it, and
