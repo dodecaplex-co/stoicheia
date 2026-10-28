@@ -17,8 +17,10 @@
 # 30 seconds apart, each stopped after 90 seconds; if all three fail, it is taken from
 # GitHub's copy of the same file, the release asset releases.lean-lang.org redirects to,
 # and unpacked where elan keeps it (#594; docs/decisions/2026-10-27-lean-install-outage.md).
-# A host that connects and then sends nothing therefore costs about five minutes, not a
-# job's whole time.
+# A stalled host therefore costs at most about five minutes before GitHub's copy, not a
+# job's whole time: the 90 seconds bound too the two reads elan makes before the download
+# and gives no limit of its own, a check for a newer elan and the index of releases, from
+# release.lean-lang.org.
 set -euo pipefail
 
 elan_version=4.2.4
@@ -74,10 +76,13 @@ for file in "${files[@]}"; do
         echo "install_lean: $name restored from the cache; nothing downloaded for it"
         continue
     fi
-    # elan unpacks into <dir>.tmp, under <dir>.lock, and renames the whole into place, so a
-    # try stopped part way leaves no part of a toolchain in <dir> but may leave those two
-    # beside it. GitHub's copy is taken whenever no try succeeded; it replaces whatever is
-    # in <dir> and removes the two, so that the cache saves the toolchain alone.
+    # elan locks and unpacks beside <dir>, under names that replace <dir>'s last dot and
+    # what follows it (Rust's with_extension, which ${dir%.*} matches): for v4.35.0 or
+    # v4.35.0-rc1, leanprover--lean4---v4.35.lock and leanprover--lean4---v4.35.tmp. It
+    # renames the unpack into <dir>, so a try stopped part way leaves no part of a
+    # toolchain in <dir>, but may leave those two beside it. GitHub's copy is taken
+    # whenever no try succeeded; it replaces whatever is in <dir> and removes the two, so
+    # that the cache saves the toolchain alone.
     installed=no
     for try in 1 2 3; do
         if timeout -k 10 90 elan toolchain install "$name"; then

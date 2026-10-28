@@ -22,10 +22,11 @@
   it. One it did not is installed by elan, in three tries at most, 15 and then 30 seconds
   apart; and if none succeeds, it is downloaded from GitHub's copy of the same file, the
   one `releases.lean-lang.org` redirects to, and unpacked where elan keeps it, with what a
-  stopped try left beside it removed: elan unpacks beside that place and renames the whole
-  into it, so a stopped try leaves its partial unpack and its lock there, which the cache
-  would otherwise save with the toolchain. Whatever the route, the script ends by asking `lean --version`, in the checkout and in `model/`, and
-  fails unless each says the version its file names. It refuses any system but Linux on
+  stopped try left beside it removed: elan takes a lock beside that place, unpacks beside
+  it and renames the whole into it, so a stopped try may leave its lock there, and its
+  partial unpack too, which the cache would otherwise save with the toolchain. Whatever
+  the route, the script ends by asking `lean --version`, in the checkout and in `model/`,
+  and fails unless each says the version its file names. It refuses any system but Linux on
   x86_64, which is what `ubuntu-latest` is, and any toolchain that is not a release of
   `leanprover/lean4`, for which it would know no copy to fall back on. elan checks no
   digest of a toolchain it downloads, and neither does the script: GitHub's copy is the
@@ -37,9 +38,10 @@
   elan's tries is stopped after 90 seconds, four times that, so that a stalled host costs at
   most about five minutes before GitHub's copy, not a job's whole time. elan v4.2.4 itself
   gives up on the toolchain's download when it moves under 10 bytes a second for 30
-  seconds, but not on a slow trickle, and it sets no limit at all on its first read, of the
-  index of releases from a second host, `release.lean-lang.org`; the 90 seconds bound both. The
-  script's own downloads, of elan and of GitHub's copy, give up on a connection not made in
+  seconds, but not on a slow trickle, and it sets no limit at all on the two reads before
+  it: a check for a newer elan, from GitHub, and the index of releases, from a second
+  host, `release.lean-lang.org`. The 90 seconds bound all three. The script's own
+  downloads, of elan and of GitHub's copy, give up on a connection not made in
   20 seconds, on a transfer slower than 100 kB a second for 20 seconds, and on any try
   longer than 5 minutes (2 MB a second, for the toolchain), and start no new try after 10
   minutes.
@@ -79,7 +81,9 @@
     download failed, as it should, in 152 seconds;
   - a stopped try's leftovers, a partial unpack and a lock, planted beside where elan keeps
     the toolchain, with the host sent to 127.0.0.1: the install took GitHub's copy, and the
-    toolchain alone was left, in 68 seconds.
+    toolchain alone was left, in 68 seconds. Each of elan's tries failed, and was not
+    stopped, so each took the planted lock and removed it as it ended: the case shows the
+    script removing the partial unpack, not the lock.
 
   On GitHub's runners, a trial on a branch of its own, never landed, ran the script before
   its time limits (run 40652212492, on 28 October 2026): with `releases.lean-lang.org` sent
@@ -94,21 +98,23 @@
   the old two; it compares each action's inputs by value and type, where it compared them
   by identity, which holds for `false` but not for a string; and it plants six changes of
   the cache (none, after the install, another path, a path as a list, another key, and
-  `restore-keys`), each of which it refuses. The test of the `negative`
-  job's commands passes over the install's line, where it passed over any line naming
-  elan. No check, job or step is skipped, loosened or renamed.
+  `restore-keys`), each of which it refuses. The test of the `negative` job's commands
+  passes over the install's line, where it passed over any line naming elan. No check,
+  job or step is skipped, loosened or renamed.
 
   This entry approves the change to `.github/workflows/ci.yml`, whose `check`, `negative`,
   `formal-model` and `acceptance` jobs restore the toolchains from the cache and run
   `scripts/install_lean.sh` in place of the unpinned installer.
 
-  This entry approves the cadence's two installs, in `.github/workflows/safe-push-tests.yml`:
-  its `negative-tests` and `formal-model-kernel` jobs do as CI's four do.
+  This entry approves the cadence's two installs, in
+  `.github/workflows/safe-push-tests.yml`: its `negative-tests` and `formal-model-kernel`
+  jobs do as CI's four do.
 
   This entry approves the new file `scripts/install_lean.sh`, which installs elan v4.2.4 by
   its digest and the toolchains from the cache, elan or GitHub's copy, and checks the
   version each file names, with a time limit on every download.
 
   This entry approves the cache and the install in the test model of the `check` job's
-  setup, `scripts/test_safe_push.py`, and its test of the `negative` job's commands,
-  which passes over the install.
+  setup, `scripts/test_safe_push.py`, with each input compared by value and type and six
+  changes of the cache refused, and its test of the `negative` job's commands, which
+  passes over the install.
