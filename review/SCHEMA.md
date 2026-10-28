@@ -164,7 +164,8 @@ One table for each passage declared, in the order of the proof.
 - **grouped**: several sentences carried by one argument, or a "similarly" by one lemma.
 - **case**: a case Euclid's figure leaves aside, or leaves to the reader, which the Lean
   takes as well, in the same argument or in a step of its own (II.14's ED the greater,
-  III.2's AB through the centre); the note says how.
+  III.11's A on GF produced beyond F, which Heath says Euclid would have left to the
+  reader); the note says how.
 - **given**: what the passage does is already given, by the statement or by how our
   objects are put into Lean, so no Lean is needed beneath it (I.5's D and E, which come
   with the statement); the note says what gives it.
