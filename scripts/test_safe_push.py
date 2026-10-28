@@ -455,19 +455,26 @@ RUN_CHECKS = "python3 scripts/run_checks.py --job check"
 # The one step of CI's `model` job that safe_push's MODEL_JOB leaves out, until the
 # command joins it (#378; WORKFLOW, section 8).
 CI_ONLY_MODEL = ["python3 -I tests/model/results_check.py"]
-# Each setup action, with the inputs it may take and the value each must have (ANY_VALUE:
-# any). The checkout may only leave its token out of the checkout's git config
+# The Lean toolchains' cache, before the install in every job that installs Lean (#594):
+# ~/.elan/toolchains, keyed on the two files that name the toolchains, restored, and saved
+# after a job that passes.
+LEAN_CACHE = {"path": "~/.elan/toolchains",
+              "key": "lean-toolchains-${{ runner.os }}-"
+                     "${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}"}
+# Each setup action, with the inputs it may take and the value each must have, of its type
+# (ANY_VALUE: any). The checkout may only leave its token out of the checkout's git config
 # (persist-credentials: false, the boolean itself): that changes no commit and no file
-# the checks read, and takes a power away; any other value, or any other input, is
-# unmodeled.
+# the checks read, and takes a power away; the cache may only be the toolchains'; any
+# other value, or any other input, is unmodeled.
 ANY_VALUE = object()
 SETUP_ACTIONS = {"actions/checkout@v5": {"persist-credentials": False},
-                 "actions/setup-python@v5": {"python-version": ANY_VALUE}}
-ELAN_INSTALL = (
-    "curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh"
-    " | sh -s -- -y --default-toolchain none",
-    'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
-)
+                 "actions/setup-python@v5": {"python-version": ANY_VALUE},
+                 "actions/cache@v5": LEAN_CACHE}
+# The install, one script for every job that installs Lean (#594): elan v4.2.4, checked
+# against the SHA-256 of its release, then the toolchains that lean-toolchain and
+# model/lean-toolchain name, from the cache, else by elan in three tries, else from
+# GitHub's copy of the same file; lean --version must then say the version each names.
+ELAN_INSTALL = ("bash scripts/install_lean.sh",)
 # The pinned YAML parser, which the check of #346 (Units' lane-condition test, a file of the
 # registry) needs: the last line of the setup, after elan, isolated (-I, which takes in -P)
 # and from the runner's temporary directory, as queue-integrity installs it, so that
@@ -485,7 +492,8 @@ def is_modeled_setup(step: WorkflowStep) -> bool:
         return step.run == ELAN_INSTALL
     allowed = SETUP_ACTIONS.get(step.uses)
     return not step.run and allowed is not None and all(
-        name in allowed and (allowed[name] is ANY_VALUE or value is allowed[name])
+        name in allowed and (allowed[name] is ANY_VALUE or (
+            type(value) is type(allowed[name]) and value == allowed[name]))
         for name, value in step.inputs)
 
 
@@ -507,7 +515,7 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
         raise AssertionError("CI check job has a default working directory")
     if job.environment:
         raise AssertionError("CI check job has an environment override")
-    setup_order = (*SETUP_ACTIONS, None)  # The actions, then the elan install.
+    setup_order = (*SETUP_ACTIONS, None)  # The actions, the cache last, then the install.
     setup_index = 0
     parser_installed = False
     commands = []
@@ -12610,8 +12618,10 @@ class Units(unittest.TestCase):
                 for line in step.get("run", "").splitlines() if line.strip()]
         self.assertEqual(runs, [name for name, _ in safe_push.MODEL_JOB] + CI_ONLY_MODEL)
         runs = [line.strip() for step in jobs["negative"]["steps"][1:]
-                for line in step.get("run", "").splitlines() if line.strip()
-                and not step.get("uses") and "elan" not in line]
+                if not step.get("uses") and tuple(
+                    line.strip() for line in step.get("run", "").splitlines()
+                    if line.strip()) != ELAN_INSTALL
+                for line in step.get("run", "").splitlines() if line.strip()]
         self.assertEqual(runs, [name.removeprefix("negative: ")
                                 for name, _ in safe_push.NEGATIVE])
         return entries
@@ -12906,7 +12916,7 @@ class Units(unittest.TestCase):
                     job["steps"].insert(job["steps"].index(step_running(job, certificate)) + 1,
                                         step)
                 else:
-                    elan = next(s for s in job["steps"] if "elan-init.sh" in s.get("run", ""))
+                    elan = step_running(job, ELAN_INSTALL[0])
                     job["steps"].insert(job["steps"].index(elan), step)
             return move
 
@@ -12938,7 +12948,7 @@ class Units(unittest.TestCase):
             ("reversed setup actions", reverse_setup_actions, "setup sequence differs"),
             ("missing checkout", lambda workflow, job: job["steps"].pop(0),
              "setup sequence differs"),
-            ("missing elan install", lambda workflow, job: job["steps"].pop(2),
+            ("missing elan install", lambda workflow, job: job["steps"].pop(3),
              "setup prefix is incomplete"),
             ("checkout of another ref",
              lambda workflow, job: step_using(job, "actions/checkout@v5").update(
