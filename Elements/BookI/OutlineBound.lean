@@ -10,10 +10,11 @@ and section 8, "The routes taken"), with the lemmas, in the namespace `OutlineBo
 find a triangle holding finitely many points; `OutlineFacts.bounded_of_enclosure`, in Book
 Zero (`Figure/Outlines/OutlineFacts.lean`), does the rest, for a triangle that holds every
 corner holds the whole region. The statement can fail without Postulate 5, which enters
-here, and an angle is copied by I.23, the one proposition of the *Elements* the proof
-cites. So it cannot stand in Book Zero: it stands in Book I, after I.29, where Euclid first
-uses Postulate 5. I.23 reaches superposition only through I.4 and I.8, the two places
-FORMALIZATION (section 7) allows it; nothing here names superposition. No other proof uses
+here; an angle is copied by I.23, and an angle of a triangle is less than two right angles
+by I.13 (`Prop13.angle_lt_two_right`): these are the two propositions of the *Elements* the
+proof cites. So it cannot stand in Book Zero: it stands in Book I, after I.29, where Euclid
+first uses Postulate 5. I.13 and I.23 reach superposition only through I.4 and I.8, the two
+places FORMALIZATION (section 7) allows it; nothing here names superposition. No other proof uses
 `outline_bounded`: the division of an outline uses a convex enclosure, whose proof does not
 use Postulate 5 (`convex_enclosure`, `outline_enclosure`).
 

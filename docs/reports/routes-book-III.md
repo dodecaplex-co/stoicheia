@@ -1841,7 +1841,7 @@ and III.28's P2 and P11 to P16, until their records are read again and stamped.
 
 **Completion on the delivered revision.** After that snapshot, I.13's lemma became the one
 home of the fact that an angle of a triangle is less than two right angles, in place of
-Book I's `Figures.OutlineBound.angle_lt_two_right`, as said above, so I.13's record was
+Book I's Figures.OutlineBound.angle_lt_two_right, as said above, so I.13's record was
 stale too; III.26 to III.30 then rest on the axioms they rested on before, and III.20
 alone gains one, `Tacit.exists_centre`. The gap catalogue's entry for III.27 was made true
 as well. An independent reader who wrote none of them read the records of III.20, III.21,
