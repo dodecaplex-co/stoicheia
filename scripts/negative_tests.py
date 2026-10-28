@@ -69,6 +69,10 @@ still tell them apart: a conditional include keyed on a repository's path (`incl
 among them, and so a different verdict. Like a plant's file (below), configuration written
 to do that is not caught: the run trusts the configuration of the machine it runs on.
 
+Git commands run from a worker or its descendants are bound to that worker with
+`--work-tree`; a command run from an independent fixture repository is left to that
+repository.
+
 The shares are dealt longest first, by the seconds each plant took as
 tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
 lines): each plant, heaviest first, ties going to a plant that builds and then to the
@@ -180,6 +184,7 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import argparse
+import hashlib
 import inspect
 import io
 import json
@@ -1070,8 +1075,76 @@ def worker_status(tree: Path) -> subprocess.CompletedProcess:
     return in_tree(tree, "git", f"--work-tree={tree}", "status", "--porcelain")
 
 
+def listed_files() -> subprocess.CompletedProcess:
+    return subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
+                           "--others", "--exclude-standard"), cwd=ROOT,
+                          env=worker_env(), capture_output=True)
+
+
+def file_digest(path) -> bytes:
+    digest = hashlib.sha256()
+    with open(path, "rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.digest()
+
+
+def copied_state() -> tuple | None:
+    listed = listed_files()
+    if listed.returncode != 0:
+        return None
+    names = tuple(dict.fromkeys(name for name in listed.stdout.split(b"\0") if name))
+    paths = []
+    try:
+        for name in names:
+            source = os.path.join(os.fsencode(ROOT), name)
+            try:
+                info = os.lstat(source)
+            except FileNotFoundError:
+                paths.append((name, None))
+                continue
+            if stat.S_ISLNK(info.st_mode):
+                value = ("link", info.st_mode, os.readlink(source))
+            elif stat.S_ISREG(info.st_mode):
+                value = ("file", info.st_mode, file_digest(source))
+            else:
+                value = ("other", info.st_mode)
+            paths.append((name, value))
+        resolved = root_git("rev-parse", "--git-path", "index")
+        if resolved.returncode != 0:
+            return None
+        index = ROOT / resolved.stdout.strip()
+        shared = tuple((path.name, file_digest(path))
+                       for path in sorted(index.parent.glob("sharedindex.*")))
+        return names, tuple(paths), file_digest(index), shared
+    except OSError:
+        return None
+
+
 def unblock_sigint() -> None:
     signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
+
+
+def bound_worker_env(tree: Path, folder: Path) -> dict[str, str]:
+    env = worker_env()
+    git = shutil.which("git", path=env.get("PATH"))
+    if git is None:
+        return env
+    folder.mkdir()
+    launcher = folder / "git"
+    launcher.write_text(
+        '#!/bin/sh\n'
+        'here=$(pwd -P) || exit $?\n'
+        'case "$here/" in\n'
+        '  "$STOICHEIA_NEGATIVE_TREE/"*)\n'
+        '    exec "$STOICHEIA_NEGATIVE_GIT" "--work-tree=$STOICHEIA_NEGATIVE_TREE" "$@" ;;\n'
+        '  *) exec "$STOICHEIA_NEGATIVE_GIT" "$@" ;;\n'
+        'esac\n', encoding="utf-8")
+    launcher.chmod(0o755)
+    env["STOICHEIA_NEGATIVE_GIT"] = git
+    env["STOICHEIA_NEGATIVE_TREE"] = str(tree)
+    env["PATH"] = str(folder) + os.pathsep + env.get("PATH", os.defpath)
+    return env
 
 
 def linked(root: Path) -> Path | None:
@@ -1115,9 +1188,7 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
             if configured.returncode != 0:
                 return (f"could not be made: git config --worktree include.path: exit "
                         f"{configured.returncode}"), configured.stdout + configured.stderr
-    listed = subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
-                             "--others", "--exclude-standard"), cwd=ROOT,
-                            env=worker_env(), capture_output=True)
+    listed = listed_files()
     if listed.returncode != 0:
         return f"could not be made: git ls-files: exit {listed.returncode}", (
             listed.stderr.decode(errors="replace"))
@@ -1314,8 +1385,8 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
                 if shown_with:
                     print(shown_with, end="" if shown_with.endswith("\n") else "\n")
                 return 0
-        env = worker_env()
         for k, (tree, share) in enumerate(zip(trees, shares), 1):
+            env = bound_worker_env(tree, base / f"worker-{k}-bin")
             with open(base / f"worker-{k}.log", "wb") as log:
                 mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
                 try:
@@ -1387,6 +1458,7 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
     before = parallel_before if report is not None else run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
+    parallel_state = copied_state() if report is None and workers > 1 else None
     parallel = False
     ran = total = 0
     try:
@@ -1402,7 +1474,10 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
                     assert parallel_before is not None
                     if expect_success("entry Git status", parallel_before):
                         ready = worker_status(ROOT)
-                        if ready.returncode == 0 and ready.stdout == parallel_before.stdout:
+                        state = copied_state()
+                        if (parallel_state is not None and state == parallel_state
+                                and ready.returncode == 0
+                                and ready.stdout == parallel_before.stdout):
                             parallel = True
                             ran = run_workers(chosen, count, parallel_before.stdout, sources)
                         else:

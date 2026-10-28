@@ -2535,6 +2535,7 @@ class WorkerOptionTests(unittest.TestCase):
                                        subprocess.CompletedProcess(cmd, 0, "", "")))
         self.enterContext(patch.object(negative, "worker_status", side_effect=lambda tree:
                                        subprocess.CompletedProcess((), 0, "", "")))
+        self.enterContext(patch.object(negative, "copied_state", return_value=()))
         self.workers = self.enterContext(patch.object(negative, "run_workers", return_value=3))
         self.enterContext(patch.dict(os.environ))
         self.output = self.enterContext(redirect_stdout(io.StringIO()))
@@ -2697,6 +2698,30 @@ ASKS_GIT = ('print("not ignored:", repr(nt.run("git", "ls-files", "--others", '
             '        nt.refused("{name}: caught")\n'
             '    else:\n'
             '        print("{name}: notes.tmp is not ignored")')
+CHECKS_BOUND_GIT = ('import os\n'
+                    '    import sys\n'
+                    '    import tempfile\n'
+                    '    path = nt.ROOT / "tracked-by-git"\n'
+                    '    saved = path.read_text()\n'
+                    '    path.write_text("planted\\n")\n'
+                    '    checked = nt.run(sys.executable, "scripts/git_tree_probe.py")\n'
+                    '    path.write_text(saved)\n'
+                    '    env = {{name: value for name, value in os.environ.items()\n'
+                    '           if name not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",\n'
+                    '                           "GIT_CONFIG_NOSYSTEM")}}\n'
+                    '    with tempfile.TemporaryDirectory() as tmp:\n'
+                    '        initialized = subprocess.run(["git", "init", "-q"], cwd=tmp,\n'
+                    '                                     env=env, capture_output=True, text=True)\n'
+                    '        top = subprocess.run(["git", "rev-parse", "--show-toplevel"],\n'
+                    '                             cwd=tmp, env=env, capture_output=True, text=True)\n'
+                    '    if (checked.returncode == 0\n'
+                    '            and checked.stdout == " M tracked-by-git\\n"\n'
+                    '            and initialized.returncode == 0 and top.returncode == 0\n'
+                    '            and os.path.realpath(top.stdout.strip()) == os.path.realpath(tmp)):\n'
+                    '        nt.refused("{name}: caught")\n'
+                    '    else:\n'
+                    '        print("{name}: Git read the wrong tree", repr(checked.stdout),\n'
+                    '              repr(top.stdout), checked.stderr, top.stderr)')
 
 
 def corrupts(change):
@@ -2919,6 +2944,35 @@ class WorkerTests(unittest.TestCase):
                     self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", result.stdout)
                     self.assertFalse((self.root / "left-by-b_two").exists())
                     self.assertEqual(self.git("status", "--porcelain"), "")
+                finally:
+                    self.env.clear()
+                    self.env.update(saved)
+
+    def test_git_config_files_cannot_redirect_plant_checks(self):
+        """Global and system core.worktree settings point at the source, while a plant's
+        child check sees its worker and Git in an independent temporary repository stays
+        with that repository; one and multiple workers give the same verdict."""
+        tracked = self.root / "tracked-by-git"
+        tracked.write_text("clean\n")
+        (self.root / "scripts/git_tree_probe.py").write_text(
+            'import subprocess\n'
+            'import sys\n'
+            'result = subprocess.run(["git", "status", "--porcelain", "--", '
+            '"tracked-by-git"], capture_output=True, text=True)\n'
+            'sys.stdout.write(result.stdout)\n'
+            'sys.stderr.write(result.stderr)\n'
+            'raise SystemExit(result.returncode)\n')
+        self.commit(a_checks=CHECKS_BOUND_GIT, b_checks=CHECKS_BOUND_GIT)
+        for source in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+            with self.subTest(source=source):
+                config = self.tmp / f"{source.lower()}-plant.config"
+                config.write_text(f"[core]\n\tworktree = {self.root}\n")
+                saved = self.env.copy()
+                self.env[source] = str(config)
+                if source == "GIT_CONFIG_SYSTEM":
+                    self.env["GIT_CONFIG_NOSYSTEM"] = "0"
+                try:
+                    self.assertEqual(self.one_worker_s_verdict(), 0)
                 finally:
                     self.env.clear()
                     self.env.update(saved)
@@ -3284,6 +3338,40 @@ class WorkerTests(unittest.TestCase):
             self.assertNotIn("tree does not match the tree under test", workers.stdout)
             self.assertIn("the working tree did not return to its entry Git status",
                           workers.stdout)
+
+    def test_same_status_import_mutations_use_the_serial_path(self):
+        """An import-time append to an already-untracked or already-modified file leaves
+        its porcelain label unchanged, but multiple requested workers still give the
+        already-loaded one-worker verdict from the same initial bytes."""
+        target = self.root / "notes.txt"
+        before = ('(nt.ROOT / "notes.txt").write_text('
+                  '(nt.ROOT / "notes.txt").read_text() + "loaded\\n")')
+        for tracked, initial, label in ((False, "untracked\n", "?? notes.txt\n"),
+                                        (True, "modified\n", " M notes.txt\n")):
+            with self.subTest(tracked=tracked):
+                target.unlink(missing_ok=True)
+                if tracked:
+                    target.write_text("committed\n")
+                expected = initial + "loaded\n"
+                body = ('contents = (nt.ROOT / "notes.txt").read_text()\n'
+                        f'    if contents == {expected!r}:\n'
+                        '        nt.refused("{name}: caught")\n'
+                        '    else:\n'
+                        '        print("{name}: imported more than once", repr(contents))')
+                self.commit(before={"b_reads": before}, a_reads=body, b_reads=body)
+                target.write_text(initial)
+                self.assertEqual(self.git("status", "--porcelain", "--", "notes.txt"),
+                                 label)
+                alone = self.suite()
+                target.write_text(initial)
+                self.assertEqual(self.git("status", "--porcelain", "--", "notes.txt"),
+                                 label)
+                workers = self.suite("--workers", "2")
+                self.assertEqual(workers.returncode, alone.returncode,
+                                 workers.stdout + workers.stderr + alone.stdout + alone.stderr)
+                self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+                self.assertEqual(workers.stderr, alone.stderr)
+                self.assertEqual(target.read_text(), expected)
 
     def test_a_run_s_directory_inside_a_work_tree_fails_the_run(self):
         """TMPDIR inside another repository's work tree, where a fixture meant to have no
