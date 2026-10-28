@@ -2601,6 +2601,20 @@ class WorkerOptionTests(unittest.TestCase):
             self.assertEqual(negative.main(["--counts-only"]), 0)
         self.workers.assert_not_called()
 
+    def test_a_failed_entry_status_is_not_compared_at_the_close(self):
+        """The workers' entry status fails, and their final status reads a change: the run
+        fails on the entry status alone, makes no worker, and does not add that the tree
+        did not return to it."""
+        self.enterContext(patch.object(negative, "worker_status", side_effect=[
+            subprocess.CompletedProcess((), 128, "", "fatal: planted\n"),
+            subprocess.CompletedProcess((), 0, "?? planted\n", "")]))
+        os.environ.pop(negative.WORKERS, None)
+        self.assertEqual(negative.main(["--workers", "2"]), 1)
+        self.workers.assert_not_called()
+        self.assertEqual(negative.failures, ["entry Git status: exit 128",
+                                             "only 0 of the 3 plants chosen were run"])
+        self.assertNotIn("did not return", self.output.getvalue())
+
     def test_the_worker_report_is_hidden_and_a_worker_takes_no_workers(self):
         with self.assertRaises(SystemExit) as raised:
             negative.main(["--help"])
@@ -2668,11 +2682,14 @@ READS_NON_UTF8 = ('import os\n'
                   '        nt.refused("{name}: caught")\n'
                   '    else:\n'
                   '        print("{name}: wrong contents", repr(contents))')
-READS_IGNORED = ('contents = (nt.ROOT / "notes.tmp").read_text()\n'
-                 '    if contents == "untracked despite global ignore\\n":\n'
-                 '        nt.refused("{name}: caught")\n'
-                 '    else:\n'
-                 '        print("{name}: wrong contents", repr(contents))')
+# It refuses only when Git ignores notes.tmp in its tree, as render.py asks Git which files
+# to pass over; and it prints the untracked files Git does not ignore there.
+ASKS_GIT = ('print("not ignored:", repr(nt.run("git", "ls-files", "--others", '
+            '"--exclude-standard").stdout))\n'
+            '    if nt.run("git", "check-ignore", "-q", "notes.tmp").returncode == 0:\n'
+            '        nt.refused("{name}: caught")\n'
+            '    else:\n'
+            '        print("{name}: notes.tmp is not ignored")')
 
 
 def corrupts(change):
@@ -2765,6 +2782,15 @@ class WorkerTests(unittest.TestCase):
     def assert_no_worker_left(self):
         self.assertEqual(list(self.tmp.glob("stoicheia-negative-*")), [])
         self.assertEqual(self.git("worktree", "list", "--porcelain").count("worktree "), 1)
+
+    def one_worker_s_verdict(self):
+        """The suite in two workers, which plant nothing in the tree under test, then alone:
+        the same exit status, and the same stdout but for the time lines. The exit status."""
+        workers = self.suite("--workers", "2")
+        alone = self.suite()
+        self.assertEqual(workers.returncode, alone.returncode, workers.stdout + alone.stdout)
+        self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+        return alone.returncode
 
     def test_workers_give_one_worker_s_verdicts_and_stdout(self):
         """Apart from the time lines, and from the plan on stderr, on a set that passes and
@@ -2890,16 +2916,13 @@ class WorkerTests(unittest.TestCase):
                     self.env.clear()
                     self.env.update(saved)
 
-    def test_status_configuration_cannot_hide_a_dirty_worker(self):
-        """The repository hides untracked files from ordinary status, but a file left in a
-        worker still appears in its closing diagnostic and fails the run."""
+    def test_status_configuration_gives_one_worker_s_verdict(self):
+        """The repository hides untracked files from its status, so one worker's bracket
+        does not see a file a plant leaves, and two workers', which read the same
+        configuration, do not either: both pass."""
         self.commit(a_one=PASSES, b_two=LEAVES)
         self.git("config", "status.showUntrackedFiles", "no")
-        result = self.suite("--workers", "2")
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        message = "worker 2's tree did not return to its entry Git status"
-        self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", result.stdout)
-        self.assertFalse((self.root / "left-by-b_two").exists())
+        self.assertEqual(self.one_worker_s_verdict(), 0)
 
     def test_local_core_worktree_cannot_redirect_worker_status(self):
         """The shared repository config points core.worktree at the clean source tree, but
@@ -2930,21 +2953,35 @@ class WorkerTests(unittest.TestCase):
             self.assertIn(f"✓ {name}: caught\n", result.stdout)
         self.assertEqual(non_ascii.read_text(), "unchanged\n")
 
-    def test_global_excludes_file_does_not_change_worker_contents(self):
-        """A global excludes file does not omit an untracked source file from workers."""
-        self.commit(a_reads=READS_IGNORED, b_reads=READS_IGNORED)
+    def test_global_excludes_file_gives_one_worker_s_verdict(self):
+        """The caller's global excludes file ignores an untracked file: Git does not list it
+        in the tree under test, so it is not copied into a worker, and Git ignores it in a
+        worker's tree as in that tree, so that a check that asks Git which files to pass
+        over, as render.py does, gives one worker's verdict."""
+        self.commit(a_asks=ASKS_GIT, b_asks=ASKS_GIT)
         notes = self.root / "notes.tmp"
-        notes.write_text("untracked despite global ignore\n")
+        notes.write_text("untracked, and ignored globally\n")
         excludes = self.tmp / "global-ignore"
         excludes.write_text("notes.tmp\n")
         config = self.tmp / "excludes.config"
         config.write_text(f"[core]\n\texcludesFile = {excludes}\n")
         self.env["GIT_CONFIG_GLOBAL"] = str(config)
-        result = self.suite("--workers", "2")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        for name in ("a_reads", "b_reads"):
-            self.assertIn(f"✓ {name}: caught\n", result.stdout)
-        self.assertEqual(notes.read_text(), "untracked despite global ignore\n")
+        self.assertNotIn("notes.tmp", self.git("ls-files", "--others", "--exclude-standard"))
+        self.assertEqual(self.one_worker_s_verdict(), 0)
+        base = self.tmp / "stoicheia-negative-excludes"
+        base.mkdir()
+        registered = []
+        with patch.object(negative, "ROOT", self.root), \
+                patch.dict(os.environ, self.env, clear=True):
+            try:
+                self.assertIsNone(negative.make_worker(
+                    base / "worker-1", negative.worker_status(self.root).stdout, registered))
+                self.assertTrue((base / "worker-1/scripts/negative_tests.py").is_file())
+                self.assertFalse((base / "worker-1/notes.tmp").exists())
+            finally:
+                negative.remove(registered, base)
+        self.assert_no_worker_left()
+        self.assertEqual(notes.read_text(), "untracked, and ignored globally\n")
 
     def test_inherited_alternate_index_does_not_change_worker_snapshot(self):
         """An inherited alternate index does not replace the source index in workers."""
@@ -2982,19 +3019,16 @@ class WorkerTests(unittest.TestCase):
         self.assertFalse(old.exists())
         self.assertEqual((notes / "new.txt").read_text(), "renamed contents\n")
 
-    def test_filemode_configuration_cannot_hide_a_dirty_worker(self):
-        """A tracked executable-bit change dirties a worker even with core.fileMode=false."""
+    def test_filemode_configuration_gives_one_worker_s_verdict(self):
+        """With core.fileMode false, one worker's bracket does not see a plant's change to a
+        tracked file's executable bit, and two workers', which read the same configuration,
+        do not either: both pass."""
         tracked = self.root / "tracked-mode"
         tracked.write_text("tracked\n")
         tracked.chmod(0o644)
         self.commit(a_mode=CHANGES_MODE, b_mode=CHANGES_MODE)
         self.git("config", "core.fileMode", "false")
-        result = self.suite("--workers", "2")
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        for k in (1, 2):
-            message = f"worker {k}'s tree did not return to its entry Git status"
-            self.assertIn(f"✗ {message}:\n M tracked-mode\n", result.stdout)
-        self.assertEqual(tracked.stat().st_mode & 0o777, 0o644)
+        self.assertEqual(self.one_worker_s_verdict(), 0)
 
     def test_worktree_lifecycle_ignores_inherited_repository_variables(self):
         """Worker creation and removal stay in the source repository under foreign Git

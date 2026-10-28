@@ -51,11 +51,19 @@ index, refreshed; and a clone of `.lake` (`cp -c -R` on macOS, whose copies shar
 blocks until one side writes; `cp -a --reflink=auto` elsewhere), in which no file may be a
 symbolic link or have a second name, since a plant that builds writes there. So in the
 pre-flight's pass with origin/main's checks it lacks the files the commit adds while its
-index lists them, as the tree does. Its `git status --porcelain` must be the tree's entry
-status, or the run fails before any plant runs. It runs its own copy of this file in its
-own tree, its share given by `--plant`, its output to a log of its own, with the run's
-environment but for the variables that name a repository or a build, lest every worker
-read one index or one build, and STOICHEIA_NEGATIVE_WORKERS (WITHHELD, and every `LAKE…`).
+index lists them, as the tree does. Its Git status must be the tree's entry status, or the
+run fails before any plant runs: each is the one-worker bracket's `git status --porcelain`,
+bound to its tree with `--work-tree`. It runs its own copy of this file in its own tree,
+its share given by `--plant`, its output to a log of its own. It, and every Git command
+the run runs for its workers, has the run's environment but for the variables that name a
+repository or a part of one (its work tree, index, object store, grafts, shallow file,
+replace refs or namespace), carry Git settings inline or name `git config`'s file, set a
+ceiling on Git's search for a repository, or name a build, and STOICHEIA_NEGATIVE_WORKERS
+(WITHHELD and WITHHELD_PREFIXES), lest a worker read another tree's index or build, or its
+Git act on another tree. It keeps the variables that name or shut out the configuration
+files the run reads (GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM, GIT_CONFIG_NOSYSTEM and
+GIT_ATTR_NOSYSTEM, the four of scripts/safe_push.py's CONFIG_FILE_VARIABLES, #430), so
+that a worker and the tree under test read the same configuration.
 
 The shares are dealt longest first, by the seconds each plant took as
 tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
@@ -65,11 +73,12 @@ the stable order. A plant the record does not name weighs their median; with no 
 every plant weighs the same. The deal is printed on stderr, so stdout is unchanged, and
 changes only the speed, never a verdict: a stale record only balances less well.
 
-A worker is a run that `--plant` narrows, with all of its bracket: its entry status, the
-guard, `nothing refused`, the closing check of its unplanted tree, the guard after it and
-its final status. Only the file-only regressions are left to the run that made it, which
-runs them once, before it makes any worker, where a one-worker run runs them, and keeps a
-bracket of its own round the whole; its tree is never planted. Each worker writes one
+A worker is a run that `--plant` narrows, with all of its bracket, its Git status taken as
+above: its entry status, the guard, `nothing refused`, the closing check of its unplanted
+tree, the guard after it and its final status. Only the file-only regressions are left to
+the run that made it, which runs them once, before it makes any worker, where a one-worker
+run runs them, and keeps a bracket of its own round the whole, its Git status taken as a
+worker's; its tree is never planted. Each worker writes one
 report (`--worker-report FILE`, given only by a run with workers): each plant's output and
 the failures it added, in order; its own failures; and its exit status. Once every worker
 has ended, the run prints each chosen plant's output in the stable order, its failures
@@ -208,9 +217,13 @@ SHARED = ("check_fidelity", "check_kernel", "generated_counts", "heath", "subpro
 # module a warning is attributed to, ignored warnings too, so a warning raised through a
 # helper here would read as a plant's change; it decides only which warnings repeat.
 UNGUARDED = frozenset({"__warningregistry__"})
-# The workers (the docstring): the variable that gives their number, the variables a worker
-# is started without, besides every `LAKE…` (the audit of #607), the record of
-# the plants' times, from ROOT, and a plant's line in it as a run prints it (run_plant).
+# The workers (the docstring): the variable that gives their number; the variables a worker
+# is started without, and how the names of the others it is started without begin (every
+# `LAKE…`, and the keys and values of inline Git settings): the audit of #607 named
+# GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_COMMON_DIR, the two object directories,
+# GIT_NAMESPACE, GIT_PREFIX, LEAN_PATH, every `LAKE…` and the variable itself, and the rest
+# came from the review of #607; the record of the plants' times, from ROOT; and a plant's
+# line in it as a run prints it (run_plant).
 WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
 WITHHELD = frozenset({"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG",
                       "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS", "GIT_DIR",
@@ -1029,13 +1042,11 @@ def write_report(path: Path, report: dict, status: int | None) -> None:
 
 
 def worker_env() -> dict[str, str]:
-    """The run's environment, but for WITHHELD, indexed and file-based Git settings, and
-    every `LAKE…`."""
-    env = {name: value for name, value in os.environ.items()
-           if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
-    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_SYSTEM=os.devnull,
-               GIT_CONFIG_NOSYSTEM="1")
-    return env
+    """The run's environment, but for WITHHELD and every name WITHHELD_PREFIXES begins: the
+    variables that name the configuration files the run reads, the four of safe_push.py's
+    CONFIG_FILE_VARIABLES, are kept (#430)."""
+    return {name: value for name, value in os.environ.items()
+            if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
 
 
 def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
@@ -1049,10 +1060,9 @@ def root_git(*cmd: str) -> subprocess.CompletedProcess:
 
 
 def worker_status(tree: Path) -> subprocess.CompletedProcess:
-    """A configuration-invariant Git status snapshot for the parallel run."""
-    return in_tree(tree, "git", f"--work-tree={tree}", "-c", "core.quotePath=true",
-                   "-c", "core.fileMode=true", "status", "--porcelain=v1",
-                   "--untracked-files=all", "--no-renames")
+    """The one-worker bracket's `git status --porcelain`, bound to `tree` with --work-tree
+    and run with a worker's environment: the snapshot a run with workers compares."""
+    return in_tree(tree, "git", f"--work-tree={tree}", "status", "--porcelain")
 
 
 def linked(root: Path) -> Path | None:
@@ -1392,17 +1402,20 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
             canonical = report is not None or parallel
             reference = parallel_before if canonical else before
             assert reference is not None
-            after = worker_status(ROOT) if canonical else run("git", "status", "--porcelain")
-            if expect_success("final Git status", after):
-                if after.stdout != reference.stdout:
-                    message = "the working tree did not return to its entry Git status"
-                    failures.append(message)
-                    print(f"✗ {message}:")
-                    output = after.stdout + after.stderr
-                    if output:
-                        print(output, end="" if output.endswith("\n") else "\n")
-                else:
-                    print("✓ working tree restored to its entry Git status")
+            # A failed entry status is a failure already, with nothing to compare with.
+            if reference.returncode == 0:
+                after = (worker_status(ROOT) if canonical
+                         else run("git", "status", "--porcelain"))
+                if expect_success("final Git status", after):
+                    if after.stdout != reference.stdout:
+                        message = "the working tree did not return to its entry Git status"
+                        failures.append(message)
+                        print(f"✗ {message}:")
+                        output = after.stdout + after.stderr
+                        if output:
+                            print(output, end="" if output.endswith("\n") else "\n")
+                    else:
+                        print("✓ working tree restored to its entry Git status")
         except BaseException as error:
             if original is None:
                 raise
