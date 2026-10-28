@@ -738,8 +738,8 @@ Postulate 4, alone or with Postulate 5 and at most one more family. III.34 asks 
 points on its circle, and the rules among those that put a point on a circle that has none
 need a straight line, which III.34 does not give and none of those rules draws. No try
 stopped on any other error. What the revised screen does not give `grind` is that every
-point of a circle across the chord from a circumference gives it the same measure: that is
-III.21, a proposition, so the near misses of the measure (below) are not found by it, and
+point of a circle on the other side of the straight line joining a circumference's ends
+gives it the same measure: that is III.21, a proposition, so the near misses of the measure (below) are not found by it, and
 are not overlaps with a rule. Nor
 does it give `grind` that a magnitude Lean chooses is one magnitude under two descriptions
 that hold of the same points, as `standing_eq_circumference` and `standing_congr` show, so a
@@ -909,8 +909,8 @@ rule.
   him from the equal angles to equal halves without either. What the measure saves is
   III.26's work at the circumference, which it reduces to its definition and III.21.
   `Audit.III_30_measure` proves III.30 so, with its own statement and its axioms pinned; it
-  cites III.21, which shows that every point of the circle across the chord from a
-  circumference gives it the same measure, so it is a near miss of the measure, not of a
+  cites III.21, which shows that every point of the circle on the other side of the
+  straight line joining a circumference's ends gives it the same measure, so it is a near miss of the measure, not of a
   rule. Our III.30 follows Euclid, by III.28, as
   [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement kept the
   measure when arcs got a meaning of their own ([brief 0006](../briefs/0006-statements.md),
