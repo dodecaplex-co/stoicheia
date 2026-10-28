@@ -5,6 +5,8 @@
     python3 scripts/check_queue.py --gaps --head <sha> --base <sha> --repo <owner/name>
         [--plan <new file>]
     python3 scripts/check_queue.py --run-plan <file> --head <sha>
+    python3 scripts/check_queue.py --acceptance-run --head <sha> --repo <owner/name>
+        --ci-workflow <file> --out <dir>
     python3 scripts/check_queue.py --tree <dir> [--render]
 
 Group commands require a checkout of the supplied head. --gaps chooses the tests of what
@@ -21,6 +23,23 @@ artifacts, but not out of the job: the runner process holds the job's token unti
 job ends, every step runs beneath it, and a test that can read the runner's memory (a
 hosted runner gives its steps sudo) could read it there. So the token is read-only by
 design: queue-gaps has contents, pull-requests, actions and issues read, and no write.
+
+--acceptance-run finds, for queue-gaps, the verdicts of the acceptance job of the group's
+own CI run, which a job of another workflow cannot need. It reads GitHub alone, and each
+list whole: one page of at most 100 whose total_count is the number of items it gives.
+It reads, every RUN_POLL seconds until it is there, the one run of the --ci-workflow file
+of .github/workflows/ for the head on the merge group event, in this repository; then
+that run's jobs, each as its latest execution, until the one named acceptance has
+completed, which must have passed; then that run's artifacts named acceptance, until one
+is there: exactly one, unexpired, of that run and head, made within that job's
+execution, so that an earlier attempt's never counts. It downloads that artifact by its
+id and takes verdicts.json from it, refusing a zip that holds a path, a link, a name
+twice or a file the acceptance job does not keep (ACCEPTANCE_FILES). Then it reads the
+run, the job and the artifact again: any change, a re-run begun meanwhile among them,
+refuses. Only then does it write the verdicts to <dir>/verdicts.json, a new file. Its one
+deadline, ACCEPTANCE_WAIT, is the queue's status check timeout, so that the queue's own
+timeout binds first. The verdicts are the group's own, written by its ci.yml: --gaps
+reports them, and refuses only a changed proposition they give no items for.
 
 --tree checks the decisions page line by line (heading_problems): a line that could
 render as a level-one or level-two heading counts, in code too; its text must be plain;
@@ -104,13 +123,15 @@ commit. The group's own CI run is R5, so every check still runs on it before it 
 The block is a declaration that anyone who can edit the pull request body can type: the
 judge checks it for consistency, not as proof that a pre-flight ran.
 
-GitHub runs the group's own copy of the workflow file, so this judge's verdict, and any
-evidence check added to it, counts only while the group's .github/workflows/ci.yml still
-calls it. The protection of .github/, scripts/ and tests/, and the authenticity of the
-pre-flight's evidence, must be held by something a group cannot change: a ruleset
-requiring code-owner review, with a CODEOWNERS file naming the owner for those paths; a
-required workflow pinned to main, if the account offers one; or a status posted by an
-App running main's code. The queue must not be turned on until one exists.
+Rule (b) asks two things of something a group cannot change (WORKFLOW, section 10, "The
+merge queue"). The first, the judge's code and its running, is held by the organization
+ruleset of docs/rulesets/queue-judge.json, which requires the queue's judge workflow
+from main: GitHub runs main's copy of it in place of a pull request's own (shown on a
+pull request; on a merge group, to be shown before the queue goes on), and each of its
+steps that judges takes scripts/ from the group's base. The second, the authenticity of
+the pre-flight's evidence, is not held: the block is a declaration (above), and a block
+typed to be consistent with the repository passes this judge, as tests/test_check_queue.py
+shows. The queue must not be turned on until both are held.
 
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
@@ -120,16 +141,20 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import contextlib
 import datetime
+import io
 import json
 import os
 import re
 import shlex
+import stat
 import subprocess
 import sys
 import tempfile
 import time
+import zipfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -189,11 +214,25 @@ KEPT = (ENTRIES, safe_push.DECISIONS)
 # long: the revert job is one of that run's own jobs.
 RUN_POLL = 15
 RUN_WAIT = 600
+# --acceptance-run reads again every RUN_POLL seconds for at most this long: the queue's
+# status check timeout, 150 minutes from the group's start (WORKFLOW, "Turning it on"),
+# so that it has no earlier cutoff than the queue's own, which always binds first.
+ACCEPTANCE_WAIT = 150 * 60
+# The job of CI that checks the acceptance checklist, and the artifact it keeps; and the
+# files it keeps there (ci.yml, "Keep the reports"): its report and verdicts and, in the
+# ratchet, main's. --acceptance-run takes verdicts.json alone, and refuses any other file.
+ACCEPTANCE = "acceptance"
+ACCEPTANCE_FILES = ("report.md", "verdicts.json", "main-report.md", "main.json")
+# A workflow file of .github/workflows/, named alone, as --ci-workflow names CI's.
+WORKFLOW_FILE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.ya?ml")
+# A time as GitHub's REST answers give it, in UTC.
+STAMP = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?Z")
 # A test file --gaps runs for itself: test_*.py directly under tests/ or scripts/.
 GAP_TEST = re.compile(r"(?:tests|scripts)/test_[^/]+\.py")
 # The tests --gaps runs for each file under .github/, changed or deleted: those that read
 # it. scripts/test_safe_push.py reads every workflow and the pull request template;
-# tests/test_auto_revert.py and tests/test_check_queue.py read ci.yml and post-merge.yml;
+# tests/test_auto_revert.py and tests/test_check_queue.py read ci.yml and post-merge.yml,
+# and tests/test_check_queue.py the queue's judge workflow too, whose steps it runs;
 # tests/test_release_gate.py reads the template. A test named here is never excused for
 # being deleted, whether or not the group changes a file it reads (gap_commands). Any
 # other path under .github/ (a new workflow, say) refuses: its tests are named here, in
@@ -206,6 +245,8 @@ GITHUB_TESTS = {
     ".github/workflows/post-merge.yml": ("scripts/test_safe_push.py",
                                          "tests/test_auto_revert.py",
                                          "tests/test_check_queue.py"),
+    ".github/workflows/queue-judge.yml": ("scripts/test_safe_push.py",
+                                          "tests/test_check_queue.py"),
     ".github/workflows/release-gate.yml": ("scripts/test_safe_push.py",),
     ".github/workflows/safe-push-tests.yml": ("scripts/test_safe_push.py",),
 }
@@ -229,7 +270,11 @@ class Refused(Exception):
 
 
 class GitHub:
-    """The only GitHub boundary; fixture reads never fall back to the network."""
+    """The only GitHub boundary; fixture reads never fall back to the network. A fixture
+    keys each answer of KEYED by its number, as a string, and gives an artifact's zip,
+    artifact_zips, in base64; a read of ci_runs is of `workflow`'s runs for `head`."""
+
+    KEYED = ("pull_requests", "runs", "jobs", "artifacts", "artifact_zips")
 
     def __init__(self, repo: str, fixture: Path | None):
         self.repo = repo
@@ -237,11 +282,14 @@ class GitHub:
         if fixture and not isinstance(self.fixture, dict):
             raise ValueError("GitHub fixture must be an object")
 
-    def read(self, kind: str, number: int | None = None):
+    def read(self, kind: str, number: int | None = None, workflow: str | None = None,
+             head: str | None = None):
         if self.fixture is not None:
             try:
                 value = self.fixture[kind]
-                return value[str(number)] if kind in ("pull_requests", "runs") else value
+                value = value[str(number)] if kind in self.KEYED else value
+                return base64.b64decode(value, validate=True) if kind == "artifact_zips" \
+                    else value
             except (KeyError, TypeError):
                 raise ValueError(f"GitHub fixture lacks {kind}") from None
         if not os.environ.get("GH_TOKEN"):
@@ -268,17 +316,27 @@ class GitHub:
                         f"&activity_type={activity}&per_page=100")
             command = ["gh", "api", "--method", "GET", "--paginate", "--slurp", endpoint]
         else:
+            # Each list of one page of 100, which its reader holds to its total_count.
             endpoints = {"main": "commits/main", "pull_requests": f"pulls/{number}",
-                         "runs": f"actions/runs/{number}"}
-            if kind not in endpoints:
+                         "runs": f"actions/runs/{number}",
+                         "ci_runs": f"actions/workflows/{workflow}/runs?event=merge_group"
+                                    f"&head_sha={head}&per_page=100",
+                         "jobs": f"actions/runs/{number}/jobs?filter=latest&per_page=100",
+                         "artifacts": f"actions/runs/{number}/artifacts?name={ACCEPTANCE}"
+                                      "&per_page=100",
+                         "artifact_zips": f"actions/artifacts/{number}/zip"}
+            if kind not in endpoints or kind == "ci_runs" and not (
+                    WORKFLOW_FILE.fullmatch(str(workflow)) and OID.fullmatch(str(head))):
                 raise ValueError("GitHub: unknown read")
             endpoint = endpoints[kind]
             command = ["gh", "api", "--method", "GET", f"repos/{self.repo}/{endpoint}"]
         try:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=60)
+            # An artifact's zip is read as bytes; every other answer is JSON.
+            raw = kind == "artifact_zips"
+            result = subprocess.run(command, capture_output=True, text=not raw, timeout=60)
             if result.returncode:
                 raise ValueError("GitHub request failed")
-            return json.loads(result.stdout)
+            return result.stdout if raw else json.loads(result.stdout)
         except Exception:
             # Neither gh's output nor an exception can disclose an inherited token.
             raise ValueError(f"GitHub: could not read {kind}") from None
@@ -913,6 +971,223 @@ def failed_push(api: GitHub, run_id: int, sleep=time.sleep,
     if len(found) != 1:
         raise Refused("auto-revert: failed run's push is missing or ambiguous in main activity")
     return found.pop()
+
+
+def listed(answer, key: str, what: str) -> list[dict]:
+    """The items of a REST list, read whole: one page of at most 100, whose total_count is
+    the number of items it gives, each an object. Anything else is unreadable, so that a
+    list GitHub gave in part never passes for the whole."""
+    try:
+        items, total = answer[key], answer["total_count"]
+        if not isinstance(items, list) or type(total) is not int or total != len(items) \
+                or total > 100 or not all(isinstance(item, dict) for item in items):
+            raise ValueError
+        return items
+    except (KeyError, TypeError, ValueError):
+        raise ValueError(f"GitHub: could not read {what} whole, in one page of 100") from None
+
+
+def stamp(value, label: str) -> datetime.datetime:
+    """A time of a REST answer, in UTC."""
+    if not isinstance(value, str) or not STAMP.fullmatch(value):
+        raise ValueError(f"could not read {label}: expected a time in UTC")
+    return datetime.datetime.fromisoformat(value)
+
+
+def ci_run(run, head: str, workflow: str, repo: str) -> tuple[int, int, str]:
+    """The id, attempt and status of the group's CI run, from GitHub's REST answer for a
+    run, which must be of `workflow` in .github/workflows/, on the merge group event, for
+    `head`, with its head in this repository. Missing or malformed data is unreadable."""
+    try:
+        number, attempt, status = run["id"], run["run_attempt"], run["status"]
+        found = (oid(run["head_sha"], "run head"), run["event"], run["path"],
+                 run["head_repository"]["full_name"])
+        if type(number) is not int or number < 1 or type(attempt) is not int or attempt < 1 \
+                or not isinstance(status, str) \
+                or not all(isinstance(value, str) for value in found):
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read the group's CI run") from None
+    for name, value, wanted in zip(("head", "event", "workflow file", "head repository"),
+                                   found, (head, "merge_group",
+                                           f".github/workflows/{workflow}", repo)):
+        if value != wanted:
+            raise Refused(f"acceptance: the CI run {number} has another {name} than {wanted}")
+    return number, attempt, status
+
+
+def acceptance_job(answer, run_id: int, attempt: int) -> dict | None:
+    """The job named acceptance among the jobs of the group's CI run, each as its latest
+    execution, so that a job a partial re-run carried over counts as the run shows it:
+    None while none is listed; else its id, attempt, status and conclusion, and, once it
+    has passed, when it started and completed. Two such jobs, a job of another run, and a
+    job of a later attempt than `attempt`, the run's when first read (a re-run begun
+    since), refuse. Missing or malformed data is unreadable."""
+    jobs = listed(answer, "jobs", "the CI run's jobs")
+    try:
+        if not all(isinstance(job["name"], str) for job in jobs):
+            raise ValueError
+        named = [job for job in jobs if job["name"] == ACCEPTANCE]
+        if len(named) != 1:
+            if named:
+                raise Refused(f"acceptance: the CI run {run_id} has {len(named)} jobs named "
+                              "acceptance, not one")
+            return None
+        job = named[0]
+        found = {key: job[key] for key in ("id", "run_id", "run_attempt", "status",
+                                           "conclusion")}
+        if type(found["id"]) is not int or found["id"] < 1 \
+                or type(found["run_id"]) is not int or type(found["run_attempt"]) is not int \
+                or found["run_attempt"] < 1 or not isinstance(found["status"], str) \
+                or not isinstance(found["conclusion"], (str, type(None))):
+            raise ValueError
+        if found["status"] == "completed" and found["conclusion"] == "success":
+            found["started"] = stamp(job["started_at"], "the acceptance job's start")
+            found["completed"] = stamp(job["completed_at"], "the acceptance job's end")
+            if found["started"] > found["completed"]:
+                raise ValueError
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read the CI run's acceptance job") from None
+    if found["run_id"] != run_id:
+        raise Refused(f"acceptance: the CI run {run_id} lists an acceptance job of another run")
+    if found["run_attempt"] > attempt:
+        raise Refused(f"acceptance: the CI run {run_id} was run again after it was first read "
+                      f"at attempt {attempt}: its acceptance job is of attempt "
+                      f"{found['run_attempt']}")
+    return found
+
+
+def acceptance_artifact(answer, run_id: int, head: str, job: dict) -> dict | None:
+    """The artifact named acceptance among those of the group's CI run: None while none is
+    listed; else its id and when it was made. It must be the only one, unexpired, of that
+    run and head, and made within `job`, the acceptance job that passed, from its start
+    to its end, so that an earlier attempt's never counts. Missing or malformed data is
+    unreadable."""
+    artifacts = listed(answer, "artifacts", "the CI run's artifacts")
+    if len(artifacts) > 1:
+        raise Refused(f"acceptance: the CI run {run_id} lists {len(artifacts)} artifacts named "
+                      "acceptance, not one")
+    if not artifacts:
+        return None
+    artifact = artifacts[0]
+    try:
+        found = {"id": artifact["id"],
+                 "created": stamp(artifact["created_at"], "the acceptance artifact's time")}
+        name, expired, origin = artifact["name"], artifact["expired"], artifact["workflow_run"]
+        origin = (origin["id"], oid(origin["head_sha"], "the acceptance artifact's head"))
+        if type(found["id"]) is not int or found["id"] < 1 or not isinstance(name, str) \
+                or type(expired) is not bool or type(origin[0]) is not int:
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read the CI run's acceptance artifact") from None
+    if name != ACCEPTANCE:
+        raise Refused(f"acceptance: the CI run {run_id} lists an artifact of another name")
+    if expired:
+        raise Refused(f"acceptance: the CI run {run_id}'s acceptance artifact has expired")
+    if origin != (run_id, head):
+        raise Refused(f"acceptance: the artifact listed for the CI run {run_id} is another "
+                      "run's, or another head's")
+    if not job["started"] <= found["created"] <= job["completed"]:
+        raise Refused(f"acceptance: the CI run {run_id}'s acceptance artifact was made outside "
+                      "the execution of the acceptance job that passed (an earlier attempt's)")
+    return found
+
+
+def acceptance_verdicts(data) -> bytes:
+    """verdicts.json, from the acceptance artifact's zip. It may hold only files the
+    acceptance job keeps (ACCEPTANCE_FILES), each once, named alone and regular: a path,
+    a link or another file that is not regular, a name twice or any other file refuses.
+    A zip that cannot be read is unreadable."""
+    if not isinstance(data, bytes):
+        raise ValueError("GitHub: could not read the acceptance artifact")
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            members = archive.infolist()
+            names = [member.filename for member in members]
+            if any("/" in name or "\\" in name or name in ("", ".", "..") for name in names):
+                raise Refused("acceptance: the artifact holds a path, where only a file's "
+                              "name may stand")
+            if len(set(names)) != len(names):
+                raise Refused("acceptance: the artifact holds a name twice")
+            if any(stat.S_IFMT(member.external_attr >> 16) not in (0, stat.S_IFREG)
+                   for member in members):
+                raise Refused("acceptance: the artifact holds a link, or another file that is "
+                              "not regular")
+            if others := sorted(set(names) - set(ACCEPTANCE_FILES)):
+                raise Refused("acceptance: the artifact holds a file the acceptance job does "
+                              "not keep: " + safe_push.printable_text(", ".join(others)))
+            if "verdicts.json" not in names:
+                raise Refused("acceptance: the artifact holds no verdicts.json")
+            return archive.read("verdicts.json")
+    except (zipfile.BadZipFile, EOFError, NotImplementedError, RuntimeError):
+        raise ValueError("GitHub: could not read the acceptance artifact's zip") from None
+
+
+def acceptance_run(api: GitHub, head: str, workflow: str, sleep=time.sleep,
+                   clock=time.monotonic) -> bytes:
+    """The verdicts of the acceptance job of the group's CI run, the run of `workflow` for
+    `head` (the module's docstring, --acceptance-run), in four steps: the run, the job,
+    the artifact and its download, and the second reading. Each wait reads again every
+    RUN_POLL seconds, against one deadline, ACCEPTANCE_WAIT from the start."""
+    deadline = clock() + ACCEPTANCE_WAIT
+
+    def wait(what: str) -> None:
+        if clock() >= deadline:
+            raise Refused(f"acceptance: {what} after {ACCEPTANCE_WAIT // 60} minutes")
+        sleep(RUN_POLL)
+
+    # 1. The run: exactly one, read whole. A rebuilt group has a new head, so an earlier
+    # group's run never matches.
+    while not (runs := listed(api.read("ci_runs", workflow=workflow, head=head),
+                              "workflow_runs", f"the runs of {workflow}")):
+        wait(f"no run of {workflow} for the group's head had begun")
+    if len(runs) != 1:
+        raise Refused(f"acceptance: GitHub lists {len(runs)} runs of {workflow} for the "
+                      "group's head on the merge group event, not one")
+    run_id, attempt, _ = ci_run(runs[0], head, workflow, api.repo)
+
+    def same_run() -> str:
+        """The run read again by its id, as it was first read but for its status."""
+        number, again, status = ci_run(api.read("runs", run_id), head, workflow, api.repo)
+        if number != run_id:
+            raise ValueError("GitHub: could not read the group's CI run")
+        if again != attempt:
+            raise Refused(f"acceptance: the CI run {run_id} was run again after it was first "
+                          f"read at attempt {attempt}: it is at attempt {again}")
+        return status
+
+    # 2. The job, until it completes. While none is listed, the run is read again: one
+    # that has completed without it refuses.
+    while True:
+        job = acceptance_job(api.read("jobs", run_id), run_id, attempt)
+        if job is None:
+            if same_run() == "completed":
+                raise Refused(f"acceptance: the CI run {run_id} completed with no job named "
+                              "acceptance")
+        elif job["status"] == "completed":
+            break
+        wait("the acceptance job had not completed")
+    if job["conclusion"] != "success":
+        raise Refused(f"acceptance: the acceptance job of the CI run {run_id} ended "
+                      f"{safe_push.printable_text(str(job['conclusion']))}, not success")
+
+    # 3. The artifact, until it is listed, downloaded by its id.
+    while (artifact := acceptance_artifact(api.read("artifacts", run_id), run_id, head,
+                                           job)) is None:
+        wait("the acceptance job's artifact had not been listed")
+    verdicts = acceptance_verdicts(api.read("artifact_zips", artifact["id"]))
+
+    # 4. Again, after the download: the same run at the same attempt, the same job, still
+    # its latest execution and passed, and the same artifact, unexpired, in its window.
+    same_run()
+    if acceptance_job(api.read("jobs", run_id), run_id, attempt) != job \
+            or acceptance_artifact(api.read("artifacts", run_id), run_id, head, job) != artifact:
+        raise Refused(f"acceptance: the CI run {run_id}'s acceptance job or its artifact "
+                      "changed while the artifact was read (a re-run begun meanwhile)")
+    print(f"acceptance: run {run_id}, attempt {attempt}: job {job['id']} passed; artifact "
+          f"{artifact['id']} read, and the run, the job and the artifact read again",
+          flush=True)
+    return verdicts
 
 
 def red_issues(pages) -> list[dict]:
@@ -1564,15 +1839,26 @@ def main(argv=None) -> int:
     parser.add_argument("--run-plan", type=Path)
     parser.add_argument("--tree", type=Path)
     parser.add_argument("--render", action="store_true")
+    parser.add_argument("--acceptance-run", action="store_true")
+    parser.add_argument("--ci-workflow")
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
+    waiting = (args.acceptance_run, args.ci_workflow, args.out)
     if args.tree is not None:
         if any((args.head, args.base, args.repo, args.github_json, args.gaps, args.plan,
-                args.run_plan)):
+                args.run_plan, *waiting)):
             parser.error("--tree accepts only --render")
     elif args.run_plan is not None:
-        if any((args.base, args.repo, args.github_json, args.gaps, args.plan, args.render)) \
-                or not args.head:
+        if any((args.base, args.repo, args.github_json, args.gaps, args.plan, args.render,
+                *waiting)) or not args.head:
             parser.error("--run-plan needs --head and accepts nothing else")
+    elif args.acceptance_run:
+        if any((args.base, args.gaps, args.plan, args.render)) \
+                or not all((args.head, args.repo, args.ci_workflow, args.out)):
+            parser.error("--acceptance-run needs --head, --repo, --ci-workflow and --out, and "
+                         "accepts --github-json alone beside them")
+    elif args.ci_workflow is not None or args.out is not None:
+        parser.error("--ci-workflow and --out belong to --acceptance-run")
     elif not all((args.head, args.base, args.repo)) or args.render:
         parser.error("group checks need --head, --base and --repo; --render belongs to --tree")
     elif args.plan is not None and not args.gaps:
@@ -1580,6 +1866,21 @@ def main(argv=None) -> int:
     try:
         if args.tree is not None:
             problems = tree_problems(args.tree.resolve(), args.render)
+        elif args.acceptance_run:
+            # The group's CI run's acceptance verdicts, read from GitHub alone: no Git, no
+            # checkout, and nothing written until every reading has passed.
+            if not SLUG.fullmatch(args.repo):
+                raise ValueError("--repo must be owner/name")
+            if not WORKFLOW_FILE.fullmatch(args.ci_workflow):
+                raise ValueError("--ci-workflow must name a workflow file of "
+                                 ".github/workflows/, alone")
+            verdicts = acceptance_run(GitHub(args.repo, args.github_json),
+                                      oid(args.head, "head"), args.ci_workflow)
+            args.out.mkdir(parents=True, exist_ok=True)
+            with open(args.out / "verdicts.json", "xb") as target:
+                target.write(verdicts)
+            print(f"acceptance: verdicts.json written to {args.out}", flush=True)
+            problems = []
         elif args.run_plan is not None:
             # The group's tests, chosen by --gaps --plan, run here with no GitHub read.
             repo = Path.cwd()

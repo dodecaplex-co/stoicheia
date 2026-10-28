@@ -4,27 +4,35 @@
     python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 -I tests/test_check_queue.py
 
-The workflow cases read .github/workflows/ci.yml with PyYAML, pinned in
+The workflow cases read .github/workflows/ (ci.yml, post-merge.yml and the queue's
+judge, queue-judge.yml, whose jobs they run step by step) with PyYAML, pinned in
 scripts/requirements-test_safe_push.txt; install it in a virtual environment, since a
 system Python may refuse the install and python3 -I does not see a user install.
 Fixtures write objects with hash-object, mktree and commit-tree. Their own index
 and checkout use read-tree; the source repository's index and history never move.
 Every CLI invocation supplies --github-json, so missing fixture data cannot cause
-a GitHub request.
+a GitHub request; a workflow's steps, which call gh, find a stand-in for it first on
+their PATH (FAKE_GH), which answers from the fixture's snapshot.
 """
 
 from __future__ import annotations
 
+import base64
+import contextlib
 import copy
+import io
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+import warnings
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -34,6 +42,7 @@ sys.dont_write_bytecode = True
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import check_queue as queue
+from check_acceptance import VERDICTS_FORMAT
 
 PAGE = queue.safe_push.DECISIONS
 TEXT = "notes/first.txt"
@@ -44,6 +53,105 @@ BOT = "revert-fixture[bot]"
 REVIEW = "Independent reader at"
 # Main's own classifier, which a fixture's main is given when a light pre-flight is judged.
 CLASSIFIER = (SCRIPTS / "risk.py").read_text(encoding="utf-8")
+# The queue's judge, which the organization ruleset requires from main.
+JUDGE = ".github/workflows/queue-judge.yml"
+JUDGE_JOBS = ("queue-integrity", "queue-gaps")
+# The group's CI run, its acceptance job and that job's artifact, as GitHub gives them
+# (acceptance_answers): the job ran from STARTED to COMPLETED, and made the artifact at
+# CREATED.
+RUN, JOB, ARTIFACT = 7001, 9001, 5001
+STARTED, CREATED, COMPLETED = ("2026-10-27T21:00:00Z", "2026-10-27T21:49:00Z",
+                               "2026-10-27T21:50:00Z")
+VERDICTS = json.dumps({"format": VERDICTS_FORMAT, "checker": "fixture",
+                       "verdicts": {}}).encode("utf-8")
+
+
+def artifact_zip(members) -> bytes:
+    """A zip of (name, bytes) members, each a regular file unless its ZipInfo says else."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, data in members:
+            info = name if isinstance(name, zipfile.ZipInfo) else zipfile.ZipInfo(name)
+            if not isinstance(name, zipfile.ZipInfo):
+                info.external_attr = 0o100644 << 16
+            archive.writestr(info, data)
+    return buffer.getvalue()
+
+
+# The acceptance job's artifact in the ratchet, as its "Keep the reports" step keeps it.
+KEPT_REPORTS = artifact_zip([("report.md", b"# Acceptance\n"), ("verdicts.json", VERDICTS),
+                             ("main-report.md", b"# Main\n"), ("main.json", VERDICTS)])
+
+
+def acceptance_answers(head: str) -> dict:
+    """GitHub's answers, as a fixture keys them (check_queue.GitHub), for a group whose CI
+    run's acceptance job passed: the run, listed for the head and read by its id; its
+    jobs, acceptance and another; its acceptance artifact; and that artifact's zip."""
+    run = {"id": RUN, "run_attempt": 1, "status": "in_progress", "head_sha": head,
+           "event": "merge_group", "path": ".github/workflows/ci.yml",
+           "head_repository": {"full_name": "owner/repository"}}
+    job = {"id": JOB, "run_id": RUN, "run_attempt": 1, "name": "acceptance",
+           "status": "completed", "conclusion": "success", "started_at": STARTED,
+           "completed_at": COMPLETED}
+    artifact = {"id": ARTIFACT, "name": "acceptance", "expired": False, "created_at": CREATED,
+                "workflow_run": {"id": RUN, "head_sha": head}}
+    return {"ci_runs": {"total_count": 1, "workflow_runs": [run]},
+            "runs": {str(RUN): run},
+            "jobs": {str(RUN): {"total_count": 2, "jobs": [dict(job, id=JOB - 1, name="check"),
+                                                           job]}},
+            "artifacts": {str(RUN): {"total_count": 1, "artifacts": [artifact]}},
+            "artifact_zips": {str(ARTIFACT): base64.b64encode(KEPT_REPORTS).decode("ascii")}}
+
+
+# A stand-in for gh, first on the PATH of a workflow's steps: `gh api` answered from a
+# fixture's snapshot, by the keys check_queue.GitHub's fixtures use, each call logged.
+FAKE_GH = r'''
+import base64, json, re, sys
+snapshot_path, log_path, args = sys.argv[1], sys.argv[2], sys.argv[3:]
+with open(log_path, "a", encoding="utf-8") as log:
+    log.write(json.dumps(args) + "\n")
+with open(snapshot_path, encoding="utf-8") as source:
+    snapshot = json.load(source)
+ROUTES = (("commits/main", "main"), ("pulls/([0-9]+)", "pull_requests"),
+          ("actions/runs/([0-9]+)", "runs"),
+          (r"issues\?state=open&labels=main-red&per_page=100", "main_red"),
+          (r"actions/workflows/ci\.yml/runs\?event=merge_group&head_sha=[0-9a-f]{40}"
+           "&per_page=100", "ci_runs"),
+          (r"actions/runs/([0-9]+)/jobs\?filter=latest&per_page=100", "jobs"),
+          (r"actions/runs/([0-9]+)/artifacts\?name=acceptance&per_page=100", "artifacts"),
+          ("actions/artifacts/([0-9]+)/zip", "artifact_zips"))
+if args[:2] == ["api", "graphql"]:
+    kind, value = "queue", snapshot["queue"]
+else:
+    endpoint = args[-1].removeprefix("repos/owner/repository/")
+    if args[:3] != ["api", "--method", "GET"] or endpoint == args[-1]:
+        sys.exit("fake gh: a call it does not read")
+    for pattern, kind in ROUTES:
+        if match := re.fullmatch(pattern, endpoint):
+            value = snapshot[kind]
+            value = value[match.group(1)] if match.groups() else value
+            break
+    else:
+        sys.exit("fake gh: an endpoint it does not read")
+if kind == "artifact_zips":
+    sys.stdout.buffer.write(base64.b64decode(value))
+else:
+    print(json.dumps(value))
+'''
+# A stand-in for python3, first on the same PATH: this test's Python, but pip's install
+# of a requirements file is checked, never run, so that no step reaches the network.
+FAKE_PYTHON = '''#!/bin/sh
+if [ "$#" = 6 ] && [ "$1" = -I ] && [ "$2" = -m ] && [ "$3" = pip ] && [ "$4" = install ] \\
+    && [ "$5" = -r ]; then
+  test -f "$6" && echo "fixture pip: would install $6" && exit 0
+  echo "fixture pip: no requirements file $6" >&2
+  exit 1
+fi
+for argument in "$@"; do
+  if [ "$argument" = pip ]; then echo "fixture pip: a form it does not read" >&2; exit 1; fi
+done
+exec {python} "$@"
+'''
 
 
 def harness_source(comment, extra=(), low=queue.safe_push.LOW_CLASSES):
@@ -1829,6 +1937,7 @@ class QueueTests(unittest.TestCase):
         ".github/pull_request_template.md": [RELEASE_GATE, SAFE_PUSH],
         ".github/workflows/ci.yml": [AUTO_REVERT, QUEUE_TESTS, SAFE_PUSH],
         ".github/workflows/post-merge.yml": [AUTO_REVERT, QUEUE_TESTS, SAFE_PUSH],
+        JUDGE: [QUEUE_TESTS, SAFE_PUSH],
         ".github/workflows/release-gate.yml": [SAFE_PUSH],
         ".github/workflows/safe-push-tests.yml": [SAFE_PUSH],
     }
@@ -1942,41 +2051,130 @@ class QueueTests(unittest.TestCase):
                     with self.assertRaisesRegex(queue.Refused, re.escape(message)):
                         queue.gap_commands(self.repo, checks, {test})
 
+    @staticmethod
+    def workflow(name):
+        with (SCRIPTS.parent / ".github/workflows" / name).open(encoding="utf-8") as source:
+            return yaml.safe_load(source)
+
+    # The ifs the step runner reads, each as it is on the event the runner simulates.
+    CONDITIONS = {"": lambda event: True,
+                  "github.event_name == 'merge_group'": lambda event: event == "merge_group",
+                  "github.event_name != 'merge_group'": lambda event: event != "merge_group",
+                  "github.event_name == 'pull_request'": lambda event: event == "pull_request"}
+
+    def fixture_tools(self):
+        """The folder put first on the PATH of a workflow's steps: gh, FAKE_GH over this
+        test's fixture file, logging each call to gh-calls.jsonl beside it; and python3,
+        FAKE_PYTHON, which checks pip's install and runs nothing else of pip."""
+        tools = self.root / "tools"
+        if not tools.is_dir():
+            tools.mkdir()
+            (tools / "fake_gh.py").write_text(FAKE_GH, encoding="utf-8")
+            python = shlex.quote(sys.executable)
+            for name, text in (
+                    ("gh", f"#!/bin/sh\nexec {python} -I {shlex.quote(str(tools / 'fake_gh.py'))} "
+                           f"{shlex.quote(str(self.fixture))} "
+                           f"{shlex.quote(str(self.root / 'gh-calls.jsonl'))} \"$@\"\n"),
+                    ("python3", FAKE_PYTHON.format(python=python))):
+                (tools / name).write_text(text, encoding="utf-8")
+                (tools / name).chmod(0o755)
+        return tools
+
+    def run_job(self, job, event="merge_group", head=None, base=None, workflow=None,
+                steps=None, runner=None):
+        """Run the steps of the queue judge's `job` in order, from main's copy of
+        queue-judge.yml or a planted `workflow`, as GitHub's runner would on `event`, in
+        the checkout as the test left it. The job may have no if of its own, since a
+        skipped required job counts as passed. Each step's if is read against the event
+        (CONDITIONS; any other fails the test): a step whose if is false is skipped, as
+        GitHub skips it, but on a merge group every step must run, so that no plant passes
+        by running a step GitHub would skip. Each expression of a step's environment or
+        working directory is given its value on the event, and any other fails the test.
+        The checkout and Python's setup are the fixture's own; gh and pip are FAKE_GH and
+        FAKE_PYTHON (fixture_tools), and the snapshot is written for gh first. With
+        `steps`, only the steps so named run, the test having set up what those before
+        them leave. As on GitHub, the first step that fails ends the job. The result's
+        args are the labels of the steps that ran, its status the failing step's or 0,
+        and its output theirs."""
+        head, base = head or self.head, base or self.base
+        spec = (workflow or self.workflow("queue-judge.yml"))["jobs"][job]
+        self.assertNotIn("if", spec, f"{job}: a skipped required job counts as passed")
+        runner = runner or self.root / f"runner-{job}"
+        runner.mkdir(exist_ok=True)
+        group = event == "merge_group"
+        values = {"github.event_name": event, "github.token": "fixture-workflow-secret",
+                  "github.repository": "owner/repository", "vars.STOICHEIA_REVERT_BOT": BOT,
+                  "runner.temp": str(runner),
+                  "github.event.merge_group.head_sha": head if group else "",
+                  "github.event.merge_group.base_sha": base if group else ""}
+
+        def evaluated(text):
+            def value(match):
+                self.assertIn(match.group(1), values, f"{job}: an expression the runner "
+                              "does not know")
+                return values[match.group(1)]
+            return re.sub(r"\$\{\{\s*(.*?)\s*\}\}", value, str(text))
+
+        self.fixture.write_text(json.dumps(self.snapshot), encoding="utf-8")
+        common = dict(os.environ, RUNNER_TEMP=str(runner), GITHUB_EVENT_NAME=event,
+                      GITHUB_WORKSPACE=str(self.repo),
+                      PATH=f"{self.fixture_tools()}{os.pathsep}{os.environ['PATH']}")
+        ran, out, err, status = [], [], [], 0
+        for number, step in enumerate(spec["steps"], 1):
+            label = step.get("name") or step.get("uses") or f"step {number}"
+            condition = str(step.get("if", "")).strip()
+            if condition.startswith("${{") and condition.endswith("}}"):
+                condition = condition[3:-2].strip()
+            self.assertIn(condition, self.CONDITIONS, f"{label}: an if the runner does not read")
+            if not self.CONDITIONS[condition](event):
+                self.assertFalse(group, f"{label}: skipped on a merge group, where every step "
+                                 "runs")
+                continue
+            if steps is not None and label not in steps:
+                continue
+            ran.append(label)
+            if "uses" in step:
+                self.assertIn(step["uses"], ("actions/checkout@v5", "actions/setup-python@v5"),
+                              label)
+                continue
+            env = dict(common, **{key: evaluated(text)
+                                  for key, text in (step.get("env") or {}).items()})
+            where = evaluated(step.get("working-directory", self.repo))
+            result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+                                    cwd=where, env=env, capture_output=True, text=True)
+            out.append(result.stdout)
+            err.append(result.stderr)
+            if result.returncode:
+                status = result.returncode
+                break
+        return subprocess.CompletedProcess(ran, status, "".join(out), "".join(err))
+
     def queue_job(self, head, base):
-        """Execute the workflow's extraction and invocation with local fixture objects."""
-        with (SCRIPTS.parent / ".github/workflows/ci.yml").open(encoding="utf-8") as source:
-            workflow = yaml.safe_load(source)
-        job = workflow["jobs"]["queue-integrity"]
-        steps = [step for step in job["steps"] if step.get("name") ==
-                 "Check the group with main's copy of check_queue.py"]
-        self.assertEqual(len(steps), 1)
-        script = steps[0].get("run")
-        self.assertIsInstance(script, str)
+        """Run the queue judge's queue-integrity job on a merge group of `head` and `base`,
+        checked out."""
         self.checkout(head)
-        runner = self.root / "runner"
-        runner.mkdir()
-        env = dict(os.environ, GROUP_HEAD=head, GROUP_BASE=base,
-                   GITHUB_EVENT_NAME="merge_group", RUNNER_TEMP=str(runner),
-                   REPOSITORY="owner/repository")
-        return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script], cwd=self.repo,
-                              env=env, capture_output=True, text=True)
+        return self.run_job("queue-integrity", head=head, base=base)
 
     def test_queue_job_installs_test_dependency_only_for_offline_tests(self):
-        with (SCRIPTS.parent / ".github/workflows/ci.yml").open(encoding="utf-8") as source:
-            workflow = yaml.safe_load(source)
-        steps = workflow["jobs"]["queue-integrity"]["steps"]
-        install = [step for step in steps if step.get("name") ==
+        # The offline cases are CI's queue-tests: it installs their parser and runs them on
+        # every event, a merge group's among them, with no if. The judge's queue-integrity
+        # installs nothing, so the Python that runs the judge holds nothing a group names,
+        # and its judge runs on a merge group alone.
+        tests = self.workflow("ci.yml")["jobs"]["queue-tests"]
+        install = [step for step in tests["steps"] if step.get("name") ==
                    "Install the queue tests' pinned YAML parser"]
-        offline = [step for step in steps if step.get("name") ==
+        offline = [step for step in tests["steps"] if step.get("name") ==
                    "Check the queue and train checks, and automatic reverts, case by case"]
-        judge = [step for step in steps if step.get("name") ==
-                 "Check the group with main's copy of check_queue.py"]
         self.assertEqual(len(install), 1)
         self.assertEqual(len(offline), 1)
+        for spec in (tests, *tests["steps"]):
+            self.assertNotIn("if", spec)
+        steps = self.workflow("queue-judge.yml")["jobs"]["queue-integrity"]["steps"]
+        judge = [step for step in steps if step.get("name") ==
+                 "Check the group with main's copy of check_queue.py"]
         self.assertEqual(len(judge), 1)
-        self.assertEqual(install[0].get("if"), "github.event_name != 'merge_group'")
-        self.assertEqual(offline[0].get("if"), "github.event_name != 'merge_group'")
         self.assertEqual(judge[0].get("if"), "github.event_name == 'merge_group'")
+        self.assertEqual([step for step in steps if "pip" in str(step.get("run", ""))], [])
 
     def test_queue_job_executes_the_base_judge_with_all_its_scripts(self):
         script = (
@@ -2124,34 +2322,39 @@ class QueueTests(unittest.TestCase):
                      "--run-plan needs --head and accepts nothing else")
         self.verdict(self.cli("--plan", str(path)), 2, "--plan belongs to --gaps")
 
-    EXPRESSIONS = {"github.token": "fixture-workflow-secret", "github.run_id": "1",
-                   "github.repository": "owner/repository", "vars.STOICHEIA_REVERT_BOT": BOT}
+    # A base judge that records how each step calls it, and the tokens it holds then;
+    # for --acceptance-run it writes the verdicts, as main's does.
+    RECORDING_JUDGE = (
+        "import json, os, sys\n"
+        "log = os.path.join(os.environ['RUNNER_TEMP'], 'judge-calls.jsonl')\n"
+        "tokens = sorted(key for key in os.environ if 'TOKEN' in key.upper())\n"
+        "with open(log, 'a', encoding='utf-8') as calls:\n"
+        "    calls.write(json.dumps([sys.argv[1:], tokens]) + '\\n')\n"
+        "if '--acceptance-run' in sys.argv:\n"
+        "    out = sys.argv[sys.argv.index('--out') + 1]\n"
+        "    os.makedirs(out)\n"
+        "    with open(os.path.join(out, 'verdicts.json'), 'w', encoding='utf-8') as file:\n"
+        "        file.write('{}')\n")
 
-    def gaps_step(self, steps, name, head, base, runner):
-        """Run one of the queue-gaps job's steps as the runner would, the expressions of
-        its env given fixture values; an expression this does not know fails the test."""
-        matching = [step for step in steps if step.get("name") == name]
-        self.assertEqual(len(matching), 1, name)
-        values = dict(self.EXPRESSIONS, **{
-            "github.event.merge_group.head_sha": head, "runner.temp": str(runner),
-            "github.event.merge_group.base_sha": base})
+    def recording_group(self):
+        """A base whose judge is RECORDING_JUDGE, with main's pin of the tests' parser, and
+        a head whose judge would refuse were it run."""
+        base = self.make([self.base], {
+            "scripts/check_queue.py": self.RECORDING_JUDGE,
+            "scripts/requirements-test_safe_push.txt": "pyyaml==0\n"})
+        head = self.make([base], {"scripts/check_queue.py": "raise SystemExit('group ran')\n"})
+        return base, head
 
-        def value(match):
-            self.assertIn(match.group(1), values)
-            return values[match.group(1)]
-
-        env = dict(os.environ, RUNNER_TEMP=str(runner), GITHUB_EVENT_NAME="merge_group")
-        for key, text in (matching[0].get("env") or {}).items():
-            env[key] = re.sub(r"\$\{\{\s*(.*?)\s*\}\}", value, str(text))
-        return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", matching[0]["run"]],
-                              cwd=self.repo, env=env, capture_output=True, text=True)
+    def recorded(self, runner):
+        return [json.loads(line) for line in
+                (runner / "judge-calls.jsonl").read_text(encoding="utf-8").splitlines()]
 
     def test_gaps_job_runs_the_tests_in_a_step_that_holds_no_token(self):
         # The tests are the group's own code, and on Linux a process can read its parent's
-        # environment: the step that holds the token chooses the tests and runs none, and
-        # no later step declares a token. The base's judge records how it is called.
-        with (SCRIPTS.parent / ".github/workflows/ci.yml").open(encoding="utf-8") as source:
-            steps = yaml.safe_load(source)["jobs"]["queue-gaps"]["steps"]
+        # environment: the steps that hold the token read acceptance's verdicts and choose
+        # the tests, and run none, and no later step declares a token. The base's judge
+        # records how each step of the whole job, run on a merge group, calls it.
+        steps = self.workflow("queue-judge.yml")["jobs"]["queue-gaps"]["steps"]
         choose = [step.get("name") for step in steps].index("Choose the tests of what is new")
         self.assertIn("--plan", steps[choose]["run"])
         self.assertNotIn("--run-plan", steps[choose]["run"])
@@ -2159,37 +2362,25 @@ class QueueTests(unittest.TestCase):
             for key, text in (step.get("env") or {}).items():
                 self.assertNotIn("TOKEN", key.upper(), step)
                 self.assertNotRegex(str(text), r"(?i)token|secrets\.", step)
-        judge = ("import json, os, sys\n"
-                 "log = os.path.join(os.environ['RUNNER_TEMP'], 'judge-calls.jsonl')\n"
-                 "tokens = sorted(key for key in os.environ if 'TOKEN' in key.upper())\n"
-                 "with open(log, 'a', encoding='utf-8') as calls:\n"
-                 "    calls.write(json.dumps([sys.argv[1:], tokens]) + '\\n')\n")
-        base = self.make([self.base], {"scripts/check_queue.py": judge})
-        head = self.make([base], {"scripts/check_queue.py": "raise SystemExit('group ran')\n"})
+        base, head = self.recording_group()
         self.checkout(head)
-        runner = self.root / "runner"
-        runner.mkdir()
-        for name in ("Choose the tests of what is new", "Run the tests of what is new"):
-            result = self.gaps_step(steps, name, head, base, runner)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        calls = [json.loads(line) for line in
-                 (runner / "judge-calls.jsonl").read_text(encoding="utf-8").splitlines()]
+        result = self.run_job("queue-gaps", head=head, base=base)
+        self.verdict(result, 0, "fixture pip: would install")
+        self.assertEqual(len(result.args), len(steps))
+        runner = self.root / "runner-queue-gaps"
         plan = str(runner / "gaps-plan.json")
-        self.assertEqual(calls, [
+        self.assertEqual(self.recorded(runner), [
+            [["--acceptance-run", "--head", head, "--repo", "owner/repository",
+              "--ci-workflow", "ci.yml", "--out", str(runner / "acceptance")], ["GH_TOKEN"]],
             [["--gaps", "--head", head, "--base", base, "--repo", "owner/repository",
               "--plan", plan], ["GH_TOKEN"]],
             [["--run-plan", plan, "--head", head], []]])
-
-    @staticmethod
-    def workflow(name):
-        with (SCRIPTS.parent / ".github/workflows" / name).open(encoding="utf-8") as source:
-            return yaml.safe_load(source)
 
     def test_python_modules_run_isolated_outside_the_checkout(self):
         # python3 -m puts the working directory first on the import path, so a pip/ folder
         # in a group's checkout would run in pip's place.
         modules = []
-        for name in ("ci.yml", "post-merge.yml"):
+        for name in ("ci.yml", "post-merge.yml", "queue-judge.yml"):
             for job, value in self.workflow(name)["jobs"].items():
                 for step in value.get("steps", []):
                     for line in str(step.get("run", "")).splitlines():
@@ -2198,28 +2389,278 @@ class QueueTests(unittest.TestCase):
         # The check job installs the parser the lane-condition check reads the workflows
         # with (checks/24-lane-condition.toml, #346).
         self.assertEqual(sorted(job for _, job, _, _ in modules),
-                         ["check", "queue-gaps", "queue-integrity"])
+                         ["check", "queue-gaps", "queue-tests"])
         for name, job, directory, line in modules:
             with self.subTest(job=job):
                 self.assertEqual(directory, "${{ runner.temp }}")
                 self.assertRegex(line, r"^python3 -I -m pip install -r \"\$[A-Z_]+/\S+\.txt\"$")
 
     def test_queue_timeouts_are_pinned(self):
-        # To be measured again on the queue's trial (WORKFLOW, "Turning it on").
-        jobs = self.workflow("ci.yml")["jobs"]
-        self.assertEqual(jobs["acceptance"]["timeout-minutes"], 60)
-        self.assertEqual(jobs["queue-gaps"]["timeout-minutes"], 75)
-        self.assertEqual(jobs["queue-integrity"]["timeout-minutes"], 20)
-        # The status check timeout: acceptance, then queue-gaps, which waits for it, and
-        # 15 minutes for runners.
-        self.assertEqual(jobs["queue-gaps"]["needs"], "acceptance")
-        status = jobs["acceptance"]["timeout-minutes"] + jobs["queue-gaps"]["timeout-minutes"]
-        self.assertEqual(status + 15, 150)
+        # The design's section 4. queue-gaps starts with the group and waits for
+        # acceptance (--acceptance-run), so it has no cutoff of its own earlier than the
+        # queue's status check timeout, 150 minutes from the group's start: the waiter's
+        # deadline and the job's limit are that timeout too, and the job starts after the
+        # group does, so the queue's own timeout always binds first. The waiter ends at
+        # most one poll and one read (60 seconds) after acceptance ends. Acceptance's
+        # limit, 75 minutes of gap tests and 15 for runners fit in it, as before. To be
+        # measured again on the queue's trial (WORKFLOW, "Turning it on").
+        ci, judge = self.workflow("ci.yml")["jobs"], self.workflow("queue-judge.yml")["jobs"]
+        status = 150
+        self.assertEqual(ci["acceptance"]["timeout-minutes"], 60)
+        self.assertEqual(ci["acceptance"]["timeout-minutes"] + 75 + 15, status)
+        self.assertEqual(queue.ACCEPTANCE_WAIT, status * 60)
+        self.assertEqual(judge["queue-gaps"]["timeout-minutes"], status)
+        self.assertNotIn("needs", judge["queue-gaps"])
+        self.assertEqual(queue.RUN_POLL, 15)
+        self.assertEqual(judge["queue-integrity"]["timeout-minutes"], 20)
         guide = " ".join((SCRIPTS.parent / "docs/WORKFLOW.md").read_text(
             encoding="utf-8").split())
-        self.assertIn("set the queue's status check timeout to 150 minutes", guide)
+        self.assertIn(f"set the queue's status check timeout to {status} minutes", guide)
         # --merge follows an entry through one rebuild behind a group that fails.
         self.assertEqual(queue.safe_push.QUEUE_TIMEOUT, 2 * 150 * 60)
+
+    # The planted cases of the queue judge's design (MQ3-reqwf, 27 October 2026, section
+    # 7), each naming the guard it holds; undone, its test turns red. Those of main's own
+    # file (a job made conditional, a merge-group step skipped, the judge step removed,
+    # cancel-in-progress added) and CI's queue-tests dropped are the contracts': in
+    # scripts/test_safe_push.py, Units.test_the_queue_judge_workflow_refuses_its_plants.
+    # That GitHub runs main's copy, binds the rule to the file and ignores a job of the
+    # same name elsewhere is for the live trial alone.
+
+    def real_main(self):
+        """Main with scripts/ as this repository holds it but for its tests and its harness,
+        which stays the fixture's: the trains built now name this commit as their
+        pre-flight's base and harness, whose CHECKS harness_check_names reads by ast. tests/
+        holds a stand-in for each test GITHUB_TESTS names, printing that it ran. The queue
+        is emptied for the trains to come."""
+        scripts = {f"scripts/{path.relative_to(SCRIPTS).as_posix()}":
+                   path.read_text(encoding="utf-8")
+                   for path in sorted(SCRIPTS.rglob("*"))
+                   if path.is_file() and "__pycache__" not in path.parts
+                   and not path.name.startswith("test_") and path != SCRIPTS / "safe_push.py"}
+        stand_ins = {path: f"print('{path} ran')\n" for path in (
+            "tests/test_check_queue.py", "tests/test_auto_revert.py",
+            "tests/test_release_gate.py")}
+        self.base = self.make([self.base], {**scripts, **stand_ins})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+
+    def real_harness(self):
+        """Main's next commit, which puts in this repository's harness, scripts/safe_push.py,
+        for the judge to import beside it; the group is built on it."""
+        self.base = self.make([self.base], {
+            "scripts/safe_push.py": (SCRIPTS / "safe_push.py").read_text(encoding="utf-8")})
+        self.snapshot["main"]["sha"] = self.base
+
+    def sound_group(self, changes, new="None."):
+        """A group of main as it is (real_main, real_harness), the first train making
+        `changes`, the second a change elsewhere, whose CI run's acceptance job passed;
+        checked out."""
+        self.real_main()
+        one = self.train(1, changes, new=new)
+        two = self.train(2, {SECOND: "The second train's reviewed line.\n"})
+        self.real_harness()
+        group = self.merge(self.merge(self.base, one, 1), two, 2)
+        self.snapshot.update(acceptance_answers(group))
+        self.checkout(group)
+        return group
+
+    def labels(self, job):
+        return [step.get("name") or step.get("uses")
+                for step in self.workflow("queue-judge.yml")["jobs"][job]["steps"]]
+
+    def test_on_a_pull_request_each_judge_job_passes_at_once(self):
+        # Neither job has an if of its own, since a skipped required job counts as passed:
+        # on a pull request each runs its first step alone, which says there is nothing to
+        # judge, and passes; on any other event but a merge group that step fails.
+        for job in JUDGE_JOBS:
+            with self.subTest(job=job):
+                result = self.run_job(job, event="pull_request")
+                self.verdict(result, 0, "A pull request: nothing to judge here")
+                self.assertEqual(result.args, self.labels(job)[:1])
+                result = self.run_job(job, event="push", runner=self.root / f"push-{job}")
+                self.verdict(result, 1, "A push event: the queue's judge runs on pull "
+                             "requests and merge groups only")
+
+    def test_the_step_runner_runs_every_step_on_a_group_as_github_would(self):
+        # The runner's own plants: a merge-group step made to run on pull requests alone,
+        # a step whose if the runner does not read, and a job given an if of its own each
+        # fail the run, so that no plant passes by running a step GitHub would skip.
+        for change, refusal in (
+                (lambda job: job["steps"][3].update({"if": "github.event_name == 'pull_request'"}),
+                 "skipped on a merge group, where every step runs"),
+                (lambda job: job["steps"][3].update({"if": "always()"}),
+                 "an if the runner does not read"),
+                (lambda job: job.update({"if": "github.event_name == 'merge_group'"}),
+                 "a skipped required job counts as passed")):
+            with self.subTest(refusal=refusal):
+                planted = self.workflow("queue-judge.yml")
+                change(planted["jobs"]["queue-integrity"])
+                with self.assertRaisesRegex(AssertionError, re.escape(refusal)):
+                    self.run_job("queue-integrity", workflow=planted)
+
+    def test_plant_a_group_whose_own_judge_passes_everything_is_judged_by_main_s(self):
+        # A group whose second train overwrites the first's reviewed line, rule (a), and
+        # whose own scripts/check_queue.py passes everything, called by its own copy of
+        # queue-judge.yml, which takes scripts/ from the checkout. Main's queue-integrity,
+        # run as the runner would on the group, refuses it. Guard: the judge step's
+        # `git archive "$GROUP_BASE:scripts"`, main's scripts from the group's base; taken
+        # from the checkout instead, the plant passes.
+        self.real_main()
+        one = self.train(1, {TEXT: "The first train's reviewed line.\n"})
+        own = (SCRIPTS.parent / JUDGE).read_text(encoding="utf-8").replace(
+            '"$GROUP_BASE:scripts"', "HEAD:scripts")
+        two = self.train(2, {TEXT: "A later train overwrote the reviewed line.\n",
+                             "scripts/check_queue.py": "print('queue: PASS')\n", JUDGE: own},
+                         start=one)
+        self.real_harness()
+        group = self.merge(self.merge(self.base, one, 1), two, 2)
+        self.checkout(group)
+        self.verdict(self.run_job("queue-integrity", head=group), 1,
+                     f"queue: REFUSED: not overwriting: #1 changed lines were overwritten: {TEXT}")
+
+    # A group's own check_queue.py that chooses no tests, writes the verdicts it is asked
+    # for, and passes everything.
+    CHOOSES_NOTHING = (
+        "import json, os, sys\n"
+        "print('group judge ran')\n"
+        "args = sys.argv[1:]\n"
+        "if '--acceptance-run' in args:\n"
+        "    out = args[args.index('--out') + 1]\n"
+        "    os.makedirs(out, exist_ok=True)\n"
+        "    with open(os.path.join(out, 'verdicts.json'), 'w', encoding='utf-8') as file:\n"
+        "        file.write('{}')\n"
+        "if '--plan' in args:\n"
+        "    with open(args[args.index('--plan') + 1], 'w', encoding='utf-8') as plan:\n"
+        "        json.dump({'head': args[args.index('--head') + 1], 'commands': []}, plan)\n"
+        "print('queue: PASS')\n")
+
+    def test_plant_a_group_whose_own_gap_choice_chooses_nothing_is_judged_by_main_s(self):
+        # A valid group whose train changes a check, weakens the check's test to succeed,
+        # and changes its own check_queue.py to choose no tests. Main's queue-gaps, run as
+        # the runner would, chooses the check's test by main's --gaps and runs it. That it
+        # passes proves nothing of the weakened test: its adequacy is the protected path's
+        # security review's (WORKFLOW, section 10). Guards: the first judging step's
+        # `git archive "$GROUP_BASE:scripts"`, main's scripts for it and the steps after
+        # it; and gap_commands, which chooses the test. Undo either: the test is not run.
+        changes = {CHECK: "print('changed check')\n", TEST: "print('weakened sample test ran')\n",
+                   "scripts/check_queue.py": self.CHOOSES_NOTHING}
+        group = self.sound_group(changes, "\n".join(f"- check: {path}" for path in changes))
+        output = self.verdict(self.run_job("queue-gaps", head=group), 0,
+                              f"gaps: chosen: python3 -I {TEST}", f"gaps: python3 -I {TEST}\n",
+                              "weakened sample test ran", "queue: PASS")
+        self.assertNotIn("group judge ran", output)
+
+    def test_plant_a_body_edited_after_its_pre_flight_is_refused_by_main_s_judge(self):
+        # The body edited after the pre-flight, the head unchanged: main's judge refuses
+        # each edit by its own predicate of preflight, whose refusal is named here, so that
+        # undoing any one of them turns its case red.
+        original = self.body()
+        blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
+        other = self.git("rev-parse", f"{self.base}:{TEXT}").strip()
+        block = queue.PREFLIGHT.search(original).group()
+        name = queue.safe_push.CHECKS[0][0]
+        for label, body, refusal in (
+                # Guard: the harness blob's --disambiguate match with the recorded harness
+                # commit's safe_push.py.
+                ("the harness blob changed", original.replace(blob[:12], other[:12]),
+                 "harness blob is not the recorded harness commit's safe_push.py"),
+                # Guard: preflight_steps' passing line for each check of the harness.
+                ("a check line removed", original.replace(f"| 4. {name} | ok | 1.0 |\n", ""),
+                 "steps must run the full checks"),
+                # Guard: the visible witness, the sentinel that must stand where the block did.
+                ("the block hidden", original.replace(block, f"<!--\n{block}\n-->"),
+                 "block is hidden by code or HTML")):
+            with self.subTest(label):
+                self.set_body(body)
+                self.verdict(self.cli(), 1, f"queue: REFUSED: pre-flight: {refusal}")
+        # A light pre-flight claimed for an R3 diff, a change to a check. Guard:
+        # light_preflight's class of the change by main's scripts/risk.py.
+        group = self.light_group({CHECK: "print('changed check')\n"}, "R1",
+                                 new=f"- check: {CHECK}")
+        self.verdict(self.cli(head=group), 1, "queue: REFUSED: pre-flight: left the full checks "
+                     "to CI, but the class by main's scripts/risk.py is R3 (")
+
+    def test_plant_a_body_edited_between_github_s_two_readings_is_unreadable(self):
+        # The body edited between the queue's answer and the pull request's, which the
+        # verdict reads. Guard: chain's comparison of the two bodies; undone, the later
+        # body, a passing one, is judged alone and passes.
+        self.snapshot["pull_requests"]["1"]["body"] = self.body() + "\nA later edit.\n"
+        self.verdict(self.cli(), 2, "#1's body differs between the queue's answer and its "
+                     "pull request's")
+
+    def test_a_consistent_forgery_passes(self):
+        # Rule (b)'s second requirement, the authenticity of the pre-flight's evidence, is
+        # not held (WORKFLOW, section 10): the judge checks the block for consistency with
+        # the repository, not that a pre-flight ran. Each block here is typed, as anyone
+        # who can edit the body could type it, for a head no pre-flight ever ran on, with
+        # its head, base, harness and blob right and every check "ok", and main's judge
+        # passes it. No guard holds this: the test says so, so that what is still open
+        # stays in sight, and it is to refuse once the judge verifies evidence CI signs
+        # (#574), or as the owner's dated decision on what authenticates the block says.
+        blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
+        rows = "".join(f"| 4. {name} | ok | 1.0 |\n"
+                       for name, _ in (*queue.safe_push.CHECKS, *queue.safe_push.NEGATIVE))
+        for number, head in ((1, self.one), (2, self.two)):
+            typed = (f"<!-- safe_push:preflight begin sha={head} base={self.base} "
+                     f"harness={self.base} -->\n"
+                     f"Pre-flight of `{head[:12]}` against origin/main `{self.base[:12]}`, by "
+                     f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`).\n\n"
+                     "Verdict: PASS.\n\n| Step | Outcome | Seconds |\n|---|---|---|\n"
+                     f"{rows}<!-- safe_push:preflight end -->")
+            self.set_body(queue.PREFLIGHT.sub(lambda _: typed, self.body(number)), number)
+        self.verdict(self.cli(), 0, "queue: PASS")
+
+    def test_plant_a_checkout_that_is_not_the_group_s_head_fails_each_judging_step(self):
+        # Whichever copy of the file runs, each step that runs main's judge first compares
+        # the checkout with the group's head, and fails before the judge runs. Guard: each
+        # step's `test "$(git rev-parse HEAD)" = "$GROUP_HEAD"`; undone, the base's judge
+        # runs on another tree, and records the call. The two steps after the extraction
+        # find the base's scripts as it leaves them.
+        base, head = self.recording_group()
+        self.checkout(base)
+        for number, (job, step, extracted) in enumerate((
+                ("queue-integrity", "Check the group with main's copy of check_queue.py", False),
+                ("queue-gaps", "Read acceptance's verdicts from the group's CI run with main's "
+                               "copy of check_queue.py", False),
+                ("queue-gaps", "Choose the tests of what is new", True),
+                ("queue-gaps", "Run the tests of what is new", True))):
+            with self.subTest(step=step):
+                runner = self.root / f"wrong-checkout-{number}"
+                if extracted:
+                    (runner / "judge").mkdir(parents=True)
+                    archive = subprocess.run(["git", "archive", "--format=tar", f"{base}:scripts"],
+                                             cwd=self.repo, capture_output=True, check=True)
+                    subprocess.run(["tar", "-xf", "-", "-C", str(runner / "judge")],
+                                   input=archive.stdout, check=True)
+                result = self.run_job(job, head=head, base=base, steps={step}, runner=runner)
+                self.assertEqual(result.args, [step])
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertFalse((runner / "judge-calls.jsonl").exists())
+
+    def test_control_a_sound_group_passes_every_step_of_both_jobs(self):
+        # The controls: a sound group, judged by main's copy of each job, runs every step
+        # on a merge group, and each exits 0.
+        group = self.sound_group({TEXT: "The first train's reviewed line.\n"})
+        for job in JUDGE_JOBS:
+            with self.subTest(job=job):
+                result = self.run_job(job, head=group)
+                self.verdict(result, 0, "queue: PASS")
+                self.assertEqual(result.args, self.labels(job))
+
+    def test_control_a_sound_group_that_changes_the_judge_is_judged_by_main_s_copy(self):
+        # A sound group whose train changes queue-judge.yml itself, its own copy one that
+        # could judge nothing: main's copy judges it, every step exits 0, and main's
+        # GITHUB_TESTS chooses the tests that read the file.
+        group = self.sound_group({JUDGE: "name: A copy that judges nothing\non: push\njobs: {}\n"},
+                                 f"- check: {JUDGE}")
+        for job in JUDGE_JOBS:
+            with self.subTest(job=job):
+                result = self.run_job(job, head=group)
+                self.verdict(result, 0, "queue: PASS")
+                self.assertEqual(result.args, self.labels(job))
+        self.assertIn("tests/test_check_queue.py ran", result.stdout)
+        self.assertIn("safe push test ran", result.stdout)
 
     def test_risk_job_classes_a_merge_group_r5(self):
         # The judge accepts a light pre-flight only because a merge group's own run is R5,
@@ -2281,6 +2722,555 @@ class QueueTests(unittest.TestCase):
                                                         "regular file"):
                     queue.page_blob(self.repo, head)
         self.assertEqual(queue.page_blob(self.repo, self.head), self.trees[self.head][PAGE])
+
+
+class AcceptanceRunTests(unittest.TestCase):
+    """--acceptance-run, the design's section 4: each case through acceptance_run, GitHub
+    answering each read in turn and a clock that only sleeping moves on, or through the
+    command line with a fixture, whose zip is in base64. Each test names the predicate
+    of the four steps it holds."""
+
+    HEAD = "0123456789abcdef" * 2 + "01234567"
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.enterContext(patch.dict(os.environ, fixture_environment(), clear=True))
+        answers = acceptance_answers(self.HEAD)
+        self.sound = {"ci_runs": answers["ci_runs"], "runs": answers["runs"][str(RUN)],
+                      "jobs": answers["jobs"][str(RUN)],
+                      "artifacts": answers["artifacts"][str(RUN)],
+                      "artifact_zips": KEPT_REPORTS}
+
+    def waited(self, **changes):
+        """acceptance_run on HEAD, GitHub answering each kind at each of its reads in turn,
+        the last answer repeating: the sound answers, but for `changes`, each a list. The
+        verdicts or the error, the kinds read in order, and each sleep."""
+        answers = {kind: [answer] for kind, answer in self.sound.items()}
+        answers.update(changes)
+        reads, slept, now = [], [], [0.0]
+        test = self
+
+        class Reads:
+            repo = "owner/repository"
+
+            def read(self, kind, number=None, workflow=None, head=None):
+                reads.append(kind)
+                if kind == "ci_runs":
+                    test.assertEqual((number, workflow, head), (None, "ci.yml", test.HEAD))
+                else:
+                    test.assertEqual(number, ARTIFACT if kind == "artifact_zips" else RUN)
+                given = answers[kind]
+                return copy.deepcopy(given[min(reads.count(kind), len(given)) - 1])
+
+        def sleep(seconds):
+            slept.append(seconds)
+            now[0] += seconds
+
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                found = queue.acceptance_run(Reads(), self.HEAD, "ci.yml", sleep=sleep,
+                                             clock=lambda: now[0])
+        except (queue.Refused, ValueError) as error:
+            found = error
+        return found, reads, slept
+
+    def run_answer(self, **change):
+        return dict(self.sound["ci_runs"]["workflow_runs"][0], **change)
+
+    def job(self, **change):
+        return dict(self.sound["jobs"]["jobs"][1], **change)
+
+    def artifact(self, **change):
+        return dict(self.sound["artifacts"]["artifacts"][0], **change)
+
+    @staticmethod
+    def listing(key, *items):
+        return {"total_count": len(items), key: list(items)}
+
+    def other_job(self):
+        return self.sound["jobs"]["jobs"][0]
+
+    def refused(self, found, message):
+        self.assertIsInstance(found, queue.Refused, found)
+        self.assertIn(message, str(found))
+
+    def unreadable(self, found, message):
+        self.assertIsInstance(found, ValueError, found)
+        self.assertIn(message, str(found))
+
+    RUNNING = {"status": "in_progress", "conclusion": None}
+    SOUND_READS = ["ci_runs", "jobs", "artifacts", "artifact_zips", "runs", "jobs", "artifacts"]
+
+    def test_a_passed_acceptance_gives_its_verdicts(self):
+        # The control: one run, its acceptance job passed, the one artifact it made, read
+        # and read again; in the ratchet, and with the full gate, which keeps no main's.
+        found, reads, slept = self.waited()
+        self.assertEqual((found, reads, slept), (VERDICTS, self.SOUND_READS, []))
+        full = artifact_zip([("report.md", b"# Acceptance\n"), ("verdicts.json", VERDICTS)])
+        self.assertEqual(self.waited(artifact_zips=[full])[0], VERDICTS)
+
+    def test_a_run_not_yet_begun_is_waited_for(self):
+        # Step 1's wait: read again every RUN_POLL seconds until the run is listed.
+        found, reads, slept = self.waited(ci_runs=[self.listing("workflow_runs")] * 2
+                                          + [self.sound["ci_runs"]])
+        self.assertEqual((found, reads.count("ci_runs"), slept), (VERDICTS, 3, [15, 15]))
+
+    def test_no_run_by_the_deadline_refuses(self):
+        # Step 1's deadline, ACCEPTANCE_WAIT, the queue's status check timeout.
+        found, reads, slept = self.waited(ci_runs=[self.listing("workflow_runs")])
+        self.refused(found, "no run of ci.yml for the group's head had begun after 150 minutes")
+        self.assertEqual((reads, slept), (["ci_runs"] * 601, [15] * 600))
+
+    def test_a_job_and_an_artifact_not_yet_there_are_waited_for(self):
+        # Step 2's and step 3's waits: no acceptance job listed while the run goes on, then
+        # one in progress, then passed; no artifact listed, then one.
+        found, reads, slept = self.waited(
+            jobs=[self.listing("jobs", self.other_job()),
+                  self.listing("jobs", self.other_job(), self.job(**self.RUNNING)),
+                  self.sound["jobs"]],
+            artifacts=[self.listing("artifacts"), self.sound["artifacts"]])
+        self.assertEqual(found, VERDICTS)
+        self.assertEqual(reads, ["ci_runs", "jobs", "runs", "jobs", "jobs", "artifacts",
+                                 "artifacts", "artifact_zips", "runs", "jobs", "artifacts"])
+        self.assertEqual(slept, [15, 15, 15])
+
+    def test_two_runs_refuse(self):
+        # Step 1's "exactly one" run.
+        found, _, _ = self.waited(ci_runs=[self.listing(
+            "workflow_runs", self.run_answer(), self.run_answer(id=RUN + 1))])
+        self.refused(found, "GitHub lists 2 runs of ci.yml for the group's head")
+
+    def test_a_run_of_another_head_event_workflow_or_repository_refuses(self):
+        # Step 1's run: of the head, on the merge group event, of ci.yml, from this
+        # repository (ci_run's comparison).
+        for key, value, name in (("head_sha", "f" * 40, "head"), ("event", "push", "event"),
+                                 ("path", ".github/workflows/other.yml", "workflow file"),
+                                 ("head_repository", {"full_name": "fork/repository"},
+                                  "head repository")):
+            with self.subTest(key=key):
+                found, _, _ = self.waited(ci_runs=[self.listing(
+                    "workflow_runs", self.run_answer(**{key: value}))])
+                self.refused(found, f"the CI run {RUN} has another {name} than")
+
+    def test_a_run_begun_again_while_waiting_refuses(self):
+        # The attempt held from step 1: an acceptance job of a later attempt
+        # (acceptance_job), or the run read again at one (same_run), refuses.
+        found, _, _ = self.waited(jobs=[
+            self.listing("jobs", self.job(**self.RUNNING)),
+            self.listing("jobs", self.job(id=JOB + 1, run_attempt=2, **self.RUNNING))])
+        self.refused(found, "was run again after it was first read at attempt 1: its "
+                     "acceptance job is of attempt 2")
+        found, _, _ = self.waited(jobs=[self.listing("jobs", self.other_job())],
+                                  runs=[self.run_answer(run_attempt=2)])
+        self.refused(found, "was run again after it was first read at attempt 1: it is at "
+                     "attempt 2")
+
+    def test_a_job_a_partial_re_run_carried_over_counts(self):
+        # Each job as its latest execution: the run at attempt 2, its acceptance job
+        # carried over from attempt 1, passed.
+        later = self.run_answer(run_attempt=2)
+        found, _, _ = self.waited(ci_runs=[self.listing("workflow_runs", later)], runs=[later])
+        self.assertEqual(found, VERDICTS)
+
+    def test_a_ci_run_without_acceptance_refuses(self):
+        # The plant of a group whose ci.yml drops acceptance: once the run has completed
+        # with no job of that name, step 2 refuses, as the `needs` did.
+        found, _, _ = self.waited(jobs=[self.listing("jobs", self.other_job())],
+                                  runs=[self.run_answer(status="completed")])
+        self.refused(found, f"the CI run {RUN} completed with no job named acceptance")
+
+    def test_a_skipped_cancelled_or_failed_job_refuses(self):
+        # Step 2's conclusion: success alone.
+        for conclusion in ("skipped", "cancelled", "failure", "timed_out"):
+            with self.subTest(conclusion=conclusion):
+                found, _, _ = self.waited(jobs=[self.listing(
+                    "jobs", self.job(conclusion=conclusion))])
+                self.refused(found, f"ended {conclusion}, not success")
+
+    def test_two_acceptance_jobs_or_another_run_s_refuse(self):
+        # Step 2's one job of this run.
+        found, _, _ = self.waited(jobs=[self.listing("jobs", self.job(), self.job(id=JOB + 1))])
+        self.refused(found, f"the CI run {RUN} has 2 jobs named acceptance, not one")
+        found, _, _ = self.waited(jobs=[self.listing("jobs", self.job(run_id=RUN + 1))])
+        self.refused(found, "lists an acceptance job of another run")
+
+    def test_a_missing_artifact_refuses_at_the_deadline(self):
+        # Step 3's wait, against the one deadline.
+        found, _, slept = self.waited(artifacts=[self.listing("artifacts")])
+        self.refused(found, "the acceptance job's artifact had not been listed after 150 minutes")
+        self.assertEqual(slept, [15] * 600)
+
+    def test_two_artifacts_refuse(self):
+        # Step 3's "exactly one".
+        found, _, _ = self.waited(artifacts=[self.listing(
+            "artifacts", self.artifact(), self.artifact(id=ARTIFACT + 1))])
+        self.refused(found, f"the CI run {RUN} lists 2 artifacts named acceptance, not one")
+
+    def test_an_expired_artifact_refuses(self):
+        # Step 3's unexpired artifact.
+        found, _, _ = self.waited(artifacts=[self.listing("artifacts",
+                                                          self.artifact(expired=True))])
+        self.refused(found, "acceptance artifact has expired")
+
+    def test_another_run_s_or_head_s_artifact_refuses(self):
+        # Step 3's artifact of that run and head.
+        for origin in ({"id": RUN + 1, "head_sha": self.HEAD}, {"id": RUN, "head_sha": "f" * 40}):
+            with self.subTest(origin=origin):
+                found, _, _ = self.waited(artifacts=[self.listing(
+                    "artifacts", self.artifact(workflow_run=origin))])
+                self.refused(found, "is another run's, or another head's")
+
+    def test_an_artifact_made_outside_the_job_s_execution_refuses(self):
+        # Step 3's window, from the job's start to its end: an earlier attempt's artifact,
+        # made before, and one made after, refuse; at either end, it counts.
+        for created in ("2026-10-27T20:59:59Z", "2026-10-27T21:50:01Z"):
+            with self.subTest(created=created):
+                found, _, _ = self.waited(artifacts=[self.listing(
+                    "artifacts", self.artifact(created_at=created))])
+                self.refused(found, "was made outside the execution of the acceptance job")
+        for created in (STARTED, COMPLETED):
+            with self.subTest(created=created):
+                found, _, _ = self.waited(artifacts=[self.listing(
+                    "artifacts", self.artifact(created_at=created))])
+                self.assertEqual(found, VERDICTS)
+
+    def test_a_zip_holding_more_than_the_acceptance_job_keeps_refuses(self):
+        # Step 3's zip (acceptance_verdicts): the files the acceptance job keeps, each
+        # once, named alone and regular, and verdicts.json among them.
+        link = zipfile.ZipInfo("verdicts.json")
+        link.external_attr = 0o120777 << 16
+        folder = zipfile.ZipInfo("reports/")
+        folder.external_attr = 0o040755 << 16
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # zipfile warns of a name written twice
+            cases = (
+                ([("verdicts.json", VERDICTS), ("notes.txt", b"")],
+                 "holds a file the acceptance job does not keep: notes.txt"),
+                ([("reports/verdicts.json", VERDICTS)], "holds a path"),
+                ([("../verdicts.json", VERDICTS)], "holds a path"),
+                ([("verdicts.json", VERDICTS), (folder, b"")], "holds a path"),
+                ([(link, b"/etc/passwd")], "holds a link, or another file that is not regular"),
+                ([("verdicts.json", VERDICTS), ("verdicts.json", b"{}")], "holds a name twice"),
+                ([("report.md", b"")], "holds no verdicts.json"))
+            zips = [(artifact_zip(members), message) for members, message in cases]
+        for data, message in zips:
+            with self.subTest(message=message):
+                self.refused(self.waited(artifact_zips=[data])[0],
+                             f"acceptance: the artifact {message}")
+        for data in (b"not a zip", KEPT_REPORTS[:-30]):
+            with self.subTest(data=data[:12]):
+                self.unreadable(self.waited(artifact_zips=[data])[0],
+                                "could not read the acceptance artifact's zip")
+
+    def test_a_change_at_the_second_reading_refuses(self):
+        # Step 4: after the download, the same run at its attempt, the same job, still its
+        # latest execution and passed, and the same artifact, unexpired, in its window.
+        jobs, artifacts = self.sound["jobs"], self.sound["artifacts"]
+        for label, changes, message in (
+                ("another job", {"jobs": [jobs, self.listing("jobs", self.job(id=JOB + 1))]},
+                 "acceptance job or its artifact changed while the artifact was read"),
+                ("a re-run begun", {"jobs": [jobs, self.listing(
+                    "jobs", self.job(id=JOB + 1, run_attempt=2, **self.RUNNING))]},
+                 "was run again after it was first read at attempt 1"),
+                ("the job no longer passed", {"jobs": [jobs, self.listing(
+                    "jobs", self.job(**self.RUNNING))]}, "changed while the artifact was read"),
+                ("another artifact", {"artifacts": [artifacts, self.listing(
+                    "artifacts", self.artifact(id=ARTIFACT + 1))]},
+                 "changed while the artifact was read"),
+                ("the artifact gone", {"artifacts": [artifacts, self.listing("artifacts")]},
+                 "changed while the artifact was read"),
+                ("the artifact expired", {"artifacts": [artifacts, self.listing(
+                    "artifacts", self.artifact(expired=True))]}, "has expired"),
+                ("the run at another attempt", {"runs": [self.run_answer(run_attempt=2)]},
+                 "it is at attempt 2")):
+            with self.subTest(label):
+                found, reads, _ = self.waited(**changes)
+                self.refused(found, message)
+                self.assertEqual(reads[:4], self.SOUND_READS[:4])
+
+    def test_a_list_not_read_whole_is_unreadable(self):
+        # Every list read whole (listed): total_count the items given, in one page of 100.
+        for kind, key, item in (("ci_runs", "workflow_runs", self.run_answer()),
+                                ("jobs", "jobs", self.job()),
+                                ("artifacts", "artifacts", self.artifact())):
+            for label, answer in (("more than given", {"total_count": 2, key: [item]}),
+                                  ("more than a page", self.listing(key, *[item] * 101)),
+                                  ("no count", {key: [item]}), ("no list", {"total_count": 0}),
+                                  ("not an object", self.listing(key, [item]))):
+                with self.subTest(kind=kind, label=label):
+                    self.unreadable(self.waited(**{kind: [answer]})[0],
+                                    "whole, in one page of 100")
+
+    def test_malformed_answers_are_unreadable(self):
+        # Missing or malformed data is unreadable, never a pass.
+        run, job, artifact = self.run_answer(), self.job(), self.artifact()
+        runs = [self.listing("workflow_runs", {k: v for k, v in run.items() if k != "id"}),
+                self.listing("workflow_runs", dict(run, run_attempt="1")),
+                self.listing("workflow_runs", dict(run, head_sha="x")),
+                self.listing("workflow_runs", dict(run, head_repository=None))]
+        jobs = [self.listing("jobs", dict(job, id="9001")),
+                self.listing("jobs", dict(job, started_at="yesterday")),
+                self.listing("jobs", dict(job, completed_at="2026-10-27T20:00:00Z")),
+                self.listing("jobs", dict(job, status=None)),
+                self.listing("jobs", {k: v for k, v in job.items() if k != "name"})]
+        artifacts = [self.listing("artifacts", dict(artifact, expired="false")),
+                     self.listing("artifacts", {k: v for k, v in artifact.items()
+                                                if k != "created_at"}),
+                     self.listing("artifacts", dict(artifact, workflow_run=None))]
+        for kind, answers, message in (("ci_runs", runs, "could not read the group's CI run"),
+                                       ("jobs", jobs,
+                                        "could not read the CI run's acceptance job"),
+                                       ("artifacts", artifacts,
+                                        "could not read the CI run's acceptance artifact")):
+            for number, answer in enumerate(answers):
+                with self.subTest(kind=kind, case=number):
+                    self.unreadable(self.waited(**{kind: [answer]})[0], message)
+        self.unreadable(self.waited(artifact_zips=["UEsF"])[0],
+                        "could not read the acceptance artifact")
+
+    def command(self, *extra, fixture=None):
+        return subprocess.run([sys.executable, "-I", str(SCRIPTS / "check_queue.py"), *extra]
+                              + (["--github-json", str(fixture)] if fixture else []),
+                              cwd=self.root, capture_output=True, text=True)
+
+    def fixture(self, answers=None):
+        path = self.root / "github.json"
+        path.write_text(json.dumps(answers or acceptance_answers(self.HEAD)), encoding="utf-8")
+        return path
+
+    def asked(self, out):
+        return ("--acceptance-run", "--head", self.HEAD, "--repo", "owner/repository",
+                "--ci-workflow", "ci.yml", "--out", str(out))
+
+    def test_the_command_writes_the_verdicts_alone(self):
+        # The verdicts, from main's copy, alone, to a new file of a folder it makes.
+        out = self.root / "acceptance"
+        result = self.command(*self.asked(out), fixture=self.fixture())
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("queue: PASS", result.stdout)
+        self.assertEqual(os.listdir(out), ["verdicts.json"])
+        self.assertEqual((out / "verdicts.json").read_bytes(), VERDICTS)
+        result = self.command(*self.asked(out), fixture=self.fixture())
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("File exists", result.stderr)
+
+    def test_the_command_writes_nothing_when_it_refuses(self):
+        answers = acceptance_answers(self.HEAD)
+        answers["artifacts"][str(RUN)]["artifacts"][0]["expired"] = True
+        out = self.root / "acceptance"
+        result = self.command(*self.asked(out), fixture=self.fixture(answers))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("queue: REFUSED: acceptance: the CI run 7001's acceptance artifact has "
+                      "expired", result.stdout)
+        self.assertFalse(out.exists())
+
+    def test_the_command_takes_its_arguments_alone(self):
+        # As the other modes do: every argument the mode needs, and nothing else.
+        out = str(self.root / "acceptance")
+        asked = self.asked(out)
+        drop = lambda name: [a for i, a in enumerate(asked)
+                             if a != name and (i == 0 or asked[i - 1] != name)]
+        for args, message in (
+                (drop("--out"), "--acceptance-run needs --head, --repo, --ci-workflow and --out"),
+                (drop("--ci-workflow"), "--acceptance-run needs"),
+                (drop("--head"), "--acceptance-run needs"),
+                (drop("--repo"), "--acceptance-run needs"),
+                ([*asked, "--base", self.HEAD], "--acceptance-run needs"),
+                ([*asked, "--gaps"], "--acceptance-run needs"),
+                ([*asked, "--plan", out], "--acceptance-run needs"),
+                ([*asked, "--render"], "--acceptance-run needs"),
+                ([*asked, "--tree", out], "--tree accepts only --render"),
+                ([*asked, "--run-plan", out], "--run-plan needs --head and accepts nothing else"),
+                ([*asked, "stray"], "unrecognized arguments: stray"),
+                (asked[1:], "--ci-workflow and --out belong to --acceptance-run"),
+                (["--head", self.HEAD, "--base", self.HEAD, "--repo", "owner/repository",
+                  "--out", out], "--ci-workflow and --out belong to --acceptance-run"),
+                ([*drop("--ci-workflow"), "--ci-workflow", "../ci.yml"],
+                 "--ci-workflow must name a workflow file of .github/workflows/, alone"),
+                ([*drop("--ci-workflow"), "--ci-workflow", "ci.yml/runs"], "must name a workflow"),
+                ([*drop("--repo"), "--repo", "owner"], "--repo must be owner/name"),
+                ([*drop("--head"), "--head", "HEAD"], "could not read head")):
+            with self.subTest(args=args):
+                result = self.command(*args, fixture=self.fixture())
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn(message, result.stderr)
+                self.assertFalse((self.root / "acceptance").exists())
+
+    def test_the_reader_reads_each_list_whole_and_the_zip_as_bytes(self):
+        # Through gh api, as the reader reads the rest: each list one page of 100, the
+        # zip by the artifact's id, its bytes as given.
+        api = queue.GitHub("owner/repository", None)
+        root = "repos/owner/repository/actions/"
+        with patch.dict(os.environ, {"GH_TOKEN": "fixture-token"}), \
+                patch.object(queue.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0, "{}", "")) as call:
+            for args, endpoint in (
+                    (("ci_runs", None, "ci.yml", self.HEAD),
+                     f"workflows/ci.yml/runs?event=merge_group&head_sha={self.HEAD}&per_page=100"),
+                    (("jobs", RUN), f"runs/{RUN}/jobs?filter=latest&per_page=100"),
+                    (("artifacts", RUN), f"runs/{RUN}/artifacts?name=acceptance&per_page=100"),
+                    (("runs", RUN), f"runs/{RUN}")):
+                with self.subTest(kind=args[0]):
+                    self.assertEqual(api.read(*args), {})
+                    self.assertEqual(call.call_args.args[0],
+                                     ["gh", "api", "--method", "GET", root + endpoint])
+                    self.assertIs(call.call_args.kwargs["text"], True)
+            call.return_value = subprocess.CompletedProcess([], 0, KEPT_REPORTS, b"")
+            self.assertEqual(api.read("artifact_zips", ARTIFACT), KEPT_REPORTS)
+            self.assertEqual(call.call_args.args[0][-1], root + f"artifacts/{ARTIFACT}/zip")
+            self.assertIs(call.call_args.kwargs["text"], False)
+            for workflow, head in (("../ci.yml", self.HEAD), ("ci.yml", "HEAD")):
+                with self.subTest(workflow=workflow, head=head):
+                    with self.assertRaisesRegex(ValueError, "unknown read"):
+                        api.read("ci_runs", workflow=workflow, head=head)
+
+
+class RulesetTests(unittest.TestCase):
+    """docs/rulesets/queue-judge.json, the organization ruleset the owner imports, bound to
+    the queue judge's workflow and to the lists of required checks (the design's sections
+    5, 6 and 8). This is configuration, not enforcement: the owner's check of the
+    installed rule and the coordinator's trial show that."""
+
+    RULESET = SCRIPTS.parent / "docs/rulesets/queue-judge.json"
+    # Where WORKFLOW requires the judge by its file and names this ruleset, and its lists
+    # of the checks required by name, which never name the judge's jobs.
+    GUIDE = ("requires `.github/workflows/queue-judge.yml`, which holds `queue-integrity` and "
+             "`queue-gaps`, from main (its `ref`, `refs/heads/main`), with an empty bypass "
+             "list; the ruleset the owner imports is `docs/rulesets/queue-judge.json`",
+             "require `check`, `model`, `negative`, `formal-model`, `acceptance` and "
+             "`queue-tests`, and never `queue-integrity` or `queue-gaps`",
+             "the owner adds `queue-tests` to those required checks.")
+
+    @classmethod
+    def problems(cls, ruleset, workflows, guide, required) -> list[str]:
+        """Where the configuration departs from the one reviewed: an active branch ruleset
+        on main of this repository alone, with no bypass actor, whose one rule, "Require
+        workflows to pass before merging", enforced on creation too, names the queue
+        judge's workflow in this repository at main's ref, by those three alone (no sha);
+        that workflow holds the judge's two jobs, and no other a job of either id or name;
+        WORKFLOW says so; and neither its lists of the checks required by name nor
+        safe_push's names the judge's, since GitHub matches a required check by its name
+        alone."""
+        found = []
+        if set(ruleset) != {"name", "target", "enforcement", "bypass_actors", "conditions",
+                            "rules"}:
+            found.append("settings other than the reviewed ones")
+        if ruleset.get("target") != "branch":
+            found.append("a target other than branches")
+        if ruleset.get("enforcement") != "active":
+            found.append("a ruleset not enforced")
+        if ruleset.get("bypass_actors") != []:
+            found.append("a bypass actor")
+        if ruleset.get("conditions") != {
+                "repository_name": {"include": ["stoicheia"], "exclude": [], "protected": True},
+                "ref_name": {"include": ["refs/heads/main"], "exclude": []}}:
+            found.append("conditions other than main of this repository alone")
+        rules = ruleset.get("rules")
+        if not isinstance(rules, list) or [rule.get("type") for rule in rules] != ["workflows"] \
+                or set(rules[0]) != {"type", "parameters"}:
+            found.append("rules other than one rule requiring workflows")
+        else:
+            parameters = rules[0]["parameters"]
+            if set(parameters) != {"do_not_enforce_on_create", "workflows"} \
+                    or parameters["do_not_enforce_on_create"] is not False:
+                found.append("parameters other than the reviewed ones")
+            named = parameters.get("workflows")
+            if not isinstance(named, list) or len(named) != 1:
+                found.append("not one workflow")
+            else:
+                if set(named[0]) != {"path", "repository_id", "ref"}:
+                    found.append("a workflow named by more than its path, repository and ref")
+                if named[0].get("path") != JUDGE:
+                    found.append("another path than the judge's")
+                if named[0].get("ref") != "refs/heads/main":
+                    found.append("another ref than main's")
+                if type(named[0].get("repository_id")) is not int \
+                        or named[0]["repository_id"] != 1421047853:
+                    found.append("another repository than this one")
+        if set(JUDGE_JOBS) - set((workflows.get(Path(JUDGE).name) or {}).get("jobs") or {}):
+            found.append("a judge's workflow without the judge's jobs")
+        for name, workflow in workflows.items():
+            for job_id, job in (workflow.get("jobs") or {}).items():
+                if name != Path(JUDGE).name and {job_id, job.get("name")} & set(JUDGE_JOBS):
+                    found.append(f"{name}: a job named as the judge's")
+        if set(required) & set(JUDGE_JOBS):
+            found.append("safe_push's required checks name the judge's")
+        found += [f"WORKFLOW no longer says: {text}" for text in cls.GUIDE if text not in guide]
+        return found
+
+    def configuration(self):
+        return {"ruleset": json.loads(self.RULESET.read_text(encoding="utf-8")),
+                "workflows": {path.name: yaml.safe_load(path.read_text(encoding="utf-8"))
+                              for path in sorted((SCRIPTS.parent / ".github/workflows")
+                                                 .glob("*.y*ml"))},
+                "guide": " ".join((SCRIPTS.parent / "docs/WORKFLOW.md").read_text(
+                    encoding="utf-8").split()),
+                "required": queue.safe_push.REQUIRED_CHECKS}
+
+    def test_the_ruleset_is_the_one_reviewed(self):
+        self.assertEqual(self.problems(**self.configuration()), [])
+
+    def test_the_binding_refuses_each_plant(self):
+        # Section 7's plants of the reviewed ruleset file, and of what it binds, each
+        # refused by its own predicate of `problems`, named by its refusal.
+        def workflow(state):
+            return state["ruleset"]["rules"][0]["parameters"]["workflows"][0]
+
+        def guide(state, old, new):
+            self.assertIn(old, state["guide"])
+            state["guide"] = state["guide"].replace(old, new)
+
+        plants = (
+            ("a required_status_checks rule", "rules other than one rule requiring workflows",
+             lambda s: s["ruleset"]["rules"].append({"type": "required_status_checks",
+                                                     "parameters": {}})),
+            ("a bypass actor", "a bypass actor", lambda s: s["ruleset"]["bypass_actors"].append(
+                {"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"})),
+            ("a sha beside the ref", "a workflow named by more than its path, repository and ref",
+             lambda s: workflow(s).update(sha="0" * 40)),
+            ("another target", "a target other than branches",
+             lambda s: s["ruleset"].update(target="tag")),
+            ("another branch", "conditions other than main of this repository alone",
+             lambda s: s["ruleset"]["conditions"]["ref_name"].update(include=["~ALL"])),
+            ("another repository", "conditions other than main of this repository alone",
+             lambda s: s["ruleset"]["conditions"]["repository_name"].update(include=["~ALL"])),
+            ("another path", "another path than the judge's",
+             lambda s: workflow(s).update(path=".github/workflows/ci.yml")),
+            ("another ref", "another ref than main's",
+             lambda s: workflow(s).update(ref="refs/heads/other")),
+            ("another repository's workflow", "another repository than this one",
+             lambda s: workflow(s).update(repository_id=1)),
+            ("a second workflow", "not one workflow",
+             lambda s: s["ruleset"]["rules"][0]["parameters"]["workflows"].append(workflow(s))),
+            ("not enforced on creation", "parameters other than the reviewed ones",
+             lambda s: s["ruleset"]["rules"][0]["parameters"].update(
+                 do_not_enforce_on_create=True)),
+            ("evaluated only", "a ruleset not enforced",
+             lambda s: s["ruleset"].update(enforcement="evaluate")),
+            ("another setting", "settings other than the reviewed ones",
+             lambda s: s["ruleset"].update(source_type="Repository")),
+            ("another workflow's job of the judge's id", "ci.yml: a job named as the judge's",
+             lambda s: s["workflows"]["ci.yml"]["jobs"].update({"queue-integrity": {}})),
+            ("another workflow's job of the judge's name", "ci.yml: a job named as the judge's",
+             lambda s: s["workflows"]["ci.yml"]["jobs"]["check"].update(name="queue-gaps")),
+            ("the judge's workflow without a job", "a judge's workflow without the judge's jobs",
+             lambda s: s["workflows"][Path(JUDGE).name]["jobs"].pop("queue-gaps")),
+            ("WORKFLOW requiring the judge by name", "WORKFLOW no longer says: require",
+             lambda s: guide(s, "`acceptance` and `queue-tests`, and never",
+                             "`acceptance`, `queue-tests` and `queue-integrity`, and never")),
+            ("WORKFLOW naming another ruleset", "WORKFLOW no longer says: requires",
+             lambda s: guide(s, "imports is `docs/rulesets/queue-judge.json`",
+                             "imports is `docs/rulesets/other.json`")),
+            ("safe_push requiring the judge by name",
+             "safe_push's required checks name the judge's",
+             lambda s: s.update(required=(*s["required"], "queue-integrity"))))
+        for label, refusal, plant in plants:
+            with self.subTest(label):
+                state = self.configuration()
+                plant(state)
+                self.assertIn(refusal, "\n".join(self.problems(**state)))
 
 
 class TreeTests(unittest.TestCase):

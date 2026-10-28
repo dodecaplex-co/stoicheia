@@ -115,7 +115,7 @@ jobs:
       - name: Install the pinned YAML parser the lane-condition check reads the workflows with
         # checks/24-lane-condition.toml runs a test of scripts/test_safe_push.py, which reads
         # the workflows with this parser (#346). Isolated, from the runner's temporary
-        # directory, as queue-integrity installs it: nothing in the checkout (a pip.py or a
+        # directory, as queue-tests installs it: nothing in the checkout (a pip.py or a
         # pip/ folder at its root, say) can run in place of pip, before the checks.
         working-directory: ${{ runner.temp }}
         run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
@@ -465,31 +465,17 @@ jobs:
           name: acceptance
           path: ${{ runner.temp }}/acceptance/
 
-  queue-integrity:
-    # The judge of each merge group. It checks out the group, takes scripts/ from the
-    # group's base (main) and runs that check_queue.py, which reads what it judges from
-    # Git's objects and GitHub only, never from the checkout, which it only compares with
-    # the group's head; it builds nothing and renders nothing (the check job renders the
-    # same group). But GitHub runs the group's own copy of this file, so the judge's
-    # verdict, and any evidence check added later, count only while the group's ci.yml
-    # still calls them.
-    # The protection of .github/, scripts/ and tests/, and the authenticity of the
-    # pre-flight's evidence, must be held by something a group cannot change: a ruleset
-    # requiring code-owner review, with a CODEOWNERS file naming the owner for those
-    # paths; a required workflow pinned to main, if the account offers one; or a status
-    # posted by an App running main's code. The queue must not be turned on until one
-    # exists.
+  queue-tests:
+    # The offline cases of the queue's judge, its train check and its automatic reverts,
+    # which need no network: tests/test_check_queue.py, tests/test_check_train.py and
+    # tests/test_auto_revert.py. They run on every event CI runs on: each pull request,
+    # main in post-merge.yml's call, and each merge group too, where main's branch ruleset
+    # requires this check by its name once the queue is on, so it must report there. They
+    # are the change's own tests of its own code: they test, they do not judge. The queue's
+    # judge, queue-integrity and queue-gaps, is .github/workflows/queue-judge.yml, which the
+    # organization's ruleset runs from main (WORKFLOW, section 10, "The merge queue").
     runs-on: ubuntu-latest
-    # The judge's own reading, and its wait of up to 10 minutes for a revert's run to
-    # complete (WORKFLOW, section 10): to be measured again on the queue's trial.
     timeout-minutes: 20
-    permissions:
-      contents: read
-      pull-requests: read
-      # An automatic revert's failed run and the open main-red issues, which a revert
-      # must name and an ordinary entry must declare it fixes.
-      actions: read
-      issues: read
     steps:
       - uses: actions/checkout@v5
         with:
@@ -503,126 +489,11 @@ jobs:
       - name: Install the queue tests' pinned YAML parser
         # Isolated, from the runner's temporary directory: nothing in the checkout (a
         # pip/ folder, say) can run in pip's place.
-        if: github.event_name != 'merge_group'
         working-directory: ${{ runner.temp }}
         run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
 
       - name: Check the queue and train checks, and automatic reverts, case by case
-        # On a pull request and on main: the offline cases, which need no network.
-        if: github.event_name != 'merge_group'
         run: |
           python3 -I tests/test_check_queue.py
           python3 -I tests/test_check_train.py
           python3 -I tests/test_auto_revert.py
-
-      - name: Check the group with main's copy of check_queue.py
-        if: github.event_name == 'merge_group'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
-          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
-          REPOSITORY: ${{ github.repository }}
-          # The revert App's bot login (a repository variable, the owner's steps): only its
-          # pull requests may stand in a group as automatic reverts.
-          STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
-        run: |
-          test -n "$GROUP_HEAD"
-          test -n "$GROUP_BASE"
-          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
-          if ! git cat-file -e "$GROUP_BASE:scripts/check_queue.py"; then
-            echo "The group base has no queue judge."
-            exit 2
-          fi
-          mkdir "$RUNNER_TEMP/judge"
-          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
-          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
-          test -f "$RUNNER_TEMP/judge/check_queue.py" || exit 2
-          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
-
-  queue-gaps:
-    # The gaps of what is new, on each merge group: the tests of each check the group
-    # changes, chosen by main's copy of check_queue.py, and the changed propositions'
-    # acceptance items, from the acceptance job's verdicts. These are the group's own
-    # tests: they test, they do not judge. They are its own code too, and on Linux a
-    # process can read its parent's environment (/proc/<ppid>/environ), so the step that
-    # holds the token, to read GitHub, chooses them and runs none; the last step, which
-    # holds no token, nor does any step after the choosing, runs them, and refuses to if
-    # a variable named with TOKEN is in its environment. That keeps the token out of the
-    # tests' environment, files, caches and artifacts, but the runner process holds it
-    # for the whole job, beneath every step: so it is read-only by design, the four
-    # permissions below, all read.
-    needs: acceptance
-    if: always()
-    runs-on: ubuntu-latest
-    # The changed checks' tests, the slowest group (safe_push's, check_queue's and
-    # check_train's at once) near 40 minutes here, and the judge's wait of up to 10
-    # minutes for a revert's run: to be measured again on the queue's trial.
-    timeout-minutes: 75
-    permissions:
-      contents: read
-      pull-requests: read
-      actions: read
-      issues: read
-    steps:
-      - name: Require a completed acceptance check
-        env:
-          ACCEPTANCE_RESULT: ${{ needs.acceptance.result }}
-        run: test "$ACCEPTANCE_RESULT" = success
-
-      - uses: actions/checkout@v5
-        if: github.event_name == 'merge_group'
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        if: github.event_name == 'merge_group'
-        with:
-          python-version: "3.12"
-
-      - name: Read acceptance's verdicts
-        if: github.event_name == 'merge_group'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          gh run download "$RUN_ID" --repo "$REPOSITORY" --name acceptance --dir "$RUNNER_TEMP/acceptance"
-          test -s "$RUNNER_TEMP/acceptance/verdicts.json"
-
-      - name: Choose the tests of what is new
-        # Main's check_queue.py reads GitHub with the token, prints the acceptance items,
-        # and writes the tests it chooses to a new file; it runs none of them.
-        if: github.event_name == 'merge_group'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
-          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
-          REPOSITORY: ${{ github.repository }}
-          ACCEPTANCE_VERDICTS: ${{ runner.temp }}/acceptance/verdicts.json
-          STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
-        run: |
-          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
-          git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
-          mkdir "$RUNNER_TEMP/judge"
-          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
-          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
-          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY" --plan "$RUNNER_TEMP/gaps-plan.json"
-
-      - name: Install the tests' pinned YAML parser, main's pin
-        # After the token's last step: what pip installs could run in any later Python.
-        # Isolated, from the runner's temporary directory: nothing in the group's
-        # checkout (a pip/ folder, say) can run in pip's place.
-        if: github.event_name == 'merge_group'
-        working-directory: ${{ runner.temp }}
-        run: python3 -I -m pip install -r "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"
-
-      - name: Run the tests of what is new
-        # No token here: the tests are the group's own code. Main's check_queue.py runs
-        # the chosen tests and refuses to while a variable named with TOKEN is set.
-        if: github.event_name == 'merge_group'
-        env:
-          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
-        run: |
-          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
-          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"
