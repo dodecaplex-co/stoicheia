@@ -31,14 +31,14 @@ It reads, every ACCEPTANCE_POLL seconds until it is there, the one run of the
 --ci-workflow file of .github/workflows/ for the head on the merge group event, in this
 repository; then that run's jobs, each as its latest execution, until the one named
 acceptance has completed, which must have passed; then that run's artifacts named
-acceptance, until one is there: exactly one, unexpired, of that run and head, made
-within that job's execution, so that an earlier attempt's never counts. It downloads
+acceptance, until exactly one unexpired artifact of that run and head was made within
+that job's execution, so that an earlier attempt's artifacts never count. It downloads
 that artifact by its id, holding at most ACCEPTANCE_ZIP_MAX bytes of it as they come, and
 takes verdicts.json alone from it, at most ACCEPTANCE_VERDICTS_MAX bytes, read through a
 bounded stream; it refuses a zip that holds a path, a link, a name twice, a file the
 acceptance job does not keep (ACCEPTANCE_FILES), or a file compressed by another method
 than deflate or declaring more than ACCEPTANCE_VERDICTS_MAX bytes, before any is
-decompressed. Then it reads the run, the job and the artifact again: any change,
+decompressed. Then it reads the run, the job and the complete artifact list again: any change,
 the run's attempt among them (a re-run of any job begun meanwhile), refuses. Only then
 does it write the verdicts to <dir>/verdicts.json, a new file. Its one deadline,
 ACCEPTANCE_WAIT, is the queue's status check timeout, so that it cuts no group off before
@@ -1084,12 +1084,17 @@ def ci_run(run, head: str, workflow: str, repo: str) -> tuple[int, int, str]:
     `head`, with its head in this repository. Missing or malformed data is unreadable."""
     try:
         number, attempt, status = run["id"], run["run_attempt"], run["status"]
-        found = (oid(run["head_sha"], "run head"), run["event"], run["path"],
+        path = run["path"]
+        found = (oid(run["head_sha"], "run head"), run["event"], path,
                  run["head_repository"]["full_name"])
         if type(number) is not int or number < 1 or type(attempt) is not int or attempt < 1 \
                 or not isinstance(status, str) \
                 or not all(isinstance(value, str) for value in found):
             raise ValueError
+        workflow_path, separator, workflow_ref = path.partition("@")
+        if separator and not workflow_ref:
+            raise ValueError
+        found = (found[0], found[1], workflow_path, found[3])
     except (KeyError, TypeError, ValueError):
         raise ValueError("GitHub: could not read the group's CI run") from None
     for name, value, wanted in zip(("head", "event", "workflow file", "head repository"),
@@ -1102,11 +1107,10 @@ def ci_run(run, head: str, workflow: str, repo: str) -> tuple[int, int, str]:
 
 def acceptance_job(answer, run_id: int, attempt: int) -> dict | None:
     """The job named acceptance among the jobs of the group's CI run, each as its latest
-    execution, so that a job a partial re-run carried over counts as the run shows it:
-    None while none is listed; else its id, attempt, status and conclusion, and, once it
-    has passed, when it started and completed. Two such jobs, a job of another run, and a
-    job of a later attempt than `attempt`, the run's when first read (a re-run begun
-    since), refuse. Missing or malformed data is unreadable."""
+    execution: None while none is listed; else its id, attempt, status and conclusion,
+    and, once it has passed, when it started and completed. Two such jobs, a job of
+    another run, and a job of another attempt than `attempt`, the run's when first read,
+    refuse. Missing or malformed data is unreadable."""
     jobs = listed(answer, "jobs", "the CI run's jobs")
     try:
         if not all(isinstance(job["name"], str) for job in jobs):
@@ -1138,43 +1142,59 @@ def acceptance_job(answer, run_id: int, attempt: int) -> dict | None:
         raise Refused(f"acceptance: the CI run {run_id} was run again after it was first read "
                       f"at attempt {attempt}: its acceptance job is of attempt "
                       f"{found['run_attempt']}")
+    if found["run_attempt"] < attempt:
+        raise Refused(f"acceptance: the CI run {run_id} lists an acceptance job of attempt "
+                      f"{found['run_attempt']}, not its current attempt {attempt}")
     return found
 
 
 def acceptance_artifact(answer, run_id: int, head: str, job: dict) -> dict | None:
-    """The artifact named acceptance among those of the group's CI run: None while none is
-    listed; else its id and when it was made. It must be the only one, unexpired, of that
-    run and head, and made within `job`, the acceptance job that passed, from its start
-    to its end, so that an earlier attempt's never counts. Missing or malformed data is
+    """The artifact named acceptance made during `job`, the acceptance job that passed:
+    None while none is listed; else its id, when it was made and a normalized snapshot of
+    the complete artifact list. Every listed artifact must be of this run and head. The
+    selected artifact must be the only one made from the job's start to its end and must
+    be unexpired, so that an earlier attempt's never counts. Missing or malformed data is
     unreadable."""
     artifacts = listed(answer, "artifacts", "the CI run's artifacts")
-    if len(artifacts) > 1:
-        raise Refused(f"acceptance: the CI run {run_id} lists {len(artifacts)} artifacts named "
-                      "acceptance, not one")
     if not artifacts:
         return None
-    artifact = artifacts[0]
+    found = []
     try:
-        found = {"id": artifact["id"],
-                 "created": stamp(artifact["created_at"], "the acceptance artifact's time")}
-        name, expired, origin = artifact["name"], artifact["expired"], artifact["workflow_run"]
-        origin = (origin["id"], oid(origin["head_sha"], "the acceptance artifact's head"))
-        if type(found["id"]) is not int or found["id"] < 1 or not isinstance(name, str) \
-                or type(expired) is not bool or type(origin[0]) is not int:
-            raise ValueError
+        for artifact in artifacts:
+            current = {
+                "id": artifact["id"],
+                "created": stamp(artifact["created_at"], "the acceptance artifact's time"),
+                "expired": artifact["expired"],
+            }
+            name, origin = artifact["name"], artifact["workflow_run"]
+            origin = (origin["id"], oid(origin["head_sha"],
+                                        "the acceptance artifact's head"))
+            if type(current["id"]) is not int or current["id"] < 1 \
+                    or not isinstance(name, str) or type(current["expired"]) is not bool \
+                    or type(origin[0]) is not int:
+                raise ValueError
+            if name != ACCEPTANCE:
+                raise Refused(f"acceptance: the CI run {run_id} lists an artifact of another "
+                              "name")
+            if origin != (run_id, head):
+                raise Refused(f"acceptance: an artifact listed for the CI run {run_id} is "
+                              "another run's, or another head's")
+            found.append(current)
     except (KeyError, TypeError, ValueError):
         raise ValueError("GitHub: could not read the CI run's acceptance artifact") from None
-    if name != ACCEPTANCE:
-        raise Refused(f"acceptance: the CI run {run_id} lists an artifact of another name")
-    if expired:
+    candidates = [artifact for artifact in found
+                  if job["started"] <= artifact["created"] <= job["completed"]]
+    if len(candidates) > 1:
+        raise Refused(f"acceptance: the CI run {run_id} lists {len(candidates)} artifacts made "
+                      "during its acceptance job, not one")
+    if not candidates:
+        return None
+    selected = candidates[0]
+    if selected["expired"]:
         raise Refused(f"acceptance: the CI run {run_id}'s acceptance artifact has expired")
-    if origin != (run_id, head):
-        raise Refused(f"acceptance: the artifact listed for the CI run {run_id} is another "
-                      "run's, or another head's")
-    if not job["started"] <= found["created"] <= job["completed"]:
-        raise Refused(f"acceptance: the CI run {run_id}'s acceptance artifact was made outside "
-                      "the execution of the acceptance job that passed (an earlier attempt's)")
-    return found
+    selected["listed"] = tuple(sorted((artifact["id"], artifact["created"],
+                                        artifact["expired"]) for artifact in found))
+    return selected
 
 
 def acceptance_verdicts(data) -> bytes:

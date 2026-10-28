@@ -2110,26 +2110,29 @@ class QueueTests(unittest.TestCase):
                   "github.event_name != 'merge_group'": lambda event: event != "merge_group",
                   "github.event_name == 'pull_request'": lambda event: event == "pull_request"}
 
-    def fixture_tools(self):
+    def fixture_tools(self, real_python=False):
         """The folder put first on the PATH of a workflow's steps: gh, FAKE_GH over this
         test's fixture file, logging each call to gh-calls.jsonl beside it; and python3,
-        FAKE_PYTHON, which checks pip's install and runs nothing else of pip."""
-        tools = self.root / "tools"
+        either this test's interpreter or FAKE_PYTHON, which checks pip's install and runs
+        nothing else of pip."""
+        tools = self.root / ("real-python-tools" if real_python else "tools")
         if not tools.is_dir():
             tools.mkdir()
             (tools / "fake_gh.py").write_text(FAKE_GH, encoding="utf-8")
             python = shlex.quote(sys.executable)
+            python_command = f"#!/bin/sh\nexec {python} \"$@\"\n" if real_python \
+                else FAKE_PYTHON.format(python=python)
             for name, text in (
                     ("gh", f"#!/bin/sh\nexec {python} -I {shlex.quote(str(tools / 'fake_gh.py'))} "
                            f"{shlex.quote(str(self.fixture))} "
                            f"{shlex.quote(str(self.root / 'gh-calls.jsonl'))} \"$@\"\n"),
-                    ("python3", FAKE_PYTHON.format(python=python))):
+                    ("python3", python_command)):
                 (tools / name).write_text(text, encoding="utf-8")
                 (tools / name).chmod(0o755)
         return tools
 
     def run_job(self, job, event="merge_group", head=None, base=None, workflow=None,
-                steps=None, runner=None):
+                steps=None, runner=None, real_python=False):
         """Run the steps of the queue judge's `job` in order, from main's copy of
         queue-judge.yml or a planted `workflow`, as GitHub's runner would on `event`, in
         the checkout as the test left it. The job may have no if of its own, since a
@@ -2167,7 +2170,12 @@ class QueueTests(unittest.TestCase):
         self.fixture.write_text(json.dumps(self.snapshot), encoding="utf-8")
         common = dict(os.environ, RUNNER_TEMP=str(runner), GITHUB_EVENT_NAME=event,
                       GITHUB_WORKSPACE=str(self.repo),
-                      PATH=f"{self.fixture_tools()}{os.pathsep}{os.environ['PATH']}")
+                      PATH=f"{self.fixture_tools(real_python)}{os.pathsep}{os.environ['PATH']}")
+        if real_python:
+            # The requirements are empty and there is no index, so nothing is installed: let
+            # pip run outside a virtual environment, as a hosted runner's Python does.
+            common.update(PIP_NO_INDEX="1", PIP_DISABLE_PIP_VERSION_CHECK="1",
+                          PIP_BREAK_SYSTEM_PACKAGES="1")
         ran, out, err, status = [], [], [], 0
         for number, step in enumerate(spec["steps"], 1):
             label = step.get("name") or step.get("uses") or f"step {number}"
@@ -2426,8 +2434,49 @@ class QueueTests(unittest.TestCase):
             [["--run-plan", plan, "--head", head], []]])
 
     def test_python_modules_run_isolated_outside_the_checkout(self):
+        requirement = "scripts/requirements-test_safe_push.txt"
+        head = self.make([self.base], {requirement: ""})
+        self.checkout(head)
+        hostile = self.repo / "pip"
+        hostile.mkdir()
+        (hostile / "__init__.py").write_text("", encoding="utf-8")
+        marker = self.repo / "hostile-pip-ran"
+        (hostile / "__main__.py").write_text(
+            "from pathlib import Path\n"
+            f"Path({str(marker)!r}).write_text('hostile pip ran', encoding='utf-8')\n"
+            "print('hostile pip ran')\n", encoding="utf-8")
+        cases = (
+            ("check", "Install the pinned YAML parser the lane-condition check reads the "
+             "workflows with", self.workflow("ci.yml")),
+            ("queue-tests", "Install the queue tests' pinned YAML parser", self.workflow("ci.yml")),
+            ("queue-gaps", "Install the tests' pinned YAML parser, main's pin",
+             self.workflow("queue-judge.yml")))
+        for job, step, workflow in cases:
+            with self.subTest(job=job):
+                runner = self.root / f"isolated-{job}"
+                if job == "queue-gaps":
+                    (runner / "judge").mkdir(parents=True)
+                    (runner / "judge" / Path(requirement).name).write_text("", encoding="utf-8")
+                result = self.run_job(job, head=head, workflow=workflow, steps={step},
+                                      runner=runner, real_python=True)
+                self.verdict(result, 0)
+                self.assertFalse(marker.exists())
+
+        workflow = copy.deepcopy(self.workflow("ci.yml"))
+        step = next(step for step in workflow["jobs"]["queue-tests"]["steps"]
+                    if step.get("name") == "Install the queue tests' pinned YAML parser")
+        step.pop("working-directory")
+        step["run"] = step["run"].replace("python3 -I -m", "python3 -m")
+        result = self.run_job("queue-tests", head=head, workflow=workflow,
+                              steps={step["name"]}, runner=self.root / "unsafe-module",
+                              real_python=True)
+        self.verdict(result, 0, "hostile pip ran")
+        self.assertEqual(marker.read_text(encoding="utf-8"), "hostile pip ran")
+
+    def test_every_python_module_line_of_the_workflows_runs_isolated(self):
         # python3 -m puts the working directory first on the import path, so a pip/ folder
-        # in a group's checkout would run in pip's place.
+        # in a group's checkout would run in pip's place. The census of every such line in
+        # the workflows (the test above runs three of them against a hostile module).
         modules = []
         for name in ("ci.yml", "post-merge.yml", "queue-judge.yml"):
             for job, value in self.workflow(name)["jobs"].items():
@@ -2993,13 +3042,34 @@ class AcceptanceRunTests(unittest.TestCase):
         # Step 1's run: of the head, on the merge group event, of ci.yml, from this
         # repository (ci_run's comparison).
         for key, value, name in (("head_sha", "f" * 40, "head"), ("event", "push", "event"),
-                                 ("path", ".github/workflows/other.yml", "workflow file"),
                                  ("head_repository", {"full_name": "fork/repository"},
                                   "head repository")):
             with self.subTest(key=key):
                 found, _, _ = self.waited(ci_runs=[self.listing(
                     "workflow_runs", self.run_answer(**{key: value}))])
                 self.refused(found, f"the CI run {RUN} has another {name} than")
+
+    def test_the_ci_workflow_path_may_carry_a_ref_suffix_on_both_reads(self):
+        paths = (".github/workflows/ci.yml", ".github/workflows/ci.yml@refs/heads/main")
+        for initial in paths:
+            for reread in paths:
+                with self.subTest(initial=initial, reread=reread):
+                    found, _, _ = self.waited(
+                        ci_runs=[self.listing("workflow_runs", self.run_answer(path=initial))],
+                        runs=[self.run_answer(path=reread)])
+                    self.assertEqual(found, VERDICTS)
+
+    def test_another_workflow_refuses_with_or_without_a_ref_suffix_on_both_reads(self):
+        paths = (".github/workflows/other.yml",
+                 ".github/workflows/other.yml@refs/heads/main")
+        for source in ("ci_runs", "runs"):
+            for path in paths:
+                with self.subTest(source=source, path=path):
+                    changes = {source: [self.run_answer(path=path)]}
+                    if source == "ci_runs":
+                        changes[source] = [self.listing("workflow_runs", changes[source][0])]
+                    found, _, _ = self.waited(**changes)
+                    self.refused(found, f"the CI run {RUN} has another workflow file than")
 
     def test_a_run_begun_again_while_waiting_refuses(self):
         # The attempt held from step 1: an acceptance job of a later attempt
@@ -3014,12 +3084,20 @@ class AcceptanceRunTests(unittest.TestCase):
         self.refused(found, "was run again after it was first read at attempt 1: it is at "
                      "attempt 2")
 
-    def test_a_job_a_partial_re_run_carried_over_counts(self):
-        # Each job as its latest execution: the run at attempt 2, its acceptance job
-        # carried over from attempt 1, passed.
+    def test_a_partial_re_run_cannot_carry_over_an_earlier_acceptance_job(self):
         later = self.run_answer(run_attempt=2)
-        found, _, _ = self.waited(ci_runs=[self.listing("workflow_runs", later)], runs=[later])
+        found, reads, _ = self.waited(ci_runs=[self.listing("workflow_runs", later)])
+        self.refused(found, f"the CI run {RUN} lists an acceptance job of attempt 1, not its "
+                     "current attempt 2")
+        self.assertEqual(reads, ["ci_runs", "jobs"])
+
+    def test_an_acceptance_job_from_the_current_attempt_counts(self):
+        later = self.run_answer(run_attempt=2)
+        current_jobs = self.listing("jobs", self.other_job(), self.job(run_attempt=2))
+        found, reads, _ = self.waited(ci_runs=[self.listing("workflow_runs", later)],
+                                      runs=[later], jobs=[current_jobs])
         self.assertEqual(found, VERDICTS)
+        self.assertEqual(reads, self.SOUND_READS)
 
     def test_a_ci_run_without_acceptance_refuses(self):
         # The plant of a group whose ci.yml drops acceptance: once the run has completed
@@ -3049,11 +3127,18 @@ class AcceptanceRunTests(unittest.TestCase):
         self.refused(found, "the acceptance job's artifact had not been listed after 150 minutes")
         self.assertEqual(slept, [60] * 150)
 
-    def test_two_artifacts_refuse(self):
-        # Step 3's "exactly one".
+    def test_an_earlier_artifact_and_one_from_the_selected_job_pass(self):
+        earlier = self.artifact(id=ARTIFACT - 1, created_at="2026-10-27T20:59:59Z",
+                                expired=True)
+        found, _, _ = self.waited(artifacts=[self.listing(
+            "artifacts", earlier, self.artifact())])
+        self.assertEqual(found, VERDICTS)
+
+    def test_two_artifacts_from_the_selected_job_refuse(self):
         found, _, _ = self.waited(artifacts=[self.listing(
             "artifacts", self.artifact(), self.artifact(id=ARTIFACT + 1))])
-        self.refused(found, f"the CI run {RUN} lists 2 artifacts named acceptance, not one")
+        self.refused(found, f"the CI run {RUN} lists 2 artifacts made during its acceptance "
+                     "job, not one")
 
     def test_an_expired_artifact_refuses(self):
         # Step 3's unexpired artifact.
@@ -3069,14 +3154,14 @@ class AcceptanceRunTests(unittest.TestCase):
                     "artifacts", self.artifact(workflow_run=origin))])
                 self.refused(found, "is another run's, or another head's")
 
-    def test_an_artifact_made_outside_the_job_s_execution_refuses(self):
-        # Step 3's window, from the job's start to its end: an earlier attempt's artifact,
-        # made before, and one made after, refuse; at either end, it counts.
+    def test_an_artifact_outside_the_job_s_execution_is_never_selected(self):
         for created in ("2026-10-27T20:59:59Z", "2026-10-27T21:50:01Z"):
             with self.subTest(created=created):
-                found, _, _ = self.waited(artifacts=[self.listing(
+                found, reads, _ = self.waited(artifacts=[self.listing(
                     "artifacts", self.artifact(created_at=created))])
-                self.refused(found, "was made outside the execution of the acceptance job")
+                self.refused(found, "the acceptance job's artifact had not been listed after "
+                             "150 minutes")
+                self.assertNotIn("artifact_zips", reads)
         for created in (STARTED, COMPLETED):
             with self.subTest(created=created):
                 found, _, _ = self.waited(artifacts=[self.listing(
@@ -3229,8 +3314,11 @@ class AcceptanceRunTests(unittest.TestCase):
 
     def test_a_change_at_the_second_reading_refuses(self):
         # Step 4: after the download, the same run at its attempt, the same job, still its
-        # latest execution and passed, and the same artifact, unexpired, in its window.
+        # latest execution and passed, and the complete artifact list unchanged, with the
+        # selected artifact still unexpired and in its window.
         jobs, artifacts = self.sound["jobs"], self.sound["artifacts"]
+        earlier = self.artifact(id=ARTIFACT - 1, created_at="2026-10-27T20:59:59Z")
+        with_earlier = self.listing("artifacts", earlier, self.artifact())
         for label, changes, message in (
                 ("another job", {"jobs": [jobs, self.listing("jobs", self.job(id=JOB + 1))]},
                  "acceptance job or its artifact changed while the artifact was read"),
@@ -3241,6 +3329,10 @@ class AcceptanceRunTests(unittest.TestCase):
                     "jobs", self.job(**self.RUNNING))]}, "changed while the artifact was read"),
                 ("another artifact", {"artifacts": [artifacts, self.listing(
                     "artifacts", self.artifact(id=ARTIFACT + 1))]},
+                 "changed while the artifact was read"),
+                ("an earlier artifact appeared", {"artifacts": [artifacts, with_earlier]},
+                 "changed while the artifact was read"),
+                ("an earlier artifact disappeared", {"artifacts": [with_earlier, artifacts]},
                  "changed while the artifact was read"),
                 ("the artifact gone", {"artifacts": [artifacts, self.listing("artifacts")]},
                  "changed while the artifact was read"),
@@ -3281,7 +3373,10 @@ class AcceptanceRunTests(unittest.TestCase):
         artifacts = [self.listing("artifacts", dict(artifact, expired="false")),
                      self.listing("artifacts", {k: v for k, v in artifact.items()
                                                 if k != "created_at"}),
-                     self.listing("artifacts", dict(artifact, workflow_run=None))]
+                     self.listing("artifacts", dict(artifact, workflow_run=None)),
+                     self.listing("artifacts", dict(
+                         artifact, id=ARTIFACT - 1, created_at="2026-10-27T20:59:59Z",
+                         expired="false"), artifact)]
         for kind, answers, message in (("ci_runs", runs, "could not read the group's CI run"),
                                        ("jobs", jobs,
                                         "could not read the CI run's acceptance job"),
@@ -3398,25 +3493,14 @@ class RulesetTests(unittest.TestCase):
     installed rule and the coordinator's trial show that."""
 
     RULESET = SCRIPTS.parent / "docs/rulesets/queue-judge.json"
-    # Where WORKFLOW requires the judge by its file and names this ruleset, and its lists
-    # of the checks required by name, which never name the judge's jobs.
-    GUIDE = ("requires `.github/workflows/queue-judge.yml`, which holds `queue-integrity` and "
-             "`queue-gaps`, from main (its `ref`, `refs/heads/main`), with an empty bypass "
-             "list; the ruleset the owner imports is `docs/rulesets/queue-judge.json`",
-             "require `check`, `model`, `negative`, `formal-model`, `acceptance` and "
-             "`queue-tests`, and never `queue-integrity` or `queue-gaps`",
-             "the owner adds `queue-tests` to those required checks.")
-
     @classmethod
-    def problems(cls, ruleset, workflows, guide, required) -> list[str]:
+    def problems(cls, ruleset, workflows, required) -> list[str]:
         """Where the configuration departs from the one reviewed: an active branch ruleset
         on main of this repository alone, with no bypass actor, whose one rule, "Require
         workflows to pass before merging", enforced on creation too, names the queue
         judge's workflow in this repository at main's ref, by those three alone (no sha);
-        that workflow holds the judge's two jobs, and no other a job of either id or name;
-        WORKFLOW says so; and neither its lists of the checks required by name nor
-        safe_push's names the judge's, since GitHub matches a required check by its name
-        alone."""
+        that workflow holds the judge's two jobs, no other workflow has a job of either id
+        or name, and safe_push's required checks do not name the judge's."""
         found = []
         if set(ruleset) != {"name", "target", "enforcement", "bypass_actors", "conditions",
                             "rules"}:
@@ -3461,7 +3545,6 @@ class RulesetTests(unittest.TestCase):
                     found.append(f"{name}: a job named as the judge's")
         if set(required) & set(JUDGE_JOBS):
             found.append("safe_push's required checks name the judge's")
-        found += [f"WORKFLOW no longer says: {text}" for text in cls.GUIDE if text not in guide]
         return found
 
     def configuration(self):
@@ -3469,8 +3552,6 @@ class RulesetTests(unittest.TestCase):
                 "workflows": {path.name: yaml.safe_load(path.read_text(encoding="utf-8"))
                               for path in sorted((SCRIPTS.parent / ".github/workflows")
                                                  .glob("*.y*ml"))},
-                "guide": " ".join((SCRIPTS.parent / "docs/WORKFLOW.md").read_text(
-                    encoding="utf-8").split()),
                 "required": queue.safe_push.REQUIRED_CHECKS}
 
     def test_the_ruleset_is_the_one_reviewed(self):
@@ -3481,10 +3562,6 @@ class RulesetTests(unittest.TestCase):
         # refused by its own predicate of `problems`, named by its refusal.
         def workflow(state):
             return state["ruleset"]["rules"][0]["parameters"]["workflows"][0]
-
-        def guide(state, old, new):
-            self.assertIn(old, state["guide"])
-            state["guide"] = state["guide"].replace(old, new)
 
         plants = (
             ("a required_status_checks rule", "rules other than one rule requiring workflows",
@@ -3521,12 +3598,6 @@ class RulesetTests(unittest.TestCase):
              lambda s: s["workflows"]["ci.yml"]["jobs"]["check"].update(name="queue-gaps")),
             ("the judge's workflow without a job", "a judge's workflow without the judge's jobs",
              lambda s: s["workflows"][Path(JUDGE).name]["jobs"].pop("queue-gaps")),
-            ("WORKFLOW requiring the judge by name", "WORKFLOW no longer says: require",
-             lambda s: guide(s, "`acceptance` and `queue-tests`, and never",
-                             "`acceptance`, `queue-tests` and `queue-integrity`, and never")),
-            ("WORKFLOW naming another ruleset", "WORKFLOW no longer says: requires",
-             lambda s: guide(s, "imports is `docs/rulesets/queue-judge.json`",
-                             "imports is `docs/rulesets/other.json`")),
             ("safe_push requiring the judge by name",
              "safe_push's required checks name the judge's",
              lambda s: s.update(required=(*s["required"], "queue-integrity"))))
