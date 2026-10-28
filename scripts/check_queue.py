@@ -124,10 +124,11 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import safe_push
 import check_train
+import heath
 from check_train import declared_new, derive_new
 
 # Isolated invocation and this directory supply the judge's complete script imports.
-for module in (safe_push, check_train):
+for module in (safe_push, check_train, heath):
     if Path(module.__file__).resolve().parent != Path(__file__).resolve().parent:
         raise ImportError("queue judge dependencies must come from its own directory")
 
@@ -708,11 +709,10 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
 
 def hand_written_intact(repo: Path, path: str, group: str, mb: str, train: str) -> bool:
     """Revert and reapply a train's change to the hand-written part of `path`, the file
-    less its generated regions, by git merge-file; true when the group keeps it whole."""
-    pattern = safe_push.GENERATED_REGIONS[path]
-
+    with its regions' bodies emptied and their markers kept (heath.outside), by git
+    merge-file; true when the group keeps it whole."""
     def text(rev):
-        return pattern.sub("", safe_push.show(repo, rev, path) or "")
+        return heath.outside(path, safe_push.show(repo, rev, path) or "")
 
     g, b, t = text(group), text(mb), text(train)
     if t == b:
@@ -754,9 +754,9 @@ def intact(repo: Path, base: str, head: str, pr: dict) -> None:
         changed = {path for _, path in safe_push.changed_files(repo, head, reapplied)}
         lost = [path for path in set(conflicts) | set(forward_conflicts) | changed
                 if not safe_push.under(path, GENERATED)]
-        # README.md and docs/PROGRAM.md are generated only between their markers: the
-        # rest, written by hand, is held to the same revert and reapply, read with the
-        # markers' regions taken out.
+        # README.md, docs/PROGRAM.md and docs/WORKFLOW.md are generated only between their
+        # markers: the rest, written by hand, the markers among it, is held to the same
+        # revert and reapply, read with the regions' bodies emptied (heath.outside).
         lost += [path for path in safe_push.GENERATED_REGIONS
                  if not hand_written_intact(repo, path, head, mb, pr["head"])]
         if lost:
@@ -1274,12 +1274,30 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
 
 
 def checkout(repo: Path, head: str) -> None:
-    """Require the checked commit and unchanged sources before running its commands."""
+    """Require the checked commit and unchanged sources before running its commands. A
+    file generated whole may differ from the head; one of safe_push.GENERATED_REGIONS only
+    in its regions' bodies, since the rest, its markers among it, is written by hand
+    (heath.outside). Its bytes are compared as they are, and a working file that is missing,
+    a link or unreadable counts as changed."""
     if commit(repo, "HEAD") != head:
         raise Refused("checkout is not the supplied group head")
     changed = safe_push.git(repo, "diff", "--name-only", "-z", head, "--").split("\0")
     if any(path and not safe_push.under(path, GENERATED) for path in changed):
         raise Refused("checkout has source changes outside the supplied group head")
+    for path in safe_push.GENERATED_REGIONS:
+        if path not in changed:
+            continue
+        working = repo / path
+        try:
+            same = not working.is_symlink() and (
+                heath.outside(path, working.read_bytes().decode("utf-8", "surrogateescape"))
+                == heath.outside(path, (safe_push.show_bytes(repo, head, path) or b"")
+                                 .decode("utf-8", "surrogateescape")))
+        except OSError:
+            same = False
+        if not same:
+            raise Refused("checkout has source changes outside the supplied group head: the "
+                          f"part of {path} written by hand, outside its regions' bodies")
 
 
 def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) -> list[list[str]]:
