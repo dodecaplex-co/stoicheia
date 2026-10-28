@@ -10,10 +10,16 @@ III.5, III.6, III.11 and III.13 before the change to cutting and contact within 
 0008, section 7. Here the names ending in `today`, and `TouchesInternallyToday`, refer to
 those earlier statements, at `bd3b72a` on 19 October 2026.
 
+The first bridge, `CirclesCut.of_meet`, with its step `CirclesCut.cut_point`, was proved
+here; since 26 October 2026 it is proved in `Elements/BookIII/Cutting.lean`, after III.8,
+for III.10's last step cites it with III.5. This file no longer proves a copy. It checks
+that each of the two theorems there has exactly the statement proved here before, and pins
+their axioms below with the others.
+
 The bridges use III.7, III.8 and III.10 and rest on Diagram-segment 2. They belong after
 those propositions, and do not enter the proofs of III.5 and III.6. `lake build Audit`
-checks this file, including the axiom lists pinned below; the certificate imports none
-of it.
+checks this file, including the axiom lists pinned below. The certificate imports none of
+it; it reaches `CirclesCut.of_meet` through III.10, which cites it.
 -/
 
 set_option warningAsError true
@@ -22,63 +28,20 @@ namespace Audit
 
 open Elements Elements.Tacit Elements.BookIII
 
-/-- Let B and C be distinct points common to two different circles α and β. A point of α
-is within β. Take their centres O and O' from the rule; the end of α's diameter on the
-line of the centres nearer O' supplies the point (III.7 when O' is within α, III.8 when
-it is outside; O' itself when it is on α). -/
-theorem cut_point {α β : Circle} {B C : Point}
-    (hne : α ≠ β) (hBC : B ≠ C) (hBα : OnCircle B α) (hBβ : OnCircle B β)
-    (hCα : OnCircle C α) (hCβ : OnCircle C β) :
-    ∃ P : Point, OnCircle P α ∧ InsideCircle P β := by
-  obtain ⟨O, hO⟩ := exists_centre α
-  obtain ⟨O', hO'⟩ := exists_centre β
-  have hOO' : O ≠ O' := fun e => hne (circle_eq hO (e ▸ hO') hBα hBβ rfl)
-  /- If the least line from O' to α ends at X, X is within β unless it is B; and if it is
-     B, then C, also on α, is farther from O' than B, though both are on β. -/
-  have finish : ∀ X : Point, OnCircle X α → (∀ K : Point, OnCircle K α → K ≠ X →
-      ‖O' X‖ < ‖O' K‖) → ∃ P : Point, OnCircle P α ∧ InsideCircle P β := by
-    intro X hX hleast
-    by_cases hBX : B = X
-    · subst hBX
-      have h := hleast C hCα hBC.symm
-      rw [Definition15 hO' hBβ hCβ] at h
-      exact absurd h (lt_irrefl _)
-    · exact ⟨X, hX, inside_of_len_lt hO' hBβ (hleast B hBα hBX)⟩
-  by_cases hon : OnCircle O' α
-  · exact ⟨O', hon, centre_inside hO'⟩
-  by_cases hin : InsideCircle O' α
-  · /- III.7 applies with O' on the diameter AD, between O and D. -/
-    obtain ⟨L, hO_L, hO'_L⟩ := Postulate1 O O' hOO'
-    obtain ⟨D, hD, -, hDO'O⟩ := line_circle_beyond hin hO'_L hO_L hOO'
-    obtain ⟨A, hA, -, hAOO'⟩ := line_circle_beyond (centre_inside hO) hO_L hO'_L hOO'.symm
-    have hOO'D : Between O O' D := between_symm hDO'O
-    have hAOD : Between A O D := between_of_between_right hAOO' hOO'D
-    exact finish D hD (Prop7 hO hA hD hAOD hOO'D).2.1
-  · /- III.8 applies with O' outside α, G the nearer end of the diameter and A the farther. -/
-    have hout : OutsideCircle O' α := ⟨hin, hon⟩
-    obtain ⟨L, hO'_L, hO_L⟩ := Postulate1 O' O hOO'.symm
-    obtain ⟨A, hA, hA_L, hAOO'⟩ := line_circle_beyond (centre_inside hO) hO_L hO'_L hOO'.symm
-    have hAO : A ≠ O := ne_of_between hAOO'
-    obtain ⟨G, hG, hG_L, hGOA⟩ := line_circle_beyond (centre_inside hO) hO_L hA_L hAO
-    have hGO' : G ≠ O' := fun e => hon (e ▸ hG)
-    have hGO : G ≠ O := ne_of_centre_of_on hO hG
-    have hO'GO : Between O' G O := by
-      rcases between_cases hGO'.symm hGO hOO'.symm hO'_L hG_L hO_L with h | h | h
-      · exact h
-      · exact absurd
-          (Prop2.within (Or.inr hG) (Or.inl (centre_inside hO)) h) hin
-      · exact absurd hGOA (not_between_of_between_between h (between_symm hAOO'))
-    have hO'GA : Between O' G A := between_of_between_right hO'GO hGOA
-    exact finish G hG (Prop8 hout hA hG hO'GA
-      (fun M hM => centre_unique hM hO ▸ hGOA)).2.2.1
+/-- The step of the crossing bridge, proved in `Elements/BookIII/Cutting.lean`, has exactly
+the statement this file proved before under the name cut_point. -/
+example : type_of% @CirclesCut.cut_point =
+    ∀ {α β : Circle} {B C : Point}, α ≠ β → B ≠ C → OnCircle B α → OnCircle B β →
+      OnCircle C α → OnCircle C β → ∃ P : Point, OnCircle P α ∧ InsideCircle P β := rfl
 
-/-- Two different circles that meet at two points cut one another. -/
-theorem CirclesCut.of_meet {α β : Circle}
-    (hne : α ≠ β) (h : CirclesMeet α β) : CirclesCut α β := by
-  obtain ⟨B, C, hBC, hBα, hBβ, hCα, hCβ⟩ := h
-  exact ⟨⟨B, C, hBC, hBα, hBβ, hCα, hCβ⟩,
-    cut_point hne hBC hBα hBβ hCα hCβ,
-    cut_point (Ne.symm hne) hBC hBβ hBα hCβ hCα⟩
+/-- The crossing bridge, proved in `Elements/BookIII/Cutting.lean`, has exactly the
+statement this file proved before under the same name in its own namespace. -/
+example : type_of% @CirclesCut.of_meet =
+    ∀ {α β : Circle}, α ≠ β → CirclesMeet α β → CirclesCut α β := rfl
+
+/-- The earlier statement of the crossing bridge, proved by the theorem in `Elements`. -/
+example {α β : Circle} (hne : α ≠ β) (h : CirclesMeet α β) : CirclesCut α β :=
+  CirclesCut.of_meet hne h
 
 /-- For two different circles, if no point of the inner circle is outside
 the outer, some point of it is within the outer. Otherwise every point of it would be on
@@ -166,14 +129,20 @@ end Audit
 These lists include Diagram-segment 2. They check the bridges' dependencies, separately
 from the lists for III.5 and III.6 below, whose proofs cite neither Diagram-segment 2 nor
 Circle 4, which is now a theorem proved from I.7 using Diagram-segment 2 (19 October 2026),
-though the proved rules they use rest on Diagram-segment 2 (below). The bridge through III.7
+and since 26 October 2026 rest on neither, through the proved rules they use or otherwise
+(below). The bridge through III.7
 and III.8 uses III.2 (`Prop2.within`) to order the points on the straight line through the
-centres, which `cut_point` takes from the rule. Circle 2 and Circle 3 are theorems since
-24 October 2026, proved after III.2, so no list can show them; no bridge uses either. All
-seven bridge lists
-include `exists_centre`, and none reaches III.1: III.2 and III.8 take their centres from the
-rule (22 October 2026, #131). `centre_unique` is a theorem since axiom wave one, so no list
-here shows a call to it. Nothing in this file enters the certificate.
+centres, which `CirclesCut.cut_point` takes from the rule. Two of the lists pin the
+theorems `Elements.CirclesCut.cut_point` and `Elements.CirclesCut.of_meet`, which this file
+proved until 26 October 2026; moving them into `Elements` changed no list. Circle 2 and
+Circle 3 are theorems since 24 October 2026, and Circle 1 since 26 October 2026, all three
+proved after III.2, so no list can show them; no bridge uses Circle 2 or Circle 3, and five
+of the seven lists showed Circle 1 while it was an axiom. All seven bridge lists
+include `exists_centre`, and each bridge reaches III.1 through III.8, which takes its centre
+by III.1's construction (`Prop1.of_circle`) since 26 October 2026 (#547); every axiom
+`Prop1.of_circle` rests on was in the lists already, so none changed. `centre_unique` is a
+theorem since axiom wave one, so no list here shows a call to it. Nothing in this file
+enters the certificate.
 -/
 
 /--
@@ -198,7 +167,6 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -221,6 +189,7 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -250,7 +219,6 @@ info: 'Audit.III_6_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -273,6 +241,7 @@ info: 'Audit.III_6_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -302,7 +271,6 @@ info: 'Audit.III_11_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -325,6 +293,7 @@ info: 'Audit.III_11_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -354,7 +323,6 @@ info: 'Audit.III_13_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -377,6 +345,7 @@ info: 'Audit.III_13_today' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -385,7 +354,7 @@ info: 'Audit.III_13_today' depends on axioms: [propext,
 #print axioms Audit.III_13_today
 
 /--
-info: 'Audit.cut_point' depends on axioms: [propext,
+info: 'Elements.CirclesCut.cut_point' depends on axioms: [propext,
  Classical.choice,
  Elements.Definition15,
  Elements.Postulate1,
@@ -406,7 +375,6 @@ info: 'Audit.cut_point' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -429,15 +397,16 @@ info: 'Audit.cut_point' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
 -/
 #guard_msgs in
-#print axioms Audit.cut_point
+#print axioms Elements.CirclesCut.cut_point
 
 /--
-info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
+info: 'Elements.CirclesCut.of_meet' depends on axioms: [propext,
  Classical.choice,
  Elements.Definition15,
  Elements.Postulate1,
@@ -458,7 +427,6 @@ info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -481,12 +449,13 @@ info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
 -/
 #guard_msgs in
-#print axioms Audit.CirclesCut.of_meet
+#print axioms Elements.CirclesCut.of_meet
 
 /--
 info: 'Audit.within_point' depends on axioms: [propext,
@@ -510,7 +479,6 @@ info: 'Audit.within_point' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -533,6 +501,7 @@ info: 'Audit.within_point' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -542,17 +511,23 @@ info: 'Audit.within_point' depends on axioms: [propext,
 
 /-! ## What III.5 and III.6 rest on
 
-The pins from the staged proofs followed them home. They now list Definition I.15,
-Postulates 1 and 3 and 18 tacit rules, the same for each. Diagram-segment 2
-(`Elements.Tacit.circle_eq`) is among them: the proofs do not cite it, but since the second
-axiom retirement (proved on 19 October 2026) the proved rules they use, such as
-`centre_inside` beneath Book Zero's `ne_of_centre_of_on`, rest on it and on Postulate 3, to
-show that a radius is never nothing (`RuleProofs.Circle.radius_ne_zero`). So the pins no
-longer show that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
+The pins from the staged proofs followed them home. Since 26 October 2026 they list
+Definition I.15, Postulates 1 and 3 and 12 tacit rules for III.5, and 16 for III.6, whose
+`centre_inside`, for contact without, adds Points 8, Intersections 4, `len_symm` and
+`lt_trans`. Our radius rule (`Elements.Tacit.radius_ne_zero`) is among them, and neither
+Diagram-segment 2 (`Elements.Tacit.circle_eq`) nor Circle 1
+(`Elements.Tacit.between_of_inside_chord`) is. From the second axiom retirement (proved on
+19 October 2026) until then, the proved rules the proofs use, such as `centre_inside`
+beneath Book Zero's `ne_of_centre_of_on`, rested on both, and on Postulate 3, to show that a
+radius is never nothing (`RuleProofs.Circle.radius_ne_zero`); that lemma now takes it from
+the radius rule, and Postulate 3 enters through Metric 1, proved from the rule, and, for
+III.6, through `RuleProofs.Circle.length_pos` beneath `centre_inside`. So the pins
+show again that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
 check the names of these two declarations' axioms, and the build fails if an admitted proof
-(`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, proved after III.2,
-cannot appear here; the certificate shows that neither proof uses them, for neither cites
-III.2, as a use of either would make it.
+(`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, and Circle 1, a
+theorem since 26 October 2026, all three proved after III.2, cannot appear here; the
+certificate shows that neither proof uses them, for neither cites III.2, as a use of any of
+them would make it.
 -/
 
 /--
@@ -565,21 +540,15 @@ info: 'Elements.BookIII.Prop5' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
- Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
- Elements.Tacit.len_symm,
- Elements.Tacit.line_circle_between,
  Elements.Tacit.line_circle_beyond,
  Elements.Tacit.lt_irrefl,
- Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero]
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.radius_ne_zero]
 -/
 #guard_msgs in
 #print axioms Elements.BookIII.Prop5
@@ -594,10 +563,7 @@ info: 'Elements.BookIII.Prop6' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
- Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
@@ -608,7 +574,8 @@ info: 'Elements.BookIII.Prop6' depends on axioms: [propext,
  Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero]
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.radius_ne_zero]
 -/
 #guard_msgs in
 #print axioms Elements.BookIII.Prop6

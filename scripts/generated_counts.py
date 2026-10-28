@@ -334,9 +334,7 @@ def number_word(n):
                     + ((" and " if rest < 100 else " ") + number_word(rest) if rest else ""))
 
 
-START = re.compile(r"<!--\s*/?\s*count\b", re.I)
-OPEN = re.compile(r"<!-- count:([A-Za-z0-9]+(?:[-:][A-Za-z0-9]+)*) -->")
-CLOSE = "<!-- /count -->"
+START, OPEN, CLOSE = heath.COUNT_START, heath.COUNT_OPEN, heath.COUNT_CLOSE
 
 
 @dataclass(frozen=True)
@@ -382,7 +380,8 @@ def markers(text, path):
 
 def whole_output(path):
     """Whether render.py owns the whole Markdown file."""
-    return path.parts[0] == "book" or path.as_posix() in {"CERTIFICATE.md", "GRAPH.md"}
+    return any(path.as_posix() == name or name.endswith("/") and path.as_posix().startswith(name)
+               for name in heath.GENERATED_WHOLE)
 
 
 def historical(path):
@@ -394,22 +393,18 @@ def historical(path):
                               or re.fullmatch(r"gaps-book-[IVX]+\.md", path.name)))))
 
 
-README_SCOPE_MARKERS = re.compile(
-    r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
-PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+README_SCOPE_MARKERS = heath.REGIONS["README.md"]
+PROGRAM_STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 
 
 def partial_output_region(path, text, span):
     """Name a renderer-owned region containing a count marker, if there is one."""
-    if path == Path("README.md"):
-        pattern, name = README_SCOPE_MARKERS, "README.md scope region"
-    elif path == Path("docs/PROGRAM.md"):
-        pattern, name = PROGRAM_STATUS_MARKERS, "docs/PROGRAM.md status region"
-    else:
+    pattern = heath.REGIONS.get(path.as_posix())
+    if pattern is None:
         return None
     if any(span.start < region.end() and region.start() < span.end
            for region in pattern.finditer(text)):
-        return name
+        return f"{path.as_posix()} {heath.MARKER_WORDS[path.as_posix()]} region"
     return None
 
 

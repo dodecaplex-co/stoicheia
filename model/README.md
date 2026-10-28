@@ -43,7 +43,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Hand.lean](Model/Hand.lean) | the laws first proved in the plane, translated **by hand**, and `exists_centre`, proved in the plane before the library declared it | `Laws` |
 | [Model/Laws/angles.lean](Model/Laws/angles.lean) | the ten angle laws, with `Collinear` and `IsRightAngle`, translated **by hand** | `Signature` |
 | [Model/Laws/areas-p5.lean](Model/Laws/areas-p5.lean) | the eight area laws and Postulate 5, translated **by hand** | `Signature` |
-| [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 19 circle rules, translated **by hand** | `Model.Hand` |
+| [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 20 circle rules, our `radius_ne_zero` among them, translated **by hand** | `Model.Hand` |
 | [Model/Laws/incidence.lean](Model/Laws/incidence.lean) | the incidence and line laws, and `Hand.LinesMeet`, **by hand** | `Signature`, `Hand` |
 | [Model/Laws/intersections.lean](Model/Laws/intersections.lean) | the five line intersection rules and the four circle rules, and separate hand copies of `LinesMeet` and `LineMeetsCircle` | `Hand` |
 | [Model/Laws/lengths.lean](Model/Laws/lengths.lean) | the three metric length laws, translated **by hand** | `Signature` |
@@ -57,7 +57,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Areas.lean](Model/Euclidean/Areas.lean) | the eight area laws, including collinear and repeated corners, proved by determinants | Mathlib |
 | [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and all finite avoidance rules for lines, regions and circumferences proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | `exists_centre`, every circle has a centre, proved in the plane | Mathlib |
-| [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
+| [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15, `radius_ne_zero` and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
 | [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
@@ -72,7 +72,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Postulate5.lean](Model/Euclidean/Postulate5.lean) | Postulate 5, with the meeting on the stated side, proved in the plane | Mathlib |
 | [Model/Euclidean/Segments.lean](Model/Euclidean/Segments.lean) | the diagram-segment rules 1 to 4 proved in the plane | Mathlib |
 | [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
-| [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | restricted superposition from placement by isometry and reflection, its kept side, and `Rule.of_placement` | Mathlib, pure calculus soundness |
+| [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | restricted superposition from placement by isometry and reflection, its kept side by Same side 3 and Postulate 1, through `Rule.of_placement_of_join` | Mathlib, pure calculus soundness |
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all <!-- count:axioms -->48<!-- /count --> proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: `Elements.Point` remains unknown, and every proof and the assembly have their pinned logical axioms | every module of `Model` |
@@ -438,14 +438,15 @@ the original means. These checks do that, at every build.
   swapped arguments or a change in the order of the binders fails it, and the build with
   it. This covers all <!-- count:axioms -->48<!-- /count --> laws and all 15 defined words they reach. The family checks in
   `Check/` retain the original library checks. They also compare each hand-translated law
-  with its generated field over any signature, except for the 40 retired rules. Eight were
+  with its generated field over any signature, except for the 41 retired rules. Eight were
   retired first: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
   `centre_unique`, `inside_of_between`, `exists_point_outside_circle`,
   `line_meets_circle_of_opposite_sides`, `triple_incidence3` and `inside_of_angle_add`;
-  31 more on 19 October 2026 (listed in [MODEL.md](../tests/model/MODEL.md)); and Circle 3,
+  31 more on 19 October 2026 (listed in [MODEL.md](../tests/model/MODEL.md)); Circle 3,
   `outside_of_between`, on 24 October 2026, proved after III.2, with Circle 2, Points 9
   and Intersection 2 moved beside it, in `Elements/BookIII/Prop02.lean`, which the circle
-  and intersection checks import. These are now theorems with the same names and types. Their hand translations are compared
+  and intersection checks import; and Circle 1, `between_of_inside_chord`, on 26 October
+  2026, proved there too, after III.2. These are now theorems with the same names and types. Their hand translations are compared
   directly with the library declaration's type by `comparePlanted`, including binder kinds,
   which works for an axiom or a theorem and remains when a generated assumption field
   disappears. This includes Intersections 2 and 3, which reach `LineMeetsCircle`, a word no
@@ -476,7 +477,7 @@ the original means. These checks do that, at every build.
   hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
   translations kept under suffixed names ([below](#proved-laws)), and the angle and
   superposition translations, which use words of their own written by hand, are compared
-  with the generated laws by the kernel in their files of `Check/`, apart from the 49
+  with the generated laws by the kernel in their files of `Check/`, apart from the 48
   direct declaration comparisons just described.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
@@ -576,6 +577,12 @@ the vocabulary with it. A law proposed for the foundations is proved here before
 In the change that declared it, the generator wrote its law, the assembly gathered
 `Euclidean.exists_centre`, which is named as its field, `Check/RoundTrip.lean` compared the
 hand translation with the generated law, and its kernel round trip joined `Check/Hand.lean`.
+`radius_ne_zero`, a radius is not nothing, approved by the owner on 25 October 2026 (#473),
+was proved in the plane in the change that declared it: the generator wrote its law, its hand
+translation joined `Model/Laws/circles.lean`, `Check/Circles.lean` compares that translation
+with the library's declaration and with the generated law, and the assembly gathers
+`Euclidean.radius_ne_zero`, from `Model/Euclidean/CircleBasics.lean`, where the type of
+circles gives every circle a positive radius.
 
 ## What the proofs rest on
 
@@ -619,7 +626,7 @@ formal statement captures what Euclid meant: that is the work of the review reco
 Astra's third answer listed the laws whose proofs would settle the representation, and they
 were taken first. Each retained axiom proved here is gathered into `euclidean_laws`
 by the generator, and `lake build` fails until it has been (`lake lean Check/Write.lean`).
-The table also includes the 40 former axioms now proved in the library, whose
+The table also includes the 41 former axioms now proved in the library, whose
 [derivations and homes](../docs/FORMALIZATION.md#rules-now-proved) are listed separately.
 Their plane proofs remain as derived facts with individual audits; the generator
 no longer gathers them as assumptions.
@@ -632,7 +639,7 @@ no longer gathers them as assumptions.
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides`, `lines_meet_of_opposite_sides` | proved here |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | proved here |
 | Postulate 5 | the meeting on the stated side, not only a meeting | proved here |
-| Superposition | `superposition`: the restricted rule, from `superposition_placement`, its side by Postulate 1, and `Rule.of_placement` | proved here |
+| Superposition | `superposition`: the restricted rule, from `superposition_placement`, Same side 3, Postulate 1 and `Rule.of_placement_of_join` | proved here |
 | Areas | all eight area laws, including `area_congruent`, `area_add_of_between` and `between_of_area_add`, with collinear and repeated corners | proved here |
 | Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | proved here: infinite real intervals on a line, and injective families indexed by ℕ for regions and circumferences |
 
@@ -660,7 +667,7 @@ bisector of the common points, as in Intersections 8 and 9.
 The generated [assembly](Model/Assembly.lean) supplies **<!-- count:axioms -->48<!-- /count --> of the <!-- count:axioms -->48<!-- /count --> locked laws** from
 proofs in the plane. This list counts each law once, even where two families supply a proof.
 Names other than `Definition15` and the postulates are in `Elements.Tacit` in the lock.
-The 40 retired rules listed above also retain their concrete plane proofs and audits,
+The 41 retired rules listed above also retain their concrete plane proofs and audits,
 as derived facts outside the generated assumption fields and this table.
 
 | Proof file in `Model/Euclidean/` | Count | Locked laws proved |
@@ -670,8 +677,7 @@ as derived facts outside the generated assumption fields and this table.
 | [Areas.lean](Model/Euclidean/Areas.lean) | 6 | `area_add_of_between`, `area_congruent`, `area_degenerate`, `area_eq_zero_of_on_line`, `area_rotate`, `on_line_of_area_eq_zero` |
 | [Avoidance.lean](Model/Euclidean/Avoidance.lean) | 4 | `Postulate2`, `exists_point`, `exists_point_inside_circle`, `exists_point_on_line` |
 | [Centre.lean](Model/Euclidean/Centre.lean) | 1 | `exists_centre` |
-| [CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | 2 | `Definition15`, `Postulate3` |
-| [CircleRules.lean](Model/Euclidean/CircleRules.lean) | 1 | `between_of_inside_chord` |
+| [CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | 3 | `Definition15`, `Postulate3`, `radius_ne_zero` |
 | [CircleSides.lean](Model/Euclidean/CircleSides.lean) | 1 | `circles_meet_same_side` |
 | [Circles.lean](Model/Euclidean/Circles.lean) | 1 | `circles_meet` |
 | [Incidence.lean](Model/Euclidean/Incidence.lean) | 3 | `Postulate1`, `line_unique`, `lines_meet_of_opposite_sides` |

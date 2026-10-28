@@ -28,11 +28,15 @@ it, put to the script's own patterns and functions:
 * the wording cases: render.py names the rules of an overlap that a proof leaves unused
   as "does not use" for one, "neither … nor" for two and "none of" for more, and words
   III.24's application of one segment to another by `placement` only from what its
-  facts.json entry shows, read afresh for each root;
+  facts.json entry shows, read afresh for each root; and a summary of tacit rules names
+  the entries attached to a proposition in the order facts.json attaches them, the porism
+  first, under every hash seed;
 * the figure cases: render.py's caption under Euclid's figure says "Drawn for one case"
-  before the case the record's [figure] names, or "Drawn for every case" where the record
-  says `every_case`, and heath.py refuses an `every_case` that is not true or false, or
-  that has no `case` for the caption to name;
+  before the case the record's [figure] names, "Drawn for every case" where the record
+  says `every_case`, or "Drawn for some of its cases" where it says `some_cases`, and
+  heath.py refuses an `every_case` or a `some_cases` that is not true or false, or that
+  has no `case` for the caption to name, a `some_cases` with no `note` naming the cases
+  left undrawn, and the two together;
 * the route cases: render.py counts the steps a modified route changes, one for each
   passage its record argues another way, on the page, in the book's summary and in the
   certificate's key, and where the record counts none says "with a step changed" on the
@@ -2279,7 +2283,8 @@ class Modern(unittest.TestCase):
 
 class Wording(unittest.TestCase):
     """render.py's words that facts.json decides: which of an overlap's rules the proof
-    uses, and III.24's application of one segment to another by `placement`."""
+    uses, III.24's application of one segment to another by `placement`, and the order in
+    which a summary of tacit rules names the entries attached to a proposition."""
 
     def test_overlap_use_names_the_unused_rules_plainly(self):
         four = {"rule": "Tacit.a", "also": ["Tacit.b", "Tacit.c", "Tacit.d"], "kind": "gives"}
@@ -2331,6 +2336,46 @@ class Wording(unittest.TestCase):
                 (root / "facts.json").write_text(json.dumps(facts))
                 with patch.object(render, "ROOT", root):
                     self.assertEqual(render.content_wording().get(old, old), want)
+
+    @staticmethod
+    def entry(ref, axioms, **fields):
+        """A proved entry of facts.json whose proof calls each of `axioms` itself."""
+        return {"ref": ref, "status": "proved", "axioms": list(axioms), "cites": [],
+                "common_notions": [], "own_axioms": list(axioms), "inherited": {}, **fields}
+
+    def test_attached_entries_are_named_in_one_order_under_every_hash_seed(self):
+        """A summary of tacit rules names the entries that bring in rules of their own in
+        the order facts.json attaches them, the porism first, whatever PYTHONHASHSEED is
+        (#539): it sorted a set of them, and on one train's facts III.25's page named two
+        companions one way under seeds 1 and 2 and the other way under 0, 3, 4 and 5."""
+        p = self.entry("III.99", ["Tacit.a"])
+        attached = [self.entry("III.99 kind", ["Tacit.a", "Tacit.b"]),
+                    self.entry("III.99 complete", ["Tacit.c"]),
+                    self.entry("III.99 Por.", ["Tacit.d"], kind="porism")]
+        want = ("<summary>The 1 tacit rule beneath this proof, and 3 more beneath its porism "
+                "and <code>Prop99.kind</code> and <code>Prop99.complete</code></summary>")
+        code = ("import json, sys\n"
+                "sys.path.insert(0, sys.argv[1])\n"
+                "import render\n"
+                "p, attached = json.loads(sys.argv[2])\n"
+                "refs = {'props': [], 'Post.': [], 'Def.': [], 'C.N.': []}\n"
+                "print(render.rests_on(p, {}, 2, 'III', refs, [(a, refs) for a in attached]))\n")
+        scripts = Path(__file__).resolve().parent.parent / "scripts"
+        # -I would ignore PYTHONHASHSEED, as -E does: -P and -s keep the rest of its
+        # isolation, and no other PYTHON variable reaches the child.
+        env = {k: v for k, v in os.environ.items() if not k.startswith("PYTHON")}
+        pages = defaultdict(list)
+        for seed in range(8):
+            result = subprocess.run(
+                [sys.executable, "-P", "-s", "-c", code, str(scripts), json.dumps([p, attached])],
+                capture_output=True, text=True, timeout=60,
+                env={**env, "PYTHONHASHSEED": str(seed)})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            pages[result.stdout].append(seed)
+        self.assertEqual(len(pages), 1, "the seeds render different pages: " + "; ".join(
+            f"{seeds}: {page[page.find('<summary>'):page.find('</summary>')]}"
+            for page, seeds in pages.items()))
+        self.assertIn(want, next(iter(pages)))
 
 
 class LeanPartsNames(unittest.TestCase):
@@ -2459,12 +2504,14 @@ class RouteSteps(unittest.TestCase):
 
 class FigureCaption(unittest.TestCase):
     """The caption under Euclid's figure, from the review record's [figure]: "Drawn for
-    one case" before its `case`, or "Drawn for every case" where `every_case` says the
-    figure draws them all, as III.25's draws Euclid's three side by side."""
+    one case" before its `case`, "Drawn for every case" where `every_case` says the
+    figure draws them all, as III.25's draws Euclid's three side by side, or "Drawn for
+    some of its cases" where `some_cases` says it draws more than one but not all, as
+    III.35's draws Euclid's two and none of Simson's."""
 
     CASE = "the angle ABD greater than, equal to and less than the angle BAD"
 
-    def test_the_caption_says_one_case_or_every_case(self):
+    def test_the_caption_says_one_case_every_case_or_some_cases(self):
         for figure, want in [
                 ({"case": "A outside the circle."}, "Drawn for one case: A outside the circle."),
                 ({"case": "A outside the circle", "every_case": False},
@@ -2472,7 +2519,11 @@ class FigureCaption(unittest.TestCase):
                 ({"case": self.CASE, "every_case": True}, f"Drawn for every case: {self.CASE}."),
                 ({"case": self.CASE + ".", "every_case": True, "note": "N."},
                  f"Drawn for every case: {self.CASE}. N."),
-                ({"every_case": True, "note": "N."}, "N.")]:
+                ({"every_case": True, "note": "N."}, "N."),
+                ({"case": self.CASE + ".", "some_cases": True, "note": "N."},
+                 f"Drawn for some of its cases: {self.CASE}. N."),
+                ({"case": self.CASE, "some_cases": False},
+                 f"Drawn for one case: {self.CASE}.")]:
             with self.subTest(figure=figure):
                 self.assertEqual(render.figure_note({"figure": figure}), want)
 
@@ -2493,21 +2544,35 @@ class FigureCaption(unittest.TestCase):
                     patch.object(heath, "REVIEW", root / "review"):
                 return heath.load_review("III", 25, require_stamp=False)
 
-    def test_a_record_reads_every_case_with_its_case(self):
+    def test_a_record_reads_every_case_or_some_cases_with_its_case(self):
         for figure, want in [(f'case = "{self.CASE}"\nevery_case = true',
                               f"Drawn for every case: {self.CASE}."),
                              (f'case = "{self.CASE}"\nevery_case = false',
+                              f"Drawn for one case: {self.CASE}."),
+                             (f'case = "{self.CASE}"\nsome_cases = true\nnote = "N."',
+                              f"Drawn for some of its cases: {self.CASE}. N."),
+                             (f'case = "{self.CASE}"\nsome_cases = false',
                               f"Drawn for one case: {self.CASE}.")]:
             with self.subTest(figure=figure):
                 self.assertEqual(render.figure_note(self.load(figure)), want)
 
-    def test_a_record_refuses_every_case_without_its_case_or_not_true_or_false(self):
+    def test_a_record_refuses_every_case_or_some_cases_without_its_case_or_not_true_or_false(self):
         for figure, want in [
                 ('every_case = true\nnote = "N."', "`every_case` needs the `case`"),
                 ("every_case = true", "`every_case` needs the `case`"),
                 ("every_case = false", "give its `case`, its `note`, or both"),
                 (f'case = "{self.CASE}"\nevery_case = "yes"', "`every_case` must be true or false"),
-                (f'case = "{self.CASE}"\nevery_case = 1', "`every_case` must be true or false")]:
+                (f'case = "{self.CASE}"\nevery_case = 1', "`every_case` must be true or false"),
+                ('some_cases = true\nnote = "N."', "`some_cases` needs the `case`"),
+                ("some_cases = true", "`some_cases` needs the `case`"),
+                ("some_cases = false", "give its `case`, its `note`, or both"),
+                (f'case = "{self.CASE}"\nsome_cases = true', "`some_cases` needs the `note`"),
+                (f'case = "{self.CASE}"\nsome_cases = "yes"', "`some_cases` must be true or false"),
+                (f'case = "{self.CASE}"\nsome_cases = 1', "`some_cases` must be true or false"),
+                *[(f'case = "{self.CASE}"\nevery_case = {every}\n'
+                   f'some_cases = {some}\nnote = "N."',
+                   "`every_case` and `some_cases` cannot appear together")
+                  for every in ("true", "false") for some in ("true", "false")]]:
             with self.subTest(figure=figure):
                 with self.assertRaises(heath.ReviewError) as caught:
                     self.load(figure)

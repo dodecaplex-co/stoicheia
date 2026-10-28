@@ -645,6 +645,33 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=group), 1,
                      "not overwriting: #1 changed lines were overwritten: README.md")
 
+    def test_valid_later_train_deleting_readme_markers_is_caught(self):
+        # #578: README.md's markers are written by hand, so its hand-written part is read
+        # with each region's body emptied and its markers kept (heath.outside). Train 1
+        # adds Book II's region inline in a line of prose; a reviewed member of train 2, on
+        # train 1's member, deletes it, markers and all, and keeps the prose. Every merge is
+        # automatic, and with the regions taken out whole, markers and all, as before #578,
+        # the hand-written part read as train 1 left it.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        added = readme + "Book II: <!-- scope:II -->Row two.<!-- /scope:II --> Read it.\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {"README.md": added})
+        member = queue.parents(self.repo, one)[1]
+        deleted = self.make([member], {"README.md": readme + "Book II:  Read it.\n"})
+        head = self.merge(self.merge(self.base, member), deleted)
+        rows = "".join(f"| content/{name} | {sha} | {REVIEW} {sha[:12]}: pass. | "
+                       f"{REVIEW} {sha[:12]}: pass. | passed at {sha} |\n"
+                       for name, sha in (("1b", member), ("2", deleted)))
+        self.pr(2, head, "train/area-2", (
+            "## Members\n\n| Branch | Head | /code-review | /security-review | "
+            "/no-mistakes |\n|---|---|---|---|---|\n" + rows
+            + "\n## What is new\n\nNone.\n\n" + self.block(head)))
+        group = self.merge(self.merge(self.base, one, 1), head, 2)
+        self.verdict(self.cli(head=group), 1,
+                     "not overwriting: #1 changed lines were overwritten: README.md")
+
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
         self.base = self.make([old_base], {
@@ -1925,6 +1952,23 @@ class QueueTests(unittest.TestCase):
         self.checkout(self.head)
         (self.repo / TEXT).write_text("A working copy change.\n", encoding="utf-8")
         self.verdict(self.cli(prepare=False), 1, "checkout has source changes")
+
+    def test_working_edits_to_readme_prose_refuse_and_to_a_body_do_not(self):
+        # #578: README.md is generated only between its markers, so a working-tree edit of
+        # its prose is a source change; one inside a scope body is render's, which the
+        # render freshness check catches.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        group = self.merge(self.base, self.train(1, {TEXT: "A reviewed line.\n"}), 1)
+        for old, new, code, message in (
+                ("Prose by hand.", "Prose, edited.", 1, "the part of README.md written by hand"),
+                ("Row.", "Row, regenerated.", 0, "queue: PASS")):
+            with self.subTest(new=new):
+                self.checkout(group)
+                (self.repo / "README.md").write_text(readme.replace(old, new), encoding="utf-8")
+                self.verdict(self.cli(head=group, prepare=False), code, message)
 
     def test_deleted_tracked_file_is_unreadable_in_tree_mode(self):
         # Rule (d) reads the decisions page alone; conflict markers are S23's.

@@ -17,9 +17,9 @@ file compares each locked law's translation with its generated
 law, and `centre_unique` directly with the library declaration, including binder kinds.
 Its concrete plane proof remains as a derived fact, with no generated assumption field.
 The same holds for `centre_inside` and `inside_not_on`, now proved using circle crossings
-and Circle 1 in `Elements/Figure/RuleBase.lean`, and for `exists_point_between` and
-`exists_point_on_line_off_line`, proved using smaller circles and uniqueness of a line,
-respectively, in `Elements/Figure/Incidence.lean`.
+and the radius rule, without Circle 1, in `Elements/Figure/RuleBase.lean`, and for
+`exists_point_between` and `exists_point_on_line_off_line`, proved using smaller circles
+and uniqueness of a line, respectively, in `Elements/Figure/Incidence.lean`.
 
 The laws are those of a straight line and the points on it:
 

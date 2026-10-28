@@ -1,7 +1,9 @@
 """Counting congruence constructors instead of `Coincidence.step` in the certificate,
 `Certificate/Facts.lean`: `tests/test_certificate.py` must fail on transformers with no
 step. The restored certificate must pass the same regression, including its real-step
-cases.
+cases. Both runs are of `CommonNotion4Tests`, the class that runs the certificate on the
+C.N. 4 fixture alone and holds the transformer cases, no step and real steps alike; the
+file's other classes run in the check registry, on the certificate as committed.
 """
 
 import sys
@@ -9,6 +11,9 @@ import sys
 import negative_tests as nt
 
 BUILDS = False
+
+# The class of tests/test_certificate.py whose cases judge the constructor count.
+CLASS = "CommonNotion4Tests"
 
 
 def plant() -> None:
@@ -25,11 +30,11 @@ def plant() -> None:
         )
         nt.expect_failure(
             "constructor counting reports a step in a transformer",
-            nt.run(sys.executable, "-I", "tests/test_certificate.py"),
-            "FAIL: test_transformers_without_step_do_not_count",
+            nt.run(sys.executable, "-I", "tests/test_certificate.py", CLASS),
+            f"FAIL: test_transformers_without_step_do_not_count (__main__.{CLASS}",
             "AssertionError: Lists differ: ['C.N. 4'] != []",
         )
     finally:
         path.write_bytes(saved)
     nt.expect_success("the restored certificate regression",
-                      nt.run(sys.executable, "-I", "tests/test_certificate.py"))
+                      nt.run(sys.executable, "-I", "tests/test_certificate.py", CLASS))

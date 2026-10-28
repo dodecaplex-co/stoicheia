@@ -253,9 +253,9 @@ I.31's, and `Prop30.meet`, credited to Proclus (Heath, vol. 1, pp. 207 and 316).
 tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`, and how
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
-the pieces make up the whole. Book III's tells how proofs take a circle's centre: by
-`exists_centre` where none is supplied, under Heath's "[III. 1]" as elsewhere, or from
-geometric data such as equal circles. It tells the constructions whose references the text
+the pieces make up the whole. Book III's tells how proofs take a circle's centre: from
+geometric data such as equal circles, by III.1's construction in III.4, III.8 and III.17,
+and from `exists_centre` in III.2 and where Heath gives no reference. It tells the constructions whose references the text
 leaves unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
 twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
@@ -626,7 +626,9 @@ validate a figure. Before a changed figure is signed off, render it
   does not suggest that the other cases were proved by the drawing; where a theorem covers
   several cases, the review record's `[figure]` names the one shown; a figure that draws
   every case, side by side or on one figure, says so too, with `every_case` in the
-  record's `[figure]` and its `case` naming the cases drawn;
+  record's `[figure]` and its `case` naming the cases drawn; and a figure that draws more
+  than one case but not every one says so with `some_cases`, its `case` naming the cases
+  drawn and its `note` the cases the theorem covers that it does not draw;
 - a reductio: a figure that draws the impossible supposition is said to be one. It may
   draw it as Heath's printed figure does, departing from the construction so that the
   supposition can be seen, provided the figure note says so (I.14's E, drawn off CB produced

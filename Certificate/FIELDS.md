@@ -35,7 +35,7 @@ in Books I-III, I.15, III.1 and III.16.
 | `opaque` | list of names | Every `opaque` constant this project declares. |
 | `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
 | `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
-| `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. |
+| `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. Each entry's own `proved_rules` (below) names those it rests on. |
 | `proved_rule_cites` | object, name to list of refs | **New** (23 October 2026, [#294](https://github.com/jackChallis/stoicheia/issues/294)). For every theorem in `proved_rules`, with the same keys, the entries its proof cites, found by the walk that finds an entry's `cites`, as `["I.13"]` for `Tacit.inside_of_angle_add`: an entry whose proof uses a proved rule is found to cite every entry in the rule's list. Refs as an entry's `cites` writes them, each list sorted by string. `scripts/check_fidelity.py` accepts a forbidden circle rule missing from the lock as a theorem whose list holds `"III.2"`, with III.2 proved and resting on neither rule ([FORMALIZATION](../docs/FORMALIZATION.md), section 7, "Circle 2 and Circle 3"). |
 | `construction_rules` | list of names | **New** (21 October 2026, [#150](https://github.com/jackChallis/stoicheia/issues/150)). The axioms in `axiom_modules` that are [construction rules](../docs/FORMALIZATION.md#construction-rules), found from Lean's statements of them (below). Sorted by string. |
 
@@ -61,6 +61,7 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `cites` | list of refs | The entries the proof uses directly. **Changed**: a use of a porism is now recorded as the porism, `"III.1 Por."`, where it was recorded as `"III.1"`, and a use of a companion by its own ref. Sorted by string, as before. |
 | `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. A walked local declaration's value that names `Elements.Superposition.Coincidence.step` records `"C.N. 4"`, the restricted calculus's coincidence step. |
 | `axioms` | list of names | Lean's `collectAxioms` of this declaration alone, without Lean's three foundations and `sorryAx`. `Tacit.centre_unique` is now a theorem, proved in `Elements/Figure/Circles.lean` from circle intersections, equal radii (Definition I.15) and the order of lengths; where a proof rests on it, its list holds the axioms beneath it. The list follows each proof's dependencies; `tests/certificate_expectations.json` pins what III.1's and its porism's lists must hold. |
+| `proved_rules` | list of names | **New** (26 October 2026, [#168](https://github.com/jackChallis/stoicheia/issues/168)). Every proved rule the entry rests on: each name of the top-level `proved_rules`, a tacit rule that is a theorem now, that its statement or its proof reaches, through what it cites, its Common Notions, its shared steps and the proved rules themselves, wherever `collectAxioms` goes. A proved rule leaves only its own axioms in `axioms`, never its name, so this list is where a use of one shows. Names omit `Elements.`; sorted by string. On 26 October 2026 III.1's held 24 names and III.3's 25, the one more being `Tacit.adjacent_eq_of_right`, I.13's corollary. Four pins of `tests/certificate_expectations.json` read it, since 26 October 2026: those of III.1, III.1 Por., III.2 and II.14, each excluding all eight tacit rules that the retirement of #119 made theorems (the stronger pins #168 calls for). The pins on those entries' `axioms` that exclude the same eight can no longer fail. `scripts/negative/retired_rule_used.py` plants a use of `Tacit.centre_unique` in III.2's proof, which leaves III.2's `axioms` and `cites` as they are, and of the expectations only the pin on III.2's `proved_rules` refuses it, beside III.2's review stamp, which any edit to the file trips. |
 | `direct_axioms` | list of names | The axioms the proof uses itself, through its helpers and shared steps, but not through another entry it cites or a Common Notion: exactly `own_axioms` together with the keys of `inherited`, besides any of Lean's own foundations it lists (`propext`, in II.2, II.5, III.27, III.29 and III.30), which those two leave out, as `axioms` does. The policy on superposition reads it, so a proof may not reach that rule through a lemma either. |
 | `own_axioms` | list of names | **New** (18 October 2026, [#65](https://github.com/jackChallis/stoicheia/issues/65)). The axioms the proof's own Lean names: in the declaration itself, in a helper written for its proposition (in the proposition's namespace: `Prop7.figure`; for a porism or companion, its proposition's, as `Prop1.middle` is III.1 Por.'s), or in Lean's auxiliary declarations for them; Lean's three foundations and `sorryAx` left out, as in `axioms`. Sorted by string. III.2's has 12 at commit 95b7491. Circle 2 (`Tacit.inside_of_between`) and Circle 3 (`Tacit.outside_of_between`) are not axioms: Circle 2 has been a theorem since 19 October 2026 and Circle 3 since 24 October, and both are now proved after III.2, in `Elements/BookIII/Prop02.lean`, from its corollary `Prop2.within`, so neither occurs in any entry's `axioms`, and a proof that used either would cite III.2 (`proved_rule_cites`, above). |
 | `inherited` | object, name to list of objects | **New** (18 October 2026, #65). The rest of `direct_axioms`, Lean's foundations aside: each axiom the proof's own Lean does not name but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step (`Prop5.base`, or another proposition's helper, as `Prop1.perpendicular` is for III.19), with each such lemma: `name`, `file`, `line`, as in `shared_steps`, sorted by name. An axiom the proof's own Lean names is in `own_axioms` alone, even when a lemma brings it in too. An excerpt from I.5's entry is `"Postulate3": [{"name": "exists_between_nearer", "file": "Elements/Figure/Circles.lean", …}]`: its own Lean draws no circle, and the lemma that keeps a point taken at random near enough does. A proposition it cites may bring the same axiom in as well, as I.3 brings Postulate 3 into I.5. |
@@ -70,9 +71,10 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `statement` | string | **New.** The declaration's type, printed as below. Review records are fingerprinted from it (`heath.review_fingerprint`). |
 | `cited_laws` | list of objects | **New** (21 October 2026, #150), only on an entry whose own declarations, as `own_axioms` reads them, name a law of `Elements.Superposition.Cited`: today I.4 and I.8. One object for each law they name, in the order of the `Cited` type: `law`, the constructor's name (`"lenSymm"`); `proofs`, the theorems that prove it, each stating exactly `Cited.Holds primitives` of that law (below): `name`, `file`, `line`, as in `shared_steps`, sorted by name; and `construction_rules`, every [construction rule](../docs/FORMALIZATION.md#construction-rules) that `collectAxioms` finds beneath any proof of that law the entry reaches (below), sorted by string. The laws are read from the constants the entry's own Lean names, not through `Derives.map`. A law named with no proof reached fails the run, since an empty list would read as a law proved with no construction rule. |
 
-One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `own_axioms`,
-`inherited`, `common_notions` and `shared_steps`: it reads each declaration's type and
-value, opaque values included, and an inductive type's constructors. For
+Every walk of a proof reads a declaration through `mentions`, and these walks give `cites`,
+`direct_axioms`, `own_axioms`, `inherited`, `common_notions`, `shared_steps` and
+`proved_rules`: `mentions` reads each declaration's type and value, opaque values
+included, and an inductive type's constructors. For
 `common_notions`, each local declaration visited is also checked for
 `Elements.Superposition.Coincidence.step` named in its value. Like `#print axioms`, this
 records what the proof term names, through the local declarations it names, without
@@ -106,11 +108,16 @@ itself against Lean: each entry's `axioms` are exactly its `direct_axioms`, the 
 its Common Notions and the `axioms` of every entry in `cites`; and its `direct_axioms`,
 Lean's foundations aside, are exactly its `own_axioms` and the keys of its `inherited`.
 So its `axioms` are its own, those it inherits, its Common Notions' and those of what it
-cites. The Common Notions named as theorems count even though `collectAxioms` cannot see
-them, and some rest on tacit rules (C.N. 3 and C.N. 5 use
-`Tacit.add_lt_add_right`). The restricted calculus's marked coincidence steps count as
-C.N. 4; equality substitution justifies them, as it does the three `CommonNotion4`
-theorems. The marker adds no axiom and changes no axiom field.
+cites. `proved_rules` comes from a walk of its own, `beneath`, which reads through
+`mentions` as the others do and goes wherever `collectAxioms` goes: through the entries
+cited, the Common Notions, the shared steps and the proved rules, recording each axiom
+and each proved rule it meets. Facts.lean checks that this walk finds exactly the
+entry's `axioms`, so its proved rules are those of the walk that finds them. The Common
+Notions named as theorems count even though `collectAxioms` cannot see them, and some
+rest on tacit rules (C.N. 3 and C.N. 5 use `Tacit.add_lt_add_right`). The restricted
+calculus's marked coincidence steps count as C.N. 4; equality substitution justifies
+them, as it does the three `CommonNotion4` theorems. The marker adds no axiom and
+changes no axiom field.
 
 `construction_rules` reads statements, not proofs. For each axiom in `axiom_modules` it
 takes the statement's conclusion and reads it as the definition of a construction rule
@@ -201,7 +208,7 @@ value is not printed: that Lean cannot see it is the point. An inductive type's 
 structure's constructors are entries of their own.
 
 At commit d040117 there were 37, all reached from the axioms; with the entries'
-statements, from 17 October 2026, there are <!-- count:vocabulary -->267<!-- /count -->. Among them:
+statements, from 17 October 2026, there are <!-- count:vocabulary -->268<!-- /count -->. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
@@ -221,8 +228,8 @@ axiom is `HAdd.hAdd a b`, and which addition it is lives in `instAddMagnitude`.
   exactly Heath's porisms; that every attached entry of a complete book is proved; the
   axiom lock; the review stamps; and the facts pinned in
   `tests/certificate_expectations.json`, among them I.4's and I.8's `cited_laws`, the
-  top-level `construction_rules`, and every entry's `shared_steps`, read by each step's
-  `name`.
+  top-level `construction_rules`, every entry's `shared_steps`, read by each step's
+  `name`, and the `proved_rules` of III.1, III.1 Por., III.2 and II.14.
 - `scripts/render.py`: the pages, CERTIFICATE.md and GRAPH.md. A page's table splits
   what the proof uses itself by `own_axioms` and `inherited`, and its list of tacit
   rules marks each, with the lemmas an inherited rule comes in through; CERTIFICATE.md

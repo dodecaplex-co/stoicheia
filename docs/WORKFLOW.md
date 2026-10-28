@@ -324,8 +324,8 @@ reviewer from the authors of the proof.
   history and run it again; for an ambiguous id, a reader identifies the intended commit
   without guessing, reads the record and stamps it as above with enough of the id to name
   that commit alone; then run it again. The migration may be run again at any time, as at
-  landing, after the branches that change records. Until every record carries `text`,
-  `check_fidelity.py` names those without it in a note.
+  landing, after the branches that change records. `check_fidelity.py` fails a record
+  without `text`, as it fails one without any other stamp.
 
 **What a reviewer of the Lean looks for:**
 
@@ -454,10 +454,10 @@ broken reader can merge.
 **One check needs the YAML parser.** The test that every step after a job's lane step
 carries the lane's condition
 ([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
-`scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned in
-`scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after elan and
-before the run of the checks; to run the sequence yourself, or the pre-flight, which runs
-it for a train of class R3 and above, install it once:
+`scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned by version and
+hash in `scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after
+elan and before the run of the checks; to run the sequence yourself, or the pre-flight,
+which runs it for a train of class R3 and above, install it once:
 
 ```sh
 python3 -P -m pip install -r scripts/requirements-test_safe_push.txt
@@ -960,22 +960,10 @@ train and group as unreadable.
 
 ## 9. Release criteria and severity
 
-The acceptance checklist ([ACCEPTANCE.md](ACCEPTANCE.md#where-the-older-criteria-went))
-incorporates the criteria below. A proposition meets these criteria when:
-
-1. its reviewed brief and its final formal statements agree;
-2. every substantive clause, and its porism, is proved or exactly qualified;
-3. the intended cases are covered, and construction inputs and outputs are right;
-4. each representation it relies on has the correspondence results its claims need;
-5. the route shown is accurate, and every exception is visible;
-6. the dependency closure, the axiom boundaries and the certificate cover every formal claim
-   published;
-7. quotations and attributions are checked, and the commentary explains this proposition
-   accurately;
-8. changed figures and the page have been inspected;
-9. the required checks pass on the integrated revision;
-10. a reviewer other than the author has assessed the changed mathematical claims, and the
-    record names the reviewer and the commit.
+The release standard is the acceptance checklist, [ACCEPTANCE.md](ACCEPTANCE.md): a
+proposition, a book and the edition meet the release criteria when its items pass. The ten
+criteria this section listed before it are retired; ACCEPTANCE.md
+[maps each one to the items that replace it](ACCEPTANCE.md#where-the-older-criteria-went).
 
 **Severity** decides what must be corrected:
 
@@ -1064,7 +1052,7 @@ looked into.
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
     run on a release pull request. Before that `--merge`, and after every other change the
-    release's pull request carries, two generated accounts are made again at its head, and
+    release's pull request carries, three generated accounts are made again at its head, and
     what they write is committed to it. The model's full run,
     `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
     MODEL.md's counts. After `lake build`, the overlap screen,
@@ -1074,18 +1062,23 @@ looked into.
     failed check leaves the record as it was. Checks at the two ends of a run cannot show
     that nothing changed and changed back in between. Then
     [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
-    screened, the number of statements in `facts.json` and what closed. Then
-    `python3 -I tests/model/results_check.py` and
-    `python3 -I Audit/screen.py --check-current` both pass: CI runs the first on every pull
-    request, and the coordinator runs the second on the head that `--merge` merges and
-    again just before the tag, and the pull request quotes the screen's closing lines. The
-    screen's check needs no Lean, but any change to the library makes it fail, and only a
-    run, with Lean and about an hour and a half of processor time, may make it pass again;
-    so it is a release step, not one of CI's. The check reads the record, not the run, so
-    it cannot tell a record written by hand from a run's, and the security review reads the
-    run's closing lines, which the pull request quotes. `Audit/` and `tests/` are
-    protected, so the release's decisions entry names each file the runs and their records
-    change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
+    screened, the number of statements in `facts.json` and what closed. Last, once those
+    are committed, and after `lake build`, `lake build Audit` and
+    `lake env lean Certificate/Facts.lean`, `python3 scripts/check_acceptance.py` writes
+    [the acceptance report](reports/acceptance-books-I-III.md), which is committed by
+    itself, since its check lets the head differ from the revision the report names in
+    nothing but the report. Then `python3 -I tests/model/results_check.py`,
+    `python3 -I Audit/screen.py --check-current` and
+    `python3 scripts/check_acceptance.py --check-current` all pass: CI runs the first on
+    every pull request, and the coordinator runs the other two on the head that `--merge`
+    merges and again just before the tag, and the pull request quotes the screen's closing
+    lines. The screen's check needs no Lean, but any change to the library makes it fail,
+    and only a run, with Lean and about an hour and a half of processor time, may make it
+    pass again; so it is a release step, not one of CI's. The check reads the record, not
+    the run, so it cannot tell a record written by hand from a run's, and the security
+    review reads the run's closing lines, which the pull request quotes. `Audit/` and
+    `tests/` are protected, so the release's decisions entry names each file the runs and
+    their records change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
     `Audit/screen-run.toml` and `Audit/screen.py`. Then the notes are drafted from the
     generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
     made.

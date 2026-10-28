@@ -117,6 +117,14 @@ circumference, taken twice.
 decision to add none for Book III is superseded by the approved rule `Tacit.exists_centre`,
 which gives every circle a centre ([brief 0008](0008-centre.md), approved 18 October).
 
+**26 October 2026, the radius rule.** A second rule of ours has joined `exists_centre`: a
+circle's radius is not nothing (`Tacit.radius_ne_zero`), added by the owner's decision of
+25 October 2026 ([its decisions entry](../decisions/2026-10-25-radius-rule.md)). It is a
+rule for Book Zero, not one added for Book III's sake, but Book III's proofs rest on it:
+every positive length in the edition now comes from it, and III.5 and III.6 rest on it in
+place of Diagram-segment 2 and Circle 1, which neither now rests on
+([the entry for that move](../decisions/2026-10-25-book-zero-radius-rule.md)).
+
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. It is the angle the circumference subtends at the centre when it is less than
@@ -174,6 +182,11 @@ comparisons of regions near the vertex. III.16's companions argue directly from 
 rectilineal fact, where Euclid uses reductio; III.31's companions prove what he calls
 manifest. No addition, ratio or motion of mixed angles is claimed. The representation
 and Heath's account of the quarrel over the horn-like angle are explained in the mishnah.
+
+**27 October 2026, correction.** III.16's companions now follow Euclid's reductio from the
+rectilineal fact, and its route is `euclid`. The sentence above that they argue directly,
+and the dated notes below that give the route as `modified`, describe the earlier proof;
+[III.16's record](../../review/III/16.toml) gives the route now.
 
 ## Circles and their centres
 
@@ -256,6 +269,10 @@ point of the straight line through two points of a circle is on the circle exact
 is one of them, and within it exactly when between them), before III.24, which uses it;
 and the meeting fact for an arc, `Prop25.meets`, beside III.25, whose companion uses it.
 
+**27 October 2026, correction.** III.24 no longer uses `Prop24.chord_cases` in its main
+proof. The lemma remains before it and is used by `Prop24.image`, after the theorem, for
+`Prop24.equalMeasure` and `Arc.congruent_iff`.
+
 **Book III's ground, before III.1, `Elements/BookIII/Squares.lean`**: `sq_pos` (the square
 on a straight line is something) and `BookI.Prop46.sq` (equal squares are on equal
 straight lines), for III.14 and III.37, which add I.3, I.4, I.28, I.34, I.46; and
@@ -266,6 +283,14 @@ in equal circles and of one kind, are one), which adds I.7; and, from stage 4,
 `Foot.exists` and `Foot.unique` (every straight line has one foot of the perpendicular
 from a point), which add I.12 and I.17. The file imports Book II's
 ground, so every proposition of Book III has `rect`, `sq` and `BookI.Prop47.sq`.
+
+**26 October 2026, `foot_between` (#477).** `foot_between` has moved, with its name and type,
+to a ground of its own after III.2, `Elements/BookIII/Feet.lean`, which III.14, III.15,
+III.35 and III.36 import. Its last step is Circle 1, and Circle 1 is to be proved after
+III.2, by the owner's decision of 25 October 2026
+([the entry for this move](../decisions/2026-10-25-circle-1-bookzero.md)); III.1 and III.2
+import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
+unchanged; the rest of `Squares.lean` stands as it says.
 
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
@@ -294,6 +319,24 @@ III.23–III.37:
 `Circumference.semicircle` proves of circumferences, by Euclid's own argument, what III.31
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
+
+**26 October 2026, the angle at the centre (#129).** The table stands, and beside it now
+stand the word `angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`, the angle at
+the centre standing on a circumference, which may be two right angles or more, and its
+bridge theorems before III.20 in `Elements/BookIII/Prop20.lean`: `angleAtCentre.diameter`
+(every diameter with its ends on opposite sides of the base gives the same angle),
+`angleAtCentre.congr` (the same for every point naming the side), `angleAtCentre.within`
+(the angle BEC when the centre E lies beyond the base), `angleAtCentre.semicircle` (two
+right angles when E is on it), `angleAtCentre.reflex` (with the angle BEC, four right
+angles when E is on the circumference's side), `angleAtCentre.reflex_gt` (then greater
+than two right angles) and `angleAtCentre.size` (less, two right angles or greater, as E
+lies). III.20's companion `Prop20.circumference` proves from III.20, with III.2 and
+without III.21, that every circumference is its angle at the centre, whatever its size.
+`Circumference.centre` keeps its statement, the case where the centre lies beyond the
+circumference and its angle at the centre is the rectilineal angle BGC; it is proved from
+`Circumference.eq` (III.21) and III.20's companion `Prop20.special`, the statement III.20
+had before #129, so its row still adds III.20 and III.21
+([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 
 **Porisms.** Two porisms are cited by later propositions, and are theorems of their
 own, after their propositions: `Prop1.porism` (the centre lies on a straight line
@@ -390,9 +433,19 @@ worth naming. The first mate's report has a note on every statement.
   statement covers both of Euclid's cases, drawn in his one figure, the centre within the
   angle `BAC` and outside the angle `BDC`, and the case he leaves out, the centre on one
   of the arms.
+
+  **26 October 2026, the angle at the centre of any size (#129).** The bullet above is
+  overtaken: III.20 now speaks of the angle at the centre standing on the circumference,
+  of any size (`angleAtCentre`, in `Elements/Foundations/DefinitionsIII.lean`), which may
+  be two right angles or more, our reading after Heath's notes, not Euclid's; the statement
+  described above is its companion `Prop20.special`
+  ([decision entry](../decisions/2026-10-25-routes-iii-centre.md)).
 - **III.21** is said of any segment. Euclid's proof covers the segment greater than a
   semicircle; Heath gives Simson's for the rest (vol. 2, pp. 49–50), and III.22 and Book IV
   need every segment.
+
+  **26 October 2026 (#129).** Our proof of III.21 now follows Euclid's argument in every
+  segment, by III.20 of any size; Simson's proof is no longer used.
 - **III.22** takes a quadrilateral in the circle as four points of it with the straight line
   `BD` (joining opposite corners) separating `A` from `C`; that `AC` separates `B` from `D`
   follows.
@@ -413,6 +466,13 @@ worth naming. The first mate's report has a note on every statement.
   that statement and proof are now its companion `Prop24.equalCircles`, shown as the
   alternative, and `Prop24.equalMeasure` gives the equal measures of congruent segments,
   which III.26 takes from III.24.
+
+  **27 October 2026, correction.** After the application III.24 now follows Euclid's
+  reductio: the applied segment lies on a circle through C and D (`Prop24.moved`),
+  III.23's companion keeps the image of E from falling within CFD or outside it, and
+  III.10, which the proof now cites as Heath's bracket has it, makes the two circles one.
+  The clause above on settling every point by the angles describes the earlier proof;
+  [III.24's record](../../review/III/24.toml) gives the route now.
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
   and his three cases: the centre beyond the segment, at `D`, or within it, as the angle
   `ABD` is greater than, equal to, or less than `BAD`. Since stage 4 of
