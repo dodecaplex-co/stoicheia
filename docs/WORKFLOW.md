@@ -1332,11 +1332,18 @@ pull request, until evidence CI signs (#574) replaces it
 ([28 October 2026](decisions/2026-10-28-queue-write-access.md)). The judge reads the
 body's block, which is a declaration (rule (b), below), and a block typed to be
 consistent with the repository passes it: main's judge cannot tell it from a real one.
-So whoever can edit the body is trusted not to type a block for a pre-flight that did
-not run: anyone with write access to the repository, and the pull request's own author,
-whom GitHub lets edit its body, even after a writer has queued it. Only an account with
-write access can queue an entry. The judge refuses one whose head is not in this
-repository, the automatic revert included, and, but for that revert, one that a bot
+So whoever wrote or last edited the body is trusted not to type a block for a
+pre-flight that did not run, and the judge holds that trust to writers alone
+([28 October 2026](decisions/2026-10-28-queue-editor-write-access.md)): but for the
+automatic revert, it refuses an entry unless the pull request's author, and the body's
+last editor when anyone has edited it, each have write access to the repository
+(GitHub's write, maintain or admin role), read from GitHub for each queued entry as the
+group is judged; a permission it cannot read refuses too. GitHub lets a pull request's
+author edit its body, even after a writer has queued it, and lets a member of the
+organization without write access open one between the repository's branches: neither
+passes. The last editor vouches for the whole body, whoever wrote it before them. Only
+an account with write access can queue an entry. The judge refuses one whose head is
+not in this repository, the automatic revert included, and, but for that revert, one that a bot
 wrote, queued, last edited or last renamed; the revert's author must be the App, and its
 body is read only for its `Reverts:` and `Failed run:` lines, each checked against
 GitHub's record of the failed push (below). The queue must not be turned on before both
@@ -1670,7 +1677,9 @@ shows that main's copy runs on a group; that a group whose own copy of
 workflow, `ci.yml` included, has a passing job named `queue-integrity` or `queue-gaps`
 while main's fails is held. The second: the pre-flight's evidence authenticated, which
 rule (b) asks for, and which write access to the pull request does by the owner's
-decision until #574's signatures replace it. So the queue may be turned on once the
+decision until #574's signatures replace it, the judge refusing an entry whose author or
+body's last editor lacks it; the same trial shows a group refused whose entry's body was
+last edited by an account without write access. So the queue may be turned on once the
 ruleset is imported and that trial (#606) passes. The coordinator holds these steps: add
 the merge queue rule for main, keep merge commits and enable "only merge non-failing
 pull requests"; require `check`, `model`, `negative`, `formal-model`,

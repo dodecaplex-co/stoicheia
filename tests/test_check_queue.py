@@ -142,7 +142,8 @@ ROUTES = (("commits/main", "main"), ("pulls/([0-9]+)", "pull_requests"),
            "&per_page=100", "ci_runs"),
           (r"actions/runs/([0-9]+)/jobs\?filter=latest&per_page=100", "jobs"),
           (r"actions/runs/([0-9]+)/artifacts\?name=acceptance&per_page=100", "artifacts"),
-          ("actions/artifacts/([0-9]+)/zip", "artifact_zips"))
+          ("actions/artifacts/([0-9]+)/zip", "artifact_zips"),
+          ("collaborators/([A-Za-z0-9-]+)/permission", "permissions"))
 if args[:2] == ["api", "graphql"]:
     kind, value = "queue", snapshot["queue"]
 else:
@@ -175,6 +176,14 @@ for argument in "$@"; do
 done
 exec {python} "$@"
 '''
+
+
+def permission_answer(login: str, base: str, role: str | None = None) -> dict:
+    """GitHub's REST answer for an account's permission on the repository
+    (collaborators/{login}/permission), as a fixture keys it by login: its legacy base
+    role, `base`, and the name of its role, `role`, that base role unless given."""
+    return {"permission": base, "role_name": role or base,
+            "user": {"login": login, "type": "User"}}
 
 
 def harness_source(comment, extra=(), low=queue.safe_push.LOW_CLASSES):
@@ -245,6 +254,11 @@ class QueueTests(unittest.TestCase):
             }}}}},
             # No open main-red issue: main is green.
             "main_red": [[]],
+            # Each account's permission on the repository, keyed by login: the fixture's
+            # author, the owner's account, and someone, a person who edits a body in the
+            # cases below, are writers.
+            "permissions": {"fixture": permission_answer("fixture", "admin"),
+                            "someone": permission_answer("someone", "write")},
         }
         self.one = self.train(1, {TEXT: "The first train's reviewed line.\n"})
         self.two = self.train(2, {SECOND: "The second train's reviewed line.\n"})
@@ -1072,6 +1086,172 @@ class QueueTests(unittest.TestCase):
 
     def test_a_person_s_edit_is_allowed(self):
         self.nodes()[0]["pullRequest"]["editor"] = {"__typename": "User", "login": "someone"}
+        self.verdict(self.cli(), 0, "queue: PASS")
+
+    # Rule (b)'s second requirement rests on write access (#617): an ordinary queued entry
+    # passes only when its author, and its body's last editor when it has one, have write,
+    # maintain or admin access, which GitHub's REST answer gives as admin or write.
+    WRITER = "write, maintain or admin access to owner/repository"
+
+    def edited_by(self, login, *answer, typename="User"):
+        """The first entry's body, last edited by `login`, of GitHub's type `typename`, whose
+        permission GitHub gives as `answer` (permission_answer's base and role) if given."""
+        self.nodes()[0]["pullRequest"]["editor"] = {"__typename": typename, "login": login}
+        if answer:
+            self.snapshot["permissions"][login] = permission_answer(login, *answer)
+
+    def test_a_body_last_edited_by_a_member_without_write_access_refuses(self):
+        # An organization member who may open a pull request between the repository's
+        # branches, and whose base permission or team role is read or triage, edits the
+        # body after a writer has queued it.
+        for answer in (("read", "read"), ("read", "triage")):
+            with self.subTest(answer=answer):
+                self.edited_by("member", *answer)
+                self.verdict(self.cli(), 1, f"#1: its body's last editor has no {self.WRITER}")
+
+    def test_a_body_last_edited_by_an_outside_account_refuses(self):
+        # Neither a member nor a collaborator: a reader of a public repository, or none.
+        for base in ("read", "none"):
+            with self.subTest(base=base):
+                self.edited_by("outsider", base)
+                self.verdict(self.cli(), 1, f"#1: its body's last editor has no {self.WRITER}")
+
+    def test_an_author_without_write_access_refuses(self):
+        # The body never edited since it was opened: its author's own words.
+        self.assertIsNone(self.nodes()[0]["pullRequest"]["editor"])
+        self.snapshot["pull_requests"]["1"]["user"] = {"login": "contributor", "type": "User"}
+        for base in ("read", "none"):
+            with self.subTest(base=base):
+                self.snapshot["permissions"]["contributor"] = permission_answer(
+                    "contributor", base)
+                self.verdict(self.cli(), 1, f"#1: its author has no {self.WRITER}")
+
+    def test_writers_pass(self):
+        # The owner's account, admin, wrote the pull request and last edited its body; then
+        # a maintainer, or a custom role built on write, whose permission GitHub gives as
+        # write, last edited it.
+        self.assertEqual(self.snapshot["permissions"]["fixture"]["permission"], "admin")
+        self.edited_by("fixture")
+        self.verdict(self.cli(), 0, "queue: PASS")
+        for role in ("maintain", "write", "queue-writer"):
+            with self.subTest(role=role):
+                self.edited_by("maintainer", "write", role)
+                self.verdict(self.cli(), 0, "queue: PASS")
+
+    def test_a_failed_permission_read_is_unreadable(self):
+        # The answer missing, or not one GitHub gives (maintain is given as write), is
+        # unreadable, never a pass: for the author's read and for the editor's alike.
+        self.edited_by("someone")
+        for login, whose in (("fixture", "#1's author"), ("someone", "#1's body's last editor")):
+            original = self.snapshot["permissions"][login]
+            user = original["user"]
+            for answer in (None, [], {}, {"permission": "admin"}, {"user": user},
+                           {"user": None, "permission": "admin"},
+                           {"user": {}, "permission": "admin"},
+                           {"user": {"login": 7}, "permission": "admin"},
+                           *({"user": user, "permission": value}
+                             for value in (None, 3, ["admin"], "maintain", "Admin", ""))):
+                with self.subTest(whose=whose, answer=answer):
+                    self.snapshot["permissions"][login] = answer
+                    self.verdict(self.cli(), 2, f"could not read the permission of {whose}")
+            with self.subTest(whose=whose, answer="absent"):
+                del self.snapshot["permissions"][login]
+                self.verdict(self.cli(), 2, f"could not read the permission of {whose}")
+            self.snapshot["permissions"][login] = original
+
+    def test_the_permission_read_asks_github_for_the_account_alone(self):
+        # REST collaborators/{login}/permission, through the one boundary. A failed gh, or
+        # an answer that is not JSON, is unreadable, showing nothing of gh's; and a login
+        # not of GitHub's shape is never put into an endpoint.
+        with patch.dict(os.environ, {"GH_TOKEN": "private-fixture-token"}):
+            api = queue.GitHub("owner/repository", None)
+            answer = json.dumps(permission_answer("someone", "write"))
+            with patch.object(queue.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0, answer, "")) as call:
+                self.assertTrue(queue.write_access(api, "someone", {}, "a reader"))
+            self.assertEqual(call.call_args.args[0], [
+                "gh", "api", "--method", "GET",
+                "repos/owner/repository/collaborators/someone/permission"])
+            for status, out in ((1, answer), (1, "private-fixture-token"),
+                                (0, "{private-fixture-token")):
+                with self.subTest(status=status, out=out), \
+                        patch.object(queue.subprocess, "run", return_value=subprocess.
+                                     CompletedProcess([], status, out, "private-fixture-token")):
+                    with self.assertRaises(ValueError) as caught:
+                        queue.write_access(api, "someone", {}, "a reader")
+                    self.assertEqual(str(caught.exception),
+                                     "GitHub: could not read the permission of a reader")
+            with patch.object(queue.subprocess, "run", side_effect=AssertionError("asked")):
+                for login in ("some/../one", "someone?per_page=1", "-someone", None):
+                    with self.subTest(login=login), \
+                            self.assertRaisesRegex(ValueError, "GitHub: unknown read"):
+                        api.read("permissions", login=login)
+
+    def test_an_answer_for_another_account_is_unreadable(self):
+        # GitHub's logins ignore case, so Kelvin's answer is kelvin's; another login's, a
+        # lookalike's among them, is not, for the editor's read or the author's.
+        self.edited_by("kelvin", "admin")
+        answered = self.snapshot["permissions"]["kelvin"]["user"]
+        for login in ("other", "kelvin-x", "\N{KELVIN SIGN}elvin"):
+            with self.subTest(login=login):
+                answered["login"] = login
+                self.verdict(self.cli(), 2,
+                             "could not read the permission of #1's body's last editor")
+        answered["login"] = "Kelvin"
+        self.verdict(self.cli(), 0, "queue: PASS")
+        self.snapshot["permissions"]["fixture"]["user"]["login"] = "other"
+        self.verdict(self.cli(), 2, "could not read the permission of #1's author")
+
+    def test_a_login_not_of_github_s_shape_is_unreadable(self):
+        # Never put into an endpoint, though an admin's answer is planted for each.
+        for login in ("some one", "-someone", "someone-", "some--one", "x" * 40,
+                      "../someone", "someone?per_page=1", "some_one", "someone\n"):
+            with self.subTest(login=login):
+                self.edited_by(login, "admin")
+                self.verdict(self.cli(), 2,
+                             "could not read the permission of #1's body's last editor")
+        self.nodes()[0]["pullRequest"]["editor"] = None
+        self.snapshot["pull_requests"]["1"]["user"] = {"login": "fixture/x", "type": "User"}
+        self.snapshot["permissions"]["fixture/x"] = permission_answer("fixture/x", "admin")
+        self.verdict(self.cli(), 2, "could not read the permission of #1's author")
+
+    def test_a_body_last_edited_by_an_actor_that_is_not_a_user_is_unreadable(self):
+        # A bot's edit refuses (above); any other actor GraphQL may name has no permission
+        # to read, though a writer's answer stands under its login.
+        for typename in ("Mannequin", "Organization", "EnterpriseUserAccount"):
+            with self.subTest(typename=typename):
+                self.edited_by("someone", typename=typename)
+                self.verdict(self.cli(), 2, "#1's body's last editor is not a user")
+
+    def test_each_account_s_permission_is_read_once_a_run(self):
+        # Both entries' author and the first's last editor are one account, its login in
+        # two cases, as GitHub's logins ignore case: one read, which the second spelling,
+        # with no answer of its own, never needs.
+        self.edited_by("FIXTURE")
+        self.checkout(self.head)
+        self.fixture.write_text(json.dumps(self.snapshot), encoding="utf-8")
+        read, asked = queue.GitHub.read, []
+
+        def counted(api, kind, *args, **kwargs):
+            if kind == "permissions":
+                asked.append(kwargs["login"])
+            return read(api, kind, *args, **kwargs)
+
+        with patch.object(queue.GitHub, "read", counted), contextlib.chdir(self.repo), \
+                contextlib.redirect_stdout(io.StringIO()) as out:
+            code = queue.main(["--head", self.head, "--base", self.base,
+                               "--repo", "owner/repository", "--github-json", str(self.fixture)])
+        self.assertEqual((code, out.getvalue()), (0, "queue: PASS\n"))
+        self.assertEqual(asked, ["fixture"])
+
+    def test_a_merged_entry_s_accounts_are_not_read(self):
+        # Already on main, judged by its own group: only the queued entries are read.
+        pr = self.snapshot["pull_requests"]["1"]
+        pr.update(state="closed", merged=True, merge_commit_sha=self.first,
+                  user={"login": "former", "type": "User"})
+        self.snapshot["main"]["sha"] = self.first
+        self.nodes().pop(0)
+        self.nodes()[0]["position"] = 1
         self.verdict(self.cli(), 0, "queue: PASS")
 
     def rename(self, typename):
