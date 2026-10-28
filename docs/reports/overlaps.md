@@ -273,11 +273,11 @@ still calls the rule itself. II.5 no longer calls it either: it proves the right
 by I.13 and Common Notion 3 in its own Lean. Nor do II.14 and its companion
 `BookII.Prop14.rectangle`, which prove the right angle HEG (it is the angle HEB) in the same
 way and cite II.5; so neither they nor II.14's other seven companions rest on the rule at
-all. Thirty more entries (fifteen propositions, III.16's porism and fourteen companions) rest on
-it through these 14. I.13 does not rest on it. The rule gives the right angles Euclid reads
-off his figure, as for the rectangles of II.1, where his text says nothing of them. These 14
-are not the 17 of the historical census below, which counted propositions and porisms on
-the earlier foundations, II.5 and II.14 among them.
+all. Thirty more entries (fifteen propositions, III.16's porism and fourteen companions)
+rest on it through these 14. I.13 does not rest on it. The rule gives the right angles
+Euclid reads off his figure, as for the rectangles of II.1, where his text says nothing of
+them. These 14 are not the 17 of the historical census below, which counted propositions
+and porisms on the earlier foundations, II.5 and II.14 among them.
 
 The full dependency closure contains the theorem in 44 entries: 27 propositions, one
 porism (III.16's) and 16 companions. The 30 additional entries above reach it only through
@@ -295,12 +295,12 @@ The recount walks Lean's elaborated declarations using the same type, value and
 constructor references as `Certificate/Facts.lean`. For the 14, it stops at another
 certificate entry or a Common Notion; a second walk, which also stops at a shared lemma
 outside the proposition's namespace while following Lean's auxiliary declarations, finds
-the same 14 calling it themselves. For the 33, it follows every project declaration. Each
+the same 14 calling it themselves. For the 44, it follows every project declaration. Each
 walk counts an entry once when it reaches `Tacit.adjacent_eq_of_right`, before following
 that theorem's proof. Since the theorem's proof cites I.13, `facts.json` records I.13 among
 the citations of each of the 14; the first walk, stopping at the theorem, finds every
 entry's citations as `facts.json` gives them, save I.13 for 13 of these 14. III.16 keeps
-I.13 even so, through the I.13 step of `BookIII.Prop1.perpendicular`, which it uses. The 33
+I.13 even so, through the I.13 step of `BookIII.Prop1.perpendicular`, which it uses. The 44
 are exactly the 14 with every entry whose citations in `facts.json` lead to one of them.
 On 22 October 2026 the same walks, run on the second axiom retirement's revision (31 more
 rules proved), which had II.5's and II.14's change but not yet III.1's, gave 17, 16 and 53,
@@ -534,20 +534,21 @@ them, nor their companions, reaches it.
 
 28 October 2026 update (#584): the rule now first enters at III.10. A walk of Lean's proof
 terms on 28 October 2026, at `20d14b0a`, finds eight proofs that rest on it without
-passing through another entry, where the walk of 22 October found four. III.26, III.28
-and III.29 reach it through `EqualCircles.radii` and III.36 calls it itself, as before.
-III.10 reaches it through `CirclesCut.cut_point`, by way of `CirclesCut.of_meet`, in
-`Elements/BookIII/Cutting.lean`, since it came to end by III.5 (#475, #547). III.20, its
-companion `BookIII.Prop20.special` and III.27 reach it through III.20's helper
+passing through another entry, where the walk of 22 October found four. III.26, III.28 and
+III.29 reach it through `EqualCircles.radii` and III.36 calls it itself, as before. III.10
+reaches it through `CirclesCut.cut_point`, by way of `CirclesCut.of_meet`, in
+`Elements/BookIII/Cutting.lean`, since it came to end by III.5 (#475, #547). III.20 and
+its companion `BookIII.Prop20.special` reach it through III.20's helper
 `angleAtCentre.diameter`, which identifies the centre Lean's choice took with the given
-centre, since the angle at the centre of any size moved into `Elements/` (#129). Eighteen more entries rest on it only
-through entries they cite, 26 in all: III.21 to III.24, III.30 to III.34 and III.37, and
-the companions `BookIII.Prop20.circumference`, `BookIII.Prop23.point`,
-`BookIII.Prop24.equalCircles`, `BookIII.Prop24.equalMeasure`, `BookIII.Prop25.kind`,
-`BookIII.Prop30.halves`, `BookIII.Prop31.greater` and `BookIII.Prop31.less`. The walk agrees
-with the proved rules `facts.json` lists for each entry. Searching `Elements/` for the
-rule's name finds III.36's call, the three lemmas above, `CirclesCut.cut_point` and
-`angleAtCentre.diameter`.
+centre, since the angle at the centre of any size moved into `Elements/` (#129); III.27
+reaches it through the same helper since it came to take Euclid's halving in every case
+(#511). Eighteen more entries rest on it only through entries they cite, 26 in all: III.21
+to III.24, III.30 to III.34 and III.37, and the companions `BookIII.Prop20.circumference`,
+`BookIII.Prop23.point`, `BookIII.Prop24.equalCircles`, `BookIII.Prop24.equalMeasure`,
+`BookIII.Prop25.kind`, `BookIII.Prop30.halves`, `BookIII.Prop31.greater` and
+`BookIII.Prop31.less`. The walk agrees with the proved rules `facts.json` lists for each
+entry. Searching `Elements/` for the rule's name finds III.36's call, the three lemmas
+above, `CirclesCut.cut_point` and `angleAtCentre.diameter`.
 
 ##### III.2
 
