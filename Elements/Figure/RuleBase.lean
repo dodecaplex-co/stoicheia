@@ -4,7 +4,7 @@ import Elements.Foundations.Tacit.Transfer
 # Book Zero: elementary incidence and separation
 
 These rules keep their original names and statements from System E. Their proofs use
-point construction, Pasch 2, angle addition and circle chords. Lengths then build on
+point construction, Pasch 2, angle addition and circle crossings. Lengths then build on
 the proved separation of distinct endpoints, without assuming it: a circle drawn about
 one end through the other has a radius, and a radius is not nothing, by a rule of our
 own (`Tacit.radius_ne_zero`).
@@ -242,19 +242,23 @@ theorem Tacit.pasch3 (h : Between A B C) (hB : OnLine B L) : ¬ SameSide A C L :
     (pasch2 h hAM hBM)
     (same_side_symm (pasch2 (between_symm h) hCN hBN)) hAC
 
-/-- A point inside a circle is not on it. (Generalities 4) A line produced from the point meets
-the circle; Circle 1 would put that point between itself and the crossing. -/
+/-- A point inside a circle is not on it. (Generalities 4) It is not the centre, since a radius
+is not nothing. The straight line from the centre through it, produced beyond it, meets the
+circle (Intersections 5); the radius to that point would be the radius to the given point and
+something more. -/
 theorem Tacit.inside_not_on (hA : InsideCircle A α) : ¬ OnCircle A α := by
   intro hon
-  obtain ⟨B, hBA⟩ := exists_point [A]
-  have hAB : A ≠ B := by
+  obtain ⟨O, hO⟩ := exists_centre α
+  have hAO : A ≠ O := by
     intro e
-    subst B
-    exact hBA (List.mem_singleton_self A)
-  obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
-  obtain ⟨C, hC, hCL, hCAB⟩ := line_circle_beyond hA hAL hBL hAB.symm
-  exact ne_of_between (between_of_inside_chord hAL hAL hCL hA hon hC
-    (ne_of_between hCAB).symm) rfl
+    subst e
+    exact RuleProofs.Circle.radius_ne_zero hO hon (len_self _)
+  obtain ⟨L, hAL, hOL⟩ := Postulate1 A O hAO
+  obtain ⟨P, hP, _, hPAO⟩ := line_circle_beyond hA hAL hOL hAO.symm
+  have hlt := CommonNotion5 (a := ‖O A‖)
+    (RuleProofs.Circle.length_pos (RuleProofs.Circle.ne_first hPAO).symm)
+  rw [len_add_of_between (between_symm hPAO), Definition15 hO hon hP] at hlt
+  exact lt_irrefl _ hlt
 
 /-- A finite straight line with distinct ends has length. (Metric 1) A circle drawn about one
 end through the other (Postulate 3) has the line for a radius, and a radius is not nothing. -/
