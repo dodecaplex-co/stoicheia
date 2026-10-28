@@ -1373,8 +1373,9 @@ file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls ei
 `Prop1.of_circle`'s own call of III.1.
 `lake build Audit` then failed on eleven pins and on no other, and each was renewed from
 Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
-`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
-`Audit.CirclesCut.of_meet` and `Audit.within_point`; in `Audit/Overlaps.lean`, those of
+`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, of the crossing bridge
+and its step (since 26 October 2026 `Elements.CirclesCut.of_meet` and
+`Elements.CirclesCut.cut_point`, pinned there still) and of `Audit.within_point`; in `Audit/Overlaps.lean`, those of
 `Audit.III_26_any`, `Audit.III_27_any`, `Audit.III_24_measure` and
 `Audit.III_30_measure`. Each lost one name, `Tacit.exists_point_same_side`, and gained
 none. The pin of `Audit/Centre.lean` holds unchanged.
@@ -1884,3 +1885,15 @@ stand as written.
   right angles off `Prop24.angle_type`;
   [#511](https://github.com/jackChallis/stoicheia/issues/511) proposes Euclid's halving
   there.
+
+## Addendum: the centre by III.1's construction (#547)
+
+26 October 2026. By the owner's decision recorded on
+[#547](https://github.com/jackChallis/stoicheia/issues/547), "Yes - follow Euclid when
+possible.", and the coordinator's [decision entry of that day](../decisions/2026-10-26-centre-by-iii1.md),
+III.4, III.8 and III.17, with `Prop8.partner` and `Prop17.general`, take the centre under
+Heath's "[III. 1]" by III.1's construction through `Prop1.of_circle`; III.2 follows after
+ship C7's train P3 ([#477](https://github.com/jackChallis/stoicheia/issues/477)). Every
+audit pin holds unchanged. No entry's axioms change; the five entries cite III.1 through
+the shared step `Prop1.of_circle`, and Heath's references with no call fall from six to
+three. The reading of #131's section above, that such a call does no work, is overtaken.

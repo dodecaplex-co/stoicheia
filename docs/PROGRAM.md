@@ -165,15 +165,13 @@ and `Prop25.meets` beside III.25 in `Elements/BookIII/Prop25.lean`. III.1's cons
 is at home in `Elements/BookIII/Prop01.lean`, with its guard, `Audit/Centre.lean` (brief
 0008's step 4). Brief 0008's step 6 is done as well: the Book III statements that only
 assumed a centre now take it inside their proofs, and III.30's halves is proved as the
-companion "III.30 halves" ([#67]). On 22 October, with the owner's approval, brief
+companion "III.30 halves" ([#67]). The brief's last step, step 7, is done too ([#59]): the unused
+tag `centre-given` has left `review/terms.toml`, and III.1's expected certificate names
+the rule, `Tacit.exists_centre`. On 22 October, with the owner's approval, brief
 0013's figures followed ([#116]): I.45 and II.14 hold for any rectilineal figure, given by
 its outline (`Prop45.outline`, `Prop14.outline`), and their records are full again. How
 work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
 
-- **The centre rule's tag revision** remains under [#59]: step 7 of frozen
-  [brief 0008](briefs/0008-centre.md) removes the unused `centre-given` from
-  `review/terms.toml`. The construction (step 3), its guard (step 4) and the restatements
-  with their records (step 6) are done.
 - **Book III's review records** are all at `full` ([#29]), as Books I and II's are
   ([#115]).
 - **Acceptance** still has failing items in its report. CI now checks every pull request
@@ -201,7 +199,7 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all <!-- count:axioms -->49<!-- /count --> locked laws in the ordinary
+  a gate for the consolidation release), it proves all <!-- count:axioms -->48<!-- /count --> locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the

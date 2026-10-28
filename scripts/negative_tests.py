@@ -90,10 +90,11 @@ withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-The six that build, changed_audit_pin, cited_law_unproved, construction_in_clean_laws,
-corrupt_olean, ill_typed_proof and planted_assumptions, attempt a restoration build; if it
-fails or is interrupted, every file in `.lake/build` returns to its saved contents and
-presence or absence before the plant, including dependent modules, hashes and traces.
+The seven that build, changed_audit_pin, cited_law_unproved, construction_in_clean_laws,
+corrupt_olean, ill_typed_proof, planted_assumptions and retired_rule_used, attempt a
+restoration build; if it fails or is interrupted, every file in `.lake/build` returns to
+its saved contents and presence or absence before the plant, including dependent modules,
+hashes and traces.
 planted_assumptions always restores or removes `Planted.*` outputs in a nested `finally`.
 Every plant reports its elapsed time, restoration included. An outer `finally` compares
 Git status with the entry status, including on interruption, without replacing an
@@ -130,8 +131,8 @@ ROOT = heath.ROOT
 PLANTED = ROOT / "Elements" / "Foundations" / "Tacit" / "Planted.lean"
 failures: list[str] = []
 refusals: list[str] = []
-GENERATED = ("facts.json", "book", "CERTIFICATE.md", "GRAPH.md", "README.md",
-             "docs/PROGRAM.md")
+# What is generated, whole or in part (heath.py's "Generated regions", #578).
+GENERATED = (*(name.rstrip("/") for name in heath.GENERATED_WHOLE), *heath.REGIONS)
 # The plants' folder, from ROOT, and the name of a plant's file in it.
 PLANTS = Path("scripts", "negative")
 PLANT_FILE = re.compile(r"[a-z][a-z0-9_]*\.py")
