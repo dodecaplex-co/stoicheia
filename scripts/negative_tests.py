@@ -69,10 +69,6 @@ still tell them apart: a conditional include keyed on a repository's path (`incl
 among them, and so a different verdict. Like a plant's file (below), configuration written
 to do that is not caught: the run trusts the configuration of the machine it runs on.
 
-Git commands run from a worker or its descendants are bound to that worker with
-`--work-tree`; a command run from an independent fixture repository is left to that
-repository.
-
 The shares are dealt longest first, by the seconds each plant took as
 tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
 lines): each plant, heaviest first, ties going to a plant that builds and then to the
@@ -184,9 +180,6 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import argparse
-import base64
-import binascii
-import hashlib
 import inspect
 import io
 import json
@@ -199,10 +192,9 @@ import statistics
 import subprocess
 import sys
 import tempfile
-import threading
 import types
 from collections.abc import Callable
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from pathlib import Path
 from time import perf_counter
 from typing import NamedTuple
@@ -818,7 +810,7 @@ def load_plants(folder: Path | None = None) -> tuple[list[Plant], list[str]]:
 
 
 def run_plant(plant: Plant, sources: dict[int, str],
-              changes: Callable[[], list[str]], show_heading: bool = True) -> None:
+              changes: Callable[[], list[str]]) -> None:
     """Run one plant, named before and timed after. Fail it, by its name, if its plant()
     raises SystemExit; if it changes a shared name (`changes`, from guard, which puts the
     name back) or the failures or refusals recorded before it, which only grow (put back
@@ -827,8 +819,7 @@ def run_plant(plant: Plant, sources: dict[int, str],
     `sources` gains the plant's heading for each failure it added, by its index in
     `failures`."""
     path = shown(plant.path)
-    if show_heading:
-        print(f"{plant.name} ({path})")
+    print(f"{plant.name} ({path})")
     failed, caught = len(failures), len(refusals)
     recorded = failures[:], refusals[:]
     started = perf_counter()
@@ -1015,65 +1006,18 @@ def write_times(log: Path) -> int:
     return 0
 
 
-def write_descriptor(descriptor: int, data: bytes) -> None:
-    remaining = memoryview(data)
-    while remaining:
-        written = os.write(descriptor, remaining)
-        if written == 0:
-            raise OSError("write returned no bytes")
-        remaining = remaining[written:]
+class Tee(io.TextIOBase):
+    """Text written to `stream`, and a copy of it kept."""
 
+    def __init__(self, stream):
+        self.stream, self.copy = stream, io.StringIO()
 
-@contextmanager
-def captured_descriptors():
-    sys.stdout.flush()
-    sys.stderr.flush()
-    captured = [bytearray(), bytearray()]
-    problems = []
-    saved = os.dup(1), os.dup(2)
-    pipes = os.pipe(), os.pipe()
+    def write(self, text: str) -> int:
+        self.copy.write(text)
+        return self.stream.write(text)
 
-    def relay(source: int, target: int, copy: bytearray) -> None:
-        try:
-            while block := os.read(source, 64 * 1024):
-                copy.extend(block)
-                write_descriptor(target, block)
-        except BaseException as error:
-            problems.append(error)
-        finally:
-            os.close(source)
-
-    relays = [threading.Thread(target=relay, args=(pipe[0], descriptor, copy), daemon=True)
-              for pipe, descriptor, copy in zip(pipes, saved, captured)]
-    for thread in relays:
-        thread.start()
-    try:
-        try:
-            os.dup2(pipes[0][1], 1)
-            os.dup2(pipes[1][1], 2)
-        finally:
-            os.close(pipes[0][1])
-            os.close(pipes[1][1])
-        yield captured
-    finally:
-        active = sys.exception()
-        try:
-            try:
-                sys.stdout.flush()
-                sys.stderr.flush()
-            finally:
-                try:
-                    os.dup2(saved[0], 1)
-                finally:
-                    os.dup2(saved[1], 2)
-            for thread in relays:
-                thread.join()
-        finally:
-            os.close(saved[0])
-            os.close(saved[1])
-        captured[:] = bytes(captured[0]), bytes(captured[1])
-        if problems and active is None:
-            raise problems[0]
+    def flush(self) -> None:
+        self.stream.flush()
 
 
 def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], list[str]],
@@ -1081,15 +1025,10 @@ def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], li
     """run_plant, in a worker: what the plant prints is printed and kept, and `report`
     gains it with the failures the plant added, noting their places in `failures`."""
     start = len(failures)
-    heading = f"{plant.name} ({shown(plant.path)})"
-    print(heading, flush=True)
-    with captured_descriptors() as captured:
-        run_plant(plant, sources, changes, show_heading=False)
-    heading_bytes = (heading + "\n").encode(sys.stdout.encoding or "utf-8",
-                                             sys.stdout.errors or "strict")
-    report["plants"].append({"name": plant.name,
-                             "output": base64.b64encode(heading_bytes + captured[0]).decode(),
-                             "stderr": base64.b64encode(captured[1]).decode(),
+    tee = Tee(sys.stdout)
+    with redirect_stdout(tee):
+        run_plant(plant, sources, changes)
+    report["plants"].append({"name": plant.name, "output": tee.copy.getvalue(),
                              "failures": failures[start:]})
     report["taken"].update(range(start, len(failures)))
 
@@ -1111,13 +1050,8 @@ def worker_env() -> dict[str, str]:
     variables that name the configuration files the run reads, the four of safe_push.py's
     CONFIG_FILE_VARIABLES, are kept (#430), and with them any conditional include those
     files hold (the docstring)."""
-    env = {name: value for name, value in os.environ.items()
-           if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
-    for name in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
-        value = env.get(name)
-        if value and not os.path.isabs(value):
-            env[name] = os.path.abspath(ROOT / value)
-    return env
+    return {name: value for name, value in os.environ.items()
+            if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
 
 
 def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
@@ -1134,152 +1068,6 @@ def worker_status(tree: Path) -> subprocess.CompletedProcess:
     """The one-worker bracket's `git status --porcelain`, bound to `tree` with --work-tree
     and run with a worker's environment: the snapshot a run with workers compares."""
     return in_tree(tree, "git", f"--work-tree={tree}", "status", "--porcelain")
-
-
-def listed_files() -> subprocess.CompletedProcess:
-    return subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
-                           "--others", "--exclude-standard"), cwd=ROOT,
-                          env=worker_env(), capture_output=True)
-
-
-def file_digest(path) -> bytes:
-    digest = hashlib.sha256()
-    with open(path, "rb") as source:
-        for block in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.digest()
-
-
-def tree_state(root: Path) -> tuple:
-    source = os.fsencode(root)
-    try:
-        info = os.lstat(source)
-    except FileNotFoundError:
-        return ("absent",)
-    entries = []
-
-    def visit(path: bytes, relative: bytes, details) -> None:
-        if stat.S_ISLNK(details.st_mode):
-            value = ("link", details.st_mode, os.readlink(path))
-        elif stat.S_ISREG(details.st_mode):
-            value = ("file", details.st_mode, file_digest(path))
-        elif stat.S_ISDIR(details.st_mode):
-            value = ("directory", details.st_mode)
-        else:
-            value = ("other", details.st_mode)
-        entries.append((relative, value))
-        if stat.S_ISDIR(details.st_mode):
-            with os.scandir(path) as scanned:
-                children = sorted((entry.name, entry.path, entry.stat(follow_symlinks=False))
-                                  for entry in scanned)
-            for name, child, child_info in children:
-                visit(child, os.path.join(relative, name), child_info)
-
-    visit(source, b"", info)
-    return tuple(entries)
-
-
-def copied_state() -> tuple | None:
-    listed = listed_files()
-    if listed.returncode != 0:
-        return None
-    names = tuple(dict.fromkeys(name for name in listed.stdout.split(b"\0") if name))
-    paths = []
-    try:
-        for name in names:
-            source = os.path.join(os.fsencode(ROOT), name)
-            try:
-                info = os.lstat(source)
-            except FileNotFoundError:
-                paths.append((name, None))
-                continue
-            if stat.S_ISLNK(info.st_mode):
-                value = ("link", info.st_mode, os.readlink(source))
-            elif stat.S_ISREG(info.st_mode):
-                value = ("file", info.st_mode, file_digest(source))
-            else:
-                value = ("other", info.st_mode)
-            paths.append((name, value))
-        resolved = root_git("rev-parse", "--git-path", "index")
-        if resolved.returncode != 0:
-            return None
-        index = ROOT / resolved.stdout.strip()
-        shared = tuple((path.name, file_digest(path))
-                       for path in sorted(index.parent.glob("sharedindex.*")))
-        return names, tuple(paths), file_digest(index), shared, tree_state(ROOT / ".lake")
-    except OSError:
-        return None
-
-
-def unblock_sigint() -> None:
-    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
-
-
-def bound_worker_env(tree: Path, folder: Path) -> dict[str, str]:
-    env = worker_env()
-    git = shutil.which("git", path=env.get("PATH"))
-    if git is None:
-        return env
-    identified = subprocess.run((git, "rev-parse", "--absolute-git-dir"), cwd=tree, env=env,
-                                capture_output=True, text=True)
-    if identified.returncode != 0:
-        return env
-    folder.mkdir()
-    launcher = folder / "git"
-    launcher.write_text(
-        '#!/usr/bin/env python3\n'
-        'import os\n'
-        'import subprocess\n'
-        'import sys\n'
-        '\n'
-        'args = sys.argv[1:]\n'
-        'cwd = os.path.realpath(os.getcwd())\n'
-        'explicit = any(name in os.environ for name in '
-        '("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR"))\n'
-        'subcommand = None\n'
-        'i = 0\n'
-        'while i < len(args):\n'
-        '    arg = args[i]\n'
-        '    if arg == "-C":\n'
-        '        i += 1\n'
-        '        if i >= len(args):\n'
-        '            break\n'
-        '        cwd = os.path.realpath(os.path.join(cwd, args[i]))\n'
-        '    elif arg.startswith("-C") and len(arg) > 2:\n'
-        '        cwd = os.path.realpath(os.path.join(cwd, arg[2:]))\n'
-        '    elif arg in ("--git-dir", "--work-tree"):\n'
-        '        explicit = True\n'
-        '        i += 1\n'
-        '    elif arg.startswith(("--git-dir=", "--work-tree=")) or arg == "--bare":\n'
-        '        explicit = True\n'
-        '    elif arg in ("-c", "--config-env", "--namespace", "--super-prefix"):\n'
-        '        i += 1\n'
-        '    elif arg == "--":\n'
-        '        if i + 1 < len(args):\n'
-        '            subcommand = args[i + 1]\n'
-        '        break\n'
-        '    elif not arg.startswith("-"):\n'
-        '        subcommand = arg\n'
-        '        break\n'
-        '    i += 1\n'
-        'git = os.environ["STOICHEIA_NEGATIVE_GIT"]\n'
-        'same = False\n'
-        'if not explicit and subcommand not in ("clone", "init"):\n'
-        '    found = subprocess.run([git, "rev-parse", "--absolute-git-dir"], cwd=cwd,\n'
-        '                           env=os.environ, capture_output=True, text=True)\n'
-        '    if found.returncode == 0:\n'
-        '        same = (os.path.realpath(found.stdout.strip())\n'
-        '                == os.path.realpath(os.environ["STOICHEIA_NEGATIVE_GIT_DIR"]))\n'
-        'command = [git]\n'
-        'if same:\n'
-        '    command.append("--work-tree=" + os.environ["STOICHEIA_NEGATIVE_TREE"])\n'
-        'os.execv(git, command + args)\n', encoding="utf-8")
-    launcher.chmod(0o755)
-    env["STOICHEIA_NEGATIVE_GIT"] = git
-    env["STOICHEIA_NEGATIVE_GIT_DIR"] = identified.stdout.strip()
-    env["STOICHEIA_NEGATIVE_TREE"] = str(tree)
-    env["PATH"] = str(folder) + os.pathsep + env.get("PATH", os.defpath)
-    return env
 
 
 def linked(root: Path) -> Path | None:
@@ -1307,23 +1095,9 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
     if added.returncode != 0:
         return f"could not be made: git worktree add: exit {added.returncode}", (
             added.stdout + added.stderr)
-    enabled = root_git("config", "--bool", "--get", "extensions.worktreeConfig")
-    if enabled.returncode not in (0, 1):
-        return (f"could not be made: git config extensions.worktreeConfig: exit "
-                f"{enabled.returncode}"), enabled.stdout + enabled.stderr
-    if enabled.stdout.strip() == "true":
-        resolved = root_git("rev-parse", "--git-path", "config.worktree")
-        if resolved.returncode != 0:
-            return "could not be made: git rev-parse --git-path config.worktree failed", (
-                resolved.stdout + resolved.stderr)
-        source_config = ROOT / resolved.stdout.strip()
-        if source_config.is_file():
-            configured = in_tree(tree, "git", f"--work-tree={tree}", "config", "--worktree",
-                                 "include.path", str(source_config))
-            if configured.returncode != 0:
-                return (f"could not be made: git config --worktree include.path: exit "
-                        f"{configured.returncode}"), configured.stdout + configured.stderr
-    listed = listed_files()
+    listed = subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
+                             "--others", "--exclude-standard"), cwd=ROOT,
+                            env=worker_env(), capture_output=True)
     if listed.returncode != 0:
         return f"could not be made: git ls-files: exit {listed.returncode}", (
             listed.stderr.decode(errors="replace"))
@@ -1376,23 +1150,12 @@ def well_formed(report) -> bool:
     not missing."""
     def strings(value) -> bool:
         return isinstance(value, list) and all(isinstance(s, str) for s in value)
-
-    def encoded(value) -> bool:
-        if not isinstance(value, str):
-            return False
-        try:
-            base64.b64decode(value, validate=True)
-        except (binascii.Error, ValueError):
-            return False
-        return True
-
     return (isinstance(report, dict) and {"plants", "failures", "status"} <= report.keys()
             and strings(report["failures"])
             and (report["status"] is None or type(report["status"]) is int)
             and isinstance(report["plants"], list)
             and all(isinstance(p, dict) and isinstance(p.get("name"), str)
-                    and encoded(p.get("output")) and encoded(p.get("stderr"))
-                    and strings(p.get("failures"))
+                    and isinstance(p.get("output"), str) and strings(p.get("failures"))
                     for p in report["plants"]))
 
 
@@ -1413,9 +1176,6 @@ def read_report(path: Path, names: list[str], code: int) -> tuple[list[dict], li
     if not well_formed(report):
         return [], [], crashed + ["its report is not in the form a worker writes"]
     plants, own = report["plants"], report["failures"]
-    for plant in plants:
-        plant["output"] = base64.b64decode(plant["output"])
-        plant["stderr"] = base64.b64decode(plant["stderr"])
     given = [p["name"] for p in plants]
     if given != names[:len(given)]:
         crashed.append(f"its report names {', '.join(given) or 'no plant'}, not its plants "
@@ -1534,32 +1294,24 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
                 if shown_with:
                     print(shown_with, end="" if shown_with.endswith("\n") else "\n")
                 return 0
+        env = worker_env()
         for k, (tree, share) in enumerate(zip(trees, shares), 1):
-            env = bound_worker_env(tree, base / f"worker-{k}-bin")
             with open(base / f"worker-{k}.log", "wb") as log:
-                mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
-                try:
-                    worker = subprocess.Popen(
-                        [sys.executable, str(tree / "scripts/negative_tests.py"),
-                         *(arg for p in share for arg in ("--plant", p.name)),
-                         "--worker-report", str(base / f"worker-{k}.json")],
-                        cwd=tree, env=env, stdin=subprocess.DEVNULL, stdout=log,
-                        stderr=subprocess.STDOUT, preexec_fn=unblock_sigint)
-                    workers.append(worker)
-                finally:
-                    signal.pthread_sigmask(signal.SIG_SETMASK, mask)
+                workers.append(subprocess.Popen(
+                    [sys.executable, str(tree / "scripts/negative_tests.py"),
+                     *(arg for p in share for arg in ("--plant", p.name)),
+                     "--worker-report", str(base / f"worker-{k}.json")],
+                    cwd=tree, env=env, stdin=subprocess.DEVNULL, stdout=log,
+                    stderr=subprocess.STDOUT))
         for worker in workers:
             worker.wait()
         reports = [read_report(base / f"worker-{k}.json", [p.name for p in share],
                                worker.returncode)
                    for k, (share, worker) in enumerate(zip(shares, workers), 1)]
         outputs = {p["name"]: p for plants, _, _ in reports for p in plants}
-        sys.stdout.flush()
-        sys.stderr.flush()
         for plant in chosen:
             if plant.name in outputs:
-                write_descriptor(1, outputs[plant.name]["output"])
-                write_descriptor(2, outputs[plant.name]["stderr"])
+                sys.stdout.write(outputs[plant.name]["output"])
                 for failure in outputs[plant.name]["failures"]:
                     sources[len(failures)] = f"{plant.name} ({shown(plant.path)}):"
                     failures.append(failure)
@@ -1610,7 +1362,6 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
     before = parallel_before if report is not None else run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
-    parallel_state = copied_state() if report is None and workers > 1 else None
     parallel = False
     ran = total = 0
     try:
@@ -1623,19 +1374,10 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
                 expected = len(chosen)
                 count = min(workers, expected)
                 if count > 1:
+                    parallel = True
                     assert parallel_before is not None
                     if expect_success("entry Git status", parallel_before):
-                        ready = worker_status(ROOT)
-                        state = copied_state()
-                        if (parallel_state is not None and state == parallel_state
-                                and ready.returncode == 0
-                                and ready.stdout == parallel_before.stdout):
-                            parallel = True
-                            ran = run_workers(chosen, count, parallel_before.stdout, sources)
-                        else:
-                            for plant in chosen:
-                                run_plant(plant, sources, changes)
-                                ran += 1
+                        ran = run_workers(chosen, count, parallel_before.stdout, sources)
                 else:
                     for plant in chosen:
                         if report is None:

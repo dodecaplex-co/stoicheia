@@ -2535,7 +2535,6 @@ class WorkerOptionTests(unittest.TestCase):
                                        subprocess.CompletedProcess(cmd, 0, "", "")))
         self.enterContext(patch.object(negative, "worker_status", side_effect=lambda tree:
                                        subprocess.CompletedProcess((), 0, "", "")))
-        self.enterContext(patch.object(negative, "copied_state", return_value=()))
         self.workers = self.enterContext(patch.object(negative, "run_workers", return_value=3))
         self.enterContext(patch.dict(os.environ))
         self.output = self.enterContext(redirect_stdout(io.StringIO()))
@@ -2641,22 +2640,6 @@ if __name__ == "__main__":
 '''
 # The bodies of the throwaway plants' plant(), "{name}" the plant's name.
 PASSES = 'print("{name} plants its change")\n    nt.refused("{name}: caught")'
-WRITES_SUBPROCESS_OUTPUT = (
-    'import sys\n'
-    '    sys.stdout.flush()\n'
-    '    sys.stderr.flush()\n'
-    '    subprocess.run([sys.executable, "-c", '
-    '"import os; os.write(1, b\'{name} child stdout\\\\n\'); "'
-    '"os.write(2, b\'{name} child stderr\\\\n\')"], check=True)\n'
-    '    nt.refused("{name}: caught")')
-WRITES_NON_UTF8 = (
-    'import sys\n'
-    '    sys.stdout.flush()\n'
-    '    sys.stderr.flush()\n'
-    '    subprocess.run([sys.executable, "-c", '
-    '"import os; os.write(1, b\'{name} child stdout \' + bytes([255]) + b\'\\\\n\'); "'
-    '"os.write(2, b\'{name} child stderr \' + bytes([255]) + b\'\\\\n\')"], check=True)\n'
-    '    nt.refused("{name}: caught")')
 MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", ""))'
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
@@ -2665,13 +2648,6 @@ CHANGES_MODE = ('(nt.ROOT / "tracked-mode").chmod(0o755)\n'
                 '    nt.refused("{name}: caught")')
 DELETES_TREE_AND_CRASHES = 'import shutil\n    shutil.rmtree(nt.ROOT)\n    import os\n    os._exit(3)'
 SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
-SLEEPS_WITH_ALARM = ('import os\n'
-                     '    import signal\n'
-                     '    import time\n'
-                     '    signal.signal(signal.SIGALRM, lambda *_: os._exit(9))\n'
-                     '    signal.alarm(3)\n'
-                     '    print("{name} sleeps")\n'
-                     '    time.sleep(120)')
 # It refuses only when a changed tracked file and an untracked one hold the bytes they hold
 # in the tree under test, which it finds through Git's common directory.
 LOOKS = ('import os\n'
@@ -2714,72 +2690,6 @@ ASKS_GIT = ('print("not ignored:", repr(nt.run("git", "ls-files", "--others", '
             '        nt.refused("{name}: caught")\n'
             '    else:\n'
             '        print("{name}: notes.tmp is not ignored")')
-CHECKS_BOUND_GIT = ('import os\n'
-                    '    import sys\n'
-                    '    import tempfile\n'
-                    '    path = nt.ROOT / "tracked-by-git"\n'
-                    '    saved = path.read_text()\n'
-                    '    path.write_text("planted\\n")\n'
-                    '    checked = nt.run(sys.executable, "scripts/git_tree_probe.py")\n'
-                    '    path.write_text(saved)\n'
-                    '    env = {{name: value for name, value in os.environ.items()\n'
-                    '           if name not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",\n'
-                    '                           "GIT_CONFIG_NOSYSTEM")}}\n'
-                    '    with tempfile.TemporaryDirectory() as tmp:\n'
-                    '        fixture = os.path.join(tmp, "fixture")\n'
-                    '        os.mkdir(fixture)\n'
-                    '        initialized = subprocess.run(["git", "init", "-q"], cwd=fixture,\n'
-                    '                                     env=env, capture_output=True, text=True)\n'
-                    '        top = subprocess.run(["git", "-C", tmp, "-C", "fixture",\n'
-                    '                              "rev-parse", "--show-toplevel"], cwd=nt.ROOT,\n'
-                    '                             env=env, capture_output=True, text=True)\n'
-                    '        absolute = subprocess.run(["git", "-C", "scripts", "-C", fixture,\n'
-                    '                                   "rev-parse", "--show-toplevel"],\n'
-                    '                                  cwd=nt.ROOT, env=env, capture_output=True,\n'
-                    '                                  text=True)\n'
-                    '        explicit = subprocess.run(\n'
-                    '            ["git", "--git-dir=" + os.path.join(fixture, ".git"),\n'
-                    '             "--work-tree=" + fixture, "rev-parse", "--show-toplevel"],\n'
-                    '            cwd=nt.ROOT, env=env, capture_output=True, text=True)\n'
-                    '    if (checked.returncode == 0\n'
-                    '            and checked.stdout == " M tracked-by-git\\n"\n'
-                    '            and initialized.returncode == 0\n'
-                    '            and all(result.returncode == 0\n'
-                    '                    for result in (top, absolute, explicit))\n'
-                    '            and all(os.path.realpath(result.stdout.strip())\n'
-                    '                    == os.path.realpath(fixture)\n'
-                    '                    for result in (top, absolute, explicit))):\n'
-                    '        nt.refused("{name}: caught")\n'
-                    '    else:\n'
-                    '        print("{name}: Git read the wrong tree", repr(checked.stdout),\n'
-                    '              repr(top.stdout), repr(absolute.stdout), repr(explicit.stdout),\n'
-                    '              checked.stderr, top.stderr, absolute.stderr, explicit.stderr)')
-CHECKS_NESTED_GIT = ('import os\n'
-                     '    import tempfile\n'
-                     '    from pathlib import Path\n'
-                     '    with tempfile.TemporaryDirectory(dir=nt.ROOT) as tmp:\n'
-                     '        fixture = Path(tmp)\n'
-                     '        subprocess.run(["git", "init", "-q"], cwd=fixture, check=True)\n'
-                     '        tracked = fixture / "tracked"\n'
-                     '        tracked.write_text("committed\\n")\n'
-                     '        subprocess.run(["git", "add", "tracked"], cwd=fixture, check=True)\n'
-                     '        subprocess.run(["git", "-c", "user.name=test", "-c",\n'
-                     '                        "user.email=test@example.invalid", "commit", "-q",\n'
-                     '                        "-m", "fixture"], cwd=fixture, check=True)\n'
-                     '        tracked.write_text("changed\\n")\n'
-                     '        direct = subprocess.run(["git", "status", "--porcelain"],\n'
-                     '                                cwd=fixture, capture_output=True, text=True)\n'
-                     '        selected = subprocess.run(["git", "-C", str(fixture), "status",\n'
-                     '                                   "--porcelain"], cwd=nt.ROOT,\n'
-                     '                                  capture_output=True, text=True)\n'
-                     '        print("nested cwd:", repr(direct.stdout))\n'
-                     '        print("nested -C:", repr(selected.stdout))\n'
-                     '    if (direct.returncode == selected.returncode == 0\n'
-                     '            and direct.stdout == selected.stdout == " M tracked\\n"):\n'
-                     '        nt.refused("{name}: caught")\n'
-                     '    else:\n'
-                     '        print("{name}: nested Git read the wrong tree", direct.stderr,\n'
-                     '              selected.stderr)')
 
 
 def corrupts(change):
@@ -2814,7 +2724,6 @@ if __name__ == "__main__":
     raise SystemExit(0)
 '''
 TIME = re.compile(r"\d+\.\d\ds \(including restoration\)")
-TIME_BYTES = re.compile(rb"\d+\.\d\ds \(including restoration\)")
 
 
 class WorkerTests(unittest.TestCase):
@@ -2870,12 +2779,6 @@ class WorkerTests(unittest.TestCase):
         self.assert_no_worker_left()
         return result
 
-    def suite_bytes(self, *args):
-        result = subprocess.run([sys.executable, "scripts/negative_tests.py", *args],
-                                cwd=self.root, env=self.env, capture_output=True, timeout=300)
-        self.assert_no_worker_left()
-        return result
-
     def assert_no_worker_left(self):
         self.assertEqual(list(self.tmp.glob("stoicheia-negative-*")), [])
         self.assertEqual(self.git("worktree", "list", "--porcelain").count("worktree "), 1)
@@ -2909,42 +2812,6 @@ class WorkerTests(unittest.TestCase):
                     "1 negative-test failure(s):\nc_three (scripts/negative/c_three.py):\n"
                     "  ✗ c_three: not caught\n" if missing else
                     "4 of 4 plants run\n✓ every planted change was caught\n"), alone.stdout)
-
-    def test_successful_subprocess_output_is_replayed_in_stable_order(self):
-        """Successful workers preserve inherited stdout and stderr in the stable plant
-        order; their documented plan is the only addition beside a one-worker run."""
-        self.commit(a_one=WRITES_SUBPROCESS_OUTPUT, b_two=WRITES_SUBPROCESS_OUTPUT)
-        alone = self.suite()
-        workers = self.suite("--workers", "2")
-        self.assertEqual(workers.returncode, alone.returncode,
-                         workers.stdout + workers.stderr + alone.stdout + alone.stderr)
-        self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
-        for name in ("a_one", "b_two"):
-            self.assertEqual(alone.stdout.count(f"{name} child stdout\n"), 1)
-        self.assertEqual(alone.stderr, "a_one child stderr\nb_two child stderr\n")
-        lines = workers.stderr.splitlines(keepends=True)
-        self.assertIn("The plants in 2 workers, dealt in turn", lines[0])
-        self.assertEqual(lines[1:3], ["  worker 1: a_one\n", "  worker 2: b_two\n"])
-        self.assertEqual("".join(lines[3:]), alone.stderr)
-
-    def test_non_utf8_subprocess_output_is_replayed_as_bytes(self):
-        """Successful workers preserve non-UTF-8 bytes from inherited stdout and stderr,
-        in stable plant order and on the same descriptors as a one-worker run."""
-        self.commit(a_one=WRITES_NON_UTF8, b_two=WRITES_NON_UTF8)
-        alone = self.suite_bytes()
-        workers = self.suite_bytes("--workers", "2")
-        self.assertEqual(workers.returncode, alone.returncode,
-                         workers.stdout + workers.stderr + alone.stdout + alone.stderr)
-        self.assertEqual(TIME_BYTES.sub(b"", workers.stdout),
-                         TIME_BYTES.sub(b"", alone.stdout))
-        for name in (b"a_one", b"b_two"):
-            self.assertEqual(alone.stdout.count(name + b" child stdout \xff\n"), 1)
-        self.assertEqual(alone.stderr,
-                         b"a_one child stderr \xff\nb_two child stderr \xff\n")
-        lines = workers.stderr.splitlines(keepends=True)
-        self.assertIn(b"The plants in 2 workers, dealt in turn", lines[0])
-        self.assertEqual(lines[1:3], [b"  worker 1: a_one\n", b"  worker 2: b_two\n"])
-        self.assertEqual(b"".join(lines[3:]), alone.stderr)
 
     def test_a_plant_that_misses_its_change_fails_the_run_in_any_worker(self):
         """As the first plant of a worker's share and as the last."""
@@ -3049,63 +2916,6 @@ class WorkerTests(unittest.TestCase):
                     self.env.clear()
                     self.env.update(saved)
 
-    def test_git_config_files_cannot_redirect_plant_checks(self):
-        """Global and system core.worktree settings point at the source, while a plant's
-        child check sees its worker and Git in an independent temporary repository stays
-        with that repository; one and multiple workers give the same verdict."""
-        tracked = self.root / "tracked-by-git"
-        tracked.write_text("clean\n")
-        (self.root / "scripts/git_tree_probe.py").write_text(
-            'import subprocess\n'
-            'import sys\n'
-            'result = subprocess.run(["git", "status", "--porcelain", "--", '
-            '"tracked-by-git"], capture_output=True, text=True)\n'
-            'sys.stdout.write(result.stdout)\n'
-            'sys.stderr.write(result.stderr)\n'
-            'raise SystemExit(result.returncode)\n')
-        self.commit(a_checks=CHECKS_BOUND_GIT, b_checks=CHECKS_BOUND_GIT)
-        for source in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
-            with self.subTest(source=source):
-                config = self.tmp / f"{source.lower()}-plant.config"
-                config.write_text(f"[core]\n\tworktree = {self.root}\n")
-                saved = self.env.copy()
-                self.env[source] = str(config)
-                if source == "GIT_CONFIG_SYSTEM":
-                    self.env["GIT_CONFIG_NOSYSTEM"] = "0"
-                try:
-                    self.assertEqual(self.one_worker_s_verdict(), 0)
-                finally:
-                    self.env.clear()
-                    self.env.update(saved)
-
-    def test_relative_git_config_files_keep_source_resolution(self):
-        """Relative global and system configuration paths retain the source cwd's meaning
-        in workers, so status settings give serial and parallel runs the same verdict."""
-        hidden = self.root / "relative-config-hidden"
-        for source in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
-            with self.subTest(source=source):
-                self.commit(a_one=PASSES, b_two=PASSES)
-                config = self.tmp / f"{source.lower()}-relative.config"
-                config.write_text("[status]\n\tshowUntrackedFiles = no\n")
-                hidden.write_text("hidden by the source configuration\n")
-                saved = self.env.copy()
-                self.env[source] = os.path.relpath(config, self.root)
-                if source == "GIT_CONFIG_SYSTEM":
-                    self.env["GIT_CONFIG_NOSYSTEM"] = "0"
-                try:
-                    self.assertEqual(self.git("status", "--porcelain"), "")
-                    self.assertEqual(self.one_worker_s_verdict(), 0)
-                finally:
-                    self.env.clear()
-                    self.env.update(saved)
-                    hidden.unlink()
-
-    def test_nested_fixture_repository_keeps_its_own_work_tree(self):
-        """Git invoked by cwd or -C in a repository nested below a worker keeps that
-        repository's work tree, giving the same status and verdict as a serial run."""
-        self.commit(a_checks=CHECKS_NESTED_GIT, b_checks=CHECKS_NESTED_GIT)
-        self.assertEqual(self.one_worker_s_verdict(), 0)
-
     def test_status_configuration_gives_one_worker_s_verdict(self):
         """The repository hides untracked files from its status, so one worker's bracket
         does not see a file a plant leaves, and two workers', which read the same
@@ -3191,38 +3001,23 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), "")
 
     def test_worktree_rename_configuration_does_not_change_worker_snapshot(self):
-        """A staged rename in a linked source has its plain-status form and one-worker
-        verdict preserved in every worker."""
+        """A staged rename has the same snapshot in source and worker worktrees."""
         notes = self.root / "notes"
         notes.mkdir()
         old = notes / "old.txt"
         old.write_text("renamed contents\n")
         self.commit(a_one=PASSES, b_two=PASSES)
         self.git("config", "extensions.worktreeConfig", "true")
-        source = self.tmp / "source"
-        self.git("worktree", "add", "--detach", str(source), "HEAD")
-        try:
-            def source_git(*args):
-                return subprocess.run(["git", *args], cwd=source, env=self.env,
-                                      capture_output=True, text=True, check=True).stdout
-
-            source_git("config", "--worktree", "status.renames", "false")
-            source_git("mv", "notes/old.txt", "notes/new.txt")
-            before = source_git("status", "--porcelain")
-            self.assertEqual(before, "A  notes/new.txt\nD  notes/old.txt\n")
-            alone = subprocess.run([sys.executable, "scripts/negative_tests.py"], cwd=source,
-                                   env=self.env, capture_output=True, text=True, timeout=300)
-            workers = subprocess.run([sys.executable, "scripts/negative_tests.py", "--workers",
-                                      "2"], cwd=source, env=self.env, capture_output=True,
-                                     text=True, timeout=300)
-            self.assertEqual(workers.returncode, alone.returncode,
-                             workers.stdout + workers.stderr + alone.stdout + alone.stderr)
-            self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
-            self.assertEqual(source_git("status", "--porcelain"), before)
-            self.assertEqual((source / "notes/new.txt").read_text(), "renamed contents\n")
-        finally:
-            self.git("worktree", "remove", "--force", "--force", str(source))
-        self.assert_no_worker_left()
+        self.git("config", "--worktree", "status.renames", "false")
+        self.git("mv", "notes/old.txt", "notes/new.txt")
+        before = self.git("status", "--porcelain", "--no-renames")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_one", "b_two"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+        self.assertEqual(self.git("status", "--porcelain", "--no-renames"), before)
+        self.assertFalse(old.exists())
+        self.assertEqual((notes / "new.txt").read_text(), "renamed contents\n")
 
     def test_filemode_configuration_gives_one_worker_s_verdict(self):
         """With core.fileMode false, one worker's bracket does not see a plant's change to a
@@ -3292,47 +3087,6 @@ class WorkerTests(unittest.TestCase):
                     self.assertRaises(KeyboardInterrupt):
                 negative.run_workers(chosen, 2, entry, {})
         self.assertTrue(interrupted)
-        self.assert_no_worker_left()
-
-    def test_interrupt_after_process_creation_stops_it_before_removing_its_tree(self):
-        """SIGINT after a child is created leaves cleanup owning it, with SIGINT unblocked;
-        the child is stopped and reaped before either registered tree is removed."""
-        self.commit(a_one=SLEEPS_WITH_ALARM, b_two=PASSES)
-        chosen = [negative.Plant(name, self.root / f"scripts/negative/{name}.py", "", False,
-                                 lambda: None)
-                  for name in ("a_one", "b_two")]
-        children = []
-        reaped = []
-        real_popen = subprocess.Popen
-        before_mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
-        with patch.object(negative, "ROOT", self.root), \
-                patch.dict(os.environ, self.env, clear=True):
-            entry = negative.worker_status(self.root).stdout
-            real_root_git = negative.root_git
-
-            def interrupt_after_spawn(*args, **kwargs):
-                child = real_popen(*args, **kwargs)
-                command = args[0] if args else kwargs["args"]
-                if "--worker-report" in command:
-                    children.append(child)
-                    os.kill(os.getpid(), signal.SIGINT)
-                return child
-
-            def check_before_removal(*cmd):
-                if cmd[:2] == ("worktree", "remove"):
-                    reaped.append(bool(children) and children[0].poll() is not None)
-                return real_root_git(*cmd)
-
-            with patch.object(negative.subprocess, "Popen", side_effect=interrupt_after_spawn), \
-                    patch.object(negative, "root_git", side_effect=check_before_removal), \
-                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()), \
-                    self.assertRaises(KeyboardInterrupt):
-                negative.run_workers(chosen, 2, entry, {})
-        self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, set()), before_mask)
-        self.assertEqual(len(children), 1)
-        self.assertIsNotNone(children[0].returncode)
-        self.assertNotEqual(children[0].returncode, 9)
-        self.assertEqual(reaped, [True, True])
         self.assert_no_worker_left()
 
     def test_split_index_state_is_cloned_into_workers(self):
@@ -3455,76 +3209,14 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), status)
         with self.subTest("a file written as a plant loads"):
             self.commit(before={"b_writes": '(nt.ROOT / "written-as-it-loads").touch()'},
-                        a_one=PASSES, b_writes=PASSES)
-            alone = self.suite()
-            (self.root / "written-as-it-loads").unlink()
-            workers = self.suite("--workers", "2")
-            self.assertEqual(workers.returncode, alone.returncode, workers.stdout + alone.stdout)
-            self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
-            first = workers.stdout.index("a_one (scripts/negative/a_one.py)")
-            second = workers.stdout.index("b_writes (scripts/negative/b_writes.py)")
-            self.assertLess(first, second)
-            self.assertNotIn("tree does not match the tree under test", workers.stdout)
+                        a_looks=LOOKS, b_writes=PASSES)
+            result = self.suite("--workers", "2")
+            self.assertEqual(result.returncode, 1, result.stdout)
+            self.assertIn("✗ worker 1's tree does not match the tree under test:\n", result.stdout)
+            self.assertNotIn("worker 2's tree", result.stdout)
+            self.assertNotIn("(scripts/negative/", result.stdout)
             self.assertIn("the working tree did not return to its entry Git status",
-                          workers.stdout)
-
-    def test_same_status_import_mutations_use_the_serial_path(self):
-        """An import-time append to an already-untracked or already-modified file leaves
-        its porcelain label unchanged, but multiple requested workers still give the
-        already-loaded one-worker verdict from the same initial bytes."""
-        target = self.root / "notes.txt"
-        before = ('(nt.ROOT / "notes.txt").write_text('
-                  '(nt.ROOT / "notes.txt").read_text() + "loaded\\n")')
-        for tracked, initial, label in ((False, "untracked\n", "?? notes.txt\n"),
-                                        (True, "modified\n", " M notes.txt\n")):
-            with self.subTest(tracked=tracked):
-                target.unlink(missing_ok=True)
-                if tracked:
-                    target.write_text("committed\n")
-                expected = initial + "loaded\n"
-                body = ('contents = (nt.ROOT / "notes.txt").read_text()\n'
-                        f'    if contents == {expected!r}:\n'
-                        '        nt.refused("{name}: caught")\n'
-                        '    else:\n'
-                        '        print("{name}: imported more than once", repr(contents))')
-                self.commit(before={"b_reads": before}, a_reads=body, b_reads=body)
-                target.write_text(initial)
-                self.assertEqual(self.git("status", "--porcelain", "--", "notes.txt"),
-                                 label)
-                alone = self.suite()
-                target.write_text(initial)
-                self.assertEqual(self.git("status", "--porcelain", "--", "notes.txt"),
-                                 label)
-                workers = self.suite("--workers", "2")
-                self.assertEqual(workers.returncode, alone.returncode,
-                                 workers.stdout + workers.stderr + alone.stdout + alone.stderr)
-                self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
-                self.assertEqual(workers.stderr, alone.stderr)
-                self.assertEqual(target.read_text(), expected)
-
-    def test_lake_import_mutation_uses_the_serial_path(self):
-        """An import-time append within the ignored build clone gives multiple requested
-        workers the already-loaded one-worker verdict from the same initial bytes."""
-        probe = self.root / ".lake/build/probe"
-        initial = "initial\n"
-        expected = initial + "loaded\n"
-        probe.write_text(initial)
-        before = ('(nt.ROOT / ".lake/build/probe").write_text('
-                  '(nt.ROOT / ".lake/build/probe").read_text() + "loaded\\n")')
-        body = ('contents = (nt.ROOT / ".lake/build/probe").read_text()\n'
-                f'    if contents == {expected!r}:\n'
-                '        nt.refused("{name}: caught")\n'
-                '    else:\n'
-                '        print("{name}: imported more than once", repr(contents))')
-        self.commit(before={"b_reads": before}, a_reads=body, b_reads=body)
-        alone = self.suite()
-        probe.write_text(initial)
-        workers = self.suite("--workers", "2")
-        self.assertEqual(workers.returncode, alone.returncode,
-                         workers.stdout + workers.stderr + alone.stdout + alone.stderr)
-        self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
-        self.assertEqual(workers.stderr, alone.stderr)
-        self.assertEqual(probe.read_text(), expected)
+                          result.stdout)
 
     def test_a_run_s_directory_inside_a_work_tree_fails_the_run(self):
         """TMPDIR inside another repository's work tree, where a fixture meant to have no
@@ -3550,30 +3242,29 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(list(inside.iterdir()), [])
 
     def test_a_report_out_of_form_is_a_crash_and_the_others_are_read(self):
-        """Each of eight workers' reports lacks a field the run reads, or has one of the
-        wrong type, once the worker has written it: each worker crashed, and the ninth
+        """Each of seven workers' reports lacks a field the run reads, or has one of the
+        wrong type, once the worker has written it: each worker crashed, and the eighth
         worker's verdicts are read all the same."""
         changes = {"a_no_plants": 'del report["plants"]',
                    "b_no_failures": 'del report["failures"]',
                    "c_no_status": 'del report["status"]',
                    "d_no_name": 'del report["plants"][0]["name"]',
                    "e_no_output": 'del report["plants"][0]["output"]',
-                   "f_stderr_not_base64": 'report["plants"][0]["stderr"] = "*"',
-                   "g_no_plant_failures": 'del report["plants"][0]["failures"]',
-                   "h_status_as_text": 'report["status"] = str(report["status"])'}
-        self.commit(i_whole=PASSES, **{name: corrupts(change) for name, change in changes.items()})
-        result = self.suite("--workers", "9")
+                   "f_no_plant_failures": 'del report["plants"][0]["failures"]',
+                   "g_status_as_text": 'report["status"] = str(report["status"])'}
+        self.commit(h_whole=PASSES, **{name: corrupts(change) for name, change in changes.items()})
+        result = self.suite("--workers", "8")
         self.assertEqual(result.returncode, 1, result.stdout)
         crashed = [f"worker {k} ({name}) crashed: its report is not in the form a worker writes"
                    for k, name in enumerate(changes, 1)]
         for message in crashed:
             self.assertIn(f"✗ {message}; its log ends:\n", result.stdout)
-        self.assertIn("\ni_whole (scripts/negative/i_whole.py)\ni_whole plants its change\n"
-                      "✓ i_whole: caught\n", result.stdout)
+        self.assertIn("\nh_whole (scripts/negative/h_whole.py)\nh_whole plants its change\n"
+                      "✓ h_whole: caught\n", result.stdout)
         self.assertTrue(result.stdout.endswith(
-            "9 negative-test failure(s):\noutside any plant:\n"
+            "8 negative-test failure(s):\noutside any plant:\n"
             + "".join(f"  ✗ {message}\n" for message in crashed)
-            + "  ✗ only 1 of the 9 plants chosen were run\n"), result.stdout)
+            + "  ✗ only 1 of the 8 plants chosen were run\n"), result.stdout)
 
     def test_a_worker_runs_without_the_variables_of_a_repository_or_a_build(self):
         """LEAN_PATH, a LAKE variable, GIT_NAMESPACE and the variable that gives the number
