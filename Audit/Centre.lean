@@ -18,11 +18,13 @@ either would make III.1 cite III.2, a later proposition, which the certificate r
 `Tacit.centre_unique` is a theorem since axiom wave one, and no axiom list shows a call
 to it either.
 `Tacit.exists_centre` is admitted by the owner's decision of 18 October 2026 on issue
-#59, "approved, as Astra recommends". The pin cannot show that its centre is used only
-inside the proof that D is within the circle, nor that
-`centre_unique` is not called. A reader checks both in `Prop1`, `Prop1.construction` and the
-lemmas they call, as well as how the construction follows Euclid; a pin on the proved rules
-each entry uses is #168's.
+#59, "approved, as Astra recommends". The pin cannot show that the construction uses its
+centre only inside the proof that D is within the circle, nor that `centre_unique` is not
+called. A reader checks both in `Prop1.construction` and the lemmas it calls; checks in
+`Prop1`, whose reductio takes its supposed centre G from the rule too, that no centre the
+rule gives is a point the theorem returns, and that `centre_unique` is not called there
+either; and checks how the construction follows Euclid. A pin on the proved rules each
+entry uses is #168's.
 -/
 
 set_option warningAsError true

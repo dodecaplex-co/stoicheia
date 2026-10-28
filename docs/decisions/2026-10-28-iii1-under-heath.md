@@ -14,4 +14,5 @@
 
   This entry approves the change to `Audit/Centre.lean`, a protected path, in its module
   comment alone: the comment names the steps that `Prop1` now calls in place of
-  `Prop1.construction`. The pin, its fixture and its axiom list are unchanged.
+  `Prop1.construction`, and what a reader checks in `Prop1`, whose reductio also takes a
+  centre from the rule. The pin, its fixture and its axiom list are unchanged.

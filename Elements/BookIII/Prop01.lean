@@ -162,8 +162,8 @@ theorem Prop1.perpendicular_chord {A B D : Point} {ABC : Circle}
 /-- Euclid's construction for III.1 receives a circle and two points A, B of it.
 AB is bisected at D [I. 10]; DC is drawn at right angles to AB and through to E;
 and CE is bisected at F [I. 10]. That D is within the circle, which Euclid takes from
-his figure, is `Prop1.midpoint_inside`. The same three
-steps appear separately under Heath's sentences in `Prop1`. -/
+his figure, is `Prop1.midpoint_inside`. The same three steps appear separately under
+Heath's sentences in `Prop1`. -/
 theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hAB : A ≠ B) :
     ∃ F C D E : Point, Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧
