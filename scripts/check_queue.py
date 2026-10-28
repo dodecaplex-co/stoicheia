@@ -614,13 +614,18 @@ def ordinary_entry(pr: dict, actors: dict, repo_slug: str, api: GitHub,
                       "automatic revert, and its title goes into main's merge commit")
     writer = f"write, maintain or admin access to {repo_slug}, and only a writer vouches " \
              "for a pre-flight block"
-    if not write_access(api, pr["author"]["login"], access, f"#{pr['number']}'s author"):
-        raise Refused(f"#{pr['number']}: its author has no {writer}")
+    author_writes = write_access(api, pr["author"]["login"], access,
+                                 f"#{pr['number']}'s author")
+    editor_writes = None
     if editor is not None:
         if editor[0] != "User":
             raise ValueError(f"GitHub: #{pr['number']}'s body's last editor is not a user")
-        if not write_access(api, editor[1], access, f"#{pr['number']}'s body's last editor"):
-            raise Refused(f"#{pr['number']}: its body's last editor has no {writer}")
+        editor_writes = write_access(api, editor[1], access,
+                                     f"#{pr['number']}'s body's last editor")
+    if not author_writes:
+        raise Refused(f"#{pr['number']}: its author has no {writer}")
+    if editor_writes is False:
+        raise Refused(f"#{pr['number']}: its body's last editor has no {writer}")
 
 
 def pull_request(answer, number: int) -> dict:

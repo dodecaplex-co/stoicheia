@@ -1127,6 +1127,30 @@ class QueueTests(unittest.TestCase):
                     "contributor", base)
                 self.verdict(self.cli(), 1, f"#1: its author has no {self.WRITER}")
 
+    def test_an_unreadable_editor_is_not_masked_by_an_author_without_write_access(self):
+        for base in ("read", "none"):
+            for case in ("unsupported type", "malformed login", "failed permission read",
+                         "mismatched permission answer"):
+                with self.subTest(base=base, case=case):
+                    saved = json.loads(json.dumps(self.snapshot))
+                    self.snapshot["pull_requests"]["1"]["user"] = {
+                        "login": "contributor", "type": "User"}
+                    self.snapshot["permissions"]["contributor"] = permission_answer(
+                        "contributor", base)
+                    message = "could not read the permission of #1's body's last editor"
+                    if case == "unsupported type":
+                        self.edited_by("someone", typename="Mannequin")
+                        message = "#1's body's last editor is not a user"
+                    elif case == "malformed login":
+                        self.edited_by("some one", "admin")
+                    elif case == "failed permission read":
+                        self.edited_by("unreadable")
+                    else:
+                        self.edited_by("someone")
+                        self.snapshot["permissions"]["someone"]["user"]["login"] = "other"
+                    self.verdict(self.cli(), 2, message)
+                    self.snapshot = saved
+
     def test_writers_pass(self):
         # The owner's account, admin, wrote the pull request and last edited its body; then
         # a maintainer, or a custom role built on write, whose permission GitHub gives as
