@@ -58,9 +58,9 @@
   branch `main`; the one rule `workflows`, naming `.github/workflows/queue-judge.yml` at
   `refs/heads/main` in the repository by its id; enforcement active; no bypass actor.
   The queue's tests hold it to that, and the installed ruleset is to be compared with it.
-  It is not a protected path, and `scripts/risk.py` gives it class R0; since it is the
-  configuration the owner installs, a card asks for it to be classed with the landing
-  tool.
+  It is not a protected path, and `scripts/risk.py` gives it class R0, although it is the
+  configuration the owner installs; classing it with the landing tool is proposed
+  separately.
   The repository and the workflow's identity are settings in that file and the event's
   `github.repository`, never written in the judge's code, so that #574's signer can be a
   second entry of the same rule with no second design.
