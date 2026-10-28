@@ -188,9 +188,6 @@ theorem Prop22 {A₁ A₂ B₁ B₂ C₁ C₂ E F P : Point}
      drawn for the joins. -/
   -- I say that the triangle KFG has been constructed out of three straight lines equal to A,
   -- B, C.
-  /- A triangle indeed: K is off DE, on P's side of it, and F and G are on it. -/
-  have : Triangle K F G :=
-    (Triangle.of_line hF_DE hG_DE (ne_of_between hFGY) (not_on_line_of_same_side hKP)).cab
   -- For, since the point F is the centre of the circle DKL,
   -- FD is equal to FK.
   have hFD_FK : ‖F D‖ = ‖F K‖ := Definition15 hF_DKL hD_DKL hK_DKL

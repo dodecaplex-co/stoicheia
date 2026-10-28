@@ -32,9 +32,8 @@ note = "In the Lean a straight line between two points is named by its ends: KF 
 
 [[passage]]
 at = "I say that the triangle KFG has been constructed"
-kind = "carried"
-note = "The Lean proves here that K, F and G make a triangle, since K is off DE and F and G are on it. Euclid's proof argues only the three lengths and never uses that KFG is a triangle; nor does ours, whose statement concludes with the lengths and the side of FE on which K lies."
-unused = ["this"]
+kind = "grouped"
+note = "Euclid announces here what the steps below establish, and the Lean carries it with them. Its conclusion gives G on the ray from F through E, K on P's side of FE and the three lengths; since K is then off FE, K, F and G make a triangle."
 
 [review]
 stage = "full"
