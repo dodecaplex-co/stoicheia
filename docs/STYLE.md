@@ -254,8 +254,8 @@ tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`, and how
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
 the pieces make up the whole. Book III's tells how proofs take a circle's centre: from
-geometric data such as equal circles, by III.1's construction in III.4, III.8 and III.17,
-and from `exists_centre` in III.2 and where Heath gives no reference. It tells the constructions whose references the text
+geometric data such as equal circles, by III.1's construction in III.2, III.4, III.8 and
+III.17, and from `exists_centre` where Heath gives no reference. It tells the constructions whose references the text
 leaves unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
 twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
