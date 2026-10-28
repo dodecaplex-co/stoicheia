@@ -2944,6 +2944,42 @@ class WorkerTests(unittest.TestCase):
             self.assertIn(f"✓ {name}: caught\n", result.stdout)
         self.assertEqual(notes.read_text(), "untracked despite global ignore\n")
 
+    def test_inherited_alternate_index_does_not_change_worker_snapshot(self):
+        """An inherited alternate index does not replace the source index in workers."""
+        self.commit(a_one=PASSES, b_two=PASSES)
+        alternate = self.tmp / "alternate-index"
+        alternate_env = self.env | {"GIT_INDEX_FILE": str(alternate)}
+        subprocess.run(["git", "read-tree", "--empty"], cwd=self.root, env=alternate_env,
+                       check=True)
+        self.env["GIT_INDEX_FILE"] = str(alternate)
+        try:
+            result = self.suite("--workers", "2")
+        finally:
+            self.env.pop("GIT_INDEX_FILE")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_one", "b_two"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+        self.assertEqual(self.git("status", "--porcelain"), "")
+
+    def test_worktree_rename_configuration_does_not_change_worker_snapshot(self):
+        """A staged rename has the same snapshot in source and worker worktrees."""
+        notes = self.root / "notes"
+        notes.mkdir()
+        old = notes / "old.txt"
+        old.write_text("renamed contents\n")
+        self.commit(a_one=PASSES, b_two=PASSES)
+        self.git("config", "extensions.worktreeConfig", "true")
+        self.git("config", "--worktree", "status.renames", "false")
+        self.git("mv", "notes/old.txt", "notes/new.txt")
+        before = self.git("status", "--porcelain", "--no-renames")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_one", "b_two"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+        self.assertEqual(self.git("status", "--porcelain", "--no-renames"), before)
+        self.assertFalse(old.exists())
+        self.assertEqual((notes / "new.txt").read_text(), "renamed contents\n")
+
     def test_no_worker_s_tree_is_left(self):
         """After a run that passes, one that fails and one with a crash, as after every run
         of these tests; and after an interruption, which the run passes on to each worker

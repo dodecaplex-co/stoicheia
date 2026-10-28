@@ -1046,7 +1046,7 @@ def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
 def worker_status(tree: Path) -> subprocess.CompletedProcess:
     """A configuration-invariant Git status snapshot for the parallel run."""
     return in_tree(tree, "git", f"--work-tree={tree}", "-c", "core.quotePath=true",
-                   "status", "--porcelain=v1", "--untracked-files=all")
+                   "status", "--porcelain=v1", "--untracked-files=all", "--no-renames")
 
 
 def linked(root: Path) -> Path | None:
@@ -1085,7 +1085,8 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
                     target.symlink_to(os.readlink(source))
                 else:
                     shutil.copy2(source, target)
-        indexes = [run("git", "rev-parse", "--git-path", "index"),
+        indexes = [in_tree(ROOT, "git", f"--work-tree={ROOT}", "rev-parse", "--git-path",
+                           "index"),
                    in_tree(tree, "git", "rev-parse", "--git-path", "index")]
         if any(index.returncode != 0 for index in indexes):
             return "could not be made: git rev-parse --git-path index failed", "".join(
