@@ -66,16 +66,39 @@ VERDICTS = json.dumps({"format": VERDICTS_FORMAT, "checker": "fixture",
                        "verdicts": {}}).encode("utf-8")
 
 
-def artifact_zip(members) -> bytes:
-    """A zip of (name, bytes) members, each a regular file unless its ZipInfo says else."""
+def artifact_zip(members, method=zipfile.ZIP_STORED) -> bytes:
+    """A zip of (name, bytes) members, each a regular file unless its ZipInfo says else, and
+    each compressed by `method` (stored, by default) unless its ZipInfo says else."""
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         for name, data in members:
             info = name if isinstance(name, zipfile.ZipInfo) else zipfile.ZipInfo(name)
             if not isinstance(name, zipfile.ZipInfo):
                 info.external_attr = 0o100644 << 16
+                info.compress_type = method
             archive.writestr(info, data)
     return buffer.getvalue()
+
+
+def sized_zip(size: int) -> bytes:
+    """A zip of exactly `size` bytes: the four files the acceptance job keeps, stored, each
+    of a quarter of what the zip's headers leave."""
+    names = queue.ACCEPTANCE_FILES
+    each, rest = divmod(size - len(artifact_zip([(name, b"") for name in names])), len(names))
+    return artifact_zip([(name, b"x" * (each + (rest if number == 0 else 0)))
+                         for number, name in enumerate(names)])
+
+
+def declaring(data: bytes, name: str, size: int) -> bytes:
+    """The zip `data` with its central directory declaring `size` bytes for `name`'s file,
+    whatever the file holds: the size zipfile reads it by."""
+    data, at = bytearray(data), 0
+    while (at := data.find(b"PK\x01\x02", at)) != -1:
+        length = int.from_bytes(data[at + 28:at + 30], "little")
+        if data[at + 46:at + 46 + length] == name.encode("utf-8"):
+            data[at + 24:at + 28] = size.to_bytes(4, "little")
+        at += 4
+    return bytes(data)
 
 
 # The acceptance job's artifact in the ratchet, as its "Keep the reports" step keeps it.
@@ -2120,8 +2143,9 @@ class QueueTests(unittest.TestCase):
         `steps`, only the steps so named run, the test having set up what those before
         them leave. As on GitHub, the first step that fails ends the job. The result's
         args are the labels of the steps that ran, its status the failing step's or 0,
-        and its output theirs."""
-        head, base = head or self.head, base or self.base
+        and its output theirs. A `head` or `base` of "" is an event that gives none."""
+        head = self.head if head is None else head
+        base = self.base if base is None else base
         spec = (workflow or self.workflow("queue-judge.yml"))["jobs"][job]
         self.assertNotIn("if", spec, f"{job}: a skipped required job counts as passed")
         runner = runner or self.root / f"runner-{job}"
@@ -2425,17 +2449,19 @@ class QueueTests(unittest.TestCase):
         # acceptance (--acceptance-run), so it has no cutoff of its own earlier than the
         # queue's status check timeout, 150 minutes from the group's start: the waiter's
         # deadline and the job's limit are that timeout too, and the job starts after the
-        # group does. Acceptance's limit and 75 minutes of gap tests leave 15 for runners
-        # and the handover after acceptance ends, which is serial (a poll of a minute,
-        # then the reads and the download, each allowed 60 seconds): a group that ends
-        # near the timeout may be ejected at it (AcceptanceRunTests, the deadline passed
-        # during the handover). The poll is a minute for the token's limit of about 1,000
-        # requests an hour; the revert's wait keeps RUN_POLL. To be measured again on the
-        # queue's trial (WORKFLOW, "Turning it on").
+        # group does. Acceptance's limit and a budget of 75 minutes for the gap tests leave
+        # 15 for runners and the handover after acceptance ends, which is serial (a poll of
+        # a minute, then the reads and the download, each allowed 60 seconds): a group that
+        # ends near the timeout may be ejected at it (AcceptanceRunTests, the deadline
+        # passed during the handover). The two are budgets, which no job holds:
+        # queue-gaps' own limit is the 150. The poll is a minute for the token's limit of
+        # about 1,000 requests an hour; the revert's wait keeps RUN_POLL. To be measured
+        # again on the queue's trial (WORKFLOW, "Turning it on").
         ci, judge = self.workflow("ci.yml")["jobs"], self.workflow("queue-judge.yml")["jobs"]
-        status = 150
+        status, gap_tests_budget, runners_and_handover_budget = 150, 75, 15
         self.assertEqual(ci["acceptance"]["timeout-minutes"], 60)
-        self.assertEqual(ci["acceptance"]["timeout-minutes"] + 75 + 15, status)
+        self.assertEqual(ci["acceptance"]["timeout-minutes"] + gap_tests_budget
+                         + runners_and_handover_budget, status)
         self.assertEqual(queue.ACCEPTANCE_WAIT, status * 60)
         self.assertEqual(judge["queue-gaps"]["timeout-minutes"], status)
         self.assertNotIn("needs", judge["queue-gaps"])
@@ -2449,12 +2475,15 @@ class QueueTests(unittest.TestCase):
         self.assertEqual(queue.safe_push.QUEUE_TIMEOUT, 2 * 150 * 60)
 
     # The planted cases of the queue judge's design (MQ3-reqwf, 27 October 2026, section
-    # 7), each naming the guard it holds; undone, its test turns red. Those of main's own
-    # file (a job made conditional, a merge-group step skipped, the judge step removed,
-    # cancel-in-progress added) and CI's queue-tests dropped are the contracts': in
-    # scripts/test_safe_push.py, Units.test_the_queue_judge_workflow_refuses_its_plants.
-    # That GitHub runs main's copy, binds the rule to the file and ignores a job of the
-    # same name elsewhere is for the live trial alone.
+    # 7), each naming the guard it holds; undone, its test turns red. Most run main's file
+    # step by step (run_job); the body-edit plants run this tree's check_queue.py by its
+    # command line, and one of them main's file too. Those of main's own file (a job made
+    # conditional, a merge-group step skipped, the judge step removed, cancel-in-progress
+    # added, merge_group dropped from `on:`) and CI's queue-tests dropped are the
+    # contracts': in scripts/test_safe_push.py,
+    # Units.test_the_queue_judge_workflow_refuses_its_plants. That GitHub runs main's copy,
+    # binds the rule to the file and ignores a job of the same name elsewhere is for the
+    # live trial alone.
 
     def real_main(self):
         """Main with scripts/ as this repository holds it but for its tests and its harness,
@@ -2481,14 +2510,19 @@ class QueueTests(unittest.TestCase):
             "scripts/safe_push.py": (SCRIPTS / "safe_push.py").read_text(encoding="utf-8")})
         self.snapshot["main"]["sha"] = self.base
 
-    def sound_group(self, changes, new="None."):
+    def sound_group(self, changes, new="None.", real_preflight=False):
         """A group of main as it is (real_main, real_harness), the first train making
         `changes`, the second a change elsewhere, whose CI run's acceptance job passed;
-        checked out."""
+        checked out. Its trains are pre-flighted by the fixture's harness or, with
+        `real_preflight`, by this repository's, which main then holds before they are
+        built."""
         self.real_main()
+        if real_preflight:
+            self.real_harness()
         one = self.train(1, changes, new=new)
         two = self.train(2, {SECOND: "The second train's reviewed line.\n"})
-        self.real_harness()
+        if not real_preflight:
+            self.real_harness()
         group = self.merge(self.merge(self.base, one, 1), two, 2)
         self.snapshot.update(acceptance_answers(group))
         self.checkout(group)
@@ -2580,10 +2614,27 @@ class QueueTests(unittest.TestCase):
                               "weakened sample test ran", "queue: PASS")
         self.assertNotIn("group judge ran", output)
 
+    def test_plant_a_group_that_adds_a_workflow_with_the_judge_s_job_is_refused_by_main_s(self):
+        # A group whose train adds a workflow of its own with a job queue-integrity, which
+        # passes on every merge group, as if it were the judge. Main's queue-gaps, run as
+        # the runner would, refuses the group by main's --gaps. Guard: gap_commands'
+        # refusal of a path under .github/ to which GITHUB_TESTS maps no tests; undone, the
+        # group is not refused by it. That GitHub's rule binds the judge's own file, so that
+        # a job of the same name elsewhere satisfies nothing, is the live trial's to show.
+        impostor = ".github/workflows/impostor.yml"
+        group = self.sound_group({impostor: (
+            "name: Queue judge\non:\n  merge_group:\njobs:\n  queue-integrity:\n"
+            "    runs-on: ubuntu-latest\n    steps:\n      - run: echo 'queue: PASS'\n")},
+            f"- check: {impostor}")
+        self.verdict(self.run_job("queue-gaps", head=group), 1,
+                     f"queue: REFUSED: gaps: no tests are mapped to {impostor}")
+
     def test_plant_a_body_edited_after_its_pre_flight_is_refused_by_main_s_judge(self):
-        # The body edited after the pre-flight, the head unchanged: main's judge refuses
-        # each edit by its own predicate of preflight, whose refusal is named here, so that
-        # undoing any one of them turns its case red.
+        # The body edited after the pre-flight, the head unchanged: the judge refuses each
+        # edit by its own predicate of preflight, whose refusal is named here, so that
+        # undoing any one of them turns its case red. Each runs this tree's check_queue.py
+        # by its command line; the block hidden runs main's file too, its queue-integrity
+        # step as the runner runs it, last.
         original = self.body()
         blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
         other = self.git("rev-parse", f"{self.base}:{TEXT}").strip()
@@ -2609,6 +2660,11 @@ class QueueTests(unittest.TestCase):
                                  new=f"- check: {CHECK}")
         self.verdict(self.cli(head=group), 1, "queue: REFUSED: pre-flight: left the full checks "
                      "to CI, but the class by main's scripts/risk.py is R3 (")
+        group = self.sound_group({TEXT: "The first train's reviewed line.\n"})
+        block = queue.PREFLIGHT.search(self.body()).group()
+        self.set_body(self.body().replace(block, f"<!--\n{block}\n-->"))
+        self.verdict(self.run_job("queue-integrity", head=group), 1,
+                     "queue: REFUSED: pre-flight: block is hidden by code or HTML")
 
     def test_plant_a_body_edited_between_github_s_two_readings_is_unreadable(self):
         # The body edited between the queue's answer and the pull request's, which the
@@ -2667,10 +2723,49 @@ class QueueTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
                 self.assertFalse((runner / "judge-calls.jsonl").exists())
 
+    def test_plant_an_event_without_a_head_or_base_fails_each_first_judging_step(self):
+        # A merge group's event gives both shas. Were one empty, each step that first reads
+        # them fails at its first lines, before Git reads a revision made of it: with no
+        # base, the check of ":scripts/check_queue.py" reads the group's own file, in the
+        # index, and passes, and only the archive after it fails. Guard: each step's
+        # `test -n "$GROUP_HEAD"` and `test -n "$GROUP_BASE"`; undone, the base's case
+        # reaches Git. The head's case is held by the comparison of the checkout too, so
+        # only the contracts' digest tells its guard undone.
+        base, head = self.recording_group()
+        self.checkout(head)
+        for number, (job, step) in enumerate((
+                ("queue-integrity", "Check the group with main's copy of check_queue.py"),
+                ("queue-gaps", "Read acceptance's verdicts from the group's CI run with main's "
+                               "copy of check_queue.py"))):
+            for given in ({"head": head, "base": ""}, {"head": "", "base": base}):
+                with self.subTest(step=step, empty=[k for k, v in given.items() if not v]):
+                    runner = self.root / f"no-sha-{number}-{bool(given['head'])}"
+                    result = self.run_job(job, steps={step}, runner=runner, **given)
+                    self.assertEqual(result.args, [step])
+                    self.assertEqual((result.returncode, result.stdout, result.stderr),
+                                     (1, "", ""))
+                    self.assertFalse((runner / "judge-calls.jsonl").exists())
+
     def test_control_a_sound_group_passes_every_step_of_both_jobs(self):
         # The controls: a sound group, judged by main's copy of each job, runs every step
         # on a merge group, and each exits 0.
         group = self.sound_group({TEXT: "The first train's reviewed line.\n"})
+        for job in JUDGE_JOBS:
+            with self.subTest(job=job):
+                result = self.run_job(job, head=group)
+                self.verdict(result, 0, "queue: PASS")
+                self.assertEqual(result.args, self.labels(job))
+
+    def test_control_a_sound_group_pre_flighted_by_main_s_own_harness_passes(self):
+        # The same control, its trains pre-flighted by this repository's
+        # scripts/safe_push.py, which names a check by EMPTY_CHECK, a name bound to a
+        # string: main's judge reads that harness's checks (harness_check_names, through
+        # harness_value) and passes the group. Undo that reading and this control turns red.
+        group = self.sound_group({TEXT: "The first train's reviewed line.\n"},
+                                 real_preflight=True)
+        self.assertEqual(self.git("show", f"{self.base}:scripts/safe_push.py"),
+                         (SCRIPTS / "safe_push.py").read_text(encoding="utf-8"))
+        self.assertIn(f"harness={self.base}", self.body())
         for job in JUDGE_JOBS:
             with self.subTest(job=job):
                 result = self.run_job(job, head=group)
@@ -3020,6 +3115,118 @@ class AcceptanceRunTests(unittest.TestCase):
                 self.unreadable(self.waited(artifact_zips=[data])[0],
                                 "could not read the acceptance artifact's zip")
 
+    def test_a_zip_past_its_limit_refuses(self):
+        # Step 3's zip, of a group's own CI: at most ACCEPTANCE_ZIP_MAX bytes, which a zip
+        # of exactly that size passes and one of a byte more does not, before it is read
+        # as a zip (acceptance_verdicts; the download holds the same limit as it comes).
+        limit = queue.ACCEPTANCE_ZIP_MAX
+        at, over = sized_zip(limit), sized_zip(limit + 1)
+        self.assertEqual((len(at), len(over)), (limit, limit + 1))
+        found = self.waited(artifact_zips=[at])[0]
+        self.assertEqual(found, zipfile.ZipFile(io.BytesIO(at)).read("verdicts.json"))
+        self.refused(self.waited(artifact_zips=[over])[0],
+                     f"acceptance: the artifact's zip is larger than {limit} bytes")
+
+    def test_a_verdicts_json_past_its_limit_refuses(self):
+        # Step 3's verdicts: at most ACCEPTANCE_VERDICTS_MAX bytes, stored or deflated,
+        # which a file of exactly that size passes; one byte more refuses by the size its
+        # header declares, before anything is decompressed.
+        limit = queue.ACCEPTANCE_VERDICTS_MAX
+        for method in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED):
+            with self.subTest(method=method):
+                verdicts = b" " * limit
+                self.assertEqual(self.waited(artifact_zips=[artifact_zip(
+                    [("verdicts.json", verdicts)], method)])[0], verdicts)
+                self.refused(self.waited(artifact_zips=[artifact_zip(
+                    [("verdicts.json", verdicts + b" ")], method)])[0],
+                    f"the artifact holds verdicts.json, which declares {limit + 1} bytes, "
+                    f"more than {limit}")
+
+    def test_a_compressed_payload_that_expands_past_the_limit_refuses(self):
+        # A zip of some 16,000 bytes whose verdicts.json, or another file it keeps, would
+        # expand to 16 MiB: refused by the size each file's header declares, before
+        # anything is decompressed. A file compressed by another method than deflate,
+        # which zipfile would decompress a whole read at once, refuses however small.
+        expands = b"\0" * (16 << 20)
+        for members in ([("verdicts.json", expands)],
+                        [("verdicts.json", VERDICTS), ("report.md", expands)]):
+            name = members[-1][0]
+            with self.subTest(name=name):
+                bomb = artifact_zip(members, zipfile.ZIP_DEFLATED)
+                self.assertLess(len(bomb), 20000)
+                self.refused(self.waited(artifact_zips=[bomb])[0],
+                             f"the artifact holds {name}, which declares {16 << 20} bytes")
+        for method in (zipfile.ZIP_BZIP2, zipfile.ZIP_LZMA):
+            with self.subTest(method=method):
+                self.refused(self.waited(artifact_zips=[artifact_zip(
+                    [("verdicts.json", VERDICTS)], method)])[0],
+                    "the artifact holds verdicts.json compressed by another method than deflate")
+
+    def test_a_header_that_understates_its_file_refuses(self):
+        # zipfile reads a file no further than its header declares. Read through the
+        # bounded stream instead, a verdicts.json whose header declares 1,000 bytes refuses
+        # once it gives one byte past ACCEPTANCE_VERDICTS_MAX, stored or deflated, however
+        # much more it holds within the zip's own limit; and if it holds fewer than that
+        # but more than 1,000, it refuses for holding other than its header declares.
+        limit = queue.ACCEPTANCE_VERDICTS_MAX
+        for method in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED):
+            for size in (limit + 1, 3 * limit):
+                with self.subTest(method=method, size=size):
+                    data = declaring(artifact_zip([("verdicts.json", b"\0" * size)], method),
+                                     "verdicts.json", 1000)
+                    self.assertEqual(zipfile.ZipFile(io.BytesIO(data)).getinfo(
+                        "verdicts.json").file_size, 1000)
+                    self.refused(self.waited(artifact_zips=[data])[0],
+                                 f"the artifact's verdicts.json is larger than {limit} bytes")
+            with self.subTest(method=method, size=5000):
+                data = declaring(artifact_zip([("verdicts.json", b"\0" * 5000)], method),
+                                 "verdicts.json", 1000)
+                self.refused(self.waited(artifact_zips=[data])[0],
+                             "verdicts.json holds 5000 bytes, not the 1000 its header declares")
+
+    def test_the_download_is_bounded_as_it_comes(self):
+        # Step 3's download, by gh api, a stand-in for it first on the PATH: gh's bytes as
+        # given, by the artifact's id, up to ACCEPTANCE_ZIP_MAX. At one byte more the
+        # reading stops and refuses, and gh, which holds on after it for 30 seconds, is
+        # stopped by its handle at once rather than waited for. A gh that exits other
+        # than 0 is unreadable.
+        tools = self.root / "tools"
+        tools.mkdir()
+        (tools / "fake_gh.py").write_text(
+            "import json, os, sys, time\n"
+            "with open(os.environ['FAKE_ZIP_LOG'], 'w', encoding='utf-8') as log:\n"
+            "    json.dump(sys.argv[1:], log)\n"
+            "sys.stdout.buffer.write(b'x' * int(os.environ['FAKE_ZIP_BYTES']))\n"
+            "sys.stdout.buffer.flush()\n"
+            "time.sleep(int(os.environ['FAKE_ZIP_HOLD']))\n"
+            "sys.exit(int(os.environ['FAKE_ZIP_EXIT']))\n", encoding="utf-8")
+        (tools / "gh").write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} -I "
+                                  f"{shlex.quote(str(tools / 'fake_gh.py'))} \"$@\"\n",
+                                  encoding="utf-8")
+        (tools / "gh").chmod(0o755)
+        log, limit = self.root / "gh-call.json", queue.ACCEPTANCE_ZIP_MAX
+        api = queue.GitHub("owner/repository", None)
+        for size, hold, code in ((limit, 0, 0), (limit + 1, 30, 0), (10, 0, 1)):
+            with self.subTest(size=size, code=code), patch.dict(os.environ, {
+                    "GH_TOKEN": "fixture-token", "FAKE_ZIP_LOG": str(log),
+                    "FAKE_ZIP_BYTES": str(size), "FAKE_ZIP_HOLD": str(hold),
+                    "FAKE_ZIP_EXIT": str(code),
+                    "PATH": f"{tools}{os.pathsep}{os.environ['PATH']}"}):
+                start = time.monotonic()
+                if size == limit:
+                    self.assertEqual(api.read("artifact_zips", ARTIFACT), b"x" * limit)
+                elif code:
+                    with self.assertRaisesRegex(ValueError, "could not read artifact_zips"):
+                        api.read("artifact_zips", ARTIFACT)
+                else:
+                    with self.assertRaisesRegex(queue.Refused, re.escape(
+                            f"acceptance: the artifact's zip is larger than {limit} bytes")):
+                        api.read("artifact_zips", ARTIFACT)
+                    self.assertLess(time.monotonic() - start, 15)
+                self.assertEqual(json.loads(log.read_text(encoding="utf-8")),
+                                 ["api", "--method", "GET",
+                                  f"repos/owner/repository/actions/artifacts/{ARTIFACT}/zip"])
+
     def test_a_change_at_the_second_reading_refuses(self):
         # Step 4: after the download, the same run at its attempt, the same job, still its
         # latest execution and passed, and the same artifact, unexpired, in its window.
@@ -3156,7 +3363,8 @@ class AcceptanceRunTests(unittest.TestCase):
 
     def test_the_reader_reads_each_list_whole_and_the_zip_as_bytes(self):
         # Through gh api, as the reader reads the rest: each list one page of 100, the
-        # zip by the artifact's id, its bytes as given.
+        # zip by the artifact's id, its bytes as given, by the bounded download (whose
+        # reading of gh test_the_download_is_bounded_as_it_comes holds).
         api = queue.GitHub("owner/repository", None)
         root = "repos/owner/repository/actions/"
         with patch.dict(os.environ, {"GH_TOKEN": "fixture-token"}), \
@@ -3173,10 +3381,10 @@ class AcceptanceRunTests(unittest.TestCase):
                     self.assertEqual(call.call_args.args[0],
                                      ["gh", "api", "--method", "GET", root + endpoint])
                     self.assertIs(call.call_args.kwargs["text"], True)
-            call.return_value = subprocess.CompletedProcess([], 0, KEPT_REPORTS, b"")
-            self.assertEqual(api.read("artifact_zips", ARTIFACT), KEPT_REPORTS)
-            self.assertEqual(call.call_args.args[0][-1], root + f"artifacts/{ARTIFACT}/zip")
-            self.assertIs(call.call_args.kwargs["text"], False)
+            with patch.object(queue, "download", return_value=KEPT_REPORTS) as fetch:
+                self.assertEqual(api.read("artifact_zips", ARTIFACT), KEPT_REPORTS)
+            self.assertEqual(fetch.call_args.args[0],
+                             ["gh", "api", "--method", "GET", root + f"artifacts/{ARTIFACT}/zip"])
             for workflow, head in (("../ci.yml", self.HEAD), ("ci.yml", "HEAD")):
                 with self.subTest(workflow=workflow, head=head):
                     with self.assertRaisesRegex(ValueError, "unknown read"):

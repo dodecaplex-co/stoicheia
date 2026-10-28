@@ -1112,9 +1112,8 @@ pushes and deletion. When the owner enables the merge queue, the owner adds
 `queue-gaps`, is never among them, since GitHub matches a required check by its name
 alone and a group can make a check of any name: an organization ruleset requires it
 instead, by its file, `.github/workflows/queue-judge.yml`, run from main ("The merge
-queue", below). The queue is off until then, and the coordinator holds the setup steps
-below. Locally, the pre-push hook refuses
-every push to main. Agents
+queue", below). The queue is off until the owner enables it, and the coordinator holds
+the setup steps below. Locally, the pre-push hook refuses every push to main. Agents
 never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
 findings recorded in the pull request, not by approvals. Tags, releases, release notes,
@@ -1320,23 +1319,27 @@ checker that judges it, and the job fails while main has none. It refuses an unr
 input, record or GitHub answer.
 
 Before the queue is turned on, two things must be held by something a group cannot
-change. **The first, the judge's code and its running**, is held by an organization
-ruleset of the repository's organization: its rule "Require workflows to pass before
-merging" requires `.github/workflows/queue-judge.yml`, which holds `queue-integrity` and
-`queue-gaps`, from main (its `ref`, `refs/heads/main`), with an empty bypass list; the
-ruleset the owner imports is `docs/rulesets/queue-judge.json`, and the queue's tests hold
-it to this paragraph. GitHub runs main's copy of that file in place of a pull request's
-or a group's own (the coordinator's trial of 27 October 2026, on a pull request; on a
-group, to be shown before the queue goes on), so a group that changes the file, or
-`ci.yml`, or `check_queue.py`, is judged by main's; its change judges the groups after it
-lands. A skipped required job counts as passed, so neither job may skip on a group. The
-two jobs' names are never among the required status checks, which GitHub matches by
-name alone. **The second, the authenticity of the pre-flight's evidence**, is not held
-yet: the judge reads the body's block, which is a declaration (rule (b), below), and a
-block typed to be consistent with the repository passes it. Main's judge cannot tell it
-from a real one. It waits for evidence CI signs (#574) or for a dated decision of the
-owner on what authenticates the block until then. The queue must not be turned on
-before both are held. Its four rules are:
+change. **The first, the judge's code and its running**, is to be held by an organization
+ruleset of the repository's organization, once the owner imports it and the trial shows
+it holding a group; until then nothing holds it. Its rule "Require workflows to pass
+before merging" requires `.github/workflows/queue-judge.yml`, which holds
+`queue-integrity` and `queue-gaps`, from main (its `ref`, `refs/heads/main`), with an
+empty bypass list; the ruleset the owner imports is `docs/rulesets/queue-judge.json`, and
+the queue's tests hold it to this paragraph. GitHub runs main's copy of that file in
+place of a pull request's or a group's own (the coordinator's trial of 27 October 2026,
+on a pull request; on a group, to be shown before the queue goes on), so a group that
+changes the file, or `ci.yml`, or `check_queue.py`, is judged by main's; its change
+judges the groups after it lands. GitHub runs a required file only on the events its own
+`on:` names: in the same trial, a required file that named only `pull_request` never ran
+on a group, and the group waited, so main's copy must name `merge_group`. A skipped
+required job counts as passed, so neither job may skip on a group. The two jobs' names
+are never among the required status checks, which GitHub matches by name alone. **The
+second, the authenticity of the pre-flight's evidence**, is not held yet: the judge reads
+the body's block, which is a declaration (rule (b), below), and a block typed to be
+consistent with the repository passes it. Main's judge cannot tell it from a real one. It
+waits for evidence CI signs (#574) or for a dated decision of the owner on what
+authenticates the block until then. The queue must not be turned on before both are held.
+Its four rules are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
@@ -1450,28 +1453,27 @@ main's fix: its body must declare, as `--merge` reads it, every open `main-red` 
 and no other ("Out of a red main", below), or the judge refuses it.
 
 **The gaps of what is new.** In the `queue-gaps` job, `check_queue.py --gaps` takes the
-union of the entries' derived changes and their declarations. A changed
-`tests/test_*.py` runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself;
-a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
-`scripts/test_<name>.py` tests. The safe_push test command is
-`python3 scripts/test_safe_push.py`. A file under `.github/`, changed or deleted, asks
-for the tests that read it, which `GITHUB_TESTS` names; any other path under `.github/`
-is refused, as is a group that deletes a test named there, whether or not it changes a
-file under `.github/`, until main's copy of the map changes. Any other file the group
-deletes asks for no test; when an entry has more than one merge base, it asks for the
-tests of what it changes against
-any of them, and a deletion excuses a test only if it is a deletion against all. Each
-selected command runs once, and a failure fails the job. Main chooses the tests, but
-they are the group's own: that they pass shows what they test, and whether they test
-enough is the protected paths' security review's to say. Changed propositions have
-their acceptance items printed from the acceptance artifact, as a report of the
-verdict already judged there. `queue-gaps` is not part of CI's run, so `check_queue.py
---acceptance-run` finds that run's verdicts: the one run of `ci.yml` for the group's head and the
-merge group event, that run's latest `acceptance` job, passed, and the one `acceptance`
-artifact that job made, read by its id; after the download it reads the run, the job
-and the artifact again, the run's attempt unchanged. Any other answer, or a list not read
-whole, refuses; a run, job or artifact not there yet is waited for. Declared rules are printed for the reader. Foundations
-need no extra run here, since `model` and `formal-model` run on every group.
+union of the entries' derived changes and their declarations. A changed `tests/test_*.py`
+runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself; a changed
+`scripts/<name>.py` runs its existing `tests/test_<name>.py` or `scripts/test_<name>.py`
+tests. The safe_push test command is `python3 scripts/test_safe_push.py`. A file under
+`.github/`, changed or deleted, asks for the tests that read it, which `GITHUB_TESTS`
+names; any other path under `.github/` is refused, as is a group that deletes a test
+named there, whether or not it changes a file under `.github/`, until main's copy of the
+map changes. Any other file the group deletes asks for no test; when an entry has more
+than one merge base, it asks for the tests of what it changes against any of them, and a
+deletion excuses a test only if it is a deletion against all. Each selected command runs
+once, and a failure fails the job. Main chooses the tests, but they are the group's own:
+that they pass shows what they test, and whether they test enough is the protected paths'
+security review's to say. Changed propositions have their acceptance items printed from
+the acceptance artifact, as a report of the verdict already judged there. `queue-gaps` is
+not part of CI's run, so `check_queue.py --acceptance-run` finds that run's verdicts: the
+one run of `ci.yml` for the group's head and the merge group event, that run's latest
+`acceptance` job, passed, and the one `acceptance` artifact that job made, read by its
+id; after the download it reads the run, the job and the artifact again, the run's
+attempt unchanged. Any other answer, or a list not read whole, refuses; a run, job or
+artifact not there yet is waited for. Declared rules are printed for the reader.
+Foundations need no extra run here, since `model` and `formal-model` run on every group.
 
 The tests are the group's own code, and on Linux a process can read its parent's
 environment (`/proc/<ppid>/environ`), so no test runs in a step that holds the token.
@@ -1658,20 +1660,25 @@ once main's tip has a post-merge run that passed, re-run that run's `clear` job,
 removes the label from every open `main-red` issue whose `After` main's tip contains.
 
 **Turning it on.** The queue remains off until the owner enables it, and not before both
-things "The merge queue" names are held: the organization ruleset requiring
-`queue-judge.yml` from main, imported and shown on a test group to run main's copy; and
-an authenticated source for the pre-flight's evidence, which rule (b) asks for and the
-owner chooses. The coordinator holds these steps: add the merge queue rule for main,
-keep merge commits and enable "only merge non-failing pull requests"; require `check`,
-`model`, `negative`, `formal-model`, `acceptance` and `queue-tests`, and never
-`queue-integrity` or `queue-gaps`, which the organization ruleset requires by their file;
-set the queue's status check timeout to 150 minutes: `acceptance`'s limit of 60 minutes,
-then `queue-gaps`' testing, up to 75, which starts only once `acceptance` ends, and 15 for
-waiting on runners. `queue-gaps` starts with the group and waits for `acceptance` with no
-earlier limit of its own than those 150 minutes, so the status check timeout binds, as
-before; but the handover after `acceptance` ends (a poll of up to a minute, then a few
-reads and the download) is not the runner wait it replaces, so a group that ends at the
-very edge of the timeout may now be ejected there. `queue-gaps` may run the tests of `safe_push.py`, `check_queue.py` and
+things "The merge queue" names are held. The first: the organization ruleset requiring
+`queue-judge.yml` from main is imported, and the coordinator's trial on test groups
+shows that main's copy runs on a group; that a group whose own copy of
+`queue-judge.yml` passes while main's fails is held; and that a group whose other
+workflow, `ci.yml` included, has a passing job named `queue-integrity` or `queue-gaps`
+while main's fails is held. The second: an authenticated source for the pre-flight's
+evidence, which rule (b) asks for and the owner chooses. The coordinator holds these
+steps: add the merge queue rule for main, keep merge commits and enable "only merge
+non-failing pull requests"; require `check`, `model`, `negative`, `formal-model`,
+`acceptance` and `queue-tests`, and never `queue-integrity` or `queue-gaps`, which the
+organization ruleset requires by their file; set the queue's status check timeout to 150
+minutes: `acceptance`'s limit of 60 minutes, then a budget of 75 for `queue-gaps`'
+testing, which starts only once `acceptance` ends (no job holds that budget:
+`queue-gaps`' own limit is the 150), and 15 for runners and the handover. `queue-gaps`
+starts with the group and waits for `acceptance` with no earlier limit of its own, so the
+status check timeout binds, as before; but the handover after `acceptance` ends (a poll
+of up to a minute, then a few reads and the download) is not the runner wait it
+replaces, so a group that ends at the very edge of the timeout may now be ejected there.
+`queue-gaps` may run the tests of `safe_push.py`, `check_queue.py` and
 `check_train.py` in one group, near 40 minutes as measured off GitHub, and its choosing
 step, like `queue-integrity` (limit 20 minutes), may wait up to 10 minutes for a
 revert's run to complete before it judges the revert (above): a shorter timeout ejects

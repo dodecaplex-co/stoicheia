@@ -33,9 +33,12 @@ repository; then that run's jobs, each as its latest execution, until the one na
 acceptance has completed, which must have passed; then that run's artifacts named
 acceptance, until one is there: exactly one, unexpired, of that run and head, made
 within that job's execution, so that an earlier attempt's never counts. It downloads
-that artifact by its id and takes verdicts.json alone from it, refusing a zip that holds
-a path, a link, a name twice or a file the acceptance job does not keep
-(ACCEPTANCE_FILES). Then it reads the run, the job and the artifact again: any change,
+that artifact by its id, holding at most ACCEPTANCE_ZIP_MAX bytes of it as they come, and
+takes verdicts.json alone from it, at most ACCEPTANCE_VERDICTS_MAX bytes, read through a
+bounded stream; it refuses a zip that holds a path, a link, a name twice, a file the
+acceptance job does not keep (ACCEPTANCE_FILES), or a file compressed by another method
+than deflate or declaring more than ACCEPTANCE_VERDICTS_MAX bytes, before any is
+decompressed. Then it reads the run, the job and the artifact again: any change,
 the run's attempt among them (a re-run of any job begun meanwhile), refuses. Only then
 does it write the verdicts to <dir>/verdicts.json, a new file. Its one deadline,
 ACCEPTANCE_WAIT, is the queue's status check timeout, so that it cuts no group off before
@@ -126,14 +129,16 @@ The block is a declaration that anyone who can edit the pull request body can ty
 judge checks it for consistency, not as proof that a pre-flight ran.
 
 Rule (b) asks two things of something a group cannot change (WORKFLOW, section 10, "The
-merge queue"). The first, the judge's code and its running, is held by the organization
-ruleset of docs/rulesets/queue-judge.json, which requires the queue's judge workflow
-from main: GitHub runs main's copy of it in place of a pull request's own (shown on a
-pull request; on a merge group, to be shown before the queue goes on), and each of its
-steps that judges takes scripts/ from the group's base. The second, the authenticity of
-the pre-flight's evidence, is not held: the block is a declaration (above), and a block
-typed to be consistent with the repository passes this judge, as tests/test_check_queue.py
-shows. The queue must not be turned on until both are held.
+merge queue"). The first, the judge's code and its running, is to be held by the
+organization ruleset of docs/rulesets/queue-judge.json, which requires the queue's judge
+workflow from main, once the owner imports it and the trial shows it holding a group;
+until then nothing holds it. Under that rule GitHub runs main's copy of the workflow in
+place of a pull request's own (shown on a pull request; on a merge group, to be shown
+before the queue goes on), and each of its steps that judges takes scripts/ from the
+group's base. The second, the authenticity of the pre-flight's evidence, is not held: the
+block is a declaration (above), and a block typed to be consistent with the repository
+passes this judge, as tests/test_check_queue.py shows. The queue must not be turned on
+until both are held.
 
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
@@ -145,6 +150,7 @@ import argparse
 import ast
 import base64
 import contextlib
+import copy
 import datetime
 import io
 import json
@@ -155,6 +161,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import zipfile
 from pathlib import Path
@@ -230,6 +237,20 @@ ACCEPTANCE_WAIT = 150 * 60
 # ratchet, main's. --acceptance-run takes verdicts.json alone, and refuses any other file.
 ACCEPTANCE = "acceptance"
 ACCEPTANCE_FILES = ("report.md", "verdicts.json", "main-report.md", "main.json")
+# The most bytes --acceptance-run holds of the artifact's zip, and of verdicts.json, the
+# most any file of the zip may declare: a group's own CI makes the artifact. Each is ten
+# times an estimate. check_acceptance.py --json writes 29,866 bytes of verdicts for Books
+# I to III's 1,602 items, all passing (its verdicts() over its cells, written as --json
+# writes them), and the report beside them is shorter: the committed one, with 11 items
+# failing, is 18,960 bytes. The Elements' 465 propositions, at 16 items each, would give
+# some 140,000 bytes of verdicts, say 200,000 with failures' notes; and the zip holds at
+# most four such files (ACCEPTANCE_FILES), 800,000 bytes, stored or compressed.
+ACCEPTANCE_VERDICTS_MAX = 2 * 1024 * 1024
+ACCEPTANCE_ZIP_MAX = 8 * 1024 * 1024
+# How a file of the zip may be compressed: not at all, or by deflate, which zipfile
+# decompresses a bounded piece at a time. Any other method (bzip2 or LZMA, say) it
+# decompresses a whole read at once, however much that gives.
+ACCEPTANCE_METHODS = (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
 # A workflow file of .github/workflows/, named alone, as --ci-workflow names CI's.
 WORKFLOW_FILE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.ya?ml")
 # A time as GitHub's REST answers give it, in UTC.
@@ -274,6 +295,39 @@ LIGHT_STEPS = {"4. class": "ok", "4. full local checks": "skip"}
 
 class Refused(Exception):
     """A readable input which does not meet the queue's rules."""
+
+
+def bounded(stream, limit: int, what: str) -> bytes:
+    """What `stream` gives, read a piece at a time, if it is at most `limit` bytes: at one
+    byte more it stops reading and refuses, so that no more than that is ever held."""
+    data = bytearray()
+    while piece := stream.read(min(1 << 16, limit + 1 - len(data))):
+        data += piece
+        if len(data) > limit:
+            raise Refused(f"acceptance: {what} is larger than {limit} bytes")
+    return bytes(data)
+
+
+def download(command: list[str]) -> bytes:
+    """gh's output for an artifact's zip, read as it comes, at most ACCEPTANCE_ZIP_MAX bytes
+    (bounded): at one byte more the reading stops, gh, the process this started, is
+    stopped by its own handle, and the download refuses. gh is stopped too if it has not
+    ended in 60 seconds, and a gh that does not exit 0 is unreadable."""
+    with subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                          stderr=subprocess.DEVNULL) as process:
+        timer = threading.Timer(60, process.kill)
+        timer.start()
+        try:
+            data = bounded(process.stdout, ACCEPTANCE_ZIP_MAX, "the artifact's zip")
+            process.wait()
+        except BaseException:
+            process.kill()
+            raise
+        finally:
+            timer.cancel()
+    if process.returncode:
+        raise ValueError("GitHub request failed")
+    return data
 
 
 class GitHub:
@@ -338,12 +392,16 @@ class GitHub:
             endpoint = endpoints[kind]
             command = ["gh", "api", "--method", "GET", f"repos/{self.repo}/{endpoint}"]
         try:
-            # An artifact's zip is read as bytes; every other answer is JSON.
-            raw = kind == "artifact_zips"
-            result = subprocess.run(command, capture_output=True, text=not raw, timeout=60)
+            # An artifact's zip is read as bytes, a bounded amount (download); every other
+            # answer is JSON.
+            if kind == "artifact_zips":
+                return download(command)
+            result = subprocess.run(command, capture_output=True, text=True, timeout=60)
             if result.returncode:
                 raise ValueError("GitHub request failed")
-            return result.stdout if raw else json.loads(result.stdout)
+            return json.loads(result.stdout)
+        except Refused:
+            raise
         except Exception:
             # Neither gh's output nor an exception can disclose an inherited token.
             raise ValueError(f"GitHub: could not read {kind}") from None
@@ -1120,13 +1178,20 @@ def acceptance_artifact(answer, run_id: int, head: str, job: dict) -> dict | Non
 
 
 def acceptance_verdicts(data) -> bytes:
-    """verdicts.json, from the acceptance artifact's zip. It may hold only files the
-    acceptance job keeps (ACCEPTANCE_FILES), each once, named alone and regular: a path,
-    a link or another file that is not regular, a name twice or any other file refuses.
-    Each name is read as the zip stores it, before zipfile cuts it at a NUL. A zip that
-    cannot be read is unreadable."""
+    """verdicts.json, from the acceptance artifact's zip, of at most ACCEPTANCE_ZIP_MAX
+    bytes. It may hold only files the acceptance job keeps (ACCEPTANCE_FILES), each once,
+    named alone and regular: a path, a link or another file that is not regular, a name
+    twice or any other file refuses. Each name is read as the zip stores it, before
+    zipfile cuts it at a NUL. Before anything is decompressed, each file must be stored or
+    deflated (ACCEPTANCE_METHODS) and declare at most ACCEPTANCE_VERDICTS_MAX bytes; then
+    verdicts.json is read through a bounded stream, which refuses past that limit whatever
+    its header said, and must hold the bytes its header declares. A zip that cannot be
+    read is unreadable."""
     if not isinstance(data, bytes):
         raise ValueError("GitHub: could not read the acceptance artifact")
+    if len(data) > ACCEPTANCE_ZIP_MAX:
+        raise Refused(f"acceptance: the artifact's zip is larger than {ACCEPTANCE_ZIP_MAX} "
+                      "bytes")
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             members = archive.infolist()
@@ -1145,7 +1210,28 @@ def acceptance_verdicts(data) -> bytes:
                               "not keep: " + safe_push.printable_text(", ".join(others)))
             if "verdicts.json" not in names:
                 raise Refused("acceptance: the artifact holds no verdicts.json")
-            return archive.read("verdicts.json")
+            for member in members:
+                if member.compress_type not in ACCEPTANCE_METHODS:
+                    raise Refused(f"acceptance: the artifact holds {member.orig_filename} "
+                                  "compressed by another method than deflate")
+                if member.file_size > ACCEPTANCE_VERDICTS_MAX:
+                    raise Refused(f"acceptance: the artifact holds {member.orig_filename}, "
+                                  f"which declares {member.file_size} bytes, more than "
+                                  f"{ACCEPTANCE_VERDICTS_MAX}")
+            # zipfile reads a file no further than the size its header declares, so that a
+            # header that understates it would cut the file short: the bound is the
+            # stream's instead, the file opened by a copy of its entry whose size the read
+            # never reaches, and what it gives is then held to the declared size.
+            declared = members[names.index("verdicts.json")]
+            entry = copy.copy(declared)
+            entry.file_size = sys.maxsize
+            with archive.open(entry) as stream:
+                verdicts = bounded(stream, ACCEPTANCE_VERDICTS_MAX,
+                                   "the artifact's verdicts.json")
+            if len(verdicts) != declared.file_size:
+                raise Refused(f"acceptance: the artifact's verdicts.json holds {len(verdicts)} "
+                              f"bytes, not the {declared.file_size} its header declares")
+            return verdicts
     except (zipfile.BadZipFile, EOFError, NotImplementedError, RuntimeError):
         raise ValueError("GitHub: could not read the acceptance artifact's zip") from None
 

@@ -1052,12 +1052,13 @@ WORKFLOW_CONTRACTS = {
                     *when(GROUP, HISTORY, PYTHON, {
                         # The base's scripts/, once, for this step and those after it, and
                         # acceptance's verdicts from the group's CI run, read by the base's
-                        # check_queue.py --acceptance-run; red without either.
+                        # check_queue.py --acceptance-run; red without either, or without
+                        # the group's head and base.
                         "env": {"GH_TOKEN": "${{ github.token }}",
                                 "GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
                                 "GROUP_BASE": "${{ github.event.merge_group.base_sha }}",
                                 "REPOSITORY": "${{ github.repository }}"},
-                        "run": Script("f30691486714ab918e5848070682599e")}, {
+                        "run": Script("8124d59830269c1dcc78319392b290cb")}, {
                         # The gap tests' plan, by the base's check_queue.py.
                         "env": {**GROUP_ENV, "ACCEPTANCE_VERDICTS":
                                 "${{ runner.temp }}/acceptance/verdicts.json"},
@@ -13755,7 +13756,10 @@ class Units(unittest.TestCase):
         # passed, so each of the first five would let a group pass unjudged: a job made
         # conditional, a merge-group step skipped, the judge step removed, and
         # cancel-in-progress, of the workflow (a setting the model does not read) or of a
-        # job. The last would leave unrun a check main's ruleset requires by its name.
+        # job. The sixth, merge_group dropped from `on:`, would hold every group unjudged:
+        # the rule runs a required file only on the events its `on:` names, and in the
+        # coordinator's trial a group waited on a file without it. The last would leave
+        # unrun a check main's ruleset requires by its name.
         workflows = read_workflows(SOURCE)
         hold_to_contracts(workflows)
         stopping = {"group": "queue-judge", "cancel-in-progress": True}
@@ -13777,6 +13781,8 @@ class Units(unittest.TestCase):
              lambda w: judge(w).update(concurrency=stopping)),
             ("cancel-in-progress, of a job", "queue-judge.yml jobs queue-gaps concurrency: not in",
              lambda w: judge(w, "queue-gaps").update(concurrency=stopping)),
+            ("merge_group dropped from on:", "queue-judge.yml on merge_group: missing",
+             lambda w: judge(w)["on"].pop("merge_group")),
             ("CI's queue-tests dropped", "ci.yml jobs queue-tests: missing",
              lambda w: w["ci.yml"]["jobs"].pop("queue-tests")))
         for label, refusal, plant in plants:

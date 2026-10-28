@@ -3,20 +3,24 @@ name: Queue judge
 # The queue's judge (docs/WORKFLOW.md, section 10, "The merge queue"): on each merge group,
 # queue-integrity runs main's scripts/check_queue.py over the group, and queue-gaps reads
 # the verdicts of the group's acceptance job and runs the tests of what the group changes,
-# chosen by main's copy. The organization ruleset of docs/rulesets/queue-judge.json
-# requires this file from main (its rule "Require workflows to pass before merging", ref
-# refs/heads/main), and GitHub runs main's copy of it in place of a pull request's own
-# (the coordinator's trial of 27 October 2026; on a merge group, still to be shown). So a
-# group that changes this file is judged by main's copy, and its change judges the groups
-# after it lands. Whichever copy runs, each step that judges takes scripts/ from the
-# group's base by Git's objects, never from the checkout, and first checks that the
-# checkout is the group's head.
+# chosen by main's copy. The organization ruleset of docs/rulesets/queue-judge.json is to
+# require this file from main (its rule "Require workflows to pass before merging", ref
+# refs/heads/main) once the owner imports it and the trial shows it holding a group; until
+# then nothing holds it. Under that rule GitHub runs main's copy in place of a pull
+# request's own (the coordinator's trial of 27 October 2026; on a merge group, still to be
+# shown), so a group that changes this file is judged by main's copy, and its change
+# judges the groups after it lands. Whichever copy runs, each step that judges takes
+# scripts/ from the group's base by Git's objects, never from the checkout, and first
+# checks that the checkout is the group's head.
 #
 # A skipped required job counts as passed (the same trial), so neither job has an if of
 # its own, and on a merge group every step runs; on a pull request each job runs its first
-# step alone, which says there is nothing to judge, and passes. The ruleset runs the file
-# on these two events, whatever filters it names, so it names none; and GitHub's guide to
-# ruleset workflows asks for no cancel-in-progress, so it has no concurrency group.
+# step alone, which says there is nothing to judge, and passes. The rule runs the file only
+# on the events its own `on:` names: in the same trial, a required file whose `on:` lacked
+# merge_group never ran on a group, and the group waited. So merge_group must stay, and
+# pull_request too, since the rule holds a pull request until the file has run on it. They
+# name no filter; and GitHub's guide to ruleset workflows asks for no cancel-in-progress,
+# so the file has no concurrency group.
 on:
   pull_request:
   merge_group:
@@ -159,6 +163,8 @@ jobs:
           GROUP_BASE: ${{ github.event.merge_group.base_sha }}
           REPOSITORY: ${{ github.repository }}
         run: |
+          test -n "$GROUP_HEAD"
+          test -n "$GROUP_BASE"
           test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
           git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
           mkdir "$RUNNER_TEMP/judge"

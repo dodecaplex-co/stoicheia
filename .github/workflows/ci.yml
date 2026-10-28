@@ -473,8 +473,11 @@ jobs:
     # requires this check by its name once the queue is on, so it must report there. They
     # are the change's own tests of its own code: they test, they do not judge. The queue's
     # judge, queue-integrity and queue-gaps, is .github/workflows/queue-judge.yml, which the
-    # organization's ruleset runs from main (WORKFLOW, section 10, "The merge queue").
+    # organization ruleset of docs/rulesets/queue-judge.json is to run from main once the
+    # owner imports it and the trial shows it holding a group; until then nothing holds it
+    # (WORKFLOW, section 10, "The merge queue").
     runs-on: ubuntu-latest
+    # The three files took 22.5 minutes on a loaded Mac; 30 leaves room and stops a hang.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
