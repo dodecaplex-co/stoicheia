@@ -18,8 +18,7 @@ note = "The statement gives the goal, AD parallel to BE. The distinct vertices A
 at = "For, if not, let AF be drawn through A parallel to BE"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`), proves the meeting by I.30 (`Prop30.meet`), and joins FE by Postulate 1."
-unused = ["FE"]
+note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`) and proves the meeting by I.30 (`Prop30.meet`); FE is named by its ends, as a side of the triangle FCE, so the Lean draws nothing for the join and does not call Postulate 1 for it."
 
 [[passage]]
 at = "But the triangle ABC is equal to the triangle DCE"

@@ -43,7 +43,7 @@ note = "Our triangles AEG and ADG are named by their corners, so no straight lin
 [[passage]]
 at = "therefore each of the angles EAC, AEC is half a right angle"
 kind = "carried"
-note = "The Lean proves that each of the angles EAC and AEC is half a right angle, as Euclid states; the later steps use only the half at E, and the angle EAC is not used again."
+note = "The Lean proves that each of the angles EAC and AEC is half a right angle, as Euclid states. Neither his proof nor ours uses the half at A again: only the half at E goes on, into the right angle AEB."
 unused = ["hhalf_EAC"]
 
 [[passage]]

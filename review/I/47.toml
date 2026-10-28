@@ -36,7 +36,7 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 [[passage]]
 at = "therefore the base AD is equal to the base FC"
 kind = "carried"
-note = "The Lean proves that the base AD equals FC here, as Euclid states it; the argument goes on by the triangles ABD and FBC, and does not use it again."
+note = "The Lean proves that the base AD equals FC here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the equal triangles ABD and FBC."
 unused = ["hAD_FC"]
 
 [[passage]]

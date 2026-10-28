@@ -38,7 +38,7 @@ note = "Euclid infers equal angles at A and E from AC equal to CE. The Lean uses
 [[passage]]
 at = "therefore each of the angles CEA, CAE is half a right angle"
 kind = "carried"
-note = "The Lean proves that each of the angles CEA and CAE is half a right angle, as Euclid states; the later steps use only the half at E, and the angle CAE is not used again."
+note = "The Lean proves that each of the angles CEA and CAE is half a right angle, as Euclid states. Neither his proof nor ours uses the half at A again: only the half at E goes on, into the right angle AEB."
 unused = ["hhalf_CAE"]
 
 [[passage]]
