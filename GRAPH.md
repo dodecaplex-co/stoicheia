@@ -756,7 +756,7 @@ graph TD
 
 ### From the Lean
 
-245 arrows: 83 also among Heath's references and 162 only in the Lean. The graph draws the 92 arrows between propositions of Book III, 36 solid and 56 dashed; the table under it lists the other 153, to propositions of earlier books.
+245 arrows: 81 also among Heath's references and 164 only in the Lean. The graph draws the 90 arrows between propositions of Book III, 34 solid and 56 dashed; the table under it lists the other 155, to propositions of earlier books.
 
 ```mermaid
 graph TD
@@ -797,10 +797,8 @@ graph TD
   III35["III.35"]
   III36["III.36"]
   III37["III.37"]
-  III1 --> III4
   III3 --> III4
   III2 -.-> III7
-  III1 --> III8
   III2 -.-> III8
   III1 --> III9
   III2 -.-> III9
@@ -819,7 +817,6 @@ graph TD
   III2 -.-> III15
   III14 --> III15
   III2 -.-> III16
-  III1 --> III17
   III16 --> III17
   III2 -.-> III18
   III16 -.-> III18
@@ -832,6 +829,7 @@ graph TD
   III10 -.-> III23
   III21 -.-> III23
   III2 -.-> III24
+  III10 --> III24
   III20 -.-> III24
   III21 -.-> III24
   III22 -.-> III24
@@ -917,7 +915,7 @@ graph TD
 | [III.20](book/III/20.md) | I.5, I.13, I.32 | I.5, I.32 |
 | [III.22](book/III/22.md) | I.32 | I.32 |
 | [III.23](book/III/23.md) | I.16, I.21 | I.16 |
-| [III.24](book/III/24.md) | I.2, I.3, I.4, I.5, I.7, I.8, I.20, I.22, I.26, I.32 | none |
+| [III.24](book/III/24.md) | I.2, I.3, I.4, I.5, I.7, I.8, I.13, I.14, I.20, I.22, I.26, I.32 | none |
 | [III.25](book/III/25.md) | I.4, I.5, I.6, I.10, I.11, I.13, I.17, I.23, I.32 | I.6 |
 | [III.26](book/III/26.md) | I.4, I.13 | I.4 |
 | [III.27](book/III/27.md) | I.5, I.23, I.32 | I.23 |
@@ -934,7 +932,7 @@ graph TD
 
 </details>
 
-Heath's references that the Lean does not cite, 3 of his 86: [III.1](book/III/01.md) in [III.2](book/III/02.md); [III.1](book/III/01.md) in [III.14](book/III/14.md); [III.10](book/III/10.md) in [III.24](book/III/24.md).
+Heath's references that the Lean does not cite, 5 of his 86: [III.1](book/III/01.md) in [III.2](book/III/02.md); [III.1](book/III/01.md) in [III.4](book/III/04.md); [III.1](book/III/01.md) in [III.8](book/III/08.md); [III.1](book/III/01.md) in [III.14](book/III/14.md); [III.1](book/III/01.md) in [III.17](book/III/17.md).
 
 <details><summary>The 37 propositions of Book III</summary>
 

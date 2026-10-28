@@ -183,6 +183,11 @@ rectilineal fact, where Euclid uses reductio; III.31's companions prove what he 
 manifest. No addition, ratio or motion of mixed angles is claimed. The representation
 and Heath's account of the quarrel over the horn-like angle are explained in the mishnah.
 
+**27 October 2026, correction.** III.16's companions now follow Euclid's reductio from the
+rectilineal fact, and its route is `euclid`. The sentence above that they argue directly,
+and the dated notes below that give the route as `modified`, describe the earlier proof;
+[III.16's record](../../review/III/16.toml) gives the route now.
+
 ## Circles and their centres
 
 **19 October 2026, step 6 complete.** These conventions replace the earlier convention
@@ -263,6 +268,10 @@ brief's two other facts for it rest on III.2, and come after it: `Prop24.chord_c
 point of the straight line through two points of a circle is on the circle exactly when it
 is one of them, and within it exactly when between them), before III.24, which uses it;
 and the meeting fact for an arc, `Prop25.meets`, beside III.25, whose companion uses it.
+
+**27 October 2026, correction.** III.24 no longer uses `Prop24.chord_cases` in its main
+proof. The lemma remains before it and is used by `Prop24.image`, after the theorem, for
+`Prop24.equalMeasure` and `Arc.congruent_iff`.
 
 **Book III's ground, before III.1, `Elements/BookIII/Squares.lean`**: `sq_pos` (the square
 on a straight line is something) and `BookI.Prop46.sq` (equal squares are on equal
@@ -457,6 +466,13 @@ worth naming. The first mate's report has a note on every statement.
   that statement and proof are now its companion `Prop24.equalCircles`, shown as the
   alternative, and `Prop24.equalMeasure` gives the equal measures of congruent segments,
   which III.26 takes from III.24.
+
+  **27 October 2026, correction.** After the application III.24 now follows Euclid's
+  reductio: the applied segment lies on a circle through C and D (`Prop24.moved`),
+  III.23's companion keeps the image of E from falling within CFD or outside it, and
+  III.10, which the proof now cites as Heath's bracket has it, makes the two circles one.
+  The clause above on settling every point by the angles describes the earlier proof;
+  [III.24's record](../../review/III/24.toml) gives the route now.
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
   and his three cases: the centre beyond the segment, at `D`, or within it, as the angle
   `ABD` is greater than, equal to, or less than `BAD`. Since stage 4 of
