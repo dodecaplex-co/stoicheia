@@ -60,7 +60,9 @@ helper = "Prop35.cut"
 note = "Euclid leaves DB to the same argument without writing it out; the Lean applies `Prop35.cut`, proved once over any letters, with D and B as the ends. It uses I.12, `foot_between` (I.17 and I.19), III.3, II.5 and I.47 as above, including DB through F and E at the perpendicular's foot; Heath prints no further references here."
 
 [figure]
-case = "both straight lines through the centre E (left), and neither through F with E distinct from G and H (right)"
+case = "Euclid's two, both straight lines through the centre E (left) and neither through the centre F, with E distinct from G and H (right)"
+some_cases = true
+note = "The theorem also covers the cases the figure does not draw: Robert Simson's two, where one straight line passes through the centre and the other does not, and those where neither does and E is at G or H, the foot of a perpendicular from the centre F."
 
 [review]
 stage = "full"
