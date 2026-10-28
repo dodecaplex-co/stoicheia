@@ -56,7 +56,8 @@ Generalities 4, beside Circle 2 and Circle 3 (#477). It never had a row here, an
 leaves or joins the table. No entry rests on it now. Through their own proofs and the
 proved rules beneath them 19 entries use it, the first III.7: 15 propositions, no porism and
 4 companions; each cites III.2, which III.14, III.35 and III.36 cite for the first time.
-Counting the entries they cite, 36 use it: 23 propositions, no porism and 13 companions.
+Counting the entries they cite, 37 use it: 24 propositions, no porism and 13 companions;
+III.10 reaches it through `CirclesCut.of_meet` and III.7 and III.8.
 Where the point within is the centre, `Prop14.general`, `Prop15.le_diameter`,
 `Prop15.nearer` and `Prop36.through_centre` take the step from Book Zero's
 `between_of_centre_chord` instead, so that III.14's and III.15's companions and III.37 cite
