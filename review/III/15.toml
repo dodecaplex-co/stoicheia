@@ -7,7 +7,7 @@ fingerprint = "sha256:c0f5cead6405c5bd"
 
 [route]
 kind = "euclid"
-note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC by III.14, and uses I.20 and I.24 to compare it with AD and FG. `Prop15.le_diameter` uses I.20 on BE and EC when BC does not pass through E; if BC is a diameter it equals AD, and if B and C coincide its length is zero. `Prop15.nearer` uses `Prop15` when neither straight line passes through the centre and `Prop15.le_diameter` when BC is a diameter; FG, being more remote, cannot pass through E. `Prop15` and `Prop15.nearer` rest on `Tacit.exists_centre` through III.2 and its corollary `Prop2.within`, which `Prop15.half` uses; `Prop15.le_diameter` does not."
+note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC by III.14, and uses I.20 and I.24 to compare it with AD and FG. `Prop15.le_diameter` uses I.20 on BE and EC when BC does not pass through E; if BC is a diameter it equals AD, and if B and C coincide its length is zero. `Prop15.nearer` uses `Prop15` when neither straight line passes through the centre and `Prop15.le_diameter` when BC is a diameter; FG, being more remote, cannot pass through E. `Prop15` rests on `Tacit.exists_centre` through III.2 and III.14, which it cites, and through `foot_between`, `Prop2.within` and `Tacit.inside_not_on` (System E, Generalities 4), proved in `Elements/Figure/RuleBase.lean`, which since 26 October 2026 takes its centre from that rule; `Prop15.half` calls the last two. `Prop15.nearer` rests on it through `Prop15`, and `Prop15.le_diameter` does not."
 
 [[passage]]
 at = "For from the centre E let EH, EK be drawn"
