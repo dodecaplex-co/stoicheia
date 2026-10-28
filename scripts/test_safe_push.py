@@ -904,6 +904,9 @@ SHADOW_HISTORY = {"uses": "actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b
                   "with": {"fetch-depth": 0, "persist-credentials": False}}
 SHADOW_PYTHON = {"uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
                  "with": {"python-version": "3.12"}}
+# elan 4.2.4, run only if its release has its pinned SHA-256.
+SHADOW_ELAN = {"working-directory": "${{ runner.temp }}",
+               "run": Script("582b5d677f6b9f6a5c5101b18a3495ff")}
 WORKFLOW_CONTRACTS = {
     "ci.yml": {
         "name": "CI", "on": {"pull_request": None, "merge_group": None, "workflow_call": None},
@@ -1125,12 +1128,12 @@ WORKFLOW_CONTRACTS = {
                        "nothing; CadenceReport runs its step",
                        {"permissions": {"issues": "write"}, "concurrency": {
                            "group": "safe-push-tests-report", "cancel-in-progress": False}})}},
-    # The shadow of main's checking policy (#574, train 1). No ruleset requires it. `policy`
-    # runs on a push to main alone, where no landing reads it, so it is named with its
-    # reason and held to where, how long, when and with what token it runs. `self-test` and
-    # `plants` run on a pull request that changes the shadow, whose landing counts them as
-    # it counts every check, so they are held whole. A ruleset that required one of these
-    # jobs would need it held whole with no `if`: a skipped required job counts as passed.
+    # The shadow of main's checking policy (#574, train 1). No ruleset requires it, but
+    # `self-test` and `plants` hold a pull request that changes the shadow, whose landing
+    # counts them as it counts every check, and `policy` runs the pushed commit's code for up
+    # to three hours: so each is held whole, its pinned actions, elan's checksum and its
+    # token among them. A ruleset that required one of these jobs would need it to have no
+    # `if` as well: a skipped required job counts as passed.
     "shadow-policy.yml": {
         "name": "Shadow policy", "permissions": {"contents": "read"},
         "on": {"push": {"branches": ["main"]},
@@ -1142,10 +1145,48 @@ WORKFLOW_CONTRACTS = {
                           "timeout-minutes": 10, "steps": (
                               SHADOW_HISTORY, SHADOW_PYTHON,
                               {"run": ("python3 -I scripts/shadow_policy.py self-test",)})},
-            "policy": ("it keeps main's pre-flight verdict on a push to main as an artifact, "
-                       "which no landing reads",
-                       {"if": "github.event_name == 'push'", "runs-on": "ubuntu-latest",
-                        "permissions": {"contents": "read"}, "timeout-minutes": 180}),
+            "policy": {
+                "if": "github.event_name == 'push'", "runs-on": "ubuntu-latest",
+                "permissions": {"contents": "read"}, "timeout-minutes": 180, "steps": (
+                    SHADOW_HISTORY, SHADOW_PYTHON, {
+                        # The push to main: its base, before; its tested commit, after, the
+                        # checkout; and, for a merge whose first parent is the base, its
+                        # second parent, the pull request's head; else red.
+                        "id": "push",
+                        "env": {"REF": "${{ github.ref }}", "BEFORE": "${{ github.event.before }}",
+                                "AFTER": "${{ github.event.after }}",
+                                "DELETED": "${{ github.event.deleted }}"},
+                        "run": Script("1cc9802faf0e531817448d93d9fa5bbc")}, {
+                        # The driver: the base's, a regular file, when the base holds one;
+                        # the checkout's when the base holds neither it nor this workflow;
+                        # else red.
+                        "env": {"BASE": "${{ steps.push.outputs.base }}"},
+                        "run": Script("42c9fec46e6efdfa186192098125760e")}, {
+                        # The base's pinned YAML parser, from the runner's temporary directory.
+                        "working-directory": "${{ runner.temp }}",
+                        "env": {"BASE": "${{ steps.push.outputs.base }}"},
+                        "run": Script("40cc6e649b74a8583a57a87e5f883863")},
+                    SHADOW_ELAN, {
+                        "env": {"BASE": "${{ steps.push.outputs.base }}",
+                                "TESTED": "${{ steps.push.outputs.tested }}",
+                                "PR_HEAD": "${{ steps.push.outputs.head }}",
+                                "REPOSITORY": "${{ github.repository }}",
+                                "EVENT": "${{ github.event_name }}"},
+                        "run": ('python3 -I "$RUNNER_TEMP/policy.py" judge --base "$BASE"'
+                                ' --tested "$TESTED" --out "$RUNNER_TEMP/shadow" --repository'
+                                ' "$REPOSITORY" --event "$EVENT" ${PR_HEAD:+--pr-head'
+                                ' "$PR_HEAD"}',)},
+                    # Red unless verdict.json's verdict is passed.
+                    {"run": Script("da349219c105bbf183c95f5e862d00d2")},
+                    # The verdict, written to the job's summary.
+                    {"if": "always()", "run": Script("5e8fb35d344c2de6dea167c46e2e114a")}, {
+                        "if": "always()",
+                        "uses": "actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4",
+                        "with": {"name": "shadow-policy-${{ github.event.after }}",
+                                 "path": "${{ runner.temp }}/shadow/\n"
+                                         "!${{ runner.temp }}/shadow/origin.git/\n"
+                                         "!${{ runner.temp }}/shadow/repo/\n"
+                                         "!${{ runner.temp }}/shadow/harness/\n"}})},
             "plants": {
                 "if": "github.event_name == 'pull_request' || (github.event_name == "
                       "'workflow_dispatch' && github.ref == 'refs/heads/main')",
@@ -1169,10 +1210,8 @@ WORKFLOW_CONTRACTS = {
                         # Main's pinned YAML parser, from the runner's temporary directory.
                         "working-directory": "${{ runner.temp }}",
                         "env": {"BASE": "${{ steps.main.outputs.base }}"},
-                        "run": Script("40cc6e649b74a8583a57a87e5f883863")}, {
-                        # elan 4.2.4, run only if its release has its pinned SHA-256.
-                        "working-directory": "${{ runner.temp }}",
-                        "run": Script("582b5d677f6b9f6a5c5101b18a3495ff")}, {
+                        "run": Script("40cc6e649b74a8583a57a87e5f883863")},
+                    SHADOW_ELAN, {
                         "env": {"PLANT": "${{ matrix.plant }}",
                                 "BASE": "${{ steps.main.outputs.base }}",
                                 "REPOSITORY": "${{ github.repository }}"},

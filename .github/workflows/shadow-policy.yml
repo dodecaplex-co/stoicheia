@@ -20,7 +20,8 @@
 # holds its landing, since judge_checks (scripts/safe_push.py) counts every check, required
 # or not: an hour's run on every pull request would lengthen every landing and could block
 # one. So `policy` runs on a push alone; `self-test` and `plants` run on a pull request only
-# when it changes this workflow or the driver, and hold that one's landing, as they should. And not a job of post-merge.yml: a failure there starts the bounded revert, while
+# when it changes this workflow or the driver, and hold that one's landing, as they should.
+# And not a job of post-merge.yml: a failure there starts the bounded revert, while
 # main_health reads post-merge.yml's runs only, so this workflow's result never makes main
 # red.
 #
@@ -237,7 +238,8 @@ jobs:
     # driver, so that the shadow's own pull request proves its plants before it lands, and
     # on demand on main. Four of the six run Lean; at most three run at once, since the
     # account's limit of concurrent jobs is shared with CI; a new push to the pull request
-    # cancels the plants still running for the one before.
+    # cancels the plants still running for the one before, and a new dispatch on main those
+    # of the dispatch before.
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
@@ -307,6 +309,8 @@ jobs:
           python3 -I -m pip install --only-binary :all: -r requirements-test_safe_push.txt
 
       - name: Install elan 4.2.4 from its release, checked against its pinned SHA-256 before it runs
+        # The Lean toolchain elan then fetches is the one lean-toolchain names, unchecked by
+        # any digest here (a card).
         working-directory: ${{ runner.temp }}
         run: |
           set -euo pipefail

@@ -17,9 +17,9 @@ check_fidelity.py and render.py, keep_apart at steps 3 and 4, step 4's full chec
 B's registry and then T's own, and the negative tests in both passes. What needs a branch
 is not run, as the dry run is given none: the kind label, the public names, a train/
 branch's check and its body; the class is found without labels. Nothing of the policy is
-written again here, so nothing here can drift from it. The pre-flight's
-log, its step logs and its record (STOICHEIA_PUSH_LOG names DIR/state/pushes.log) stay
-beside the verdict, and its printed report in DIR/preflight.log.
+written again here, so nothing here can drift from it. The pre-flight's log, its step logs
+and its record (STOICHEIA_PUSH_LOG names DIR/state/pushes.log) stay beside the verdict, and
+its printed report in DIR/preflight.log.
 
 The verdict is read from the report safe_push.py prints, in the format of its Report.add
 (each step's line as it happens, under its step's heading) and summary() (after
@@ -39,10 +39,10 @@ held to the local harness's known behaviour. `self-test` reads report texts in t
 format, and planted misreadings of them, with no Lean and no network.
 
 verdict.json, schema "stoicheia-shadow-policy/1", canonical (keys sorted, no spaces,
-ASCII): the repository, event, base, tested and its tree, pr_head and its tree when known;
-`policy`, the
-blobs of B's safe_push.py, heath.py, check_train.py, registry.py and risk.py, the tree of
-B's checks/, and the driver's own blob and whose copy it is (`from`: "base", "tested" or
+ASCII): the repository, event, base, tested and its tree, pr_head and its tree when known
+(T a merge whose parents are B and pr_head, and no other); `policy`, the blobs of B's
+safe_push.py, heath.py, check_train.py, registry.py and risk.py, the tree of B's checks/,
+and the driver's own blob and whose copy it is (`from`: "base", "tested" or
 "neither"); `runtime`; the pre-flight's `exit`, the `verdict` (passed, refused or error),
 `result` (the summary's words), `class`, `kept_apart` (the step of a "check change kept
 apart" FAIL, or null), `base_pass_notes` and `pinned_values`, every `steps` row and every
@@ -1148,6 +1148,11 @@ def judge_main(args) -> int:
                         (args.pr_head, "--pr-head")):
         if value is not None and (why := commit_named(source, value, what)) is not None:
             return usage(why)
+    if args.pr_head is not None and (
+            rev(source, f"{args.tested}^1") != args.base
+            or rev(source, f"{args.tested}^2") != args.pr_head
+            or rev(source, f"{args.tested}^3") is not None):
+        return usage(f"--pr-head {args.pr_head}: --tested is not a merge of it into --base")
     if args.base == args.tested:
         return usage("--base and --tested are one commit: there is nothing to judge")
     if subprocess.run([*GIT, "merge-base", "--is-ancestor", args.base, args.tested],

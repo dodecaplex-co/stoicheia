@@ -28,10 +28,10 @@
   the post-merge workflow, whose failure starts the bounded revert, and whose runs alone the
   merge reads for main's health. Its self-test and planted cases run on a pull request that
   changes the shadow itself, whose landing they hold as any check does, and on demand on
-  main: a clean control, a weakened check_fidelity.py with a
-  stale record, a loosened renderer with the stage it lets in, a dropped check of the
-  registry with a broken link, a weakened check_links.py with the same link, and a renderer's
-  change with content, which passes as a legitimate exception. Each mirrors a case the
+  main, and the self-test on each push to main too. The planted cases: a clean control, a
+  weakened check_fidelity.py with a stale record, a loosened renderer with the stage it lets
+  in, a dropped check of the registry with a broken link, a weakened check_links.py with the
+  same link, and a renderer's change with content, which passes as a legitimate exception. Each mirrors a case the
   pre-flight's own tests hold.
 
   Its limit, stated: the verdict counts only while the workflow GitHub runs still calls
@@ -52,6 +52,6 @@
   - tests/test_risk.py: a row for it among the paths a broader, lighter rule also matches.
   - scripts/test_safe_push.py: the workflow's contract among the workflow contracts of #259,
     which refuse a workflow with none. The self-test and the planted cases hold a pull
-    request that changes the shadow, so they are held whole. The policy job runs on a push
-    to main alone, where no landing reads it, so it is named with its reason, and held to
-    where it runs, its time limit, when it runs and its token's permissions.
+    request that changes the shadow, and the policy job runs the pushed commit's code for up
+    to three hours, so all three are held whole: their pinned actions, elan's checksum,
+    their tokens and every step.
