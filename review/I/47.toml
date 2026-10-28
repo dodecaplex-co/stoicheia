@@ -60,11 +60,11 @@ case = "the three squares standing outward from the right-angled triangle, as in
 
 [review]
 stage = "full"
-commit = "f9d627547"
+commit = "0cd594d70"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "card 220, cross-family sign-off: original Prop47 by OpenAI Codex at 0c244bc0, begun from the voyage 4 challenger's X47 (54a08e61; family unrecorded) and keeping many lines; Prop47.within by the Claude first mate from X47.within; Prop47.general added at 16875e3b, its proof author's family unrecorded; current file read by GPT-6 Astra (Codex) at adbf6993 and Claude Opus 5.5; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547"
-lean = "sha256:0120b11abdd14b1b"
-text = "sha256:e51d98875281cc96"
+run = "card 220, cross-family sign-off: original Prop47 by OpenAI Codex at 0c244bc0, begun from the voyage 4 challenger's X47 (54a08e61; family unrecorded) and keeping many lines; Prop47.within by the Claude first mate from X47.within; Prop47.general added at 16875e3b, its proof author's family unrecorded; current file read by GPT-6 Astra (Codex) at adbf6993 and Claude Opus 5.5; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547; card #515 (Metric 5's consumers onto I.13's bound), staging, written by Claude (ship C7): read in full by GPT-6 Astra (Codex), reader C7-stg515-rev, at 0cd594d70"
+lean = "sha256:04488a51a9f5ee9d"
+text = "sha256:1674e79b18febfb1"
 
 [review.items]
 statement = "pass"
