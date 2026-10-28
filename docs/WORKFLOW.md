@@ -346,8 +346,8 @@ reviewer from the authors of the proof.
   history and run it again; for an ambiguous id, a reader identifies the intended commit
   without guessing, reads the record and stamps it as above with enough of the id to name
   that commit alone; then run it again. The migration may be run again at any time, as at
-  landing, after the branches that change records. Until every record carries `text`,
-  `check_fidelity.py` names those without it in a note.
+  landing, after the branches that change records. `check_fidelity.py` fails a record
+  without `text`, as it fails one without any other stamp.
 
 **What a reviewer of the Lean looks for:**
 
@@ -986,22 +986,10 @@ train and group as unreadable.
 
 ## 9. Release criteria and severity
 
-The acceptance checklist ([ACCEPTANCE.md](ACCEPTANCE.md#where-the-older-criteria-went))
-incorporates the criteria below. A proposition meets these criteria when:
-
-1. its reviewed brief and its final formal statements agree;
-2. every substantive clause, and its porism, is proved or exactly qualified;
-3. the intended cases are covered, and construction inputs and outputs are right;
-4. each representation it relies on has the correspondence results its claims need;
-5. the route shown is accurate, and every exception is visible;
-6. the dependency closure, the axiom boundaries and the certificate cover every formal claim
-   published;
-7. quotations and attributions are checked, and the commentary explains this proposition
-   accurately;
-8. changed figures and the page have been inspected;
-9. the required checks pass on the integrated revision;
-10. a reviewer other than the author has assessed the changed mathematical claims, and the
-    record names the reviewer and the commit.
+The release standard is the acceptance checklist, [ACCEPTANCE.md](ACCEPTANCE.md): a
+proposition, a book and the edition meet the release criteria when its items pass. The ten
+criteria this section listed before it are retired; ACCEPTANCE.md
+[maps each one to the items that replace it](ACCEPTANCE.md#where-the-older-criteria-went).
 
 **Severity** decides what must be corrected:
 

@@ -1,6 +1,6 @@
 # The formal model
 
-Stoicheia's proofs rest on <!-- count:axioms -->49<!-- /count --> laws: Euclid's postulates, Definition 15 and the tacit rules,
+Stoicheia's proofs rest on <!-- count:axioms -->48<!-- /count --> laws: Euclid's postulates, Definition 15 and the tacit rules,
 each an `axiom` about seventeen `opaque` words, with their exact statements in
 [Certificate/axioms.lock](../Certificate/axioms.lock). Lean checks that every proof follows
 from the laws. Checking the proofs does not show that the laws can all be true at once.
@@ -10,10 +10,10 @@ package gives a formal proof: a Lake package of its own, with Mathlib, in which 
 words are the fields of a structure, the ordinary plane fills them, and Lean checks that
 the plane satisfies each law.
 
-**Where it stands.** The signature, the plane and all <!-- count:axioms -->49<!-- /count --> laws are represented in Lean.
+**Where it stands.** The signature, the plane and all <!-- count:axioms -->48<!-- /count --> laws are represented in Lean.
 The generator writes the library's elaborated declarations into one structure, `Laws`,
 and the translation checks compare them with those declarations. The plane satisfies all
-<!-- count:axioms -->49<!-- /count --> laws, including restricted superposition. The build also requires the vocabulary lock
+<!-- count:axioms -->48<!-- /count --> laws, including restricted superposition. The build also requires the vocabulary lock
 and both model hashes to agree with the same revision.
 `Model/Assembly.lean` gathers these proofs into `euclidean_laws`, with no remaining
 hypotheses, and proves `model_exists`. This establishes a model relative to Lean's logic
@@ -74,7 +74,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
 | [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | restricted superposition from placement by isometry and reflection, its kept side by Same side 3 and Postulate 1, through `Rule.of_placement_of_join` | Mathlib, pure calculus soundness |
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
-| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all <!-- count:axioms -->49<!-- /count --> proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
+| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all <!-- count:axioms -->48<!-- /count --> proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: `Elements.Point` remains unknown, and every proof and the assembly have their pinned logical axioms | every module of `Model` |
 | [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Elements.BookI.Prop13`, `Check.Hand`, the generator, `Model.Laws.angles` |
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
@@ -203,7 +203,7 @@ what it writes.
 1. **Read the declarations, not the text.** The generator imports every module of
    `Elements.Foundations`, and checks that there is one for each file under
    `Elements/Foundations/`, so that no axiom is missed. It takes every axiom declared there,
-   which must be exactly the <!-- count:axioms -->49<!-- /count --> names in the lock's `[axioms]`, as the expression Lean
+   which must be exactly the <!-- count:axioms -->48<!-- /count --> names in the lock's `[axioms]`, as the expression Lean
    elaborated: binders, binder kinds (implicit or explicit), the order of the binders, every
    guard, every instance argument. It checks too that the lock prints each one's statement
    as Lean prints it now, and each word they reach as the lock's `[vocabulary]` has it, so
@@ -252,7 +252,7 @@ what it writes.
      Postulate5 : Law.Postulate5 S
    ```
 
-   Postulate 5 stands apart from the other <!-- count:axioms-but-postulate-5 -->48<!-- /count -->, so that a hyperbolic plane can later satisfy
+   Postulate 5 stands apart from the other <!-- count:axioms-but-postulate-5 -->47<!-- /count -->, so that a hyperbolic plane can later satisfy
    `Neutral` and fail it; so would any rule the library declared in
    `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
    records the sha256 of the lock it was written from, with a table of the reached words and what
@@ -414,7 +414,7 @@ The library keeps its geometric words; I.4 and I.8 use the restricted rule.
 Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
 care not to blur the certificate: if every theorem took one `Laws` hypothesis bundling all
-<!-- count:axioms -->49<!-- /count --> laws, Lean's dependency walk would report all <!-- count:axioms -->49<!-- /count --> beneath every proof.
+<!-- count:axioms -->48<!-- /count --> laws, Lean's dependency walk would report all <!-- count:axioms -->48<!-- /count --> beneath every proof.
 
 ## How the translation is checked
 
@@ -436,16 +436,17 @@ the original means. These checks do that, at every build.
   declaration's statement and does not use the axiom. The kernel accepts the `rfl` only if
   the two are the same proposition, up to unfolding definitions; a dropped guard, two
   swapped arguments or a change in the order of the binders fails it, and the build with
-  it. This covers all <!-- count:axioms -->49<!-- /count --> laws and all 15 defined words they reach. The family checks in
+  it. This covers all <!-- count:axioms -->48<!-- /count --> laws and all 15 defined words they reach. The family checks in
   `Check/` retain the original library checks. They also compare each hand-translated law
-  with its generated field over any signature, except for the 40 retired rules. Eight were
+  with its generated field over any signature, except for the 41 retired rules. Eight were
   retired first: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
   `centre_unique`, `inside_of_between`, `exists_point_outside_circle`,
   `line_meets_circle_of_opposite_sides`, `triple_incidence3` and `inside_of_angle_add`;
-  31 more on 19 October 2026 (listed in [MODEL.md](../tests/model/MODEL.md)); and Circle 3,
+  31 more on 19 October 2026 (listed in [MODEL.md](../tests/model/MODEL.md)); Circle 3,
   `outside_of_between`, on 24 October 2026, proved after III.2, with Circle 2, Points 9
   and Intersection 2 moved beside it, in `Elements/BookIII/Prop02.lean`, which the circle
-  and intersection checks import. These are now theorems with the same names and types. Their hand translations are compared
+  and intersection checks import; and Circle 1, `between_of_inside_chord`, on 26 October
+  2026, proved there too, after III.2. These are now theorems with the same names and types. Their hand translations are compared
   directly with the library declaration's type by `comparePlanted`, including binder kinds,
   which works for an axiom or a theorem and remains when a generated assumption field
   disappears. This includes Intersections 2 and 3, which reach `LineMeetsCircle`, a word no
@@ -476,7 +477,7 @@ the original means. These checks do that, at every build.
   hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
   translations kept under suffixed names ([below](#proved-laws)), and the angle and
   superposition translations, which use words of their own written by hand, are compared
-  with the generated laws by the kernel in their files of `Check/`, apart from the 49
+  with the generated laws by the kernel in their files of `Check/`, apart from the 48
   direct declaration comparisons just described.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
@@ -625,7 +626,7 @@ formal statement captures what Euclid meant: that is the work of the review reco
 Astra's third answer listed the laws whose proofs would settle the representation, and they
 were taken first. Each retained axiom proved here is gathered into `euclidean_laws`
 by the generator, and `lake build` fails until it has been (`lake lean Check/Write.lean`).
-The table also includes the 40 former axioms now proved in the library, whose
+The table also includes the 41 former axioms now proved in the library, whose
 [derivations and homes](../docs/FORMALIZATION.md#rules-now-proved) are listed separately.
 Their plane proofs remain as derived facts with individual audits; the generator
 no longer gathers them as assumptions.
@@ -663,10 +664,10 @@ bisector of the common points, as in Intersections 8 and 9.
 
 ## Proved laws
 
-The generated [assembly](Model/Assembly.lean) supplies **<!-- count:axioms -->49<!-- /count --> of the <!-- count:axioms -->49<!-- /count --> locked laws** from
+The generated [assembly](Model/Assembly.lean) supplies **<!-- count:axioms -->48<!-- /count --> of the <!-- count:axioms -->48<!-- /count --> locked laws** from
 proofs in the plane. This list counts each law once, even where two families supply a proof.
 Names other than `Definition15` and the postulates are in `Elements.Tacit` in the lock.
-The 40 retired rules listed above also retain their concrete plane proofs and audits,
+The 41 retired rules listed above also retain their concrete plane proofs and audits,
 as derived facts outside the generated assumption fields and this table.
 
 | Proof file in `Model/Euclidean/` | Count | Locked laws proved |
@@ -677,7 +678,6 @@ as derived facts outside the generated assumption fields and this table.
 | [Avoidance.lean](Model/Euclidean/Avoidance.lean) | 4 | `Postulate2`, `exists_point`, `exists_point_inside_circle`, `exists_point_on_line` |
 | [Centre.lean](Model/Euclidean/Centre.lean) | 1 | `exists_centre` |
 | [CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | 3 | `Definition15`, `Postulate3`, `radius_ne_zero` |
-| [CircleRules.lean](Model/Euclidean/CircleRules.lean) | 1 | `between_of_inside_chord` |
 | [CircleSides.lean](Model/Euclidean/CircleSides.lean) | 1 | `circles_meet_same_side` |
 | [Circles.lean](Model/Euclidean/Circles.lean) | 1 | `circles_meet` |
 | [Incidence.lean](Model/Euclidean/Incidence.lean) | 3 | `Postulate1`, `line_unique`, `lines_meet_of_opposite_sides` |
@@ -706,7 +706,7 @@ The hand copies of `LinesMeet` and `LineMeetsCircle` also remain under distinct 
 is checked against the library's definition by `comparePlanted`, as above, and by `rfl`
 at the original signature. Superposition adds
 one supporting theorem, `superposition_placement`, with its own pinned axiom audit; the
-law count remains <!-- count:axioms -->49<!-- /count -->. The restricted rule, `euclidean_laws` and `model_exists` all have
+law count remains <!-- count:axioms -->48<!-- /count -->. The restricted rule, `euclidean_laws` and `model_exists` all have
 the same three logical axioms pinned by the audit.
 
 ## The CI job

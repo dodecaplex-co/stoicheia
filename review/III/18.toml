@@ -7,7 +7,7 @@ fingerprint = "sha256:c091c8d1991be2a0"
 
 [route]
 kind = "euclid"
-note = "`Prop18` follows Euclid, with the centre F given; F is off DE, for it is within the circle and no point of DE is. The companions follow in Euclid's order and cite nothing later than III.18. Let AE touch the circle at A, and AB be the diameter through A: III.18 puts AE at right angles to AB (`Prop18.diameter`), so AE is III.16's straight line and III.16's two parts hold for it (`Prop18.parts`); III.16's comparisons then hold for AE, cited from III.16's own steps (`Prop16.horn_lt`, `Prop16.semicircle_gt`), which argue directly from its second part where Euclid argues by reductio, the one departure, as III.16's record declares. `Prop18.contact_locallyEqual` and `Prop18.contact_lt` take the centre from `Tacit.exists_centre`, a rule we assume; `Prop18.semicircle_gt` and `Prop18.acute` keep the centre D, through which the diameter is drawn, and `Prop18.acute` places every acute angle at A by I.23."
+note = "`Prop18` follows Euclid, with the centre F given; F is off DE, for it is within the circle and no point of DE is. The companions follow in Euclid's order and cite nothing later than III.18. Let AE touch the circle at A, and AB be the diameter through A: III.18 puts AE at right angles to AB (`Prop18.diameter`), so AE is III.16's straight line and III.16's two parts hold for it (`Prop18.parts`); III.16's comparisons then hold for AE, cited from III.16's own steps (`Prop16.horn_lt`, `Prop16.semicircle_gt`), which follow Euclid's reductio from its second part, as III.16's record declares. `Prop18.contact_locallyEqual` and `Prop18.contact_lt` take the centre from `Tacit.exists_centre`, a rule we assume; `Prop18.semicircle_gt` and `Prop18.acute` keep the centre D, through which the diameter is drawn, and `Prop18.acute` places every acute angle at A by I.23."
 
 [representation]
 tags = ["mixed-angles-local"]
@@ -47,11 +47,11 @@ note = "The figure shows the impossible supposition with G distinct from C: FG i
 
 [review]
 stage = "full"
-commit = "8d1358248"
+commit = "c803fb9a2"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:7ecfaa05ae91135c"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #130, ship ER: read in full after the angle of contact after III.18 moved in, with its four companions, written by Claude, read by GPT-6 Astra (Codex)"
-text = "sha256:a8a5ebd0aa17fe54"
+lean = "sha256:7f79fbb2bcc56ecd"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; card #130, ship ER: read in full after the angle of contact after III.18 moved in, with its four companions, written by Claude, read by GPT-6 Astra (Codex); card #547, ship ER: Euclid's reductio in III.16's companions and III.24 (the III.18 texts that cited the direct argument corrected), written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:ae8c4c0888764819"
 
 [review.items]
 statement = "pass"

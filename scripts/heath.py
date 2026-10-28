@@ -363,9 +363,6 @@ BOUND_NAME = re.compile(r"[^\W\d][\w'!?₀-₉]*")
 _STR, _LIST, _TABLE, _NAMES, _BOOL = "string", "list", "table", "names", "boolean"
 # Each section's keys, as (type, required). A "stamp" key is written by
 # scripts/review_stamp.py, and required unless an unstamped record is asked for.
-# [review] `text` is a stamp too, but not yet required: the records stamped before it
-# gain it from `review_stamp.py --migrate-text`, or from a reader (docs/WORKFLOW.md,
-# section 6), and it becomes "stamp" once every record carries it.
 FIELDS = {
     "statement": {"scope": (_STR, True), "hypotheses": (_LIST, False),
                   "omitted": (_LIST, False), "note": (_STR, False),
@@ -382,7 +379,7 @@ FIELDS = {
     "figure": {"case": (_STR, False), "every_case": (_BOOL, False),
                "some_cases": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
-               "text": (_STR, False), "reviewer": (_STR, True), "run": (_STR, False),
+               "text": (_STR, "stamp"), "reviewer": (_STR, True), "run": (_STR, False),
                "items": (_TABLE, False)},
 }
 REQUIRED = ("statement", "route", "review")
@@ -477,7 +474,9 @@ def _shape(record, require_stamp: bool) -> list[str]:
                 if required is True:
                     bad(f"{label}: `{key}` is missing")
                 elif required == "stamp" and require_stamp:
-                    bad(f"{label}: `{key}` is missing (scripts/review_stamp.py writes it)")
+                    bad(f"{label}: `{key}` is missing: a reader reads the record and stamps it "
+                        "with scripts/review_stamp.py --commit, which writes it "
+                        "(docs/WORKFLOW.md, section 6)")
                 continue
             v = table[key]
             if kind == _STR and not (isinstance(v, str) and v.strip()):
@@ -511,11 +510,10 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
     hypotheses, omitted and companions, [coverage]'s three lists, `passage` and
     [review] items, each empty when not given. Raises ReviewError naming every fault.
 
-    With require_stamp=False `fingerprint`, `commit` and `lean` may be absent, for
-    scripts/review_stamp.py to write. `text`, also a stamp, may be absent either way, for
-    now (see FIELDS). Whether the stamps are current (the fingerprint against facts.json,
-    `lean` against the file, `text` against the record) is check_fidelity's business, not
-    this function's."""
+    With require_stamp=False `fingerprint`, `commit`, `lean` and `text` may be absent, for
+    scripts/review_stamp.py to write. Whether the stamps are current (the fingerprint
+    against facts.json, `lean` against the file, `text` against the record) is
+    check_fidelity's business, not this function's."""
     where = where or _rel(review_path(book, n))
     problems = _shape(record, require_stamp)
     if problems:
