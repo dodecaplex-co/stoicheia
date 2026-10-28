@@ -2831,6 +2831,32 @@ class WorkerTests(unittest.TestCase):
                     + "".join(f"  ✗ {failure}\n" for failure in failures)), result.stdout)
                 self.assertEqual(self.git("status", "--porcelain"), "")
 
+    def test_git_configuration_cannot_redirect_worker_status(self):
+        """Both inline Git configuration protocols point core.worktree at the clean source
+        tree: clean workers pass, but a worker that leaves its own tree dirty still fails
+        with that worker's diagnostic, and every worker is cleaned up."""
+        settings = (
+            ("parameters", {"GIT_CONFIG_PARAMETERS":
+                            f"'core.worktree'='{self.root}'"}),
+            ("count", {"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "core.worktree",
+                       "GIT_CONFIG_VALUE_0": str(self.root)}))
+        for mechanism, variables in settings:
+            with self.subTest(mechanism=mechanism):
+                self.commit(a_one=PASSES, b_two=PASSES)
+                self.env.update(variables)
+                try:
+                    clean = self.suite("--workers", "2")
+                    self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
+                    self.commit(a_one=PASSES, b_two=LEAVES)
+                    dirty = self.suite("--workers", "2")
+                    self.assertEqual(dirty.returncode, 1, dirty.stdout + dirty.stderr)
+                    message = "worker 2's tree did not return to its entry Git status"
+                    self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", dirty.stdout)
+                    self.assertEqual(self.git("status", "--porcelain"), "")
+                finally:
+                    for name in variables:
+                        self.env.pop(name, None)
+
     def test_no_worker_s_tree_is_left(self):
         """After a run that passes, one that fails and one with a crash, as after every run
         of these tests; and after an interruption, which the run passes on to each worker

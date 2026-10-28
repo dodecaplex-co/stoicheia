@@ -212,10 +212,13 @@ UNGUARDED = frozenset({"__warningregistry__"})
 # is started without, besides every `LAKE…` (the audit of #607), the record of
 # the plants' times, from ROOT, and a plant's line in it as a run prints it (run_plant).
 WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
-WITHHELD = frozenset({"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
-                      "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-                      "GIT_NAMESPACE", "GIT_PREFIX", "GIT_CEILING_DIRECTORIES",
-                      "LEAN_PATH", WORKERS})
+WITHHELD = frozenset({"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG",
+                      "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS", "GIT_DIR",
+                      "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE", "GIT_INDEX_FILE",
+                      "GIT_INTERNAL_SUPER_PREFIX", "GIT_OBJECT_DIRECTORY", "GIT_PREFIX",
+                      "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE", "GIT_WORK_TREE",
+                      "GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES", "LEAN_PATH", WORKERS})
+WITHHELD_PREFIXES = ("LAKE", "GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
 TIMES = Path("tests", "negative_times.json")
 TIME_LINE = re.compile(r"  ([a-z][a-z0-9_]*): (\d+\.\d+)s \(including restoration\)")
 TIMES_ABOUT = ("Seconds each plant of scripts/negative_tests.py took, restoration included, "
@@ -1026,9 +1029,9 @@ def write_report(path: Path, report: dict, status: int | None) -> None:
 
 
 def worker_env() -> dict[str, str]:
-    """The run's environment, but for WITHHELD and every `LAKE…`."""
+    """The run's environment, but for WITHHELD, indexed Git settings and every `LAKE…`."""
     return {name: value for name, value in os.environ.items()
-            if name not in WITHHELD and not name.startswith("LAKE")}
+            if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
 
 
 def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
