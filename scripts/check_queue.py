@@ -8,7 +8,10 @@
     python3 scripts/check_queue.py --tree <dir> [--render]
 
 Group commands require a checkout of the supplied head. --gaps chooses the tests of what
-the group changes; with --plan it writes them to a new file and runs nothing, and
+the group changes: for a path under .github/, changed or deleted, every test GITHUB_TESTS
+names for it, none excused for being deleted, and a refusal if it names none or one is
+missing; and a test GITHUB_TESTS names refuses if it is deleted, whatever else the group
+changes. With --plan it writes them to a new file and runs nothing, and
 --run-plan runs that file's tests in the checkout of its head, reading no GitHub. No
 test runs while this process's environment holds a variable named with TOKEN: a test
 could read it there or, on Linux, in its parent's environment in /proc. So CI chooses
@@ -44,7 +47,12 @@ main (the REST commits/main response), and pushes, queue_merges and main_red (li
 REST pages, as returned by gh api --paginate --slurp: main's push and queue merge
 activity, and the open issues labelled main-red). Queue entries include
 pageInfo so a truncated answer cannot pass. The subject's number and the queue's
-headRefOid must agree. A different queue merge subject is accepted only when its
+headRefOid must agree. That GraphQL answer gives each queued entry's head, body, editor
+and last rename at once, and the head and body the verdict reads, by REST afterwards,
+must equal its own: a head that differs refuses (the queue order compares them), and a
+body that differs, or that the answer lacks, is unreadable, so an edit made between the
+two reads (a bot's, which the editor read before it would name as a person's) never
+passes. A different queue merge subject is accepted only when its
 second parent uniquely identifies a queue entry; no subject fallback is allowed
 for the already merged prefix.
 
@@ -55,7 +63,11 @@ also merges cleanly. Reapplying T must reproduce the group on every non-exempt
 path. Generated files are excluded; added decisions lines must remain a
 subsequence. An automatic revert instead requires the configured STOICHEIA_REVERT_BOT
 and the failed post-merge run's push range, before to after, every commit of which must
-be a two-parent merge, as auto_revert.trains requires. Its one merge base with main must
+be a pull request's two-parent merge, as auto_revert's trains and read_trains require,
+before any revert is computed (pushed_pull_requests): its subject names the pull
+request, no number comes twice, and GitHub's REST answer for that number records it
+merged as that merge, from the merge's second parent, into main of this repository,
+with a title that is not blank and a kind label. Its one merge base with main must
 be after, the failed push's tip, and after..head exactly the reverts and at most one
 keep commit, with no merge (exact_revert): one commit for each of the push's merges,
 newest first, whose tree is that merge reverted onto the last (git revert -m 1, merge
@@ -180,6 +192,24 @@ RUN_POLL = 15
 RUN_WAIT = 600
 # A test file --gaps runs for itself: test_*.py directly under tests/ or scripts/.
 GAP_TEST = re.compile(r"(?:tests|scripts)/test_[^/]+\.py")
+# The tests --gaps runs for each file under .github/, changed or deleted: those that read
+# it. scripts/test_safe_push.py reads every workflow and the pull request template;
+# tests/test_auto_revert.py and tests/test_check_queue.py read ci.yml and post-merge.yml;
+# tests/test_release_gate.py reads the template. A test named here is never excused for
+# being deleted, whether or not the group changes a file it reads (gap_commands). Any
+# other path under .github/ (a new workflow, say) refuses: its tests are named here, in
+# main's copy, before it can land.
+GITHUB_TESTS = {
+    ".github/pull_request_template.md": ("scripts/test_safe_push.py",
+                                         "tests/test_release_gate.py"),
+    ".github/workflows/ci.yml": ("scripts/test_safe_push.py", "tests/test_auto_revert.py",
+                                 "tests/test_check_queue.py"),
+    ".github/workflows/post-merge.yml": ("scripts/test_safe_push.py",
+                                         "tests/test_auto_revert.py",
+                                         "tests/test_check_queue.py"),
+    ".github/workflows/release-gate.yml": ("scripts/test_safe_push.py",),
+    ".github/workflows/safe-push-tests.yml": ("scripts/test_safe_push.py",),
+}
 # The attributes with which Git may write a file to a checkout other than as its blob
 # holds it; --tree, which reads the checkout, refuses to read a page that has any of them.
 CHECKOUT_ATTRIBUTES = ("working-tree-encoding", "filter", "ident", "text", "eol", "crlf")
@@ -223,7 +253,7 @@ class GitHub:
                 "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){"
                 'mergeQueue(branch:"main"){entries(first:100){'
                 "nodes{position enqueuer{__typename login} "
-                "pullRequest{number headRefOid editor{__typename login} "
+                "pullRequest{number headRefOid body editor{__typename login} "
                 "timelineItems(itemTypes:[RENAMED_TITLE_EVENT],last:1){"
                 "nodes{...on RenamedTitleEvent{actor{__typename login}}}}}} "
                 "pageInfo{hasNextPage}}}}}"
@@ -368,6 +398,21 @@ def queue_actors(answer) -> dict[int, tuple[bool, bool, bool]]:
                          "entry") from None
 
 
+def queue_bodies(answer) -> dict[int, str]:
+    """Each queued pull request's body, as the queue read gives it, in the same answer as
+    its head, its editor and its last rename. Missing or malformed data is unreadable."""
+    try:
+        bodies = {}
+        for node in answer["data"]["repository"]["mergeQueue"]["entries"]["nodes"]:
+            pr = node["pullRequest"]
+            if not isinstance(pr["body"], str):
+                raise ValueError
+            bodies[pr["number"]] = pr["body"]
+        return bodies
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read each queued entry's body") from None
+
+
 def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
     """An entry that is not an automatic revert: its head is in this repository, and no
     bot (the revert App's above all) wrote it, put it in the queue, last edited its body
@@ -428,8 +473,10 @@ def pull_request(answer, number: int) -> dict:
 
 
 def chain(repo: Path, base: str, head: str, api: GitHub, queue_answer=None) -> list[dict]:
-    """Identify the first-parent chain and prove its queue order and merge trees."""
-    queued = queue_entries(queue_answer if queue_answer is not None else api.read("queue"))
+    """Identify the first-parent chain and prove its queue order and merge trees, and that
+    the REST reading of each queued entry is the queue read's."""
+    answer = queue_answer if queue_answer is not None else api.read("queue")
+    queued = queue_entries(answer)
     main = commit(repo, oid(api.read("main")["sha"], "main head"))
     main_chain = safe_push.git(repo, "rev-list", "--first-parent", main).splitlines()
     if base not in main_chain:
@@ -476,6 +523,17 @@ def chain(repo: Path, base: str, head: str, api: GitHub, queue_answer=None) -> l
             raise Refused("batching: only a merged prefix may precede open queue entries")
     if not waiting or waiting != queued[:len(waiting)]:
         raise Refused("batching: skipped train or trains out of queue order")
+    # One GraphQL answer gives each queued entry's head, body, editor and last rename;
+    # the body and head the verdict reads come later, by REST. The heads agree, by the
+    # queue order above, and the bodies must too: then everything the verdict reads of a
+    # queued entry is that one answer's. An edit between the two reads either changes the
+    # body, which is unreadable, or leaves it as that answer gave it, with its editor.
+    bodies = queue_bodies(answer)
+    for pr in entries:
+        if pr["state"] == "OPEN" and bodies.get(pr["number"]) != pr["body"]:
+            raise ValueError(f"GitHub: #{pr['number']}'s body differs between the "
+                             "queue's answer and its pull request's: it was edited "
+                             "between the two reads")
     return entries
 
 
@@ -936,14 +994,70 @@ def revert_commits(repo: Path, after: str, head: str, most: int) -> list[str]:
     return found[::-1]
 
 
+def pushed_pull_requests(repo: Path, api: GitHub, merges: list[str]) -> None:
+    """Require each two-parent merge of the failed push to be a pull request's, as
+    auto_revert's trains and read_trains require before it reverts any: its subject
+    names the pull request, read as auto_revert reads it, no number comes twice, and
+    GitHub's REST answer for that number records it merged as that merge, from the
+    merge's second parent, into main of this repository, with a title that is not blank
+    and a kind label (safe_push.KIND_LABELS, which auto_revert's KINDS copies). So the
+    queue admits no revert that auto_revert would not make. Malformed data is
+    unreadable."""
+    found = []
+    for sha in merges:
+        # As auto_revert reads it: Git's %s, with only its line end taken off.
+        match = SUBJECT.fullmatch(safe_push.git(repo, "show", "-s", "--format=%s",
+                                                sha).rstrip("\n"))
+        if not match:
+            raise Refused(f"auto-revert: the failed push's merge {sha[:12]} names no "
+                          "pull request in its subject, and only pull request merges are "
+                          "reverted")
+        found.append((sha, parents(repo, sha)[1], int(match.group(1))))
+    numbers = [number for _, _, number in found]
+    if repeated := sorted({number for number in numbers if numbers.count(number) > 1}):
+        raise Refused("auto-revert: the failed push repeats pull request "
+                      + ", ".join(f"#{number}" for number in repeated))
+    for sha, second, number in found:
+        answer = api.read("pull_requests", number)
+        try:
+            if type(answer["number"]) is not int or answer["number"] != number \
+                    or type(answer["merged"]) is not bool:
+                raise ValueError
+            merged = oid(answer["merge_commit_sha"], "merged commit") \
+                if answer["merged"] else None
+            head = oid(answer["head"]["sha"], "pull request head")
+            base, base_repo = answer["base"]["ref"], answer["base"]["repo"]["full_name"]
+            title, labels = answer["title"], answer["labels"]
+            if not all(isinstance(value, str) and value for value in (base, base_repo)) \
+                    or not isinstance(title, str) or not isinstance(labels, list) \
+                    or not all(isinstance(label["name"], str) and label["name"]
+                               for label in labels):
+                raise ValueError
+        except (KeyError, TypeError, ValueError):
+            raise ValueError(f"GitHub: could not read pull request #{number}") from None
+        if merged != sha or head != second:
+            raise Refused(f"auto-revert: #{number} does not confirm the failed push's "
+                          f"merge {sha[:12]}: GitHub must record it merged as that merge, "
+                          "from the merge's second parent")
+        if base != "main" or base_repo != api.repo:
+            raise Refused(f"auto-revert: #{number} was not merged into main of "
+                          f"{api.repo}")
+        if not title.strip():
+            raise Refused(f"auto-revert: #{number} has a blank title")
+        if not {label["name"] for label in labels} & set(safe_push.KIND_LABELS):
+            raise Refused(f"auto-revert: #{number} has no kind label, one of "
+                          + ", ".join(safe_push.KIND_LABELS))
+
+
 def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
     """Require the configured bot and exactly the failed run's main merge reversals: a
-    push of two-parent merges only; a branch whose one merge base with main is the
-    push's tip, `after`; and after..head exactly the reverts, one commit for each merge,
-    newest first, each that merge reverted onto the last (merge attributes read from
-    the push's `before`, as the revert job reads them), then a commit keeping the
-    decisions record as at `after` only where the reverts changed it. No merge and no
-    other commit; the commits' messages are not read."""
+    push of pull request merges only (pushed_pull_requests), read before any revert; a
+    branch whose one merge base with main is the push's tip, `after`; and after..head
+    exactly the reverts, one commit for each merge, newest first, each that merge
+    reverted onto the last (merge attributes read from the push's `before`, as the
+    revert job reads them), then a commit keeping the decisions record as at `after`
+    only where the reverts changed it. No merge and no other commit; the commits'
+    messages are not read."""
     expected = os.environ.get("STOICHEIA_REVERT_BOT", "")
     if not expected or not expected.endswith("[bot]") or pr["author"]["type"] != "Bot" \
             or pr["author"]["login"] != expected or not re.fullmatch(r"revert/\S+", pr["ref"]) \
@@ -980,6 +1094,7 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
             raise Refused("auto-revert: the failed push holds a commit that is not a "
                           "two-parent merge")
         expected_merges.append(sha)
+    pushed_pull_requests(repo, api, expected_merges)
     if named != expected_merges:
         raise Refused("auto-revert: Reverts lines do not equal the failed push's merges")
     if start != after:
@@ -1301,13 +1416,31 @@ def checkout(repo: Path, head: str) -> None:
 
 
 def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) -> list[list[str]]:
-    """Choose tests once; skip proven deletions and refuse unexplained missing tests."""
+    """Choose tests once; skip proven deletions and refuse unexplained missing tests. A
+    path under .github/, deleted or not, asks for every test GITHUB_TESTS names for it,
+    and a deletion excuses none of them: while one is missing, the path refuses, naming
+    it. A path it names no tests for refuses, naming it. A test GITHUB_TESTS names asks
+    for itself, deleted or not, whether or not the group changes what it reads, so its
+    deletion always refuses."""
     commands = set()
     deleted = deleted or set()
-    for path in sorted(checks):
-        if path in deleted:
+    readers = {}
+    for path, tests in GITHUB_TESTS.items():
+        for test in tests:
+            readers.setdefault(test, []).append(path)
+    for path in sorted(checks | (deleted & readers.keys())):
+        github = path == ".github" or path.startswith(".github/")
+        if github:
+            if path not in GITHUB_TESTS:
+                raise Refused(f"gaps: no tests are mapped to {path}: a path under .github/ "
+                              "lands only once main's check_queue.py names its tests in "
+                              "GITHUB_TESTS")
+            candidates = list(GITHUB_TESTS[path])
+        elif path in readers:
+            candidates = [path]
+        elif path in deleted:
             continue
-        if GAP_TEST.fullmatch(path):
+        elif GAP_TEST.fullmatch(path):
             candidates = [path]
         elif path == "scripts/safe_push.py":
             candidates = ["scripts/test_safe_push.py"]
@@ -1318,11 +1451,15 @@ def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) 
         else:
             candidates = []
         for candidate in candidates:
-            if candidate in deleted:
+            if candidate in deleted and candidate not in readers:
                 continue
             target = repo / candidate
             if not target.is_file() or target.is_symlink():
-                raise Refused(f"gaps: declared test is missing or not a regular file: {candidate}")
+                named = path if github else ", ".join(readers.get(candidate, ()))
+                raise Refused(f"gaps: declared test is missing or not a regular file: {candidate}"
+                              + (f", which GITHUB_TESTS names for {named}: it is never excused, "
+                                 "deleted or not, until main's check_queue.py names others"
+                                 if named else ""))
             command = ("python3", candidate) if candidate == "scripts/test_safe_push.py" \
                 else ("python3", "-I", candidate)
             commands.add(command)
@@ -1476,7 +1613,8 @@ def main(argv=None) -> int:
                 raise ValueError("could not read complete history: shallow repository")
             checkout(repo, head)
             api = GitHub(args.repo, args.github_json)
-            # The queue is read once, for its order and for who queued and edited each entry.
+            # The queue is read once, for its order, each entry's body and who queued,
+            # edited and renamed each entry.
             queue_answer = api.read("queue")
             entries = chain(repo, base, head, api, queue_answer)
             actors = queue_actors(queue_answer)
