@@ -63,7 +63,11 @@ ceiling on Git's search for a repository, or name a build, and STOICHEIA_NEGATIV
 Git act on another tree. It keeps the variables that name or shut out the configuration
 files the run reads (GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM, GIT_CONFIG_NOSYSTEM and
 GIT_ATTR_NOSYSTEM, the four of scripts/safe_push.py's CONFIG_FILE_VARIABLES, #430), so
-that a worker and the tree under test read the same configuration.
+that a worker and the tree under test read the same configuration files. Those files can
+still tell them apart: a conditional include keyed on a repository's path (`includeIf
+"gitdir:…"`) can give a worker's tree settings the tree under test lacks, `status` ones
+among them, and so a different verdict. Like a plant's file (below), configuration written
+to do that is not caught: the run trusts the configuration of the machine it runs on.
 
 The shares are dealt longest first, by the seconds each plant took as
 tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
@@ -1044,7 +1048,8 @@ def write_report(path: Path, report: dict, status: int | None) -> None:
 def worker_env() -> dict[str, str]:
     """The run's environment, but for WITHHELD and every name WITHHELD_PREFIXES begins: the
     variables that name the configuration files the run reads, the four of safe_push.py's
-    CONFIG_FILE_VARIABLES, are kept (#430)."""
+    CONFIG_FILE_VARIABLES, are kept (#430), and with them any conditional include those
+    files hold (the docstring)."""
     return {name: value for name, value in os.environ.items()
             if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
 
