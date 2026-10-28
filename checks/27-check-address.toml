@@ -1,0 +1,8 @@
+# Check that every page and current document gives the repository's address on GitHub as
+# its home, dodecaplex-co/stoicheia, the dated records passed over; --self-test first reads
+# a case of each form of address and of each kind of file. It needs no Lean.
+order = 185
+name = "python3 scripts/check_address.py --self-test"
+job = "check"
+command = ["python3", "scripts/check_address.py", "--self-test"]
+section8 = "python3 scripts/check_address.py --self-test"

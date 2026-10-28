@@ -252,6 +252,25 @@ worktree sets it, each with instructions for running the check without the overr
 module planted beside it, such as `scripts/unicodedata.py`, is never read in place of the
 standard library's.
 
+### The repository's address
+
+The repository moved from a personal account to the organization dodecaplex-co on 27
+October 2026 ([#626](https://github.com/dodecaplex-co/stoicheia/issues/626)), and its
+address is `https://github.com/dodecaplex-co/stoicheia`. The pages, which `render.py`
+writes from its constant `REPO`, and every document read as current guidance give that
+address. The dated records keep the old address as they were written: the decision
+entries and the decisions page, the briefs and the reports (`docs/decisions/`,
+`docs/briefs/`, `docs/reports/`). Each was true on its day; GitHub's redirect still
+serves its links; an entry is never edited ([the folder's README](decisions/README.md));
+and rewriting a record's words, however small the change, would make it say what it
+never said when it was written. So nothing new names the old address, and a reader meets
+it only in a record whose date tells them why.
+[`scripts/check_address.py`](../scripts/check_address.py), in section 8's sequence,
+refuses any address of a repository named `stoicheia` on GitHub, in each form GitHub
+serves, under an owner other than `dodecaplex-co`, in a page, a Markdown file or
+`CITATION.cff` outside those three folders. It refuses every other owner rather than the
+old one, so it never needs to name it.
+
 ## 5. Proving in parallel: a voyage
 
 A voyage is one stretch of a book, run as a workflow:
@@ -422,6 +441,7 @@ python3 scripts/render.py
 git status --porcelain                 # prints nothing
 python3 scripts/check_queue.py --tree .
 python3 scripts/check_links.py
+python3 scripts/check_address.py --self-test
 ```
 <!-- /checks -->
 
