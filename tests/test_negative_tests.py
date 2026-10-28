@@ -2648,6 +2648,13 @@ CHANGES_MODE = ('(nt.ROOT / "tracked-mode").chmod(0o755)\n'
                 '    nt.refused("{name}: caught")')
 DELETES_TREE_AND_CRASHES = 'import shutil\n    shutil.rmtree(nt.ROOT)\n    import os\n    os._exit(3)'
 SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
+SLEEPS_WITH_ALARM = ('import os\n'
+                     '    import signal\n'
+                     '    import time\n'
+                     '    signal.signal(signal.SIGALRM, lambda *_: os._exit(9))\n'
+                     '    signal.alarm(3)\n'
+                     '    print("{name} sleeps")\n'
+                     '    time.sleep(120)')
 # It refuses only when a changed tracked file and an untracked one hold the bytes they hold
 # in the tree under test, which it finds through Git's common directory.
 LOOKS = ('import os\n'
@@ -3001,23 +3008,38 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), "")
 
     def test_worktree_rename_configuration_does_not_change_worker_snapshot(self):
-        """A staged rename has the same snapshot in source and worker worktrees."""
+        """A staged rename in a linked source has its plain-status form and one-worker
+        verdict preserved in every worker."""
         notes = self.root / "notes"
         notes.mkdir()
         old = notes / "old.txt"
         old.write_text("renamed contents\n")
         self.commit(a_one=PASSES, b_two=PASSES)
         self.git("config", "extensions.worktreeConfig", "true")
-        self.git("config", "--worktree", "status.renames", "false")
-        self.git("mv", "notes/old.txt", "notes/new.txt")
-        before = self.git("status", "--porcelain", "--no-renames")
-        result = self.suite("--workers", "2")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        for name in ("a_one", "b_two"):
-            self.assertIn(f"✓ {name}: caught\n", result.stdout)
-        self.assertEqual(self.git("status", "--porcelain", "--no-renames"), before)
-        self.assertFalse(old.exists())
-        self.assertEqual((notes / "new.txt").read_text(), "renamed contents\n")
+        source = self.tmp / "source"
+        self.git("worktree", "add", "--detach", str(source), "HEAD")
+        try:
+            def source_git(*args):
+                return subprocess.run(["git", *args], cwd=source, env=self.env,
+                                      capture_output=True, text=True, check=True).stdout
+
+            source_git("config", "--worktree", "status.renames", "false")
+            source_git("mv", "notes/old.txt", "notes/new.txt")
+            before = source_git("status", "--porcelain")
+            self.assertEqual(before, "A  notes/new.txt\nD  notes/old.txt\n")
+            alone = subprocess.run([sys.executable, "scripts/negative_tests.py"], cwd=source,
+                                   env=self.env, capture_output=True, text=True, timeout=300)
+            workers = subprocess.run([sys.executable, "scripts/negative_tests.py", "--workers",
+                                      "2"], cwd=source, env=self.env, capture_output=True,
+                                     text=True, timeout=300)
+            self.assertEqual(workers.returncode, alone.returncode,
+                             workers.stdout + workers.stderr + alone.stdout + alone.stderr)
+            self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+            self.assertEqual(source_git("status", "--porcelain"), before)
+            self.assertEqual((source / "notes/new.txt").read_text(), "renamed contents\n")
+        finally:
+            self.git("worktree", "remove", "--force", "--force", str(source))
+        self.assert_no_worker_left()
 
     def test_filemode_configuration_gives_one_worker_s_verdict(self):
         """With core.fileMode false, one worker's bracket does not see a plant's change to a
@@ -3087,6 +3109,47 @@ class WorkerTests(unittest.TestCase):
                     self.assertRaises(KeyboardInterrupt):
                 negative.run_workers(chosen, 2, entry, {})
         self.assertTrue(interrupted)
+        self.assert_no_worker_left()
+
+    def test_interrupt_after_process_creation_stops_it_before_removing_its_tree(self):
+        """SIGINT after a child is created leaves cleanup owning it, with SIGINT unblocked;
+        the child is stopped and reaped before either registered tree is removed."""
+        self.commit(a_one=SLEEPS_WITH_ALARM, b_two=PASSES)
+        chosen = [negative.Plant(name, self.root / f"scripts/negative/{name}.py", "", False,
+                                 lambda: None)
+                  for name in ("a_one", "b_two")]
+        children = []
+        reaped = []
+        real_popen = subprocess.Popen
+        before_mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
+        with patch.object(negative, "ROOT", self.root), \
+                patch.dict(os.environ, self.env, clear=True):
+            entry = negative.worker_status(self.root).stdout
+            real_root_git = negative.root_git
+
+            def interrupt_after_spawn(*args, **kwargs):
+                child = real_popen(*args, **kwargs)
+                command = args[0] if args else kwargs["args"]
+                if "--worker-report" in command:
+                    children.append(child)
+                    os.kill(os.getpid(), signal.SIGINT)
+                return child
+
+            def check_before_removal(*cmd):
+                if cmd[:2] == ("worktree", "remove"):
+                    reaped.append(bool(children) and children[0].poll() is not None)
+                return real_root_git(*cmd)
+
+            with patch.object(negative.subprocess, "Popen", side_effect=interrupt_after_spawn), \
+                    patch.object(negative, "root_git", side_effect=check_before_removal), \
+                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()), \
+                    self.assertRaises(KeyboardInterrupt):
+                negative.run_workers(chosen, 2, entry, {})
+        self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, set()), before_mask)
+        self.assertEqual(len(children), 1)
+        self.assertIsNotNone(children[0].returncode)
+        self.assertNotEqual(children[0].returncode, 9)
+        self.assertEqual(reaped, [True, True])
         self.assert_no_worker_left()
 
     def test_split_index_state_is_cloned_into_workers(self):
@@ -3209,14 +3272,18 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), status)
         with self.subTest("a file written as a plant loads"):
             self.commit(before={"b_writes": '(nt.ROOT / "written-as-it-loads").touch()'},
-                        a_looks=LOOKS, b_writes=PASSES)
-            result = self.suite("--workers", "2")
-            self.assertEqual(result.returncode, 1, result.stdout)
-            self.assertIn("✗ worker 1's tree does not match the tree under test:\n", result.stdout)
-            self.assertNotIn("worker 2's tree", result.stdout)
-            self.assertNotIn("(scripts/negative/", result.stdout)
+                        a_one=PASSES, b_writes=PASSES)
+            alone = self.suite()
+            (self.root / "written-as-it-loads").unlink()
+            workers = self.suite("--workers", "2")
+            self.assertEqual(workers.returncode, alone.returncode, workers.stdout + alone.stdout)
+            self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+            first = workers.stdout.index("a_one (scripts/negative/a_one.py)")
+            second = workers.stdout.index("b_writes (scripts/negative/b_writes.py)")
+            self.assertLess(first, second)
+            self.assertNotIn("tree does not match the tree under test", workers.stdout)
             self.assertIn("the working tree did not return to its entry Git status",
-                          result.stdout)
+                          workers.stdout)
 
     def test_a_run_s_directory_inside_a_work_tree_fails_the_run(self):
         """TMPDIR inside another repository's work tree, where a fixture meant to have no

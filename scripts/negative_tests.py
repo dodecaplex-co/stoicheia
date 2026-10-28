@@ -1070,6 +1070,10 @@ def worker_status(tree: Path) -> subprocess.CompletedProcess:
     return in_tree(tree, "git", f"--work-tree={tree}", "status", "--porcelain")
 
 
+def unblock_sigint() -> None:
+    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
+
+
 def linked(root: Path) -> Path | None:
     """The first entry under `root` that is a symbolic link, or a file with a second name."""
     for folder, folders, files in os.walk(root):
@@ -1095,6 +1099,22 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
     if added.returncode != 0:
         return f"could not be made: git worktree add: exit {added.returncode}", (
             added.stdout + added.stderr)
+    enabled = root_git("config", "--bool", "--get", "extensions.worktreeConfig")
+    if enabled.returncode not in (0, 1):
+        return (f"could not be made: git config extensions.worktreeConfig: exit "
+                f"{enabled.returncode}"), enabled.stdout + enabled.stderr
+    if enabled.stdout.strip() == "true":
+        resolved = root_git("rev-parse", "--git-path", "config.worktree")
+        if resolved.returncode != 0:
+            return "could not be made: git rev-parse --git-path config.worktree failed", (
+                resolved.stdout + resolved.stderr)
+        source_config = ROOT / resolved.stdout.strip()
+        if source_config.is_file():
+            configured = in_tree(tree, "git", f"--work-tree={tree}", "config", "--worktree",
+                                 "include.path", str(source_config))
+            if configured.returncode != 0:
+                return (f"could not be made: git config --worktree include.path: exit "
+                        f"{configured.returncode}"), configured.stdout + configured.stderr
     listed = subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
                              "--others", "--exclude-standard"), cwd=ROOT,
                             env=worker_env(), capture_output=True)
@@ -1297,12 +1317,17 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
         env = worker_env()
         for k, (tree, share) in enumerate(zip(trees, shares), 1):
             with open(base / f"worker-{k}.log", "wb") as log:
-                workers.append(subprocess.Popen(
-                    [sys.executable, str(tree / "scripts/negative_tests.py"),
-                     *(arg for p in share for arg in ("--plant", p.name)),
-                     "--worker-report", str(base / f"worker-{k}.json")],
-                    cwd=tree, env=env, stdin=subprocess.DEVNULL, stdout=log,
-                    stderr=subprocess.STDOUT))
+                mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+                try:
+                    worker = subprocess.Popen(
+                        [sys.executable, str(tree / "scripts/negative_tests.py"),
+                         *(arg for p in share for arg in ("--plant", p.name)),
+                         "--worker-report", str(base / f"worker-{k}.json")],
+                        cwd=tree, env=env, stdin=subprocess.DEVNULL, stdout=log,
+                        stderr=subprocess.STDOUT, preexec_fn=unblock_sigint)
+                    workers.append(worker)
+                finally:
+                    signal.pthread_sigmask(signal.SIG_SETMASK, mask)
         for worker in workers:
             worker.wait()
         reports = [read_report(base / f"worker-{k}.json", [p.name for p in share],
@@ -1374,10 +1399,16 @@ def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
                 expected = len(chosen)
                 count = min(workers, expected)
                 if count > 1:
-                    parallel = True
                     assert parallel_before is not None
                     if expect_success("entry Git status", parallel_before):
-                        ran = run_workers(chosen, count, parallel_before.stdout, sources)
+                        ready = worker_status(ROOT)
+                        if ready.returncode == 0 and ready.stdout == parallel_before.stdout:
+                            parallel = True
+                            ran = run_workers(chosen, count, parallel_before.stdout, sources)
+                        else:
+                            for plant in chosen:
+                                run_plant(plant, sources, changes)
+                                ran += 1
                 else:
                     for plant in chosen:
                         if report is None:
