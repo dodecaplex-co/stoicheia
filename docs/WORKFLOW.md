@@ -960,22 +960,10 @@ train and group as unreadable.
 
 ## 9. Release criteria and severity
 
-The acceptance checklist ([ACCEPTANCE.md](ACCEPTANCE.md#where-the-older-criteria-went))
-incorporates the criteria below. A proposition meets these criteria when:
-
-1. its reviewed brief and its final formal statements agree;
-2. every substantive clause, and its porism, is proved or exactly qualified;
-3. the intended cases are covered, and construction inputs and outputs are right;
-4. each representation it relies on has the correspondence results its claims need;
-5. the route shown is accurate, and every exception is visible;
-6. the dependency closure, the axiom boundaries and the certificate cover every formal claim
-   published;
-7. quotations and attributions are checked, and the commentary explains this proposition
-   accurately;
-8. changed figures and the page have been inspected;
-9. the required checks pass on the integrated revision;
-10. a reviewer other than the author has assessed the changed mathematical claims, and the
-    record names the reviewer and the commit.
+The release standard is the acceptance checklist, [ACCEPTANCE.md](ACCEPTANCE.md): a
+proposition, a book and the edition meet the release criteria when its items pass. The ten
+criteria this section listed before it are retired; ACCEPTANCE.md
+[maps each one to the items that replace it](ACCEPTANCE.md#where-the-older-criteria-went).
 
 **Severity** decides what must be corrected:
 
@@ -1157,29 +1145,49 @@ pre-flight leaves the train.
 
 The train's `--body-file`, required on a dry run and on every update too, has the usual
 pull request sections and two more, `Members` and `What is new`. `Members` is a table
-with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
-one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
-head merged. Each `/code-review` and `/security-review` cell names the commit its review
-read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not in an HTML tag or
-comment, or a link's destination), with the findings, and that commit must
-be one of the member's own: the member's head, or an ancestor of it not on origin/main,
-named unambiguously by digits that begin its name (as `git rev-parse --verify
-<digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
-digits in the cell, a coordinator's commit or a run's, may stand beside it. A cell that
-is only a placeholder ("not run", "awaiting review", "skipped" and their like) refuses,
-and so does one that holds, anywhere, in any case and beside the member's commit too,
-"pending", "TBD", "to come", "not needed" or "N/A" ("Pending items: none" among them);
-a finding that merely begins with another placeholder's words ("To do so, ...", "Later
-commits ...") does not. `/security-review` may instead say "Not required", and only
-if no protected path changed, read against every merge base of
-the member with origin/main; a member that changes a protected path must name its
-commit there, and its cell may not say "Not required" anywhere, in any case or
-spelling. Beyond that, the cells are the coordinator's words: the check reads that a
-review of the member is named and that some visible verdict or findings stand beyond the
-commit name and its punctuation or markup. It imposes no verdict vocabulary or prose
-length. `/no-mistakes` says
-`passed at <head>` for that same member head, or `not run: <reason>`, with at least
-five words giving the reason.
+with the columns `Branch`, `Head`, `/code-review`, `/security-review` and
+`/no-mistakes`, one row per member. `Head` is 12 to 40 lower-case hexadecimal digits
+naming the member head merged. Each `/code-review` and `/security-review` cell names the
+commit its review read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not
+in an HTML tag or comment, or a link's destination), with the findings, and that commit
+must be one of the member's own: the member's head, or an ancestor of it not on
+origin/main, named unambiguously by digits that begin its name (as `git rev-parse
+--verify <digits>^{commit}` resolves them; a ref whose name is hex digits does not
+count). Other digits in the cell, a coordinator's commit or a run's, may stand beside
+it. A cell that is only a placeholder ("not run", "awaiting review", "skipped" and their
+like) refuses, and so does one that holds, anywhere, in any case and beside the member's
+commit too, "pending", "TBD", "to come", "not needed" or "N/A" ("Pending items: none"
+among them); a finding that merely begins with another placeholder's words ("To do so,
+...", "Later commits ...") does not. `/security-review` may instead say "Not required",
+and only if no protected path changed, read against every merge base of the member with
+origin/main; a member that changes a protected path must name its commit there, and its
+cell may not say "Not required" anywhere, in any case or spelling. Beyond that, the
+cells are the coordinator's words, read three times: as written, as a reader sees them,
+and as a reader sees them with the inline Markdown markers (`*`, `_`, `` ` ``, `~` and a
+link's brackets) taken out, each with Unicode's default-ignorable characters (a Hangul
+filler among them) dropped, so that HTML tags, emphasis, code, strikethrough, a link or
+an invisible letter inside a word (`w*i*ll`, `pen<i></i>ding`, `pen[d](#x)ing`) cannot
+hide the word from all three at once. In each reading a cell must give a verdict that
+stands as one (passed, approved, fixed, no findings or a number of them, and their like,
+and on `/security-review` "not required") in the same clause as a commit it names. A
+clause ends at every `;`, `!`, line end, `<br>` and HTML block tag (`<p>`, `<div>`,
+`<li>` and the like), at five other scripts' full stops, at every `?` but one before a
+name and `=`, as in a link's query, and at every `.` but one between two letters or
+digits, inside a name or a number (`SCHEMA.md`, `5.5`), so `Started at <commit>; CI
+passed` refuses. A verdict that is negated, hedged, used as a noun, struck through or
+followed at once by a word saying the review is unfinished is none ("may have passed",
+"a first pass", `~~passed~~`, "passed (partial)"). As a second layer, a cell refuses if
+any reading says, anywhere, that the review is still to come, in progress or provisional
+("will", "yet", "outstanding", "to follow", "to be reported", "unreviewed",
+"preliminary", "for now", "later" saying when, a question mark that no name and `=`
+follow, and their like), in those readings or in a fourth that keeps Unicode's other
+invisible characters as separators, or says, in a phrase that names the review, a
+finding, a verdict or the rest, that it is deferred, incomplete, partial, interim or not
+yet done. A rule read from prose cannot list every way of saying that a review is not
+done ("PASS if CI is green" still passes): the cells are written by the coordinator's
+crews, and each is read by the lane as well. The check imposes no prose length.
+`/no-mistakes` says `passed at <head>` for that same member head, or `not run:
+<reason>`, with at least five words giving the reason.
 
 `What is new` says `None.` or gives bullet lines of these forms:
 
@@ -1419,8 +1427,12 @@ union of the entries' derived changes and their declarations. A changed
 `tests/test_*.py` runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself;
 a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
 `scripts/test_<name>.py` tests. The safe_push test command is
-`python3 scripts/test_safe_push.py`. A file the group deletes asks for no test; when an
-entry has more than one merge base, it asks for the tests of what it changes against
+`python3 scripts/test_safe_push.py`. A file under `.github/`, changed or deleted, asks
+for the tests that read it, which `GITHUB_TESTS` names; any other path under `.github/`
+is refused, as is a group that deletes a test named there, whether or not it changes a
+file under `.github/`, until main's copy of the map changes. Any other file the group
+deletes asks for no test; when an entry has more than one merge base, it asks for the
+tests of what it changes against
 any of them, and a deletion excuses a test only if it is a deletion against all. Each
 selected command runs once, and a failure fails the job. Changed propositions have
 their acceptance items printed from the acceptance artifact, as a report of the
@@ -1517,17 +1529,21 @@ when its named run is a failed post-merge run of a push to main, its branch is
 `main-red` names the run on its own `Run:` line, by this repository's address for the
 run (a run of another repository, or an address elsewhere in the issue, names nothing).
 The push, its `before` and `after` read from GitHub's record of pushes to main, must be
-two-parent merges only, and the merges the revert names must be exactly those, newest
-first. The revert's one merge base with main must be the push's tip, `after`, and
-`after..head` exactly the reverts and at most one keep commit, with no merge: one
-commit for each named merge, in that order, whose tree is that merge reverted onto the
-last (merge attributes read from `before`, as the script reads them), then, only where
-the reverts changed the decisions record, one commit whose tree keeps
+two-parent merges only, each the recorded merge of a merged pull request into this
+repository's main, as `auto_revert.py` reads a train (its subject, a number named once,
+its merge and head commits, a title and a kind label), and the merges the revert names
+must be exactly those, newest first. The revert's one merge base with main must be the
+push's tip, `after`, and `after..head` exactly the reverts and at most one keep commit,
+with no merge: one commit for each named merge, in that order, whose tree is that merge
+reverted onto the last (merge attributes read from `before`, as the script reads them),
+then, only where the reverts changed the decisions record, one commit whose tree keeps
 `docs/decisions/` and the decisions page as at `after`, as above. Nothing else may
 differ, so a revert that takes a train's lines off the page, or changes it in any other
 way, refuses, and so does one built on a later main, or through any other commit. The
-commits' messages are not read. The job that clears `main-red` runs no repository code
-at all.
+commits' messages are not read. The `clear` job, which clears `main-red` after a run
+that passed, runs no repository code at all; the revert job, which can also remove it
+when main has moved on ("Out of a red main", below), runs no repository code but the
+previous main's script.
 
 The revert job is one of the named run's own jobs, so the revert's group can be judged
 while that run is still in progress. The judge then reads the run again every 15
@@ -1593,7 +1609,19 @@ revert made by hand, as for a train that changed `.github/workflows/`; it keeps 
 decisions record, and mends each link on it that the revert would break, as
 `check_links.py` names them ("Auto-revert", above). Once it is on
 main, its own post-merge run decides: a passing run at the new tip clears `main-red`,
-and a failing one is a failed push like any other.
+and a failing one is a failed push like any other. A slow run's failure can be recorded
+after a later push's run has passed and cleared, which would leave main paused although
+its tip is green. So, unless it enqueues a revert, `auto_revert.py` then reads main's tip
+afresh. While the tip is still the failed push, it changes nothing more: a later push's
+run that passes clears the issue as any other. When main has moved on, it removes
+`main-red` from the issue it opened, naming the run, if GitHub's comparison of the
+issue's `After` with the tip shows the tip ahead of it and not behind (the job's
+checkout holds main only as it stood when the job began), the tip's latest post-merge
+run (every page read) completed with success, and main still names that tip just before
+the removal. When main has moved on, or its tip cannot be read, and the label stays,
+the issue says how to clear it, the way that also clears an issue the fallback opened:
+once main's tip has a post-merge run that passed, re-run that run's `clear` job, which
+removes the label from every open `main-red` issue whose `After` main's tip contains.
 
 **Turning it on.** The queue remains off until the owner enables it, and not before the
 owner has chosen the authenticated source for the pre-flight's evidence that rule (b)

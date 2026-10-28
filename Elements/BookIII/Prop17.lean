@@ -3,6 +3,7 @@ import Elements.Figure.Circles
 import Elements.BookIII.Squares
 import Elements.BookI.Prop04
 import Elements.BookI.Prop11
+import Elements.BookIII.Prop01
 import Elements.BookIII.Prop16
 import Elements.BookI.Prop13
 
@@ -42,9 +43,10 @@ theorem Prop17 {A : Point} {BCD : Circle} (hA : OutsideCircle A BCD) :
   -- Let A be the given point, and BCD the given circle;
   -- thus it is required to draw from the point A a straight line touching the circle BCD.
   -- For let the centre E of the circle be taken; [III. 1]
-  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
-     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
-  obtain ⟨E, hE⟩ := exists_centre BCD
+  /- The centre is found by III.1's construction, on a straight line drawn through the
+     circle at random (`Prop1.of_circle`), as Euclid finds it. The proof keeps the centre
+     alone, which is what Euclid takes from III.1. -/
+  obtain ⟨-, -, E, -, -, -, -, -, hE, -⟩ := Prop1.of_circle BCD
   -- let AE be joined, and with centre E and distance EA let the circle AFG be described;
   have hEA : E ≠ A := fun e => hA.1 (e ▸ centre_inside hE)
   obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA
@@ -135,8 +137,9 @@ theorem Prop17.general {A : Point} {BCD : Circle}
     (hA : ¬ InsideCircle A BCD) :
     ∃ X : Point, Touches A X BCD := by
   by_cases hon : OnCircle A BCD
-  · /- A is on the circle. Its centre E is within it, so E is not A. -/
-    obtain ⟨E, hE⟩ := exists_centre BCD
+  · /- A is on the circle. Its centre E, found by III.1's construction as in `Prop17`
+       (`Prop1.of_circle`), is within it, so E is not A. -/
+    obtain ⟨-, -, E, -, -, -, -, -, hE, -⟩ := Prop1.of_circle BCD
     have hEA : E ≠ A := (ne_of_centre_of_on hE hon).symm
     obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA
     /- Choose Q off EA, then draw AX at right angles to EA on Q's side by I.11. -/
