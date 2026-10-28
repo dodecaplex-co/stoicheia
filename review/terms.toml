@@ -49,6 +49,10 @@ kind = "representation"
 meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.26–III.30, both companions of III.24, and III.25's `Prop25.kind`)."
 badge = "in our measure of circumferences"
 
+[tag.angle-at-centre]
+kind = "representation"
+meaning = "The angle at the centre E standing on the circumference BKC is the angles BEF and FEC together, for a diameter AEF with F on that circumference and A on the other, as in III.20's first figure; so it may be two right angles or more, a reading made after Heath's notes (vol. 2, pp. 47–49) and not Euclid's, whose angles at the centre are less than two right angles. Where E lies on the other side of BC from K, as in Euclid's figures, it is the rectilineal angle BEC (III.20 and its companion `Prop20.circumference`)."
+
 [tag.redundant-hypothesis]
 kind = "representation"
 meaning = "A hypothesis kept from Euclid's enunciation is not needed for the Lean conclusion, which holds without it; the proof may still use it, along Euclid's route (III.24, III.26, III.27)."
