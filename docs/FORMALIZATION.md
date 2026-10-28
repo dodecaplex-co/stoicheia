@@ -382,10 +382,12 @@ reads each proof term and lists a proposition, porism or companion whose proof c
 in every case, to one helper that none of its own steps feeds, or that cites a helper
 stating exactly what it states.
 
-A construction core kept apart under section 4, as III.1's `Prop1.construction`, carries
-Euclid's sentences of construction, not a step he takes for granted; the record shows it as
-a `grouped` passage naming it, and the proposition keeps the correctness argument under his
-sentences.
+A construction core kept apart under section 4 carries Euclid's sentences of construction,
+not a step he takes for granted; where the proposition calls it, the record shows it as a
+`grouped` passage naming it, and the proposition keeps the correctness argument under his
+sentences. III.1 takes its three steps under his sentences, by I.10,
+`Prop1.perpendicular_chord` and I.10; `Prop1.construction` gathers them in one theorem,
+which `Audit/Centre.lean` pins.
 
 ## 6. Where lemmas live
 

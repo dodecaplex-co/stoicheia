@@ -113,18 +113,19 @@ theorem Prop1.equal_adjacent {A B D G : Point} (hDAG : Triangle D A G)
 /-- D must be within the circle before the perpendicular through it can be produced to
 the circumference. Euclid takes it from his figure; III.2 cannot supply it, since III.2
 takes its centre from III.1. We take it by `Prop1.within` from the centre that a circle
-has by Definitions I.15 and 16 (`exists_centre`), the same centre Euclid's reductio
-supposes when it says "let G be the centre". That centre is used for this step only and
-is not the point the construction finds. -/
+has by Definitions I.15 and I.16 (`exists_centre`), which Euclid's reductio presupposes
+too. That centre is used for this step only and is not the point the construction
+finds. -/
 theorem Prop1.midpoint_inside {A B D : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hADB : Between A D B) (hAD : ‖A D‖ = ‖D B‖) :
     InsideCircle D ABC := by
   obtain ⟨G, hG⟩ := exists_centre ABC
   exact Prop1.within hG hA hB hADB hAD
 
-/-- From an interior point D of AB, draw DC at right angles to AB [I.11] and produce
-it through to E (Intersections 5). This step receives the interior-point evidence;
-it neither chooses a centre nor bisects CE. -/
+/-- From a point D between A and B and within the circle, draw DC at right angles to AB
+[I. 11] and produce it through to E: Intersections 5 finds C, and then E. That D is within
+the circle is given (in III.1, by `Prop1.midpoint_inside`); this step takes no centre and
+does not bisect CE. -/
 theorem Prop1.perpendicular_chord {A B D : Point} {ABC : Circle}
     (hADB : Between A D B) (hD_in : InsideCircle D ABC) :
     ∃ C E : Point, OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧
@@ -159,8 +160,8 @@ theorem Prop1.perpendicular_chord {A B D : Point} {ABC : Circle}
   exact ⟨C, E, hC, hE, hCDE, hADC, hBDC, Triangle.of_line hA_L hB_L hAB hC_L⟩
 
 /-- Euclid's construction for III.1 receives a circle and two points A, B of it.
-AB is bisected at D [I.10]; DC is drawn at right angles to AB and through to E;
-and CE is bisected at F [I.10]. That D is within the circle, which Euclid takes from
+AB is bisected at D [I. 10]; DC is drawn at right angles to AB and through to E;
+and CE is bisected at F [I. 10]. That D is within the circle, which Euclid takes from
 his figure, is `Prop1.midpoint_inside`. The same three
 steps appear separately under Heath's sentences in `Prop1`. -/
 theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)

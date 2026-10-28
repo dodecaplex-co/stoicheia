@@ -17,19 +17,19 @@ note = "Our foundations assume that every circle has a centre, as Definitions I.
 at = "Let a straight line AB be drawn through it at random"
 kind = "helper"
 helper = "BookI.Prop10"
-note = "A and B are the given distinct circumference points; `Prop1.of_circle` takes them when only the circle is given. I.10 bisects AB at D here, before the perpendicular is drawn."
+note = "A and B are the given distinct circumference points; `Prop1.of_circle` takes them when only the circle is given. I.10 bisects AB at D, for which Heath prints no reference here."
 
 [[passage]]
 at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
 kind = "helper"
 helper = "Prop1.perpendicular_chord"
-note = "I.11 draws the perpendicular, and Intersections 5, the rule we assume as System E's, finds C and then E through D. Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes (Heath, vol. 2, p. 7). III.2 cannot be cited, since it takes its centre from III.1, so `Prop1.midpoint_inside` takes a centre from `exists_centre` for this proof alone, and `Prop1.within` gives III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
+note = "I.11 draws the perpendicular, for which Heath prints no reference here, and the rule we assume as System E, Intersections 5, finds C and then E through D. Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes (Heath, vol. 2, p. 7). III.2 cannot be cited, since it takes its centre from III.1, so `Prop1.midpoint_inside` takes a centre from `exists_centre` for this proof alone, and `Prop1.within` gives III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
 
 [[passage]]
 at = "let CE be bisected at F"
 kind = "helper"
 helper = "BookI.Prop10"
-note = "I.10 bisects the constructed CE at F. This F is the point returned by the theorem; the later centre witness G is used only in the reductio. `Prop1.construction` retains its interface and assembles the same three construction steps."
+note = "I.10 bisects CE at F, the point the theorem returns; the centre G is taken later, for the reductio alone. `Prop1.construction` gathers the same three steps of construction in one theorem."
 
 [[passage]]
 at = "For suppose it is not, but, if possible, let G be the centre"
@@ -56,19 +56,20 @@ note = "Euclid rules out equal angles when one is greater; `Prop1.perpendicular`
 
 [[passage]]
 at = "Therefore G is not the centre of the circle ABC."
-kind = "grouped"
-note = "The reductio puts G on CE. `between_of_centre_chord` and `Prop1.middle` then identify G with its middle point F, contradicting G ≠ F. The witness G was unrestricted, so the same argument excludes any other centre."
+kind = "helper"
+helper = "Prop1.middle"
+note = "Euclid takes for granted that a centre on CE is its middle point (Heath, vol. 2, p. 8). The Lean puts G between C and E by Book Zero's `between_of_centre_chord`, since either other order would make one radius a part of the other, and `Prop1.middle` makes G the middle point F, against the supposition that F is not the centre. Nothing in the argument restricted G: that is Euclid's \"similarly\" for every other point."
 
 [[passage]]
 at = "Therefore the point F is the centre of the circle ABC."
 kind = "grouped"
-note = "The preceding reductio discharges the supposition that F is not the centre. The final witness is the F obtained by bisecting CE, with all its construction data, rather than a substitution of the centre G for F."
+note = "Euclid's conclusion repeats \"I say that F is the centre\", which the reductio above proves. The theorem returns F, the middle point of CE, with the points D, C and E of the construction."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., by the argument of Euclid's reductio from the given centre G: on AB it is D by `Prop1.middle`; off AB, the shared I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes them right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular` puts G on DC. It makes no direct call to III.1, `centre_unique` or `exists_centre`; inherited facts still depend on `exists_centre`."
+note = "Proved as its own theorem, III.1 Por., by the argument of Euclid's reductio from the given centre G: on AB it is D by `Prop1.middle`; off AB, the shared I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes them right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular` puts G on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`."
 
 [figure]
 case = "AB not through F, with the supposed centre G off CE in the reductio"
