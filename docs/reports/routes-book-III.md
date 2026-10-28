@@ -1910,9 +1910,10 @@ nearer (`Prop8.contact_last`); its route is `euclid`. III.26, III.28 and III.29 
 
 28 October 2026, later (#547). III.26 and III.28 now subtract the remainders as Euclid does,
 for the congruence as for the measures: the application of the equal segments, extended to
-the whole circles (`Prop26.extend`, by I.2, I.4, I.8, I.20's collinear lemmas and III.9),
+the whole circles (`Prop26.extend`, by I.2, I.4, I.8, I.12, I.17, I.19, I.20's collinear lemmas, III.2 and
+III.9),
 is restricted to what remains (`Prop26.remainder`). III.26's route stays modified for its obtuse
 angles at the circumferences, I.4 taking the angles that remain of four right angles
-(Heath, vol. 2, p. 57); III.28 for its two diameters, a case of the statement that Euclid's
-proof does not in terms cover (vol. 2, p. 60); III.29 for its semicircles and greater
-circumferences (vol. 2, pp. 60 to 61).
+(Heath, vol. 2, p. 57), and III.29's for its greater circumferences (vol. 2, pp. 60 to 61).
+III.28's route is euclid: its two diameters are a case Heath calls "scarcely worth giving"
+(vol. 2, p. 60), declared as a passage, so the note above is overtaken for III.28.

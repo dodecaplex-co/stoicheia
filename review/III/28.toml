@@ -4,8 +4,8 @@ note = "Equal circumferences read as equal in measure and congruent; \"the great
 fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
-kind = "modified"
-note = "Euclid's argument where AB and DE are not diameters: equal radii and bases give equal angles at the centres by I.8, III.26 gives the equal less circumferences, and subtraction gives the greater, in measure by Common Notion 3 and in congruence by restricting the same application of the whole circles (`Prop26.remainder`). Two diameters are a case of his statement that his proof does not in terms cover (Heath, vol. 2, p. 60): there are no triangles AKB, DLE for I.8. The Lean argues it another way: I.20 makes DE a diameter with AB, and the right angle in each semicircle (`Prop28.right`) with III.24 makes the semicircles congruent."
+kind = "euclid"
+note = "Euclid's argument: equal radii and bases give equal angles at the centres by I.8, III.26 gives the equal less circumferences, and subtraction gives the greater, in measure by Common Notion 3 and in congruence by restricting the same application of the whole circles (`Prop26.remainder`). Two diameters, which leave no triangles AKB, DLE for I.8, are a case his proof does not in terms cover and Heath calls \"scarcely worth giving, as the proof can easily be supplied\" (vol. 2, p. 60); the Lean takes it in a step of its own, declared as a passage."
 
 [representation]
 tags = ["angle-measure"]
@@ -18,8 +18,8 @@ note = "Euclid takes K and L as centres and joins the radii. The hypothesis that
 
 [[passage]]
 at = "the radii are also equal"
-kind = "different"
-note = "If K is on AB, both straight lines are diameters and the four circumferences semicircles, a case Euclid's proof does not in terms cover and Heath supplies by III.15 and the equal circles (vol. 2, p. 60). The Lean argues it another way: `Prop28.diameter` uses I.20 to make DE a diameter, `Circumference.semicircle` gives the measures, and `Prop28.right` gives the right angle in each semicircle, so that III.24 makes them congruent. Otherwise `Prop28.sides` and `Prop28.beyond` place each centre across its straight line from the less circumference, as Euclid's figure has it. These helpers use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here, as for I.20 and III.24."
+kind = "case"
+note = "If K is on AB, both straight lines are diameters and the four circumferences semicircles, a case Euclid's proof does not in terms cover and Heath supplies by III.15 and the equal circles (vol. 2, p. 60). The Lean takes it in a step of its own: `Prop28.diameter` uses I.20 to make DE a diameter, `Circumference.semicircle` gives the measures, and `Prop28.right` gives the right angle in each semicircle, so that III.24 makes them congruent. Otherwise `Prop28.sides` and `Prop28.beyond` place each centre across its straight line from the less circumference, as Euclid's figure has it. These helpers use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here, as for I.20 and III.24."
 
 [[passage]]
 at = "But equal angles stand on equal circumferences"
@@ -37,7 +37,7 @@ note = "Euclid subtracts the equal lesser circumferences from the equal whole ci
 at = "therefore the circumference ACB which remains"
 kind = "helper"
 helper = "Prop26.remainder"
-note = "Common Notion 3 gives the remaining measures. The congruence of the lesser segments supplied by III.26 extends to one application of the whole disks and circumferences (`Prop26.extend`); restricting it to the complementary closed sides gives the congruent greater segments and arcs. This is the same subtraction as in III.26, with the common bases retained."
+note = "Common Notion 3 gives the remaining measures. The congruence of the lesser segments supplied by III.26 extends to one application of the whole disks and circumferences (`Prop26.extend`); restricting it to the complementary closed sides gives the congruent greater segments and arcs. This is the same subtraction as in III.26, with the common bases retained. `Prop26.extend` uses I.2, I.4, I.12, I.17, I.19, I.20, III.2 and III.9, for which Heath prints no references here."
 
 [figure]
 case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
