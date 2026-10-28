@@ -886,7 +886,8 @@ def lane(digest: str, full, **inputs) -> Table:
 
 
 PYTHON = {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}}
-ELAN = {"run": ELAN_INSTALL}
+# The toolchains' cache, then the install.
+LEAN = ({"uses": "actions/cache@v5", "with": LEAN_CACHE}, {"run": ELAN_INSTALL})
 BUILD = {"run": ("lake build", "lake env lean Certificate/Facts.lean")}
 NEGATIVE_TESTS = {"run": ("python3 scripts/negative_tests.py",)}
 YAML_INSTALL = {"run": ("python3 -m pip install -r scripts/requirements-test_safe_push.txt",)}
@@ -901,7 +902,7 @@ READS = {"contents": "read", "pull-requests": "read", "actions": "read", "issues
 # The formal model after its checkout, in CI's formal-model job and the cadence's
 # formal-model-kernel: the lock, Mathlib's cache, the build in model/ and the kernel's check.
 FORMAL_MODEL = (
-    ELAN, {"run": ("grep -v '^#' model/lock.sha256 | shasum -a 256 -c -",)},
+    *LEAN, {"run": ("grep -v '^#' model/lock.sha256 | shasum -a 256 -c -",)},
     {"uses": "actions/cache@v5",
      "with": {"path": "model/.lake/packages\n~/.cache/mathlib\n",
               "key": "formal-model-packages-${{ runner.os }}-"
@@ -931,7 +932,7 @@ WORKFLOW_CONTRACTS = {
                     # as GitHub's merge, which main's scripts/risk.py classifies if it has one.
                     "run": Script("436fd10e4d811be19ea01e7bdbb7300d")})},
             "check": {"runs-on": "ubuntu-latest", "steps": (
-                CHECKOUT, PYTHON, ELAN, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
+                CHECKOUT, PYTHON, *LEAN, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
                 {"run": (RUN_CHECKS,)})},
             "negative": {
                 "needs": ("risk",), "if": "always()", "runs-on": "ubuntu-latest", "steps": (
@@ -941,7 +942,7 @@ WORKFLOW_CONTRACTS = {
                         "ab845bc546996a52ffbbe227cb9ec3ae",
                         lambda row: row["CLASS"] in CLASSES[3:] if row["CLASS"] in CLASSES
                         else None)},
-                    *when(LANE, CHECKOUT, PYTHON, ELAN, BUILD, NEGATIVE_TESTS))},
+                    *when(LANE, CHECKOUT, PYTHON, *LEAN, BUILD, NEGATIVE_TESTS))},
             "model": {"runs-on": "ubuntu-latest", "steps": (
                 CHECKOUT, PYTHON, {"run": ("python3 -I tests/model/run.py --fast",)},
                 {"run": ("python3 -I tests/model/results_check.py",)})},
@@ -962,7 +963,7 @@ WORKFLOW_CONTRACTS = {
             "acceptance": {
                 "runs-on": "ubuntu-latest", "timeout-minutes": 60,
                 "env": {"ACCEPTANCE_GATE": "ratchet"}, "steps": (
-                    HISTORY, PYTHON, ELAN,
+                    HISTORY, PYTHON, *LEAN,
                     # MAIN_SHA, main for the event and an ancestor of the checkout, or red.
                     {"run": Script("bd4d63c2ad732ea90703d4fb48a71770")},
                     {"run": ("python3 -I tests/test_check_acceptance.py",)},
@@ -1123,7 +1124,7 @@ WORKFLOW_CONTRACTS = {
                                       ()))})},
             "negative-tests": {"runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
                                "timeout-minutes": 120,
-                               "steps": (CHECKOUT, PYTHON, ELAN, BUILD, NEGATIVE_TESTS)},
+                               "steps": (CHECKOUT, PYTHON, *LEAN, BUILD, NEGATIVE_TESTS)},
             "formal-model-kernel": {"runs-on": "ubuntu-latest", "timeout-minutes": 60,
                                     "permissions": {"contents": "read"},
                                     "steps": (CHECKOUT, *FORMAL_MODEL)},
