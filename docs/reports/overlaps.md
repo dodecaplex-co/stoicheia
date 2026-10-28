@@ -71,10 +71,10 @@ centre from the rule.
 `Prop47.within` rules out AD crossing BC beyond B by I.13's bound for an angle of a
 triangle, `BookI.Prop13.angle_lt_two_right`, proved after I.13 from I.13 and Common
 Notion 5; `OutlineBound.angle_lt_two_right`, in `Elements/BookI/OutlineBound.lean` and the
-rule's only other user, has given way to the same theorem. No entry rests on Metric 5 now, where 24 did, the first
-I.47: 13 propositions, no porism and 11 companions. I.47's row has left the current table
-for the former overlaps. The rule is still in the lock, used by no proof, until its
-deletion is decided.
+rule's only other user, has given way to the same theorem. No entry rests on Metric 5 now;
+24 did, from I.47 on: 13 propositions, no porism and 11 companions. I.47's row has left the
+current table for the former overlaps. The rule is still in the lock, used by no proof,
+until its deletion is decided.
 
 ## Current axiom overlaps
 
