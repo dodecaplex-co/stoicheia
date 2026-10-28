@@ -519,6 +519,12 @@ left with III.14. Walking Lean's proof terms on 22 October 2026 finds the theore
 eight entries and in no other, and searching `Elements/` for the rule's name finds the one
 call, III.36's, beside the three lemmas above.
 
+26 October 2026 update (#547): III.17 again obtains its centre by `Prop1.of_circle`, as
+III.4 and III.8 now do, by the coordinator's
+[decision of that day](../decisions/2026-10-26-centre-by-iii1.md). None of them calls
+`centre_unique`, and a walk of Lean's proof terms on 26 October 2026 finds that none of
+them, nor their companions, reaches it.
+
 ##### III.2
 
 Two rules contain III.2, and no proposition rests on either. Circle 2 says it outright, and more,
