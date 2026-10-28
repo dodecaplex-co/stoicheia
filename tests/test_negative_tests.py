@@ -2628,7 +2628,7 @@ MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", "")
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
 LEAVES_AND_EXITS = '(nt.ROOT / "left-by-{name}").write_text("")\n    import os\n    os._exit(0)'
-DELETES_TREE_AND_EXITS = 'import shutil\n    shutil.rmtree(nt.ROOT)\n    import os\n    os._exit(0)'
+DELETES_TREE_AND_CRASHES = 'import shutil\n    shutil.rmtree(nt.ROOT)\n    import os\n    os._exit(3)'
 SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
 # It refuses only when a changed tracked file and an untracked one hold the bytes they hold
 # in the tree under test, which it finds through Git's common directory.
@@ -2859,12 +2859,26 @@ class WorkerTests(unittest.TestCase):
         self.assert_no_worker_left()
         self.assertEqual(self.git("status", "--porcelain"), "")
 
-    def test_a_missing_worker_tree_s_registration_is_removed(self):
-        """A worker deletes its own tree and exits: the run fails, and cleanup still removes
-        that worker's registration as well as the other worker's tree and registration."""
-        self.commit(a_one=PASSES, b_two=DELETES_TREE_AND_EXITS)
-        result = self.suite("--workers", "2")
-        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+    def test_a_missing_worker_tree_is_reported_and_later_workers_are_checked(self):
+        """A worker deletes its tree and crashes, then a later worker leaves its tree dirty:
+        both failures reach the normal summary, and cleanup removes every registration."""
+        self.commit(a_one=PASSES, b_two=DELETES_TREE_AND_CRASHES,
+                    c_three=LEAVES_AND_EXITS)
+        result = self.suite("--workers", "3")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        prefix = "worker 2's tree did not return to its entry Git status (FileNotFoundError:"
+        detail = next((line.removeprefix("✗ ") for line in result.stdout.splitlines()
+                       if line.startswith(f"✗ {prefix}")), None)
+        self.assertIsNotNone(detail, result.stdout)
+        later = "worker 3's tree did not return to its entry Git status"
+        self.assertIn(f"✗ {later}:\n?? left-by-c_three\n", result.stdout)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+        failures = ["worker 2 (b_two) crashed: exit 3; no report", detail,
+                    "worker 3 (c_three) crashed: no report", later,
+                    "only 1 of the 3 plants chosen were run"]
+        self.assertTrue(result.stdout.endswith(
+            f"{len(failures)} negative-test failure(s):\noutside any plant:\n"
+            + "".join(f"  ✗ {failure}\n" for failure in failures)), result.stdout)
 
     def test_an_untracked_non_utf8_filename_is_preserved(self):
         """Each worker receives an untracked filename that is not UTF-8, with its bytes and

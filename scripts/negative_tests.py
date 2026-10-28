@@ -79,9 +79,10 @@ plants; a worker that crashed (one that exited other than 0 or 1, or whose repor
 missing, unreadable, lacks a field the run reads or has one of the wrong type, lacks a
 plant it was given or disagrees with its exit), with its log's tail, its plants that did
 not report counting as not run, the other workers' reports read all the same; and a
-worker's tree whose Git status, read once the worker has ended, is not the entry status,
-which catches a worker that ended without its `finally` (os._exit, a signal). Interrupted,
-the run interrupts each worker still running and waits for it (stop), and in its `finally`
+worker's tree whose Git status, read once the worker has ended, is not the entry status or
+can no longer be read, which catches a worker that ended without its `finally` (os._exit,
+a signal). Interrupted, the run interrupts each worker still running and waits for it
+(stop), and in its `finally`
 it removes every worker's tree with `git worktree remove --force --force`, with SIGINT
 ignored, each successfully registered tree whatever became of those before it; one that
 Git cannot remove fails the run, even when its directory can be deleted, because its
@@ -1283,7 +1284,14 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
                                                             errors="replace")[-3000:]
                 if tail:
                     print(tail, end="" if tail.endswith("\n") else "\n")
-            after = in_tree(tree, "git", "status", "--porcelain")
+            try:
+                after = in_tree(tree, "git", "status", "--porcelain")
+            except OSError as error:
+                message = (f"worker {k}'s tree did not return to its entry Git status "
+                           f"({type(error).__name__}: {error})")
+                failures.append(message)
+                print(f"✗ {message}")
+                continue
             if after.returncode != 0 or after.stdout != entry:
                 message = f"worker {k}'s tree did not return to its entry Git status"
                 failures.append(message)
