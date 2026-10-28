@@ -95,9 +95,13 @@ plant it was given or disagrees with its exit), with its log's tail, its plants 
 not report counting as not run, the other workers' reports read all the same; and a
 worker's tree whose Git status, read once the worker has ended, is not the entry status or
 can no longer be read, which catches a worker that ended without its `finally` (os._exit,
-a signal). Interrupted, the run interrupts each worker still running and waits for it
-(stop), and in its `finally`
-it removes every worker's tree with `git worktree remove --force --force`, with SIGINT
+a signal). Interrupted, or left by any other exception while its workers run, the run
+interrupts each worker still running and waits for it (stop). The interrupt reaches a
+worker whatever SIGINT the run inherited: a run started with SIGINT ignored, as a
+background job is, would pass the ignore on, so each worker starts with SIGINT at its
+default, Python puts its handler there, and the worker's `finally` restores its tree; one
+interrupted while Python starts ends at once, having planted nothing. In its `finally`
+the run removes every worker's tree with `git worktree remove --force --force`, with SIGINT
 ignored, each successfully registered tree whatever became of those before it; one that
 Git cannot remove fails the run, even when its directory can be deleted, because its
 record remains in the repository's worktree list; a tree, or the workers' directory,
@@ -1200,10 +1204,13 @@ def read_report(path: Path, names: list[str], code: int) -> tuple[list[dict], li
 def stop(workers: list[subprocess.Popen]) -> None:
     """Interrupt each worker still running, so that its `finally` restores its tree, and
     wait for every one; interrupted while waiting, kill them all, wait, and raise. The
-    workers share the run's process group, so a worker the terminal's interrupt has already
-    reached is interrupted a second time here, which may cut its `finally` short. Its tree
-    is removed either way (remove), and the tree under test is never planted: only the
-    workers' trees are."""
+    interrupt reaches a worker whatever SIGINT the run inherited: a run started with it
+    ignored, as a background job is, would pass the ignore on, so each worker starts with
+    SIGINT at its default (run_workers), and Python puts its handler there as it starts.
+    One interrupted before then ends at once, having planted nothing. The workers share the run's process group, so a worker the
+    terminal's interrupt has already reached is interrupted a second time here, which may
+    cut its `finally` short. Its tree is removed either way (remove), and the tree under
+    test is never planted: only the workers' trees are."""
     for worker in workers:
         if worker.poll() is None:
             worker.send_signal(signal.SIGINT)
@@ -1304,12 +1311,15 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
         env = worker_env()
         for k, (tree, share) in enumerate(zip(trees, shares), 1):
             with open(base / f"worker-{k}.log", "wb") as log:
+                # SIGINT at its default, whatever the run inherited, so that stop() reaches
+                # every worker (stop).
                 workers.append(subprocess.Popen(
                     [sys.executable, str(tree / "scripts/negative_tests.py"),
                      *(arg for p in share for arg in ("--plant", p.name)),
                      "--worker-report", str(base / f"worker-{k}.json")],
                     cwd=tree, env=env, stdin=subprocess.DEVNULL, stdout=log,
-                    stderr=subprocess.STDOUT))
+                    stderr=subprocess.STDOUT,
+                    preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL)))
         for worker in workers:
             worker.wait()
         reports = [read_report(base / f"worker-{k}.json", [p.name for p in share],

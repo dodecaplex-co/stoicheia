@@ -3106,6 +3106,8 @@ class WorkerTests(unittest.TestCase):
         chosen = [negative.Plant(name, self.root / f"scripts/negative/{name}.py", "", False,
                                  lambda: None)
                   for name in ("a_one", "b_two")]
+        previous = signal.signal(signal.SIGINT, signal.default_int_handler)
+        self.addCleanup(signal.signal, signal.SIGINT, previous)
         with patch.object(negative, "ROOT", self.root), \
                 patch.dict(os.environ, self.env, clear=True):
             entry = negative.worker_status(self.root).stdout
@@ -3155,9 +3157,11 @@ class WorkerTests(unittest.TestCase):
                 self.assertEqual(self.suite("--workers", "2").returncode,
                                  0 if body == PASSES else 1)
         self.commit(a_one=PASSES, b_two=SLEEPS)
+        # A run in a terminal, with SIGINT at its default whatever this test inherited.
         run = subprocess.Popen([sys.executable, "scripts/negative_tests.py", "--workers", "2"],
                                cwd=self.root, env=self.env, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, text=True)
+                               stderr=subprocess.PIPE, text=True,
+                               preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
         self.addCleanup(run.kill)
         deadline = time.monotonic() + 120
         while not any("b_two sleeps" in log.read_text()
@@ -3172,6 +3176,78 @@ class WorkerTests(unittest.TestCase):
         self.assertIn("KeyboardInterrupt", err)
         self.assert_no_worker_left()
         self.assertEqual(self.git("status", "--porcelain"), "")
+
+    def test_workers_answer_the_run_s_interrupt_whatever_sigint_it_inherited(self):
+        """A run started with SIGINT ignored, as a background job is, passes the ignore to
+        its workers. Left by an exception once both have started, it still interrupts the
+        one that sleeps, whose `finally` restores its tree, well inside its sleep; and no
+        tree is left. Run in process; a later wait for a worker fails the test after 30 s
+        rather than wait out the sleep."""
+        self.commit(a_one=PASSES, b_two=SLEEPS)
+        chosen = [negative.Plant(name, self.root / f"scripts/negative/{name}.py", "", False,
+                                 lambda: None)
+                  for name in ("a_one", "b_two")]
+        previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+        self.addCleanup(signal.signal, signal.SIGINT, previous)
+        tmp, failure, deadline = self.tmp, self.failureException, time.monotonic() + 60
+        workers, raised, kept = [], [], {}
+        self.addCleanup(lambda: [worker.kill() for worker in workers])
+
+        class Planted(subprocess.Popen):
+            """A worker's first wait, in the run's loop, raises once b_two sleeps."""
+
+            def __init__(self, args, **kwargs):
+                super().__init__(args, **kwargs)
+                if "--worker-report" in args:
+                    workers.append(self)
+
+            def wait(self, timeout=None):
+                if self not in workers:
+                    return super().wait(timeout)
+                if not raised:
+                    raised.append(self)
+                    while not any("b_two sleeps" in log.read_text()
+                                  for log in tmp.glob("stoicheia-negative-*/worker-*.log")):
+                        if time.monotonic() > deadline:
+                            raise failure("b_two never slept")
+                        time.sleep(0.05)
+                    raise RuntimeError("planted")
+                try:
+                    return super().wait(30 if timeout is None else timeout)
+                except subprocess.TimeoutExpired:
+                    raise failure(f"{Path(self.args[-1]).stem} still running 30 s after "
+                                  "stop() interrupted it") from None
+
+        real = negative.remove
+
+        def remove(trees, base):
+            """What each worker left, read before the trees are removed."""
+            for k, tree in enumerate(trees, 1):
+                kept[k] = (negative.worker_status(tree).stdout,
+                           (base / f"worker-{k}.log").read_text())
+            real(trees, base)
+        # tempfile read TMPDIR long ago: `tempdir` puts the run's directory in the test's own.
+        plan = io.StringIO()
+        with patch.object(negative, "ROOT", self.root), \
+                patch.dict(os.environ, self.env, clear=True), \
+                patch.object(tempfile, "tempdir", str(self.tmp)), \
+                patch.object(negative.subprocess, "Popen", Planted), \
+                patch.object(negative, "remove", remove):
+            entry = negative.worker_status(self.root).stdout
+            start = time.monotonic()
+            with redirect_stdout(io.StringIO()), redirect_stderr(plan), \
+                    self.assertRaisesRegex(RuntimeError, "^planted$"):
+                negative.run_workers(chosen, 2, entry, {})
+            elapsed = time.monotonic() - start
+        self.assertIn("  worker 2: b_two\n", plan.getvalue())
+        self.assertLess(elapsed, 60)
+        self.assertEqual(workers[1].returncode, -signal.SIGINT)
+        status, log = kept[2]
+        self.assertIn("b_two sleeps\n", log)
+        self.assertIn("✓ working tree restored to its entry Git status\n", log)
+        self.assertIn("KeyboardInterrupt", log)
+        self.assertEqual(status, entry)
+        self.assert_no_worker_left()
 
     def test_a_missing_worker_tree_is_reported_and_later_workers_are_checked(self):
         """A worker deletes its tree and crashes, then a later worker leaves its tree dirty:
