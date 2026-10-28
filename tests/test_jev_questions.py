@@ -1414,7 +1414,8 @@ class BookThree(unittest.TestCase):
         # the centre (`angleAtCentre.diameter`), nor the point naming the side
         # (`angleAtCentre.congr`); III.21's record has no representation note, and its route
         # covers the semicircle and the less segment (`angleAtCentre.diameter`) and its passages
-        # name the word and `angleAtCentre.congr`. III.26's note names the word, which our
+        # name the word, `angleAtCentre.congr` and its three sizes (`angleAtCentre.size`), which
+        # its row has besides. III.26's note names the word, which our
         # measure of a circumference is (`Prop20.circumference`).
         generator = shared()['generator']
         rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
@@ -1430,7 +1431,8 @@ class BookThree(unittest.TestCase):
                                                     'Elements.BookIII.angleAtCentre.congr',
                                                     'Elements.BookIII.angleAtCentre.diameter'])
         self.assertEqual(questions.CENTRE_MEASURE_BRIDGES, ['Elements.BookIII.Prop20.circumference'])
-        for n, extra in ((20, questions.CENTRE_MEASURE_BRIDGES), (21, [])):
+        self.assertEqual(questions.CENTRE_SIZE_BRIDGES, ['Elements.BookIII.angleAtCentre.size'])
+        for n, extra in ((20, questions.CENTRE_MEASURE_BRIDGES), (21, questions.CENTRE_SIZE_BRIDGES)):
             with self.subTest(ref=f'III.{n}'):
                 state = rows[f'III.{n}']['state']
                 self.assertEqual(rows[f'III.{n}']['expected'], 'bridge stated')
@@ -1478,21 +1480,24 @@ class BookThree(unittest.TestCase):
         # The words of the records that RECORD_CHECKED's comments quote.
         self.assertIn('It depends on neither the diameter, nor the centre, nor the point naming the side',
                       records[20]['representation']['note'])
-        self.assertIn('may be two right angles or more (`angleAtCentre`)', records[21]['route']['note'])
-        self.assertIn('his argument covers the semicircle and the less segment too',
-                      records[21]['route']['note'])
+        self.assertIn('two right angles or more (`angleAtCentre`)', records[21]['route']['note'])
+        self.assertIn('III.20 doubles BAD and BED in every segment', records[21]['route']['note'])
         self.assertIn("with F on A's and E's side of BD", records[21]['figure']['case'])
         passages = {p['at']: p['note'] for p in records[21]['passage']}
         self.assertIn('both are halves of BFD', passages['therefore the angle BAD is equal to the angle BED'])
         self.assertIn('the angle at the centre reads only the side (`angleAtCentre.congr`)',
                       passages['Let ABCD be a circle'])
+        self.assertIn('III.20 makes it up from angles at the centre itself', passages['let BF, FD be joined'])
+        self.assertIn('two right angles in a semicircle and more in a less segment (`angleAtCentre.size`)',
+                      passages['Now, since the angle BFD is at the centre'])
         self.assertIn('"Equal circumferences" is read as equal in measure', records[26]['representation']['note'])
         self.assertIn('within the proof the angles at the centres standing on BKC and ELF are of any size '
                       '(`angleAtCentre`)', records[26]['representation']['note'])
         self.assertEqual(questions.RECORD_CHECKED['III.20'],
                          ('Elements.BookIII.angleAtCentre.diameter', 'Elements.BookIII.angleAtCentre.congr'))
         self.assertEqual(questions.RECORD_CHECKED['III.21'],
-                         ('Elements.angleAtCentre', *questions.CENTRE_BRIDGES))
+                         ('Elements.angleAtCentre', *questions.CENTRE_BRIDGES,
+                          *questions.CENTRE_SIZE_BRIDGES))
         self.assertEqual(questions.RECORD_CHECKED['III.26'], tuple(questions.CENTRE_MEASURE_BRIDGES))
         # Each of them left out of its row is refused, and nothing else is.
         for ref, table, name in (('III.20', 'bridges', 'Elements.BookIII.angleAtCentre.diameter'),
@@ -1501,6 +1506,7 @@ class BookThree(unittest.TestCase):
                                  ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.within'),
                                  ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.congr'),
                                  ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.diameter'),
+                                 ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.size'),
                                  ('III.26', 'bridges', 'Elements.BookIII.Prop20.circumference')):
             n = int(ref.split('.')[1])
             with self.subTest(ref=ref, missing=name):

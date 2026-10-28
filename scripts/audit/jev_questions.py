@@ -866,13 +866,17 @@ RECORD_CHECKED = {
     # (`angleAtCentre.diameter`), "nor the point naming the side" (`angleAtCentre.congr`).
     'III.20': ('Elements.BookIII.angleAtCentre.diameter', 'Elements.BookIII.angleAtCentre.congr'),
     # III.21's record has no representation note. Its route reads the angle at the centre as
-    # ours: it "may be two right angles or more" (`angleAtCentre`); where the centre F lies on
-    # A's side of BD, as in Euclid's figure, it is the angle BFD of which BAD and BED "are
-    # halves" (`angleAtCentre.within`); with it "his argument covers the semicircle and the less
-    # segment too" (`angleAtCentre.diameter`); and, the passage at "Let ABCD be a circle" says,
+    # ours: in the semicircle and the less segment it is "two right angles or more"
+    # (`angleAtCentre`); where the centre F lies on A's side of BD, as in Euclid's figure, it is
+    # the angle BFD of which BAD and BED "are halves" (`angleAtCentre.within`); "III.20 makes it
+    # up from angles at the centre itself", the passage at "let BF, FD be joined" says, so that
+    # "III.20 doubles BAD and BED in every segment" (`angleAtCentre.diameter`); the passage at
+    # "Now, since the angle BFD is at the centre" gives its three sizes, the angle BFD, two right
+    # angles and more (`angleAtCentre.size`); and, the passage at "Let ABCD be a circle" says,
     # it "reads only the side" (`angleAtCentre.congr`).
     'III.21': ('Elements.angleAtCentre', 'Elements.BookIII.angleAtCentre.within',
-               'Elements.BookIII.angleAtCentre.congr', 'Elements.BookIII.angleAtCentre.diameter'),
+               'Elements.BookIII.angleAtCentre.congr', 'Elements.BookIII.angleAtCentre.diameter',
+               'Elements.BookIII.angleAtCentre.size'),
     # III.26's note reads "Equal circumferences" as "equal in measure", and within the proof "the
     # angles at the centres standing on BKC and ELF are of any size (`angleAtCentre`)": our
     # measure of a circumference is its angle at the centre (`Prop20.circumference`).
@@ -926,7 +930,9 @@ TOUCHING_BRIDGES = ['Elements.BookIII.Prop13.touchesInternally_iff',
 # base that the point naming the circumference lies on (`angleAtCentre.congr`). III.20's representation note names the first
 # and says the other two in words. III.21's record has no representation note: its route reads
 # Euclid's argument in a segment of any size, the semicircle and the less segment among them,
-# and its passages name `angleAtCentre.congr`. Our measure of a circumference is its angle at
+# and its passages name `angleAtCentre.congr` and the three sizes of the angle at the centre,
+# less than, equal to and greater than two right angles as the centre lies across the base, on
+# it or beyond it (`angleAtCentre.size`). Our measure of a circumference is its angle at
 # the centre (`Prop20.circumference`), which III.20's note names; it ties III.26's reading of
 # equal circumferences as equal in measure to the angles at the centres its note names, and,
 # with `Circumference.centre`, makes the angle at the centre the angle BGC where G lies across
@@ -935,6 +941,7 @@ CENTRE_DEFINITIONS = ['angleAtCentre']
 CENTRE_BRIDGES = ['Elements.BookIII.angleAtCentre.within', 'Elements.BookIII.angleAtCentre.congr',
                   'Elements.BookIII.angleAtCentre.diameter']
 CENTRE_MEASURE_BRIDGES = ['Elements.BookIII.Prop20.circumference']
+CENTRE_SIZE_BRIDGES = ['Elements.BookIII.angleAtCentre.size']
 # A straight line's distance from the centre is the perpendicular to its foot (Definition III.4).
 FOOT_BRIDGES = ['Elements.Foot.exists', 'Elements.Foot.unique']
 RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
@@ -1003,6 +1010,8 @@ def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[st
             bridges += CENTRE_BRIDGES
         if n in (20, 26):
             bridges += CENTRE_MEASURE_BRIDGES
+        if n == 21:
+            bridges += CENTRE_SIZE_BRIDGES
         if 35 <= n <= 37:
             definitions += ['Rectangle', 'Contain', 'rect', 'Parallelogram', 'quadArea']
             bridges += RECTANGLE_BRIDGES
