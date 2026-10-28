@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Prop01
 import Elements.BookIII.Prop03
 
 /-!
@@ -32,9 +33,10 @@ theorem Prop4 {A B C D E : Point} {ABCD : Circle}
   -- For, if possible, let them bisect one another, so that AE is equal to EC, and BE to ED;
   rintro ⟨hAE, hBE⟩
   -- let the centre of the circle ABCD be taken [III. 1], and let it be F; let FE be joined.
-  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
-     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
-  obtain ⟨F, hF⟩ := exists_centre ABCD
+  /- The centre is found by III.1's construction, on a straight line drawn through the
+     circle at random (`Prop1.of_circle`), as Euclid finds it. The proof keeps the centre
+     alone, which is what Euclid takes from III.1. -/
+  obtain ⟨-, -, F, -, -, -, -, -, hF, -⟩ := Prop1.of_circle ABCD
   have hF_L : ¬ OnLine F L := (show Triangle A C F from hAC F hF).off_line hA_L hC_L
   have hF_N : ¬ OnLine F N := (show Triangle B D F from hBD F hF).off_line hB_N hD_N
   have hEF : E ≠ F := fun h => hF_L (h ▸ hE_L)
