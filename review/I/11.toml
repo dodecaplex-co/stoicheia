@@ -16,13 +16,12 @@ note = "Euclid takes D on AC, with C between A and B in his figure. The Lean als
 at = "let CE be made equal to CD"
 kind = "helper"
 helper = "produce_longer"
-note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyond C greater than CD, although CB may be shorter than CD or C may be B. The Lean uses `produce_longer` to extend DC beyond C far enough for I.3 and, after the cut, `between_cut` to put C between D and E; with F off DE, this makes DCF and FCE adjacent, as Euclid later says in \"and they are adjacent angles\"."
+note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyond C greater than CD, although CB may be shorter than CD or C may be B. The Lean uses `produce_longer` to extend DC beyond C far enough for I.3 and, after the cut, `between_cut` to put C between D and E; with F off DE, this makes DCF and FCE adjacent, as Euclid later says in \"and they are adjacent angles\". To reach so far, `produce_longer` describes the circle with centre C and distance CD by Postulate 3, which Heath's bracket at this step does not name: it names only I.3. The proof's own Lean draws no circle: Postulate 3 reaches it through this lemma, among others, and every proposition it cites rests on it too."
 
 [[passage]]
 at = "and let FC be joined;"
-kind = "carried"
-note = "The Lean joins FC by Postulate 1, as Euclid asks. The later proof compares lengths and angles named by the points, without using the joined line; FC is named here only to carry out this sentence."
-unused = ["FC"]
+kind = "given"
+note = "In the Lean a straight line between two points is named by its ends: FC is a side of the triangles CDF and CEF, so nothing is drawn for the join, and Postulate 1 is not called for it."
 
 [[passage]]
 at = "Therefore the straight line CF has been drawn at right angles"

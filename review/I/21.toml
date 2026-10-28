@@ -44,9 +44,8 @@ note = "Euclid reads ED and DB together as EB because D lies between E and B. Th
 
 [[passage]]
 at = "But BA, AC were proved greater than BE, EC"
-kind = "carried"
-note = "The Lean restates here that BA, AC are greater than BE, EC, as Euclid recalls it; the next step cites the inequality where it was first proved, and does not use the restatement."
-unused = ["this"]
+kind = "grouped"
+note = "Euclid recalls that BA, AC are greater than BE, EC, and concludes at once that they are much greater than BD, DC. One step carries both sentences: it joins that inequality, as first proved, to CE, EB greater than CD, DB, by `Tacit.lt_trans`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [review]
 stage = "full"

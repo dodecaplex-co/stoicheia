@@ -17,7 +17,7 @@ note = "Euclid gives three straight lines; `Prop22.ne_zero` uses the strict ineq
 at = "and let DF be made equal to A"
 kind = "helper"
 helper = "Prop22.room"
-note = "Euclid's DE has an end D and extends endlessly towards E; the Lean starts with F and the ray from F through E given by the statement, takes DE through F and E, and finds its end D by cutting off FD equal to A from EF produced beyond F. For each cut, `Prop22.room` uses I.2 and `produce_longer` to find a point far enough along the produced line for I.3 to cut from a longer finite straight line; `between_cut` puts D, F, G and H in order, and the Lean applies `Tacit.not_between_of_between_between` (System E, Between 7), which Book Zero proves, to the orders D, F, G and D, F, E to show that F is not between G and E, placing G on the ray from F through E as the statement asks."
+note = "Euclid's DE has an end D and extends endlessly towards E; the Lean starts with F and the ray from F through E given by the statement, takes DE through F and E, and finds its end D by cutting off FD equal to A from EF produced beyond F. For each cut, `Prop22.room` uses I.2 and `produce_longer` to find a point far enough along the produced line for I.3 to cut from a longer finite straight line. To reach so far, `produce_longer` describes a circle by Postulate 3, about F for the first two cuts and about G for the third, which Heath's bracket at this step does not name: it names only I.3. Postulate 3 is in the proof's own Lean in any case, which describes Euclid's two circles with it. `between_cut` puts D, F, G and H in order, and the Lean applies `Tacit.not_between_of_between_between` (System E, Between 7), which Book Zero proves, to the orders D, F, G and D, F, E to show that F is not between G and E, placing G on the ray from F through E as the statement asks."
 
 [[passage]]
 at = "again, with centre G and distance GH let the circle KLH be described"
@@ -27,14 +27,13 @@ note = "Euclid takes K where the circles meet without proving they meet; `Prop22
 
 [[passage]]
 at = "and let KF, KG be joined"
-kind = "carried"
-note = "The Lean joins KF and KG by Postulate 1, as Euclid asks. The later proof compares the lengths KF, FG and GK, named by their points, without using the joined lines; they are named here only to carry out this sentence."
-unused = ["KF", "KG"]
+kind = "given"
+note = "In the Lean a straight line between two points is named by its ends: KF and KG are sides of the triangle KFG, so nothing is drawn for the joins, and Postulate 1 is not called for them."
 
 [[passage]]
 at = "I say that the triangle KFG has been constructed"
 kind = "carried"
-note = "The Lean proves here that K, F and G make a triangle, since K is off DE and F and G are on it; the statement concludes with the three lengths and the side of FE on which K lies, so this is not used again."
+note = "The Lean proves here that K, F and G make a triangle, since K is off DE and F and G are on it. Euclid's proof argues only the three lengths and never uses that KFG is a triangle; nor does ours, whose statement concludes with the lengths and the side of FE on which K lies."
 unused = ["this"]
 
 [review]

@@ -24,9 +24,8 @@ note = "Euclid assumes he can find F on BD near enough to B that AF remains less
 
 [[passage]]
 at = "and let the straight lines FC, GB be joined"
-kind = "carried"
-note = "The Lean joins FC and GB by Postulate 1, as Euclid asks. The later steps use lengths, angles, triangles and areas named by their points and do not use either joined line; the lines are named here only to carry out this sentence."
-unused = ["FC", "GB"]
+kind = "given"
+note = "In the Lean a straight line between two points is named by its ends: FC and GB are sides of the triangles AFC and AGB, so nothing is drawn for the joins, and Postulate 1, which Heath cites, is not called for them."
 
 [[passage]]
 at = "and they contain a common angle"
@@ -37,7 +36,7 @@ note = "Euclid reads B between A and F and C between A and G from the figure, gi
 [[passage]]
 at = "and the triangle AFC is equal to the triangle AGB"
 kind = "carried"
-note = "The Lean proves that the triangle AFC equals the triangle AGB here, as Euclid states it; the later steps use the base FC and the angles that I.4 gives, and do not use it again."
+note = "The Lean proves that the triangle AFC equals the triangle AGB here, as Euclid states it. Neither his proof nor ours uses it again: both go on with the base FC and the angles that I.4 gives."
 unused = ["this"]
 
 [[passage]]
@@ -54,7 +53,7 @@ note = "BC is one straight line, the base of both triangles, so nothing is prove
 [[passage]]
 at = "therefore the triangle BFC is also equal to the triangle CGB"
 kind = "carried"
-note = "The Lean proves that the triangle BFC equals the triangle CGB here, as Euclid states it; the later steps use only the angles that I.4 gives, and do not use it again."
+note = "The Lean proves that the triangle BFC equals the triangle CGB here, as Euclid states it. Neither his proof nor ours uses it again: both go on with only the angles that I.4 gives."
 unused = ["this"]
 
 [[passage]]

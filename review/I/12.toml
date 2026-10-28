@@ -24,12 +24,6 @@ helper = "Definition15"
 note = "Euclid uses the equal radii CG and CE without naming a reason. The Lean applies `Definition15`, Euclid's definition of a circle, as a rule we assume."
 
 [[passage]]
-at = "therefore the angle CHG is equal to the angle EHC"
-kind = "carried"
-note = "The Lean states that the angle CHG equals EHC in Euclid's letters; the later steps use the same equality as I.8 gives it, with the angle read as GHC, and do not use this form again."
-unused = ["hCHG_EHC"]
-
-[[passage]]
 at = "Therefore CH has been drawn perpendicular to the given infinite straight line AB"
 kind = "helper"
 helper = "OnRay.cases_of_between"

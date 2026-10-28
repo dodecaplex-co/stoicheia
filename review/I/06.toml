@@ -32,7 +32,7 @@ note = "Our triangle DBC is named by its corners, so no straight line DC is draw
 at = "therefore the base DC is equal to the base AB"
 kind = "grouped"
 helper = "Prop4"
-note = "Euclid obtains the equal base and the equal triangle from the two sides and their included angle. The Lean first shows that DBC is a triangle by `Prop6.figure`, then applies I.4 (`Prop4`), for which Heath gives no reference here, once for both conclusions."
+note = "Euclid obtains the equal base and the equal triangle from the two sides and their included angle. The Lean first shows that DBC is a triangle by `Prop6.figure`, then applies I.4 (`Prop4`), for which Heath gives no reference here, once for both conclusions. Neither his proof nor ours uses the equal base DC and AB again: the absurdity comes from the equal triangles alone."
 unused = ["hDC_AB"]
 
 [[passage]]

@@ -79,7 +79,6 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   -- therefore the angle CHG is equal to the angle EHC. [I. 8]
   have hGHC_EHC : ∠ G H C = ∠ E H C :=
     Prop8 hHGC hHEC hHG_HE hHC ((len_symm G C).trans (hCG_CE.trans (len_symm C E)))
-  have hCHG_EHC : ∠ C H G = ∠ E H C := (angle_symm hCH hHG.symm).trans hGHC_EHC
   -- And they are adjacent angles.
   /- Adjacent: H lies between G and E, so HG and HE make one straight line. -/
   have hGHE : Between G H E := between_symm hEHG
