@@ -62,11 +62,12 @@
   `heath.regions`, `heath.outside`, `heath.bodies` and `heath.fill` read them with the
   others, so that `render.py`, `generated_counts.py` and every reader of those agree on
   them. `render.py` fills each page through `heath.fill`, which refuses a write that
-  would change a byte outside a region's body. The pre-flight reads PROGRAM.md through
-  that account already, so it reads a line `render.py` writes into PROGRAM.md's notes as
-  generated. It reads the briefs' notes regions only after a later change to
-  `safe_push.py`: no folder is a key of `heath.REGIONS`, whose files it reads as
-  generated in part, so until then it reads a brief as written by hand whole.
+  would change a byte outside a region's body. Once this change is on main, the
+  pre-flight, which reads origin/main's `heath.py`, reads PROGRAM.md through that
+  account, so it reads a line `render.py` writes into PROGRAM.md's notes as generated.
+  It reads the briefs' notes regions only after a later change to `safe_push.py`: no
+  folder is a key of `heath.REGIONS`, whose files it reads as generated in part, so until
+  then it reads a brief as written by hand whole.
 
   Old entries are not given headers: `render.py` checks a header where one stands and
   requires none, and WORKFLOW asks every new entry for one. The markers come with card

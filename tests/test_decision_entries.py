@@ -27,6 +27,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 import uuid
 from pathlib import Path
@@ -803,6 +804,16 @@ class NotesRegions(HeaderFolder):
                     "<!-- /notes:later -->\n")
             self.assertEqual(self.filled(), ({self.program: want}, 2, 1))
 
+    def test_program_page_writes_the_status_table_alone(self):
+        # render.program_page writes the status table between the status markers, and gives
+        # each notes region back byte for byte, for notes_updates to fill.
+        text = ("# Programme\n\n<!-- status -->\n| old |\n<!-- /status -->\n\n### Landed\n\n"
+                "<!-- notes:landed -->\n- A line.\n<!-- /notes:landed -->\n\nAfter.\n")
+        with mock.patch.object(render, "status_table", return_value="| new |") as table:
+            self.assertEqual(render.program_page(text, "facts", "records", "program"),
+                             text.replace("| old |\n", "\n| new |\n\n"))
+        table.assert_called_once_with("facts", "records", "program")
+
     def test_corrections_and_reverts_are_linked_both_ways(self):
         path = self.brief("book-I", "# Book I\n\n<!-- notes -->\n<!-- /notes -->\n")
         other = self.brief("0008-centre", "# Centre\n\n<!-- notes -->\n<!-- /notes -->\n")
@@ -938,6 +949,14 @@ class NotesRegions(HeaderFolder):
                               "notes closing marker does not close the region 'landed', "
                               "opened on line 1$"):
                 self.filled()
+        # A fault heath.fill finds past the notes markers, as a status region missing, is
+        # named as render.py names it in the other generated pages.
+        self.program.write_text("<!-- notes:landed -->\n<!-- /notes:landed -->\n",
+                                encoding="utf-8")
+        with self.refused("^notes regions: nothing was rendered:\ndocs/PROGRAM.md: no status "
+                          "region: it must hold one status region; render.py writes between "
+                          "these markers, so nothing was rendered$"):
+            self.filled()
         self.program.write_text("# Again as it was.\n", encoding="utf-8")
         for text in ("<!-- notes -->\n<!-- /notes -->\n", "<!-- /notes -->\n"):
             with self.subTest(path="docs/briefs/0002-decisions.md", text=text):
@@ -1211,6 +1230,26 @@ class HeathReadsTheNotes(EntryFolder):
                           self.assertRaisesRegex(heath.RegionError, "reaches outside them")):
                         heath.fill(path, text, lambda name, body: (
                             body + after if name.startswith("notes") else body))
+
+    def test_unclosed_openers_are_read_in_linear_time(self):
+        # 8,000 openers with no closer are read in well under a second: by heath.outside and
+        # heath.bodies, whose body stops at the next opener, and by heath.notes, which finds
+        # the status region in two searches, with a notes region beside them or none.
+        for path, line in (("docs/PROGRAM.md", "<!-- notes:landed -->\n"),
+                           ("docs/PROGRAM.md", "<!-- status -->\n"),
+                           ("docs/briefs/0008-centre.md", "<!-- notes -->\n")):
+            with self.subTest(path=path, line=line):
+                text = line * 8000
+                started = time.perf_counter()
+                self.assertEqual(heath.outside(path, text), text)
+                self.assertEqual(heath.bodies(path, text), [])
+                self.assertLess(time.perf_counter() - started, 1.0)
+        for landed in ("", "<!-- notes:landed -->\n<!-- /notes:landed -->\n"):
+            with self.subTest(landed=landed):
+                text = landed + "<!-- status -->\n" * 8000
+                started = time.perf_counter()
+                self.assertEqual(len(heath.notes("docs/PROGRAM.md", text)), bool(landed))
+                self.assertLess(time.perf_counter() - started, 1.0)
 
     def test_safe_push_reads_program_notes_bodies_as_generated(self):
         # safe_push.generated_parts reads docs/PROGRAM.md, a key of heath.REGIONS, through

@@ -3354,7 +3354,8 @@ def notes_updates(headers, changes):
         try:
             new = heath.fill(rel.as_posix(), text, write)
         except heath.RegionError as error:
-            errors.append(printable_text(str(error)))
+            errors.append(printable_text(f"{error}; render.py writes between these markers, "
+                                         "so nothing was rendered"))
             continue
         if new != text:
             filled[path] = new

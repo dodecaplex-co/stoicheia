@@ -761,14 +761,14 @@ LINE_MARKERS = ("docs/PROGRAM.md", "docs/WORKFLOW.md")
 # (DECISIONS_PAGE), dated history, holds none. A notes region is optional, where each
 # region of REGIONS is required: `notes` reads them alone, and `regions`, `outside`,
 # `bodies` and `fill` read them with the others, a brief's by BRIEF_REGIONS, its region
-# named "notes", and docs/PROGRAM.md's status region and notes regions by PROGRAM_REGIONS,
-# in one pass, named "status" and "notes:<section>" (groups as REGIONS's: open, name, body
-# and close). No folder is a key of REGIONS: safe_push.py reads each key as a file
-# generated in part, and any other path under one of GENERATED_WHOLE and REGIONS as
-# generated whole, so a folder there would leave every brief's changes unjudged. So
-# safe_push.py reads docs/PROGRAM.md's notes bodies as generated, through `bodies` and
-# `outside`, and a brief as written by hand whole, until a later change to it reads the
-# briefs' notes regions too.
+# named "notes", and docs/PROGRAM.md's status region and notes regions, of the sections of
+# PROGRAM_NOTES as it stands, by one pattern (`_pattern`), in one pass, named "status" and
+# "notes:<section>" (groups as REGIONS's: open, name, body and close). No folder is a key
+# of REGIONS: safe_push.py reads each key as a file generated in part, and any other path
+# under one of GENERATED_WHOLE and REGIONS as generated whole, so a folder there would
+# leave every brief's changes unjudged. So safe_push.py reads docs/PROGRAM.md's notes
+# bodies as generated, through `bodies` and `outside`, and a brief as written by hand
+# whole, until a later change to it reads the briefs' notes regions too.
 # Every comment that begins `<!-- notes` or `<!-- /notes`, in any case and spacing, is read
 # as a marker, with no word's end after it, so that a near miss, as `<!-- notes_typo -->`,
 # is refused, not passed over; its spaces are read as `_marker_text` reads them, once.
@@ -787,14 +787,17 @@ DECISIONS_PAGE = "docs/briefs/0002-decisions.md"
 
 def _between(name: str) -> re.Pattern:
     """A region between markers alone on their lines, `<!-- NAME -->` and `<!-- /NAME -->`,
-    its NAME read by the pattern `name` (groups: open, name, body and close)."""
-    return re.compile(rf"(?P<open>^<!-- (?P<name>{name}) -->\n)(?P<body>.*?)"
+    its NAME read by the pattern `name` (groups: open, name, body and close). The body
+    stops at the next opener `name` reads, so that an opener with no closer is read to the
+    next opener at most, never to the end of the text, and a run of them in linear time; a
+    body `regions` accepts holds no marker, so the regions it accepts are read the same."""
+    return re.compile(rf"(?P<open>^<!-- (?P<name>{name}) -->\n)"
+                      rf"(?P<body>(?:(?!^<!-- (?:{name}) -->$).)*?)"
                       rf"(?P<close>^<!-- /(?P=name) -->$)", re.S | re.M)
 
 
 BRIEF_REGIONS = _between("notes")
-PROGRAM_REGIONS = _between(f"status|notes:{NOTES_SECTION}")
-_PROGRAM_NOTES = _between(f"notes:{NOTES_SECTION}")
+_PROGRAM_NOTES_REGIONS = _between(f"notes:{NOTES_SECTION}")
 # An inline count (generated_counts.py): what begins a comment that looks like one of its
 # markers, its opener and its closer; render.py writes its value, between them. A value is
 # read up to the first newline or count comment, never past one, as generated_counts.markers
@@ -821,11 +824,14 @@ def notes_page(path: str) -> bool:
 
 def _pattern(path: str) -> re.Pattern | None:
     """The pattern that reads every region of `path`, REGIONS's and the notes regions
-    alike: PROGRAM_REGIONS for docs/PROGRAM.md, BRIEF_REGIONS for a brief, REGIONS's own
+    alike: for docs/PROGRAM.md, its status region and a notes region of each section of
+    PROGRAM_NOTES as it stands, so that one of another section, which `notes` refuses, is
+    not read as a region (`re` keeps it compiled); BRIEF_REGIONS for a brief, REGIONS's own
     for README.md and docs/WORKFLOW.md; and none for any other file, the decisions page
     among them, which holds no notes marker."""
     if path == "docs/PROGRAM.md":
-        return PROGRAM_REGIONS
+        return _between("|".join(["status", *(f"notes:{re.escape(section)}"
+                                              for section in PROGRAM_NOTES)]))
     if notes_page(path) and path != DECISIONS_PAGE:
         return BRIEF_REGIONS
     return REGIONS.get(path)
@@ -896,12 +902,6 @@ def _required(path: str, text: str) -> dict[str, int]:
     if path not in REGIONS:
         return {}
     word = MARKER_WORDS[path]
-
-    def line(i: int) -> int:
-        return text.count("\n", 0, i) + 1
-
-    def label(name: str) -> str:
-        return name if path in LINE_MARKERS else f"{word}:{name}"
     if path in LINE_MARKERS:
         shape = f"`<!-- {word} -->` or `<!-- /{word} -->`, alone on its line"
         marker = re.compile(rf"<!-- (/?)({word}) -->")
@@ -910,7 +910,7 @@ def _required(path: str, text: str) -> dict[str, int]:
         marker = re.compile(rf"<!-- (/?){word}:([IVX]+) -->")
     opened, found = None, {}
     for start, token in _marker_like(path, text):
-        where = f"{path}:{line(start)}"
+        where = f"{path}:{_line(text, start)}"
         m = marker.fullmatch(token)
         if m is None:
             raise RegionError(f"{where}: {_cut(token)!r} looks like a marker but is not one: "
@@ -921,23 +921,25 @@ def _required(path: str, text: str) -> dict[str, int]:
                               f"one of the books carried into Lean ({', '.join(BOOKS)})")
         if not closer and opened is not None:
             raise RegionError(f"{where}: {_cut(token)!r} opens a region inside the "
-                              f"{label(opened[0])} region opened at line {line(opened[1])}")
+                              f"{_label(path, opened[0])} region opened at line "
+                              f"{_line(text, opened[1])}")
         if not closer and name in found:
-            raise RegionError(f"{where}: {_cut(token)!r} opens a second {label(name)} region; "
-                              f"the first opens at line {line(found[name])}")
+            raise RegionError(f"{where}: {_cut(token)!r} opens a second {_label(path, name)} "
+                              f"region; the first opens at line {_line(text, found[name])}")
         if closer and opened is None:
             raise RegionError(f"{where}: {_cut(token)!r} closes no region")
         if closer and opened[0] != name:
-            raise RegionError(f"{where}: {_cut(token)!r} stands inside the {label(opened[0])} "
-                              f"region opened at line {line(opened[1])}")
+            raise RegionError(f"{where}: {_cut(token)!r} stands inside the "
+                              f"{_label(path, opened[0])} region opened at line "
+                              f"{_line(text, opened[1])}")
         if closer:
             found[name], opened = opened[1], None
         else:
             opened = name, start
     if opened is not None:
-        raise RegionError(f"{path}:{line(opened[1])}: the {label(opened[0])} region opened "
-                          "here has no closer")
-    missing = [label(name) for name in (BOOKS if path not in LINE_MARKERS else [word])
+        raise RegionError(f"{path}:{_line(text, opened[1])}: the {_label(path, opened[0])} "
+                          "region opened here has no closer")
+    missing = [_label(path, name) for name in (BOOKS if path not in LINE_MARKERS else [word])
                if name not in found]
     if missing:
         raise RegionError(f"{path}: no {' or '.join(missing)} region: it must hold "
@@ -950,8 +952,9 @@ def _required(path: str, text: str) -> dict[str, int]:
 def regions(path: str, text: str) -> list[re.Match]:
     """The regions of `path` in `text`, in order: those of REGIONS, as their markers are
     read alone (`_required`), and the notes regions (`notes`), read together by the
-    pattern of `path` (PROGRAM_REGIONS for docs/PROGRAM.md, BRIEF_REGIONS for a brief,
-    REGIONS's own for README.md and docs/WORKFLOW.md); any other path has none.
+    pattern of `path` (`_pattern`: for docs/PROGRAM.md, of its status region and the
+    notes regions of PROGRAM_NOTES; BRIEF_REGIONS for a brief; REGIONS's own for README.md
+    and docs/WORKFLOW.md); any other path has none.
     RegionError, naming the line, at a fault in the markers of either kind, as `_required`
     and `notes` refuse them; and at text in a region's body that looks like a marker of
     `path` (`_marker_text`), even not alone on its line. A token is shown cut to 80
@@ -993,7 +996,9 @@ def notes(path: str, text: str) -> list[re.Match]:
     docs/PROGRAM.md, a section not in PROGRAM_NOTES, an opener inside a region or of a
     region already read, a closer with no opener or of another section, an opener with
     no closer, and any marker at all in the decisions page; and at a notes region of
-    docs/PROGRAM.md that overlaps its status region, as REGIONS reads it. A section is
+    docs/PROGRAM.md that overlaps its status region, from the first `<!-- status -->` line
+    to the first `<!-- /status -->` line after it, which, on a page `regions` accepts, is
+    the region REGIONS reads, found in two searches, each in linear time. A section is
     shown cut to 80 characters."""
     if not notes_page(path):
         return []
@@ -1036,13 +1041,15 @@ def notes(path: str, text: str) -> list[re.Match]:
             found[name], opened = opened[1], None
     if opened is not None:
         raise RegionError(f"{path}:{_line(text, opened[1])}: unclosed notes marker")
-    matches = list((_PROGRAM_NOTES if named else BRIEF_REGIONS).finditer(text))
+    matches = list((_PROGRAM_NOTES_REGIONS if named else BRIEF_REGIONS).finditer(text))
     if [(m["name"], m.start()) for m in matches] != sorted(found.items(), key=lambda f: f[1]):
         raise RegionError(f"{path}: its notes markers pair otherwise than their pattern "
                           "reads them")
-    for status in REGIONS["docs/PROGRAM.md"].finditer(text) if named else []:
+    opener = re.search(r"^<!-- status -->\n", text, re.M) if named and matches else None
+    closer = opener and re.compile(r"^<!-- /status -->$", re.M).search(text, opener.end())
+    if closer:
         for m in matches:
-            if m.start() < status.end() and status.start() < m.end():
+            if m.start() < closer.end() and opener.start() < m.end():
                 raise RegionError(f"{path}:{_line(text, m.start())}: notes region "
                                   f"{m['name'].partition(':')[2]!r} overlaps the status "
                                   "region")
@@ -1055,7 +1062,11 @@ def outside(path: str, text: str, counts: bool = False) -> str:
     between its opener and its closer, in any file: the part written by hand, to compare.
     It never refuses: a region whose markers are broken, or whose body holds a marker's
     text, is not emptied, so that a change to a marker, or to a region so broken, shows
-    here as a change to the part written by hand."""
+    here as a change to the part written by hand. A region whose own two markers are whole
+    is emptied even in a page `regions` refuses: a repeated region, as a second status or
+    `landed` region, and, in docs/PROGRAM.md or a brief, one inside another, whose body
+    stops at the inner opener (`_between`); a notes region of a section not in
+    PROGRAM_NOTES is not read as a region, and so not emptied."""
     pattern = _pattern(path)
     if pattern is not None:
         text = pattern.sub(lambda m: m[0] if _marked_body(path, m) else m["open"] + m["close"],
