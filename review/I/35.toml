@@ -32,7 +32,7 @@ note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior ang
 [[passage]]
 at = "therefore the base EB is equal to the base FC"
 kind = "carried"
-note = "The Lean proves that the base EB equals FC here, as Euclid states it; the argument goes on by the triangles' areas, and does not use it again."
+note = "The Lean proves that the base EB equals FC here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the equal triangles EAB and FDC."
 unused = ["hEB_FC"]
 
 [[passage]]

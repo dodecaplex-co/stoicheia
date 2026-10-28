@@ -12,26 +12,24 @@ kind = "euclid"
 at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A, and joins GC by Postulate 1."
-unused = ["GC"]
+note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it."
 
 [[passage]]
 at = "therefore the base GC is equal to the base DF"
 kind = "carried"
-note = "The Lean proves that the base GC equals DF here, as Euclid states it; the argument goes on by the angles at C, and does not use it again."
+note = "The Lean proves that the base GC equals DF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at C."
 unused = ["hGC"]
 
 [[passage]]
 at = "and the triangle GBC is equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it; the argument goes on by the angles at C, and does not use it again."
+note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at C."
 unused = ["this"]
 
 [[passage]]
 at = "and the remaining angles will be equal to the remaining angles, namely those which the equal sides subtend; [I. 4] therefore the angle GCB"
-kind = "carried"
-note = "The Lean states both pairs of remaining angles here, as Euclid does; the next step takes the angles GCB and DFE from I.4 directly, and the pairs are not used again."
-unused = ["this"]
+kind = "grouped"
+note = "I.4, applied under \"therefore the base GC is equal to the base DF\", gives the remaining angles. One step carries both sentences: it takes the pair at C and F, read as GCB and DFE, the only pair Euclid goes on with."
 
 [[passage]]
 at = "the less to the greater"
@@ -48,26 +46,24 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C, and joins AH by Postulate 1."
-unused = ["AH"]
+note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it."
 
 [[passage]]
 at = "therefore the base AH is equal to the base DF"
 kind = "carried"
-note = "The Lean proves that the base AH equals DF here, as Euclid states it; the argument goes on by the angles at H, and does not use it again."
+note = "The Lean proves that the base AH equals DF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at H."
 unused = ["hAH"]
 
 [[passage]]
 at = "and the triangle ABH is equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it; the argument goes on by the angles at H, and does not use it again."
+note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at H."
 unused = ["this"]
 
 [[passage]]
 at = "and the remaining angles will be equal to the remaining angles, namely those which the equal sides subtend; [I. 4] therefore the angle BHA"
-kind = "carried"
-note = "The Lean states both pairs of remaining angles here, as Euclid does; the next step takes the angles BHA and EFD from I.4 directly, and the pairs are not used again."
-unused = ["this"]
+kind = "grouped"
+note = "I.4, applied under \"therefore the base AH is equal to the base DF\", gives the remaining angles. One step carries both sentences: it takes the pair at H and F, BHA and EFD, the only pair Euclid goes on with."
 
 [[passage]]
 at = "Therefore BC is not unequal to EF"
@@ -77,7 +73,7 @@ note = "Euclid supposes BC greater than EF; the Lean proves his argument once ov
 [[passage]]
 at = "the triangle ABC equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it; the statement asks only for the remaining sides and angle, so this is not used again."
+note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: the enunciation asks only for the remaining sides and angle."
 unused = ["this"]
 
 [figure]
