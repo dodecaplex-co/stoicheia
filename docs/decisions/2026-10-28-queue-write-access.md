@@ -18,14 +18,14 @@
   what vouches for the block: whoever can edit the body is trusted not to type a block
   for a pre-flight that did not run. That is anyone with write access to the repository,
   and the pull request's own author, whom GitHub lets edit its body, even after a writer
-  has queued it. The card put the route as trusting the owner's account and the revert
-  App alone; but to open a pull request between this public repository's branches,
-  GitHub requires write access to the head branch or membership in the organization
-  that owns the repository
-  ([GitHub's documentation](https://docs.github.com/en/enterprise-cloud@latest/pull-requests/how-tos/create-pull-requests/creating-a-pull-request)),
-  and the judge refuses only a bot's edit of the body, so the route trusts such an
-  author too. Only an account with write access can queue an entry. The judge refuses
-  one whose head is not in this repository, the automatic
+  has queued it. In a public repository of an organization, GitHub lets an account open
+  a pull request between the repository's branches only with write access to the head
+  branch or as a member of the organization
+  ([GitHub's documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)),
+  and the judge refuses no entry for a person's edit of its body: so the route trusts
+  the organization's members as authors too, where #603 put it as the owner's account
+  and the revert App alone. Only an account with write access can queue an
+  entry. The judge refuses one whose head is not in this repository, the automatic
   revert included, and, but for that revert, one that a bot wrote, queued, last edited
   or last renamed; the revert's author must be the revert App, and its body is read only
   for its `Reverts:` and `Failed run:` lines, each checked against GitHub's record of the

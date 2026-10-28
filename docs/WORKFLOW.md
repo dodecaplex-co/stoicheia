@@ -1350,8 +1350,9 @@ whom GitHub lets edit its body, even after a writer has queued it. Only an accou
 write access can queue an entry. The judge refuses one whose head is not in this
 repository, the automatic revert included, and, but for that revert, one that a bot
 wrote, queued, last edited or last renamed; the revert's author must be the App, and its
-body is read only for its two lines, each checked against GitHub's record of the failed
-push (below). The queue must not be turned on before both are held. Its four rules are:
+body is read only for its `Reverts:` and `Failed run:` lines, each checked against
+GitHub's record of the failed push (below). The queue must not be turned on before both
+are held. Its four rules are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
