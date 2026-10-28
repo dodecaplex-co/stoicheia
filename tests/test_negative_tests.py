@@ -2630,6 +2630,8 @@ MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", "")
 CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
 LEAVES_AND_EXITS = '(nt.ROOT / "left-by-{name}").write_text("")\n    import os\n    os._exit(0)'
+CHANGES_MODE = ('(nt.ROOT / "tracked-mode").chmod(0o755)\n'
+                '    nt.refused("{name}: caught")')
 DELETES_TREE_AND_CRASHES = 'import shutil\n    shutil.rmtree(nt.ROOT)\n    import os\n    os._exit(3)'
 SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
 # It refuses only when a changed tracked file and an untracked one hold the bytes they hold
@@ -2980,6 +2982,97 @@ class WorkerTests(unittest.TestCase):
         self.assertFalse(old.exists())
         self.assertEqual((notes / "new.txt").read_text(), "renamed contents\n")
 
+    def test_filemode_configuration_cannot_hide_a_dirty_worker(self):
+        """A tracked executable-bit change dirties a worker even with core.fileMode=false."""
+        tracked = self.root / "tracked-mode"
+        tracked.write_text("tracked\n")
+        tracked.chmod(0o644)
+        self.commit(a_mode=CHANGES_MODE, b_mode=CHANGES_MODE)
+        self.git("config", "core.fileMode", "false")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        for k in (1, 2):
+            message = f"worker {k}'s tree did not return to its entry Git status"
+            self.assertIn(f"✗ {message}:\n M tracked-mode\n", result.stdout)
+        self.assertEqual(tracked.stat().st_mode & 0o777, 0o644)
+
+    def test_worktree_lifecycle_ignores_inherited_repository_variables(self):
+        """Worker creation and removal stay in the source repository under foreign Git
+        repository variables."""
+        self.commit(a_one=PASSES, b_two=PASSES)
+        other = self.tmp / "other-repository"
+        other.mkdir()
+        other_env = self.env.copy()
+        subprocess.run(["git", "init", "-q"], cwd=other, env=other_env, check=True)
+        sentinel = other / "sentinel"
+        sentinel.write_text("unchanged\n")
+        subprocess.run(["git", "add", "sentinel"], cwd=other, env=other_env, check=True)
+        subprocess.run(["git", "-c", "user.name=test", "-c",
+                        "user.email=test@example.invalid", "commit", "-q", "-m", "other"],
+                       cwd=other, env=other_env, check=True)
+        foreign_before = subprocess.run(["git", "worktree", "list", "--porcelain"],
+                                        cwd=other, env=other_env, capture_output=True,
+                                        text=True, check=True).stdout
+        self.env.update(GIT_DIR=str(other / ".git"), GIT_WORK_TREE=str(other))
+        try:
+            result = self.suite("--workers", "2")
+        finally:
+            self.env.pop("GIT_DIR")
+            self.env.pop("GIT_WORK_TREE")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_no_worker_left()
+        foreign_after = subprocess.run(["git", "worktree", "list", "--porcelain"],
+                                       cwd=other, env=other_env, capture_output=True,
+                                       text=True, check=True).stdout
+        self.assertEqual(foreign_after, foreign_before)
+        self.assertEqual(sentinel.read_text(), "unchanged\n")
+
+    def test_interrupt_after_worktree_registration_cleans_the_registration(self):
+        """SIGINT after Git registers the first worker reaches cleanup with that ownership
+        recorded, so neither its directory nor its repository record remains."""
+        self.commit(a_one=PASSES, b_two=PASSES)
+        chosen = [negative.Plant(name, self.root / f"scripts/negative/{name}.py", "", False,
+                                 lambda: None)
+                  for name in ("a_one", "b_two")]
+        with patch.object(negative, "ROOT", self.root), \
+                patch.dict(os.environ, self.env, clear=True):
+            entry = negative.worker_status(self.root).stdout
+            real = negative.root_git
+            interrupted = False
+
+            def interrupt_after_add(*cmd):
+                nonlocal interrupted
+                result = real(*cmd)
+                if cmd[:2] == ("worktree", "add") and result.returncode == 0 and not interrupted:
+                    interrupted = True
+                    os.kill(os.getpid(), signal.SIGINT)
+                return result
+
+            with patch.object(negative, "root_git", side_effect=interrupt_after_add), \
+                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()), \
+                    self.assertRaises(KeyboardInterrupt):
+                negative.run_workers(chosen, 2, entry, {})
+        self.assertTrue(interrupted)
+        self.assert_no_worker_left()
+
+    def test_split_index_state_is_cloned_into_workers(self):
+        """A staged change in a valid split index has the same snapshot in every worker."""
+        tracked = self.root / "split-index-state"
+        tracked.write_text("committed\n")
+        self.commit(a_one=PASSES, b_two=PASSES)
+        tracked.write_text("staged\n")
+        self.git("add", "split-index-state")
+        self.git("update-index", "--split-index")
+        git_dir = Path(self.git("rev-parse", "--absolute-git-dir").strip())
+        self.assertTrue(list(git_dir.glob("sharedindex.*")))
+        before = self.git("status", "--porcelain")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_one", "b_two"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+        self.assertEqual(self.git("status", "--porcelain"), before)
+        self.assertEqual(tracked.read_text(), "staged\n")
+
     def test_no_worker_s_tree_is_left(self):
         """After a run that passes, one that fails and one with a crash, as after every run
         of these tests; and after an interruption, which the run passes on to each worker
@@ -3187,14 +3280,14 @@ class WorkerTests(unittest.TestCase):
         base, trees = self.trees("interrupted")
         previous = signal.signal(signal.SIGINT, signal.default_int_handler)
         self.addCleanup(signal.signal, signal.SIGINT, previous)
-        real, calls = negative.run, []
+        real, calls = negative.root_git, []
 
         def interrupted(*cmd):
             calls.append(cmd)
             if len(calls) == 1:
                 os.kill(os.getpid(), signal.SIGINT)
             return real(*cmd)
-        with patch.object(negative, "run", interrupted):
+        with patch.object(negative, "root_git", interrupted):
             try:
                 negative.remove(trees, base)
             except KeyboardInterrupt:
@@ -3218,7 +3311,7 @@ class WorkerTests(unittest.TestCase):
             with self.subTest(label):
                 negative.failures.clear()
                 base, trees = self.trees(label)
-                real = negative.run
+                real = negative.root_git
 
                 def fails(*cmd):
                     if str(trees[0]) not in cmd:
@@ -3227,7 +3320,7 @@ class WorkerTests(unittest.TestCase):
                         raise effect
                     return effect
                 output = io.StringIO()
-                with patch.object(negative, "run", fails), redirect_stdout(output):
+                with patch.object(negative, "root_git", fails), redirect_stdout(output):
                     negative.remove(trees, base)
                 message = (f"worker 1's tree {trees[0]} could not be removed ({why}); its "
                            "directory was deleted, but its record remains in the repository's "
@@ -3247,7 +3340,7 @@ class WorkerTests(unittest.TestCase):
         holds the first, fails too."""
         self.commit(a_one=PASSES)
         base, trees = self.trees("kept")
-        real, delete = negative.run, shutil.rmtree
+        real, delete = negative.root_git, shutil.rmtree
 
         def fails(*cmd):
             if str(trees[0]) in cmd:
@@ -3259,7 +3352,7 @@ class WorkerTests(unittest.TestCase):
                 delete(path, *args, **kwargs)
         output = io.StringIO()
         try:
-            with patch.object(negative, "run", fails), \
+            with patch.object(negative, "root_git", fails), \
                     patch.object(negative.shutil, "rmtree", keeps), redirect_stdout(output):
                 negative.remove(trees, base)
             self.assertEqual(negative.failures, [

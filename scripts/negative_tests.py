@@ -1043,10 +1043,16 @@ def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, cwd=tree, env=worker_env(), capture_output=True, text=True)
 
 
+def root_git(*cmd: str) -> subprocess.CompletedProcess:
+    """A Git command bound to the tree under test and its sanitized environment."""
+    return in_tree(ROOT, "git", f"--work-tree={ROOT}", *cmd)
+
+
 def worker_status(tree: Path) -> subprocess.CompletedProcess:
     """A configuration-invariant Git status snapshot for the parallel run."""
     return in_tree(tree, "git", f"--work-tree={tree}", "-c", "core.quotePath=true",
-                   "status", "--porcelain=v1", "--untracked-files=all", "--no-renames")
+                   "-c", "core.fileMode=true", "status", "--porcelain=v1",
+                   "--untracked-files=all", "--no-renames")
 
 
 def linked(root: Path) -> Path | None:
@@ -1064,11 +1070,16 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
     """Make a worker's tree at `tree` (the docstring): None when its Git status is `entry`,
     the tree's entry status; else what is wrong, to follow "worker k's tree", and what to
     show with it."""
-    added = run("git", "worktree", "add", "--detach", "--no-checkout", str(tree), "HEAD")
+    mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    try:
+        added = root_git("worktree", "add", "--detach", "--no-checkout", str(tree), "HEAD")
+        if added.returncode == 0:
+            registered.append(tree)
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, mask)
     if added.returncode != 0:
         return f"could not be made: git worktree add: exit {added.returncode}", (
             added.stdout + added.stderr)
-    registered.append(tree)
     listed = subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
                              "--others", "--exclude-standard"), cwd=ROOT,
                             env=worker_env(), capture_output=True)
@@ -1085,13 +1096,16 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
                     target.symlink_to(os.readlink(source))
                 else:
                     shutil.copy2(source, target)
-        indexes = [in_tree(ROOT, "git", f"--work-tree={ROOT}", "rev-parse", "--git-path",
-                           "index"),
+        indexes = [root_git("rev-parse", "--git-path", "index"),
                    in_tree(tree, "git", "rev-parse", "--git-path", "index")]
         if any(index.returncode != 0 for index in indexes):
             return "could not be made: git rev-parse --git-path index failed", "".join(
                 index.stderr for index in indexes)
-        shutil.copyfile(ROOT / indexes[0].stdout.strip(), tree / indexes[1].stdout.strip())
+        source_index = ROOT / indexes[0].stdout.strip()
+        target_index = tree / indexes[1].stdout.strip()
+        shutil.copyfile(source_index, target_index)
+        for shared in source_index.parent.glob("sharedindex.*"):
+            shutil.copyfile(shared, target_index.parent / shared.name)
     except OSError as error:
         return f"could not be made: {type(error).__name__}: {error}", ""
     in_tree(tree, "git", "update-index", "-q", "--refresh")
@@ -1193,7 +1207,7 @@ def remove(trees: list[Path], base: Path) -> None:
     try:
         for k, tree in enumerate(trees, 1):
             try:
-                removed = run("git", "worktree", "remove", "--force", "--force", str(tree))
+                removed = root_git("worktree", "remove", "--force", "--force", str(tree))
                 if removed.returncode == 0:
                     continue
                 why = f"exit {removed.returncode}: {(removed.stdout + removed.stderr).strip()}"
