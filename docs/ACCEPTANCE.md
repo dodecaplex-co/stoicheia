@@ -34,14 +34,22 @@ python3 scripts/check_acceptance.py           # every item, in about two minutes
 python3 scripts/check_acceptance.py --quick   # the kernel replay and the model tests not run
 python3 scripts/check_acceptance.py --json verdicts.json   # every verdict as JSON as well
 python3 scripts/check_acceptance.py --compare main.json verdicts.json   # no check run
+python3 scripts/check_acceptance.py --check-current   # no check run: the committed report
 ```
 
 It writes [the report](reports/acceptance-books-I-III.md): a table of items by book, a table
 of every proposition against every item, and every failure, each with what to do about it.
 It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every
 item passes and every check ran; 1 when anything fails or was not run (a check not run is
-not a pass); and 2 when it cannot begin. It needs Python 3.11 or later, `lake` on the
-PATH, and the commits the records name, so a full clone rather than a shallow one.
+not a pass); and 2 when it cannot begin. To pass every item it needs Python 3.11 or later,
+`lake` on the PATH, and the commits the records name, so a full clone rather than a shallow
+one. Before any check runs it asks Lake, with `lake build --no-build Elements Audit`,
+whether the build is current, since the Lean the checks ask is the build and not the
+sources; when Lake says it is not, by its exit 3, the script says why and what to build,
+and exits 2 with nothing written; and when Lake cannot answer (any other exit, a toolchain
+or lakefile problem, say), it says so, and exits 2 as well. If there is no `lake`
+executable, it keeps the earlier path: the run continues, and each check that needs Lean
+reports that it could not ask it.
 
 The script stands on the checks already in place rather than restating them:
 `check_fidelity.py`'s functions, `check_style.py`, `check_links.py`, `check_kernel.py`,
@@ -56,6 +64,14 @@ it reads two such files, main's first, and compares their verdicts by the rule b
 ([In CI](#in-ci)). It exits 0 when every pass holds under that rule; 1 for a regression,
 listing each; and 2 when a file cannot be read in the verdict format, or the two name
 different copies of the script by their hashes. CI uses both options.
+
+`--check-current` runs no check and needs no Lean: it reads the report as HEAD holds it,
+and exits 0 when that report is a run of every item on a commit that HEAD descends from
+and differs from in nothing but the report, with no staged, unstaged or untracked change
+Git reports in the worktree and no tracked file marked assume-unchanged or skip-worktree;
+1, giving each reason, when it is not; and 2 when it cannot begin. It asks Git with
+replacement objects disabled, and reads the report, not the run that wrote it. It is a
+release step, not one of CI's ([In CI](#in-ci)).
 
 ## In CI
 
@@ -110,7 +126,12 @@ file with its decisions entry; from then on the job skips main and the compariso
 any failing item or check not run fails it, the staging items included. That is step 9
 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10: the checklist
 passes in CI with no failures. Any other value fails the job before the checklist runs,
-so that no misspelling turns the gate off.
+so that no misspelling turns the gate off. At the release candidate the report is
+regenerated on a freshly built tree and committed, and `--check-current` passes, as step
+10 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, says.
+Every pull request's job has the build and the run, but only the release candidate is
+held to committing the regenerated report, so an ordinary pull request is not held to
+`--check-current`.
 
 The distinction between GitHub's five required checks and the merge gate's local presence
 test, including what a skipped job means, is in

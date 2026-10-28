@@ -117,6 +117,14 @@ circumference, taken twice.
 decision to add none for Book III is superseded by the approved rule `Tacit.exists_centre`,
 which gives every circle a centre ([brief 0008](0008-centre.md), approved 18 October).
 
+**26 October 2026, the radius rule.** A second rule of ours has joined `exists_centre`: a
+circle's radius is not nothing (`Tacit.radius_ne_zero`), added by the owner's decision of
+25 October 2026 ([its decisions entry](../decisions/2026-10-25-radius-rule.md)). It is a
+rule for Book Zero, not one added for Book III's sake, but Book III's proofs rest on it:
+every positive length in the edition now comes from it, and III.5 and III.6 rest on it in
+place of Diagram-segment 2 and Circle 1, which neither now rests on
+([the entry for that move](../decisions/2026-10-25-book-zero-radius-rule.md)).
+
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. It is the angle the circumference subtends at the centre when it is less than
@@ -266,6 +274,14 @@ in equal circles and of one kind, are one), which adds I.7; and, from stage 4,
 `Foot.exists` and `Foot.unique` (every straight line has one foot of the perpendicular
 from a point), which add I.12 and I.17. The file imports Book II's
 ground, so every proposition of Book III has `rect`, `sq` and `BookI.Prop47.sq`.
+
+**26 October 2026, `foot_between` (#477).** `foot_between` has moved, with its name and type,
+to a ground of its own after III.2, `Elements/BookIII/Feet.lean`, which III.14, III.15,
+III.35 and III.36 import. Its last step is Circle 1, and Circle 1 is to be proved after
+III.2, by the owner's decision of 25 October 2026
+([the entry for this move](../decisions/2026-10-25-circle-1-bookzero.md)); III.1 and III.2
+import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
+unchanged; the rest of `Squares.lean` stands as it says.
 
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,

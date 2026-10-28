@@ -21,30 +21,24 @@ open Tacit
 variable {A B C D : Point} {α : Circle}
 
 /-- A circle has only one centre (System E, Generalities 2). This was an assumption
-until 19 October 2026 and is now proved from the foundations: a straight line through
-two supposed centres meets the circle at P and Q, and both centres bisect PQ by
-Definition I.15. Equal doubles have equal halves, contradicting the strict order of
-the lengths from P if the centres differ. -/
+until 19 October 2026 and is now proved from the foundations: the straight line through
+two supposed centres A and B, produced beyond B, meets the circle at P, and produced
+beyond A, at Q (Intersections 5). Then BP is less than AP, which is AQ by Definition
+I.15, and AQ is less than BQ, which is BP: BP would be less than itself. -/
 theorem Tacit.centre_unique {A B : Point} {α : Circle}
     (hA : Centre A α) (hB : Centre B α) : A = B := by
   by_cases hAB : A = B
   · exact hAB
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
-  obtain ⟨P, hP, hPL, hPAB⟩ :=
-    line_circle_beyond (centre_inside hA) hAL hBL (Ne.symm hAB)
-  obtain ⟨Q, hQ, hQL, hQAP⟩ :=
-    line_circle_beyond (centre_inside hA) hAL hPL (ne_of_between hPAB)
-  have hPAQ := between_symm hQAP
-  have hPBQ := between_of_inside_chord hBL hPL hQL
-    (centre_inside hB) hP hQ (ne_of_between_ends hPAQ)
-  have eA := len_add_of_between hPAQ
-  have eB := len_add_of_between hPBQ
-  have rA : ‖P A‖ = ‖A Q‖ := (len_symm P A).trans (Definition15 hA hP hQ)
-  have rB : ‖P B‖ = ‖B Q‖ := (len_symm P B).trans (Definition15 hB hP hQ)
-  rw [← rA] at eA
-  rw [← rB] at eB
-  have heq : ‖P A‖ = ‖P B‖ := Magnitude.eq_of_add_self_eq (eA.trans eB.symm)
-  exact False.elim (Magnitude.ne_of_lt (len_lt_of_between hPAB) heq)
+  obtain ⟨P, hP, _, hPBA⟩ := line_circle_beyond (centre_inside hB) hBL hAL hAB
+  obtain ⟨Q, hQ, _, hQAB⟩ := line_circle_beyond (centre_inside hA) hAL hBL (Ne.symm hAB)
+  have h₁ := CommonNotion5 (a := ‖B P‖) (len_pos hAB)
+  rw [add_comm ‖B P‖ ‖A B‖, len_add_of_between (between_symm hPBA)] at h₁
+  have h₂ := CommonNotion5 (a := ‖A Q‖) (len_pos (Ne.symm hAB))
+  rw [add_comm ‖A Q‖ ‖B A‖, len_add_of_between (between_symm hQAB)] at h₂
+  rw [Definition15 hA hP hQ] at h₁
+  rw [← Definition15 hB hP hQ] at h₂
+  exact False.elim (lt_irrefl _ (lt_trans h₁ h₂))
 
 /-- Where two different straight lines L and M meet at B, and A and C are points of M,
 different from B and from each other, that are not on the same side of L, B lies between
@@ -140,11 +134,26 @@ theorem Tacit.triple_incidence3 {A B C D E : Point} {L M N : Line}
     exact pasch3 (between_at_crossing hLR hAL hAR hXR hER he hXA hAE.symm hn) hAM hXE_M
   exact same_side_trans (same_side_symm hCX) hXE_L
 
-/-- A point on a circle is not its centre. -/
+/-- A point on a circle is not its centre: a radius is not nothing (the radius rule). -/
 theorem ne_of_centre_of_on (hA : Centre A α) (hC : OnCircle C α) : C ≠ A := by
   intro h
   subst h
-  exact inside_not_on (centre_inside hA) hC
+  exact radius_ne_zero hA hC (len_self _)
+
+/-- Circle 1 at the centre: the centre O lies between two different points B and C of its
+circle on a straight line through it. Neither point is the centre, since a radius is not
+nothing; of the three orders of B, O and C (Between 6), the two with O at an end would make
+one radius a part of the other, and so less than it, against Definition I.15. This uses
+neither Circle 1 nor any proposition. -/
+theorem between_of_centre_chord {O B C : Point} {L : Line} (hO : OnLine O L)
+    (hB : OnLine B L) (hC : OnLine C L) (hOc : Centre O α) (hBon : OnCircle B α)
+    (hCon : OnCircle C α) (hBC : B ≠ C) : Between B O C := by
+  have hr : ‖O B‖ = ‖O C‖ := Definition15 hOc hBon hCon
+  rcases between_cases (ne_of_centre_of_on hOc hBon) (ne_of_centre_of_on hOc hCon).symm hBC
+      hB hO hC with h | h | h
+  · exact h
+  · exact absurd hr (Magnitude.ne_of_lt (len_lt_of_between h))
+  · exact absurd hr.symm (Magnitude.ne_of_lt (len_lt_of_between (between_symm h)))
 
 /-- A point farther from the centre than the circumference is outside the
 circle. -/
@@ -156,23 +165,6 @@ theorem outside_of_len_gt (hA : Centre A α) (hD : OnCircle D α) (h : ‖A D‖
   · intro hon
     rw [Definition15 hA hD hon] at h
     exact lt_irrefl _ h
-
-/-- A point between the centre and a point on the circle is within it. It is nearer the
-centre than that point is, as the part is less than the whole, and so nearer than the
-circumference by Definition I.15 and the transfer rules. This proof uses no proposition
-and neither Circle 2 nor Circle 3. -/
-theorem InsideCircle.of_between_centre {O P : Point} (hO : Centre O α)
-    (hP : OnCircle P α) (h : Between O C P) : InsideCircle C α := by
-  exact inside_of_len_lt hO hP (len_lt_of_between h)
-
-/-- A point between the centre and a point within the circle is within it, when a point
-of the circle is given. The nearer point is nearer than the point within, which is nearer
-than the circumference by Definition I.15 and the transfer rules. This proof uses no
-proposition and neither Circle 2 nor Circle 3. -/
-theorem InsideCircle.of_between_centre_of_inside {O P R : Point} (hO : Centre O α)
-    (hR : OnCircle R α) (hP : InsideCircle P α) (h : Between O C P) : InsideCircle C α := by
-  exact inside_of_len_lt hO hR
-    (lt_trans (len_lt_of_between h) (len_lt_of_inside hO hR hP))
 
 /-- A chance point, but not too far out. If P is nearer to O than C is, and Q
 lies beyond P as seen from O (or O is P itself), there is a point F between

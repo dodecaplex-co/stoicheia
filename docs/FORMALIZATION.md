@@ -402,7 +402,10 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   `Elements/BookI/HelpersParallels.lean` if it cites I.28, I.30 or I.31 (`Prop30.meet`,
   `Prop31.parallelogram`); in `Elements/BookII/Rectangles.lean` for Book II's steps that
   cite Book I; in `Elements/BookIII/Squares.lean` for Book III's that cite Books I or II; and
-  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; and in
+  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; in
+  `Elements/BookIII/Feet.lean`, after III.2, for `foot_between`, whose last step is Circle
+  1, which is to be proved after III.2
+  ([its decisions entry](decisions/2026-10-25-circle-1-bookzero.md)); and in
   `Elements/BookI/OutlineBound.lean`, after I.29, for `outline_bounded`, which cites I.23
   and uses Postulate 5 (brief 0013). A new shared module (stage 2's
   `Elements/Figure/Sums.lean`, stage 3's placement and arcs, brief 0013's figures given by
@@ -774,7 +777,7 @@ proof to the assumptions it uses.
 |---|---|---|
 | `adjacent_eq_of_right` | Diagram-angle 3 | I.13 makes adjacent angles two right angles; Common Notion 3 removes the given right angle. Proved after I.13 in [`Prop13.lean`](../Elements/BookI/Prop13.lean). |
 | `not_same_side_of_circles_meet` | Circle 4 | Definition I.15 gives equal distances from each centre, `circle_eq` tells the centres apart, and I.7 excludes two common points on the same side. Proved after I.7 in [`Prop07.lean`](../Elements/BookI/Prop07.lean). |
-| `centre_unique` | Generalities 2 | Two supposed centres bisect the same straight line through the circle by Definition I.15. Equal doubles have equal halves, and the strict order of lengths forces the centres to coincide. Proved from the foundations in [`Circles.lean`](../Elements/Figure/Circles.lean). |
+| `centre_unique` | Generalities 2 | The straight line through two supposed centres A and B, produced beyond B to P and beyond A to Q on the circle (Intersections 5), would make BP less than AP, which is AQ (Definition I.15), and AQ less than BQ, which is BP. Proved from the foundations in [`Circles.lean`](../Elements/Figure/Circles.lean); until 26 October 2026 two supposed centres bisected the same straight line through the circle, by Circle 1 and Definition I.15. |
 | `inside_of_between` | Circle 2 | III.2's corollary `Prop2.within`, III.2 for points on or within the circle. Proved after III.2 in [`Prop02.lean`](../Elements/BookIII/Prop02.lean) since 24 October 2026; from 19 October it was proved from Circle 3 in `Circles.lean`. |
 | `exists_point_outside_circle` | Points 9 | A point between two points on the circle is within it, by III.2; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and III.2, by `Prop2.within`, puts the new point outside. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean`, from Circle 3, before. |
 | `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points (Book Zero's `between_at_crossing`); III.2, by `Prop2.within`, puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved after III.2 in `Prop02.lean` since 24 October 2026, when Circle 3 joined it there; it was proved in `Circles.lean`, from Circle 3, before. |
@@ -800,7 +803,7 @@ contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
 | Theorem under `Elements.Tacit` | System E label | Derivation and home |
 |---|---|---|
 | `centre_inside` | Generalities 3 | A centre that were not inside would lie on a straight line through an inside point beyond it, and its radii to the two crossings would be unequal. Proved in [`RuleBase.lean`](../Elements/Figure/RuleBase.lean). |
-| `on_circle_of_len_eq` | Diagram-segment 3, the half that Definition 15 doesn't give | The circle about the centre through the point is the given circle; the centre itself is excluded, since a radius is never nothing. Proved in `RuleBase.lean`. |
+| `on_circle_of_len_eq` | Diagram-segment 3, the half that Definition 15 doesn't give | The centre itself is excluded, since a radius is never nothing. A point within would be nearer the centre than the place where the straight line from the centre through it, produced, meets the circle (Intersections 5); a point without would be farther than the place where that line leaves the circle (Intersections 4). Proved in `RuleBase.lean`, since 26 October 2026 without Diagram-segment 2, which gave the step before. |
 | `same_side_symm` | Same side 2 | Two circles about points of the line cut on A's side, by Intersection 5, Generalities 3 and Intersections 8; Same side 4 then makes B's relation to A follow from A's to B. Proved in `RuleBase.lean`. |
 | `exists_point_same_side` | Points 5 | Postulate 2 extends a line from a point of L beyond B; Pasch 2 puts its endpoint on B's side. Proved in `RuleBase.lean`. |
 | `ne_of_between` | Between 1 | Coincidence would make the forbidden reversed order identical to the given order. Proved in `RuleBase.lean`. |
@@ -809,15 +812,15 @@ contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
 | `same_side_refl` | Same side 1 | Choose a point on its side and apply transitivity to that relation twice. Proved in `RuleBase.lean`. |
 | `triple_incidence1` | Triple incidence 1 | Two angle decompositions would make each of two angles greater than the other. Proved in `RuleBase.lean`. |
 | `pasch3` | Pasch 3 | Join A and C to another point of the line: Pasch 2 puts B within the angle they make there, and Triple incidence 1 then forbids A and C one side. Proved in `RuleBase.lean`. |
-| `inside_not_on` | Generalities 4 | A line produced from the point meets the circle; Circle 1 would put that point between itself and the crossing. Proved in `RuleBase.lean`. |
-| `eq_of_len_eq_zero` | Metric 1 | A circle drawn with distinct endpoints would put its own centre on its circumference. Proved in `RuleBase.lean`. |
+| `inside_not_on` | Generalities 4 | The point is not the centre, by our radius rule; the straight line from the centre through it, produced beyond it, meets the circle (Intersections 5), and the radius there would be the radius to the point and something more. Proved in `RuleBase.lean`, from the centre that `exists_centre` gives; until 26 October 2026 Circle 1 put the point between itself and a crossing. |
+| `eq_of_len_eq_zero` | Metric 1 | A circle drawn about one end through the other (Postulate 3) has the straight line for a radius, and a radius is not nothing (our `radius_ne_zero`, section 7). Proved in `RuleBase.lean`; until 26 October 2026 it was proved from Generalities 3 and 4 and Diagram-segment 3's half, and so rested on Circle 1 and Diagram-segment 2. |
 | `inside_of_len_lt` | Diagram-segment 4 | A point outside would lie beyond a circumference crossing, whose radius is shorter than its distance. Proved in [`Incidence.lean`](../Elements/Figure/Incidence.lean). |
 | `len_lt_of_inside` | Diagram-segment 4 | Produce the line from the centre through the interior point to the circumference; its distance is a part of the radius. Proved in `Incidence.lean`. |
 | `ne_of_between_ends` | Between 1 | Coincident endpoints would make a sum containing a positive length equal to zero. Proved in `Incidence.lean`. |
 | `on_line_of_between` | Between 2 | Join the endpoints and use incidence of the middle point and uniqueness of their line. Proved in `Incidence.lean`. |
 | `between_of_between_left` | Between 4 | Length addition and strict comparison exclude the other two orders of A, D and C. Proved in `Incidence.lean`. |
 | `between_of_between_right` | Between 5 | Collinear orders, length comparison and one extension exclude both contrary arrangements. Proved in `Incidence.lean`. |
-| `circles_meet_of_on_inside_outside` | Intersection 4, in LeanEuclid's corrected form | A crossing of the second circle lies inside the first, giving the two witnesses for Intersection 5. Proved in `Incidence.lean`. |
+| `circles_meet_of_on_inside_outside` | Intersection 4, in LeanEuclid's corrected form | Take the first circle's centre (`exists_centre`), and `circles_meet_of_centre`, which takes it as a hypothesis, does the rest: on the second circle, the centre is the witness; within it or outside it, a crossing of the second circle lies between that centre and a point on or within the first circle, and so within the first by Diagram-segment 4, giving the two witnesses for Intersection 5. Proved in `Incidence.lean`. I.22, the rule's one user before 26 October 2026, has the centre and now calls `circles_meet_of_centre` instead, so it rests on neither `exists_centre` nor Circle 1. Until 26 October 2026 the crossing was taken from any point within the first circle and put within it by Circle 1. |
 | `exists_point_opposite_side` | Points 6 | Produce the line from B through a point of L; Pasch 3 separates its endpoints. Proved in `Incidence.lean`. |
 | `circles_meet_opposite_side` | Intersections 9 | Choose a point opposite B and take the common circle point on that point's side. Proved in `Incidence.lean`. |
 | `exists_point_between` | Points 3 | A smaller concentric circle supplies one interior division; repeat within a smaller segment to avoid each forbidden point. Proved in `Incidence.lean`. |

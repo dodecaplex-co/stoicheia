@@ -87,10 +87,10 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "full"
-commit = "918efd90"
+commit = "1870c96d1"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:4e99fba888723a6e"
-run = "card #131, ship ER: re-read after III.1's call was dropped; lines 78 and 115 of Prop14.lean, of unknown family, read also by GPT-6 Astra (Codex); the calls of III.1 and centre_unique dropped (#131), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two (card 119) merged with main at dc4ec99f, which brought ER-promote332 and ER-iii1calls: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write ER's changes, reader F2-w2m3cx at 918efd90; card 478, ship XS, from git and record evidence, added without a restamp: main Prop14 proof by OpenAI Codex (e1c75ee61); Prop14.diameter_sum, Prop14.general and the check came in through efdef7580 from staging (f2cd06608, 5220bda58, 17fddffc1, 62de449bb and f4b8bfbb3), which name no writer; lines 78 and 115 are Codex's code (e1c75ee61), their bullets joined by 908ad2065, which names no writer; cross-family reading: ER-s131c, Claude Opus 5.5, read in full at 3027a105 (be3018137, 23 October 2026), with the Lean and record as they now stand"
+lean = "sha256:70af5bfc9fea60a9"
+run = "card #131, ship ER: re-read after III.1's call was dropped; lines 78 and 115 of Prop14.lean, of unknown family, read also by GPT-6 Astra (Codex); the calls of III.1 and centre_unique dropped (#131), written by Claude, read also by GPT-6 Astra (Codex); axiom wave two (card 119) merged with main at dc4ec99f, which brought ER-promote332 and ER-iii1calls: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write ER's changes, reader F2-w2m3cx at 918efd90; card 478, ship XS, from git and record evidence, added without a restamp: main Prop14 proof by OpenAI Codex (e1c75ee61); Prop14.diameter_sum, Prop14.general and the check came in through efdef7580 from staging (f2cd06608, 5220bda58, 17fddffc1, 62de449bb and f4b8bfbb3), which name no writer; lines 78 and 115 are Codex's code (e1c75ee61), their bullets joined by 908ad2065, which names no writer; cross-family reading: ER-s131c, Claude Opus 5.5, read in full at 3027a105 (be3018137, 23 October 2026), with the Lean and record as they now stand; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1"
 text = "sha256:1a42bd2cee5c9126"
 
 [review.items]

@@ -28,8 +28,10 @@ The geometric pins record the proof of each cited law, one theorem each, and the
 named-lines proof used for I.4. Which construction rules each law's proof uses is
 computed by the certificate, law by law (`cited_laws` in `facts.json`). Since the second
 axiom retirement, the pins of four laws, `holds_neOfLen`, `holds_rayUnique`,
-`holds_rayOfAngle` and `holds_rayOfAngleSide`, list construction rules, Postulates 1 and 3
-among them, reached through the proved System E rules beneath them. The pin of
+`holds_rayOfAngle` and `holds_rayOfAngleSide`, list construction rules, reached through the
+proved System E rules beneath them: Postulate 3 in all four, by which Metric 1 is proved
+from our radius rule, and in the last two Postulate 1 and other construction rules as well.
+The pin of
 `Prop8.holds_prop7` records I.8's adapter of I.7, whose proof uses constructions and inherits the
 restricted rule through I.5 and I.4.
 -/
@@ -49,9 +51,7 @@ info: 'Elements.BookI.Prop4' depends on axioms: [propext,
  Elements.Tacit.angle_symm,
  Elements.Tacit.area_congruent,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.exists_point,
@@ -71,6 +71,7 @@ info: 'Elements.BookI.Prop4' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -99,9 +100,7 @@ info: 'Elements.BookI.Prop8' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.exists_point,
@@ -121,6 +120,7 @@ info: 'Elements.BookI.Prop8' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -522,12 +522,9 @@ info: 'Elements.Superposition.onLine_of_angle_eq_named' depends on axioms: [prop
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_symm,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
@@ -544,6 +541,7 @@ info: 'Elements.Superposition.onLine_of_angle_eq_named' depends on axioms: [prop
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans]
 -/
@@ -573,27 +571,10 @@ info: 'Elements.Superposition.Cited.holds_areaCongruent' depends on axioms: [pro
 /--
 info: 'Elements.Superposition.Cited.holds_neOfLen' depends on axioms: [propext,
  Classical.choice,
- Elements.Definition15,
- Elements.Postulate1,
  Elements.Postulate3,
  Quot.sound,
- Elements.Tacit.add_comm,
- Elements.Tacit.add_lt_add_right,
- Elements.Tacit.add_zero,
- Elements.Tacit.between_of_inside_chord,
- Elements.Tacit.circle_eq,
- Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_inside_circle,
- Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
- Elements.Tacit.len_symm,
- Elements.Tacit.line_circle_between,
- Elements.Tacit.line_circle_beyond,
- Elements.Tacit.lt_irrefl,
- Elements.Tacit.lt_trans,
- Elements.Tacit.lt_trichotomy,
- Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero]
+ Elements.Tacit.radius_ne_zero]
 -/
 #guard_msgs in
 #print axioms Elements.Superposition.Cited.holds_neOfLen
@@ -601,28 +582,17 @@ info: 'Elements.Superposition.Cited.holds_neOfLen' depends on axioms: [propext,
 /--
 info: 'Elements.Superposition.Cited.holds_rayUnique' depends on axioms: [propext,
  Classical.choice,
- Elements.Definition15,
- Elements.Postulate1,
  Elements.Postulate3,
  Quot.sound,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
- Elements.Tacit.circle_eq,
- Elements.Tacit.exists_point,
- Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
- Elements.Tacit.len_self,
- Elements.Tacit.len_symm,
- Elements.Tacit.line_circle_between,
- Elements.Tacit.line_circle_beyond,
  Elements.Tacit.lt_irrefl,
- Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
- Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero]
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.radius_ne_zero]
 -/
 #guard_msgs in
 #print axioms Elements.Superposition.Cited.holds_rayUnique
@@ -641,12 +611,9 @@ info: 'Elements.Superposition.Cited.holds_rayOfAngle' depends on axioms: [propex
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_symm,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
- Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.exists_point_on_line,
  Elements.Tacit.len_add_of_between,
@@ -663,6 +630,7 @@ info: 'Elements.Superposition.Cited.holds_rayOfAngle' depends on axioms: [propex
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans]
 -/
@@ -680,9 +648,7 @@ info: 'Elements.Superposition.Cited.holds_rayOfAngleSide' depends on axioms: [pr
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
  Elements.Tacit.angle_add_of_inside,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.exists_point_inside_circle,
@@ -700,6 +666,7 @@ info: 'Elements.Superposition.Cited.holds_rayOfAngleSide' depends on axioms: [pr
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans]
 -/
@@ -727,9 +694,7 @@ info: 'Elements.BookI.Prop8.holds_prop7' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.exists_point,
@@ -749,6 +714,7 @@ info: 'Elements.BookI.Prop8.holds_prop7' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
@@ -784,9 +750,7 @@ info: 'Elements.Superposition.Cited.holds_all' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_same_side,
  Elements.Tacit.exists_point,
@@ -806,6 +770,7 @@ info: 'Elements.Superposition.Cited.holds_all' depends on axioms: [propext,
  Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
  Elements.Tacit.pasch2,
+ Elements.Tacit.radius_ne_zero,
  Elements.Tacit.same_ray_of_angle_eq_zero,
  Elements.Tacit.same_side_trans,
  Elements.Tacit.superposition]
