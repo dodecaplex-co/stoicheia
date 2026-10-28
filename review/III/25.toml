@@ -52,7 +52,7 @@ note = "Euclid infers AE equal to CE from the two equal sides and the equal incl
 at = "Therefore the circle drawn with centre E and distance one of the straight lines"
 kind = "carried"
 helper = "Prop25.complete"
-note = "The core describes the circle with centre E through A (Postulate 3), and B and C are on it, EB and EC being equal to EA. That it is the circle of the given segment, Euclid's [III. 9], is proved as its own theorem, the companion `Prop25.complete`, for each of the three cases. It takes a centre of the constructed circle from the rule internally; the construction still returns its centre E, which `Prop25.kind` uses."
+note = "The core describes the circle with centre E through A (Postulate 3), and B and C are on it, EB and EC being equal to EA. That it is the circle of the given segment, the step for which Heath's reference is III.9, is proved as its own theorem, the companion `Prop25.complete`, for each of the three cases. It takes a centre of the constructed circle from the rule internally; the construction still returns its centre E, which `Prop25.kind` uses."
 
 [[passage]]
 at = "And it is manifest that the segment ABC is less than a semicircle"
