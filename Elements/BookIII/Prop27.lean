@@ -223,4 +223,34 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
     centres (hGA.trans_opposite hQA.symm) (hHD.trans_opposite hRD.symm) hBC⟩
   -- Q. E. D.
 
+/-- **III.27 with congruent circumferences** (companion of III.27, "III.27 of_congruent").
+In equal circles, angles standing on congruent circumferences are equal to one another,
+whether they stand at the centres or at the circumferences. We read equal circumferences
+through Common Notion 4 as arcs that can be placed one on the other, with their segments,
+keeping every distance (`Arc.Congruent`), as III.26 concludes them; `Prop27` reads them as
+equal in measure. Q and R name the circumferences BC and EF on which the angles BAC and EDF
+stand, across BC from A and across EF from D.
+
+Proved: `Prop24.equalMeasure` gives the circumferences equal measures, and
+`standing_eq_circumference` makes them the circumferences on which the angles stand;
+`Prop27` then gives the equal angles, with Euclid's reductio and his halving in each case.
+Congruence of these drawn arcs already implies that the circles are equal (`Prop24.image`,
+`Prop24.equalCircles`); the hypothesis keeps Euclid's setting, and `Prop27` uses it
+through III.26. -/
+theorem Prop27.of_congruent {A B C D E F G H Q R : Point} {ABC DEF : Circle}
+    (hcircles : EqualCircles ABC DEF) (hG : Centre G ABC) (hH : Centre H DEF)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC)
+    (hD : OnCircle D DEF) (hE : OnCircle E DEF) (hF : OnCircle F DEF)
+    (hAQ : OppositeSidesOf A Q B C) (hDR : OppositeSidesOf D R E F)
+    (hcong : Arc.Congruent ⟨ABC, B, C, Q⟩ ⟨DEF, E, F, R⟩) :
+    ∠ B A C = ∠ E D F ∧
+      (SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F) := by
+  /- The congruent circumferences are equal in measure (`Prop24.equalMeasure`), and they
+     are the circumferences on which the angles at A and D stand. -/
+  have hm := Prop24.equalMeasure (a := ⟨ABC, B, C, Q⟩) (b := ⟨DEF, E, F, R⟩)
+    ⟨hB, hC, hAQ.symm.triangle⟩ ⟨hE, hF, hDR.symm.triangle⟩ hcong
+  have heq : standing ABC B A C = standing DEF E D F := by
+    rw [standing_eq_circumference hAQ, standing_eq_circumference hDR]; exact hm
+  exact Prop27 hcircles hG hH hA hB hC hD hE hF hAQ.triangle.acb hDR.triangle.acb heq
+
 end Elements.BookIII

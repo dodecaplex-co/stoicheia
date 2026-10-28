@@ -68,13 +68,12 @@ its side (`Circumference.semicircle`, `Circumference.lt_semicircle`,
 `Circumference.gt_semicircle`). A lemma named after a proposition, such as
 `Prop8.within`, lives in its file. Our foundations give every circle a centre
 (`exists_centre`); proofs find a centre by III.1's construction where none is supplied
-and Heath's reference is III.1 (`Prop1.of_circle`), III.2 aside, which takes it from the
-rule; they take it from the rule where he gives no reference, and from geometric data
+and Heath's reference is III.1 (`Prop1.of_circle`); they take it from the rule where he gives no reference, and from geometric data
 such as equal circles, as [Book III's introduction](../../book/III/index.md) tells.
 These steps, with those below that Euclid takes with no bracket in Heath or without a
 word, are why [CERTIFICATE.md](../../CERTIFICATE.md) shows the Lean citing more than
-Heath's brackets give in most of the propositions of Book III; and two of Heath's
-references to III.1, in III.2 and III.14, have no call beside them.
+Heath's brackets give in most of the propositions of Book III; and one of Heath's
+references to III.1, in III.14, whose statement names its centre, has no call beside it.
 
 ## III.1
 - "Let it be bisected at the point D; from D let DC be drawn at right angles to AB": Heath gives no bracket for either step. They are I.10 and I.11 (`BookI.Prop10`, `BookI.Prop11`).
@@ -88,7 +87,7 @@ references to III.1, in III.2 and III.14, have no call beside them.
 - "Let it fall outside, as AEB", and then "Similarly we can prove that neither will it fall on the circumference itself": the two suppositions Heath calls "the destruction of two hypotheses" (vol. 2, p. 9). One comparison serves both. The angles make DE less than DB (I.5, I.16, I.19); outside the circle DE would be greater than the radius DF, and on it equal to the radius.
 - "Let DFE be drawn through": F, where DE crosses the circle, is read off the figure. A straight line from the centre, within the circle, to the supposed point E outside it meets the circle between them (`line_circle_between`, Intersections 4).
 - Euclid's figure keeps the centre off AB, so that DAE and DEB are triangles for I.5 and I.16. When AB passes through D, `Prop2.through_centre` argues apart: DE is a part of DA or of DB, which are equal; and when E is D itself there is no straight line DE.
-- III.2 follows at once from System E's Circle 3 (`outside_of_between`), and from its Circle 2 (`inside_of_between`). Neither is assumed: both are proved after III.2, from its corollary `Prop2.within`, and our III.2 uses neither. III.2 still takes its centre from the rule, where Heath's reference is III.1; III.1 puts its own D within the circle by III.2's argument (`Prop1.within`): the gap Todhunter points out under III.1.
+- III.2 follows at once from System E's Circle 3 (`outside_of_between`), and from its Circle 2 (`inside_of_between`). Neither is assumed: both are proved after III.2, from its corollary `Prop2.within`, and our III.2 uses neither. III.2 takes its centre by III.1's construction (`Prop1.of_circle`), where Heath's reference is III.1; III.1 puts its own D within the circle by III.2's argument (`Prop1.within`), the gap Todhunter points out under III.1, and does not cite III.2, so the two do not argue in a circle.
 
 ## III.3
 - "But the right angle AFE is equal to the right angle BFE": for the converse our statement gives only that AFE is right. Its neighbour BFE is right as well, by `adjacent_eq_of_right` (System E, Diagram-angle 3), now proved after I.13 by taking one right angle from two.
@@ -120,7 +119,7 @@ references to III.1, in III.2 and III.14, have no call beside them.
 - "As De Morgan points out, there are here two assumptions similar to that tacitly made in the proof of III. 7, namely that K falls within the triangle DLM and E outside the triangle DFM" (vol. 2, p. 20). The first is I.21's figure, the second gives I.24 its greater angle at M. We prove both as in III.7 (`Prop8.within`, `Prop8.outside`): where DK crosses the radius ML, or DE the radius MF, the crossing is within the circle, and so between the two points where that straight line meets the circle (Circle 1).
 - Our statement compares DA and DG with every point of the circle, and a point on DA itself makes no triangle for I.20. It is A or G (`Prop8.on_diameter`), and the part DG is less than the whole DA.
 - "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. This rule is now proved in `Elements/Figure/RuleBase.lean` by comparing lengths on the straight line from the centre through the point, with our radius rule (`radius_ne_zero`) and Postulate 3; until 26 October 2026 it was proved from Postulate 3 and `circle_eq`. Definition I.15 gives only the other half: that a point of the circle is a radius away.
-- "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle. Our proof takes Euclid's step where the convex order reaches, the concave order for two points of the concave circumference, and the two orders together for a point on each, through the second point where the straight line making the greater angle with DA meets the circle, which is on the other circumference: cases his figure leaves aside. Only where neither order reaches, one of the two points a point of contact, does it compare the angles at M: by I.24, unequal angles there give unequal straight lines from D.
+- "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle: cases his figure leaves aside. Our proof takes the step by his orders throughout. Of the two straight lines compared, the one making the less angle with DA is the nearer: on the convex circumference it is the less, by I.21, and on the concave the greater, by I.24 at M. Neither argument asks where the more remote ends, so it may end on the other circumference, or at a point of contact, on neither, which ends both orders. A point of contact is never the nearer: were a point of the circle on its side to make a greater angle with DA, the straight line touching would cross that point's radius within the circle, and so meet the circle again, before the point of contact or beyond it (`Prop8.contact_last`).
 - Across DA, as in III.7, the companion `Prop8.general` compares through the partner on the other side, which Euclid's I.4 step at M makes equally inclined to DA; that it is in the same class, the convex or the concave circumference, is a step of its own (`Prop8.partner`), from the partners of the points of the circle beyond it or before it.
 
 ## III.9
