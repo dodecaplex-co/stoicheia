@@ -1,0 +1,292 @@
+# A benchmark, never merged: this file lives on the local branch bench/preflight alone, and
+# runs only when the coordinator pushes a branch under bench/ (#574, the owner's decision
+# of 27 October 2026, "yes I'm fine to benchmark. $25 is fine"). It changes nothing on
+# main, posts nothing and holds no landing: no other workflow runs on a push of a bench/
+# branch, and none of the pull-request events this file could meet is among its triggers.
+#
+# What it measures. Main's own pre-flight, scripts/safe_push.py --dry-run as the base holds
+# it, run by the shadow driver (scripts/shadow_policy.py, `plant`) on the same commit on
+# each of three runners: GitHub's ordinary ubuntu-latest (4 cores, free for a public
+# repository) and the owner's two larger runners, bench-8core and bench-16core (Linux x64,
+# billed by the minute). The commit is one of the driver's planted cases built on one fixed
+# base, so every runner and both rounds judge the same tree:
+#   control             a line of docs/WORKFLOW.md: class R3, step 4 in full, one pass;
+#   renderer-freshness  a line of render.py's wording: a check input changed, so step 4 runs
+#                       twice, with main's copies of the checks and then the commit's.
+# The coordinator pushes the branch twice: a cold round, whose runs find no toolchain in the
+# cache and save one, and a warm round, which restores it. The toolchain is all a cache can
+# hold for this pre-flight: step 4 builds in fresh worktrees by design, and the
+# main-checks cache needs macOS's sandbox-exec.
+#
+# Timing. Wall time per step of this job (marks.tsv, the gap between marks), and per step
+# of the pre-flight: each row of its summary with the seconds safe_push.py measured, and the
+# time each row's line reached this job (stamped.log, each line of output stamped as it
+# arrives), so that the untimed work between rows (worktrees, resets between passes,
+# keep_apart) shows as gaps. Written to the job's summary and to the artifact
+# timings-<runner>-<case>, beside the pre-flight's own report and the plant's verdict.
+name: Bench pre-flight
+
+on:
+  push:
+    branches: ["bench/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    name: bench (${{ matrix.runner }}, ${{ matrix.case }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, bench-8core, bench-16core]
+        case: [control, renderer-freshness]
+    env:
+      # origin/main when the benchmark was written, 27 October 2026.
+      BASE: 9b747ec5da2b4e2ead6e12c69a3c52c6f10f6e57
+      RUNNER_LABEL: ${{ matrix.runner }}
+      CASE: ${{ matrix.case }}
+    steps:
+      - name: "Mark: the job's first step, and the machine"
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bench"
+          echo "start	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+          {
+            echo "nproc	$(nproc)"
+            echo "cpu	$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')"
+            echo "mem_kib	$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+            echo "uptime_s	$(cut -d' ' -f1 /proc/uptime)"
+            echo "load_start	$(cut -d' ' -f1-3 /proc/loadavg)"
+            echo "image	${ImageOS:-}-${ImageVersion:-}"
+          } > "$RUNNER_TEMP/bench/machine.tsv"
+          cat "$RUNNER_TEMP/bench/machine.tsv"
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: "Mark: checkout and Python; the base, and the toolchain it names"
+        id: base
+        run: |
+          set -euo pipefail
+          echo "checkout and python	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || git fetch --quiet --no-tags origin "$BASE"
+          git cat-file -e "$BASE^{commit}"
+          toolchain=$(git show "$BASE:lean-toolchain" | tr -d '[:space:]')
+          [[ "$toolchain" =~ ^[A-Za-z0-9_./:+-]+$ ]]
+          echo "toolchain=$toolchain" >> "$GITHUB_OUTPUT"
+          echo "key=bench-elan-${toolchain//[^A-Za-z0-9.-]/_}" >> "$GITHUB_OUTPUT"
+          echo "base $BASE, toolchain $toolchain"
+
+      - name: Restore the Lean toolchain from an earlier round
+        # One entry, shared by every job: the toolchain is the same on all three runners, and
+        # one entry keeps clear of the formal model's Mathlib in the repository's 10 GB.
+        id: cache
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.elan
+          key: ${{ steps.base.outputs.key }}
+
+      - name: "Mark: cache restore. Install elan 4.2.4, checked against its pinned SHA-256, and the base's toolchain"
+        working-directory: ${{ runner.temp }}
+        env:
+          TOOLCHAIN: ${{ steps.base.outputs.toolchain }}
+        run: |
+          set -euo pipefail
+          echo "cache restore	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+          curl -sSfL -o elan.tar.gz https://github.com/leanprover/elan/releases/download/v4.2.4/elan-x86_64-unknown-linux-gnu.tar.gz
+          echo "42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63  elan.tar.gz" | sha256sum -c -
+          mkdir elan
+          tar -xzf elan.tar.gz -C elan
+          ./elan/elan-init -y --default-toolchain none
+          echo "elan	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+          "$HOME/.elan/bin/elan" toolchain install "$TOOLCHAIN"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          echo "toolchain	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+
+      - name: Keep the toolchain for the warm round
+        if: steps.cache.outputs.cache-hit != 'true'
+        # Two jobs of a runner, or of the round, may race to save the one key: the first
+        # wins, and the others only warn.
+        continue-on-error: true
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.elan
+          key: ${{ steps.base.outputs.key }}
+
+      - name: "Mark: cache save. Install the pinned YAML parser, by the base's pin, as the shadow does"
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          echo "cache save	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+          git -C "$GITHUB_WORKSPACE" show "$BASE:scripts/requirements-test_safe_push.txt" > requirements-test_safe_push.txt
+          python3 -I -m pip install --only-binary :all: -r requirements-test_safe_push.txt
+          echo "yaml parser	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+
+      - name: Plant ${{ matrix.case }} on the base and judge it by main's own pre-flight, each line of output stamped as it arrives
+        id: preflight
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          python3 -I scripts/shadow_policy.py plant "$CASE" --base "$BASE" --out "$RUNNER_TEMP/bench/plant" --repository "$REPOSITORY" 2>&1 |
+            python3 -I -c '
+          import sys, time
+          start = time.monotonic()
+          with open(sys.argv[1], "wb") as log:
+              for raw in iter(sys.stdin.buffer.readline, b""):
+                  sys.stdout.buffer.write(raw)
+                  sys.stdout.flush()
+                  log.write(b"%.3f\t" % (time.monotonic() - start) + raw)
+                  log.flush()
+          ' "$RUNNER_TEMP/bench/stamped.log"
+          code=$?
+          echo "pre-flight	$(date +%s.%N)" >> "$RUNNER_TEMP/bench/marks.tsv"
+          echo "plant exit $code"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Write the timings, to the job's summary and to timings-${{ matrix.runner }}-${{ matrix.case }}.json
+        if: always()
+        env:
+          CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+          PLANT_EXIT: ${{ steps.preflight.outputs.code }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          SHA: ${{ github.sha }}
+        run: |
+          echo "load_end	$(cut -d' ' -f1-3 /proc/loadavg)" >> "$RUNNER_TEMP/bench/machine.tsv"
+          python3 -I - "$RUNNER_TEMP/bench" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, os, re, sys
+          from pathlib import Path
+
+          out = Path(sys.argv[1])
+          runner, case = os.environ["RUNNER_LABEL"], os.environ["CASE"]
+
+          def lines(name):
+              try:
+                  return (out / name).read_text(errors="replace").splitlines()
+              except OSError:
+                  return []
+
+          machine = dict(l.split("\t", 1) for l in lines("machine.tsv") if "\t" in l)
+          marks = [(n, float(t)) for n, t in (l.split("\t", 1) for l in lines("marks.tsv"))]
+          phases = [{"phase": n, "seconds": round(t - marks[i - 1][1], 1)}
+                    for i, (n, t) in enumerate(marks) if i]
+
+          # The pre-flight's summary table, in safe_push.py's summary() format.
+          stamped = [l.split("\t", 1) for l in lines("stamped.log") if "\t" in l]
+          text = [l for _, l in stamped]
+          head = next((i for i, l in enumerate(text) if l.startswith("Summary: ")), None)
+          total = None
+          rows = []
+          if head is not None:
+              m = re.search(r" \((\d+) s\)$", text[head])
+              total = int(m.group(1)) if m else None
+              for l in text[head + 1:]:
+                  r = re.fullmatch(r"  (\d+)  (ok  |FAIL|skip)  (.*?)  +(?:(\d+\.\d) s| {10})", l)
+                  if not r:
+                      break
+                  rows.append({"stage": r.group(1), "outcome": r.group(2).strip(),
+                               "name": r.group(3).rstrip(),
+                               "seconds": float(r.group(4)) if r.group(4) else None})
+          # When each row's line reached this job: the streamed lines of ok, FAIL and skip, in
+          # order, as the shadow driver matches them to the summary's rows.
+          streamed = [float(t) for t, l in stamped[:head or 0]
+                      if re.match(r"  (ok  |FAIL|skip)  ", l)]
+          if len(streamed) == len(rows):
+              before = None
+              for row, at in zip(rows, streamed):
+                  row["ended_at"] = at
+                  if before is not None and row["seconds"] is not None:
+                      row["gap_before"] = round(at - row["seconds"] - before, 1)
+                  before = at
+          for row in rows:
+              n = row["name"]
+              row["pass"] = ("main" if n.endswith(" (origin/main's checks)") else
+                             "commit" if n.endswith(" (the commit's checks)") else "single")
+              bare = re.sub(r" \((origin/main's|the commit's) checks\)$", "", n)
+              row["group"] = ("negative" if bare.startswith("negative: ") else
+                              "lean" if bare.startswith(("lake ", "python3 scripts/check_kernel"))
+                              else "other")
+
+          def total_of(pred):
+              return round(sum(r["seconds"] or 0 for r in rows if pred(r)), 1)
+
+          step4 = [r for r in rows if r["stage"] == "4"]
+          groups = {
+              "step 1": total_of(lambda r: r["stage"] == "1"),
+              "step 2 (secret scan)": total_of(lambda r: r["stage"] == "2"),
+              "step 3 (guards)": total_of(lambda r: r["stage"] == "3"),
+              "step 4": total_of(lambda r: r["stage"] == "4"),
+              "step 4, Lean builds and Facts.lean": total_of(lambda r: r["stage"] == "4" and r["group"] == "lean"),
+              "step 4, other checks": total_of(lambda r: r["stage"] == "4" and r["group"] == "other"),
+              "step 4, negative stages": total_of(lambda r: r["stage"] == "4" and r["group"] == "negative"),
+          }
+          if step4 and all("ended_at" in r for r in step4):
+              groups["step 4, wall (first row's start to last row's end)"] = round(
+                  step4[-1]["ended_at"] - (step4[0]["ended_at"] - (step4[0]["seconds"] or 0)), 1)
+          try:
+              plant = json.loads((out / "plant" / "plant.json").read_text())
+          except (OSError, ValueError):
+              plant = None
+          timings = {
+              "schema": "stoicheia-bench-preflight/1", "runner": runner, "case": case,
+              "run_id": os.environ.get("RUN_ID"), "run_attempt": os.environ.get("RUN_ATTEMPT"),
+              "commit": os.environ.get("SHA"), "base": os.environ.get("BASE"),
+              "cache_hit": os.environ.get("CACHE_HIT") == "true",
+              "plant_exit": os.environ.get("PLANT_EXIT") or None,
+              "plant_ok": bool(plant and plant.get("ok")),
+              "tested": ((plant or {}).get("got") or {}).get("tested"),
+              "verdict": ((plant or {}).get("got") or {}).get("verdict"),
+              "machine": machine, "phases": phases,
+              "preflight": {"total_seconds": total,
+                            "untimed_seconds": round(total - total_of(lambda r: True), 1)
+                            if total is not None else None,
+                            "groups": groups, "rows": rows},
+          }
+          (out / f"timings-{runner}-{case}.json").write_text(json.dumps(timings, indent=1) + "\n")
+
+          print(f"## Bench pre-flight: {runner}, {case}\n")
+          print(f"- {machine.get('nproc')} cores, {machine.get('cpu')}; "
+                f"{int(machine.get('mem_kib', 0)) // 1048576} GiB; image {machine.get('image')}")
+          print(f"- toolchain from the cache: {timings['cache_hit']}; load at start "
+                f"{machine.get('load_start')}, at end {machine.get('load_end')}")
+          print(f"- the plant {'gave' if timings['plant_ok'] else 'did not give'} its expected "
+                f"verdict; verdict {timings['verdict']}; tested `{timings['tested']}`\n")
+          print("| this job's step | minutes |\n|---|---:|")
+          for p in phases:
+              print(f"| {p['phase']} | {p['seconds'] / 60:.1f} |")
+          print(f"\n**Pre-flight total: {(total or 0) / 60:.1f} min** "
+                f"(untimed between rows: {(timings['preflight']['untimed_seconds'] or 0) / 60:.1f} min)\n")
+          print("| group | minutes |\n|---|---:|")
+          for name, sec in groups.items():
+              print(f"| {name} | {sec / 60:.1f} |")
+          print("\n| step | outcome | row | seconds | gap before |\n|---|---|---|---:|---:|")
+          for r in rows:
+              sec = "" if r["seconds"] is None else f"{r['seconds']:.1f}"
+              print(f"| {r['stage']} | {r['outcome']} | {r['name']} | {sec} | {r.get('gap_before', '')} |")
+          PY
+
+      - name: Keep the timings, the stamped output, the pre-flight's report and the plant's verdict
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: timings-${{ matrix.runner }}-${{ matrix.case }}
+          path: |
+            ${{ runner.temp }}/bench/
+            !${{ runner.temp }}/bench/plant/judge/origin.git/
+            !${{ runner.temp }}/bench/plant/judge/repo/
+            !${{ runner.temp }}/bench/plant/judge/harness/
+
+      - name: Pass only when the plant gave its expected verdict
+        env:
+          PLANT_EXIT: ${{ steps.preflight.outputs.code }}
+        run: test "$PLANT_EXIT" = 0
