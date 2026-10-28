@@ -1472,8 +1472,10 @@ one run of `ci.yml` for the group's head and the merge group event, that run's l
 `acceptance` job, passed, and the one `acceptance` artifact that job made, read by its
 id; after the download it reads the run, the job and the artifact again, the run's
 attempt unchanged. Any other answer, or a list not read whole, refuses; a run, job or
-artifact not there yet is waited for. Declared rules are printed for the reader.
-Foundations need no extra run here, since `model` and `formal-model` run on every group.
+artifact not there yet is waited for. The artifact is bounded (8 MiB downloaded; members
+stored or deflated, each at most 2 MiB; `verdicts.json` read through a bounded stream).
+Declared rules are printed for the reader. Foundations need no extra run here, since
+`model` and `formal-model` run on every group.
 
 The tests are the group's own code, and on Linux a process can read its parent's
 environment (`/proc/<ppid>/environ`), so no test runs in a step that holds the token.
