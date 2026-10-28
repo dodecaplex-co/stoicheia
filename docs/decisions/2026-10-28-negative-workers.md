@@ -17,9 +17,9 @@
   dropped, skipped or merged, no expected refusal changes, and with one worker, the
   default, the run is as it was.
 
-  The variable lets the pre-flight and the yards choose N without changing their commands:
-  `scripts/safe_push.py` passes the checks every variable of its caller's but those of
-  Git's, so it is not changed.
+  The variable lets the pre-flight and any other caller choose N without changing their
+  commands: `scripts/safe_push.py` passes the checks every variable of its caller's but
+  those of Git's, a few of which it keeps, so it is not changed.
 
   This entry approves the change to `scripts/negative_tests.py`, which runs the plants in N
   workers when asked, and one by default.

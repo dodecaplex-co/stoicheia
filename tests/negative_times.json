@@ -1,5 +1,5 @@
 {
-  "about": "Seconds each plant of scripts/negative_tests.py took, restoration included, to a tenth of a second, written by `python3 scripts/negative_tests.py --times-from-log` from the time lines of 48 plants in the log of the pre-flight of 28 October 2026 on the Mac (origin/main's pass), 20261028-051307-dd5531ca88a8/33-negative-python3-scripts-negative-tests-py-origin-main-s-checks.log. `--workers N` deals the plants out by these times, longest first; a plant missing here weighs their median, and with no file every plant weighs the same. A stale time only balances the workers less well: it changes no verdict.",
+  "about": "Seconds each plant of scripts/negative_tests.py took, restoration included, to a tenth of a second, written by `python3 scripts/negative_tests.py --times-from-log` from the time lines of 48 plants in the log 20261028-051307-dd5531ca88a8/33-negative-python3-scripts-negative-tests-py-origin-main-s-checks.log. `--workers N` deals the plants out by these times, longest first; a plant missing here weighs their median, and with no file every plant weighs the same. A stale time only balances the workers less well: it changes no verdict. The log is of origin/main's pass of a pre-flight on the Mac on 28 October 2026; that sentence was added by hand.",
   "seconds": {
     "book_zero_imports": 2.7,
     "broken_link": 1.3,

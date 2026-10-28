@@ -2628,13 +2628,65 @@ CRASHES = 'import os\n    os._exit(3)'
 LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
 LEAVES_AND_EXITS = '(nt.ROOT / "left-by-{name}").write_text("")\n    import os\n    os._exit(0)'
 SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
+# It refuses only when a changed tracked file and an untracked one hold the bytes they hold
+# in the tree under test, which it finds through Git's common directory.
 LOOKS = ('import os\n'
+         '    from pathlib import Path\n'
          '    print("status:", repr(nt.run("git", "status", "--porcelain").stdout))\n'
          '    built = nt.ROOT / ".lake/build/Built.olean"\n'
          '    print("built:", built.read_text().strip(), built.is_symlink(), '
          'os.stat(built).st_nlink)\n'
          '    print("root:", nt.ROOT)\n'
-         '    nt.refused("{name}: caught")')
+         '    common = nt.run("git", "rev-parse", "--path-format=absolute", "--git-common-dir")\n'
+         '    tested = Path(common.stdout.strip()).parent.resolve()\n'
+         '    same = [(nt.ROOT / n).read_bytes() == (tested / n).read_bytes()\n'
+         '            for n in ("notes/changed.txt", "notes/untracked.txt")\n'
+         '            if (nt.ROOT / n).is_file()]\n'
+         '    if tested != nt.ROOT.resolve() and same == [True, True]:\n'
+         '        nt.refused("{name}: caught")\n'
+         '    else:\n'
+         '        print("{name}: its files are not the tree under test\'s")')
+# It refuses only when its process has none of the variables a worker is started without.
+SCRUBBED = ('import os\n'
+            '    seen = [n for n in ("LEAN_PATH", "LAKE_HOME", "GIT_NAMESPACE", nt.WORKERS)\n'
+            '            if n in os.environ]\n'
+            '    if seen:\n'
+            '        print("{name} sees", ", ".join(seen))\n'
+            '    else:\n'
+            '        nt.refused("{name}: caught")')
+
+
+def corrupts(change):
+    """A plant that passes, and that changes its worker's report by `change`, a statement on
+    `report`, as the worker exits, after its `finally` has written the report."""
+    return ('import atexit\n'
+            '    import json\n'
+            '    import sys\n'
+            '    path = sys.argv[sys.argv.index("--worker-report") + 1]\n'
+            '\n'
+            '    def corrupt():\n'
+            '        with open(path, encoding="utf-8") as file:\n'
+            '            report = json.load(file)\n'
+            f'        {change}\n'
+            '        with open(path, "w", encoding="utf-8") as file:\n'
+            '            json.dump(report, file)\n'
+            '    atexit.register(corrupt)\n'
+            '    nt.refused("{name}: caught")')
+
+
+# check_fidelity.py failing in a worker's tree alone: one in a run's directory for its
+# workers. The run's own tree passes it.
+FAILS_IN_A_WORKER = '''"""A stand-in for check_fidelity.py, failing in a worker's tree alone."""
+import heath
+
+ROOT = heath.ROOT
+
+if __name__ == "__main__":
+    if ROOT.parent.name.startswith("stoicheia-negative-"):
+        print("the stand-in fails in", ROOT.name)
+        raise SystemExit(1)
+    raise SystemExit(0)
+'''
 TIME = re.compile(r"\d+\.\d\ds \(including restoration\)")
 
 
@@ -2799,8 +2851,10 @@ class WorkerTests(unittest.TestCase):
     def test_a_worker_s_tree_is_the_tree_under_test(self):
         """Not just its commit: a change staged, a change not, a tracked file deleted and an
         untracked one, a symbolic link and an executable file; and a clone of `.lake`, each
-        file a regular file with one name. Each worker's Git status is the tree's. A tree
-        that is not the one whose status was taken first fails the run before any plant."""
+        file a regular file with one name. Each worker's Git status is the tree's, and the
+        changed file and the untracked one hold the tree's bytes, or its plant refuses
+        nothing. A tree that is not the one whose status was taken first fails the run
+        before any plant."""
         notes = self.root / "notes"
         notes.mkdir()
         for name in ("staged", "changed", "gone"):
@@ -2834,6 +2888,151 @@ class WorkerTests(unittest.TestCase):
             self.assertNotIn("(scripts/negative/", result.stdout)
             self.assertIn("the working tree did not return to its entry Git status",
                           result.stdout)
+
+    def test_a_run_s_directory_inside_a_work_tree_fails_the_run(self):
+        """TMPDIR inside another repository's work tree, where a fixture meant to have no
+        repository above it would find one: the run fails before it makes any worker,
+        naming its directory and TMPDIR, and no plant runs."""
+        inside = self.tmp / "checkout/tmp"
+        inside.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q"], cwd=inside.parent, env=self.env, check=True)
+        self.commit(a_one=PASSES, b_two=PASSES)
+        self.env["TMPDIR"] = str(inside)
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 1, result.stdout)
+        message = (rf"the run's directory {re.escape(str(inside))}/stoicheia-negative-\w+ is "
+                   r"inside a Git work tree, where a plant's fixture would find a repository "
+                   r"above it; no worker was made: set TMPDIR elsewhere \(it is "
+                   rf"{re.escape(repr(str(inside)))}\)")
+        self.assertRegex(result.stdout, rf"\n✗ {message}\n")
+        self.assertRegex(result.stdout, rf"\noutside any plant:\n  ✗ {message}\n"
+                                        r"  ✗ only 0 of the 2 plants chosen were run\n\Z")
+        self.assertNotIn("(scripts/negative/", result.stdout)
+        self.assertEqual(list(inside.iterdir()), [])
+
+    def test_a_report_out_of_form_is_a_crash_and_the_others_are_read(self):
+        """Each of seven workers' reports lacks a field the run reads, or has one of the
+        wrong type, once the worker has written it: each worker crashed, and the eighth
+        worker's verdicts are read all the same."""
+        changes = {"a_no_plants": 'del report["plants"]',
+                   "b_no_failures": 'del report["failures"]',
+                   "c_no_status": 'del report["status"]',
+                   "d_no_name": 'del report["plants"][0]["name"]',
+                   "e_no_output": 'del report["plants"][0]["output"]',
+                   "f_no_plant_failures": 'del report["plants"][0]["failures"]',
+                   "g_status_as_text": 'report["status"] = str(report["status"])'}
+        self.commit(h_whole=PASSES, **{name: corrupts(change) for name, change in changes.items()})
+        result = self.suite("--workers", "8")
+        self.assertEqual(result.returncode, 1, result.stdout)
+        crashed = [f"worker {k} ({name}) crashed: its report is not in the form a worker writes"
+                   for k, name in enumerate(changes, 1)]
+        for message in crashed:
+            self.assertIn(f"✗ {message}; its log ends:\n", result.stdout)
+        self.assertIn("\nh_whole (scripts/negative/h_whole.py)\nh_whole plants its change\n"
+                      "✓ h_whole: caught\n", result.stdout)
+        self.assertTrue(result.stdout.endswith(
+            "8 negative-test failure(s):\noutside any plant:\n"
+            + "".join(f"  ✗ {message}\n" for message in crashed)
+            + "  ✗ only 1 of the 8 plants chosen were run\n"), result.stdout)
+
+    def test_a_worker_runs_without_the_variables_of_a_repository_or_a_build(self):
+        """LEAN_PATH, a LAKE variable, GIT_NAMESPACE and the variable that gives the number
+        of workers are in the run's environment and in no worker's: its plants refuse only
+        then."""
+        self.commit(a_one=SCRUBBED, b_two=SCRUBBED)
+        self.env.update({"LEAN_PATH": str(self.tmp / "lean"), "LAKE_HOME": str(self.tmp / "lake"),
+                         "GIT_NAMESPACE": "planted", negative.WORKERS: "2"})
+        result = self.suite()
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("The plants in 2 workers", result.stderr)
+        for name in ("a_one", "b_two"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+
+    def test_a_worker_s_closing_check_fails_the_run_under_its_name(self):
+        """check_fidelity.py fails in a worker's tree alone: the run's own closing check
+        passes, and each worker's fails the run under the worker's name."""
+        (self.root / "scripts/check_fidelity.py").write_text(FAILS_IN_A_WORKER)
+        self.commit(a_one=PASSES, b_two=PASSES)
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("\n✓ the unplanted tree passes check_fidelity.py\n", result.stdout)
+        failed = [f"worker {k} ({name}): the unplanted tree failed check_fidelity.py"
+                  for k, name in ((1, "a_one"), (2, "b_two"))]
+        self.assertTrue(result.stdout.endswith(
+            "2 negative-test failure(s):\noutside any plant:\n"
+            + "".join(f"  ✗ {message}\n" for message in failed)), result.stdout)
+
+    def trees(self, label):
+        """Two workers' trees made as a run makes them, in a run's directory with their
+        reports, `label` naming it; the runner in process, as a run with this repository's
+        environment."""
+        self.commit(a_one=PASSES)
+        base = self.tmp / f"stoicheia-negative-{label}"
+        base.mkdir()
+        trees = [base / f"worker-{k}" for k in (1, 2)]
+        for k, tree in enumerate(trees, 1):
+            self.git("worktree", "add", "--detach", str(tree), "HEAD")
+            (base / f"worker-{k}.json").write_text("{}")
+        self.enterContext(patch.object(negative, "ROOT", self.root))
+        self.enterContext(patch.dict(os.environ, self.env, clear=True))
+        return base, trees
+
+    def test_an_interrupt_during_the_first_removal_leaves_no_tree(self):
+        """SIGINT while Git removes the first tree is ignored until both trees and the run's
+        directory are gone, and the handler before it is put back."""
+        base, trees = self.trees("interrupted")
+        previous = signal.signal(signal.SIGINT, signal.default_int_handler)
+        self.addCleanup(signal.signal, signal.SIGINT, previous)
+        real, calls = negative.run, []
+
+        def interrupted(*cmd):
+            calls.append(cmd)
+            if len(calls) == 1:
+                os.kill(os.getpid(), signal.SIGINT)
+            return real(*cmd)
+        with patch.object(negative, "run", interrupted):
+            try:
+                negative.remove(trees, base)
+            except KeyboardInterrupt:
+                pass  # what it left is asserted below
+        self.assertEqual(len(calls), 2)
+        self.assert_no_worker_left()
+        self.assertIs(signal.getsignal(signal.SIGINT), signal.default_int_handler)
+
+    def test_a_tree_git_cannot_remove_is_deleted_with_a_note(self):
+        """Git fails to remove the first tree, or the command raises: its directory is
+        deleted, the run says that Git's record of it stays, and the second tree is removed
+        all the same. No record is pruned, not even one whose tree is not the run's."""
+        elsewhere = self.tmp / "elsewhere"
+        self.commit(a_one=PASSES)
+        self.git("worktree", "add", "--detach", str(elsewhere), "HEAD")
+        shutil.rmtree(elsewhere)    # a stale record, which only `git worktree prune` drops
+        for label, effect, why in (
+                ("exit", subprocess.CompletedProcess((), 128, "", "fatal: planted\n"),
+                 "exit 128: fatal: planted"),
+                ("raise", OSError("planted"), "OSError: planted")):
+            with self.subTest(label):
+                base, trees = self.trees(label)
+                real = negative.run
+
+                def fails(*cmd):
+                    if str(trees[0]) not in cmd:
+                        return real(*cmd)
+                    if isinstance(effect, BaseException):
+                        raise effect
+                    return effect
+                output = io.StringIO()
+                with patch.object(negative, "run", fails), redirect_stdout(output):
+                    negative.remove(trees, base)
+                self.assertEqual(output.getvalue(), (
+                    f"note: git worktree remove could not remove worker 1's tree ({why}); "
+                    f"{trees[0]} was deleted, and its record in the repository's worktree "
+                    "list stays until Git prunes it\n"))
+                self.assertFalse(base.exists())
+                listed = self.git("worktree", "list", "--porcelain")
+                self.assertIn(f"worktree {trees[0]}\n", listed)
+                self.assertNotIn(f"worktree {trees[1]}\n", listed)
+                self.assertIn(f"worktree {elsewhere}\n", listed)
 
 
 if __name__ == "__main__":

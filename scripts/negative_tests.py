@@ -35,24 +35,27 @@ count_markers alone, without the Git bracket.
 `--workers N` runs the chosen plants in N workers at once, N cut to the number of plants
 chosen; with one, the run is the one described here, with no worker and no worktree.
 STOICHEIA_NEGATIVE_WORKERS gives N when `--workers` is absent, unset or empty meaning one,
-so that the pre-flight and the yards choose it without changing their commands. In
+so that the pre-flight and any other caller choose it without changing their commands. In
 either, anything but a whole number from 1 exits 2, naming it. `--counts-only` takes no
 workers: it refuses `--workers` and passes the variable over.
 
 Each worker is a Git worktree of its own at the tree's commit, never a copy of a `.git`
 file, made with `git worktree add --detach --no-checkout` outside the tree, under the
-system's temporary directory (`stoicheia-negative-*`). It is given the tree's state, not
-just its commit: every file Git lists that is present, tracked or untracked and not
-ignored, with its mode, a symbolic link as a link; the tree's index, refreshed; and a
-clone of `.lake` (`cp -c -R` on macOS, whose copies share their blocks until one side
-writes; `cp -a --reflink=auto` elsewhere), in which no file may be a symbolic link or have
-a second name, since a plant that builds writes there. So in the pre-flight's pass with
-origin/main's checks it lacks the files the commit adds while its index lists them, as the
-tree does. Its `git status --porcelain` must be the tree's entry status, or the run fails
-before any plant runs. It runs its own copy of this file in its own tree, its share given
-by `--plant`, its output to a log of its own, with the run's environment but for the
-variables that name a repository or a build, lest every worker read one index or one
-build, and STOICHEIA_NEGATIVE_WORKERS (WITHHELD, and every `LAKE…`).
+system's temporary directory (`stoicheia-negative-*`). TMPDIR chooses that directory, so
+the run asks `git rev-parse --is-inside-work-tree` there, with a worker's environment: if
+it is inside a Git work tree, where a fixture meant to have no repository above it would
+find one, the run fails before any worker is made, naming it and TMPDIR. A worker is
+given the tree's state, not just its commit: every file Git lists that is present,
+tracked or untracked and not ignored, with its mode, a symbolic link as a link; the tree's
+index, refreshed; and a clone of `.lake` (`cp -c -R` on macOS, whose copies share their
+blocks until one side writes; `cp -a --reflink=auto` elsewhere), in which no file may be a
+symbolic link or have a second name, since a plant that builds writes there. So in the
+pre-flight's pass with origin/main's checks it lacks the files the commit adds while its
+index lists them, as the tree does. Its `git status --porcelain` must be the tree's entry
+status, or the run fails before any plant runs. It runs its own copy of this file in its
+own tree, its share given by `--plant`, its output to a log of its own, with the run's
+environment but for the variables that name a repository or a build, lest every worker
+read one index or one build, and STOICHEIA_NEGATIVE_WORKERS (WITHHELD, and every `LAKE…`).
 
 The shares are dealt longest first, by the seconds each plant took as
 tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
@@ -73,12 +76,19 @@ has ended, the run prints each chosen plant's output in the stable order, its fa
 under its heading, so that its stdout is a one-worker run's apart from the times; then the
 run's own failures, any one of which fails it: a worker's own, named by the worker and its
 plants; a worker that crashed (one that exited other than 0 or 1, or whose report is
-missing, unreadable, lacks a plant it was given or disagrees with its exit), with its
-log's tail, its plants that did not report counting as not run; and a worker's tree whose Git
-status, read once the worker has ended, is not the entry status, which catches a worker
-that ended without its `finally` (os._exit, a signal). Interrupted, the run interrupts
-each worker still running and waits for it, and in its `finally` it removes every
-worker's tree (`git worktree remove --force`, then `git worktree prune`).
+missing, unreadable, lacks a field the run reads or has one of the wrong type, lacks a
+plant it was given or disagrees with its exit), with its log's tail, its plants that did
+not report counting as not run, the other workers' reports read all the same; and a
+worker's tree whose Git status, read once the worker has ended, is not the entry status,
+which catches a worker that ended without its `finally` (os._exit, a signal). Interrupted,
+the run interrupts each worker still running and waits for it (stop), and in its `finally`
+it removes every worker's tree with `git worktree remove --force --force`, with SIGINT
+ignored, each whatever became of those before it; one that Git cannot remove is deleted,
+with a note that its record in the repository's worktree list stays until Git prunes it.
+The run never runs `git worktree prune`, which would prune other trees' records too. As
+with a plant's restoration (below), a forced kill defeats this: a run ended by SIGKILL, or
+by a signal Python does not turn into an exception, leaves its workers running and their
+trees registered.
 
 The loader is checked too. It lists scripts/negative/ itself, never Git's index, so the
 pre-flight's pass with origin/main's checks, which takes out the files a commit adds, runs
@@ -196,7 +206,7 @@ SHARED = ("check_fidelity", "check_kernel", "generated_counts", "heath", "subpro
 # helper here would read as a plant's change; it decides only which warnings repeat.
 UNGUARDED = frozenset({"__warningregistry__"})
 # The workers (the docstring): the variable that gives their number, the variables a worker
-# is started without, besides every `LAKE…` (the reader's audit, TS-aud607), the record of
+# is started without, besides every `LAKE…` (the audit of #607), the record of
 # the plants' times, from ROOT, and a plant's line in it as a run prints it (run_plant).
 WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
 WITHHELD = frozenset({"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
@@ -1018,7 +1028,7 @@ def worker_env() -> dict[str, str]:
 
 
 def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
-    """A command in a worker's tree, with a worker's environment."""
+    """A command in `tree`, a worker's or the run's directory, with a worker's environment."""
     return subprocess.run(cmd, cwd=tree, env=worker_env(), capture_output=True, text=True)
 
 
@@ -1085,12 +1095,15 @@ def make_worker(tree: Path, entry: str) -> tuple[str, str] | None:
 
 
 def well_formed(report) -> bool:
-    """Whether `report` has the form write_report gives it."""
+    """Whether `report` has the form write_report gives it: every field read_report and
+    run_workers read is there, with its type, `status` among them, which may be None but
+    not missing."""
     def strings(value) -> bool:
         return isinstance(value, list) and all(isinstance(s, str) for s in value)
-    return (isinstance(report, dict) and strings(report.get("failures"))
-            and (report.get("status") is None or type(report.get("status")) is int)
-            and isinstance(report.get("plants"), list)
+    return (isinstance(report, dict) and {"plants", "failures", "status"} <= report.keys()
+            and strings(report["failures"])
+            and (report["status"] is None or type(report["status"]) is int)
+            and isinstance(report["plants"], list)
             and all(isinstance(p, dict) and isinstance(p.get("name"), str)
                     and isinstance(p.get("output"), str) and strings(p.get("failures"))
                     for p in report["plants"]))
@@ -1129,7 +1142,11 @@ def read_report(path: Path, names: list[str], code: int) -> tuple[list[dict], li
 
 def stop(workers: list[subprocess.Popen]) -> None:
     """Interrupt each worker still running, so that its `finally` restores its tree, and
-    wait for every one; interrupted while waiting, kill them all, wait, and raise."""
+    wait for every one; interrupted while waiting, kill them all, wait, and raise. The
+    workers share the run's process group, so a worker the terminal's interrupt has already
+    reached is interrupted a second time here, which may cut its `finally` short. Its tree
+    is removed either way (remove), and the tree under test is never planted: only the
+    workers' trees are."""
     for worker in workers:
         if worker.poll() is None:
             worker.send_signal(signal.SIGINT)
@@ -1145,12 +1162,30 @@ def stop(workers: list[subprocess.Popen]) -> None:
 
 
 def remove(trees: list[Path], base: Path) -> None:
-    """Remove the workers' trees, with their reports and logs, and Git's note of each."""
-    for tree in trees:
-        if tree.exists():
-            run("git", "worktree", "remove", "--force", str(tree))
-    shutil.rmtree(base, ignore_errors=True)
-    run("git", "worktree", "prune")
+    """Remove the workers' trees, each with Git's record of it, then `base`, with their
+    reports and logs: SIGINT ignored throughout, and the previous handler put back after,
+    so that an interruption leaves none of them; each removal whatever became of those
+    before it. A tree that Git cannot remove is deleted, with a note that its record stays
+    until Git prunes it: never `git worktree prune`, which would prune other trees' too."""
+    previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        for k, tree in enumerate(trees, 1):
+            try:
+                if not tree.exists():
+                    continue
+                removed = run("git", "worktree", "remove", "--force", "--force", str(tree))
+                if removed.returncode == 0:
+                    continue
+                why = f"exit {removed.returncode}: {(removed.stdout + removed.stderr).strip()}"
+            except Exception as error:
+                why = f"{type(error).__name__}: {error}"
+            shutil.rmtree(tree, ignore_errors=True)
+            print(f"note: git worktree remove could not remove worker {k}'s tree ({why}); "
+                  f"{tree} was deleted, and its record in the repository's worktree list "
+                  "stays until Git prunes it")
+        shutil.rmtree(base, ignore_errors=True)
+    finally:
+        signal.signal(signal.SIGINT, previous)
 
 
 def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, str]) -> int:
@@ -1177,6 +1212,17 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
     trees = [base / f"worker-{k}" for k in range(1, count + 1)]
     workers: list[subprocess.Popen] = []
     try:
+        # A failure or "false" is the good answer: no repository above the workers' trees.
+        inside = in_tree(base, "git", "rev-parse", "--is-inside-work-tree")
+        if inside.returncode == 0 and inside.stdout.strip() != "false":
+            tmpdir = os.environ.get("TMPDIR")
+            message = (f"the run's directory {base} is inside a Git work tree, where a "
+                       "plant's fixture would find a repository above it; no worker was "
+                       "made: set TMPDIR elsewhere ("
+                       + (f"it is {tmpdir!r})" if tmpdir is not None else "it is not set)"))
+            failures.append(message)
+            print(f"✗ {message}")
+            return 0
         for k, tree in enumerate(trees, 1):
             fault = make_worker(tree, entry)
             if fault is not None:
