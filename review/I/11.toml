@@ -34,11 +34,11 @@ case = "C between A and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "71146bf3f"
+commit = "2e30aceba"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:a1b5532a9baeffc0"
-run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 267d8d2f; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1b, Codex exec session 01a159b0-1bad-73b2-bdef-4d42ed062aad, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readI, at 71146bf3f"
-text = "sha256:0f1abf00db939b8c"
+lean = "sha256:c95fa43b68b95579"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 267d8d2f; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1b, Codex exec session 01a159b0-1bad-73b2-bdef-4d42ed062aad, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readI, at 71146bf3f; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba"
+text = "sha256:4ecad02f7ee773d6"
 
 [review.items]
 statement = "pass"

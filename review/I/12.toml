@@ -31,11 +31,11 @@ note = "Euclid concludes that CH is perpendicular to AB from the two right angle
 
 [review]
 stage = "full"
-commit = "f2195c72"
+commit = "2e30aceba"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:a21edabcbb0d95db"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72"
-text = "sha256:3981d21cb274450d"
+lean = "sha256:3fc860a71b3c4097"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba"
+text = "sha256:76f5ab13c562d720"
 
 [review.items]
 statement = "pass"
