@@ -187,7 +187,7 @@ nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sen
 Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
 of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
 `#` comment. `unused` is a key, which the records' `text` stamp covers
-([#77](https://github.com/jackChallis/stoicheia/issues/77)); TOML does not read a
+([#77](https://github.com/dodecaplex-co/stoicheia/issues/77)); TOML does not read a
 comment, so that stamp never sees one change. `heath.load_review` checks that
 `unused` lists distinct names, each one Lean identifier; `scripts/check_fidelity.py`,
 that the Lean beneath the run binds each, so a declaration cannot outlive its binding.

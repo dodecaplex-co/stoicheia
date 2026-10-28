@@ -453,7 +453,7 @@ broken reader can merge.
 
 **One check needs the YAML parser.** The test that every step after a job's lane step
 carries the lane's condition
-([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
+([#346](https://github.com/dodecaplex-co/stoicheia/issues/346)) is a test of
 `scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned by version and
 hash in `scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after
 elan and before the run of the checks; to run the sequence yourself, or the pre-flight,
@@ -658,7 +658,7 @@ The proof is built from what the shards ran, not from the dealing. Each shard wr
 tests it ran, each with its outcome, to the file `--ran` names, and keeps it as an
 artifact, a test having failed or not, for 35 days; and it keeps its log, from which the
 report takes the tests that failed. A run re-run either way is judged on every shard's
-list ([#411](https://github.com/jackChallis/stoicheia/issues/411),
+list ([#411](https://github.com/dodecaplex-co/stoicheia/issues/411),
 [the decision](decisions/2026-10-25-rerun-failed-jobs.md)). A run re-run with "re-run all
 jobs" is judged afresh. A run re-run in part, as with "re-run failed jobs", is judged on
 the lists of the shards it runs again and on those the others kept in an earlier attempt,
