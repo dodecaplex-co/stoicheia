@@ -4,17 +4,17 @@
 
 Each file of `heath/`, the 99 propositions of Books I to III and the three books' front matter, was read line by line against the page images of the leaves its source comment names, from its first words to its last ("Q. E. D.", "Q. E. F.", or as the file ends). The leaves are the Internet Archive's scans that [STYLE, section 5](../STYLE.md#5-heaths-text-and-quotations), names: [thirteenbookseu02heibgoog](https://archive.org/details/thirteenbookseu02heibgoog) for volume 1 (Books I and II), where page N is leaf N + 20, and [thirteenbookseu00heibgoog](https://archive.org/details/thirteenbookseu00heibgoog) for volume 2 (Book III), where page N is leaf N + 12.
 
-**Result.** Every line of every file agrees with the print, but for two marks that the scans do not settle: one word in I.11 (note 1) and one stop in III.16 (note 4). Nothing has been mended: the transcription stands as it was, and both marks are left for a decision, since a change to either would also change a `--` line of the Lean.
+**Result.** Every line of every file agrees with the print wherever the print is legible. Two marks that the scans do not settle could change the text: one word in I.11 (note 1) and one stop in III.16 (note 4). Four more places are read through damaged or faint print, and the scan alone does not settle them, though nothing on it contradicts the file: the words under a blot in I.17 (note 3), the last stop of I.48 (note 5), a comma in III.36 (note 6) and one in II.9 (note 7). Nothing has been mended: the transcription stands as it was, and the two marks of notes 1 and 4 are left for a decision, since a change to either would also change a `--` line of the Lean.
 
 ## How the text was read
 
 Six readers, each a crew member of ship AU (Claude Opus 5.5, independent readers AU-h551-1 to AU-h551-6), took a run of files each: Book I's front matter and I.1 to I.16; I.17 to I.32; I.33 to I.48; Book II's front matter and II.1 to II.14; Book III's front matter and III.1 to III.18; III.19 to III.37. None of them made the transcriptions. Each read the leaves at full resolution, cut into overlapping bands with closer crops wherever a mark was unclear, and judged every line of the file against the print. A word diff against the OCR of the same leaves (made with tesseract) directed the eye; it was not taken as evidence, and every entry in it turned out to be OCR noise.
 
-Counted as a difference: any word or spelling, any punctuation mark, a reference in square brackets, its content and its place after its clause, Heath's or Heiberg's square brackets round words, the italics of the enunciation and of Heath's emphasis, a capital, a word or clause left out or added, and the order of words. Not counted, since `heath/` adopts them (STYLE, section 5): one sentence or clause per paragraph; line breaks and end-of-line hyphens joined; Heath's italic letters set upright; margin line numbers, running heads, page numbers and signature marks left out; small capitals written as plain words ("PORISM."); the spacing inside a reference ("[C. N. 3]" as "[C.N. 3]") and the thin space Heath sets before a semicolon or colon; straight quotes. Each source comment was checked too: the pages it names are the numbers printed on those leaves, the proposition begins and ends on them, and its figure is on the leaf named. Each other comment in a file was checked against the print where the print can settle it (note 8).
+Counted as a difference: any word or spelling, any punctuation mark, a reference in square brackets, its content and its place after its clause, Heath's or Heiberg's square brackets round words, the italics of the enunciation and of Heath's emphasis, a capital, a word or clause left out or added, and the order of words. Not counted, since `heath/` adopts them (STYLE, section 5): one sentence or clause per paragraph; the full stop after a heading ("PROPOSITION 1.") dropped; line breaks and end-of-line hyphens joined; Heath's italic letters set upright; margin line numbers, running heads, page numbers and signature marks left out; small capitals written as plain words ("PORISM."); the spacing inside a reference ("[C. N. 3]" as "[C.N. 3]") and the thin space Heath sets before a semicolon or colon; straight quotes. Each source comment was checked too: the pages it names agree with the numbers printed on those leaves, where a number is printed (Book I's opening page, p. 153, and Book II's, p. 370, print none, and are placed by the pagination of the leaves beside them), the proposition begins and ends on them, and its figure is on the leaf named. Each other comment in a file was checked against the print where the print can settle it (note 8).
 
 ## Checking it yourself
 
-Each leaf's image is at `https://archive.org/download/<item>/page/n<leaf>.jpg`. Its SHA-256, in the table at the end, was taken from the file as the Internet Archive serves it, and was the same for a copy fetched on 22 October 2026:
+Each leaf's image is at `https://archive.org/download/<item>/page/n<leaf>.jpg`. Its SHA-256, in the table at the end, was taken from the file as the Internet Archive serves it on 28 October 2026. The 166 leaves named in the source comments matched the copies fetched on 22 October 2026; the two further leaves used for note 8 were fetched and checked on 28 October alone. For example:
 
 ```sh
 curl -sL https://archive.org/download/thirteenbookseu02heibgoog/page/n264.jpg | shasum -a 256
@@ -25,13 +25,13 @@ Then set the file beside the leaf, as the tables below pair them.
 
 ## Notes
 
-1. **I.11, line 22 of `heath/I/11.md`: "and CF is common,".** On n289 (p. 269) no "and" is printed: the line begins at the indent of "For, since DC is equal to CE," with a small stray mark touching the C of CF, and the space where "and" would stand is blank. Another Internet Archive item, [bub_gb_UhgPAAAAIAAJ](https://archive.org/details/bub_gb_UhgPAAAAIAAJ) (p. 269 at its leaf n280), shows the line the same way, but it is a scan of the same copy, for it shares the same blots elsewhere (I.17's on p. 282), so it is no second witness. The second edition of 1926 ([bwb_S0-AHZ-704_1](https://archive.org/details/bwb_S0-AHZ-704_1), read only in its OCR) prints "and CF is common,", as the file has it. Whether the 1908 printing dropped the word, or this copy lost it, one copy cannot settle. Taking the word out would change the `--` line at `Elements/BookI/Prop11.lean:72`, which waits for approval (WORKFLOW, section 2); so the file stands, and the question goes to the coordinator.
-2. **I.10 and I.11 (n287, n289).** The scan has lost the left edge of the column on several lines. Every word can be read from the letters that survive ("constructed", "straight", "been", "bisected", "CD", the C of "C on it"), but for note 1.
-3. **I.17 (n302).** An ink blot covers "less", the comma after "right angles" and the "w" of "as well" in the sentence "Similarly we can prove that the angles BAC, ACB are also less than two right angles, and so are the angles CAB, ABC as well." (line 24), and a streak runs through the comma between ABC and BCA on line 22. What survives fits the file, and the 1926 edition's OCR reads line 24 word for word as the file does.
+1. **I.11, line 22 of `heath/I/11.md`: "and CF is common,".** On n289 (p. 269) no "and" is printed: the line begins at the indent of "For, since DC is equal to CE," with a small stray mark touching the C of CF, and the space where "and" would stand is blank. Another Internet Archive item, [bub_gb_UhgPAAAAIAAJ](https://archive.org/details/bub_gb_UhgPAAAAIAAJ) (p. 269 at its leaf n281), shows the line the same way, but it is a scan of the same copy, for it shares the same blots elsewhere (I.17's on p. 282), so it is no second witness. The second edition of 1926 ([bwb_S0-AHZ-704_1](https://archive.org/details/bwb_S0-AHZ-704_1), read only in its OCR) prints "and CF is common,", as the file has it. Whether the 1908 printing dropped the word, or this copy lost it, one copy cannot settle. Taking the word out would change the `--` line at `Elements/BookI/Prop11.lean:72`, which waits for approval (WORKFLOW, section 2); so the file stands, and the question goes to the coordinator.
+2. **I.10 and I.11 (n287, n289).** The scan has lost the left edge of the column on several lines. Every word can be read from the letters that survive ("constructed", "straight", "been", "bisected", "CD", the C of "C on it"), but for note 1. On n287 the reference in I.10's "[I. 4]" (line 24 of the file) prints with a brace for its closing bracket, "[I. 4}"; the file writes "[I. 4]". That is a convention applied in this reading, not one STYLE names.
+3. **I.17 (n302).** An ink blot covers "less", the comma after "right angles" and the "w" of "as well" in the sentence "Similarly we can prove that the angles BAC, ACB are also less than two right angles, and so are the angles CAB, ABC as well." (line 24), and a streak runs through the comma between ABC and BCA on line 22. What survives fits the file, and the 1926 edition's OCR reads line 24 word for word as the file does. That supports the file's reading, but it is another printing, and does not show the marks of the 1908 one: those under the blot stay unverified on this scan.
 4. **III.16, line 21: "two right angles; which is impossible."** On n50 (p. 38) the mark has two round dots spaced like a colon's and a third, fainter dot below, where a semicolon's tail runs. The file, and its comment, read a semicolon, the 1926 edition's OCR a colon (Heath's usual mark before "which is impossible", as on line 43 of the same file). The scan does not settle it. A change would change the `--` line at `Elements/BookIII/Prop16.lean:90`, so it goes to the coordinator with note 1.
-5. **I.48 (n389).** The full stop after the D of "Q. E. D." prints faint, much lighter than the stops after Q and E.
-6. **III.36, line 51 (n87).** The mark after "at the point F" is a comma with a dot above it; read as a comma, as the file's comment says and as the matching clause on line 21 has it.
-7. **II.9, line 39 (n412).** The mark after "angle", the last line of p. 392, is a dot with a faint tail; the file reads a comma, as its comment says, and the sentence runs on at the top of p. 393.
+5. **I.48 (n389).** After the D of "Q. E. D." there is only a faint speck, much lighter than the stops after Q and E: it may be a weakly printed full stop, as the file has it, or a blemish, and the scan does not settle which.
+6. **III.36, line 51 (n87).** The mark after "at the point F" is a comma with a dot above it; read as a comma, as the file's comment says and as the matching clause on line 21 has it, though the scan alone does not settle it beyond doubt.
+7. **II.9, line 39 (n412).** The mark after "angle", the last line of p. 392, is a dot with a faint tail; the file reads a comma, as its comment says, and the sentence runs on at the top of p. 393; the leaf alone does not settle whether the mark is a comma or a full stop.
 8. **Comments that go beyond their leaves.** II.4's comment quotes Heath's note on p. 381, and III.31's his note on p. 64: both quotations were checked against those leaves (n401 and n76, added to the table below) and are exact. Three comments say whose brackets or numbers Heath prints: I.4's ("Heiberg's brackets marking an interpolated passage"), I.15's ("Heath (after Heiberg) brackets it as probably interpolated"; Heath's note on p. 278 discusses the Porism's genuineness without naming Heiberg) and Book I's front matter's ("their numbers in Heiberg's list"). The brackets and numbers are printed as the comments say; whose they are, the leaves named do not state, so those clauses are not checked here.
 9. **Book II's front matter (n390).** The leaf prints no page number (p. 370, by the rule of leaf and page, and by n389's 369); and "contained" and "gnomon", the terms Definitions II.1 and II.2 define, are set in heavier type, which the file gives plain, as it gives Heath's other settings.
 
@@ -59,7 +59,7 @@ Specks and pencil marks on the leaves that are not print (on n323, n330, n405, n
 | [I.14](../../heath/I/14.md) | pp. 276–277 | n296, n297 | Agrees |
 | [I.15](../../heath/I/15.md) | pp. 277–278 | n297, n298 | Agrees (note 8) |
 | [I.16](../../heath/I/16.md) | pp. 279–280 | n299, n300 | Agrees |
-| [I.17](../../heath/I/17.md) | pp. 281–282 | n301, n302 | Agrees (note 3) |
+| [I.17](../../heath/I/17.md) | pp. 281–282 | n301, n302 | Agrees where legible; marks under a blot unverified (note 3) |
 | [I.18](../../heath/I/18.md) | p. 283 | n303 | Agrees |
 | [I.19](../../heath/I/19.md) | p. 284 | n304 | Agrees |
 | [I.20](../../heath/I/20.md) | pp. 286–287 | n306, n307 | Agrees |
@@ -90,7 +90,7 @@ Specks and pencil marks on the leaves that are not print (on n323, n330, n405, n
 | [I.45](../../heath/I/45.md) | pp. 345–346 | n365, n366 | Agrees |
 | [I.46](../../heath/I/46.md) | pp. 347–348 | n367, n368 | Agrees |
 | [I.47](../../heath/I/47.md) | pp. 349–350 | n369, n370 | Agrees |
-| [I.48](../../heath/I/48.md) | pp. 368–369 | n388, n389 | Agrees (note 5) |
+| [I.48](../../heath/I/48.md) | pp. 368–369 | n388, n389 | Agrees but for one faint mark (note 5) |
 
 ### Book II
 
@@ -105,7 +105,7 @@ Specks and pencil marks on the leaves that are not print (on n323, n330, n405, n
 | [II.6](../../heath/II/06.md) | pp. 385–386 | n405, n406 | Agrees |
 | [II.7](../../heath/II/07.md) | pp. 388–389 | n408, n409 | Agrees |
 | [II.8](../../heath/II/08.md) | pp. 389–391 | n409, n410, n411 | Agrees |
-| [II.9](../../heath/II/09.md) | pp. 392–394 | n412, n413, n414 | Agrees (note 7) |
+| [II.9](../../heath/II/09.md) | pp. 392–394 | n412, n413, n414 | Agrees; one mark the scan alone does not settle (note 7) |
 | [II.10](../../heath/II/10.md) | pp. 395–397 | n415, n416, n417 | Agrees |
 | [II.11](../../heath/II/11.md) | pp. 402–403 | n422, n423 | Agrees |
 | [II.12](../../heath/II/12.md) | pp. 403–404 | n423, n424 | Agrees |
@@ -152,7 +152,7 @@ Specks and pencil marks on the leaves that are not print (on n323, n330, n405, n
 | [III.33](../../heath/III/33.md) | pp. 67–70 | n79, n80, n81, n82 | Agrees |
 | [III.34](../../heath/III/34.md) | pp. 70–71 | n82, n83 | Agrees |
 | [III.35](../../heath/III/35.md) | pp. 71–72 | n83, n84 | Agrees |
-| [III.36](../../heath/III/36.md) | pp. 73–75 | n85, n86, n87 | Agrees (note 6) |
+| [III.36](../../heath/III/36.md) | pp. 73–75 | n85, n86, n87 | Agrees; one mark the scan alone does not settle (note 6) |
 | [III.37](../../heath/III/37.md) | pp. 75–76 | n87, n88 | Agrees |
 
 ## The leaves
