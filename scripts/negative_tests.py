@@ -1066,8 +1066,14 @@ def root_git(*cmd: str) -> subprocess.CompletedProcess:
 
 def worker_status(tree: Path) -> subprocess.CompletedProcess:
     """The one-worker bracket's `git status --porcelain`, bound to `tree` with --work-tree
-    and run with a worker's environment: the snapshot a run with workers compares."""
-    return in_tree(tree, "git", f"--work-tree={tree}", "status", "--porcelain")
+    and run with a worker's environment plus the caller's inline Git configuration: the
+    snapshot a run with workers compares."""
+    env = worker_env()
+    env.update({name: value for name, value in os.environ.items()
+                if name in ("GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS")
+                or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_"))})
+    return subprocess.run(("git", f"--work-tree={tree}", "status", "--porcelain"),
+                          cwd=tree, env=env, capture_output=True, text=True)
 
 
 def linked(root: Path) -> Path | None:

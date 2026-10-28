@@ -2924,6 +2924,44 @@ class WorkerTests(unittest.TestCase):
         self.git("config", "status.showUntrackedFiles", "no")
         self.assertEqual(self.one_worker_s_verdict(), 0)
 
+    def test_inline_status_configuration_gives_one_worker_s_verdict(self):
+        """An inline override makes untracked files visible despite the repository setting:
+        clean serial and parallel runs pass, and both fail when a plant leaves a file."""
+        settings = (
+            ("parameters", {"GIT_CONFIG_PARAMETERS":
+                            "'status.showUntrackedFiles'='all'"}),
+            ("count", {"GIT_CONFIG_COUNT": "1",
+                       "GIT_CONFIG_KEY_0": "status.showUntrackedFiles",
+                       "GIT_CONFIG_VALUE_0": "all"}))
+        for mechanism, variables in settings:
+            with self.subTest(mechanism=mechanism):
+                self.commit(a_one=PASSES, b_two=PASSES)
+                self.git("config", "status.showUntrackedFiles", "no")
+                self.env.update(variables)
+                try:
+                    serial_clean = self.suite()
+                    parallel_clean = self.suite("--workers", "2")
+                    self.commit(a_one=PASSES, b_two=LEAVES)
+                    parallel_dirty = self.suite("--workers", "2")
+                    serial_dirty = self.suite()
+                    (self.root / "left-by-b_two").unlink()
+                    self.assertEqual(serial_clean.returncode, 0,
+                                     serial_clean.stdout + serial_clean.stderr)
+                    self.assertEqual(parallel_clean.returncode, 0,
+                                     parallel_clean.stdout + parallel_clean.stderr)
+                    self.assertEqual(serial_dirty.returncode, 1,
+                                     serial_dirty.stdout + serial_dirty.stderr)
+                    self.assertEqual(parallel_dirty.returncode, 1,
+                                     parallel_dirty.stdout + parallel_dirty.stderr)
+                    message = "worker 2's tree did not return to its entry Git status"
+                    self.assertIn(f"✗ {message}:\n?? left-by-b_two\n",
+                                  parallel_dirty.stdout)
+                    self.assertEqual(self.git("status", "--porcelain"), "")
+                finally:
+                    (self.root / "left-by-b_two").unlink(missing_ok=True)
+                    for name in variables:
+                        self.env.pop(name, None)
+
     def test_local_core_worktree_cannot_redirect_worker_status(self):
         """The shared repository config points core.worktree at the clean source tree, but
         a file left in the actual worker still fails the run and cleanup removes it."""
