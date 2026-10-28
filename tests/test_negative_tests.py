@@ -2894,6 +2894,18 @@ class WorkerTests(unittest.TestCase):
         self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", result.stdout)
         self.assertFalse((self.root / "left-by-b_two").exists())
 
+    def test_local_core_worktree_cannot_redirect_worker_status(self):
+        """The shared repository config points core.worktree at the clean source tree, but
+        a file left in the actual worker still fails the run and cleanup removes it."""
+        self.commit(a_one=PASSES, b_two=LEAVES)
+        self.git("config", "core.worktree", str(self.root))
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        message = "worker 2's tree did not return to its entry Git status"
+        self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", result.stdout)
+        self.assertFalse((self.root / "left-by-b_two").exists())
+        self.assertEqual(self.git("status", "--porcelain"), "")
+
     def test_global_quote_configuration_does_not_change_worker_snapshot(self):
         """A global core.quotePath=false and an existing non-ASCII untracked filename do
         not make an identical worker tree differ from the source tree."""

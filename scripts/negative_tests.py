@@ -1045,8 +1045,8 @@ def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
 
 def worker_status(tree: Path) -> subprocess.CompletedProcess:
     """A configuration-invariant Git status snapshot for the parallel run."""
-    return in_tree(tree, "git", "-c", "core.quotePath=true", "status", "--porcelain=v1",
-                   "--untracked-files=all")
+    return in_tree(tree, "git", f"--work-tree={tree}", "-c", "core.quotePath=true",
+                   "status", "--porcelain=v1", "--untracked-files=all")
 
 
 def linked(root: Path) -> Path | None:
