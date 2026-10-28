@@ -23,12 +23,17 @@ remaining, horn-like angle, each contained by a straight line and a circumferenc
 have no Lean beneath them: the theorem states the straight line's two parts, and the
 angle clause is proved after it, by the companions `Prop16.semicircle`,
 `Prop16.remaining` and `Prop16.acute`, where each of those angles is a mixed angle
-(`MixedAngle`), compared with rectilineal angles near A. They argue directly from the
-second part, where Euclid argues by reductio: the straight line of an acute angle falls
-within the circle, so that near A the acute angle lies within the angle of the
-semicircle, with room to spare. The Porism is proved after the theorem, as
-`Prop16.porism`; the steps of the companions follow it, and after the companions the
-comparisons at another vertex.
+(`MixedAngle`), compared with rectilineal angles near A. They follow Euclid's reductio,
+in the steps `Prop16.semicircle_gt` and `Prop16.horn_lt`: were the angle of the
+semicircle not to exceed an acute angle BAF, or the remaining angle not to fall short of
+an acute angle EAF, the straight line AF would be interposed between AE and the
+circumference, no point of it within the circle; but the second part puts a point of AF
+within the circle. The work of "a straight line will be interposed" is done by the steps
+that start from such a point G (`Prop16.semicircle_gt_of_inside`,
+`Prop16.horn_lt_of_inside`): near A the acute angle lies within the angle of the
+semicircle, and the remaining angle within the acute angle, each with room to spare. The
+Porism is proved after the theorem, as `Prop16.porism`; the steps of the companions
+follow it, and after the companions the comparisons at another vertex.
 -/
 
 namespace Elements.BookIII
@@ -135,10 +140,12 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
     exact hFA ⟨G, ⟨M, hA_M, hF_M, hG_M⟩, inside_of_len_lt hD hA h19⟩
   -- Therefore another straight line cannot be interposed into the space between the straight
   -- line and the circumference.
-  /- The angle clauses below are proved after the theorem, from the second part above, by
-     the companions `Prop16.semicircle` and `Prop16.remaining`: directly, where Euclid
-     argues by reductio that no acute angle is greater than the one or less than the
-     other. -/
+  /- The angle clauses below are proved after the theorem, by the companions
+     `Prop16.semicircle` and `Prop16.remaining`, with Euclid's reductio in their steps
+     `Prop16.semicircle_gt` and `Prop16.horn_lt`: an acute angle that the angle of the
+     semicircle does not exceed, or that the remaining angle does not fall short of, would
+     leave its straight line AF with no point within the circle, interposed between AE and
+     the circumference; and the second part above says that it cannot be. -/
   -- I say further that the angle of the semicircle contained by the straight line BA and the
   -- circumference CHA is greater than any acute rectilineal angle,
   -- and the remaining angle contained by the circumference CHA and the straight line AE is
@@ -190,7 +197,10 @@ The angle of the semicircle is `MixedAngle.ofSegment A B ABC E`, contained by th
 line BA and the circumference on E's side, which is Heath's CHA; the remaining angle is
 `MixedAngle.ofContact A E ABC B`, contained by that circumference and the straight line AE.
 The steps take the theorem's two parts as hypotheses (`Prop16.Outside`,
-`Prop16.FallsWithin`), and the companions take them from the theorem. -/
+`Prop16.FallsWithin`), and the companions take them from the theorem. The steps that carry
+the work of Euclid's "a straight line will be interposed" take, in place of the second part,
+a point G of the straight line AF within the circle, so that the reductio can use the second
+part once, where Euclid does. -/
 
 /-- III.16's first part, for the circle `α` at A: every point of the straight line AE but A
 is without the circle. -/
@@ -250,17 +260,19 @@ theorem Prop16.inside_sameSideOf {A B D E Q : Point} {ABC : Circle} (hD : Centre
     (SameSideOf.of_onRay (OnRay.of_between hADB)
       (sameSideOf_self (show Triangle A B E from hE).acb))
 
-/-- **No straight line between, near A.** For a point F within the angle EAB, some circle
-about A holds no point within the angle FAB, nor on the ray AF, that is not within the
-circle. This is III.16's second part made local: the straight line AF falls within the circle
-at some G, on F's side of A, since the circle lies on B's side of AE; and near A the angle
-GAD lies within the circle (`near_inside_of_angle`). -/
-theorem Prop16.near_inside {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
+/-- **A straight line with a point within the circle, near A.** For a point F within the
+angle EAB, and a point G of the straight line AF within the circle, some circle about A
+holds no point within the angle FAB, nor on the ray AF, that is not within the circle. G is
+on F's side of A, since the circle lies on B's side of AE; and near A the angle GAD lies
+within the circle (`near_inside_of_angle`). So a straight line AF that is not interposed
+between AE and the circumference has, near A, the whole angle FAB within the circle: the
+fact Euclid's "a straight line will be interposed" turns on. -/
+theorem Prop16.near_inside_of {A B D E F G : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
-    (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC) (hF : WithinAngle E A B F) :
+    (hAE_out : Outside A E ABC) (hF : WithinAngle E A B F) (hG : Collinear A F G)
+    (hGα : InsideCircle G ABC) :
     LocallyWithin A (fun P => WithinAngle F A B P ∨ OnRay P A F)
       (fun P => InsideCircle P ABC) := by
-  obtain ⟨G, hG, hGα⟩ := hAE_in F hF.1.triangle
   have hGA : G ≠ A := fun e => inside_not_on (e ▸ hGα) hA
   have hGB : SameSideOf G B A E := inside_sameSideOf hD hA hADB hE hAE_out hGα
   have hGray : OnRay G A F := OnRay.of_sameSideOf (hGB.trans hF.1.symm) hG hGA
@@ -276,6 +288,18 @@ theorem Prop16.near_inside {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC
   rcases hP with hW | hR
   · exact Or.inl ((WithinAngle.congr hGray hDray).2 hW)
   · exact Or.inr (Or.inl (OnRay.of_sameRay hR hGray))
+
+/-- **No straight line between, near A.** For a point F within the angle EAB, some circle
+about A holds no point within the angle FAB, nor on the ray AF, that is not within the
+circle. This is III.16's second part made local: the straight line AF falls within the circle
+at some G (`Prop16.near_inside_of`). -/
+theorem Prop16.near_inside {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
+    (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
+    (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC) (hF : WithinAngle E A B F) :
+    LocallyWithin A (fun P => WithinAngle F A B P ∨ OnRay P A F)
+      (fun P => InsideCircle P ABC) := by
+  obtain ⟨G, hG, hGα⟩ := hAE_in F hF.1.triangle
+  exact near_inside_of hD hA hADB hE hAE_out hF hG hGα
 
 /-- **The horn-like angle is something.** Every circle about A, however small, holds a whole
 circle within the remaining angle: within the angle EAB and without the circle. The points
@@ -315,15 +339,17 @@ theorem Prop16.horn_no_ray {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC
   exact ⟨γ, hγ, fun P hPγ hPF hP =>
     (MixedAngle.region_ofContact.1 hP).2.1 (hnear P hPγ (Or.inr hPF))⟩
 
-/-- **The horn lies within every angle EAF near A.** For a point F within the angle EAB, near
-A a point of the remaining angle cannot be on AF or beyond it, for there the points are
-within the circle (`Prop16.near_inside`). -/
-theorem Prop16.horn_within {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
+/-- **The horn lies within the angle EAF near A, when AF has a point within the circle.**
+For a point F within the angle EAB, and a point G of the straight line AF within the circle,
+near A a point of the remaining angle cannot be on AF or beyond it, for there the points are
+within the circle (`Prop16.near_inside_of`). -/
+theorem Prop16.horn_within_of {A B D E F G : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
-    (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC) (hFw : WithinAngle E A B F) :
+    (hAE_out : Outside A E ABC) (hFw : WithinAngle E A B F) (hG : Collinear A F G)
+    (hGα : InsideCircle G ABC) :
     LocallyWithin A (MixedAngle.ofContact A E ABC B).region (WithinAngle E A F) := by
   have hF : SameSideOf F B A E := hFw.1
-  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside hD hA hADB hE hAE_out hAE_in hFw
+  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of hD hA hADB hE hAE_out hFw hG hGα
   refine ⟨γ₀, hγ₀, fun P hPγ hP => ?_⟩
   obtain ⟨hW, hout⟩ := MixedAngle.region_ofContact.1 hP
   have hPF : SameSideOf P F A E := hW.1.trans hF.symm
@@ -342,6 +368,16 @@ theorem Prop16.horn_within {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC
   · exact SameSideOf.of_line hAF hA_M hF_M (same_side_symm h)
   · exact absurd (hnear P hPγ (Or.inl ⟨SameSideOf.of_line hAF hA_M hF_M (same_side_symm h),
       hW.2.trans hFw.2.symm⟩)) hout.1
+
+/-- **The horn lies within every angle EAF near A.** For a point F within the angle EAB, the
+straight line AF falls within the circle at some G, by III.16's second part, and near A a
+point of the remaining angle cannot be on AF or beyond it (`Prop16.horn_within_of`). -/
+theorem Prop16.horn_within {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
+    (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
+    (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC) (hFw : WithinAngle E A B F) :
+    LocallyWithin A (MixedAngle.ofContact A E ABC B).region (WithinAngle E A F) := by
+  obtain ⟨G, hG, hGα⟩ := hAE_in F hFw.1.triangle
+  exact horn_within_of hD hA hADB hE hAE_out hFw hG hGα
 
 /-- **The angle of contact does not depend on the straight line that names its branch**, in
 III.16's figure, where AE is at right angles to the diameter AB. For any point B′ on B's side
@@ -455,20 +491,24 @@ theorem Prop16.right_parts {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     · exact WithinAngle.comm.1 (MixedAngle.region_ofContact.1 h).1
     · exact h.2
 
-/-- **The angle of the semicircle exceeds the acute angle BAF.** For F on E's side of the
-diameter AB with the angle BAF acute, near A the angle BAF lies within the circle
-(`Prop16.near_inside`), and every circle about A holds whole circles within the circle and
-within the angle FAE, which are in the angle of the semicircle and not in BAF. -/
-theorem Prop16.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
-    (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
-    (hBAE : ∠ B A E = ∟) (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC)
-    (hF : SameSideOf F E A B) (hBAF : ∠ B A F < ∟) :
+/-- **A straight line not interposed makes the angle of the semicircle exceed BAF.** For F on
+E's side of the diameter AB with the angle BAF acute, and a point G of the straight line AF
+within the circle: near A the angle BAF lies within the circle (`Prop16.near_inside_of`), and
+every circle about A holds whole circles within the circle and within the angle FAE, which
+are in the angle of the semicircle and not in BAF. This is the step Euclid asserts without
+argument in his reductio, turned about: an acute angle BAF that the angle of the semicircle
+did not exceed would have its straight line AF interposed between AE and the circumference,
+no point of it within the circle. -/
+theorem Prop16.semicircle_gt_of_inside {A B D E F G : Point} {ABC : Circle}
+    (hD : Centre D ABC) (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
+    (hBAE : ∠ B A E = ∟) (hAE_out : Outside A E ABC) (hF : SameSideOf F E A B)
+    (hBAF : ∠ B A F < ∟) (hG : Collinear A F G) (hGα : InsideCircle G ABC) :
     (MixedAngle.ofSegment A B ABC E).Exceeds B F := by
   refine ⟨hF.triangle.bac, ?_⟩
   show LocallyLess A (WithinAngle B A F) (MixedAngle.ofSegment A B ABC E).region
   have hlt : ∠ B A F < ∠ B A E := by rw [hBAE]; exact hBAF
   have hFw : WithinAngle E A B F := ⟨sameSideOf_of_angle_lt hF hlt, hF⟩
-  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside hD hA hADB hE hAE_out hAE_in hFw
+  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of hD hA hADB hE hAE_out hFw hG hGα
   refine ⟨⟨γ₀, hγ₀, fun P hPγ hP => MixedAngle.region_ofSegment.2
     ⟨hP.1.trans hF, hnear P hPγ (Or.inl (WithinAngle.comm.1 hP))⟩⟩, ?_⟩
   refine (near_across hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
@@ -478,15 +518,38 @@ theorem Prop16.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D A
     ⟨(WithinAngle.mono_left hFw (WithinAngle.comm.1 hPw)).2, hPα⟩, fun h' => ?_⟩
   exact hFw.not_sameSideOf (hPw.1.symm.trans h'.2)
 
-/-- **The remaining angle falls short of the acute angle EAF.** For F on the circle's side of
-AE with the angle EAF acute, the remaining angle comes as near A as we please
-(`Prop16.horn_nearVertex`); near A it lies within the angle EAF (`Prop16.horn_within`); and
-every circle about A holds whole circles within the angle EAF and within the circle, which
-are not in the horn. -/
-theorem Prop16.horn_lt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
+/-- **The angle of the semicircle exceeds the acute angle BAF**, by Euclid's reductio. For F
+on E's side of the diameter AB with the angle BAF acute, suppose the angle of the semicircle
+does not exceed the angle BAF. Then the straight line AF is interposed between AE and the
+circumference: no point of it is within the circle, for a point within would make the angle
+of the semicircle exceed BAF (`Prop16.semicircle_gt_of_inside`). But such a straight line
+cannot be interposed: AF is not AE, F being on the circle's side of AE, and III.16's second
+part puts a point of AF within the circle. -/
+theorem Prop16.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hBAE : ∠ B A E = ∟) (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC)
-    (hF : SameSideOf F B A E) (hEAF : ∠ E A F < ∟) :
+    (hF : SameSideOf F E A B) (hBAF : ∠ B A F < ∟) :
+    (MixedAngle.ofSegment A B ABC E).Exceeds B F := by
+  have hlt : ∠ B A F < ∠ B A E := by rw [hBAE]; exact hBAF
+  have hFB : SameSideOf F B A E := sameSideOf_of_angle_lt hF hlt
+  refine Classical.byContradiction fun hnot => ?_
+  have hinterposed : ∀ G : Point, Collinear A F G → ¬ InsideCircle G ABC := fun G hG hGα =>
+    hnot (semicircle_gt_of_inside hD hA hADB hE hBAE hAE_out hF hBAF hG hGα)
+  obtain ⟨G, hG, hGα⟩ := hAE_in F hFB.triangle
+  exact hinterposed G hG hGα
+
+/-- **A straight line not interposed makes the remaining angle fall short of EAF.** For F on
+the circle's side of AE with the angle EAF acute, and a point G of the straight line AF
+within the circle: the remaining angle comes as near A as we please
+(`Prop16.horn_nearVertex`); near A it lies within the angle EAF (`Prop16.horn_within_of`);
+and every circle about A holds whole circles within the angle EAF and within the circle,
+which are not in the horn. As for the angle of the semicircle, this is Euclid's step turned
+about: an acute angle EAF that the remaining angle did not fall short of would have its
+straight line AF interposed between AE and the circumference. -/
+theorem Prop16.horn_lt_of_inside {A B D E F G : Point} {ABC : Circle} (hD : Centre D ABC)
+    (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
+    (hBAE : ∠ B A E = ∟) (hAE_out : Outside A E ABC) (hF : SameSideOf F B A E)
+    (hEAF : ∠ E A F < ∟) (hG : Collinear A F G) (hGα : InsideCircle G ABC) :
     (MixedAngle.ofContact A E ABC B).FallsShort E F := by
   refine ⟨hF.triangle.bac, horn_nearVertex hD hA hADB hE hAE_out, ?_⟩
   show LocallyLess A (MixedAngle.ofContact A E ABC B).region (WithinAngle E A F)
@@ -494,11 +557,29 @@ theorem Prop16.horn_lt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
   have hlt : ∠ E A F < ∠ E A B := by
     rw [angle_symm hABE.ne₁₃.symm hABE.ne₁₂.symm, hBAE]; exact hEAF
   have hFw : WithinAngle E A B F := ⟨hF, sameSideOf_of_angle_lt hF hlt⟩
-  refine ⟨horn_within hD hA hADB hE hAE_out hAE_in hFw, ?_⟩
-  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside hD hA hADB hE hAE_out hAE_in hFw
+  refine ⟨horn_within_of hD hA hADB hE hAE_out hFw hG hGα, ?_⟩
+  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of hD hA hADB hE hAE_out hFw hG hGα
   exact (near_across hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
     (outside_of_onRay hAE_out)).1.mono fun P hP =>
       ⟨WithinAngle.comm.1 hP.1, fun h' => (MixedAngle.region_ofContact.1 h').2.1 hP.2⟩
+
+/-- **The remaining angle falls short of the acute angle EAF**, by Euclid's reductio. For F
+on the circle's side of AE with the angle EAF acute, suppose the remaining angle does not
+fall short of the angle EAF. Then the straight line AF is interposed between AE and the
+circumference: no point of it is within the circle, for a point within would make the
+remaining angle fall short of EAF (`Prop16.horn_lt_of_inside`). But such a straight line
+cannot be interposed: AF is not AE, and III.16's second part puts a point of AF within the
+circle. -/
+theorem Prop16.horn_lt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
+    (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
+    (hBAE : ∠ B A E = ∟) (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC)
+    (hF : SameSideOf F B A E) (hEAF : ∠ E A F < ∟) :
+    (MixedAngle.ofContact A E ABC B).FallsShort E F := by
+  refine Classical.byContradiction fun hnot => ?_
+  have hinterposed : ∀ G : Point, Collinear A F G → ¬ InsideCircle G ABC := fun G hG hGα =>
+    hnot (horn_lt_of_inside hD hA hADB hE hBAE hAE_out hF hEAF hG hGα)
+  obtain ⟨G, hG, hGα⟩ := hAE_in F hF.triangle
+  exact hinterposed G hG hGα
 
 /-- **The angle of the semicircle is less than a right angle.** It comes as near A as we
 please (`Prop16.semicircle_nearVertex`) and lies within the right angle BAE, the whole circle
@@ -547,7 +628,9 @@ theorem Prop16.horn_wellFormed {A B D E : Point} {ABC : Circle} (hD : Centre D A
 Euclid's figure, the circle ABC about D with the diameter AB and AE at right angles to it,
 the angle of the semicircle, contained by the straight line BA and the circumference on E's
 side, is a mixed angle as Euclid draws it, and it exceeds every acute angle BAF placed at A
-along AB on that side. Every acute rectilineal angle can be placed so (`Prop16.acute`). -/
+along AB on that side: by Euclid's reductio from the second part of III.16, that otherwise
+AF would be interposed between AE and the circumference (`Prop16.semicircle_gt`). Every
+acute rectilineal angle can be placed so (`Prop16.acute`). -/
 theorem Prop16.semicircle {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hBAE : ∠ B A E = ∟) :
@@ -561,8 +644,9 @@ theorem Prop16.semicircle {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
 /-- **III.16: the remaining angle is less than any acute rectilineal angle.** In Euclid's
 figure, the remaining angle, contained by the circumference and the straight line AE, is a
 mixed angle as Euclid draws it, and it falls short of every acute angle EAF placed at A
-along AE on the circle's side. Every acute rectilineal angle can be placed so
-(`Prop16.acute`). -/
+along AE on the circle's side: by Euclid's reductio from the second part of III.16, that
+otherwise AF would be interposed between AE and the circumference (`Prop16.horn_lt`). Every
+acute rectilineal angle can be placed so (`Prop16.acute`). -/
 theorem Prop16.remaining {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hBAE : ∠ B A E = ∟) :

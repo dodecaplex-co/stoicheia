@@ -110,9 +110,11 @@ comparisons in III.16's figure, where AE is drawn at right angles to the diamete
 declarations below, which use the words and facts of the mixed angles, prove the angle of
 contact's comparisons for a touching straight line in general. The route is Euclid's order:
 III.18 makes the touching straight line III.16's, and III.16's comparisons do the rest.
-Nothing later is cited. Those comparisons are argued as the mixed angles argue them,
-directly from III.16's second part, where Euclid argues by reductio: the straight line of an
-acute angle falls within the circle, so near A the acute angle lies within the angle of the
+Nothing later is cited. Those comparisons follow Euclid's reductio, in III.16's steps
+(`Prop16.semicircle_gt`, `Prop16.horn_lt`): an acute angle that failed the comparison would
+leave its straight line with no point within the circle, interposed between the touching
+straight line and the circumference, which III.16's second part forbids; and a straight line
+with a point within the circle puts, near A, the acute angle within the angle of the
 semicircle, with room to spare, and the angle of contact within the acute angle.
 
 Nothing here rests on Circle 2 or Circle 3. All but `Prop18.diameter` and `Prop18.parts` rest
