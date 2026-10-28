@@ -203,10 +203,17 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Restore the Lean toolchains from an earlier run
+        # As CI's jobs restore them: ~/.elan/toolchains, keyed on the files that name the
+        # toolchains, and saved after a job that passes (#594).
+        uses: actions/cache@v5
+        with:
+          path: ~/.elan/toolchains
+          key: lean-toolchains-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}
+
       - name: Install Lean (elan)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        # As CI's jobs install it (scripts/install_lean.sh).
+        run: bash scripts/install_lean.sh
 
       - name: Build and compute the certificate
         run: |
@@ -232,10 +239,17 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Restore the Lean toolchains from an earlier run
+        # As CI's jobs restore them: ~/.elan/toolchains, keyed on the files that name the
+        # toolchains, and saved after a job that passes (#594).
+        uses: actions/cache@v5
+        with:
+          path: ~/.elan/toolchains
+          key: lean-toolchains-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}
+
       - name: Install Lean (elan)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        # As CI's jobs install it (scripts/install_lean.sh).
+        run: bash scripts/install_lean.sh
 
       - name: Check the model was last brought up to date against the present lock of the axioms
         run: grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
