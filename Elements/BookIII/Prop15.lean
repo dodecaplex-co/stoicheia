@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Feet
 import Elements.BookI.Prop03
 import Elements.BookI.Prop11
 import Elements.BookI.Prop13
@@ -244,7 +245,7 @@ theorem Prop15.le_diameter {A B C D E : Point} {ABCD : Circle} (hE : Centre E AB
     · /- BC passes through E: it too is a diameter, equal to the same two radii. -/
       obtain ⟨L, hB_L, hC_L, hE_L⟩ := hE_BC
       have hBEC : Between B E C :=
-        between_of_inside_chord hE_L hB_L hC_L (centre_inside hE) hB hC hBC
+        between_of_centre_chord hE_L hB_L hC_L hE hB hC hBC
       have hBC_AD : ‖B C‖ = ‖A D‖ := (len_add_of_between hBEC).symm.trans hAD_sum.symm
       refine ⟨?_, ⟨fun _ => hBEC, fun _ => hBC_AD⟩⟩
       rw [hBC_AD]
@@ -281,7 +282,7 @@ theorem Prop15.nearer {B C E F G H K : Point} {ABCD : Circle} (hE : Centre E ABC
   · /- BC is a diameter. The diameter bound is strict for FG, which does not pass through E. -/
     obtain ⟨L, hB_L, hC_L, hE_L⟩ := hE_BC
     have hBEC : Between B E C :=
-      between_of_inside_chord hE_L hB_L hC_L (centre_inside hE) hB hC hBC
+      between_of_centre_chord hE_L hB_L hC_L hE hB hC hBC
     obtain ⟨hbound, hequal⟩ := Prop15.le_diameter hE hB hC hBEC hF hG
     have hunequal : ‖F G‖ ≠ ‖B C‖ := by
       intro h

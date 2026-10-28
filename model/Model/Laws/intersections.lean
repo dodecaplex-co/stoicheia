@@ -11,8 +11,9 @@ words they reach in `Hand.Intersections`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration.
 `Check/Intersections.lean` compares each locked law and hand word here with its generated
 counterpart. The retired rules `line_meets_circle_of_opposite_sides`,
-`line_meets_circle_of_inside`, `inside_of_between`, `outside_of_between` and
-`not_same_side_of_circles_meet` are compared directly with their library declarations. Since 19 October 2026 no locked law
+`line_meets_circle_of_inside`, `between_of_inside_chord`, `inside_of_between`,
+`outside_of_between` and `not_same_side_of_circles_meet` are compared directly with their
+library declarations. Since 19 October 2026 no locked law
 reaches `Elements.LineMeetsCircle`, so the generator no longer writes it, and Intersections 2
 and 3 use the hand copy here, itself checked against the library's word. Their concrete plane proofs remain as derived facts, with no
 generated assumption fields. Overlapping translations keep their statements under
@@ -115,7 +116,8 @@ def line_circle_beyond : Prop :=
 
 /-! ## The circle rules -/
 
-/-- `Elements.Tacit.between_of_inside_chord` (Circle 1), by hand. The lock prints it as
+/-- `Elements.Tacit.between_of_inside_chord` (Circle 1), by hand.
+The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.OnLine A L
 → Elements.OnLine B L → Elements.OnLine C L → Elements.InsideCircle A α →
 Elements.OnCircle B α → Elements.OnCircle C α → Ne B C → Elements.Between B A C`. -/
