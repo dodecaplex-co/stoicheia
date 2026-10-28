@@ -5,7 +5,7 @@ fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
 kind = "modified"
-note = "For non-diameters, Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]. For diameters, the measures are those of semicircles, and congruence follows from Prop28.right and III.24. The route stays so for this release, a deliberate limitation: for straight lines that are not diameters the measures follow Euclid's subtraction, while the greater circumferences' congruence is proved separately, by III.24, and the case of diameters keeps its own proof; a theory of arc magnitudes of their own is left for a later release."
+note = "Provisional subtraction skeleton, with the statement unchanged. For non-diameters, equal radii and bases give equal central angles by I.8, and III.26 gives the equal lesser circumferences. Common Notion 3 gives the remaining measures; Prop26.remainder restricts a common application of the whole circles to the remaining segments and arcs, but depends on the unproved Prop26.extend. This replaces the former separate III.20/III.24 argument for the greater segments, without claiming the replacement complete. In the diameter case there are no triangles for I.8 or ordinary central angles for III.26's first clause: Prop28.right and III.24 still supply congruence. Heath's subtraction is at vol. 2, pp. 59–60; both the missing extension and this diameter case remain disclosed, and the route stays modified."
 
 [representation]
 tags = ["angle-measure"]
@@ -35,8 +35,9 @@ note = "Euclid subtracts the equal lesser circumferences from the equal whole ci
 
 [[passage]]
 at = "therefore the circumference ACB which remains"
-kind = "different"
-note = "The greater circumferences are equal in measure as the remainders [C.N. 3]; their congruence comes from III.24, the angles AXB, DYE at points of the greater circumferences being the halves of the equal angles AKB, DLE at the centres [III. 20], so that the greater segments are similar; Heath prints no reference here for III.20 or III.24, called as `Prop20.special` and `Prop24`, and `Magnitude.eq_of_add_self_eq` supplies the equality of the halves."
+kind = "helper"
+helper = "Prop26.remainder"
+note = "The remaining measures are equal by Common Notion 3. Prop26.remainder now takes the congruence hless.2 proved by III.26 and restricts the common application of the whole circles to the complementary segments ACB, DFE. The restriction is proved; the whole-circle extension Prop26.extend remains unproved in this skeleton. No second use of III.24 to prove similarity of these remaining segments is made in the non-diameter branch."
 
 [figure]
 case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"

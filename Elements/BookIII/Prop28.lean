@@ -19,10 +19,9 @@ Each clause concludes that the circumferences are equal in measure and congruent
 (`Arc.Congruent`): equal circumferences are read as in III.26, which says more than Heath's
 words. The proof follows Euclid's route where it can: the angles AKB, DLE at the centres are
 equal [I. 8], so the less circumferences are equal in measure and congruent [III. 26], and
-the greater are equal in measure as the remainders [C.N. 3]. Two steps depart from it, as
-III.26's own congruence does. The congruence of the greater circumferences cannot come by
-subtraction; it comes from III.24 applied to the greater segments, which are similar, the
-angles in them being the halves of the equal angles at the centres [III. 20]. And when AB
+the greater are equal in measure as the remainders [C.N. 3]. The congruence of the greater circumferences now uses the same subtraction,
+`Prop26.remainder`; it depends on the unproved whole-circle extension `Prop26.extend`.
+Equal measures alone cannot supply that extension. And when AB
 passes through the centre, the four circumferences are semicircles. The angle at the centre
 of each is two right angles (`angleAtCentre.semicircle`), but there are no triangle angles
 AKB, DLE for III.26's central-angle clause to use; the angle in each semicircle is right

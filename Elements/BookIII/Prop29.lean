@@ -70,7 +70,7 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
      a greater circumference has a reflex angle at the centre, and a semicircle has
      two right angles. The conversion back to triangle angles belongs at I.4 below. -/
   have hcentral : angleAtCentre ABC B G C = angleAtCentre DEF E H F := by
-    sorry
+    rw [Prop20 hA hB hC hAG, Prop20 hD hE hF hDH, hangles.1]
   -- And, since the circles ABC, DEF are equal,
   -- the radii are also equal;
   have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
@@ -91,8 +91,10 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
     exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
   · rw [← len_add_of_between hBKC, ← len_add_of_between hELF,
       len_symm B K, len_symm E L, hrB, hrC]
-  · have hBKC : ∠ B K C = ∠ E L F := by
-      sorry
+  · have hBKC : ∠ B K C = ∠ E L F :=
+      CommonNotion3
+        (by rw [add_comm (∠ B K C), angleAtCentre.reflex hK hB hC hKG,
+          add_comm (∠ E L F), angleAtCentre.reflex hL hE hF hLH]) hcentral
     exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
   -- Therefore etc.
   -- Q. E. D.
@@ -103,11 +105,15 @@ the congruence as III.28 concludes it (`Arc.Congruent`, Common Notion 4); `Prop2
 equal circumferences as equal in measure.
 
 The map that makes the circumferences coincide keeps the distance between their ends, so
-the congruence already gives the equal straight lines (`Prop24.image`). This proof passes
-instead through equal measures (`Prop24.equalMeasure`) and `Prop29`, keeping that proof's
-argument through III.27 and I.4, with its own treatment of semicircles and greater
-circumferences. Congruence of these drawn arcs also implies that the circles are equal; the
-hypothesis keeps Euclid's setting. -/
+the congruence already gives the equal straight lines (`Prop24.image`). This proof follows
+III.27 and I.4 instead: `Prop27.of_congruent` gives the equal angles, the equal circles give
+the equal radii, and I.4 gives the bases. For circumferences greater than semicircles the
+angles standing at the centres are reflex; III.20 doubles the inscribed angles and I.4
+uses the rectilineal angles left from four right angles. For semicircles there are no
+triangles for I.4, so the diameters are each the sum of two equal radii. These additions to
+Heath's figure (vol. 2, p. 60) remain departures, in the companion as in the main proof.
+Congruence of these drawn arcs also implies that the circles are equal; the hypothesis
+keeps Euclid's setting and supplies the radii in this argument. -/
 theorem Prop29.of_congruent {B C E F G H : Point} {ABC DEF : Circle}
     (hcircles : EqualCircles ABC DEF)
     (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hE : OnCircle E DEF) (hF : OnCircle F DEF)
@@ -122,7 +128,7 @@ theorem Prop29.of_congruent {B C E F G H : Point} {ABC DEF : Circle}
      accepts exactly the congruence supplied, `Prop27.of_congruent`. -/
   have hangles := Prop27.of_congruent hcircles hK hL hA hB hC hD hE hF hAG hDH hcong
   have hcentral : angleAtCentre ABC B G C = angleAtCentre DEF E H F := by
-    sorry
+    rw [Prop20 hA hB hC hAG, Prop20 hD hE hF hDH, hangles.1]
   /- The radii of the equal circles are equal. -/
   have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
   have hrC : ‖K C‖ = ‖L F‖ := hcircles.radii hK hL hC hF
@@ -136,8 +142,10 @@ theorem Prop29.of_congruent {B C E F G H : Point} {ABC DEF : Circle}
     exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
   · rw [← len_add_of_between hBKC, ← len_add_of_between hELF,
       len_symm B K, len_symm E L, hrB, hrC]
-  · have hBKC : ∠ B K C = ∠ E L F := by
-      sorry
+  · have hBKC : ∠ B K C = ∠ E L F :=
+      CommonNotion3
+        (by rw [add_comm (∠ B K C), angleAtCentre.reflex hK hB hC hKG,
+          add_comm (∠ E L F), angleAtCentre.reflex hL hE hF hLH]) hcentral
     exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
 
 end Elements.BookIII

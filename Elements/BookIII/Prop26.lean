@@ -34,11 +34,14 @@ being equal [C.N. 3]. One division into cases stays, at I.4, labelled where it s
 the angles at the centres are two right angles, BC and EF are diameters, and there are no
 triangles for I.4; where they are greater, I.4 applies to the angles BGC, EHF that remain of
 four right angles. The whole circle is four right angles (`Circumference.whole`). The
-congruence of the remainders BKC, ELF cannot come by subtraction: it comes from III.24
-applied to the remaining segments, which are similar, their angles making two right angles
-with the equal angles at A and D [III. 22], with `Arc.Congruent.congr_side` for the points K
-and L that name them. That is a mild departure from Euclid's "whole minus part", noted where
-it happens.
+congruence of the remainders BKC, ELF is now a subtraction skeleton: `Prop26.extend`
+states the missing extension of the congruence of BAC, EDF to their whole circles, and
+`Prop26.remainder` restricts that common application to the remaining segments. The
+extension remains unproved. `Arc.Congruent` controls its map only on the given segment and
+arc, so this step cannot be obtained by unpacking it or by subtracting their measures.
+The former proof through III.22 and another application of III.24 would prove the
+conclusion by a different route; it is not used to fill this obligation. The diameter and
+reflex cases at I.4 remain explicit.
 -/
 
 namespace Elements.BookIII
@@ -49,7 +52,16 @@ open Tacit
 of the first segment. The base belongs to both closed segments. -/
 theorem Prop26.remaining_side {A B C K P : Point} (hAK : OppositeSidesOf A K B C) :
     OnSideOrLine P K B C ↔ ¬ SameSideOf P A B C := by
-  sorry
+  constructor
+  · rintro (hPK | hline) hPA
+    · obtain ⟨N, hB, hC⟩ := Postulate1 B C hAK.1
+      exact (hAK.oppositeSides hB hC).2.2 ((hPA.symm.trans hPK).sameSide hB hC)
+    · exact hPA.triangle hline
+  · intro hPA
+    by_cases hline : Collinear B C P
+    · exact Or.inr hline
+    · have hPA' := oppositeSidesOf_of_not_sameSideOf hline (sameSideOf_self hAK.triangle) hPA
+      exact Or.inl (OppositeSidesOf.sameSideOf hPA'.symm hAK)
 
 /-- **The whole circles placed together with the equal parts.** The missing bridge for
 the subtraction in III.26 (Heath, vol. 2, pp. 56–57) and III.28 (vol. 2, pp. 59–60).

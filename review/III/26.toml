@@ -5,7 +5,7 @@ fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
-note = "Euclid's one argument for angles of every size: equal angles at the circumferences give equal angles at the centres, their doubles (III.20), the bases are equal by I.4, the segments by III.24, and the remainders are equal in measure by his subtraction. The angles at the centres may be two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's; III.20 cites I.13 and III.2 for it, which Heath's references for III.20 do not give. One division into cases stays, at I.4: where the angles at the centres are two right angles, BC and EF are diameters, and where they are greater, I.4 takes the angles BGC, EHF that remain of four right angles. The congruence of the remainders comes from III.22 and III.24 in place of Euclid's subtraction, since a congruence cannot be subtracted. The route stays so for this release, a deliberate limitation: the measures follow Euclid's subtraction, while the remainders' congruence is proved separately, by III.22 and III.24; a theory of arc magnitudes of their own, which might let congruence follow his subtraction too, is left for a later release."
+note = "Provisional subtraction skeleton, with the statement unchanged. The radii and I.4 give the equal bases, III.24 gives the equal segments, Prop24.equalMeasure their measures, and Common Notion 3 the equal remaining measures. Prop26.remainder proves the congruence of the complements by restricting a common application of the whole disks and circumferences; its whole-circle extension, Prop26.extend, remains unproved. Arc.Congruent controls a map only on the given segment and arc, not on their complements (DefinitionsIII.lean). Thus the congruence step under Heath's subtraction (vol. 2, pp. 56–57) is an explicit obligation, not a completed repair. The former III.22/III.24 proof of the remainders has been removed. Diameter and reflex cases at I.4 remain as before: diameters are sums of radii, and reflex angles require taking what remains of four right angles. The route remains modified pending the extension and review of those cases."
 
 [representation]
 tags = ["angle-measure"]
@@ -36,8 +36,9 @@ note = "Euclid subtracts the equal segment circumferences from the equal whole c
 
 [[passage]]
 at = "therefore the circumference BKC which remains is equal to the circumference ELF"
-kind = "different"
-note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.N. 3]. Their congruence cannot come by subtraction: `Prop2.sameSide` (III.2) supplies points of the remaining segments, III.22 makes their angles supplementary to the equal angles at A and D, and III.24 makes the similar segments congruent, with `Arc.Congruent.congr_side` transferring the result to K and L; Heath prints no references here."
+kind = "helper"
+helper = "Prop26.remainder"
+note = "The measures follow Common Notion 3. For congruence, Prop26.remaining_side identifies the complementary closed side as the complement of the removed open side, so the common map of the whole disks and circumferences restricts onto both remaining figures, keeping distances and the base endpoints. This restriction is proved in Prop26.remainder. The required map is the one unproved obligation, Prop26.extend; the existing Arc.Congruent witness has no guarantees outside the original segment. A proof of the extension belongs with III.24's moved-circle and application lemmas, before III.26; the placement policy permits that machinery there, while the later Arc.congruent_iff would be circular. No axiom or change of statement is proposed."
 
 [[passage]]
 at = "Therefore etc."
