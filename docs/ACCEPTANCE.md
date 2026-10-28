@@ -17,11 +17,12 @@ Each item is one of two kinds:
   verdict is right is the reviewer's, and the independent audit's, to answer.
 
 The checklist merges the criteria of brief 0005's stage 6, Astra's measure of 95/100, with
-the release criteria of [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity), section 9,
-and with what has changed since both were written: the kernel replay, the stricter rule for
-runs of `--` lines, review stamps tied to a commit, companions as certificate entries,
-stage 4b's goal of a full statement for every record, and Staging. [Where the older
-criteria went](#where-the-older-criteria-went) traces each one here.
+the ten release criteria that [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity),
+section 9, once listed, and with what has changed since both were written: the kernel
+replay, the stricter rule for runs of `--` lines, review stamps tied to a commit,
+companions as certificate entries, stage 4b's goal of a full statement for every record,
+and Staging. [Where the older criteria went](#where-the-older-criteria-went) traces each
+one here.
 
 ## Running it
 
@@ -75,13 +76,14 @@ release step, not one of CI's ([In CI](#in-ci)).
 
 ## In CI
 
-CI's required `acceptance` job runs on pull request events and is skipped on pushes.
+CI's required `acceptance` job runs on every event CI runs on: each pull request, each
+merge-queue group, and each push to main, through the post-merge workflow, which calls CI.
 Its executable definitions are [the workflow](../.github/workflows/ci.yml),
 [`scripts/check_acceptance.py`](../scripts/check_acceptance.py) and
 [`scripts/copy_acceptance_checks.sh`](../scripts/copy_acceptance_checks.sh). It fetches
 the whole history (`fetch-depth: 0`) for the records' commits. Until the consolidation
 release, `ACCEPTANCE_GATE` is `ratchet`: **a pass on main may not turn into a fail on the
-pull request**, save the staging exception below. The
+checked-out revision**, save the staging exception below. The
 [report committed on main](reports/acceptance-books-I-III.md) records failures
 at the revision it names; CI recomputes the individual verdicts for comparison on each
 run. The ratchet allows the checklist's exit 1, then weighs its verdicts. The checker's
@@ -91,32 +93,37 @@ be compared, fail the job. In three steps:
 1. After its comparison tests, the builds of `Elements` and `Audit`, and the computation
    of the certificate, the script checks every item on CI's checked-out revision,
    normally the pull request's test merge commit, and writes its verdicts with `--json`.
-2. It checks main in a worktree beside it: the checkout's first parent if it has two
-   parents, otherwise the pull request's recorded base commit. Main is built and its
-   certificate computed with the pull request's own checks copied in (`scripts/`, `tests/`,
-   `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
-   checks judges both. Main keeps its own values pinned to its content:
+2. It checks main in a worktree beside it. On a pull request, main is the checkout's first
+   parent when the checkout has two parents and the second is the pull request's head (the
+   test merge commit); otherwise, when the checkout is the pull request's head itself, the
+   pull request's recorded base commit; and any other checkout fails the job. In a
+   merge-queue group, main is the group's base commit; on a push to main, main as it was
+   before the push. Main is built and its
+   certificate computed with the checked-out revision's own checks copied in (`scripts/`,
+   `tests/`, `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy
+   of the checks judges both. Main keeps its own values pinned to its content:
    `Certificate/axioms.lock`, `tests/certificate_expectations.json`,
    `tests/model/lock.sha256`, `tests/model/laws.toml`, `tests/model/MODEL.md` and
    `tests/model/results/` ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10,
    the pre-flight's step 4, "The full checks"). The formal model's `model/` directory is
    not copied. An updated definition or expected count must not make unchanged main fail
-   and so hide a pull request's failure. A stricter check, which lands in a pull request
-   of its own before the content it judges
+   and so hide the checked-out revision's failure. A stricter check, which lands in a pull
+   request of its own before the content it judges
    ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10), judges both revisions.
-   An item it fails on main is reported but does not hold the pull request back.
+   An item it fails on main is reported but does not hold the checked-out revision back.
    Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are recorded
-   as `not run`, so the comparison does not hold them. The pull request's checklist run
-   runs them, and CI's `check` and `model` jobs require them to pass.
-3. `--compare` sets main's verdicts beside the pull request's, and fails for each item that
-   passes on main and does not pass on the pull request (a fail, a check not run, or an
-   item missing), save a staging item (P10 or E6) that turns into a fail, which it lists.
+   as `not run`, so the comparison does not hold them. The checked-out revision's
+   checklist run runs them, and CI's `check` and `model` jobs require them to pass.
+3. `--compare` sets main's verdicts beside the checked-out revision's, and fails for each
+   item that passes on main and does not pass on the checked-out revision (a fail, a check
+   not run, or an item missing), save a staging item (P10 or E6) that turns into a fail,
+   which it lists.
    Both staging items read `Staging/` alone, where a statement that a stage adds or changes
    is staged before its proof ([WORKFLOW](WORKFLOW.md#2-briefs-before-proofs), section 2).
    A staging item that was passing and is now `not run` or missing still fails the
    comparison.
 
-The run's artifact is named `acceptance`: the pull request's `report.md` and
+The run's artifact is named `acceptance`: the checked-out revision's `report.md` and
 `verdicts.json`, and, when main is checked, its `main-report.md` and `main.json`. The
 upload step runs even after a failure and keeps whichever of these files were produced.
 
@@ -249,7 +256,9 @@ evidence = "docs/reports/…"
 
 ## Where the older criteria went
 
-Brief 0005's stage 6, item by item:
+The two older lists of criteria, brief 0005's stage 6 and the ten criteria WORKFLOW's
+section 9 once listed, are retired: this checklist replaces both. The tables below name,
+for each older criterion, the items that take it up. Brief 0005's stage 6, item by item:
 
 | Brief 0005 | Here |
 |---|---|
@@ -278,7 +287,7 @@ WORKFLOW, section 9, criterion by criterion:
 | 5. Route accurate; every exception visible | P4, P12 |
 | 6. Dependency closure, axiom boundaries and certificate cover every claim | P1, P5, E1, E2 |
 | 7. Quotations, attributions and commentary checked | P7, P14 |
-| 8. Figures and page inspected | P8, P15 |
+| 8. Figures and page inspected | P8, P15 for the figures; for the page, P9 (the committed page is exactly what `render.py` makes), P4 (its top line, field table and clause map disclose the record) and B3 (the book read straight through) |
 | 9. The required checks pass on the integrated revision | E1 to E5, with the rest of the [machine] items |
 | 10. A reviewer other than the author, named with the commit | P2, P16 |
 
