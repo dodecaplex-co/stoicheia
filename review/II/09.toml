@@ -38,7 +38,7 @@ note = "Euclid infers equal angles at A and E from AC equal to CE. The Lean uses
 [[passage]]
 at = "therefore each of the angles CEA, CAE is half a right angle"
 kind = "carried"
-note = "The Lean proves that each of the angles CEA and CAE is half a right angle, as Euclid states; the later steps use only the half at E, and the angle CAE is not used again."
+note = "The Lean proves that each of the angles CEA and CAE is half a right angle, as Euclid states. Neither his proof nor ours uses the half at A again: only the half at E goes on, into the right angle AEB."
 unused = ["hhalf_CAE"]
 
 [[passage]]
@@ -76,11 +76,11 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "1e482112"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "f9d627547"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:d341a1520792f8c3"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 3727c87e rewrite the half-right-angle equality and carry the angles EGF and FDB to Euclid's angle ECB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 221ad5c2; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
-text = "sha256:a872dfb92b97b28a"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 3727c87e rewrite the half-right-angle equality and carry the angles EGF and FDB to Euclid's angle ECB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 221ad5c2; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547"
+text = "sha256:5ef2de0a00852978"
 
 [review.items]
 statement = "pass"

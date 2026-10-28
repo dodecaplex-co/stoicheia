@@ -18,8 +18,7 @@ note = "The statement gives the goal, AD parallel to BE. The distinct vertices A
 at = "For, if not, let AF be drawn through A parallel to BE"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`), proves the meeting by I.30 (`Prop30.meet`), and joins FE by Postulate 1."
-unused = ["FE"]
+note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`) and proves the meeting by I.30 (`Prop30.meet`); FE is named by its ends, as a side of the triangle FCE, so the Lean draws nothing for the join and does not call Postulate 1 for it."
 
 [[passage]]
 at = "But the triangle ABC is equal to the triangle DCE"
@@ -42,11 +41,11 @@ note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the p
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
-reviewer = "Claude Opus 5.5, independent reader"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex at a5c335ca; closing reductio rewritten at 2a80d18a; Prop40.general and Prop40.join proved at 3ab01e89, Prop40.special already proved at 17fddffc, and all three moved at 100528e2; the author families of these later proofs are unrecorded; current file read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I40-I43, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
-lean = "sha256:42c6b5725278f449"
-text = "sha256:58ce73d29cf681ec"
+commit = "f9d627547"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex at a5c335ca; closing reductio rewritten at 2a80d18a; Prop40.general and Prop40.join proved at 3ab01e89, Prop40.special already proved at 17fddffc, and all three moved at 100528e2; the author families of these later proofs are unrecorded; current file read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I40-I43, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547"
+lean = "sha256:8b2cc0c1aad177f1"
+text = "sha256:36a9ababd79ca13c"
 
 [review.items]
 statement = "pass"
