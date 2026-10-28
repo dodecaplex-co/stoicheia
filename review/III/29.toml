@@ -2,7 +2,7 @@
 scope = "full"
 note = "Equal circumferences of any size, less than a semicircle, a semicircle or greater, by the angle measure; `Prop29.of_congruent` takes them to be congruent."
 companions = ["III.29 of_congruent"]
-fingerprint = "sha256:88bb35fd9003b0a0"
+fingerprint = "sha256:b15027ff1b86720a"
 
 [route]
 kind = "modified"
@@ -33,11 +33,11 @@ case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC
 
 [review]
 stage = "full"
-commit = "1c21c147b"
+commit = "d6f91f1b2"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:c6ea841e06026dc5"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:98b4690f4b64ab12"
+lean = "sha256:5433ac49f676cacb"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:576820a2dcfacc51"
 
 [review.items]
 statement = "pass"
