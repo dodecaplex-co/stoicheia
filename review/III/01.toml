@@ -11,31 +11,31 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.exists_centre"
 kind = "step"
-note = "Our foundations assume that every circle has a centre. The rule supplies two steps: inside `Prop1.construction`, a centre for the proof that D is within the circle, by III.2's argument in `Prop1.within`; and, in the reductio, the supposed centre G. The centre taken inside the construction supplies none of its points, so the bisections, the perpendicular and the proof that F is the centre are III.1's own work. The rule gives bare existence; `Prop1.of_circle` gives Euclid's construction for any circle, first taking two of its points, A and B."
+note = "Our foundations assume that every circle has a centre, as Definitions I.15 and I.16 presuppose. The rule supplies two steps, and neither supplies a point the construction returns. In the reductio it is the supposed centre G, taken under the supposition that the constructed F is not the centre; the argument proves G = F and returns F. In `Prop1.midpoint_inside` it gives a centre for the proof that D is within the circle, by III.2's argument in `Prop1.within`. The rule gives bare existence; `Prop1.of_circle` gives Euclid's construction for any circle, first taking two of its points, A and B."
 
 [[passage]]
 at = "Let a straight line AB be drawn through it at random"
-kind = "grouped"
-helper = "Prop1.construction"
-note = "One call carries Euclid's three construction sentences: bisect AB at D, draw DC at right angles and through to E, then bisect CE at F. `Prop1.construction` receives the circle and A, B, with no centre supplied; the proof that F is the centre follows under Euclid's sentences."
+kind = "helper"
+helper = "BookI.Prop10"
+note = "A and B are the given distinct circumference points; `Prop1.of_circle` takes them when only the circle is given. I.10 bisects AB at D, for which Heath prints no reference here."
 
 [[passage]]
 at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
 kind = "helper"
-helper = "Prop1.within"
-note = "Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes. Inside `Prop1.construction`, `exists_centre` supplies a centre only for this proof: `Prop1.within` takes III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
+helper = "Prop1.perpendicular_chord"
+note = "I.11 draws the perpendicular, for which Heath prints no reference here, and the rule we assume as System E, Intersections 5, finds C and then E through D. Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes (Heath, vol. 2, p. 7). III.2 cannot be cited, since it takes its centre from III.1, so `Prop1.midpoint_inside` takes a centre from `exists_centre` for this proof alone, and `Prop1.within` gives III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
 
 [[passage]]
 at = "let CE be bisected at F"
 kind = "helper"
 helper = "BookI.Prop10"
-note = "Euclid bisects AB and CE and draws DC at right angles without references from Heath here. Within `Prop1.construction`, the Lean uses I.10 (`BookI.Prop10`) for both bisections, I.11 (`BookI.Prop11`) for DC, and `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, twice to find C and E through the interior point D."
+note = "I.10 bisects CE at F, the point the theorem returns; the centre G is taken later, for the reductio alone. `Prop1.construction` gathers the same three steps of construction in one theorem."
 
 [[passage]]
 at = "For suppose it is not, but, if possible, let G be the centre"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid supposes a centre G other than F. The Lean takes G from `Tacit.exists_centre`, the rule that every circle has a centre, and supposes G off CE to reach the contradiction."
+note = "The Lean supposes that F is not the centre and takes G from the existence presupposed by Definitions I.15 and I.16. Thus G differs from F; the adjacent-angle argument puts G on CE, and its equal radii make G = F, contradicting the supposition."
 
 [[passage]]
 at = "and let GA, GD, GB be joined"
@@ -56,14 +56,14 @@ note = "Euclid rules out equal angles when one is greater; `Prop1.perpendicular`
 
 [[passage]]
 at = "Therefore G is not the centre of the circle ABC."
-kind = "grouped"
-note = "The reductio shows that the supposed centre G lies on CE, and the Lean beneath makes it the middle point F. One argument, for any centre G, carries all three sentences."
+kind = "helper"
+helper = "Prop1.middle"
+note = "Euclid takes for granted that a centre on CE is its middle point (Heath, vol. 2, p. 8). The Lean puts G between C and E by Book Zero's `between_of_centre_chord`, since either other order would make one radius a part of the other, and `Prop1.middle` makes G the middle point F, against the supposition that F is not the centre. Nothing in the argument restricted G: that is Euclid's \"similarly\" for every other point."
 
 [[passage]]
 at = "Therefore the point F is the centre of the circle ABC."
-kind = "helper"
-helper = "Prop1.middle"
-note = "Euclid takes for granted that a centre on CE is its middle point. The Lean puts G between C and E by Book Zero's `between_of_centre_chord`, Circle 1 (`Tacit.between_of_inside_chord`) for a centre, proved without that rule from Definition I.15, the three orders of three points on a straight line (System E, Between 6) and our radius rule: either other order would make one radius a part of the other. It does the same in the earlier case on AB, and in the porism's. Then equal radii and `Prop1.middle` identify G with F."
+kind = "grouped"
+note = "Euclid's conclusion repeats \"I say that F is the centre\", which the reductio above proves. The theorem returns F, the middle point of CE, with the points D, C and E of the construction."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
