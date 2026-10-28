@@ -1131,6 +1131,59 @@ def self_test() -> int:
                 failed = True
             check(f"replaced() with {old!r} standing {'twice' if old == 'a' else 'nowhere'}",
                   failed, True)
+    # A supplied pull-request head describes precisely a two-parent merge into the base.
+    # Exercise the command, rather than the parent-reading helper, and show that each bad
+    # shape is refused before the judge makes its output directory or starts a dry run.
+    with tempfile.TemporaryDirectory(prefix="shadow-self-test-") as tmp:
+        repo = Path(tmp)
+        git(repo, "init", "--quiet", "--initial-branch=main")
+
+        def commit(path: str, text: str, message: str) -> str:
+            (repo / path).write_text(text)
+            git(repo, "add", path)
+            git(repo, "-c", "user.name=Shadow self-test",
+                "-c", "user.email=shadow@example.invalid", "commit", "--quiet",
+                "--message", message)
+            return rev(repo, "HEAD")
+
+        base = commit("base", "base\n", "base")
+        git(repo, "switch", "--quiet", "--create", "pr-head")
+        pr_head = commit("pr", "head\n", "pull-request head")
+        git(repo, "switch", "--quiet", "--detach", base)
+        git(repo, "switch", "--quiet", "--create", "other")
+        other = commit("other", "other\n", "other head")
+        git(repo, "switch", "--quiet", "--detach", base)
+        git(repo, "-c", "user.name=Shadow self-test",
+            "-c", "user.email=shadow@example.invalid", "merge", "--quiet", "--no-ff",
+            "--message", "tested merge", pr_head)
+        tested = rev(repo, "HEAD")
+        git(repo, "switch", "--quiet", "--detach", base)
+        git(repo, "-c", "user.name=Shadow self-test",
+            "-c", "user.email=shadow@example.invalid", "merge", "--quiet", "--no-ff",
+            "--message", "three-parent merge", pr_head, other)
+        three_parent = rev(repo, "HEAD")
+        assert all((base, pr_head, other, tested, three_parent))
+
+        refusals = []
+        for label, given_base, given_tested, given_head in (
+                ("a one-parent tested commit", base, pr_head, pr_head),
+                ("the wrong base parent", other, tested, pr_head),
+                ("the wrong pull-request parent", base, tested, other),
+                ("a third parent", base, three_parent, pr_head)):
+            out = repo / f"out-{label.replace(' ', '-')}"
+            run = subprocess.run(
+                [sys.executable, "-I", str(Path(__file__).resolve()), "judge",
+                 "--base", given_base, "--tested", given_tested, "--pr-head", given_head,
+                 "--out", str(out)], cwd=repo, env=clean_env(), capture_output=True, text=True)
+            reason = (f"shadow_policy.py: --pr-head {given_head}: --tested is not a merge "
+                      "of it into --base\n")
+            check(f"--pr-head refuses {label}, its exit", run.returncode, 2)
+            check(f"--pr-head refuses {label}, its reason", run.stderr, reason)
+            check(f"--pr-head refuses {label}, before output", out.exists(), False)
+            refusals.append((label, run.returncode, run.stderr.strip(), out.exists()))
+        print("shadow_policy.py self-test: --pr-head refusal cases")
+        for label, code, reason, made_output in refusals:
+            print(f"  {label}: exit {code}; output made: {made_output}; {reason}")
     for failure in failures:
         print(f"  FAIL  {failure}")
     print(f"shadow_policy.py self-test: {count - len(failures)} of {count} checks passed"
