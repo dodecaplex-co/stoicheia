@@ -11,11 +11,13 @@
 writes what it found to DIR/verdict.json. Main's pre-flight is `scripts/safe_push.py
 --dry-run` as B holds it: B's scripts/ is taken out of Git (`git archive`) into
 DIR/harness and run from there, in DIR/repo, a clone whose origin, DIR/origin.git, holds B
-as its main and nothing else, with T checked out detached. So every rule of main's policy
-applies as the local pre-flight applies it: the secret scan, the guards of step 3, both
-passes of check_fidelity.py and render.py, keep_apart at steps 3 and 4, step 4's full
-checks under B's registry and then T's own, and the negative tests in both passes. Nothing
-of the policy is written again here, so nothing here can drift from it. The pre-flight's
+as its main and nothing else, with T checked out detached. So main's policy applies as the
+local pre-flight applies it: the secret scan, the guards of step 3, both passes of
+check_fidelity.py and render.py, keep_apart at steps 3 and 4, step 4's full checks under
+B's registry and then T's own, and the negative tests in both passes. What needs a branch
+is not run, as the dry run is given none: the kind label, the public names, a train/
+branch's check and its body; the class is found without labels. Nothing of the policy is
+written again here, so nothing here can drift from it. The pre-flight's
 log, its step logs and its record (STOICHEIA_PUSH_LOG names DIR/state/pushes.log) stay
 beside the verdict, and its printed report in DIR/preflight.log.
 
@@ -37,7 +39,8 @@ held to the local harness's known behaviour. `self-test` reads report texts in t
 format, and planted misreadings of them, with no Lean and no network.
 
 verdict.json, schema "stoicheia-shadow-policy/1", canonical (keys sorted, no spaces,
-ASCII): the repository, event, base, tested and its tree, pr_head when known; `policy`, the
+ASCII): the repository, event, base, tested and its tree, pr_head and its tree when known;
+`policy`, the
 blobs of B's safe_push.py, heath.py, check_train.py, registry.py and risk.py, the tree of
 B's checks/, and the driver's own blob and whose copy it is (`from`: "base", "tested" or
 "neither"); `runtime`; the pre-flight's `exit`, the `verdict` (passed, refused or error),
@@ -47,13 +50,13 @@ apart" FAIL, or null), `base_pass_notes` and `pinned_values`, every `steps` row 
 
 Trust. The verdict is only as good as the run that made it. It counts only while the
 workflow GitHub runs (.github/workflows/shadow-policy.yml) still calls main's driver, and
-the copy of the workflow GitHub runs is the pushed commit's; nothing here is signed
-(protected signing is the next train); and the pre-flight runs T's own code, its checks and
-its Lean, as the same user in the same job, so a hostile T could change what this driver
-reads or writes after it. So a verdict is evidence that main's policy, run in CI, agrees
-with the local pre-flight on honest work, not a defence against a hostile commit. `judge`
-and `plant` use the Python standard library and Git only; `self-test` also uses PyYAML from
-the pinned test requirements. Python 3.11 or later.
+the copy of the workflow GitHub runs is the pushed commit's; nothing here is signed or
+protected (the plan's next train protects the verdict, and a later one signs it); and the
+pre-flight runs T's own code, its checks and its Lean, as the same user in the same job, so
+a hostile T could change what this driver reads or writes after it, and what the
+workflow's later steps run. So a verdict is evidence that main's policy, run in CI, agrees
+with the local pre-flight on honest work, not a defence against a hostile commit. Standard
+library and Git only; Python 3.11 or later.
 """
 
 from __future__ import annotations
@@ -426,7 +429,9 @@ def judge(source: Path, base: str, tested: str, out: Path, repository: str, even
     verdict: dict = {
         "schema": SCHEMA, "repository": repository, "event": event, "base": base,
         "tested": tested, "tested_tree": rev(source, f"{tested}^{{tree}}"),
-        "pr_head": pr_head, "policy": policy_blobs(source, base, tested), "exit": None,
+        "pr_head": pr_head,
+        "pr_head_tree": rev(source, f"{pr_head}^{{tree}}") if pr_head else None,
+        "policy": policy_blobs(source, base, tested), "exit": None,
         "verdict": "error", "result": None, "class": None, "kept_apart": None,
         "base_pass_notes": [], "pinned_values": False, "steps": [], "notes": [],
         "record": None,
@@ -520,8 +525,7 @@ PLANTS = {
     "dropped-check": {
         "change": f"{LINKS_ENTRY} removed; a broken link added to docs/reading.md",
         "kind": "a dropped check, kept apart at step 4",
-        "mirrors": "test_weakened_check_with_the_code_it_would_catch_refused, by the "
-                   "registry at step 4",
+        "mirrors": "test_a_registry_entry_removed_with_judged_content_is_kept_apart",
         "expect": {"verdict": "refused", "kept_apart": "4",
                    "notes": [["4", LINKS + BASE_PASS]],
                    "steps": [["4", "ok", "check list"], ["4", "FAIL", KEPT_APART]],
@@ -530,7 +534,7 @@ PLANTS = {
     "weakened-links": {
         "change": "check_links.py exits 0; a broken link added to docs/reading.md",
         "kind": "a weakened script, kept apart at step 4",
-        "mirrors": "test_weakened_check_with_the_code_it_would_catch_refused, at step 4",
+        "mirrors": "test_kept_apart_counts_verdicts_not_freshness",
         "expect": {"verdict": "refused", "kept_apart": "4",
                    "notes": [["4", LINKS + BASE_PASS]],
                    "steps": [["4", "ok", "check list"], ["4", "FAIL", KEPT_APART]],
@@ -1012,17 +1016,9 @@ def real_text(module, scenario, logs: Path) -> tuple[int, str, list[tuple]]:
 
 
 def matrix_plants(text: str) -> list[str] | None:
-    """The plants at jobs.plants.strategy.matrix.plant in workflow YAML."""
-    import yaml
-
-    try:
-        document = yaml.safe_load(text)
-        plants = document["jobs"]["plants"]["strategy"]["matrix"]["plant"]
-    except (KeyError, TypeError, yaml.YAMLError):
-        return None
-    if not isinstance(plants, list) or not all(isinstance(plant, str) for plant in plants):
-        return None
-    return plants
+    """The plants of the workflow's matrix, a flow list on one line, `plant: [a, b]`."""
+    found = re.findall(r"(?m)^\s*plant:\s*\[([^\]\n]*)\]\s*$", text)
+    return [p.strip() for p in found[0].split(",") if p.strip()] if len(found) == 1 else None
 
 
 def self_test() -> int:
@@ -1103,14 +1099,6 @@ def self_test() -> int:
     except OSError as e:
         listed = f"unreadable: {e}"
     check("the workflow's plant matrix", listed, list(PLANTS))
-    block_list = "\n".join(f"          - {name}" for name in PLANTS)
-    check("the workflow's plant matrix as a block list", matrix_plants(
-        "jobs:\n  plants:\n    strategy:\n      matrix:\n        plant:\n" + block_list + "\n"),
-        list(PLANTS))
-    unrelated = ", ".join(PLANTS)
-    check("an unrelated plant list is not the workflow's matrix", matrix_plants(
-        f"plant: [{unrelated}]\njobs:\n  plants:\n    strategy:\n      matrix:\n"
-        "        unrelated: true\n"), None)
     check("the plants' changes", list(CHANGES), list(PLANTS))
     for name, plant in PLANTS.items():
         check(f"the plant {name}'s expectation", expectation_problems(name, plant), [])
@@ -1156,11 +1144,10 @@ def self_test() -> int:
 
 def judge_main(args) -> int:
     source = source_repo()
-    for value, what in ((args.base, "--base"), (args.tested, "--tested")):
-        if (why := commit_named(source, value, what)) is not None:
+    for value, what in ((args.base, "--base"), (args.tested, "--tested"),
+                        (args.pr_head, "--pr-head")):
+        if value is not None and (why := commit_named(source, value, what)) is not None:
             return usage(why)
-    if args.pr_head is not None and not FULL_SHA.fullmatch(args.pr_head):
-        return usage(f"--pr-head must be a full 40-hex commit SHA, not {args.pr_head!r}")
     if args.base == args.tested:
         return usage("--base and --tested are one commit: there is nothing to judge")
     if subprocess.run([*GIT, "merge-base", "--is-ancestor", args.base, args.tested],

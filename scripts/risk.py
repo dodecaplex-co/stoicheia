@@ -72,8 +72,9 @@ CLASSES = {
 # by a broader, lighter rule. scripts/risk.py is R5 because it decides which checks run.
 # So are scripts/registry.py, whose copy at main decides the pre-flight's sequence of
 # checks, and scripts/run_checks.py, which is CI's `check` job; the registry they read,
-# checks/, is R3, so that adding a check stays a change to the checks (#229). And so is
-# scripts/shadow_policy.py, which runs main's pre-flight in CI and gives its verdict (#574).
+# checks/, is R3, so that adding a check stays a change to the checks (#229).
+# scripts/shadow_policy.py is R5 too: it runs main's pre-flight in CI and gives its verdict
+# (#574).
 # lakefile.lean is R4 with the other build files, not R2 by `*.lean`: the repository has
 # none, but Lake reads one in preference to lakefile.toml. scripts/check_model_kernel.py is
 # R4, not R3 by `scripts/*`, because CI's formal-model job, which runs it, runs for R4 and R5.
