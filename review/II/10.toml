@@ -72,11 +72,11 @@ note = "Euclid takes the angles EGF and FEG to be equal because each is half a r
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "f9d627547"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:3884ca872c6802f9"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. A later proof edit at 3727c87e proves EAC is half a right angle; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made it. That edit was read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at 554dfb0f; ship XS, reader XS-r-II09-II10, independent re-read at 554dfb0f; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, the family that did not write the original proof, reader F2-w2m2cl at f2195c72; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
-text = "sha256:4fcf358d36afa874"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. A later proof edit at 3727c87e proves EAC is half a right angle; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made it. That edit was read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at 554dfb0f; ship XS, reader XS-r-II09-II10, independent re-read at 554dfb0f; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, the family that did not write the original proof, reader F2-w2m2cl at f2195c72; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547"
+text = "sha256:07d587b8fd26df1f"
 
 [review.items]
 statement = "pass"
