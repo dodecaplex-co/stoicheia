@@ -63,7 +63,7 @@ note = "Likewise, that the less segment lies wholly within the right angle CAF i
 at = "the angle contained by the straight line CA and the circumference ADC is less"
 kind = "carried"
 helper = "Prop31.less"
-note = "Euclid reads the strict shortfall from his figure; `Prop31.less_lt_right` uses `Tacit.adjacent_eq_of_right` from I.13, then `Prop31.less_nearVertex` and `near_across` use I.12, I.17, I.19, I.20 and III.2, none referenced by Heath here, with the right angle BAC and the diameter supplied as for the greater segment. To contain the less segment within CAF, it puts an interior point on AB between A and B by `Tacit.between_of_inside_chord` (System E, Circle 1), and excludes interior points across AB using `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1), `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.pasch2` (System E, Pasch 2), Circle 1, Intersection 1 and Pasch 2 being assumed, with III.2 putting the crossing within the circle; the same `near_across` construction supplies whole small circles outside it."
+note = "Euclid reads the strict shortfall from his figure; `Prop31.less_lt_right` uses `Tacit.adjacent_eq_of_right` from I.13, then `Prop31.less_nearVertex` and `near_across` use I.12, I.17, I.19, I.20 and III.2, none referenced by Heath here, with the right angle BAC and the diameter supplied as for the greater segment. To contain the less segment within CAF, it puts an interior point on AB between A and B by `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, and excludes interior points across AB using `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1), `Tacit.pasch4` (System E, Pasch 4), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.pasch2` (System E, Pasch 2), Intersection 1 and Pasch 2 being assumed, with III.2 putting the crossing within the circle; the same `near_across` construction supplies whole small circles outside it."
 
 [figure]
 case = "BC a diameter, with B in the greater segment ABC and D in the less segment ADC, as in Heath's figure"
@@ -71,11 +71,11 @@ note = "The figure at a glance finishes by adding the triangle's three angles. E
 
 [review]
 stage = "full"
-commit = "003a92058"
+commit = "689ab169f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:9bc76ab4d216634c"
-run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058"
-text = "sha256:56ac99f58cf457f9"
+run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
+text = "sha256:f9ed63844479d318"
 
 [review.items]
 statement = "pass"

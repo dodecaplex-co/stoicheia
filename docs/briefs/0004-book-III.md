@@ -183,6 +183,11 @@ rectilineal fact, where Euclid uses reductio; III.31's companions prove what he 
 manifest. No addition, ratio or motion of mixed angles is claimed. The representation
 and Heath's account of the quarrel over the horn-like angle are explained in the mishnah.
 
+**27 October 2026, correction.** III.16's companions now follow Euclid's reductio from the
+rectilineal fact, and its route is `euclid`. The sentence above that they argue directly,
+and the dated notes below that give the route as `modified`, describe the earlier proof;
+[III.16's record](../../review/III/16.toml) gives the route now.
+
 ## Circles and their centres
 
 **19 October 2026, step 6 complete.** These conventions replace the earlier convention
@@ -264,6 +269,10 @@ point of the straight line through two points of a circle is on the circle exact
 is one of them, and within it exactly when between them), before III.24, which uses it;
 and the meeting fact for an arc, `Prop25.meets`, beside III.25, whose companion uses it.
 
+**27 October 2026, correction.** III.24 no longer uses `Prop24.chord_cases` in its main
+proof. The lemma remains before it and is used by `Prop24.image`, after the theorem, for
+`Prop24.equalMeasure` and `Arc.congruent_iff`.
+
 **Book III's ground, before III.1, `Elements/BookIII/Squares.lean`**: `sq_pos` (the square
 on a straight line is something) and `BookI.Prop46.sq` (equal squares are on equal
 straight lines), for III.14 and III.37, which add I.3, I.4, I.28, I.34, I.46; and
@@ -274,6 +283,14 @@ in equal circles and of one kind, are one), which adds I.7; and, from stage 4,
 `Foot.exists` and `Foot.unique` (every straight line has one foot of the perpendicular
 from a point), which add I.12 and I.17. The file imports Book II's
 ground, so every proposition of Book III has `rect`, `sq` and `BookI.Prop47.sq`.
+
+**26 October 2026, `foot_between` (#477).** `foot_between` has moved, with its name and type,
+to a ground of its own after III.2, `Elements/BookIII/Feet.lean`, which III.14, III.15,
+III.35 and III.36 import. Its last step is Circle 1, and Circle 1 is to be proved after
+III.2, by the owner's decision of 25 October 2026
+([the entry for this move](../decisions/2026-10-25-circle-1-bookzero.md)); III.1 and III.2
+import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
+unchanged; the rest of `Squares.lean` stands as it says.
 
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
@@ -449,6 +466,13 @@ worth naming. The first mate's report has a note on every statement.
   that statement and proof are now its companion `Prop24.equalCircles`, shown as the
   alternative, and `Prop24.equalMeasure` gives the equal measures of congruent segments,
   which III.26 takes from III.24.
+
+  **27 October 2026, correction.** After the application III.24 now follows Euclid's
+  reductio: the applied segment lies on a circle through C and D (`Prop24.moved`),
+  III.23's companion keeps the image of E from falling within CFD or outside it, and
+  III.10, which the proof now cites as Heath's bracket has it, makes the two circles one.
+  The clause above on settling every point by the angles describes the earlier proof;
+  [III.24's record](../../review/III/24.toml) gives the route now.
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
   and his three cases: the centre beyond the segment, at `D`, or within it, as the angle
   `ABD` is greater than, equal to, or less than `BAD`. Since stage 4 of

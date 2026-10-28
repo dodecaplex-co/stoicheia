@@ -170,7 +170,9 @@ and since 26 October 2026 rest on neither, through the proved rules they use or 
 (below). The bridge through III.7
 and III.8 uses III.2 (`Prop2.within`) to order the points on the straight line through the
 centres, which `cut_point` takes from the rule. Circle 2 and Circle 3 are theorems since
-24 October 2026, proved after III.2, so no list can show them; no bridge uses either. All
+24 October 2026, and Circle 1 since 26 October 2026, all three proved after III.2, so no
+list can show them; no bridge uses Circle 2 or Circle 3, and five of the seven lists showed
+Circle 1 while it was an axiom. All
 seven bridge lists
 include `exists_centre`, and none reaches III.1: III.2 and III.8 take their centres from the
 rule (22 October 2026, #131). `centre_unique` is a theorem since axiom wave one, so no list
@@ -199,7 +201,6 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -252,7 +253,6 @@ info: 'Audit.III_6_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -305,7 +305,6 @@ info: 'Audit.III_11_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -358,7 +357,6 @@ info: 'Audit.III_13_today' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -411,7 +409,6 @@ info: 'Audit.cut_point' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -464,7 +461,6 @@ info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -517,7 +513,6 @@ info: 'Audit.within_point' depends on axioms: [propext,
  Elements.Tacit.area_eq_zero_of_on_line,
  Elements.Tacit.area_rotate,
  Elements.Tacit.between_cases,
- Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
@@ -563,9 +558,10 @@ the radius rule, and Postulate 3 enters through Metric 1, proved from the rule, 
 III.6, through `RuleProofs.Circle.length_pos` beneath `centre_inside`. So the pins
 show again that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq`. They
 check the names of these two declarations' axioms, and the build fails if an admitted proof
-(`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, proved after III.2,
-cannot appear here; the certificate shows that neither proof uses them, for neither cites
-III.2, as a use of either would make it.
+(`sorry`) enters. Circle 2 and Circle 3, theorems since 24 October 2026, and Circle 1, a
+theorem since 26 October 2026, all three proved after III.2, cannot appear here; the
+certificate shows that neither proof uses them, for neither cites III.2, as a use of any of
+them would make it.
 -/
 
 /--

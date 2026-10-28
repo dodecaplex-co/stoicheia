@@ -63,7 +63,7 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
   have hDE_DB : ‖D E‖ < ‖D B‖ := by
     by_cases hD_L : OnLine D L
     · exact Prop2.through_centre
-        (between_of_inside_chord hD_L hA_L hB_L (centre_inside hD) hA hB hAB)
+        (between_of_centre_chord hD_L hA_L hB_L hD hA hB hAB)
         hAEB hD_L hA_L hDA_DB
     have hDAB : Triangle D A B := Triangle.of_line hA_L hB_L hAB hD_L |>.cab
     have hDAE : Triangle D A E :=
@@ -179,8 +179,26 @@ theorem Prop2.sameSide {B C K : Point} {α : Circle}
 
 System E's Circle 2 and Circle 3 say what III.2 proves, so they are proved here, after
 it, under their own names, with Points 9 and Intersection 2, whose proofs used Circle 3
-and now take its step from III.2 itself. Nothing before III.2 may use them: a use cites
+and now take its step from III.2 itself, and with Circle 1, which III.2 gives with the
+order of three points on a straight line. Nothing before III.2 may use them: a use cites
 III.2. -/
+
+/-- A straight line through a point within a circle has that point between the points
+where it meets the circle (System E, Circle 1). We prove it from III.2, by `Prop2.within`:
+A is neither point, since it is within the circle and they are on it (Generalities 4), so
+one of the three is between the other two (Between 6); and were B or C between the others,
+it would be between a point on the circle and a point within it, and so within the circle,
+not on it. This was an assumption until 26 October 2026. -/
+theorem _root_.Elements.Tacit.between_of_inside_chord {A B C : Point} {L : Line}
+    {α : Circle} (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
+    (hAin : InsideCircle A α) (hBon : OnCircle B α) (hCon : OnCircle C α) (hBC : B ≠ C) :
+    Between B A C := by
+  have hBA : B ≠ A := fun e => inside_not_on hAin (e ▸ hBon)
+  have hAC : A ≠ C := fun e => inside_not_on hAin (e ▸ hCon)
+  rcases between_cases hBA hAC hBC hB hA hC with h | h | h
+  · exact h
+  · exact absurd hBon (inside_not_on (Prop2.within (Or.inl hAin) (Or.inr hCon) h))
+  · exact absurd hCon (inside_not_on (Prop2.within (Or.inr hBon) (Or.inl hAin) h))
 
 /-- Once a straight line has left a circle, it does not come back (System E, Circle 3):
 with A on or within the circle, and C, between A and B, not within it, B is outside the
