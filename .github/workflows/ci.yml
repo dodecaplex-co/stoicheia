@@ -107,10 +107,20 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Restore the Lean toolchains from an earlier run
+        # ~/.elan/toolchains, keyed on the files that name the toolchains, and saved after a
+        # job that passes: restored, the install downloads no toolchain (#594).
+        uses: actions/cache@v5
+        with:
+          path: ~/.elan/toolchains
+          key: lean-toolchains-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}
+
       - name: Install Lean (elan)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        # elan v4.2.4, checked against its release's SHA-256, then the toolchains that
+        # lean-toolchain and model/lean-toolchain name: from the cache, else by elan in three
+        # tries, else from GitHub's copy of the same file; lean --version must then say the
+        # version each names (scripts/install_lean.sh).
+        run: bash scripts/install_lean.sh
 
       - name: Install the pinned YAML parser the lane-condition check reads the workflows with
         # checks/24-lane-condition.toml runs a test of scripts/test_safe_push.py, which reads
@@ -178,11 +188,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Lean (elan)
+      - name: Restore the Lean toolchains from an earlier run
+        # As the check job restores them.
         if: steps.lane.outputs.full == 'true'
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        uses: actions/cache@v5
+        with:
+          path: ~/.elan/toolchains
+          key: lean-toolchains-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}
+
+      - name: Install Lean (elan)
+        # As the check job installs it.
+        if: steps.lane.outputs.full == 'true'
+        run: bash scripts/install_lean.sh
 
       - name: Build and compute the certificate
         if: steps.lane.outputs.full == 'true'
@@ -271,11 +288,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Lean (elan)
+      - name: Restore the Lean toolchains from an earlier run
+        # As the check job restores them.
         if: steps.lane.outputs.full == 'true'
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        uses: actions/cache@v5
+        with:
+          path: ~/.elan/toolchains
+          key: lean-toolchains-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}
+
+      - name: Install Lean (elan)
+        # As the check job installs it.
+        if: steps.lane.outputs.full == 'true'
+        run: bash scripts/install_lean.sh
 
       - name: Check the model was last brought up to date against the present lock of the axioms
         # model/lock.sha256 holds the sha256 of Certificate/axioms.lock, so any change to
@@ -351,10 +375,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Restore the Lean toolchains from an earlier run
+        # As the check job restores them.
+        uses: actions/cache@v5
+        with:
+          path: ~/.elan/toolchains
+          key: lean-toolchains-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'model/lean-toolchain') }}
+
       - name: Install Lean (elan)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        # As the check job installs it.
+        run: bash scripts/install_lean.sh
 
       - name: Identify main for this event
         # A reusable workflow keeps its caller's event. A queue group compares with
