@@ -34,19 +34,19 @@ meaning = "Straight lines through the centre are excluded by hypothesis, so the 
 
 [tag.mixed-angles-local]
 kind = "representation"
-meaning = "An angle contained by a straight line and a circumference (Definition III.7) is read as the region it opens near its vertex, and compared with a rectilineal angle placed at that vertex, along its straight arm and on its side, by containment near the vertex with whole small circles to spare: the comparisons use local containment of curved angular regions, and no general arithmetic or ratio theory of mixed angles is claimed, nor any motion of one (III.16, III.31)."
+meaning = "An angle contained by a straight line and a circumference (Definition III.7) is read as the region it opens near its vertex, and compared with a rectilineal angle placed at that vertex, along its straight arm and on its side, by containment near the vertex with whole small circles to spare: the comparisons use local containment of curved angular regions, and no general arithmetic or ratio theory of mixed angles is claimed, nor any motion of one (III.16, III.18, III.31)."
 
 [tag.touching-whole-circles]
 kind = "representation"
-meaning = "Circles touching one another are read of the whole circles: touching within, a point of the inner is within the outer, and no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+meaning = "Circles touching one another are read of the whole circles: touching within, a point of the inner is within the outer, and no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's. Beside it is defined the reading at the point of contact, which Heath prefers (`TouchesInternallyAt`, `TouchesExternallyAt`, `CirclesTouchAt`), and III.13's companions prove, for any two circles and any point, that each whole-circle definition holds exactly when its reading at the point does, so a statement may be read either way (III.6, III.11–III.13)."
 
 [tag.segment-with-circle]
 kind = "representation"
-meaning = "A segment is given as its whole circle, a straight line in it and one side of that line, so a statement given a segment is also given its circle (III.24, III.25)."
+meaning = "A segment is given as its whole circle, a straight line in it and one side of that line, so a statement given a segment is also given its circle (III.23–III.25, III.30, III.33, III.34)."
 
 [tag.angle-measure]
 kind = "representation"
-meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.26–III.30, both companions of III.24, and III.25's `Prop25.kind`)."
+meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.20's `Prop20.circumference`, both companions of III.24, III.25's `Prop25.kind`, and III.26–III.30)."
 badge = "in our measure of circumferences"
 
 [tag.angle-at-centre]
@@ -55,7 +55,7 @@ meaning = "The angle at the centre E standing on the circumference BKC is the an
 
 [tag.redundant-hypothesis]
 kind = "representation"
-meaning = "A hypothesis kept from Euclid's enunciation is not needed for the Lean conclusion, which holds without it; the proof may still use it, along Euclid's route (III.24, III.26, III.27)."
+meaning = "A hypothesis kept from Euclid's enunciation is made idle by our representation: the Lean conclusion, or a clause of it, holds without it, and the proof may still use it, along Euclid's route (III.24, III.27). A hypothesis of Euclid's that goes unused in his own argument as well as ours stays as he states it, with no tag, as III.8's that F, the more remote, lies on the concave circumference, and L on the convex."
 
 [tag.hypothesis-dropped]
 kind = "representation"
