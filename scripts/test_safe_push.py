@@ -971,7 +971,7 @@ WORKFLOW_CONTRACTS = {
             # The queue's offline cases, on every event, a merge group's among them: once the
             # queue is on, main's ruleset requires the check by its name there.
             "queue-tests": {
-                "runs-on": "ubuntu-latest", "timeout-minutes": 20, "steps": (
+                "runs-on": "ubuntu-latest", "timeout-minutes": 30, "steps": (
                     HISTORY, PYTHON, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
                     {"run": ("python3 -I tests/test_check_queue.py",
                              "python3 -I tests/test_check_train.py",

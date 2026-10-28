@@ -475,7 +475,7 @@ jobs:
     # judge, queue-integrity and queue-gaps, is .github/workflows/queue-judge.yml, which the
     # organization's ruleset runs from main (WORKFLOW, section 10, "The merge queue").
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:

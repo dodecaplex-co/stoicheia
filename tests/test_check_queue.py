@@ -553,6 +553,31 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
                      "harness's checks could not be read")
 
+    def test_a_harness_check_named_by_a_string_of_its_own_is_read(self):
+        # Main's safe_push.py names a check by EMPTY_CHECK, bound once, by a plain
+        # assignment of its top level, to a string (harness_value): read as a harness, it
+        # gives its names, that one among them. A name bound twice, conditionally, to a
+        # non-string, augmented, imported or not at all still refuses.
+        real = self.make([self.base], {"scripts/safe_push.py": (
+            SCRIPTS / "safe_push.py").read_text(encoding="utf-8")})
+        names = queue.harness_check_names(self.repo, real)
+        self.assertEqual(names, {f"4. {name}" for name, _ in (*queue.safe_push.CHECKS,
+                                                              *queue.safe_push.NEGATIVE)})
+        self.assertIn("4. git status --porcelain is empty", names)
+        lists = 'CHECKS = [("lake build", None), (EMPTY, None)]\nNEGATIVE = [("negative", None)]\n'
+        for label, binding in (
+                ("twice", 'EMPTY = "git status"\nEMPTY = "another"\n'),
+                ("twice, by one assignment", 'EMPTY = EMPTY = "git status"\n'),
+                ("conditionally", 'NOTE = "a note"\nif FLAG:\n    EMPTY = "git status"\n'),
+                ("to a non-string", "EMPTY = 4\n"),
+                ("augmented", 'EMPTY = "git status"\nEMPTY += " again"\n'),
+                ("imported", 'EMPTY = "git status"\nfrom checks import EMPTY\n'),
+                ("unbound", "")):
+            with self.subTest(label):
+                harness = self.make([self.base], {"scripts/safe_push.py": binding + lists})
+                with self.assertRaisesRegex(queue.Refused, "harness's checks could not be read"):
+                    queue.harness_check_names(self.repo, harness)
+
     def test_preflight_requires_passing_summary_and_full_steps(self):
         original = self.body()
         for body, message in (
@@ -2400,10 +2425,13 @@ class QueueTests(unittest.TestCase):
         # acceptance (--acceptance-run), so it has no cutoff of its own earlier than the
         # queue's status check timeout, 150 minutes from the group's start: the waiter's
         # deadline and the job's limit are that timeout too, and the job starts after the
-        # group does, so the queue's own timeout always binds first. The waiter ends at
-        # most one poll and one read (60 seconds) after acceptance ends. Acceptance's
-        # limit, 75 minutes of gap tests and 15 for runners fit in it, as before. To be
-        # measured again on the queue's trial (WORKFLOW, "Turning it on").
+        # group does. Acceptance's limit and 75 minutes of gap tests leave 15 for runners
+        # and the handover after acceptance ends, which is serial (a poll of a minute,
+        # then the reads and the download, each allowed 60 seconds): a group that ends
+        # near the timeout may be ejected at it (AcceptanceRunTests, the deadline passed
+        # during the handover). The poll is a minute for the token's limit of about 1,000
+        # requests an hour; the revert's wait keeps RUN_POLL. To be measured again on the
+        # queue's trial (WORKFLOW, "Turning it on").
         ci, judge = self.workflow("ci.yml")["jobs"], self.workflow("queue-judge.yml")["jobs"]
         status = 150
         self.assertEqual(ci["acceptance"]["timeout-minutes"], 60)
@@ -2411,6 +2439,7 @@ class QueueTests(unittest.TestCase):
         self.assertEqual(queue.ACCEPTANCE_WAIT, status * 60)
         self.assertEqual(judge["queue-gaps"]["timeout-minutes"], status)
         self.assertNotIn("needs", judge["queue-gaps"])
+        self.assertEqual(queue.ACCEPTANCE_POLL, 60)
         self.assertEqual(queue.RUN_POLL, 15)
         self.assertEqual(judge["queue-integrity"]["timeout-minutes"], 20)
         guide = " ".join((SCRIPTS.parent / "docs/WORKFLOW.md").read_text(
@@ -2726,9 +2755,9 @@ class QueueTests(unittest.TestCase):
 
 class AcceptanceRunTests(unittest.TestCase):
     """--acceptance-run, the design's section 4: each case through acceptance_run, GitHub
-    answering each read in turn and a clock that only sleeping moves on, or through the
-    command line with a fixture, whose zip is in base64. Each test names the predicate
-    of the four steps it holds."""
+    answering each read in turn and a clock that sleeping moves on, and a slow read where
+    a test says so, or through the command line with a fixture, whose zip is in base64.
+    Each test names the predicate of the four steps it holds."""
 
     HEAD = "0123456789abcdef" * 2 + "01234567"
 
@@ -2743,10 +2772,11 @@ class AcceptanceRunTests(unittest.TestCase):
                       "artifacts": answers["artifacts"][str(RUN)],
                       "artifact_zips": KEPT_REPORTS}
 
-    def waited(self, **changes):
+    def waited(self, took=None, **changes):
         """acceptance_run on HEAD, GitHub answering each kind at each of its reads in turn,
-        the last answer repeating: the sound answers, but for `changes`, each a list. The
-        verdicts or the error, the kinds read in order, and each sleep."""
+        the last answer repeating: the sound answers, but for `changes`, each a list. Each
+        read of a kind `took` names takes that many seconds of the clock. The verdicts or
+        the error, the kinds read in order, and each sleep."""
         answers = {kind: [answer] for kind, answer in self.sound.items()}
         answers.update(changes)
         reads, slept, now = [], [], [0.0]
@@ -2762,6 +2792,7 @@ class AcceptanceRunTests(unittest.TestCase):
                 else:
                     test.assertEqual(number, ARTIFACT if kind == "artifact_zips" else RUN)
                 given = answers[kind]
+                now[0] += (took or {}).get(kind, 0)
                 return copy.deepcopy(given[min(reads.count(kind), len(given)) - 1])
 
         def sleep(seconds):
@@ -2812,16 +2843,16 @@ class AcceptanceRunTests(unittest.TestCase):
         self.assertEqual(self.waited(artifact_zips=[full])[0], VERDICTS)
 
     def test_a_run_not_yet_begun_is_waited_for(self):
-        # Step 1's wait: read again every RUN_POLL seconds until the run is listed.
+        # Step 1's wait: read again every ACCEPTANCE_POLL seconds until the run is listed.
         found, reads, slept = self.waited(ci_runs=[self.listing("workflow_runs")] * 2
                                           + [self.sound["ci_runs"]])
-        self.assertEqual((found, reads.count("ci_runs"), slept), (VERDICTS, 3, [15, 15]))
+        self.assertEqual((found, reads.count("ci_runs"), slept), (VERDICTS, 3, [60, 60]))
 
     def test_no_run_by_the_deadline_refuses(self):
         # Step 1's deadline, ACCEPTANCE_WAIT, the queue's status check timeout.
         found, reads, slept = self.waited(ci_runs=[self.listing("workflow_runs")])
         self.refused(found, "no run of ci.yml for the group's head had begun after 150 minutes")
-        self.assertEqual((reads, slept), (["ci_runs"] * 601, [15] * 600))
+        self.assertEqual((reads, slept), (["ci_runs"] * 151, [60] * 150))
 
     def test_a_job_and_an_artifact_not_yet_there_are_waited_for(self):
         # Step 2's and step 3's waits: no acceptance job listed while the run goes on, then
@@ -2834,7 +2865,28 @@ class AcceptanceRunTests(unittest.TestCase):
         self.assertEqual(found, VERDICTS)
         self.assertEqual(reads, ["ci_runs", "jobs", "runs", "jobs", "jobs", "artifacts",
                                  "artifacts", "artifact_zips", "runs", "jobs", "artifacts"])
-        self.assertEqual(slept, [15, 15, 15])
+        self.assertEqual(slept, [60, 60, 60])
+
+    def test_a_deadline_passed_during_the_handover_refuses(self):
+        # The design's section 4, "Time", with the injected clock: acceptance ends two
+        # polls before the deadline, and the reads after it are slow, 55 seconds each of
+        # the reader's 60 (the artifacts, the zip, the run, the artifacts again; the jobs
+        # at once), so that the deadline passes during the handover: that refuses, failing
+        # closed, and names the deadline. With five polls to spare, the same handover
+        # passes. While the job is listed and running, each poll reads the jobs alone.
+        slow = {"artifacts": 55, "artifact_zips": 55, "runs": 55}
+        for spare, passes in ((2, False), (5, True)):
+            polls = queue.ACCEPTANCE_WAIT // 60 - spare
+            with self.subTest(spare=spare):
+                found, reads, slept = self.waited(took=slow, jobs=[
+                    self.listing("jobs", self.job(**self.RUNNING))] * polls + [self.sound["jobs"]])
+                self.assertEqual(reads, ["ci_runs", *["jobs"] * (polls + 1),
+                                         *self.SOUND_READS[2:]])
+                self.assertEqual(slept, [60] * polls)
+                if passes:
+                    self.assertEqual(found, VERDICTS)
+                else:
+                    self.refused(found, "the deadline, 150 minutes, passed during the handover")
 
     def test_two_runs_refuse(self):
         # Step 1's "exactly one" run.
@@ -2900,7 +2952,7 @@ class AcceptanceRunTests(unittest.TestCase):
         # Step 3's wait, against the one deadline.
         found, _, slept = self.waited(artifacts=[self.listing("artifacts")])
         self.refused(found, "the acceptance job's artifact had not been listed after 150 minutes")
-        self.assertEqual(slept, [15] * 600)
+        self.assertEqual(slept, [60] * 150)
 
     def test_two_artifacts_refuse(self):
         # Step 3's "exactly one".
@@ -2955,6 +3007,10 @@ class AcceptanceRunTests(unittest.TestCase):
                 ([("verdicts.json", VERDICTS), ("verdicts.json", b"{}")], "holds a name twice"),
                 ([("report.md", b"")], "holds no verdicts.json"))
             zips = [(artifact_zip(members), message) for members, message in cases]
+        # A name stored with a NUL, which zipfile itself would read as verdicts.json.
+        cut = artifact_zip([("report.md", b""), ("verdicts.jsonX", VERDICTS)])
+        zips.append((cut.replace(b"verdicts.jsonX", b"verdicts.json\0"),
+                     "holds a file the acceptance job does not keep: verdicts.json\\x00"))
         for data, message in zips:
             with self.subTest(message=message):
                 self.refused(self.waited(artifact_zips=[data])[0],

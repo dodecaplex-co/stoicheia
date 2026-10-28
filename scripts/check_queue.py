@@ -27,18 +27,20 @@ design: queue-gaps has contents, pull-requests, actions and issues read, and no 
 --acceptance-run finds, for queue-gaps, the verdicts of the acceptance job of the group's
 own CI run, which a job of another workflow cannot need. It reads GitHub alone, and each
 list whole: one page of at most 100 whose total_count is the number of items it gives.
-It reads, every RUN_POLL seconds until it is there, the one run of the --ci-workflow file
-of .github/workflows/ for the head on the merge group event, in this repository; then
-that run's jobs, each as its latest execution, until the one named acceptance has
-completed, which must have passed; then that run's artifacts named acceptance, until one
-is there: exactly one, unexpired, of that run and head, made within that job's
-execution, so that an earlier attempt's never counts. It downloads that artifact by its
-id and takes verdicts.json from it, refusing a zip that holds a path, a link, a name
-twice or a file the acceptance job does not keep (ACCEPTANCE_FILES). Then it reads the
-run, the job and the artifact again: any change, a re-run begun meanwhile among them,
-refuses. Only then does it write the verdicts to <dir>/verdicts.json, a new file. Its one
-deadline, ACCEPTANCE_WAIT, is the queue's status check timeout, so that the queue's own
-timeout binds first. The verdicts are the group's own, written by its ci.yml: --gaps
+It reads, every ACCEPTANCE_POLL seconds until it is there, the one run of the
+--ci-workflow file of .github/workflows/ for the head on the merge group event, in this
+repository; then that run's jobs, each as its latest execution, until the one named
+acceptance has completed, which must have passed; then that run's artifacts named
+acceptance, until one is there: exactly one, unexpired, of that run and head, made
+within that job's execution, so that an earlier attempt's never counts. It downloads
+that artifact by its id and takes verdicts.json alone from it, refusing a zip that holds
+a path, a link, a name twice or a file the acceptance job does not keep
+(ACCEPTANCE_FILES). Then it reads the run, the job and the artifact again: any change,
+the run's attempt among them (a re-run of any job begun meanwhile), refuses. Only then
+does it write the verdicts to <dir>/verdicts.json, a new file. Its one deadline,
+ACCEPTANCE_WAIT, is the queue's status check timeout, so that it cuts no group off before
+the queue's own timeout would; passed at any point, during the reads after the job ends
+among them, it refuses. The verdicts are the group's own, written by its ci.yml: --gaps
 reports them, and refuses only a changed proposition they give no items for.
 
 --tree checks the decisions page line by line (heading_problems): a line that could
@@ -214,9 +216,14 @@ KEPT = (ENTRIES, safe_push.DECISIONS)
 # long: the revert job is one of that run's own jobs.
 RUN_POLL = 15
 RUN_WAIT = 600
-# --acceptance-run reads again every RUN_POLL seconds for at most this long: the queue's
-# status check timeout, 150 minutes from the group's start (WORKFLOW, "Turning it on"),
-# so that it has no earlier cutoff than the queue's own, which always binds first.
+# --acceptance-run reads again this often, in seconds: a minute, since the token allows
+# about 1,000 requests an hour per repository and several groups may wait at once. It
+# waits for at most this long: the queue's status check timeout, 150 minutes from the
+# group's start (WORKFLOW, "Turning it on"), so that it has no earlier cutoff than the
+# queue's own. After acceptance ends the handover is serial (a poll, then the reads and
+# the download, each allowed 60 seconds), so a group that ends near the timeout may be
+# ejected at it; a deadline passed during the handover refuses.
+ACCEPTANCE_POLL = 60
 ACCEPTANCE_WAIT = 150 * 60
 # The job of CI that checks the acceptance checklist, and the artifact it keeps; and the
 # files it keeps there (ci.yml, "Keep the reports"): its report and verdicts and, in the
@@ -605,11 +612,29 @@ def harness_tree(repo: Path, harness_commit: str) -> ast.Module:
         raise Refused("pre-flight: the recorded harness could not be read") from None
 
 
+def harness_value(tree: ast.Module, name: str) -> ast.expr | None:
+    """What the harness's `name` is bound to, read by ast: by one plain assignment of its
+    top level, and by nothing else anywhere in it (a second or conditional binding, an
+    augmented one, an import or a definition); else None."""
+    binds = [node for node in ast.walk(tree)
+             if isinstance(node, ast.Name) and node.id == name
+             and not isinstance(node.ctx, ast.Load)
+             or str(getattr(node, "name", None)).split(".")[0] in (name, "*")
+             or name in (getattr(node, "asname", None), getattr(node, "rest", None))
+             or name in getattr(node, "names", ())]
+    if len(binds) == 1:
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and binds[0] in node.targets:
+                return node.value
+    return None
+
+
 def harness_check_names(repo: Path, harness_commit: str) -> set[str]:
     """The names of the full checks the harness at `harness_commit` runs: its CHECKS and
     NEGATIVE lists, read from its source by ast (never run), so that a train pre-flighted
     before a check was added is judged by the checks its harness had, and a group's own
-    harness never decides what its pre-flight needed."""
+    harness never decides what its pre-flight needed. Each name is a string constant, or
+    a name of the harness bound to one, as harness_value reads it (EMPTY_CHECK, say)."""
     tree = harness_tree(repo, harness_commit)
     names: dict[str, list[str]] = {}
     for node in tree.body:
@@ -620,11 +645,12 @@ def harness_check_names(repo: Path, harness_commit: str) -> set[str]:
                 raise Refused("pre-flight: the recorded harness's checks could not be read")
             found = []
             for elt in node.value.elts:
-                if not (isinstance(elt, ast.Tuple) and elt.elts
-                        and isinstance(elt.elts[0], ast.Constant)
-                        and isinstance(elt.elts[0].value, str)):
+                first = elt.elts[0] if isinstance(elt, ast.Tuple) and elt.elts else None
+                if isinstance(first, ast.Name):
+                    first = harness_value(tree, first.id)
+                if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
                     raise Refused("pre-flight: the recorded harness's checks could not be read")
-                found.append(elt.elts[0].value)
+                found.append(first.value)
             names[node.targets[0].id] = found
     if set(names) != {"CHECKS", "NEGATIVE"} or not all(names.values()):
         raise Refused("pre-flight: the recorded harness's checks could not be read")
@@ -1097,13 +1123,14 @@ def acceptance_verdicts(data) -> bytes:
     """verdicts.json, from the acceptance artifact's zip. It may hold only files the
     acceptance job keeps (ACCEPTANCE_FILES), each once, named alone and regular: a path,
     a link or another file that is not regular, a name twice or any other file refuses.
-    A zip that cannot be read is unreadable."""
+    Each name is read as the zip stores it, before zipfile cuts it at a NUL. A zip that
+    cannot be read is unreadable."""
     if not isinstance(data, bytes):
         raise ValueError("GitHub: could not read the acceptance artifact")
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             members = archive.infolist()
-            names = [member.filename for member in members]
+            names = [member.orig_filename for member in members]
             if any("/" in name or "\\" in name or name in ("", ".", "..") for name in names):
                 raise Refused("acceptance: the artifact holds a path, where only a file's "
                               "name may stand")
@@ -1128,13 +1155,14 @@ def acceptance_run(api: GitHub, head: str, workflow: str, sleep=time.sleep,
     """The verdicts of the acceptance job of the group's CI run, the run of `workflow` for
     `head` (the module's docstring, --acceptance-run), in four steps: the run, the job,
     the artifact and its download, and the second reading. Each wait reads again every
-    RUN_POLL seconds, against one deadline, ACCEPTANCE_WAIT from the start."""
+    ACCEPTANCE_POLL seconds, against one deadline, ACCEPTANCE_WAIT from the start, which
+    holds to the end: passed during the handover, it refuses."""
     deadline = clock() + ACCEPTANCE_WAIT
 
     def wait(what: str) -> None:
         if clock() >= deadline:
             raise Refused(f"acceptance: {what} after {ACCEPTANCE_WAIT // 60} minutes")
-        sleep(RUN_POLL)
+        sleep(ACCEPTANCE_POLL)
 
     # 1. The run: exactly one, read whole. A rebuilt group has a new head, so an earlier
     # group's run never matches.
@@ -1157,7 +1185,8 @@ def acceptance_run(api: GitHub, head: str, workflow: str, sleep=time.sleep,
         return status
 
     # 2. The job, until it completes. While none is listed, the run is read again: one
-    # that has completed without it refuses.
+    # that has completed without it refuses. While it is listed and running, the jobs
+    # alone are read, once a poll.
     while True:
         job = acceptance_job(api.read("jobs", run_id), run_id, attempt)
         if job is None:
@@ -1184,6 +1213,9 @@ def acceptance_run(api: GitHub, head: str, workflow: str, sleep=time.sleep,
             or acceptance_artifact(api.read("artifacts", run_id), run_id, head, job) != artifact:
         raise Refused(f"acceptance: the CI run {run_id}'s acceptance job or its artifact "
                       "changed while the artifact was read (a re-run begun meanwhile)")
+    if clock() >= deadline:
+        raise Refused(f"acceptance: the deadline, {ACCEPTANCE_WAIT // 60} minutes, passed "
+                      "during the handover after the acceptance job ended")
     print(f"acceptance: run {run_id}, attempt {attempt}: job {job['id']} passed; artifact "
           f"{artifact['id']} read, and the run, the job and the artifact read again",
           flush=True)

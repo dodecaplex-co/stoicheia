@@ -1668,8 +1668,10 @@ keep merge commits and enable "only merge non-failing pull requests"; require `c
 set the queue's status check timeout to 150 minutes: `acceptance`'s limit of 60 minutes,
 then `queue-gaps`' testing, up to 75, which starts only once `acceptance` ends, and 15 for
 waiting on runners. `queue-gaps` starts with the group and waits for `acceptance` with no
-earlier limit of its own than those 150 minutes, so the status check timeout is the one
-that binds. `queue-gaps` may run the tests of `safe_push.py`, `check_queue.py` and
+earlier limit of its own than those 150 minutes, so the status check timeout binds, as
+before; but the handover after `acceptance` ends (a poll of up to a minute, then a few
+reads and the download) is not the runner wait it replaces, so a group that ends at the
+very edge of the timeout may now be ejected there. `queue-gaps` may run the tests of `safe_push.py`, `check_queue.py` and
 `check_train.py` in one group, near 40 minutes as measured off GitHub, and its choosing
 step, like `queue-integrity` (limit 20 minutes), may wait up to 10 minutes for a
 revert's run to complete before it judges the revert (above): a shorter timeout ejects

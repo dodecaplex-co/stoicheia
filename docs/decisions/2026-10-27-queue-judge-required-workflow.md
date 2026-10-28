@@ -68,17 +68,31 @@
   in the owner's steps: that main's copy runs there too, that a group whose own copy
   passes while main's fails is held, and the rest.
 
+  A defect found on the way, already on main: the judge reads the names of the checks a
+  pre-flight's harness runs from that harness's `CHECKS` and `NEGATIVE` lists, as string
+  constants only, and main's `safe_push.py` names one entry by a constant,
+  `EMPTY_CHECK`, so main's judge refused every full pre-flight that main's own harness
+  records. It now reads a name bound once, at the harness's top level, by a plain
+  assignment, to a string; anything else still refuses. Without it, no legitimate group
+  could pass the queue's trial.
+
   This entry approves the new `.github/workflows/queue-judge.yml`, the queue's judge as
   above.
 
   This entry approves the change to `.github/workflows/ci.yml`, which loses `queue-gaps`
-  and the judging step of `queue-integrity`, renamed `queue-tests`.
+  and the judging step of `queue-integrity`, renamed `queue-tests`, whose offline cases
+  now run on merge groups too, where it is required by name, with a limit of 30 minutes.
 
   This entry approves the change to `.github/workflows/post-merge.yml`, whose opening
   comment now says where the queue's judge runs.
 
   This entry approves the change to `scripts/check_queue.py`, which gains
-  `--acceptance-run` and maps the new workflow to its tests.
+  `--acceptance-run`, maps the new workflow to its tests, and reads a harness's check
+  named by a constant.
+
+  This entry approves the change to `tests/test_auto_revert.py`, whose test that the
+  queue does not pass when acceptance failed or was skipped now tests it through
+  `--acceptance-run`, the step it read having moved.
 
   This entry approves the change to `tests/test_check_queue.py`, whose tests of the
   judge's steps read the new workflow, and which gains the planted cases, the tests of
