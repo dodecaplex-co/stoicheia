@@ -110,29 +110,38 @@ theorem Prop1.equal_adjacent {A B D G : Point} (hDAG : Triangle D A G)
   (BookI.Prop8 hDAG hDBG hDA_DB rfl (by rw [len_symm A G, len_symm B G, hGA_GB])).trans
     (angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm)
 
-/-- Euclid's construction for III.1 receives a circle and two points A, B of it, with no
-centre supplied. AB is bisected at D; DC is drawn at right angles to AB and through to E;
-and CE is bisected at F. The rule `exists_centre` supplies a centre only inside the proof
-that D is within the circle, by `Prop1.within`. That centre supplies none of the points
-returned here. The construction returns both right angles ADC and BDC and that C is off
-AB; the proof that F is the centre follows in `Prop1`. -/
-theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
-    (hB : OnCircle B ABC) (hAB : A ≠ B) :
-    ∃ F C D E : Point, Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧
-      OnCircle E ABC ∧ Between C D E ∧ ∠ A D C = ∟ ∧ ∠ B D C = ∟ ∧ ¬ Collinear A B C ∧
-      Between C F E ∧ ‖C F‖ = ‖F E‖ := by
+/-- D must be within the circle before the perpendicular through it can be produced to
+the circumference. This is the unproved obligation in the construction without a chosen
+centre. `Prop1.within` proves it from a given centre, but obtaining that centre from
+`exists_centre` would restore the construction's former dependence on that witness.
+III.2 cannot supply the step: it obtains its centre from III.1. -/
+theorem Prop1.midpoint_inside {A B D : Point} {ABC : Circle} (hA : OnCircle A ABC)
+    (hB : OnCircle B ABC) (hADB : Between A D B) (hAD : ‖A D‖ = ‖D B‖) :
+    InsideCircle D ABC := by
+  sorry
+
+/-- From an interior point D of AB, draw DC at right angles to AB [I.11] and produce
+it through to E (Intersections 5). This step receives the interior-point evidence;
+it neither chooses a centre nor bisects CE. -/
+theorem Prop1.perpendicular_chord {A B D : Point} {ABC : Circle}
+    (hADB : Between A D B) (hD_in : InsideCircle D ABC) :
+    ∃ C E : Point, OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧
+      ∠ A D C = ∟ ∧ ∠ B D C = ∟ ∧ ¬ Collinear A B C := by
+  have hAB : A ≠ B := ne_of_between_ends hADB
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
-  obtain ⟨D, hADB, hAD⟩ := BookI.Prop10 hAB
   have hD_L := on_line_of_between_ends hADB hA_L hB_L
   obtain ⟨Q, hQ, -⟩ := exists_off_line hAB []
   obtain ⟨X, hXQ, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hD_L⟩ hQ
-  have hD_in : InsideCircle D ABC := (exists_centre ABC).elim fun G hG => Prop1.within hG hA hB hADB hAD
   have hX_L : ¬ OnLine X L := hXQ.triangle.off_line hA_L hB_L
   have hDX : D ≠ X := fun e => hX_L (e ▸ hD_L)
   obtain ⟨N, hD_N, hX_N⟩ := Postulate1 D X hDX
-  obtain ⟨E, hE, hE_N, hEDX⟩ := line_circle_beyond hD_in hD_N hX_N hDX.symm
-  obtain ⟨C, hC, hC_N, hCDE⟩ := line_circle_beyond hD_in hD_N hE_N (ne_of_between hEDX)
-  have hCray : OnRay C D X := OnRay.of_between_between hEDX (between_symm hCDE)
+  /- Produce XD beyond D so Intersections 5 finds C on the ray DX first. Then
+     produce CD beyond D to meet the circle at E. -/
+  obtain ⟨Y, hY_N, hXDY, -⟩ := Postulate2 hX_N hD_N hDX.symm []
+  obtain ⟨C, hC, hC_N, hCDY⟩ :=
+    line_circle_beyond hD_in hD_N hY_N (ne_of_between (between_symm hXDY))
+  have hCray : OnRay C D X :=
+    OnRay.of_between_between (between_symm hXDY) (between_symm hCDY)
   have hDA : D ≠ A := (ne_of_between hADB).symm
   have hDB : D ≠ B := (ne_of_between (between_symm hADB)).symm
   have hADC : ∠ A D C = ∟ := by
@@ -141,11 +150,27 @@ theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
   have hBDC : ∠ B D C = ∟ := by
     rw [angle_onRay_right hCray hDB.symm]
     exact hX B ⟨L, hA_L, hB_L, hB_L⟩ hDB.symm
+  obtain ⟨E, hE, -, hEDC⟩ := line_circle_beyond hD_in hD_N hC_N (ne_of_between hCDY)
+  have hCDE : Between C D E := between_symm hEDC
   have hCD : C ≠ D := ne_of_between hCDE
   have hC_L : ¬ OnLine C L := fun h => hX_L ((line_unique hCD hC_N hD_N h hD_L) ▸ hX_N)
+  exact ⟨C, E, hC, hE, hCDE, hADC, hBDC, Triangle.of_line hA_L hB_L hAB hC_L⟩
+
+/-- Euclid's construction for III.1 receives a circle and two points A, B of it.
+AB is bisected at D [I.10]; DC is drawn at right angles to AB and through to E;
+and CE is bisected at F [I.10]. Its interior-point obligation is isolated in
+`Prop1.midpoint_inside`, still unproved without choosing a centre. The same three
+steps appear separately under Heath's sentences in `Prop1`. -/
+theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
+    (hB : OnCircle B ABC) (hAB : A ≠ B) :
+    ∃ F C D E : Point, Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧
+      OnCircle E ABC ∧ Between C D E ∧ ∠ A D C = ∟ ∧ ∠ B D C = ∟ ∧ ¬ Collinear A B C ∧
+      Between C F E ∧ ‖C F‖ = ‖F E‖ := by
+  obtain ⟨D, hADB, hAD⟩ := BookI.Prop10 hAB
+  obtain ⟨C, E, hC, hE, hCDE, hADC, hBDC, hC_AB⟩ :=
+    Prop1.perpendicular_chord hADB (Prop1.midpoint_inside hA hB hADB hAD)
   obtain ⟨F, hCFE, hCF⟩ := BookI.Prop10 (ne_of_between_ends hCDE)
-  exact ⟨F, C, D, E, hADB, hAD, hC, hE, hCDE, hADC, hBDC, Triangle.of_line hA_L hB_L hAB hC_L,
-    hCFE, hCF⟩
+  exact ⟨F, C, D, E, hADB, hAD, hC, hE, hCDE, hADC, hBDC, hC_AB, hCFE, hCF⟩
 
 /-- To find the centre of a given circle. -/
 theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
@@ -156,11 +181,12 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
   -- thus it is required to find the centre of the circle ABC.
   -- Let a straight line AB be drawn through it at random, and let it be bisected at the point
   -- D;
+  obtain ⟨D, hADB, hAD⟩ := BookI.Prop10 hAB
   -- from D let DC be drawn at right angles to AB and let it be drawn through to E;
+  obtain ⟨C, E, hC, hE, hCDE, hADC, hBDC, hC_AB⟩ :=
+    Prop1.perpendicular_chord hADB (Prop1.midpoint_inside hA hB hADB hAD)
   -- let CE be bisected at F;
-  /- The three construction sentences are carried together by `Prop1.construction`. -/
-  obtain ⟨F, C, D, E, hADB, hAD, hC, hE, hCDE, hADC, hBDC, hC_AB, hCFE, hCF⟩ :=
-    Prop1.construction hA hB hAB
+  obtain ⟨F, hCFE, hCF⟩ := BookI.Prop10 (ne_of_between_ends hCDE)
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   have hD_L := on_line_of_between_ends hADB hA_L hB_L
   have hCD : C ≠ D := ne_of_between hCDE
@@ -170,57 +196,67 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
   have hDB : D ≠ B := (ne_of_between (between_symm hADB)).symm
   have hC_L : ¬ OnLine C L := (show Triangle A B C from hC_AB).off_line hA_L hB_L
   -- I say that F is the centre of the circle ABC.
-  -- For suppose it is not, but, if possible, let G be the centre,
-  obtain ⟨G, hG⟩ := exists_centre ABC
-  have hG_N : OnLine G N := by
-    refine Classical.byContradiction fun hG_N => ?_
-    -- and let GA, GD, GB be joined.
-    /- A centre on AB would be its middle point D, already on CE. We set that case aside, so
-       that DAG and DBG are triangles for I.8. -/
-    have hG_L : ¬ OnLine G L := fun hG_L =>
-      hG_N ((Prop1.middle hADB hAD
-        (between_of_centre_chord hG_L hA_L hB_L hG hA hB hAB)
-        (by rw [len_symm A G, Definition15 hG hA hB])) ▸ hD_N)
-    have hDAG : Triangle D A G := Triangle.of_line hD_L hA_L hDA hG_L
-    have hDBG : Triangle D B G := Triangle.of_line hD_L hB_L hDB hG_L
-    -- Then, since AD is equal to DB,
-    have hDA_DB : ‖D A‖ = ‖D B‖ := by rw [len_symm D A, hAD]
-    -- and DG is common,
-    -- the two sides AD, DG are equal to the two sides BD, DG respectively;
-    -- and the base GA is equal to the base GB, for they are radii;
-    have hGA_GB : ‖G A‖ = ‖G B‖ := Definition15 hG hA hB
-    -- therefore the angle ADG is equal to the angle GDB. [I. 8]
-    have h8 : ∠ A D G = ∠ G D B :=
-      Prop1.equal_adjacent hDAG hDBG hDA_DB hGA_GB
-    -- But, when a straight line set up on a straight line makes the adjacent angles equal to one
-    -- another, each of the equal angles is right; [I. Def. 10]
-    /- Definition I.10 makes each of the equal adjacent angles right, and Postulate 4
-       makes it `∟`, as in I.11. -/
-    have hADG : ∠ A D G = ∟ := Postulate4 ⟨B, hADB, hDAG.bac, h8⟩
-    -- therefore the angle GDB is right.
-    have hGDB : ∠ G D B = ∟ := h8 ▸ hADG
-    -- But the angle FDB is also right;
-    /- If AB passes through the centre, F is D and there is no angle FDB. We take in its
-       place the angle CDB, right by construction. -/
-    have hCDB : ∠ C D B = ∟ :=
-      (angle_symm hCD hDB.symm).trans hBDC
-    -- therefore the angle FDB is equal to the angle GDB, the greater to the less: which is
-    -- impossible.
-    have hDBC : Triangle D B C := Triangle.of_line hD_L hB_L hDB hC_L
-    obtain ⟨M, hD_M, hC_M, hG_M⟩ := Prop1.perpendicular hDBC.bac hDBG.bac
-      ((angle_symm hDB.symm hCD).trans hCDB)
-      ((angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm).trans hGDB)
-    exact hG_N ((line_unique hCD hC_M hD_M hC_N hD_N) ▸ hG_M)
-  -- Therefore G is not the centre of the circle ABC.
-  -- Similarly we can prove that neither is any other point except F.
+  have hF : Centre F ABC := by
+    -- For suppose it is not, but, if possible, let G be the centre,
+    apply Classical.byContradiction
+    intro hF
+    /- Definitions I.15 and I.16 presuppose a centre of the given circle. Under the
+       supposition that F is not it, that centre G differs from F. This supplies the
+       reductio's witness, not the point returned by the construction. -/
+    obtain ⟨G, hG⟩ := exists_centre ABC
+    have hGF : G ≠ F := fun e => hF (e ▸ hG)
+    have hG_N : OnLine G N := by
+      refine Classical.byContradiction fun hG_N => ?_
+      -- and let GA, GD, GB be joined.
+      /- A centre on AB would be its middle point D, already on CE. We set that case aside, so
+         that DAG and DBG are triangles for I.8. -/
+      have hG_L : ¬ OnLine G L := fun hG_L =>
+        hG_N ((Prop1.middle hADB hAD
+          (between_of_centre_chord hG_L hA_L hB_L hG hA hB hAB)
+          (by rw [len_symm A G, Definition15 hG hA hB])) ▸ hD_N)
+      have hDAG : Triangle D A G := Triangle.of_line hD_L hA_L hDA hG_L
+      have hDBG : Triangle D B G := Triangle.of_line hD_L hB_L hDB hG_L
+      -- Then, since AD is equal to DB,
+      have hDA_DB : ‖D A‖ = ‖D B‖ := by rw [len_symm D A, hAD]
+      -- and DG is common,
+      -- the two sides AD, DG are equal to the two sides BD, DG respectively;
+      -- and the base GA is equal to the base GB, for they are radii;
+      have hGA_GB : ‖G A‖ = ‖G B‖ := Definition15 hG hA hB
+      -- therefore the angle ADG is equal to the angle GDB. [I. 8]
+      have h8 : ∠ A D G = ∠ G D B :=
+        Prop1.equal_adjacent hDAG hDBG hDA_DB hGA_GB
+      -- But, when a straight line set up on a straight line makes the adjacent angles equal to one
+      -- another, each of the equal angles is right; [I. Def. 10]
+      /- Definition I.10 makes each of the equal adjacent angles right, and Postulate 4
+         makes it `∟`, as in I.11. -/
+      have hADG : ∠ A D G = ∟ := Postulate4 ⟨B, hADB, hDAG.bac, h8⟩
+      -- therefore the angle GDB is right.
+      have hGDB : ∠ G D B = ∟ := h8 ▸ hADG
+      -- But the angle FDB is also right;
+      /- If AB passes through the centre, F is D and there is no angle FDB. We take in its
+         place the angle CDB, right by construction. -/
+      have hCDB : ∠ C D B = ∟ :=
+        (angle_symm hCD hDB.symm).trans hBDC
+      -- therefore the angle FDB is equal to the angle GDB, the greater to the less: which is
+      -- impossible.
+      have hDBC : Triangle D B C := Triangle.of_line hD_L hB_L hDB hC_L
+      obtain ⟨M, hD_M, hC_M, hG_M⟩ := Prop1.perpendicular hDBC.bac hDBG.bac
+        ((angle_symm hDB.symm hCD).trans hCDB)
+        ((angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm).trans hGDB)
+      exact hG_N ((line_unique hCD hC_M hD_M hC_N hD_N) ▸ hG_M)
+    -- Therefore G is not the centre of the circle ABC.
+    /- The centre lies between C and E, since either other order would make one of its
+       radii a part of the other (`between_of_centre_chord`). Its equal radii
+       make it the middle point F, the step Heath says Euclid takes for granted
+       (vol. 2, p. 8). -/
+    have hCGE := between_of_centre_chord hG_N hC_N hE_N hG hC hE (ne_of_between_ends hCDE)
+    have hmiddle : G = F :=
+      Prop1.middle hCFE hCF hCGE (by rw [len_symm C G, Definition15 hG hC hE])
+    -- Similarly we can prove that neither is any other point except F.
+    /- Nothing in this contradiction restricted the centre G supplied by the definition. -/
+    exact hGF hmiddle
   -- Therefore the point F is the centre of the circle ABC.
-  /- The centre lies between C and E, since either other order would make one of its
-     radii a part of the other (`between_of_centre_chord`). Its equal radii
-     make it the middle point F, the step Heath says Euclid takes for granted
-     (vol. 2, p. 8). -/
-  have hCGE := between_of_centre_chord hG_N hC_N hE_N hG hC hE (ne_of_between_ends hCDE)
-  obtain rfl : G = F := Prop1.middle hCFE hCF hCGE (by rw [len_symm C G, Definition15 hG hC hE])
-  exact ⟨G, C, D, E, hG, hADB, hAD, hC, hE, hCDE, hADC, hCFE, hCF⟩
+  exact ⟨F, C, D, E, hF, hADB, hAD, hC, hE, hCDE, hADC, hCFE, hCF⟩
   -- PORISM. From this it is manifest that, if in a circle a straight line cut a straight line
   -- into two equal parts and at right angles, the centre of the circle is on the cutting
   -- straight line.
