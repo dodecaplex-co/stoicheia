@@ -5,6 +5,7 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Prop12
 import Elements.BookI.Prop47
 import Elements.BookII.Prop05
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop03
 
 /-!

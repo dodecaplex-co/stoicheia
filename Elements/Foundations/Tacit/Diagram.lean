@@ -11,7 +11,7 @@ of System E, §3.4 (Avigad, Dean and Mumma, 2009). Each retained assumption is a
 axiom: most rules say one thing. Between 1 says four, and was four axioms; two of
 them, `between_symm` and `not_between_of_between`, remain, and the other two are proved.
 Generalities 2 and Triple incidence 3 are proved in `Elements.Figure.Circles`; Circle 4 is
-proved after I.7 in `Elements.BookI.Prop07`; and Circle 2, Circle 3, Points 9 and
+proved after I.7 in `Elements.BookI.Prop07`; and Circle 1, Circle 2, Circle 3, Points 9 and
 Intersection 2 are proved after III.2 in `Elements.BookIII.Prop02`.
 
 In one place we follow LeanEuclid's correction of the published rules:
@@ -74,13 +74,10 @@ axiom pasch2 (h : Between A B C) (hA : OnLine A L) (hB : ¬ OnLine B L) : SameSi
 
 Three straight lines through one point A divide the plane into six regions. -/
 
-/-! ## Circles -/
+/-! ## Circles
 
-/-- A straight line through a point inside a circle has that point between the
-points where it meets the circle. (Circle 1) -/
-axiom between_of_inside_chord (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
-    (hAin : InsideCircle A α) (hBon : OnCircle B α) (hCon : OnCircle C α) (hBC : B ≠ C) :
-    Between B A C
+System E's four rules about circles are all proved: Circle 4 after I.7, and Circle 1,
+Circle 2 and Circle 3 after III.2. -/
 
 /-! ## Intersection rules -/
 

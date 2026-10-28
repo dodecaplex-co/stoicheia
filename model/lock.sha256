@@ -159,4 +159,11 @@
 # generator writes its law, Model/Laws/circles.lean translates it by hand, Check/Circles.lean
 # compares that translation with the library's declaration and with the generated law, and
 # Model/Assembly.lean gathers Euclidean.radius_ne_zero, proved in Model/Euclidean/CircleBasics.lean.
-14c6fbccbbc751909a65cb6c2a299e69a22b93b69f9d07e07903ccdd8f407733  Certificate/axioms.lock
+#
+# Renewed on 26 October 2026, when Circle 1, Tacit.between_of_inside_chord, became a
+# theorem, proved after III.2 by the owner's decision of 25 October 2026 (#477): the lock
+# loses its line, 48 axioms with 268 words of vocabulary; every other axiom and every word
+# is unchanged, byte for byte. Its law leaves the generated translation, Check/ compares its
+# hand translations with the theorem's type directly, and the generator writes 48 laws,
+# which Model/Assembly.lean gathers.
+eb108425cdf0acaee7d08a62af018aa84f2941877f98f10144bf17b1c15e0fe5  Certificate/axioms.lock
