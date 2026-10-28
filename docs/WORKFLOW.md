@@ -491,7 +491,7 @@ run on their own, each in isolation: CI's `risk`, which classifies the change (b
 `negative`, `model`, `formal-model`, `acceptance` and `queue-tests`, more of CI's on
 each pull request, `negative` and `formal-model` of them by the class `risk` gives; the
 queue's judge, `queue-integrity` and `queue-gaps`, in a workflow of its own that the
-organization's ruleset runs from main (section 10, "The merge queue"); and
+organization's ruleset is to run from main (section 10, "The merge queue"); and
 on a cadence, in the `safe-push-tests` workflow (below), the shards of `safe-push-shards`
 and the `safe-push-tests` job, which gives the verdict on them, and `negative-tests` and
 `formal-model-kernel`, which run on main the commands of CI's `negative` and
@@ -731,23 +731,23 @@ python3 -I tests/test_check_train.py
 python3 -I tests/test_auto_revert.py
 ```
 
-On a merge group, the `queue-integrity` job of `.github/workflows/queue-judge.yml` is
-the queue's judge: it takes `scripts/` from the group's base and runs that
-`check_queue.py` with the event's head, base and repository, running none of the group's
-scripts and building and rendering nothing; it installs nothing, so the Python that runs
-it holds nothing a group names. The organization's ruleset runs main's copy
-of that file, never the group's (section 10, "The merge queue"). Its `queue-gaps` job
-waits, with main's `check_queue.py --acceptance-run`, for the group's CI run to finish
-`acceptance`, and reads that job's verdicts; then it chooses the tests of what the group
-changes in a step that holds the job's token, to read GitHub, and runs none of them
-(`--gaps --plan`); its last step, which holds no token, runs them (`--run-plan`).
-Section 10 gives the rules. The `check` job renders the same group and checks the pages
-are current, and its `check_queue.py --tree .` step, which the pre-flight runs too,
-checks the decisions page line by line as section 10's rule (d) describes; conflict
-markers in tracked text are S23's, in `scripts/check_style.py`. The train and queue
-checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38, its
-`--merge-base` in 2.40 and `--attr-source` in 2.42); with an older Git they refuse every
-train and group as unreadable.
+On a merge group, the `queue-integrity` job of `.github/workflows/queue-judge.yml` is the
+queue's judge: it takes `scripts/` from the group's base and runs that `check_queue.py`
+with the event's head, base and repository, running none of the group's scripts and
+building and rendering nothing; it installs nothing, so the Python that runs it holds
+nothing a group names. The organization's ruleset is to run main's copy of that file,
+never the group's, once the owner imports it and the trial shows it on a group (section
+10, "The merge queue"). Its `queue-gaps` job waits, with main's `check_queue.py
+--acceptance-run`, for the group's CI run to finish `acceptance`, and reads that job's
+verdicts; then it chooses the tests of what the group changes in a step that holds the
+job's token, to read GitHub, and runs none of them (`--gaps --plan`); its last step,
+which holds no token, runs them (`--run-plan`). Section 10 gives the rules. The `check`
+job renders the same group and checks the pages are current, and its `check_queue.py
+--tree .` step, which the pre-flight runs too, checks the decisions page line by line as
+section 10's rule (d) describes; conflict markers in tracked text are S23's, in
+`scripts/check_style.py`. The train and queue checks need Git 2.42 or later (`merge-tree
+--write-tree` came in 2.38, its `--merge-base` in 2.40 and `--attr-source` in 2.42); with
+an older Git they refuse every train and group as unreadable.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
