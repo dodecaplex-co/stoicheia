@@ -1,14 +1,14 @@
-# commit: 442989248536c1a64c0cd47dea59930867865f33 (harness files as committed)
-# harness: fab1bb768c2ffafbe64e2370e6a82f23ddedec6705a87d3629c3d44ccb4bc2b7
+# commit: d8c835de5cda8f3d77c6f2d6a1457fe3a7f7a2c8 (harness files as committed)
+# harness: dd6848493582c0fb7a4bd1ae73e99e9733743a5fa6d57751b374e1fadecd334b
 # python: 3.14.2 (CPython, Darwin arm64)
-# date: 2026-10-25
+# date: 2026-10-27
 
-configurations meeting an axiom's hypotheses in the plane: 4,098,108
-  search-seed1: 406,079
-  search-seed2: 406,058
-  search-seed3: 405,538
-  exhaustive: 2,247,172
-  structured: 633,261
+configurations meeting an axiom's hypotheses in the plane: 4,063,299
+  search-seed1: 408,083
+  search-seed2: 408,046
+  search-seed3: 407,697
+  exhaustive: 2,243,944
+  structured: 595,529
 counterexamples in the plane: 0; mutations caught: 15 of 15
 
 Axiom                               Search, seeds 1-3  Exhaustive  Structured             Hyperbolic
@@ -40,30 +40,30 @@ Tacit.between_cases                            16,420         912           ·  
 Tacit.not_on_line_of_same_side                    315      45,192           ·                  4,389
 Tacit.same_side_trans                             211     724,792      33,327                  5,113
 Tacit.pasch2                                      318       3,872       8,435                  1,401
-Tacit.between_of_inside_chord                     239       3,228      37,732                  8,315
-Tacit.lines_meet_of_opposite_sides                 14      26,248      39,362                  4,460
-Tacit.circles_meet                              1,313      10,668       1,587                  2,555
+Tacit.lines_meet_of_opposite_sides                 16      26,248      39,362                  4,505
+Tacit.circles_meet                              1,377      10,668       1,587                  2,528
 Tacit.len_self                                 60,000          25           ·                 20,000
 Tacit.len_symm                                 60,000         625           ·                 20,000
-Tacit.angle_symm                               15,588      14,400           ·                  6,996
+Tacit.radius_ne_zero                            6,413           ·           ·                 11,369
+Tacit.angle_symm                               15,578      14,400           ·                  6,967
 Tacit.angle_le_two_right                       60,000      15,625           ·                 20,000
 Tacit.area_degenerate                          60,000         625           ·                 20,000
 Tacit.area_rotate                              60,000      15,625           ·                 20,000
-Tacit.area_congruent                           54,727     375,479      94,050                 10,764
-Tacit.len_add_of_between                        4,805         304           ·                  9,878
-Tacit.circle_eq                                   788       2,448      27,089                  4,415
-Tacit.angle_eq_zero_of_same_ray                15,206       1,208           ·                  2,827
-Tacit.same_ray_of_angle_eq_zero                15,115       1,208           ·                  2,728
-Tacit.angle_add_of_inside                           5      77,960      24,987                  3,773
-Tacit.angle_eq_of_same_rays                     6,977      60,032       8,676                  4,150
-Tacit.area_eq_zero_of_on_line                  24,891       2,112           ·                  4,680
-Tacit.on_line_of_area_eq_zero                  24,727       2,112           ·                  4,668
-Tacit.area_add_of_between                          23       6,176      55,499                  8,515
-Tacit.superposition                               112     363,888      71,970                  8,691
+Tacit.area_congruent                           54,696     375,479      94,050                 10,711
+Tacit.len_add_of_between                        4,707         304           ·                  9,920
+Tacit.circle_eq                                   791       2,448      27,089                  4,410
+Tacit.angle_eq_zero_of_same_ray                14,978       1,208           ·                  2,790
+Tacit.same_ray_of_angle_eq_zero                15,256       1,208           ·                  2,734
+Tacit.angle_add_of_inside                           4      77,960      24,987                  3,814
+Tacit.angle_eq_of_same_rays                     6,985      60,032       8,676                  4,145
+Tacit.area_eq_zero_of_on_line                  24,842       2,112           ·                  4,672
+Tacit.on_line_of_area_eq_zero                  24,904       2,112           ·                  4,702
+Tacit.area_add_of_between                          25       6,176      55,499                  8,532
+Tacit.superposition                               109     363,888      71,970                  8,657
 
-configurations meeting a derived property's hypotheses: 9,855,030
-  exhaustive: 8,100,886
-  structured: 1,754,144
+configurations meeting a derived property's hypotheses: 9,895,990
+  exhaustive: 8,104,114
+  structured: 1,791,876
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
 | `derived.adjacent_eq_of_right` | 1,072 | 25,166 |
@@ -71,6 +71,7 @@ configurations meeting a derived property's hypotheses: 9,855,030
 | `derived.centre_unique` | 72 | 4,142 |
 | `derived.inside_of_between` | 76,104 | 39,272 |
 | `derived.outside_of_between` | 281,664 | 47,802 |
+| `derived.between_of_inside_chord` | 3,228 | 37,732 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |

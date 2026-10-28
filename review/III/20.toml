@@ -1,10 +1,22 @@
 [statement]
 scope = "full"
-note = "The given centre E is on A's side of BC: its angle stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
-fingerprint = "sha256:fb6f51cf124385c5"
+note = "The angle at the centre on BC, of any size, our reading after Heath; III.20 special has E on A's side and the angle BEC, as III.20 had before."
+companions = ["III.20 special", "III.20 circumference"]
+fingerprint = "sha256:5c9c150cc4d1d5a6"
 
 [route]
 kind = "euclid"
+note = "Euclid's own proof, for the angle at the centre of any size: the diameter AEF, the isosceles triangles and I.32, then the sum of BEF and FEC in his first figure, which now takes the centre within the angle BAC on A's side of BC, on BC or beyond it, or their difference in his second. That BEF and FEC make up the angle at the centre wherever the centre lies is `angleAtCentre.diameter`, which cites I.13 and III.2; Heath's references for III.20 give neither. `Prop20.special` follows from III.20 by `angleAtCentre.within`, and `Prop20.circumference` from it, III.2 and the definition of the measure."
+
+[representation]
+tags = ["angle-measure"]
+note = "The angle at the centre standing on the circumference BKC is `angleAtCentre`: a diameter AEF, A and F on opposite sides of BC and F on K's side, divides it into the angles BEF and FEC, as in Euclid's first figure, and it is the two together, so it may be two right angles or more. That reading is ours, made after Heath's notes; Euclid's angles at the centre are less than two right angles. It depends on neither the diameter, nor the centre, nor the point naming the side, and it is the angle BEC when the centre lies on A's side of BC (`angleAtCentre.within`), two right angles when the centre is on BC, and greater when the centre lies beyond BC. `Prop20.circumference` shows that our measure of a circumference, twice the angle standing on it, is its angle at the centre."
+
+[[passage]]
+at = "Let ABC be a circle"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "The statement names no centre, for the angle at the centre is the circle's. Under Euclid's setting-out the Lean takes the centre E by `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16."
 
 [[passage]]
 at = "For let AE be joined and drawn through to F"
@@ -26,8 +38,8 @@ note = "Euclid gives the same reason at C without writing out the isosceles-tria
 [[passage]]
 at = "Therefore the whole angle BEC is double of the whole angle BAC"
 kind = "helper"
-helper = "crossbar"
-note = "Euclid reads AE within BAC and EF within BEC from his figure. The Lean finds X between B and C by `crossbar`, puts E between A and X by `Tacit.between_cases` (System E, Between 6), a rule we assume, and `Tacit.pasch3` (System E, Pasch 3), proved in `Elements/Figure/RuleBase.lean`, because E and A lie on one side of BC, and uses `angle_add_of_between` and `angle_add_of_within` to add the two doubles."
+helper = "angleAtCentre.diameter"
+note = "Euclid reads off his figure that AE falls within the angle BAC and that BEF and FEC make up the angle at the centre. The Lean finds X between B and C on AE by `crossbar`, puts X within the circle by III.2, for which Heath gives no reference here, and so between A and F by `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, so that F lies across BC from A; then `angleAtCentre.diameter` makes BEF and FEC the angle at the centre standing on BC, whether E lies on A's side of BC, on BC or beyond it, and `angle_add_of_between` makes BAE and EAC the angle BAC."
 
 [[passage]]
 at = "let DE be joined and produced to G"
@@ -44,28 +56,28 @@ note = "Euclid invokes the same isosceles-triangle argument for GEC and GEB with
 at = "therefore the angle BEC which remains is double of the angle BDC"
 kind = "helper"
 helper = "angle_add_of_within"
-note = "Euclid reads DB within EDC and EB within GEC, then subtracts the smaller double. Beneath the construction of G, `OppositeSides.exists_between` finds Y between E and C, `InsideCircle.of_between_centre` puts Y inside the circle, and `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1, puts Y between D and B; the Lean then puts B on C's side of EG by two uses of `Tacit.pasch2` (System E, Pasch 2), a rule we assume, and on G's side of EC using the proved rule `Tacit.pasch3` (System E, Pasch 3), splits the angles by `angle_add_of_between` and `angle_add_of_within`, and subtracts by Common Notion 3."
+note = "Euclid reads DB within EDC and EB within GEC, then subtracts the smaller double. Beneath the construction of G, `OppositeSides.exists_between` finds Y between E and C, `InsideCircle.of_between_centre` puts Y inside the circle, and `Tacit.between_of_inside_chord`, System E's Circle 1, proved after III.2, puts Y between D and B; the Lean then puts B on C's side of EG by two uses of `Tacit.pasch2` (System E, Pasch 2), a rule we assume, and on G's side of EC using the proved rule `Tacit.pasch3` (System E, Pasch 3), splits the angles by `angle_add_of_between` and `angle_add_of_within`, and subtracts by Common Notion 3."
 
 [[passage]]
 at = "Therefore etc."
 kind = "case"
-note = "Euclid leaves out E on AB or on AC (Heath, vol. 2, p. 49); the Lean puts E between A and B or between A and C using `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, and the proved rule `Tacit.centre_inside` (System E, Generalities 3), then uses his argument for one isosceles triangle. In all other positions the Lean sorts E by the sides of AB and AC: within BAC it adds the doubles as in Euclid's first argument; outside BAC it applies his second argument, by subtraction, to A in place of D, exchanging B and C when E lies across AC from B."
+note = "Euclid leaves out E on AB or on AC (Heath, vol. 2, p. 49); the Lean puts E between A and B or between A and C using `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, and the proved rule `Tacit.centre_inside` (System E, Generalities 3), so that the angle at the centre is the angle BEC (`angleAtCentre.within`), then uses his argument for one isosceles triangle. In all other positions the Lean sorts E by the sides of AB and AC: within BAC it adds the doubles as in Euclid's first argument; outside BAC the centre lies on A's side of BC (`Prop20.across_side`), the angle at the centre is the angle BEC, and the Lean applies his second argument, by subtraction, to A in place of D, exchanging B and C when E lies across AC from B."
 
 [figure]
 case = "E within the angle BAC and outside the angle BDC"
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:ccd8afe1c9a04254"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0"
-text = "sha256:c6867555489fe8c7"
+commit = "689ab169f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:154bb92f72d1f831"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after I.13's lemma was named Prop13.angle_lt_two_right, by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
+text = "sha256:b0c7600c253b26ee"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"

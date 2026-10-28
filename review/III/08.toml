@@ -1,13 +1,13 @@
 # review/III/08.toml
 [statement]
 scope = "full"
-note = "The two orders stay apart; `Prop8.general` takes both sides of DA; the last clause includes contact. F's and L's classes are Euclid's, idle in his argument too."
+note = "`Prop8.general` covers both sides of DA; contact is included. The conditions placing F on the concave and L on the convex circumference are kept but unused."
 companions = ["III.8 general"]
 fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the centre M, which Euclid takes by III.1 (Heath's reference), comes from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart, as in the companion's step `Prop8.partner`; and the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where neither the convex order nor the concave reaches: N and the point it is compared with on different circumferences, or one of them a point of contact. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
+note = "Euclid's argument, but the centre M, which Euclid takes by III.1 (Heath's reference), comes from `Tacit.exists_centre`, the rule that every circle has a centre, as in the companion's step `Prop8.partner`; and the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where N or the point it is compared with is a point of contact, which neither the convex order nor the concave reaches; two points on different circumferences, like two on one, are compared by the orders. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"
@@ -18,7 +18,7 @@ note = "\"Nearer\" is the less angle at D with the ray DA, unsigned. The convex 
 at = "For let the centre of the circle ABC be taken"
 kind = "different"
 helper = "Tacit.exists_centre"
-note = "Euclid takes the centre M by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and the statement, which asks of every centre that it lie between G and A, puts M there."
+note = "Euclid takes the centre M by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes M from `Tacit.exists_centre`, the rule that every circle has a centre, and the statement, which asks of every centre that it lie between G and A, puts M there."
 
 [[passage]]
 at = "let ME, MF, MC, MK, ML, MH be joined"
@@ -48,7 +48,7 @@ note = "Euclid uses the equality of ME and MF without giving a reason. The Lean 
 at = "and the angle EMD is greater than the angle FMD"
 kind = "helper"
 helper = "Prop8.outside"
-note = "Euclid reads E outside the triangle DFM from his figure, without a reference from Heath. In `Prop8.outside`, the Lean uses `BookI.Prop24.within` and `crossbar` to find Y on MF and DE, puts Y within the circle by `InsideCircle.of_between_centre`, and uses `Tacit.between_of_inside_chord`, a rule we assume (System E, Circle 1), to put Y between H and E; `angle_lt_of_between` then compares the angles at M."
+note = "Euclid reads E outside the triangle DFM from his figure, without a reference from Heath. In `Prop8.outside`, the Lean uses `BookI.Prop24.within` and `crossbar` to find Y on MF and DE, puts Y within the circle by `InsideCircle.of_between_centre`, and uses `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, to put Y between H and E; `angle_lt_of_between` then compares the angles at M."
 
 [[passage]]
 at = "Similarly we can prove that FD is greater than CD"
@@ -76,7 +76,7 @@ note = "Euclid takes MD as MG and GD together before subtracting the equal radii
 at = "And, since on MD, one of the sides of the triangle MLD"
 kind = "helper"
 helper = "Prop8.within"
-note = "Euclid reads K within the triangle DLM from his figure. In `Prop8.within`, the Lean uses `BookI.Prop24.within`, `crossbar` and `InsideCircle.of_between_centre` to find Z on ML and DK within the circle; `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, puts Z between K and C, so K is between D and Z, and the assumed rule `Tacit.pasch2` (System E, Pasch 2) puts K on D's side of ML."
+note = "Euclid reads K within the triangle DLM from his figure. In `Prop8.within`, the Lean uses `BookI.Prop24.within`, `crossbar` and `InsideCircle.of_between_centre` to find Z on ML and DK within the circle; `Tacit.between_of_inside_chord` (System E, Circle 1), proved after III.2, puts Z between K and C, so K is between D and Z, and the assumed rule `Tacit.pasch2` (System E, Pasch 2) puts K on D's side of ML."
 
 [[passage]]
 at = "and MK is equal to ML"
@@ -116,12 +116,12 @@ note = "Euclid uses the equality of MK and MB without giving a reason. The Lean 
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "helper"
 helper = "onRay_of_angle_eq"
-note = "Euclid takes for granted that DN, a straight line other than DB, makes a different angle with DA, so that one of the two is the nearer. Where both end on one circumference, the Lean compares the angles at D by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5): equal angles put N on the ray DB, or on DK when N is on K's side, by `onRay_of_angle_eq`, and `OnRay.eq_of_len_eq` makes N that point."
+note = "Euclid takes for granted that DN, a straight line other than DB, makes a different angle with DA, so that one of the two is the nearer. Where each ends on a circumference, the Lean compares the angles at D by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5): equal angles put N and B, or N and K when N is on K's side, on one ray from D by `onRay_of_angle_eq`, and `OnRay.eq_of_len_eq` makes them one point."
 
 [[passage]]
 at = "which was proved impossible"
 kind = "different"
-note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact; the Lean takes his step where N and the point it is compared with both end on the convex circumference, the concave order where both end on the concave, a case his figure leaves aside, and only where neither order reaches splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
+note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact. The Lean takes his step where N and the point it is compared with both end on the convex circumference, and his orders for two cases his figure leaves aside: the concave order where both end on the concave circumference; and where one ends on each, the two orders together, through the second point where the straight line making the greater angle with DA meets the circle, on the other circumference, with `len_lt_of_between` for the part less than the whole. Only where one of the two is a point of contact, which neither order reaches, is the step argued another way: the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference, and for equal angles `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide. For N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
 
 [figure]
 case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"
@@ -129,16 +129,16 @@ note = "N marks the supposed third point of Euclid's reductio, with DN equal to 
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:a7394b36b6e60ea4"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538"
-text = "sha256:40929f2c02651c77"
+commit = "539139c7a"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:db251b6dc594ff8e"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main and with the Circle 1 retirement, by GPT-6 Astra (Codex)"
+text = "sha256:eb4844c6ca4654a2"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"

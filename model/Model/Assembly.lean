@@ -8,7 +8,6 @@ public import Model.Euclidean.Areas
 public import Model.Euclidean.Avoidance
 public import Model.Euclidean.Centre
 public import Model.Euclidean.CircleBasics
-public import Model.Euclidean.CircleRules
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Circles
 public import Model.Euclidean.Incidence
@@ -65,7 +64,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   area_eq_zero_of_on_line := Euclidean.area_eq_zero_of_on_line
   area_rotate := Euclidean.area_rotate
   between_cases := Euclidean.between_cases
-  between_of_inside_chord := Euclidean.between_of_inside_chord
   between_symm := Euclidean.between_symm
   circle_eq := Euclidean.circle_eq
   circles_meet := Euclidean.circles_meet
@@ -89,6 +87,7 @@ theorem euclidean_laws : Laws Euclidean.plane where
   not_on_line_of_same_side := Euclidean.not_on_line_of_same_side
   on_line_of_area_eq_zero := Euclidean.on_line_of_area_eq_zero
   pasch2 := Euclidean.pasch2
+  radius_ne_zero := Euclidean.radius_ne_zero
   same_ray_of_angle_eq_zero := Euclidean.same_ray_of_angle_eq_zero
   same_side_trans := Euclidean.same_side_trans
   superposition := Euclidean.superposition

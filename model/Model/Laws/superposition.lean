@@ -15,7 +15,8 @@ translates them by identity, preserving universe arguments.
 `Check/Superposition.lean` checks the interpretation and the law by `rfl`, both against
 the library under `Check.original` and against the generated definitions. The explicit
 placement proposition below is supporting mathematics, not a field of `Laws`.
-`Rule.of_placement` reduces the restricted law to that placement with its side drawn.
+`Rule.of_placement_of_join` reduces the restricted law to that placement, Same side 3's
+form and Postulate 1's, deriving the side before `Rule.of_placement` finishes the proof.
 
 The combined placement follows LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang Sun,
 Zhaoyu Li, Anima Anandkumar and Xujie Si, with thanks. The restriction follows the style

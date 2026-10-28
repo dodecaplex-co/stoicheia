@@ -34,7 +34,7 @@ note = "Euclid bisects AB and CE and draws DC at right angles without references
 at = "For suppose it is not, but, if possible, let G be the centre"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid supposes a centre G other than F. The Lean takes G from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and supposes G off CE to reach the contradiction."
+note = "Euclid supposes a centre G other than F. The Lean takes G from `Tacit.exists_centre`, the rule that every circle has a centre, and supposes G off CE to reach the contradiction."
 
 [[passage]]
 at = "and let GA, GD, GB be joined"
@@ -62,7 +62,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "Therefore the point F is the centre of the circle ABC."
 kind = "helper"
 helper = "Prop1.middle"
-note = "Euclid takes for granted that a centre on CE is its middle point. The Lean uses `Tacit.centre_inside` (System E, Generalities 3), proved in `Elements/Figure/RuleBase.lean`, and `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, as in the earlier case on AB, then equal radii and `Prop1.middle` identify G with F."
+note = "Euclid takes for granted that a centre on CE is its middle point. The Lean puts G between C and E by Book Zero's `between_of_centre_chord`, Circle 1 (`Tacit.between_of_inside_chord`) for a centre, proved without that rule from Definition I.15, the three orders of three points on a straight line (System E, Between 6) and our radius rule: either other order would make one radius a part of the other. It does the same in the earlier case on AB, and in the porism's. Then equal radii and `Prop1.middle` identify G with F."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
@@ -76,11 +76,11 @@ note = "Like Heath's, this figure draws the impossible supposition: G, off CE, a
 
 [review]
 stage = "full"
-commit = "e00da4b4"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:dfe361062dcb0271"
-run = "brief 0005 stage 5, ship R3 (#29); Prop1.within, Prop1.of_circle and the step by I.13 in Prop1.perpendicular, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4"
-text = "sha256:82a9c72db162d4d3"
+commit = "1870c96d1"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:aca2366dc7229919"
+run = "brief 0005 stage 5, ship R3 (#29); Prop1.within, Prop1.of_circle and the step by I.13 in Prop1.perpendicular, written by Claude, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r4, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1"
+text = "sha256:1bbf7efd2308a65d"
 
 [review.items]
 statement = "pass"

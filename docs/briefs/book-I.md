@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | <!-- count:tacit-rules -->42<!-- /count --> tacit rules taken as axioms, from System E save one of our own, that every circle has a centre (`exists_centre`, from Definitions I.15 and I.16, by the owner's decision of 18 October 2026): `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | <!-- count:tacit-rules -->42<!-- /count --> tacit rules taken as axioms, from System E save two of our own, that every circle has a centre (`exists_centre`, from Definitions I.15 and I.16, by the owner's decision of 18 October 2026) and that a circle's radius is not nothing (`radius_ne_zero`, by the owner's decision of 25 October 2026): `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 
@@ -78,7 +78,7 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
-  Intersections rule lets a proof take a point where they do. Forty rules are now theorems
+  Intersections rule lets a proof take a point where they do. Forty-one rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given by its outline (`Outline`, in
@@ -203,8 +203,9 @@ many books in front of us."), 31 more rules became
 theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
 `CirclePoints.lean`, proved that day. On 24 October 2026 Circle 3 followed, proved after
 III.2 in `Elements/BookIII/Prop02.lean`, with Circle 2, Points 9 and Intersection 2 moved
-beside it. With our own rule that every
-circle has a centre, the lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
+beside it, and on 26 October 2026 Circle 1, proved there too. With our own rules that every
+circle has a centre and, from 25 October 2026, that its radius is not nothing, the lock
+now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

@@ -13,7 +13,7 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`4a48491e378586c3439dfc41c10890517643bc3c0985a20178e397e6328c11c1`,
+`eb108425cdf0acaee7d08a62af018aa84f2941877f98f10144bf17b1c15e0fe5`,
 the hash that `model/lock.sha256` holds. The lock has 48 laws, and they reach 152 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
@@ -332,11 +332,6 @@ def between_cases : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, A ≠ B → B ≠ C → A ≠ C → S.OnLine A L → S.OnLine B L →
     S.OnLine C L → S.Between A B C ∨ S.Between B A C ∨ S.Between A C B
 
-/-- `Elements.Tacit.between_of_inside_chord`, translated. -/
-def between_of_inside_chord : Prop :=
-  ∀ {A B C : S.Point} {L : S.Line} {α : S.Circle}, S.OnLine A L → S.OnLine B L → S.OnLine C L →
-    S.InsideCircle A α → S.OnCircle B α → S.OnCircle C α → B ≠ C → S.Between B A C
-
 /-- `Elements.Tacit.between_symm`, translated. -/
 def between_symm : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → S.Between C B A
@@ -440,6 +435,10 @@ def pasch2 : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → ¬S.OnLine B L →
     S.SameSide B C L
 
+/-- `Elements.Tacit.radius_ne_zero`, translated. -/
+def radius_ne_zero : Prop :=
+  ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α → S.len A B ≠ 0
+
 /-- `Elements.Tacit.same_ray_of_angle_eq_zero`, translated. -/
 def same_ray_of_angle_eq_zero : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, A ≠ B → A ≠ C → S.OnLine A L → S.OnLine B L → S.ang B A C = 0 →
@@ -481,7 +480,6 @@ structure Neutral (S : Signature) : Prop where
   area_eq_zero_of_on_line : Law.Tacit.area_eq_zero_of_on_line S
   area_rotate : Law.Tacit.area_rotate S
   between_cases : Law.Tacit.between_cases S
-  between_of_inside_chord : Law.Tacit.between_of_inside_chord S
   between_symm : Law.Tacit.between_symm S
   circle_eq : Law.Tacit.circle_eq S
   circles_meet : Law.Tacit.circles_meet S
@@ -505,6 +503,7 @@ structure Neutral (S : Signature) : Prop where
   not_on_line_of_same_side : Law.Tacit.not_on_line_of_same_side S
   on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero S
   pasch2 : Law.Tacit.pasch2 S
+  radius_ne_zero : Law.Tacit.radius_ne_zero S
   same_ray_of_angle_eq_zero : Law.Tacit.same_ray_of_angle_eq_zero S
   same_side_trans : Law.Tacit.same_side_trans S
   superposition : Law.Tacit.superposition S
