@@ -36,9 +36,8 @@
 
   What the companions add. III.26 and III.28 conclude their equal circumferences congruent
   as well as equal in measure, reading Euclid's "equal" through Common Notion 4, but III.27
-  and III.29 assume equal measures alone; until now only the bridges of
-  `Elements/BookIII/Arcs.lean`, which come after III.29, carried the congruence back to a
-  measure. The companions take the congruence as their hypothesis, so that III.27 and III.29
+  and III.29 assume equal measures alone. The earlier companion `Prop24.equalMeasure`
+  already turns congruence into equal measures. The companions take the congruence as their hypothesis, so that III.27 and III.29
   run from what III.26 and III.28 conclude. Each is proved in its proposition's file, after
   the proposition: III.24's companion `Prop24.equalMeasure` makes the congruent
   circumferences equal in measure, and the proposition then gives the conclusion by its own
