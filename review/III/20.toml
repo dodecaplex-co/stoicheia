@@ -9,7 +9,7 @@ kind = "euclid"
 note = "Euclid's own proof: the diameter AEF, the isosceles triangles and I.32, then the sum of BEF and FEC in his first figure, or their difference in his second. Where the angle BAC is acute, the centre lies on A's side of BC, and the angle at the centre is his angle BEC (`angleAtCentre.within`). Where it is right or obtuse, the centre lies on BC or beyond it, within the angle BAC, and Euclid, whose angles at the centre are less than two right angles, has no angle at the centre on the circumference BC: that case lies beyond his statement. The Lean takes it as well, by his first figure, with the angle at the centre read as ours, two right angles or more; the further case under \"Therefore etc.\" says how. That BEF and FEC make up the angle at the centre wherever the centre lies is `angleAtCentre.diameter`, which cites I.13 and III.2; Heath's references for III.20 give neither. `Prop20.special` follows from III.20 by `angleAtCentre.within`, and `Prop20.circumference` from it, III.2 and the definition of the measure."
 
 [representation]
-tags = ["angle-measure"]
+tags = ["angle-at-centre", "angle-measure"]
 note = "The angle at the centre standing on the circumference BKC is `angleAtCentre`: a diameter AEF, A and F on opposite sides of BC and F on K's side, divides it into the angles BEF and FEC, as in Euclid's first figure, and it is the two together, so it may be two right angles or more. That reading is ours, made after Heath's notes; Euclid's angles at the centre are less than two right angles. It depends on neither the diameter, nor the centre, nor the point naming the side, and it is the angle BEC when the centre lies on A's side of BC (`angleAtCentre.within`), two right angles when the centre is on BC, and greater when the centre lies beyond BC. `Prop20.circumference` shows that our measure of a circumference, twice the angle standing on it, is its angle at the centre."
 
 [[passage]]
@@ -68,11 +68,11 @@ case = "E within the angle BAC and outside the angle BDC"
 
 [review]
 stage = "full"
-commit = "6c1cdc8f3"
+commit = "dfd48661a"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:154bb92f72d1f831"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after I.13's lemma was named Prop13.angle_lt_two_right, by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:52dffb4be1627839"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at e572d5c0; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after I.13's lemma was named Prop13.angle_lt_two_right, by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; card #524, ship RT: read in full after the angle-at-centre tag was added, by GPT-6 Astra (Codex), at dfd48661a; card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex), and read again in full after stacking on card #524"
+text = "sha256:8b9c53b3edd00982"
 
 [review.items]
 statement = "pass"
