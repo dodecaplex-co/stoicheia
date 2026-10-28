@@ -1069,8 +1069,9 @@ def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, st
         return f"could not be made: git worktree add: exit {added.returncode}", (
             added.stdout + added.stderr)
     registered.append(tree)
-    listed = subprocess.run(("git", "ls-files", "-z", "--cached", "--others",
-                             "--exclude-standard"), cwd=ROOT, capture_output=True)
+    listed = subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
+                             "--others", "--exclude-standard"), cwd=ROOT,
+                            env=worker_env(), capture_output=True)
     if listed.returncode != 0:
         return f"could not be made: git ls-files: exit {listed.returncode}", (
             listed.stderr.decode(errors="replace"))

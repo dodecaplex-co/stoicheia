@@ -2666,6 +2666,11 @@ READS_NON_UTF8 = ('import os\n'
                   '        nt.refused("{name}: caught")\n'
                   '    else:\n'
                   '        print("{name}: wrong contents", repr(contents))')
+READS_IGNORED = ('contents = (nt.ROOT / "notes.tmp").read_text()\n'
+                 '    if contents == "untracked despite global ignore\\n":\n'
+                 '        nt.refused("{name}: caught")\n'
+                 '    else:\n'
+                 '        print("{name}: wrong contents", repr(contents))')
 
 
 def corrupts(change):
@@ -2922,6 +2927,22 @@ class WorkerTests(unittest.TestCase):
         for name in ("a_one", "b_two"):
             self.assertIn(f"✓ {name}: caught\n", result.stdout)
         self.assertEqual(non_ascii.read_text(), "unchanged\n")
+
+    def test_global_excludes_file_does_not_change_worker_contents(self):
+        """A global excludes file does not omit an untracked source file from workers."""
+        self.commit(a_reads=READS_IGNORED, b_reads=READS_IGNORED)
+        notes = self.root / "notes.tmp"
+        notes.write_text("untracked despite global ignore\n")
+        excludes = self.tmp / "global-ignore"
+        excludes.write_text("notes.tmp\n")
+        config = self.tmp / "excludes.config"
+        config.write_text(f"[core]\n\texcludesFile = {excludes}\n")
+        self.env["GIT_CONFIG_GLOBAL"] = str(config)
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("a_reads", "b_reads"):
+            self.assertIn(f"✓ {name}: caught\n", result.stdout)
+        self.assertEqual(notes.read_text(), "untracked despite global ignore\n")
 
     def test_no_worker_s_tree_is_left(self):
         """After a run that passes, one that fails and one with a crash, as after every run
