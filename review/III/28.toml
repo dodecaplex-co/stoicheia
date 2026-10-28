@@ -5,7 +5,7 @@ fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
 kind = "modified"
-note = "For non-diameters, Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]. For diameters, the measures are those of semicircles, and congruence follows from Prop28.right and III.24. The route stays so for this release, a deliberate limitation: Euclid subtracts and compares the circumferences as magnitudes, which our measure, twice the angle standing on a circumference, cannot follow without a theory of arc magnitudes of its own, a change of representation left for a later release."
+note = "For non-diameters, Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]. For diameters, the measures are those of semicircles, and congruence follows from Prop28.right and III.24. The route stays so for this release, a deliberate limitation: for straight lines that are not diameters the measures follow Euclid's subtraction, while the greater circumferences' congruence is proved separately, by III.24, and the case of diameters keeps its own proof; a theory of arc magnitudes of their own is left for a later release."
 
 [representation]
 tags = ["angle-measure"]
@@ -43,11 +43,11 @@ case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
 
 [review]
 stage = "full"
-commit = "689ab169f"
+commit = "1c21c147b"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:3ec4e11663de0268"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; card #129, ship ER: read again after its call of III.20 became Prop20.special, by GPT-6 Astra (Codex); card #129, ship ER: diameter passage, Lean comments and mishnah corrected, read again in full, by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
-text = "sha256:5caf30a512445061"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; card #129, ship ER: read again after its call of III.20 became Prop20.special, by GPT-6 Astra (Codex); card #129, ship ER: diameter passage, Lean comments and mishnah corrected, read again in full, by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; card #547, ship ER: the release limitation distinguishes subtraction, congruence and diameters, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:ba727c153531fa63"
 
 [review.items]
 statement = "pass"
