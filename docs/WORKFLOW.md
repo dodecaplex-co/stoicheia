@@ -266,10 +266,12 @@ and rewriting a record's words, however small the change, would make it say what
 never said when it was written. So nothing new names the old address, and a reader meets
 it only in a record whose date tells them why.
 [`scripts/check_address.py`](../scripts/check_address.py), in section 8's sequence,
-refuses any address of a repository named `stoicheia` on GitHub, in each form GitHub
-serves, under an owner other than `dodecaplex-co`, in a page, a Markdown file or
-`CITATION.cff` outside those three folders. It refuses every other owner rather than the
-old one, so it never needs to name it.
+refuses any address of a repository named `stoicheia` on GitHub under an owner other than
+`dodecaplex-co`: in a web address (with or without `www.` and a port), Git's `git@` form,
+a Pages or raw address, or the bare `<owner>/stoicheia`, unless a path runs into it
+(`~/.cache/stoicheia`), in any Markdown file, and in `CITATION.cff`, `LICENSE` and
+`NOTICE`, outside those three folders. It refuses every other owner rather than the old
+one, so it never needs to name it.
 
 ## 5. Proving in parallel: a voyage
 

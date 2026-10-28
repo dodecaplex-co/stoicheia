@@ -1,7 +1,8 @@
 """An address of the repository on GitHub under an owner other than its home, dodecaplex-co,
-planted twice: in a generated page, `book/I/01.md`, as a link to an issue, and in
-`CITATION.cff`, as its `repository-code`. `check_address.py` must fail each time, naming
-the file and line and saying the address names an owner other than the repository's home.
+planted three times: in a generated page, `book/I/01.md`, as a link to an issue; in
+`CITATION.cff`, as its `repository-code`; and in `NOTICE`, as a bare `owner/stoicheia`.
+`check_address.py` must fail each time, naming the file and line and saying the address
+names an owner other than the repository's home.
 A stand-in owner plays the old address, which the check refuses as it refuses any owner
 but the home, and which no new file names.
 """
@@ -39,3 +40,14 @@ def plant() -> None:
                           f"CITATION.cff:{number}: an address of this repository on GitHub {SAID}")
     finally:
         (nt.ROOT / rel).write_text(saved, encoding="utf-8")
+
+    notice = nt.ROOT / "NOTICE"
+    saved = notice.read_bytes()
+    line = saved.count(b"\n") + 2
+    try:
+        notice.write_bytes(saved + b"\nThe source: someone-else/stoicheia.\n")
+        nt.expect_failure("NOTICE naming another owner's repository, bare",
+                          nt.run(sys.executable, "scripts/check_address.py"),
+                          f"NOTICE:{line}: an address of this repository on GitHub {SAID}")
+    finally:
+        notice.write_bytes(saved)

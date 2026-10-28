@@ -3,13 +3,19 @@
 The repository moved to the organization dodecaplex-co on 27 October 2026, and its
 address is `https://github.com/dodecaplex-co/stoicheia`. An address of a repository named
 `stoicheia` on GitHub, in any of the forms GitHub serves (`github.com/<owner>/stoicheia`,
-`git@github.com:<owner>/stoicheia`, `<owner>.github.io/stoicheia` and
-`raw.githubusercontent.com/<owner>/stoicheia`), must name the owner `dodecaplex-co`,
-written so. Every other owner is refused, the old address among them, so that the check
-never needs to name it.
+with or without `www.` and a port, `git@github.com:<owner>/stoicheia`,
+`<owner>.github.io/stoicheia` and `raw.githubusercontent.com/<owner>/stoicheia`), or as
+the bare `<owner>/stoicheia` that `gh` and the citation read, must name the owner
+`dodecaplex-co`, written so. Every other owner is refused, the old address among them, so
+that the check never needs to name it. A bare `<owner>/stoicheia` is read as a local path,
+and passed over, when a letter, digit, `.`, `/`, `~`, `_` or `-` stands just before it
+(`.git/stoicheia`, `~/.cache/stoicheia`); so a path is written from `./` or `~/`. The name
+must end there: `stoicheia.git` is this repository, and `stoicheia-tools` or
+`stoicheia.notes` another; and the host must be GitHub's own (`not-github.com` is not).
 
-It reads every Markdown file and `CITATION.cff` that Git knows of, tracked or new but not
-ignored: the generated pages and the documents read as current guidance. Code, fenced or
+It reads every Markdown file Git knows of, tracked or new but not ignored, and the root's
+`CITATION.cff`, `LICENSE` and `NOTICE`: the generated pages and the documents read as
+current guidance. Code, fenced or
 inline, is read too, since a command to copy is a place a reader takes the address from.
 The dated records are passed over: the decision entries and the decisions page
 (`docs/decisions/`, `docs/briefs/0002-decisions.md`), the briefs (`docs/briefs/`) and the
@@ -42,13 +48,22 @@ DATED = ("docs/decisions/", "docs/briefs/", "docs/reports/")
 # Folders never searched when git cannot list the files.
 SKIP_DIRS = {".git", ".lake", ".claude", "__pycache__", "node_modules"}
 
+# The documents at the root that are neither Markdown nor in a folder.
+ROOT_DOCUMENTS = ("CITATION.cff", "LICENSE", "NOTICE")
+
 # An owner as GitHub allows it: letters, digits and single hyphens. The repository's name
-# must end there: `stoicheia-tools` is another repository, and `stoicheia.git` this one.
+# must end there, with or without `.git`: a `.`, `_`, `-`, letter or digit after it makes
+# another name (`stoicheia.notes`, `stoicheia-tools`), but a full stop ending a sentence
+# does not. A host must stand alone (`not-github.com` is not GitHub), and a bare
+# `<owner>/stoicheia` must not continue a path (`.git/stoicheia`, `~/.cache/stoicheia`).
 OWNER = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
-NAME_END = r"(?![A-Za-z0-9_-])"
+NAME_END = r"(?:\.git)?(?![A-Za-z0-9_-])(?!\.[A-Za-z0-9_-])"
+HOST = r"(?<![A-Za-z0-9.-])"
 ADDRESS = re.compile(
-    rf"(?:\bgithub\.com[/:]|\braw\.githubusercontent\.com/)(?P<a>{OWNER})/stoicheia{NAME_END}"
-    rf"|(?<![A-Za-z0-9-])(?P<b>{OWNER})\.github\.io/stoicheia{NAME_END}",
+    rf"{HOST}(?:(?:www\.)?github\.com(?::\d+)?[/:]|raw\.githubusercontent\.com/)"
+    rf"(?P<a>{OWNER})/stoicheia{NAME_END}"
+    rf"|{HOST}(?P<b>{OWNER})\.github\.io/stoicheia{NAME_END}"
+    rf"|(?<![A-Za-z0-9._/~-])(?P<c>{OWNER})/stoicheia{NAME_END}",
     re.I)
 
 
@@ -56,7 +71,7 @@ def in_scope(name: str) -> bool:
     """Is the file, by its path from the root, a page or a current document?"""
     if name.startswith(DATED):
         return False
-    return name.endswith(".md") or name == "CITATION.cff"
+    return name.endswith(".md") or name in ROOT_DOCUMENTS
 
 
 def problems(text: str) -> list[tuple[int, str]]:
@@ -64,7 +79,7 @@ def problems(text: str) -> list[tuple[int, str]]:
     found = []
     for number, line in enumerate(text.split("\n"), 1):
         for m in ADDRESS.finditer(line):
-            owner = m.group("a") or m.group("b")
+            owner = m.group("a") or m.group("b") or m.group("c")
             if owner == HOME:
                 continue
             what = ("names the home in other capitals" if owner.lower() == HOME
@@ -117,6 +132,20 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"https://github.com/{other}/stoicheia-tools", []),
         ("docs/STYLE.md", "https://github.com/leanprover/lean4", []),
         ("docs/STYLE.md", f"https://example.com/{other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://github.com:443/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://user@github.com/{other}/stoicheia.git", [1]),
+        ("docs/STYLE.md", f"See github.com/{other}/stoicheia.", [1]),
+        ("docs/STYLE.md", f"`gh repo clone {other}/stoicheia`", [1]),
+        ("docs/STYLE.md", f"the repository {other}/stoicheia, cited", [1]),
+        ("NOTICE", f"({other}/stoicheia)", [1]),
+        ("docs/STYLE.md", "`gh repo clone dodecaplex-co/stoicheia`", []),
+        ("docs/STYLE.md", f"https://github.com/{other}/stoicheia.notes", []),
+        ("docs/STYLE.md", f"https://not-github.com/{other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://gist.github.com/{other}/stoicheia", []),
+        ("docs/STYLE.md", "copied to `.git/stoicheia/safe-push`", []),
+        ("docs/STYLE.md", "`~/.cache/stoicheia/harness/` and `~/.venvs/stoicheia/bin`", []),
+        ("docs/STYLE.md", "`~/dev/stoicheia` and `./dev/stoicheia`", []),
+        ("README.md", '<img src="assets/stoicheia-social.png">', []),
     ]
     faults = []
     for name, text, lines in cases:
@@ -124,7 +153,8 @@ def self_test() -> list[str]:
         if got != lines:
             faults.append(f"self-test: {name}: {text!r}: refused lines {got}, expected {lines}")
     scope = [("book/III/37.md", True), ("CITATION.cff", True), ("mishnah/intro/I.md", True),
-             ("tests/model/MODEL.md", True), ("docs/decisions/2026-10-21-file-names.md", False),
+             ("tests/model/MODEL.md", True), ("LICENSE", True), ("NOTICE", True),
+             ("LICENSE-PROSE.md", True), ("docs/decisions/2026-10-21-file-names.md", False),
              ("docs/briefs/0002-decisions.md", False), ("docs/briefs/book-I.md", False),
              ("docs/reports/overlaps.md", False), ("scripts/render.py", False),
              ("review/I/01.toml", False)]
