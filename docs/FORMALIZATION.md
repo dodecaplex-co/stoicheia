@@ -404,8 +404,9 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   cite Book I; in `Elements/BookIII/Squares.lean` for Book III's that cite Books I or II; and
   in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; in
   `Elements/BookIII/Feet.lean`, after III.2, for `foot_between`, whose last step is Circle
-  1, which is to be proved after III.2
-  ([its decisions entry](decisions/2026-10-25-circle-1-bookzero.md)); and in
+  1, proved after III.2 since 26 October 2026
+  ([the entry that moved the step](decisions/2026-10-25-circle-1-bookzero.md),
+  [the retirement](decisions/2026-10-26-circle-1-retired.md)); and in
   `Elements/BookI/OutlineBound.lean`, after I.29, for `outline_bounded`, which cites I.23
   and uses Postulate 5 (brief 0013). A new shared module (stage 2's
   `Elements/Figure/Sums.lean`, stage 3's placement and arcs, brief 0013's figures given by
@@ -434,7 +435,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
+  Definition I.15 and <!-- count:tacit-rules -->42<!-- /count --> tacit rules, <!-- count:axioms -->48<!-- /count --> in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation, save two of our own: every circle has
   a centre (`exists_centre`), added by the owner's decision of 18 October 2026, whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
@@ -855,6 +856,21 @@ by `InsideCircle.of_between_centre`, and uses Intersection 3
 the circle on AB. The proved
 Intersection 2 has no user in the published proofs.
 
+26 October 2026: Circle 1 became a theorem, taking the lock from 49 axioms to 48 (#477;
+[the decision entry](decisions/2026-10-26-circle-1-retired.md)). It keeps its name and
+exact type, and is proved after III.2 in `Prop02.lean`, beside Circle 2 and Circle 3. Book
+Zero, III.1, its porism and III.2 had stopped using it that day: where the point within is
+the centre, Book Zero's `between_of_centre_chord` gives the step from Definition I.15,
+Between 6 and our radius rule, without it.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `between_of_inside_chord` | Circle 1 | The point within is neither point of the circle (Generalities 4), so of the three points one is between the other two (Between 6); were either point of the circle between the others, III.2's corollary `Prop2.within` would put it within the circle. Proved after III.2 in [`Prop02.lean`](../Elements/BookIII/Prop02.lean). |
+
+From III.7 on, 19 entries use it through their own proofs and the proved rules beneath
+them, and each cites III.2; an entry before III.2 that used it would cite III.2 too, which
+the check on later citations refuses.
+
 ## 8. Completion claims
 
 A completion label and its certificate cover the same declarations: the main theorem, its
@@ -884,7 +900,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->49<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
