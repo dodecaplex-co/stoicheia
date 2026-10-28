@@ -45,6 +45,66 @@ namespace Elements.BookIII
 
 open Tacit
 
+/-- The closed side of the remaining segment is what remains on removing the open side
+of the first segment. The base belongs to both closed segments. -/
+theorem Prop26.remaining_side {A B C K P : Point} (hAK : OppositeSidesOf A K B C) :
+    OnSideOrLine P K B C ↔ ¬ SameSideOf P A B C := by
+  sorry
+
+/-- **The whole circles placed together with the equal parts.** The missing bridge for
+the subtraction in III.26 (Heath, vol. 2, pp. 56–57) and III.28 (vol. 2, pp. 59–60).
+The map must place the whole disks and their boundaries together, put the corresponding
+ends together, and carry the open side of the removed segment to the corresponding side.
+Restricting this map to the complements then proves `Prop26.remainder`.
+
+This is an unproved obligation, not a consequence obtained by unpacking `Arc.Congruent`:
+that definition controls its witness only on the given segment and arc. A new witness
+extending that application to the circles is needed. The intended proof belongs with
+III.24's application and moved-circle lemmas; it must not use III.28, III.29 or the later
+`Arc.congruent_iff`, nor replace subtraction with III.22 and another use of III.24. -/
+theorem Prop26.extend {A B C D E F : Point} {ABC DEF : Circle}
+    (hB : OnCircle B ABC) (hC : OnCircle C ABC)
+    (hE : OnCircle E DEF) (hF : OnCircle F DEF)
+    (hA : Triangle B C A) (hD : Triangle E F D)
+    (hseg : Arc.Congruent ⟨ABC, B, C, A⟩ ⟨DEF, E, F, D⟩) :
+    ∃ f : Point → Point, f B = E ∧ f C = F ∧
+      Places f (fun P => InsideCircle P ABC ∨ OnCircle P ABC)
+        (fun P => InsideCircle P DEF ∨ OnCircle P DEF) ∧
+      Places f (OnCircle · ABC) (OnCircle · DEF) ∧
+      (∀ P, SameSideOf P A B C ↔ SameSideOf (f P) D E F) := by
+  sorry
+
+/-- Equal parts removed from whole circles placed together leave congruent remainders.
+The restriction of the common map, including its surjectivity and preservation of
+distances, supplies both the remaining segments and their circumferences. -/
+theorem Prop26.remainder {A B C D E F K L : Point} {ABC DEF : Circle}
+    (hB : OnCircle B ABC) (hC : OnCircle C ABC)
+    (hE : OnCircle E DEF) (hF : OnCircle F DEF)
+    (hAK : OppositeSidesOf A K B C) (hDL : OppositeSidesOf D L E F)
+    (hseg : Arc.Congruent ⟨ABC, B, C, A⟩ ⟨DEF, E, F, D⟩) :
+    Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩ := by
+  obtain ⟨f, hfB, hfC, hdisk, hcircle, hside⟩ :=
+    Prop26.extend hB hC hE hF hAK.triangle hDL.triangle hseg
+  have hremaining : ∀ P, OnSideOrLine P K B C ↔ OnSideOrLine (f P) L E F := by
+    intro P
+    rw [Prop26.remaining_side hAK, Prop26.remaining_side hDL]
+    exact not_congr (hside P)
+  refine ⟨f, hfB, hfC, ⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩⟩
+  · rintro P ⟨hP, hPK⟩
+    exact ⟨hdisk.1 P hP, (hremaining P).mp hPK⟩
+  · rintro Q ⟨hQ, hQL⟩
+    obtain ⟨P, hP, rfl⟩ := hdisk.2.1 Q hQ
+    exact ⟨P, ⟨hP, (hremaining P).mpr hQL⟩, rfl⟩
+  · intro P Q hP hQ
+    exact hdisk.2.2 P Q hP.1 hQ.1
+  · rintro P ⟨hP, hPK⟩
+    exact ⟨hcircle.1 P hP, (hremaining P).mp hPK⟩
+  · rintro Q ⟨hQ, hQL⟩
+    obtain ⟨P, hP, rfl⟩ := hcircle.2.1 Q hQ
+    exact ⟨P, ⟨hP, (hremaining P).mpr hQL⟩, rfl⟩
+  · intro P Q hP hQ
+    exact hcircle.2.2 P Q hP.1 hQ.1
+
 
 /-- **Equal angles at the centres lie alike.** If the angle at the centre G standing on
 the circumference BKC is equal to the angle at the centre H standing on ELF, then G and H
@@ -153,28 +213,10 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
     -- therefore the circumference BKC which remains is equal to the circumference ELF.
     have hKL : circumference ABC B K C = circumference DEF E L F :=
       CommonNotion3 (w₁.trans w₂.symm) hBAC
-    /- Their congruence cannot come by subtraction, and comes from III.24 itself. At points
-       X, Y of the circles on the sides of K and L, the angles make two right angles with
-       the equal angles at A and D [III. 22], so they are equal, and the remaining segments
-       are similar; on the equal bases BC, EF they are congruent [III. 24]. Only the side
-       names a segment, so they are the segments on the sides of K and L
-       (`Arc.Congruent.congr_side`). -/
-    obtain ⟨X, hX, hXK⟩ := Prop2.sameSide hB hC hAK.symm.triangle
-    obtain ⟨Y, hY, hYL⟩ := Prop2.sameSide hE hF hDL.symm.triangle
-    have hXA : OppositeSidesOf X A B C := hXK.trans_opposite hAK.symm
-    have hYD : OppositeSidesOf Y D E F := hYL.trans_opposite hDL.symm
-    have hAX : ∠ B A C + ∠ B X C = ∟ + ∟ := by
-      have hAX := (Prop22 hA hB hX hC hXA.symm).2
-      rwa [angle_symm hXA.triangle.ne₂₃ hXA.triangle.ne₁₃] at hAX
-    have hDY : ∠ E D F + ∠ E Y F = ∟ + ∟ := by
-      have hDY := (Prop22 hD hE hY hF hYD.symm).2
-      rwa [angle_symm hYD.triangle.ne₂₃ hYD.triangle.ne₁₃] at hDY
-    have hXY : ∠ B X C = ∠ E Y F :=
-      CommonNotion3 (c := ∠ B A C) (d := ∠ E D F)
-        (by rw [add_comm (∠ B X C), hAX, add_comm (∠ E Y F), hDY]) hAD
-    have hBXC := Prop24 hB hC hX hE hF hY
-      hXK.triangle hYL.triangle hBC hXY
-    exact ⟨hKL, hBXC.congr_side hXK hYL⟩
+    /- The same subtraction for congruence restricts a common application of the whole
+       circles to the remaining segments. Its extension obligation is `Prop26.extend`;
+       the restriction itself is proved in `Prop26.remainder`. -/
+    exact ⟨hKL, Prop26.remainder hB hC hE hF hAK hDL seg⟩
   -- Therefore etc.
   /- Our statement takes the two pairs of equal angles one at a time, as the enunciation's
      "whether they stand at the centres or at the circumferences" does, and III.20 gives

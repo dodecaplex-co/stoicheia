@@ -4,6 +4,8 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Prop04
 import Elements.BookIII.Prop02
 import Elements.BookIII.Prop24
+import Elements.BookIII.Prop20
+import Elements.BookIII.Prop26
 import Elements.BookIII.Prop27
 
 /-!
@@ -55,52 +57,20 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
   -- For let the centres of the circles be taken, and let them be K, L; let BK, KC, EL, LF be
   -- joined.
   obtain ⟨K, L, -, -, hK, hL, -, -, -⟩ := id hcircles
-  /- Euclid's figure has each centre off its straight line. When K is on BC, BGC and EHF are
-     semicircles, and BC, EF are diameters of equal circles. -/
-  by_cases hKBC : Collinear B C K
-  · obtain ⟨N, hB_N, hC_N, hK_N⟩ := hKBC
-    have hBKC := between_of_inside_chord hK_N hB_N hC_N (centre_inside hK) hB hC hBCG.ne₁₂
-    have hsemi := Circumference.semicircle hK hB hC hBKC hBCG
-    rcases Prop29.size hL hE hF hEFH with ⟨-, hlt'⟩ | ⟨hELF, -⟩ | ⟨-, hgt'⟩
-    · exact absurd (heq ▸ hsemi ▸ hlt') (lt_irrefl _)
-    · rw [← len_add_of_between hBKC, ← len_add_of_between hELF, len_symm B K,
-        hcircles.radii hK hL hB hE, hcircles.radii hK hL hC hF, len_symm E L]
-    · exact absurd (heq ▸ hsemi ▸ hgt') (lt_irrefl _)
   -- Now, since the circumference BGC is equal to the circumference EHF,
-  /- Otherwise the angle BKC stands on BGC, as in Euclid's figure, or on BAC, the
-     circumference which remains; the remainders are equal, since the wholes are
-     (`Circumference.whole`) [C.N. 3], and L falls as K does. For III.27 we take a point X,
-     Y of each circle on the centre's side. -/
-  obtain ⟨X, Y, hX, hY, hKX, hLY, hst⟩ : ∃ X Y : Point, OnCircle X ABC ∧ OnCircle Y DEF ∧
-      SameSideOf K X B C ∧ SameSideOf L Y E F ∧ standing ABC B X C = standing DEF E Y F := by
-    rcases Prop29.size hK hB hC hBCG with ⟨hKG, hlt⟩ | ⟨hBKC, -⟩ | ⟨hKG, hgt⟩
-    · rcases Prop29.size hL hE hF hEFH with ⟨hLH, -⟩ | ⟨-, hsemi'⟩ | ⟨-, hgt'⟩
-      · refine ⟨A, D, hA, hD, OppositeSidesOf.sameSideOf hKG.symm hAG.symm,
-          OppositeSidesOf.sameSideOf hLH.symm hDH.symm, ?_⟩
-        rw [standing_eq_circumference hAG, standing_eq_circumference hDH, heq]
-      · exact absurd (hsemi' ▸ heq ▸ hlt) (lt_irrefl _)
-      · exact absurd (lt_trans (heq ▸ hlt) hgt') (lt_irrefl _)
-    · exact absurd (collinear_of_between hBKC) (fun h => hKBC (by
-        obtain ⟨N, h1, h2, h3⟩ := h; exact ⟨N, h1, h3, h2⟩))
-    · rcases Prop29.size hL hE hF hEFH with ⟨-, hlt'⟩ | ⟨-, hsemi'⟩ | ⟨hLH, -⟩
-      · exact absurd (lt_trans hlt' (heq ▸ hgt)) (lt_irrefl _)
-      · exact absurd (hsemi' ▸ heq ▸ hgt) (lt_irrefl _)
-      · obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hC hBCG
-        obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hEFH
-        refine ⟨X, Y, hX, hY, hKG.trans hXG.symm, hLH.trans hYH.symm, ?_⟩
-        rw [standing_eq_circumference (hXG.trans_opposite hAG.symm),
-          standing_eq_circumference (hYH.trans_opposite hDH.symm)]
-        have hw₁ := Circumference.whole hB hC hAG
-        have hw₂ := Circumference.whole hE hF hDH
-        refine CommonNotion3 (c := circumference ABC B G C) (d := circumference DEF E H F) ?_ heq
-        calc
-          _ = circumference ABC B G C + circumference ABC B A C := by ac_rfl
-          _ = circumference DEF E H F + circumference DEF E D F := hw₁.trans hw₂.symm
-          _ = _ := by ac_rfl
+  have hstanding : standing ABC B A C = standing DEF E D F := by
+    rw [standing_eq_circumference hAG, standing_eq_circumference hDH]
+    exact heq
   -- the angle BKC is also equal to the angle ELF. [III. 27]
-  have hBKC : ∠ B K C = ∠ E L F :=
-    (Prop27 hcircles hK hL hX hB hC hY hE hF hKX.symm.triangle.acb hLY.symm.triangle.acb
-      hst).2 hKX hLY
+  have hangles := Prop27 hcircles hK hL hA hB hC hD hE hF
+    hAG.triangle.acb hDH.triangle.acb hstanding
+  /- The rectilineal conclusion of III.27 applies to the lesser circumferences. Its
+     inscribed-angle conclusion, doubled by III.20, gives the angles standing at the
+     centres on the given circumferences in every size case. This extension is ours:
+     a greater circumference has a reflex angle at the centre, and a semicircle has
+     two right angles. The conversion back to triangle angles belongs at I.4 below. -/
+  have hcentral : angleAtCentre ABC B G C = angleAtCentre DEF E H F := by
+    sorry
   -- And, since the circles ABC, DEF are equal,
   -- the radii are also equal;
   have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
@@ -108,7 +78,22 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
   -- therefore the two sides BK, KC are equal to the two sides EL, LF; and they contain equal
   -- angles;
   -- therefore the base BC is equal to the base EF. [I. 4]
-  exact (BookI.Prop4 hKX.triangle.cab hLY.triangle.cab hrB hrC hBKC).1
+  /- III.27 has supplied the angles before I.4 is applied. Equal angles standing at
+     the centres put both circles in the same case (`Prop26.alike`). For diameters
+     there are no triangles; for greater circumferences I.4 takes the rectilineal
+     angles left from four right angles. These are additions to Heath's figure
+     (vol. 2, p. 60), not a restriction on the theorem. -/
+  rcases Prop26.alike hK hB hC hBCG hL hE hF hEFH hcentral with
+    ⟨hKG, hLH⟩ | ⟨hBKC, hELF⟩ | ⟨hKG, hLH⟩
+  · have hBKC : ∠ B K C = ∠ E L F := hangles.2
+      (OppositeSidesOf.sameSideOf hKG.symm hAG.symm)
+      (OppositeSidesOf.sameSideOf hLH.symm hDH.symm)
+    exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
+  · rw [← len_add_of_between hBKC, ← len_add_of_between hELF,
+      len_symm B K, len_symm E L, hrB, hrC]
+  · have hBKC : ∠ B K C = ∠ E L F := by
+      sorry
+    exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
   -- Therefore etc.
   -- Q. E. D.
 
@@ -129,10 +114,30 @@ theorem Prop29.of_congruent {B C E F G H : Point} {ABC DEF : Circle}
     (hG : ¬ Collinear B C G) (hH : ¬ Collinear E F H)
     (hcong : Arc.Congruent ⟨ABC, B, C, G⟩ ⟨DEF, E, F, H⟩) :
     ‖B C‖ = ‖E F‖ := by
-  /- The congruent circumferences BGC, EHF are equal in measure (`Prop24.equalMeasure`),
-     and III.29 gives the equal straight lines. -/
-  exact Prop29 hcircles hB hC hE hF hG hH
-    (Prop24.equalMeasure (a := ⟨ABC, B, C, G⟩) (b := ⟨DEF, E, F, H⟩)
-      ⟨hB, hC, hG⟩ ⟨hE, hF, hH⟩ hcong)
+  /- Take the centres and points on the opposite circumferences, as in the main proof. -/
+  obtain ⟨K, L, -, -, hK, hL, -⟩ := id hcircles
+  obtain ⟨A, hA, hAG⟩ := Prop2.oppositeSide hB hC hG
+  obtain ⟨D, hD, hDH⟩ := Prop2.oppositeSide hE hF hH
+  /- Equal circumferences give equal angles [III. 27], here using the companion that
+     accepts exactly the congruence supplied, `Prop27.of_congruent`. -/
+  have hangles := Prop27.of_congruent hcircles hK hL hA hB hC hD hE hF hAG hDH hcong
+  have hcentral : angleAtCentre ABC B G C = angleAtCentre DEF E H F := by
+    sorry
+  /- The radii of the equal circles are equal. -/
+  have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
+  have hrC : ‖K C‖ = ‖L F‖ := hcircles.radii hK hL hC hF
+  /- The equal sides and contained angles give the bases [I. 4]. The same diameter and
+     reflex cases as in the main proof are kept, with all their geometric hypotheses. -/
+  rcases Prop26.alike hK hB hC hG hL hE hF hH hcentral with
+    ⟨hKG, hLH⟩ | ⟨hBKC, hELF⟩ | ⟨hKG, hLH⟩
+  · have hBKC : ∠ B K C = ∠ E L F := hangles.2
+      (OppositeSidesOf.sameSideOf hKG.symm hAG.symm)
+      (OppositeSidesOf.sameSideOf hLH.symm hDH.symm)
+    exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
+  · rw [← len_add_of_between hBKC, ← len_add_of_between hELF,
+      len_symm B K, len_symm E L, hrB, hrC]
+  · have hBKC : ∠ B K C = ∠ E L F := by
+      sorry
+    exact (BookI.Prop4 hKG.triangle.cab hLH.triangle.cab hrB hrC hBKC).1
 
 end Elements.BookIII
