@@ -13,7 +13,8 @@ of scripts/negative/, and the loader is tested on temporary folders of small pla
 test runs the suite as a script, in a temporary copy, to see that its plants share the
 running module and that no bytecode runs in place of the runner or a plant. The comment
 reader the scripts share is fed the texts on which a reader could read a Lean comment
-otherwise than Lean does, each with Lean's own reading.
+otherwise than Lean does, each with Lean's own reading. The workers of `--workers` are
+run on a throwaway repository, as a script, with small plants that need no Lean.
 """
 
 import ast
@@ -24,9 +25,12 @@ import os
 import py_compile
 import re
 import shutil
+import signal
+import statistics
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
@@ -36,6 +40,9 @@ from unittest.mock import Mock, patch
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 import negative_tests as negative  # noqa: E402
+
+# The lane exports the number of workers for its runs; these tests choose their own.
+os.environ.pop(negative.WORKERS, None)
 
 
 def plant(name):
@@ -2394,6 +2401,439 @@ class ScriptTests(unittest.TestCase):
         self.assertIn("shared: True; running: True\n✓ the probe: caught\n", result.stdout)
         self.assertTrue(result.stdout.endswith(
             "✓ count plants passed; other plants were not run (--counts-only)\n"), output)
+
+
+class DealTests(unittest.TestCase):
+    """The deal of the plants to the workers, longest first, and the record of their times,
+    tests/negative_times.json, which `--times-from-log` writes."""
+
+    def plants(self, *names, builds=()):
+        """Stand-in plants, in the order given, which the caller gives as the stable one."""
+        return [negative.Plant(name, Path(f"scripts/negative/{name}.py"), "A stand-in.",
+                               name in builds, lambda: None) for name in names]
+
+    def names(self, shares):
+        return [[p.name for p in share] for share in shares]
+
+    def test_longest_first(self):
+        shares, loads = negative.deal(self.plants("a", "b", "c", "d"), 2,
+                                      {"a": 1.0, "b": 10.0, "c": 5.0, "d": 4.0})
+        self.assertEqual(self.names(shares), [["b"], ["a", "c", "d"]])
+        self.assertEqual(loads, [10.0, 10.0])
+
+    def test_a_plant_with_no_time_weighs_the_median(self):
+        """x weighs 6, the median, and so goes beside b; weighing nothing, it would go with
+        a beside c."""
+        shares, loads = negative.deal(self.plants("a", "b", "c", "x"), 2,
+                                      {"a": 1.0, "b": 6.0, "c": 8.0})
+        self.assertEqual(self.names(shares), [["a", "c"], ["b", "x"]])
+        self.assertEqual(loads, [9.0, 12.0])
+
+    def test_with_no_record_every_plant_weighs_the_same(self):
+        shares, loads = negative.deal(self.plants("a", "b", "c", "d", builds=("c", "d")), 2, {})
+        self.assertEqual(self.names(shares), [["a", "c"], ["b", "d"]])
+        self.assertEqual(loads, [2.0, 2.0])
+
+    def test_a_plant_that_builds_goes_first_on_a_tie(self):
+        shares, _ = negative.deal(self.plants("a", "b", "c", builds=("c",)), 3,
+                                  {"a": 5.0, "b": 5.0, "c": 5.0})
+        self.assertEqual(self.names(shares), [["c"], ["a"], ["b"]])
+
+    def test_every_chosen_plant_is_dealt_exactly_once(self):
+        plants, faults = negative.load_plants(REPO / "scripts" / "negative")
+        self.assertEqual(faults, [])
+        plants += self.plants("unrecorded_one", "unrecorded_two")
+        recorded = json.loads((REPO / negative.TIMES).read_text())["seconds"]
+        for seconds in (recorded, {}):
+            for count in (1, 2, 4, 8, len(plants)):
+                with self.subTest(count=count, record=bool(seconds)):
+                    shares, loads = negative.deal(plants, count, seconds)
+                    self.assertEqual(len(shares), count)
+                    dealt = [p for share in shares for p in share]
+                    self.assertEqual(sorted(p.name for p in dealt), sorted(p.name for p in plants))
+                    for share in shares:
+                        self.assertTrue(share)
+                        self.assertEqual(share, [p for p in plants if p in share])
+                    median = statistics.median(seconds.values()) if seconds else 1.0
+                    self.assertAlmostEqual(sum(loads),
+                                           sum(seconds.get(p.name, median) for p in plants))
+
+    def test_the_record_reads(self):
+        data = json.loads((REPO / negative.TIMES).read_text())
+        self.assertEqual(list(data), ["about", "seconds"])
+        self.assertIn("--times-from-log", data["about"])
+        self.assertEqual(list(data["seconds"]), sorted(data["seconds"]))
+        for name, seconds in data["seconds"].items():
+            self.assertRegex(name, r"\A[a-z][a-z0-9_]*\Z")
+            self.assertIsInstance(seconds, (int, float))
+            self.assertGreaterEqual(seconds, 0)
+            self.assertEqual(round(seconds, 1), seconds)
+
+    def test_recorded_times_without_a_record_or_with_one_unread(self):
+        root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(patch.object(negative, "ROOT", root))
+        self.assertEqual(negative.recorded_times(), {})
+        (root / "tests").mkdir()
+        (root / negative.TIMES).write_text('{"about": "", "seconds": {"a": 1.5}}')
+        self.assertEqual(negative.recorded_times(), {"a": 1.5})
+        errors = io.StringIO()
+        (root / negative.TIMES).write_text('{"about": "", "seconds": ["a"]}')
+        with redirect_stderr(errors):
+            self.assertEqual(negative.recorded_times(), {})
+        self.assertIn("note: tests/negative_times.json cannot be read (AttributeError: ",
+                      errors.getvalue())
+
+    def test_times_from_log(self):
+        root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.enterContext(patch.object(negative, "ROOT", root))
+        (root / "tests").mkdir()
+        (root / "logs/20261028-run").mkdir(parents=True)
+        log = root / "logs/20261028-run/negative.log"
+        log.write_text("zeta (scripts/negative/zeta.py)\n"
+                       "  zeta: 12.34s (including restoration)\n"
+                       "alpha (scripts/negative/alpha.py)\n"
+                       "✓ alpha: caught\n"
+                       "  alpha: 0.04s (including restoration)\n"
+                       "  not a plant: 1.00s (including restoration)\n"
+                       "2 of 2 plants run\n")
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(negative.main(["--times-from-log", str(log)]), 0)
+        data = json.loads((root / negative.TIMES).read_text())
+        self.assertEqual(data["seconds"], {"alpha": 0.0, "zeta": 12.3})
+        self.assertEqual(list(data["seconds"]), ["alpha", "zeta"])
+        self.assertIn("from the time lines of 2 plants in the log 20261028-run/negative.log.",
+                      data["about"])
+        self.assertEqual(output.getvalue(), "Wrote tests/negative_times.json: 2 plants.\n")
+        for text, reason in (("  zeta: 1.00s (including restoration)\n" * 2,
+                              "times zeta more than once"),
+                             ("no time lines\n", "holds no plant's time line")):
+            with self.subTest(reason=reason):
+                (root / negative.TIMES).unlink(missing_ok=True)
+                log.write_text(text)
+                errors = io.StringIO()
+                with redirect_stderr(errors):
+                    self.assertEqual(negative.main(["--times-from-log", str(log)]), 1)
+                self.assertIn(reason, errors.getvalue())
+                self.assertFalse((root / negative.TIMES).exists())
+
+
+class WorkerOptionTests(unittest.TestCase):
+    """--workers and STOICHEIA_NEGATIVE_WORKERS, in process, on a temporary folder of three
+    plants: `run` is a stand-in that passes, and run_workers one that records the workers it
+    is asked for and reports every plant run."""
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        folder = self.root / "scripts/negative"
+        folder.mkdir(parents=True)
+        for name in ("one", "two", "three"):
+            (folder / f"{name}.py").write_text(plant_source(name))
+        self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[]))
+        self.enterContext(patch.object(negative, "run", side_effect=lambda *cmd:
+                                       subprocess.CompletedProcess(cmd, 0, "", "")))
+        self.workers = self.enterContext(patch.object(negative, "run_workers", return_value=3))
+        self.enterContext(patch.dict(os.environ))
+        self.output = self.enterContext(redirect_stdout(io.StringIO()))
+
+    def workers_for(self, argv=(), variable=None):
+        """The workers main() runs the plants in, with the variable set to `variable`."""
+        os.environ.pop(negative.WORKERS, None)
+        if variable is not None:
+            os.environ[negative.WORKERS] = variable
+        self.workers.reset_mock()
+        for path in self.root.glob("planted-*"):
+            path.unlink()
+        self.assertEqual(negative.main(argv), 0)
+        if not self.workers.called:
+            return 1, sorted(p.name.removeprefix("planted-") for p in self.root.glob("planted-*"))
+        self.assertEqual(list(self.root.glob("planted-*")), [])
+        return self.workers.call_args.args[1], []
+
+    def refused(self, argv=(), variable=None):
+        """What main() says as it exits 2."""
+        os.environ.pop(negative.WORKERS, None)
+        if variable is not None:
+            os.environ[negative.WORKERS] = variable
+        errors = io.StringIO()
+        with redirect_stderr(errors), self.assertRaises(SystemExit) as raised:
+            negative.main(argv)
+        self.assertEqual(raised.exception.code, 2)
+        return errors.getvalue()
+
+    def test_the_variable_is_read_only_when_the_option_is_absent(self):
+        everything = ["one", "three", "two"]
+        for argv, variable, expected in (
+                ((), None, (1, everything)),
+                ((), "", (1, everything)),
+                ((), "1", (1, everything)),
+                ((), "2", (2, [])),
+                ((), "02", (2, [])),
+                (("--workers", "3"), "2", (3, [])),
+                (("--workers", "1"), "3", (1, everything)),
+                (("--workers", "2"), "not a number", (2, [])),
+                (("--workers", "9"), None, (3, [])),       # cut to the plants chosen
+                (("--plant", "two", "--workers", "4"), None, (1, ["two"]))):
+            with self.subTest(argv=argv, variable=variable):
+                self.assertEqual(self.workers_for(list(argv), variable), expected)
+
+    def test_anything_but_a_whole_number_from_1_is_refused(self):
+        for value in ("0", "00", "-1", "+2", " 2", "2.5", "two", "٣"):
+            with self.subTest(value=value):
+                self.assertIn(f"STOICHEIA_NEGATIVE_WORKERS must be a whole number from 1, not "
+                              f"{value!r}", self.refused(variable=value))
+                self.assertIn(f"--workers must be a whole number from 1, not {value!r}",
+                              self.refused(["--workers", value], variable="2"))
+        self.workers.assert_not_called()
+
+    def test_counts_only_takes_no_workers(self):
+        self.assertIn("--workers is not for --counts-only, which takes no workers",
+                      self.refused(["--counts-only", "--workers", "1"]))
+        (self.root / "scripts/negative/count_markers.py").write_text(
+            plant_source("count_markers"))
+        # The variable, which the lane may set for every run, is passed over, even when it
+        # would be refused elsewhere.
+        for value in ("", "2", "none"):
+            os.environ[negative.WORKERS] = value
+            self.assertEqual(negative.main(["--counts-only"]), 0)
+        self.workers.assert_not_called()
+
+    def test_the_worker_report_is_hidden_and_a_worker_takes_no_workers(self):
+        with self.assertRaises(SystemExit) as raised:
+            negative.main(["--help"])
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn("--workers N", self.output.getvalue())
+        self.assertNotIn("--worker-report", self.output.getvalue())
+        self.assertIn("--worker-report is for a worker, which is given its plants by --plant",
+                      self.refused(["--worker-report", "report.json"]))
+        self.assertIn("--workers is for a run of the plants, not with --worker-report",
+                      self.refused(["--plant", "one", "--worker-report", "report.json",
+                                    "--workers", "2"]))
+
+
+# check_fidelity.py in the throwaway repository: the plants there plant nothing it reads, so
+# the closing check of each unplanted tree passes; check_kernel reads ROOT from it.
+STAND_IN_FIDELITY = '''"""A stand-in for check_fidelity.py, which passes."""
+import heath
+
+ROOT = heath.ROOT
+
+if __name__ == "__main__":
+    raise SystemExit(0)
+'''
+# The bodies of the throwaway plants' plant(), "{name}" the plant's name.
+PASSES = 'print("{name} plants its change")\n    nt.refused("{name}: caught")'
+MISSES = 'nt.expect_failure("{name}", subprocess.CompletedProcess([], 0, "", ""))'
+CRASHES = 'import os\n    os._exit(3)'
+LEAVES = '(nt.ROOT / "left-by-{name}").write_text("")\n    nt.refused("{name}: caught")'
+LEAVES_AND_EXITS = '(nt.ROOT / "left-by-{name}").write_text("")\n    import os\n    os._exit(0)'
+SLEEPS = 'import time\n    print("{name} sleeps")\n    time.sleep(120)'
+LOOKS = ('import os\n'
+         '    print("status:", repr(nt.run("git", "status", "--porcelain").stdout))\n'
+         '    built = nt.ROOT / ".lake/build/Built.olean"\n'
+         '    print("built:", built.read_text().strip(), built.is_symlink(), '
+         'os.stat(built).st_nlink)\n'
+         '    print("root:", nt.ROOT)\n'
+         '    nt.refused("{name}: caught")')
+TIME = re.compile(r"\d+\.\d\ds \(including restoration\)")
+
+
+class WorkerTests(unittest.TestCase):
+    """--workers on a throwaway repository, the suite run as CI runs it, as a script: the
+    runner and the helpers it imports are copies, check_fidelity.py a stand-in that passes,
+    the regressions empty, `.lake` one small file, and the plants small ones that need no
+    Lean. Git runs without user config, and the workers' trees are made in a temporary
+    directory of the test's own, where every run must leave none, nor Git a note of one."""
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.tmp = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.env = {k: v for k, v in os.environ.items()
+                    if not k.startswith(("GIT_", "PYTHON", "LAKE")) and k != "LEAN_PATH"}
+        self.env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
+                        TMPDIR=str(self.tmp))
+        (self.root / "scripts/negative").mkdir(parents=True)
+        for name in ("negative_tests", "check_kernel", "generated_counts", "heath"):
+            shutil.copyfile(REPO / f"scripts/{name}.py", self.root / f"scripts/{name}.py")
+        (self.root / "scripts/check_fidelity.py").write_text(STAND_IN_FIDELITY)
+        (self.root / "tests").mkdir()
+        for _, rel in negative.REGRESSIONS:
+            (self.root / rel).write_text("")
+        (self.root / ".gitignore").write_text("/.lake\n__pycache__/\n")
+        (self.root / ".lake/build").mkdir(parents=True)
+        (self.root / ".lake/build/Built.olean").write_text("built\n")
+        self.git("init", "-q")
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, env=self.env, capture_output=True,
+                              text=True, check=True).stdout
+
+    def commit(self, before=None, **bodies):
+        """Each plant's file, its plant() doing its body, and commit the tree. A plant whose
+        name ends `_builds` builds; one named in `before` runs that code as it loads."""
+        for path in (self.root / "scripts/negative").glob("*.py"):
+            path.unlink()
+        for name, body in bodies.items():
+            (self.root / f"scripts/negative/{name}.py").write_text(plant_source(
+                name, builds=f"BUILDS = {name.endswith('_builds')}",
+                function="def plant() -> None:\n    " + body.format(name=name),
+                before=(before or {}).get(name, "")))
+        self.git("add", "--", ".")
+        self.git("-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                 "commit", "-q", "--no-verify", "--allow-empty", "-m", "the plants")
+
+    def suite(self, *args):
+        """The suite run as a script; then no worker's tree is left."""
+        result = subprocess.run([sys.executable, "scripts/negative_tests.py", *args],
+                                cwd=self.root, env=self.env, capture_output=True, text=True,
+                                timeout=300)
+        self.assert_no_worker_left()
+        return result
+
+    def assert_no_worker_left(self):
+        self.assertEqual(list(self.tmp.glob("stoicheia-negative-*")), [])
+        self.assertEqual(self.git("worktree", "list", "--porcelain").count("worktree "), 1)
+
+    def test_workers_give_one_worker_s_verdicts_and_stdout(self):
+        """Apart from the time lines, and from the plan on stderr, on a set that passes and
+        on a set where a plant misses its change."""
+        for missing in (False, True):
+            with self.subTest(missing=missing):
+                self.commit(a_one=PASSES, b_two=PASSES, c_three=MISSES if missing else PASSES,
+                            d_four_builds=PASSES)
+                alone = self.suite()
+                self.assertEqual(alone.returncode, 1 if missing else 0, alone.stdout)
+                self.assertEqual(alone.stderr, "")
+                for workers in ("2", "3"):
+                    result = self.suite("--workers", workers)
+                    self.assertEqual(result.returncode, alone.returncode, result.stdout)
+                    self.assertEqual(TIME.sub("", result.stdout), TIME.sub("", alone.stdout))
+                    self.assertIn(f"The plants in {workers} workers, dealt in turn",
+                                  result.stderr)
+                self.assertTrue(alone.stdout.endswith(
+                    "1 negative-test failure(s):\nc_three (scripts/negative/c_three.py):\n"
+                    "  ✗ c_three: not caught\n" if missing else
+                    "4 of 4 plants run\n✓ every planted change was caught\n"), alone.stdout)
+
+    def test_a_plant_that_misses_its_change_fails_the_run_in_any_worker(self):
+        """As the first plant of a worker's share and as the last."""
+        for missing in ("a_one", "d_four"):
+            with self.subTest(missing=missing):
+                self.commit(**{name: MISSES if name == missing else PASSES
+                               for name in ("a_one", "b_two", "c_three", "d_four")})
+                result = self.suite("--workers", "2")
+                self.assertIn("  worker 1: a_one, c_three\n  worker 2: b_two, d_four\n",
+                              result.stderr)
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertTrue(result.stdout.endswith(
+                    f"1 negative-test failure(s):\n{missing} (scripts/negative/{missing}.py):\n"
+                    f"  ✗ {missing}: not caught\n"), result.stdout)
+                self.assertNotIn("worker", result.stdout)
+
+    def test_a_worker_that_crashes_fails_the_run(self):
+        """Its plant ends the process, so neither its `finally` nor its report is written;
+        the plant after it in its share is not run, and the other worker's report."""
+        self.commit(a_one=PASSES, b_two=CRASHES, c_three=PASSES, d_four=PASSES)
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 1, result.stdout)
+        crashed = "worker 2 (b_two, d_four) crashed: exit 3; no report"
+        self.assertIn(f"✗ {crashed}; its log ends:\n", result.stdout)
+        self.assertIn("\nb_two (scripts/negative/b_two.py)\n", result.stdout)
+        for name in ("a_one", "c_three"):
+            self.assertIn(f"\n{name} (scripts/negative/{name}.py)\n{name} plants its change\n"
+                          f"✓ {name}: caught\n", result.stdout)
+        self.assertNotIn("d_four plants its change", result.stdout)
+        self.assertTrue(result.stdout.endswith(
+            f"2 negative-test failure(s):\noutside any plant:\n  ✗ {crashed}\n"
+            "  ✗ only 2 of the 4 plants chosen were run\n"), result.stdout)
+
+    def test_a_worker_s_dirty_tree_fails_the_run(self):
+        """A plant that leaves a file behind fails its worker's closing comparison and the
+        run's own of the worker's tree; one that then ends the process, which leaves no
+        report, is caught by the run's own comparison, as well as by its crash."""
+        own = ("worker 2 (b_two, d_four): the working tree did not return to its entry Git "
+               "status")
+        dirty = "worker 2's tree did not return to its entry Git status"
+        for body, failures in ((LEAVES, [own, dirty]),
+                               (LEAVES_AND_EXITS, ["worker 2 (b_two, d_four) crashed: no "
+                                                   "report", dirty, "only 2 of the 4 plants "
+                                                   "chosen were run"])):
+            with self.subTest(body=body):
+                self.commit(a_one=PASSES, b_two=body, c_three=PASSES, d_four=PASSES)
+                result = self.suite("--workers", "2")
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn(f"✗ {dirty}:\n?? left-by-b_two\n", result.stdout)
+                self.assertTrue(result.stdout.endswith(
+                    f"{len(failures)} negative-test failure(s):\noutside any plant:\n"
+                    + "".join(f"  ✗ {failure}\n" for failure in failures)), result.stdout)
+                self.assertEqual(self.git("status", "--porcelain"), "")
+
+    def test_no_worker_s_tree_is_left(self):
+        """After a run that passes, one that fails and one with a crash, as after every run
+        of these tests; and after an interruption, which the run passes on to each worker
+        still running before it removes the trees."""
+        for body in (PASSES, MISSES, CRASHES):
+            with self.subTest(body=body):
+                self.commit(a_one=PASSES, b_two=body)
+                self.assertEqual(self.suite("--workers", "2").returncode,
+                                 0 if body == PASSES else 1)
+        self.commit(a_one=PASSES, b_two=SLEEPS)
+        run = subprocess.Popen([sys.executable, "scripts/negative_tests.py", "--workers", "2"],
+                               cwd=self.root, env=self.env, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, text=True)
+        self.addCleanup(run.kill)
+        deadline = time.monotonic() + 120
+        while not any("b_two sleeps" in log.read_text()
+                      for log in self.tmp.glob("stoicheia-negative-*/worker-*.log")):
+            if run.poll() is not None:
+                self.fail(run.communicate())
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(0.05)
+        run.send_signal(signal.SIGINT)
+        out, err = run.communicate(timeout=120)
+        self.assertNotEqual(run.returncode, 0, out + err)
+        self.assertIn("KeyboardInterrupt", err)
+        self.assert_no_worker_left()
+        self.assertEqual(self.git("status", "--porcelain"), "")
+
+    def test_a_worker_s_tree_is_the_tree_under_test(self):
+        """Not just its commit: a change staged, a change not, a tracked file deleted and an
+        untracked one, a symbolic link and an executable file; and a clone of `.lake`, each
+        file a regular file with one name. Each worker's Git status is the tree's. A tree
+        that is not the one whose status was taken first fails the run before any plant."""
+        notes = self.root / "notes"
+        notes.mkdir()
+        for name in ("staged", "changed", "gone"):
+            (notes / f"{name}.txt").write_text(f"{name}\n")
+        (notes / "link").symlink_to("staged.txt")
+        (self.root / "scripts/tool.sh").write_text("#!/bin/sh\n")
+        (self.root / "scripts/tool.sh").chmod(0o755)
+        self.commit(a_looks=LOOKS, b_looks=LOOKS)
+        (notes / "staged.txt").write_text("staged, changed\n")
+        self.git("add", "--", "notes/staged.txt")
+        (notes / "changed.txt").write_text("changed, not staged\n")
+        (notes / "gone.txt").unlink()
+        (notes / "untracked.txt").write_text("untracked\n")
+        status = self.git("status", "--porcelain")
+        self.assertEqual(status, " M notes/changed.txt\n D notes/gone.txt\nM  notes/staged.txt\n"
+                                 "?? notes/untracked.txt\n")
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout.count(f"status: {status!r}\n"), 2, result.stdout)
+        self.assertEqual(result.stdout.count("built: built False 1\n"), 2, result.stdout)
+        roots = re.findall(r"^root: (.*)$", result.stdout, re.M)
+        self.assertEqual(len(set(roots)), 2)
+        self.assertNotIn(str(self.root), roots)
+        self.assertEqual(self.git("status", "--porcelain"), status)
+        with self.subTest("a file written as a plant loads"):
+            self.commit(before={"b_writes": '(nt.ROOT / "written-as-it-loads").touch()'},
+                        a_looks=LOOKS, b_writes=PASSES)
+            result = self.suite("--workers", "2")
+            self.assertEqual(result.returncode, 1, result.stdout)
+            self.assertIn("✗ worker 1's tree does not match the tree under test:\n", result.stdout)
+            self.assertNotIn("(scripts/negative/", result.stdout)
+            self.assertIn("the working tree did not return to its entry Git status",
+                          result.stdout)
 
 
 if __name__ == "__main__":
