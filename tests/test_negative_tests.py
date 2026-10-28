@@ -2857,6 +2857,30 @@ class WorkerTests(unittest.TestCase):
                     for name in variables:
                         self.env.pop(name, None)
 
+    def test_git_config_files_cannot_redirect_worker_status(self):
+        """A global or system config points core.worktree at the clean source tree: a
+        worker that leaves its own tree dirty still fails, leaves the source unchanged,
+        and is completely cleaned up."""
+        for source in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+            with self.subTest(source=source):
+                config = self.tmp / f"{source.lower()}.config"
+                config.write_text(f"[core]\n\tworktree = {self.root}\n")
+                self.commit(a_one=PASSES, b_two=LEAVES)
+                saved = self.env.copy()
+                self.env[source] = str(config)
+                if source == "GIT_CONFIG_SYSTEM":
+                    self.env["GIT_CONFIG_NOSYSTEM"] = "0"
+                try:
+                    result = self.suite("--workers", "2")
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    message = "worker 2's tree did not return to its entry Git status"
+                    self.assertIn(f"✗ {message}:\n?? left-by-b_two\n", result.stdout)
+                    self.assertFalse((self.root / "left-by-b_two").exists())
+                    self.assertEqual(self.git("status", "--porcelain"), "")
+                finally:
+                    self.env.clear()
+                    self.env.update(saved)
+
     def test_no_worker_s_tree_is_left(self):
         """After a run that passes, one that fails and one with a crash, as after every run
         of these tests; and after an interruption, which the run passes on to each worker

@@ -1029,9 +1029,13 @@ def write_report(path: Path, report: dict, status: int | None) -> None:
 
 
 def worker_env() -> dict[str, str]:
-    """The run's environment, but for WITHHELD, indexed Git settings and every `LAKE…`."""
-    return {name: value for name, value in os.environ.items()
-            if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
+    """The run's environment, but for WITHHELD, indexed and file-based Git settings, and
+    every `LAKE…`."""
+    env = {name: value for name, value in os.environ.items()
+           if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_SYSTEM=os.devnull,
+               GIT_CONFIG_NOSYSTEM="1")
+    return env
 
 
 def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
