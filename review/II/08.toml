@@ -39,7 +39,7 @@ note = "Euclid takes GK equal to GQ from the square GR. The Lean applies `Square
 at = "therefore the eight areas, which contain the gnomon STU"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid reads the gnomon STU as eight cells and AK as AG and CK together. `Parallelogram.about_diameter` divides CP into four cells, and `quadArea_add_of_parallelograms` divides AQ, QF and AK into two each, so the two groups of four equal areas give four times AK. Definition II.2's gnomon has no Lean word of its own: here and in the four later sentences that name it, the Lean carries the gnomon STU as the sum of the areas of its three parallelograms, CP, about the diameter DE, and the complements AQ and QF beside it."
+note = "Euclid reads the gnomon STU as eight cells and AK as AG and CK together. `Parallelogram.about_diameter` divides CP into four cells, and `quadArea_add_of_parallelograms` divides AQ, QF and AK into two each, so the two groups of four equal areas give four times AK. Definition II.2's gnomon has no Lean definition of its own: here and in the four later sentences that name it, the Lean carries the gnomon STU as the sum of the areas of its three parallelograms, CP, about the diameter DE, and the complements AQ and QF beside it."
 
 [[passage]]
 at = "Now, since AK is the rectangle AB, BD"
