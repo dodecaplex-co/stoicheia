@@ -7,15 +7,16 @@
   self-test about 70.
 
   The registry gains two optional fields. `concurrent = true` declares that a check writes
-  nothing in the worktree but Python's ignored bytecode, reads nothing another check
-  writes, has no limit timed by the clock tight enough to fail on a busy machine, and does
-  not itself fill the machine; the reader accepts `true` alone, and never for the check
-  with `empty`. `after`, with `concurrent` only, names earlier checks that must have ended
-  before the check starts, so that a check's own test still runs before its verdict. A
-  check without the field runs alone, after every earlier check has ended and before any
-  later one starts, so every new check runs alone until a reviewed change declares it. The
-  reader's JSON carries both fields; a copy of `scripts/safe_push.py` from before this
-  change reads only an entry's name, command, empty and job, and so ignores them.
+  nothing in the worktree but Python's ignored bytecode, reads nothing that a check which
+  may run beside it writes, has no limit timed by the clock tight enough to fail on a busy
+  machine, and does not itself fill the machine; the reader accepts `true` alone, and
+  never for the check with `empty`. `after`, with `concurrent` only, names earlier checks
+  that must have ended before the check starts, so that a check's own test still runs
+  before its verdict. A check without the field runs alone, after every earlier check has
+  ended and before any later one starts, so every new check runs alone until a reviewed
+  change declares it. The reader's JSON carries both fields; a copy of
+  `scripts/safe_push.py` from before this change reads only an entry's name, command,
+  empty and job, and so ignores them.
 
   The declarations follow a read-only audit of every check at c592c1664: seventeen
   checks of the registry are declared concurrent, with the model job beside them in
@@ -31,8 +32,8 @@
   The pre-flight runs concurrent checks that come next to each other in order as a group,
   up to `STOICHEIA_CHECK_WORKERS` at once, and never more than half the machine's cores;
   the check list line says the number and the cap, and any other value than a whole number
-  from 1 fails it. Every check is still started by the harness's one launcher, `run()`, as
-  every command it starts is: at more than one worker, each check of a group on a thread
+  from 1 fails it. Every check is still started by the harness's launcher, `run()`, as
+  every command of step 4 is: at more than one worker, each check of a group on a thread
   of its own. Unset, empty or 1, the variable means one, and every check runs as before
   this change, one after another on the harness's own thread, with only the guard below
   added around each group; so nothing runs concurrently until the lane sets it. The report
@@ -41,21 +42,35 @@
   no check starts after one fails, every running check is waited for, and the refusal
   names the first failing check in the registry's order, nothing after it reported or
   logged; where a failure is noted, every check runs and is noted in order, and the
-  main-checks cache records each in order. An interrupt (Ctrl-C, SIGTERM or SIGHUP), or
-  any other exception, starts no further check and waits for every check already running,
-  at most the number of workers, to end before the pass cleans or removes its worktree,
-  even through a further interrupt. Those checks are not stopped, as a check in `run()` is
-  not killed on another thread's behalf; a terminal's Ctrl-C reaches them too, in the
-  run's process group, and they end. Stopping their process groups is left to a later
-  card. Around each group, at every number of workers, the pre-flight takes the worktree's
-  state as `git status` sees it, untracked files included and ignored ones not, with the
-  bytes of each file it lists hashed, writing neither the index nor an object; a group
-  that changes it fails the step "concurrent checks left the tree as they found it",
-  naming the group's checks and the paths, and in origin/main's pass that note keeps the
-  pass out of the main-checks cache. A registry with no concurrent check, as origin/main's
-  before this change, gives no group and no extra step: the run is as before. The new
-  check, `tests/test_concurrent_checks.py`, runs early in the sequence and alone, since it
-  starts processes of its own and measures how many run at once.
+  main-checks cache records each in order.
+
+  A signal (Ctrl-C's SIGINT, SIGTERM or SIGHUP), or any other exception, starts no further
+  check. At more than one worker, a termination (SIGTERM or SIGHUP) or an interrupt waits
+  for the checks already running, up to the number of workers, before the pass cleans its
+  worktree, and passes over further signals while it waits (#NNN); at one worker, a check
+  in `run()` is stopped as before. The pass waits by joining each check's thread, so an
+  end that an interrupt takes from the queue before the pass has taken it in leaves
+  nothing to wait for. A terminal's Ctrl-C reaches the checks too, in the run's process
+  group, and they end. Python handles a signal only between its own steps, so one that
+  comes in the instant after another has been passed over could still go on at once.
+
+  Around each group, at every number of workers, the pre-flight takes the worktree's
+  state: HEAD; the index's entries, with their skip-worktree and assume-unchanged flags;
+  each path `git status` lists; and every other file that `git ls-files -o` lists with no
+  exclude rules, ignored files with them, but Python's bytecode. Each file's bytes are
+  hashed, but under the build's caches, `.lake/` and `model/.lake/`, where its size,
+  modification time, inode and mode are compared; nothing is written, neither the index
+  nor an object. A group that changes the state fails the step "concurrent checks left
+  the tree as they found it", naming the group's checks and what changed, and in
+  origin/main's pass that note keeps the pass out of the main-checks cache.
+  `STOICHEIA_CHECK_WORKERS` is keyed in that cache on purpose, though no check reads it: a
+  record made at one number of workers is never used at another, so that a check whose
+  outcome turns on the number, against its declaration, is judged at the number the run
+  uses. A registry with no concurrent check, as origin/main's before this change, gives no
+  group and no extra step; the variable is not read, and the check list line says nothing
+  of workers: the run is as before. The new check,
+  `tests/test_concurrent_checks.py`, runs early in the sequence and alone, since it starts
+  processes of its own and measures how many run at once.
 
   This entry approves the change to `scripts/safe_push.py`, which reads the two fields,
   runs the groups, guards the tree around each and waits for their checks on an

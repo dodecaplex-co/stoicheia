@@ -22,7 +22,8 @@ An entry holds these fields and no others:
     empty     true in place of `command`: `git status --porcelain` must print nothing,
               over the whole worktree
     section8  the line section 8's first command block shows for it
-    concurrent  true: the pre-flight may run the check beside the other concurrent checks
+    concurrent
+              true: the pre-flight may run the check beside the other concurrent checks
               next to it in order (#608; checks/README.md says what it promises)
     after     with `concurrent`: the names of earlier checks that must have ended before
               this one starts, as a check's own test runs before its verdict
@@ -32,9 +33,9 @@ An entry holds these fields and no others:
 README.md (which this reader passes over) and nothing else but a Finder .DS_Store, which it
 passes over too. A file of another name, a folder, a link, a file that is not UTF-8 TOML,
 an unknown or missing field, a value of the wrong kind, an unknown job, `concurrent` other
-than true or with `empty`, `after` without `concurrent` or naming anything but an earlier
-check, two entries of one name or one order, or no entry at all is an error naming the
-file: the registry is read whole or not at all.
+than true or with `empty`, `after` without `concurrent`, naming anything but an earlier
+check or naming one twice, two entries of one name or one order, or no entry at all is an
+error naming the file: the registry is read whole or not at all.
 
     python3 scripts/registry.py [ROOT]                     each entry, in order
     python3 scripts/registry.py --json [ROOT]              the same, as JSON

@@ -42,7 +42,7 @@ name and comment did, and a line of it says why the check is concurrent or runs 
 check:
 
 - writes nothing in the worktree but Python's ignored bytecode (`__pycache__`);
-- reads nothing another check writes;
+- reads nothing that a check which may run beside it writes;
 - has no limit timed by the clock tight enough to fail when the machine is busy;
 - does not itself fill the machine.
 
@@ -59,9 +59,11 @@ runs them one at a time, as before. Their lines and logs come in the registry's 
 as it would be run alone, and a failure refuses at the first failing check in that order.
 Interrupted, or refused, the pre-flight waits for the checks already running to end before
 it cleans or removes the worktree. Around each group, however many run at once, the
-pre-flight takes the worktree's state as `git status` sees it, untracked files with it and
-each listed file's bytes hashed, and a group that changes it fails the step "concurrent
-checks left the tree as they found it", naming its checks and the paths. CI's
+pre-flight takes the worktree's state: HEAD, the index's entries, and every file that
+`git status` or `git ls-files -o` lists, ignored files with them but Python's bytecode,
+each file's bytes hashed but under `.lake/` and `model/.lake/`, where its size, time,
+inode and mode are compared. A group that changes it fails the step "concurrent checks
+left the tree as they found it", naming its checks and what changed. CI's
 `scripts/run_checks.py` runs every check one after another, as before.
 
 ## Adding a check
@@ -75,6 +77,11 @@ checks left the tree as they found it", naming its checks and the paths. CI's
    protected path ([WORKFLOW, section 10](../docs/WORKFLOW.md#landing-work-pull-requests),
    "Protected paths"). Removing a check, or changing its command, job, order,
    `concurrent` or `after`, is the same: one file, named in the entry.
+
+A check declared concurrent that is to write in the worktree loses its `concurrent` first,
+in a train of its own. The commit's pass runs the commit's own scripts under origin/main's
+declarations, so a train that makes such a check write is refused by the guard until the
+train that undeclares it has landed.
 
 A change to `checks/` is of risk class R3, and touches neither `scripts/safe_push.py` nor
 the CI workflow. Its pull request's CI runs its own registry, the new check with it, and
