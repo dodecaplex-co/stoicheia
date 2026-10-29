@@ -51,11 +51,11 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "full"
-commit = "50db90038"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "b987a7ca0"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:3fd865e5038f4121"
-run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the release limitation distinguishes subtraction and congruence, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the remainders' congruence by Euclid's subtraction under one map (Prop26.extend, Prop26.remainder), and the step at I.4 marked as argued another way, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5"
-text = "sha256:c12c57a9addc82bd"
+run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the release limitation distinguishes subtraction and congruence, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the remainders' congruence by Euclid's subtraction under one map (Prop26.extend, Prop26.remainder), and the step at I.4 marked as argued another way, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5; card #704, ship BT: the departing cases' reasons and bridges stated after Heath's note on III.26, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r2627read, at b987a7ca0."
+text = "sha256:b31793a9ffdad712"
 
 [review.items]
 statement = "pass"
