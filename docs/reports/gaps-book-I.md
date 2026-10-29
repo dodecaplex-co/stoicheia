@@ -156,11 +156,10 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - Which ray from A, and which side of AB, the new angle takes are left to the figure. The statement settles both, as I.24, I.31 and I.42 need.
 
 ## I.24
-- Euclid gives one case, F below EG. Simson added a sentence to make it the only one, and Heath leaves it out (vol. 1, p. 297). Our proof takes all three: F lies within the angle EDG (`Prop24.within`), DF drawn on crosses EG at a point X (`crossbar`), and `Prop24.cases` puts F on EG, within the triangle DEG, or beyond EG. The first two are Proclus' cases (Heath, vol. 1, p. 297): the whole greater than the part (`len_lt_of_between`), and I.21, which no bracket names here.
+- Euclid gives one case, F below EG. Simson added a sentence to make it the only one, and Heath leaves it out (vol. 1, p. 297). Our proof inserts Simson's words: the statement reads the same with B and C, and E and F, exchanged, so DE may be taken not greater than DF. F lies within the angle EDG (`Prop24.within`), and then below EG (`Prop24.below`), by the lemma Heath gives (vol. 1, p. 298) from I.16, I.18 and I.19, with I.5 when DE equals DG; Heath's proof gives no reference for any of them. Proclus' two other cases (Heath, vol. 1, p. 297) are told in the mishnah.
 - "Let DG be made equal to either of the two straight lines AC, DF" has no bracket; a circle about D lays it off (`OnRay.exists_len_eq`).
 - G is on the same side of DE as F. I.23 lets us ask for that side, and `SameSideOf.of_onRay` keeps the point laid off along the arm there.
-- "The angle DFG is greater than the angle EGF", and "much greater", are each the whole greater than the part, because X lies between D and F and between E and G (`angle_lt_of_between`).
-- In Proclus' second case, taking the equal DF and DG away from the two sums is a law of magnitudes Euclid never states (`Magnitude.lt_of_add_lt_add_left`).
+- "The angle DFG is greater than the angle EGF", and "much greater", are each the whole greater than the part, because DF meets EG at a point H between D and F and between E and G (`angle_lt_of_between`).
 
 ## I.25
 - "For, if not, it is either equal to it or less" is the division of I.19 (`lt_trichotomy`), and the last step, "therefore the angle BAC is greater than the angle EDF", is a *reductio ad absurdum* (`Classical.byContradiction`).
@@ -189,7 +188,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - I.13 and I.15 need H off AB and B off EH. Both follow from B's being off GH, which comes from the statement's same-side hypothesis and not from the parallels.
 
 ## I.30
-- Heath's figure puts EF between AB and CD, so that GK crosses it at H (`OppositeSides.exists_between`). The enunciation also covers EF lying outside both, where a straight line from one to the other need not cross it. For that case we prove from I.29 that two straight lines through one point, each parallel to a third, are one straight line (`Prop30.unique`): Playfair's axiom, of which I.30 is the logical equivalent, as Heath reports Augustus De Morgan pointing out (vol. 1, p. 314).
+- Heath's figure puts EF between AB and CD, so that GK crosses it at H (`OppositeSides.exists_between`). The enunciation also covers EF lying outside both, where a straight line from one to the other need not cross it. For that case we prove from I.29 that two straight lines through one point, each parallel to a third, are one straight line (`Prop30.unique`), which supplies only the meeting of GH, drawn from AB to EF, with CD; Euclid's own chase does the rest, with CD or AB in the middle. Uniqueness is Playfair's axiom, of which I.30 is the logical equivalent, as Heath reports Augustus De Morgan pointing out (vol. 1, p. 314).
 - The given points need not stand where Heath's do, so `Prop30.point_on_side` takes an end of each straight line on whichever side of GK his figure wants, producing it if it must.
 - Each citation of I.29 needs Euclid's whole figure: the falling straight line meets each parallel between two of its points, and itself goes on beyond both. Book Zero produces the straight lines to make it (`AreParallel.figure_alternate`, `AreParallel.figure_interior`), and later proofs reach it through `Prop29.alternate`, `Prop29.interior` and `Prop29.exterior`.
 - "And they are alternate. Therefore AB is parallel to CD" is I.27, though Heath gives no bracket for it.

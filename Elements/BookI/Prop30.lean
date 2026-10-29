@@ -37,13 +37,13 @@ theorem Prop30.point_on_side {L T : Line} {G P : Point}
       ⟨hAT, hP, hs⟩⟩
 
 /-- Two straight lines through one point, each parallel to a third, are one
-straight line. Euclid's enunciation also covers EF lying outside AB and CD,
-where a straight line from one to the other need not cross it. There this shows
-that a straight line from AB to EF meets CD, and so falls on all three, as
-Euclid's GK does; his own argument does the rest. A straight line from the point
-to the third makes, with each, interior angles equal to two right angles (I.29);
-Common Notion 3 takes away the angle they share, and
-`onRay_of_angle_eq` makes the two rays one. This is the uniqueness of the
+straight line. A straight line from the point to the third makes, with each,
+interior angles equal to two right angles (I.29); Common Notion 3 takes away the
+angle they share, and `onRay_of_angle_eq` makes the two rays one. Euclid's
+enunciation also covers EF lying outside AB and CD, where a straight line from one
+to the other need not cross it. There this shows that a straight line from AB to EF
+meets CD, and so falls on all three, as Euclid's GK does; his own argument does the
+rest. This is the uniqueness of the
 parallel, often called Playfair's axiom, proved here from I.29 rather than
 assumed. Later proofs cite `Prop30.meet` instead: the same uniqueness, drawn
 from I.30 itself, as Heath reports Proclus drawing it under I.31. -/

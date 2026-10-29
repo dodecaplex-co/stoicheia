@@ -25,10 +25,10 @@ fall *below* EG" (vol. 1, pp. 297–298).
 Our proof inserts Simson's words, and shows it. The statement is the same with B and
 C, and E and F, exchanged, so Euclid's sentences stand inside one step that takes DE
 not greater than DF, and the end applies it to the names as given or exchanged.
-`Prop24.below` then puts F below EG, by the lemma Heath gives "by the method employed
-by Pfleiderer, Lardner, and Todhunter" (vol. 1, p. 298), from I.16, I.18 and I.19;
-and Euclid's own comparisons, each the whole greater than the part, carry every
-placing of F. Heath prefers to leave Simson's words out, and with them the other two
+`Prop24.below` then puts F below EG, as Heath shows "by the method employed by
+Pfleiderer, Lardner, and Todhunter" (vol. 1, p. 298), from I.16, I.18 and I.19, with
+I.5 when DE equals DG; and Euclid's own comparisons, each the whole greater than the
+part, carry every case. Heath prefers to leave Simson's words out, and with them the other two
 cases, which Proclus supplies: F on EG, and F within the triangle DEG, by I.21. The
 mishnah tells them.
 -/
@@ -76,7 +76,8 @@ has F there, and his comparisons need it. This is the lemma Heath gives "by the 
 employed by Pfleiderer, Lardner, and Todhunter" (vol. 1, p. 298). F lies within the
 angle EDG, so DF, produced if need be, crosses EG at a point H (`crossbar`). The angle
 DHG, outside the triangle DEH, is greater than the angle DEG [I. 16]; the angle DEG is
-not less than the angle DGE [I. 18], or equal to it when DE is equal to DG [I. 5]; so
+greater than the angle DGE when DE is less than DG [I. 18], and equal to it when DE is
+equal to DG [I. 5], so not less; so
 the angle DHG is greater than the angle DGH, and DH is less than DG [I. 19], which is
 DF. So H, on the ray from D through F, is nearer D than F is. -/
 theorem Prop24.below {D E F G : Point} (hGF : SameSideOf G F D E) (hFE : SameSideOf F E D G)
@@ -134,10 +135,9 @@ theorem Prop24.below {D E F G : Point} (hGF : SameSideOf G F D E) (hFE : SameSid
 drawn on, crosses EG at some point X (`crossbar`). Then either F is X, and lies
 on EG; or F is short of X, within the triangle DEG; or F is beyond X, on
 the far side of EG from D, and EFG is a triangle. The last is Euclid's figure.
-I.24's proof no longer uses this: with Simson's words it needs only the last
-placing, which `Prop24.below` gives. It stays, deprecated, for one release. -/
-@[deprecated "I.24's proof no longer uses it; Prop24.below gives the placing it needs"
-  (since := "2026-10-29")]
+I.24's proof, with Simson's words, needs only the last placing, which
+`Prop24.below` gives. -/
+@[deprecated (since := "2026-10-29")]
 theorem Prop24.cases {D E F G : Point} (hGF : SameSideOf G F D E) (hFE : SameSideOf F E D G) :
     Between E F G ∨ InsideTriangle F G D E ∨
       ∃ X : Point, Between E X G ∧ Between D X F ∧ Triangle E G F := by
@@ -172,7 +172,7 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   /- Simson's words, "Of the two sides DE, DF let DE be the side which is not greater
      than the other" (Heath, vol. 1, p. 297), are not Euclid's. With them F falls below
      EG, as in Euclid's figure (`Prop24.below`). So Euclid's sentences stand inside one
-     step, `simson`, which proves his conclusion for any two triangles named so that DE
+     step, below, which proves his conclusion for any two triangles named so that DE
      is not greater than DF; at the end, it is applied to the names as given, or with
      them exchanged. -/
   have simson : ∀ {B C E F : Point}, Triangle A B C → Triangle D E F → ‖A B‖ = ‖D E‖ →
@@ -247,7 +247,7 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
      exchange B with C and E with F, and the hypotheses AB equal to DE and AC to DF
      exchange, the angles FDE and CAB are the angles EDF and BAC (`angle_symm`), and
      the bases FE and CB are EF and BC (`len_symm`). So when DE is greater than DF,
-     `simson` applies to the triangles ACB and DFE. -/
+     the step applies to the triangles ACB and DFE. -/
   by_cases hDE_DF : ‖D E‖ ≤ ‖D F‖
   · exact simson hABC hDEF hAB hAC h hDE_DF
   · have hDF_DE : ‖D F‖ ≤ ‖D E‖ := fun hlt => hDE_DF fun hgt => lt_irrefl _ (lt_trans hlt hgt)

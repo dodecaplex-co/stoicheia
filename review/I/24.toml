@@ -9,7 +9,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that the base BC is also greater than the base EF"
 kind = "case"
-note = "Simson's added words make Euclid's figure the only one: \"Of the two sides DE, DF let DE be the side which is not greater than the other\" (Heath, vol. 1, p. 297). The Lean proves Euclid's argument under those words, for any two triangles so named, and when DE is greater than DF applies it with B and C, E and F exchanged, under which the statement reads the same (`angle_symm`, `len_symm`)."
+note = "Robert Simson's added words make Euclid's figure the only one: \"Of the two sides DE, DF let DE be the side which is not greater than the other\" (Heath, vol. 1, p. 297). The Lean proves Euclid's argument under those words, for any two triangles so named, and when DE is greater than DF applies it with B and C, E and F exchanged, under which the statement reads the same (`angle_symm`, `len_symm`)."
 
 [[passage]]
 at = "let DG be made equal to either of the two straight lines AC, DF"
@@ -21,7 +21,7 @@ note = "Euclid places G on the new arm with DG equal to DF; the Lean sets this l
 at = "the angle DGF is also equal to the angle DFG"
 kind = "helper"
 helper = "Prop24.below"
-note = "Euclid's figure has F below EG, and his next two comparisons need it there. With DE not greater than DF, which is DG, `Prop24.below` proves it by the lemma Heath gives, by the method of Pfleiderer, Lardner and Todhunter (vol. 1, p. 298): DF meets EG at H, and I.16, I.18 (I.5 when DE equals DG) and I.19 make DH less than DG, which is DF, so H lies between D and F."
+note = "Euclid's figure has F below EG, and his next two comparisons need it there. With DE not greater than DF, which is DG, `Prop24.below` proves it by the lemma Heath gives, by the method of Pfleiderer, Dionysius Lardner and Isaac Todhunter (vol. 1, p. 298): DF meets EG at H, and I.16, I.18 (I.5 when DE equals DG) and I.19 make DH less than DG, which is DF, so H lies between D and F."
 
 [[passage]]
 at = "therefore the angle DFG is greater than the angle EGF"
