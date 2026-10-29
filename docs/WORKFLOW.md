@@ -278,8 +278,9 @@ file, and in `CITATION.cff`, `LICENSE` and `NOTICE`, outside those three folders
 path that the check would read as bare is written from `./` or `~/` (`./dev/stoicheia`).
 The check does not judge the exempt folders, so it does not refuse an old address added
 there; it counts the addresses they hold. Code and configuration files (`.py`, `.yml`,
-`.toml`, `.json`, `.lean`) are outside its scope; code inside Markdown is read. A named
-file, or a file in scope, that cannot be read or decoded as UTF-8 is refused. It refuses
+`.toml`, `.json`, `.lean`) are outside its scope; code inside Markdown is read. A file in
+scope, or a file named outside the exempt folders, that cannot be read or decoded as UTF-8
+is refused. It refuses
 every other owner rather than the old one, so it never needs to name it.
 
 ## 5. Proving in parallel: a voyage
