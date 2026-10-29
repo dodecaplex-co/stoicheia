@@ -61,7 +61,7 @@ note = "Euclid bisects AB and draws the circle; the Lean uses I.10, then Postula
 [[passage]]
 at = "Therefore the straight line AD touches the circle ABE"
 kind = "carried"
-note = "The Lean proves that AD touches the circle by III.16's porism; no later step uses this contact."
+note = "The Lean proves that AD touches the circle by III.16's porism, as Euclid does. Neither his proof of this case nor the Lean uses the contact again, for III.31, not III.32, gives the angle, as Heath remarks (vol. 2, p. 70)."
 unused = ["htouchR"]
 
 [[passage]]
@@ -78,10 +78,9 @@ note = "Euclid draws the perpendiculars and bisects AB again; the Lean uses I.11
 
 [[passage]]
 at = "Therefore the circle described with centre G and distance GA will pass through B also;"
-unused = ["E", "hE", "hE_LX", "hEGA"]
 kind = "helper"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid draws the circle through A and B, with E again the other end of its diameter. The Lean uses Postulate 3 and the same rules as in the acute case: the proved rule `Tacit.on_circle_of_len_eq` for B, and the assumed rule `Tacit.line_circle_beyond` with the proved rule `Tacit.centre_inside` for E."
+note = "Euclid draws the circle through A and B, with E again the other end of its diameter. The Lean uses Postulate 3 and, as in the acute case, the proved rule `Tacit.on_circle_of_len_eq` for B. It names no E: the right angle at A that the diameter AE gives is read on the ray from A through the centre G."
 
 [[passage]]
 at = "therefore the angle BAD is equal to the angle constructed in the alternate segment AHB"
