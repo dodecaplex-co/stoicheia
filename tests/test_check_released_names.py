@@ -13,7 +13,7 @@ counts the names released, those present on main, those of them deprecated there
 missing, and those gone after the release that deprecated them. The list's tag: the
 repository's tag at another commit is a finding, naming the tag line; the tag absent, or
 git unable to say where it points, is a note of one line and no finding; the same commit
-is neither.
+is neither; and a later tag is a note naming it, beside a finding or alone, never a finding.
 
 The list's reader refuses, naming the line: no tag line (a row before it, or no line at
 all but comments), two tag lines, a tag line of the wrong shape, a commit that is short, in
@@ -48,7 +48,15 @@ when nothing is missing, with a note when the tag is absent, and 2 when the prob
 or the list cannot be read; the self-test exits 1 on a surprise without running the check,
 and leaves the planted namespace out of the check it runs. `--list` refuses (exit 2) a
 tag's name that is not one, a tag the repository does not hold, a HEAD at another commit
-and a modified tracked file, and otherwise prints a list that reads back.
+and a file that differs from the tag's commit, and otherwise prints a list that reads back.
+
+With git itself, on repositories made for the test: what bars `--list` is a tracked file
+modified, an untracked Lean file, `lakefile.*`, `lake-manifest.json` or `lean-toolchain`,
+and never the list itself, emptied as the recipe's redirection empties it, nor an
+untracked script; the later tags are those whose history holds the list's commit, the
+list's own left out, and none when the repository lacks the commit. The environment of
+git's commands holds none of the variables that point git elsewhere. `run_lean` gives
+Lean's output as printed, which `run_probe` reads.
 
 And the real tests/released_names.txt reads, names `book-III` with a full commit, holds 498
 names, none of them the parser of one of the four notations, and holds
@@ -184,6 +192,20 @@ class TheTag(unittest.TestCase):
 
     def test_the_same_commit_gives_nothing(self):
         self.assertEqual(released.tag_lines(listed({"Elements.a": "name"}), COMMIT), ([], []))
+
+    def test_a_later_tag_is_a_note_never_a_finding(self):
+        names = {"Elements.a": "name"}
+        found, notes = released.tag_lines(listed(names), COMMIT, None, ["book-IV"])
+        self.assertEqual(found, [])
+        self.assertEqual(notes, ["tests/released_names.txt:9: tag book-IV came after book-III, "
+                                 "so the list may be out of date; once a release is tagged, "
+                                 "make the list with --list <its tag> and commit it"])
+        lines, code = released.report(listed(names), names, COMMIT, None, ["book-IV"])
+        self.assertEqual((lines[0], code), (notes[0], 0))
+        found, notes = released.tag_lines(listed(names), OTHER, None, ["book-IV"])
+        self.assertEqual(len(found), 1)
+        self.assertEqual(len(notes), 1)
+        self.assertIn("book-IV came after", notes[0])
 
 
 class TheList(unittest.TestCase):
@@ -437,6 +459,71 @@ class TheBuild(unittest.TestCase):
         self.assertEqual(self.ran[0], list(released.BUILD_CHECK))
         self.assertEqual(self.ran[1][:3], ["lake", "env", "lean"])
 
+    def test_run_lean_gives_what_lean_printed(self):
+        lake(self, 0, rows="name Elements.a\nname Elements.b\n")
+        self.assertEqual(released.run_lean("-- any file\n"), "name Elements.a\nname Elements.b\n")
+
+
+class WithGit(unittest.TestCase):
+    """The script's git reads on repositories made here, with its ROOT pointed at them."""
+
+    def setUp(self):
+        self.repo = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.enterContext(mock.patch.object(released, "ROOT", self.repo))
+        self.git("init", "-q")
+
+    def git(self, *args: str) -> str:
+        return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                              cwd=self.repo, env=released.git_env(), check=True,
+                              capture_output=True, text=True).stdout.strip()
+
+    def commit(self, files: dict[str, str]) -> str:
+        for path, body in files.items():
+            (self.repo / path).parent.mkdir(parents=True, exist_ok=True)
+            (self.repo / path).write_text(body, encoding="utf-8")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "c")
+        return self.git("rev-parse", "HEAD")
+
+    def test_what_bars_list_and_what_does_not(self):
+        self.commit({"Elements/A.lean": "x\n", str(released.LIST): "old\n",
+                     "lakefile.toml": "x\n"})
+        (self.repo / released.LIST).write_text("", encoding="utf-8")
+        (self.repo / "scripts").mkdir()
+        (self.repo / "scripts/check_released_names.py").write_text("", encoding="utf-8")
+        (self.repo / "notes.txt").write_text("", encoding="utf-8")
+        self.assertEqual(released.modified(), [])
+        planted = ["Elements/B.lean", "lakefile.lean", "lake-manifest.json", "lean-toolchain",
+                   "sub/lakefile.lean"]
+        for path in planted:
+            (self.repo / path).parent.mkdir(parents=True, exist_ok=True)
+            (self.repo / path).write_text("x\n", encoding="utf-8")
+        (self.repo / "Elements/A.lean").write_text("y\n", encoding="utf-8")
+        self.assertEqual(sorted(released.modified()), sorted(planted + ["Elements/A.lean"]))
+
+    def test_the_later_tags_hold_the_lists_commit(self):
+        first = self.commit({"a": "1\n"})
+        self.git("tag", "book-III")
+        self.commit({"a": "2\n"})
+        self.git("tag", "book-IV")
+        self.git("tag", "book-V")
+        self.git("checkout", "-q", first)
+        self.commit({"a": "3\n"})
+        self.git("tag", "elsewhere")
+        self.assertEqual(released.later_tags(released.Listed("book-III", first, 9, {})),
+                         ["book-IV", "book-V", "elsewhere"])
+        self.assertEqual(released.later_tags(released.Listed("book-III", OTHER, 9, {})), [])
+
+    def test_gits_environment_points_nowhere_else(self):
+        planted = {name: "x" for name in released.GIT_VARIABLES}
+        with mock.patch.dict(released.os.environ, planted):
+            env = released.git_env()
+        self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1")
+        self.assertFalse(set(env) & (released.GIT_VARIABLES - {"GIT_NO_REPLACE_OBJECTS"}))
+        for name in ("GIT_DIR", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT",
+                     "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES"):
+            self.assertIn(name, released.GIT_VARIABLES)
+
 
 class TheModes(unittest.TestCase):
     def setUp(self):
@@ -452,6 +539,7 @@ class TheModes(unittest.TestCase):
         with mock.patch.object(released, "tag_commit", return_value=COMMIT), \
                 mock.patch.object(released, "head_commit", return_value=COMMIT), \
                 mock.patch.object(released, "modified", return_value=[]), \
+                mock.patch.object(released, "later_tags", return_value=[]), \
                 redirect_stdout(out), redirect_stderr(err):
             code = released.main(argv)
         return code, out.getvalue(), err.getvalue()
@@ -466,6 +554,7 @@ class TheModes(unittest.TestCase):
                 mock.patch.object(released, "tag_commit", return_value=tag), \
                 mock.patch.object(released, "head_commit", return_value=head), \
                 mock.patch.object(released, "modified", return_value=list(changed)), \
+                mock.patch.object(released, "later_tags", return_value=[]), \
                 redirect_stdout(out), redirect_stderr(err):
             code = released.main(argv)
         return code, out.getvalue(), err.getvalue(), probe
@@ -529,7 +618,7 @@ class TheModes(unittest.TestCase):
             "HEAD elsewhere": (["--list", "book-III"], {"head": OTHER},
                                f"HEAD is {OTHER}, not the tag's commit {COMMIT}"),
             "modified": (["--list", "book-III"], {"changed": ["Elements/Angle.lean"]},
-                         "1 tracked files are modified (Elements/Angle.lean)"),
+                         "1 files differ from the tag's commit (Elements/Angle.lean)"),
         }
         for label, (argv, given, says) in cases.items():
             with self.subTest(label):

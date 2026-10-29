@@ -1,13 +1,14 @@
 # tests/released_names.txt: the names that release tag book-III's `Elements` declares, which
 # scripts/check_released_names.py holds main to (FORMALIZATION.md, section 2, "A released
 # name stays, or is deprecated first"). It is made by the script, never by hand, in a
-# checkout of the tag's commit, after `lake build`, with no tracked file modified:
+# checkout of the tag's commit, after `lake build`, with no other file modified:
 #     python3 -I scripts/check_released_names.py --list book-III > tests/released_names.txt
 # At each release, once the tag is made, it is made with `--list <new tag>` at the tag's
-# commit and committed in the next pull request, the first after the release; until it
-# lands, main is compared with the release before, which is still correct for every name
-# that release declared. After the tag line, each row is `name <n>`, or `deprecated <n>`
-# for a name the tag marks deprecated, sorted by code point, each name once.
+# commit, copied to a branch off main and committed in the next pull request, the first
+# after the release; until it lands, main is compared with the release before, which is
+# still correct for every name that release declared. After the tag line, each row is
+# `name <n>`, or `deprecated <n>` for a name the tag marks deprecated, sorted by code
+# point, each name once.
 tag book-III 792082f0cc791c1fca61123a6f8f45fef80c1648
 name Elements.Angle
 name Elements.AreParallel

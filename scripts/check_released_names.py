@@ -60,15 +60,24 @@ probe's rows at the tag, sorted by code point, each name once. Anything else is 
 with its line (exit 2): a blank line, a comment after the tag line, a row before it, a
 second tag line, a commit that is not 40 lower-case hex digits, an unknown marker, a name
 listed twice, a row out of order, or no rows at all. `--list TAG` prints the whole file, in
-a built checkout whose HEAD is TAG's commit and whose tracked files are unmodified, and
-refuses otherwise (exit 2). At each release, once the tag is made, the list is made with
-`--list <new tag>` at the tag's commit and committed in the next pull request, the first
-after the release; until it lands, main is compared with the release before, which is
-still correct for every name that release declared. That step belongs in the release
-step of WORKFLOW.md, section 10. When the repository holds the list's tag and the tag
-points to another commit, the list is not the tag's, and that is a finding. When the
-repository does not hold it, as a checkout that fetches no tags may not, or git cannot
-say, one line says so and the check goes on.
+a built checkout whose HEAD is TAG's commit, and refuses otherwise (exit 2), and so when
+a file that could change what the build declares differs from the commit: a tracked file
+modified, the list itself excepted, or an untracked Lean file, `lakefile.*`,
+`lake-manifest.json` or `lean-toolchain`. The list is excepted because the recipe writes
+it in place (`--list TAG > tests/released_names.txt`), and the shell empties it before the
+script runs; the build never reads it. An untracked copy of the script, which a tag made
+before the script needs, is allowed. At each release, once the tag is made, the list is
+made with `--list <new tag>` at the tag's commit, copied to a branch off main and
+committed in the next pull request, the first after the release; until it lands, main is
+compared with the release before, which is still correct for every name that release
+declared. WORKFLOW.md, section 10's release step does not yet name this step: card #700's
+handback proposes it. When the repository holds the list's tag and the tag points to
+another commit, the list is not the tag's, and that is a finding. When the repository
+does not hold it, as CI's `check` job does not, since it fetches no tags, or git cannot
+say, one line says so and the check goes on. When the repository holds a later tag, one
+whose history holds the list's commit, one line names it: the list may be out of date
+(a note and not a finding, since between a tag and the list's pull request that is
+expected).
 
 The self-test writes the probe with a namespace of declarations, PLANTS, before its
 `#eval`, and runs it once. Lean must read `kept`, `New.a`, `New.b`, `Old.b2` and the
@@ -204,13 +213,14 @@ LIST_HEADER = """\
 # tests/released_names.txt: the names that release tag {tag}'s `Elements` declares, which
 # scripts/check_released_names.py holds main to (FORMALIZATION.md, section 2, "A released
 # name stays, or is deprecated first"). It is made by the script, never by hand, in a
-# checkout of the tag's commit, after `lake build`, with no tracked file modified:
+# checkout of the tag's commit, after `lake build`, with no other file modified:
 #     python3 -I scripts/check_released_names.py --list {tag} > tests/released_names.txt
 # At each release, once the tag is made, it is made with `--list <new tag>` at the tag's
-# commit and committed in the next pull request, the first after the release; until it
-# lands, main is compared with the release before, which is still correct for every name
-# that release declared. After the tag line, each row is `name <n>`, or `deprecated <n>`
-# for a name the tag marks deprecated, sorted by code point, each name once.
+# commit, copied to a branch off main and committed in the next pull request, the first
+# after the release; until it lands, main is compared with the release before, which is
+# still correct for every name that release declared. After the tag line, each row is
+# `name <n>`, or `deprecated <n>` for a name the tag marks deprecated, sorted by code
+# point, each name once.
 """
 
 # Builds nothing: fails when a module of `Elements` is not up to date with its sources (exit
@@ -368,9 +378,12 @@ def require_current_build() -> None:
                                     "--no-build failed): run `lake build` first", *said]))
 
 
-def run_probe(text: str) -> dict[str, str]:
-    """Run the probe `text` as `lake env lean` from the repository's root, from a file in
-    a temporary folder outside it, once the build is found current; its rows."""
+def run_lean(text: str) -> str:
+    """Run the Lean file `text` as `lake env lean` from the repository's root, from a file
+    in a temporary folder outside it, once the build is found current; what it printed.
+    Unreadable when it fails, writes to its standard error or prints what is not UTF-8.
+    Another script that reads names the same way, as the release notes' generator does
+    (#702), calls this and read_probe rather than copying them."""
     if shutil.which("lake") is None:
         raise Unreadable("lake is not on PATH: export PATH=$HOME/.elan/bin:$PATH, and run "
                          "`lake build` first")
@@ -395,15 +408,28 @@ def run_probe(text: str) -> dict[str, str]:
         shown = (out + err).strip()[-2000:]
         raise Unreadable(f"Lean could not run the probe (exit {done.returncode}), or wrote to "
                          f"its standard error; is the library built (`lake build`)?\n{shown}")
-    return read_probe(out)
+    return out
+
+
+def run_probe(text: str) -> dict[str, str]:
+    """The rows of the probe `text`, run by run_lean."""
+    return read_probe(run_lean(text))
+
+
+# The variables that point git at another repository, worktree, index, object store or
+# configuration: scripts/safe_push.py's REPOSITORY_VARIABLES, git 2.50's list.
+GIT_VARIABLES = frozenset({
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
+    "GIT_INDEX_FILE", "GIT_INTERNAL_SUPER_PREFIX", "GIT_NO_REPLACE_OBJECTS",
+    "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE",
+    "GIT_WORK_TREE"})
 
 
 def git_env() -> dict[str, str]:
-    """The environment of the script's git commands: none of the variables that point git
-    at another repository, worktree or index, and replacement objects off, so that git
-    reads this repository's own tags and HEAD."""
-    env = {key: value for key, value in os.environ.items()
-           if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR")}
+    """The environment of the script's git commands: none of GIT_VARIABLES, and
+    replacement objects off, so that git reads this repository's own tags and HEAD."""
+    env = {key: value for key, value in os.environ.items() if key not in GIT_VARIABLES}
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
     return env
 
@@ -440,12 +466,42 @@ def head_commit() -> str:
     return commit
 
 
+# Untracked files that could change what the build declares: a Lean file, Lake's
+# configuration (Lake prefers a `lakefile.lean` to `lakefile.toml`, and runs it), its
+# manifest and the toolchain.
+BUILD_INPUT = re.compile(r"(.*\.lean|(.*/)?lakefile\.[a-z]+|(.*/)?lake-manifest\.json"
+                         r"|(.*/)?lean-toolchain)")
+
+
 def modified() -> list[str]:
-    """The tracked files that differ from HEAD, staged or not, as git status shows them."""
-    done = git("--no-optional-locks", "status", "--porcelain", "--untracked-files=no")
+    """The files that bar `--list`, as git status shows them: each tracked file that differs
+    from HEAD, staged or not, but the list itself, and each untracked BUILD_INPUT."""
+    done = git("--no-optional-locks", "status", "--porcelain", "--untracked-files=all")
     if done.returncode != 0:
         raise Unreadable(f"git cannot say what is modified: {shorten(done.stderr.strip())}")
-    return [line[3:] for line in done.stdout.splitlines() if line.strip()]
+    found = []
+    for line in done.stdout.splitlines():
+        if not line.strip():
+            continue
+        path = line[3:]
+        if line.startswith("?? "):
+            if BUILD_INPUT.fullmatch(path):
+                found.append(path)
+        elif path != LIST.as_posix():
+            found.append(path)
+    return found
+
+
+def later_tags(listed: Listed) -> list[str]:
+    """The repository's tags, but the list's own, whose history holds the list's commit,
+    sorted; none when the repository does not hold that commit."""
+    if commit_of(listed.commit) is None:
+        return []
+    done = git("tag", "--contains", listed.commit)
+    if done.returncode != 0:
+        raise Unreadable(f"git cannot list the tags after {listed.tag}: "
+                         f"{shorten(done.stderr.strip())}")
+    return sorted(tag for tag in done.stdout.split() if tag != listed.tag)
 
 
 def finding(name: str, tag: str) -> str:
@@ -459,29 +515,36 @@ def missing(listed: Listed, main: dict[str, str]) -> list[str]:
             if marker == "name" and name not in main]
 
 
-def tag_lines(listed: Listed, local: str | None, error: str | None = None) \
-        -> tuple[list[str], list[str]]:
+def tag_lines(listed: Listed, local: str | None, error: str | None = None,
+              later: list[str] = ()) -> tuple[list[str], list[str]]:
     """The findings and the notes the list's tag gives, where `local` is the commit the
-    repository's tag points to (None when it holds no such tag) and `error` why git cannot
-    say: a finding when the tag points elsewhere; a note when it is absent or unknown."""
+    repository's tag points to (None when it holds no such tag), `error` why git cannot
+    say, and `later` the tags after it: a finding when the tag points elsewhere; a note
+    when it is absent or unknown; and a note naming the later tags."""
     shown = f"{LIST}:{listed.tag_line}"
+    found: list[str] = []
+    notes: list[str] = []
     if error is not None:
-        return [], [f"{shown}: where tag {listed.tag} points cannot be read here ({error}), "
-                    "so the list's commit is not compared with it"]
-    if local is None:
-        return [], [f"{shown}: this repository holds no tag {listed.tag} (a checkout may "
-                    "fetch no tags), so the list's commit is not compared with it"]
-    if local != listed.commit:
-        return [f"{shown}: the list gives {listed.tag} as {listed.commit}, but the tag in this "
-                f"repository points to {local}, so the list is not the tag's; make it with "
-                f"--list {listed.tag}"], []
-    return [], []
+        notes.append(f"{shown}: where tag {listed.tag} points cannot be read here ({error}), "
+                     "so the list's commit is not compared with it")
+    elif local is None:
+        notes.append(f"{shown}: this repository holds no tag {listed.tag} (a checkout may "
+                     "fetch no tags), so the list's commit is not compared with it")
+    elif local != listed.commit:
+        found.append(f"{shown}: the list gives {listed.tag} as {listed.commit}, but the tag in "
+                     f"this repository points to {local}, so the list is not the tag's; make "
+                     f"it with --list {listed.tag}")
+    if later:
+        notes.append(f"{shown}: tag {', '.join(later)} came after {listed.tag}, so the list "
+                     "may be out of date; once a release is tagged, make the list with "
+                     "--list <its tag> and commit it")
+    return found, notes
 
 
 def report(listed: Listed, main: dict[str, str], local: str | None,
-           error: str | None = None) -> tuple[list[str], int]:
+           error: str | None = None, later: list[str] = ()) -> tuple[list[str], int]:
     """The lines the check prints, and its exit code, for the list and main's names."""
-    found, notes = tag_lines(listed, local, error)
+    found, notes = tag_lines(listed, local, error, later)
     gone = missing(listed, main)
     released = len(listed.names)
     present = sum(name in main for name in listed.names)
@@ -540,7 +603,11 @@ def check_with(listed: Listed, rows: dict[str, str]) -> int:
         local, error = tag_commit(listed.tag), None
     except Unreadable as e:
         local, error = None, str(e)
-    lines, code = report(listed, rows, local, error)
+    try:
+        later = later_tags(listed)
+    except Unreadable:
+        later = []
+    lines, code = report(listed, rows, local, error, later)
     for line in lines:
         print(line)
     return code
@@ -573,8 +640,8 @@ def run_self_test() -> int:
 
 def make_list(tag: str) -> str:
     """The list file for `tag`, from the built checkout of the tag's commit; Unreadable
-    when the tag is not in the repository, HEAD is another commit, a tracked file is
-    modified or the build is not current."""
+    when the tag is not in the repository, HEAD is another commit, a file that could change
+    the build differs from it (modified()) or the build is not current."""
     if not TAG.fullmatch(tag):
         raise Unreadable(f"--list: `{shorten(tag)}` is not a tag's name")
     commit = tag_commit(tag)
@@ -588,8 +655,8 @@ def make_list(tag: str) -> str:
     changed = modified()
     if changed:
         shown = ", ".join(changed[:5]) + (", …" if len(changed) > 5 else "")
-        raise Unreadable(f"--list {tag}: {len(changed)} tracked files are modified ({shown}); "
-                         "the list is made from the tag's commit as it stands")
+        raise Unreadable(f"--list {tag}: {len(changed)} files differ from the tag's commit "
+                         f"({shown}); the list is made from the tag's commit as it stands")
     text = render_list(tag, commit, run_probe(probe()))
     parse_list(text, f"the list made at {tag}")
     return text

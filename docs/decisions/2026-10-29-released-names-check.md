@@ -58,19 +58,28 @@
   it is and how it is made, a tag line with the tag's name and its full commit, then the
   probe's rows at the tag, sorted by code point, each name once; the reader refuses
   anything else, naming the line. The script's `--list TAG` prints the file, and refuses
-  unless the repository holds the tag, HEAD is the tag's commit, no tracked file is
-  modified and the build is current. Section 10 of [WORKFLOW.md](../WORKFLOW.md) makes
-  the tag after the release's pull request merges, so the list cannot be in that pull
-  request. At each release, once the tag is made, the list is made with
-  `--list <new tag>` at the tag's commit and committed in the next pull request, the first
+  unless the repository holds the tag, HEAD is the tag's commit, the build is current and
+  no file that could change what the build declares differs from the commit: no tracked
+  file is modified, save the list itself, which the recipe's redirection empties before
+  the script runs, and there is no untracked Lean file, Lake configuration, manifest or
+  toolchain. Section 10 of [WORKFLOW.md](../WORKFLOW.md) makes the tag after the
+  release's pull request merges, so the list cannot be in that pull request. At each
+  release, once the tag is made, the list is made with `--list <new tag>` at the tag's
+  commit, copied to a branch off main and committed in the next pull request, the first
   after the release; until it lands, main is compared with the release before, which is
-  still correct for every name that release declared. The step belongs in the release
-  step of WORKFLOW.md, section 10, which this train does not change; that change is the
-  coordinator's to file. Where the repository holds the list's tag, the check requires that
-  tag to point to the list's commit; a checkout that fetches no tags is told so in one
-  line, and judged all the same. The list committed here was written by the script's own
-  `render_list` from a run of the probe on book-III's build, with the four parsers' rows
-  taken out, so it is in the form `--list` prints.
+  still correct for every name that release declared. WORKFLOW.md, section 10's release
+  step does not yet name this step, and this train does not change it; the change is the
+  coordinator's to file. Where the repository holds a tag after the list's, one whose
+  history holds the list's commit, the check names it in a note: the list may be out of
+  date. Where the repository holds the list's tag, the check requires that tag to point
+  to the list's commit; a checkout that fetches no tags, as CI's `check` job does not, is
+  told so in one line, and judged all the same. The list committed here is what
+  `--list book-III` prints: on 29 October 2026, on the yard's machine, the script, as an
+  untracked copy, was run at book-III's commit after `lake build`, and its output was
+  byte for byte this file but for the header's wording, since changed. Another script
+  that reads names the same way, as the release notes' generator
+  ([#702](https://github.com/dodecaplex-co/stoicheia/issues/702)) does, calls the
+  script's `run_lean` and `read_probe` rather than copying them.
 
   The self-test. `--self-test`, which the registry runs, puts a namespace of declarations
   in the probe's own file and requires the probe to read each as planted: four theorems
