@@ -811,9 +811,10 @@ SYMBOLS = {'‖': 'len', '∠': 'ang', '△': 'area', '∟': 'rightAngle'}
 # the same (`Parallelogram.quadArea_rotate`), a diameter bisects it (I.34), and it is the area
 # of the parallelogram given by its outline, whose corners are a convex outline
 # (`Parallelogram.convexOutline`, `Parallelogram.outline_area`).
+PARALLELOGRAM_OUTLINE_BRIDGES = ['Elements.Parallelogram.convexOutline',
+                                 'Elements.Parallelogram.outline_area']
 AREA_BRIDGES = ['Elements.Parallelogram.cross', 'Elements.Parallelogram.quadArea_rotate',
-                'Elements.BookI.Prop34', 'Elements.BookI.Prop34.bisect',
-                'Elements.Parallelogram.convexOutline', 'Elements.Parallelogram.outline_area']
+                'Elements.BookI.Prop34', 'Elements.BookI.Prop34.bisect', *PARALLELOGRAM_OUTLINE_BRIDGES]
 RECT_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
                 'Elements.Rectangle.eq_rect', 'Elements.Square.eq_sq', 'Elements.Square.described']
 FIGURE_BRIDGES = ['Elements.Fitted.triangle', 'Elements.Fitted.inside_pairwise',
@@ -1583,7 +1584,12 @@ class Generator:
         record = tomllib.loads(self.evidence.read(f'review/{book}/{n:02d}.toml'))
         if record['review'].get('items', {}).get('representations') == 'n/a':
             return [], []
-        return bundle(book, n, f'{book}.{n} outline' in self.facts[f'{book}.{n}']['attached'])
+        outline = f'{book}.{n} outline' in self.facts[f'{book}.{n}']['attached']
+        definitions, bridges = bundle(book, n, outline)
+        # The evidence commit of the audit of Books I and II, of 19 October, holds no outline of
+        # a parallelogram: its two bridges are supplied where the evidence declares them.
+        return definitions, [name for name in bridges if name not in PARALLELOGRAM_OUTLINE_BRIDGES
+                             or name in self.index.decls]
 
     def checked(self, ref: str, record: dict, state: dict) -> list[str]:
         """What the record says its representations verdict rests on that the row does not

@@ -7,7 +7,9 @@
   the area of that outline is the parallelogram's `quadArea` (`Parallelogram.outline_area`),
   in `Elements/Figure/Divisions.lean`. The rows of I.34 to I.38 and I.41 to I.48, which
   measure a parallelogram by `quadArea`, now supply both among their bridges, so that a
-  reader of a row finds the tie between the measure and the figure.
+  reader of a row finds the tie between the measure and the figure. The generator supplies
+  the two where the evidence it reads declares them, so the evidence commit of the audit of
+  Books I and II, of 19 October, which its tests read again, is read as before.
 
   `outline_area` ties `quadArea` to the figure's area by itself, so P13's two plants that
   broke only `Parallelogram.quadArea_rotate` would no longer be faults. Each now breaks
@@ -16,8 +18,9 @@
   after the binders of its own corners, which `quadArea_rotate` takes from its file's
   variables. Each plant keeps its base, its kind and its expected answer.
 
-  This entry approves the change to `scripts/audit/jev_questions.py`: the two bridges, a
-  comment on the list, and the two plants with their descriptions.
+  This entry approves the change to `scripts/audit/jev_questions.py`: the two bridges, where
+  the evidence declares them, a comment on the list, and the two plants with their
+  descriptions.
   This entry approves the change to `tests/test_jev_questions.py`: one new case, which
   checks the bundle, the rows and both plants.
   `docs/FORMALIZATION.md` names the two theorems in its catalogue's row on a rectilineal
