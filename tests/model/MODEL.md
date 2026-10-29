@@ -57,7 +57,7 @@ hypotheses keep out the cases the conventions cannot fix.
 The programs take an axiom, build configurations of points, lines and circles, keep those
 that satisfy its hypotheses, and check its conclusion. Where the conclusion says that a
 point exists, the program constructs one and checks it. The exhaustive and structured
-harnesses also run 41 predicates independently as retained derived properties. They
+harnesses also run 42 predicates independently as retained derived properties. They
 preserve the existing numerical checks and configurations for those laws, but do not
 depend on the corresponding declarations remaining in the axiom registry.
 
@@ -69,14 +69,19 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps 41 numerical predicates under names beginning
+- **[derived.py](derived.py)** keeps 42 numerical predicates under names beginning
   `derived.`: one for each of the 41 retired rules, among them Circle 3's
   (`outside_of_between`), proved after III.2 since 24 October 2026, and Circle 1's
-  (`between_of_inside_chord`), proved after III.2 since 26 October 2026 (#477).
+  (`between_of_inside_chord`), proved after III.2 since 26 October 2026 (#477); and one
+  for Metric 9 (`area_congruent`), still an axiom, kept here before Common Notion 4 for
+  figures takes its place among the axioms, as the owner decided on 28 October 2026
+  (#517). The exhaustive and structured harnesses run Metric 9 under that name alone, so
+  the counts they give it are in the table of derived properties, and its own row has a
+  dot for each of them.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
-  predicates in all: 35 axiom laws and the 41 retained derived properties, with degenerate
+  predicates in all: 34 axiom laws and the 42 retained derived properties, with degenerate
   configurations included.
-- **[structured.py](structured.py)** builds the hypotheses of 16 axiom laws and all 41
+- **[structured.py](structured.py)** builds the hypotheses of 15 axiom laws and all 42
   retained derived properties on purpose, where chance rarely meets them (three straight
   lines through one point, a right angle, two circles through a common point), over a
   large lattice and over fractions.
@@ -612,7 +617,7 @@ the model follows the axiom in the same pull request as the Lean:
    own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
    or restated so that its law reads other letters, that program must drop or re-key the
    law first, in a pull request of its own, before the axiom moves. That preparation is
-   already complete for the 41 predicates in [derived.py](derived.py): both programs
+   already complete for the 42 predicates in [derived.py](derived.py): both programs
    call their `derived.` names, and `run.py` requires each report independently of the
    axiom registry.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
