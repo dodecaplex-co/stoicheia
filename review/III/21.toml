@@ -15,10 +15,8 @@ note = "In Euclid's figure C only names the circle and its circumference BCD. Th
 
 [[passage]]
 at = "For let the centre of the circle ABCD be taken"
-kind = "helper"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F without a reference from Heath here. The Lean obtains F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. III.20 takes the centre itself, so nothing below names F; it is that centre, for a circle has one centre (`centre_unique`)."
-unused = ["F", "hF"]
+kind = "given"
+note = "Euclid takes the centre F without a reference from Heath here. III.20 (`Prop20`) takes the centre itself, and the angle at the centre is made up of angles there (`angleAtCentre.diameter`), so the Lean takes no centre beneath this sentence; Euclid's F is that centre, for a circle has one centre (`centre_unique`)."
 
 [[passage]]
 at = "let BF, FD be joined"
