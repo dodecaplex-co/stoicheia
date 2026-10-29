@@ -1,3 +1,4 @@
+<!-- entry: id=jev-choice-names cards=656 line="The Jev generator knows four of Lean's own names for choice, which III.26's helpers use, and no others." -->
 - **The Jev generator knows Lean's four names for choice that III.26's helpers use (checks,
   [#656](https://github.com/dodecaplex-co/stoicheia/issues/656)).** Two helpers of III.26's
   subtraction route (#547), `Prop26.radial_extension` and `Prop26.extend_places`, build a
