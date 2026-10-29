@@ -62,11 +62,11 @@ second tag line, a commit that is not 40 lower-case hex digits, an unknown marke
 listed twice, a row out of order, or no rows at all. `--list TAG` prints the whole file, in
 a built checkout whose HEAD is TAG's commit, and refuses otherwise (exit 2), and so when
 a file that could change what the build declares differs from the commit: a tracked file
-modified, the list itself excepted, or an untracked Lean file, `lakefile.*`,
-`lake-manifest.json` or `lean-toolchain`. The list is excepted because the recipe writes
-it in place (`--list TAG > tests/released_names.txt`), and the shell empties it before the
-script runs; the build never reads it. An untracked copy of the script, which a tag made
-before the script needs, is allowed. At each release, once the tag is made, the list is
+modified, the list itself excepted, or an untracked Lean file, `lakefile.lean`,
+`lakefile.toml`, `lake-manifest.json` or `lean-toolchain`. The list is excepted because the
+recipe writes it in place (`--list TAG > tests/released_names.txt`), and the shell empties
+it before the script runs; the build never reads it. An untracked copy of the script, which
+a tag made before the script needs, is allowed. At each release, once the tag is made, the list is
 made with `--list <new tag>` at the tag's commit, copied to a branch off main and
 committed in the next pull request, the first after the release; until it lands, main is
 compared with the release before, which is still correct for every name that release
@@ -469,26 +469,59 @@ def head_commit() -> str:
 # Untracked files that could change what the build declares: a Lean file, Lake's
 # configuration (Lake prefers a `lakefile.lean` to `lakefile.toml`, and runs it), its
 # manifest and the toolchain.
-BUILD_INPUT = re.compile(r"(.*\.lean|(.*/)?lakefile\.[a-z]+|(.*/)?lake-manifest\.json"
-                         r"|(.*/)?lean-toolchain)")
+BUILD_INPUT = re.compile(r"(.*\.lean|(.*/)?lakefile\.(lean|toml)|(.*/)?lake-manifest\.json"
+                         r"|(.*/)?lean-toolchain)", re.DOTALL)
 
 
 def modified() -> list[str]:
     """The files that bar `--list`, as git status shows them: each tracked file that differs
-    from HEAD, staged or not, but the list itself, and each untracked BUILD_INPUT."""
-    done = git("--no-optional-locks", "status", "--porcelain", "--untracked-files=all")
+    from HEAD, staged or not, but the list itself, and each untracked or ignored
+    BUILD_INPUT."""
+    done = git("--no-optional-locks", "status", "--porcelain=v1", "-z",
+               "--untracked-files=all", "--ignored=matching")
     if done.returncode != 0:
         raise Unreadable(f"git cannot say what is modified: {shorten(done.stderr.strip())}")
-    found = []
-    for line in done.stdout.splitlines():
-        if not line.strip():
-            continue
-        path = line[3:]
-        if line.startswith("?? "):
-            if BUILD_INPUT.fullmatch(path):
-                found.append(path)
-        elif path != LIST.as_posix():
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def add(path: str) -> None:
+        if path not in seen:
             found.append(path)
+            seen.add(path)
+
+    records = done.stdout.split("\0")
+    if records[-1] == "":
+        records.pop()
+    number = 0
+    while number < len(records):
+        record = records[number]
+        number += 1
+        if len(record) < 4 or record[2] != " ":
+            raise Unreadable("git returned a status record that cannot be read")
+        state, path = record[:2], record[3:]
+        source = None
+        if "R" in state or "C" in state:
+            if number == len(records):
+                raise Unreadable("git returned a rename status without its source path")
+            source = records[number]
+            number += 1
+        if state in ("??", "!!"):
+            if BUILD_INPUT.fullmatch(path):
+                add(path)
+        elif path != LIST.as_posix() or source is not None and source != LIST.as_posix():
+            add(f"{source} -> {path}" if source is not None else path)
+
+    ignored = git("--no-optional-locks", "ls-files", "--others", "--ignored",
+                  "--exclude-standard", "-z", "--", "*.lean", "lakefile.*",
+                  ":(glob)**/lakefile.*", "lake-manifest.json",
+                  ":(glob)**/lake-manifest.json", "lean-toolchain",
+                  ":(glob)**/lean-toolchain")
+    if ignored.returncode != 0:
+        raise Unreadable(f"git cannot say what ignored build inputs exist: "
+                         f"{shorten(ignored.stderr.strip())}")
+    for path in ignored.stdout.split("\0"):
+        if path and BUILD_INPUT.fullmatch(path):
+            add(path)
     return found
 
 

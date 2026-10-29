@@ -25,15 +25,12 @@ header naming the command that makes it. The probe's reader refuses a Lean messa
 line such as `#check` prints, a name printed twice and an empty output, and reads rows of
 both markers.
 
-The probe the script runs holds each of its filters once, the parsers' two types among
-them, and prints a marker on every row, so that a bare line is never a row; the plants
-stand before its `#eval`, in their own namespace, with `hidden` private, a notation, an
-infix and an instance among them, and each deprecated one dated and naming a replacement or
-giving a message. The self-test's judging, on what Lean prints for the plants (here written
-out, not run): it finds no surprise, and finds one when a plant is read otherwise (the
-private `hidden` present, the parser of the notation or of the infix present, the alias
-`renamed` plain, `New.a` or the instance absent, the real `Elements.BookI.Prop1` absent or
-deprecated), naming it.
+The self-test's judging is exercised with explicit rows: it finds no surprise for the
+expected plants, and finds one when a plant is read otherwise (the private `hidden`
+present, the parser of the notation or of the infix present, the alias `renamed` plain,
+`New.a` or the instance absent, the real `Elements.BookI.Prop1` absent or deprecated),
+naming it. The executable `scripts/check_released_names.py --self-test`, the next registered
+check, is the evidence that Lean itself interprets the plants and probe filters that way.
 
 The refusal of a stale build, with `lake` stood in for. The script runs exactly `lake build
 --no-build Elements` from the repository's root; when it exits 0 the probe runs after it,
@@ -51,12 +48,15 @@ tag's name that is not one, a tag the repository does not hold, a HEAD at anothe
 and a file that differs from the tag's commit, and otherwise prints a list that reads back.
 
 With git itself, on repositories made for the test: what bars `--list` is a tracked file
-modified, an untracked Lean file, `lakefile.*`, `lake-manifest.json` or `lean-toolchain`,
-and never the list itself, emptied as the recipe's redirection empties it, nor an
-untracked script; the later tags are those whose history holds the list's commit, the
-list's own left out, and none when the repository lacks the commit. The environment of
-git's commands holds none of the variables that point git elsewhere. `run_lean` gives
-Lean's output as printed, which `run_probe` reads.
+modified, an ordinary or ignored untracked Lean file, `lakefile.lean`, `lakefile.toml`,
+`lake-manifest.json` or `lean-toolchain`, including inside an ignored directory and with
+characters Git quotes, and never the list itself, emptied as the recipe's redirection
+empties it, an untracked script or ignored build artifacts; each refusal happens before
+the probe. Rename records are read as one change, including a rename to the excepted list
+path. The later tags are those whose history holds the list's commit, the list's own left
+out, and none when the repository lacks the commit. The environment of git's commands
+holds none of the variables that point git elsewhere. `run_lean` gives Lean's output as
+printed, which `run_probe` reads.
 
 And the real tests/released_names.txt reads, names `book-III` with a full commit, holds 498
 names, none of them the parser of one of the four notations, and holds
@@ -87,7 +87,10 @@ PARSERS = ("Elements.«term‖__‖»", "Elements.«term∟»", "Elements.«term
            "Elements.«term△___»")
 STALE = ("the build of Elements is not current (lake build --no-build failed): run "
          "`lake build` first")
-P = released.PLANT_NAMESPACE
+P = "Elements.ReleasedNamesPlant"
+REAL = "Elements.BookI.Prop1"
+BUILD_COMMAND = ["lake", "build", "--no-build", "Elements"]
+LEAN_COMMAND = ["lake", "env", "lean"]
 
 
 def listed(names: dict[str, str], tag: str = "book-III") -> released.Listed:
@@ -99,11 +102,19 @@ def text(*rows: str, head: str = f"# a comment\ntag book-III {COMMIT}\n") -> str
 
 
 def planted_output() -> dict[str, str]:
-    """What Lean prints for the plants, beside a real declaration and one other."""
-    rows = {f"{P}.{name}": marker for name, marker in released.PLANTED.items() if marker}
-    rows[released.REAL] = "name"
-    rows["Elements.BookI.Prop2"] = "name"
-    return rows
+    """The explicit rows expected from the executable self-test's plants."""
+    return {
+        f"{P}.kept": "name",
+        f"{P}.New.a": "name",
+        f"{P}.New.b": "name",
+        f"{P}.Old.b2": "name",
+        f"{P}.instPlant": "name",
+        f"{P}.renamed": "deprecated",
+        f"{P}.retired": "deprecated",
+        f"{P}.Old.a": "deprecated",
+        REAL: "name",
+        "Elements.BookI.Prop2": "name",
+    }
 
 
 class TheRule(unittest.TestCase):
@@ -321,41 +332,8 @@ class TheProbe(unittest.TestCase):
                     released.read_probe(out)
         self.refused("", "the probe printed no names")
 
-    def test_the_probe_holds_its_filters_and_marks_every_row(self):
-        probe = released.probe()
-        self.assertTrue(probe.startswith("import Lean\nimport Elements\n\nopen Lean\n"))
-        for part in ("(`Elements).isPrefixOf env.header.moduleNames[idx.toNat]!",
-                     "| none => true", "n.isInternalDetail || isPrivateName n",
-                     "isAuxRecursor env n || isNoConfusion env n || isRecCore env n",
-                     "for (n, info) in env.constants.toList do",
-                     "if info.type.isConstOf ``Lean.ParserDescr then continue",
-                     "if info.type.isConstOf ``Lean.TrailingParserDescr then continue",
-                     "(← findDeclarationRanges? n).isNone",
-                     's!"deprecated {n}" else s!"name {n}"',
-                     "for r in rows.qsort (· < ·) do IO.println r"):
-            with self.subTest(part):
-                self.assertEqual(probe.count(part), 1)
-
-    def test_the_plants_stand_before_the_eval(self):
-        planted = released.probe(released.PLANTS)
-        self.assertEqual(planted, released.PROBE_HEAD + released.PLANTS + released.PROBE_EVAL)
-        self.assertLess(planted.index(f"namespace {P}"), planted.index("#eval"))
-        self.assertIn(f"end {P}\n", released.PLANTS)
-        self.assertIn("private theorem hidden : True := trivial", released.PLANTS)
-        self.assertIn('notation "⟪" a "⟫" => id a', released.PLANTS)
-        self.assertIn('infixl:65 " ⊞ " => Nat.add', released.PLANTS)
-        self.assertIn("instance instPlant : Inhabited (Fin 1) := ⟨0⟩", released.PLANTS)
-        # The private plant and the two parsers must give no row; the instance one.
-        self.assertEqual([name for name, marker in released.PLANTED.items() if marker is None],
-                         ["hidden", "«term⟪_⟫»", "«term_⊞_»"])
-        self.assertEqual(released.PLANTED["instPlant"], "name")
-        # Each deprecated plant is dated, and names a replacement or gives a message.
-        self.assertEqual(released.PLANTS.count('(since := "2026-10-29")]'), 3)
-        self.assertNotIn("@[deprecated (since", released.PLANTS)
-
-
 class TheSelfTest(unittest.TestCase):
-    def test_what_lean_prints_for_the_plants_gives_no_surprise(self):
+    def test_the_expected_executable_rows_give_no_surprise(self):
         self.assertEqual(released.self_test(planted_output()), [])
 
     def test_a_plant_read_otherwise_is_a_surprise(self):
@@ -374,9 +352,8 @@ class TheSelfTest(unittest.TestCase):
                                                   "plain"),
             "the instance absent": ({}, (f"{P}.instPlant",), f"`{P}.instPlant` as absent, "
                                                              "where it must be plain"),
-            "Prop1 absent": ({}, (released.REAL,), f"`{released.REAL}` as absent"),
-            "Prop1 deprecated": ({released.REAL: "deprecated"}, (),
-                                 f"`{released.REAL}` as deprecated"),
+            "Prop1 absent": ({}, (REAL,), f"`{REAL}` as absent"),
+            "Prop1 deprecated": ({REAL: "deprecated"}, (), f"`{REAL}` as deprecated"),
         }
         for label, (changed, dropped, says) in cases.items():
             with self.subTest(label):
@@ -386,13 +363,33 @@ class TheSelfTest(unittest.TestCase):
                 problems = released.self_test(rows)
                 self.assertTrue(any(says in problem for problem in problems), problems)
 
-    def test_the_planted_lists_are_the_cases_the_card_asks_for(self):
-        self.assertEqual(len(released.PLANT_CASES), 7)
-        failing = {what: names for what, _, names in released.PLANT_CASES}
-        self.assertEqual(failing["a released name removed fails"], ["gone"])
-        self.assertEqual(failing["a namespace renamed fails once for each name in it"],
-                         ["Old.x", "Old.y"])
-        self.assertEqual(sum(len(names) for names in failing.values()), 4)
+    def test_the_planted_rule_cases_are_judged_as_expected(self):
+        cases = (
+            ("a released name removed fails", {"gone": "name"}, ["gone"]),
+            ("a renamed name with its deprecated alias passes", {"renamed": "name"}, []),
+            ("a name deprecated with nothing to replace it passes",
+             {"retired": "name"}, []),
+            ("beside a name with its alias, a name aliased nowhere fails alone",
+             {"Old.a": "name", "Old.c": "name"}, ["Old.c"]),
+            ("a namespace renamed fails once for each name in it",
+             {"Old.x": "name", "Old.y": "name"}, ["Old.x", "Old.y"]),
+            ("a removed name the tag marked deprecated passes",
+             {"gone": "deprecated"}, []),
+            ("a list that names nothing new on main passes",
+             {"kept": "name", REAL: "name"}, []),
+        )
+        rows = planted_output()
+        with mock.patch.object(released, "PLANT_CASES", cases):
+            self.assertEqual(released.self_test(rows), [])
+        for what, names, failing in cases:
+            with self.subTest(what):
+                full = {name if name.startswith("Elements.") else f"{P}.{name}": marker
+                        for name, marker in names.items()}
+                got = released.missing(released.Listed("plant", "0" * 40, 1, full), rows)
+                expected = [f"{P}.{name}: released in plant, missing on main with no "
+                            "deprecated alias (FORMALIZATION.md, section 2)"
+                            for name in failing]
+                self.assertEqual(got, expected)
 
 
 def lake(test: unittest.TestCase, build: int, said: bytes = b"",
@@ -406,9 +403,9 @@ def lake(test: unittest.TestCase, build: int, said: bytes = b"",
     def run(args, **kwargs):
         test.ran.append(list(args))
         test.assertEqual(kwargs.get("cwd"), released.ROOT)
-        if list(args) == list(released.BUILD_CHECK):
+        if list(args) == BUILD_COMMAND:
             return subprocess.CompletedProcess(args, build, stdout=said)
-        if list(args[:3]) == ["lake", "env", "lean"]:
+        if list(args[:3]) == LEAN_COMMAND:
             return subprocess.CompletedProcess(args, 0, stdout=rows.encode(), stderr=b"")
         raise AssertionError(f"an unexpected command: {args}")
 
@@ -424,13 +421,10 @@ STALE_SAID = "".join(f"✖ [{k}/60] Building Elements.Module{k}\n" for k in rang
 
 
 class TheBuild(unittest.TestCase):
-    def test_the_guard_is_lake_build_no_build_of_elements(self):
-        self.assertEqual(released.BUILD_CHECK, ("lake", "build", "--no-build", "Elements"))
-
     def test_a_current_build_passes(self):
         lake(self, 0, b"Build completed successfully (60 jobs).\n")
         self.assertIsNone(released.require_current_build())
-        self.assertEqual(self.ran, [list(released.BUILD_CHECK)])
+        self.assertEqual(self.ran, [BUILD_COMMAND])
 
     def test_a_stale_build_is_refused_with_its_last_lines(self):
         lake(self, 3, STALE_SAID.encode())
@@ -452,16 +446,18 @@ class TheBuild(unittest.TestCase):
         lake(self, 3, STALE_SAID.encode())
         with self.assertRaises(released.Unreadable):
             released.run_probe(released.probe())
-        self.assertEqual(self.ran, [list(released.BUILD_CHECK)])
+        self.assertEqual(self.ran, [BUILD_COMMAND])
         lake(self, 0)
         self.assertEqual(released.run_probe(released.probe()), {"Elements.a": "name"})
         self.assertEqual(len(self.ran), 2)
-        self.assertEqual(self.ran[0], list(released.BUILD_CHECK))
-        self.assertEqual(self.ran[1][:3], ["lake", "env", "lean"])
+        self.assertEqual(self.ran[0], BUILD_COMMAND)
+        self.assertEqual(self.ran[1][:3], LEAN_COMMAND)
 
     def test_run_lean_gives_what_lean_printed(self):
         lake(self, 0, rows="name Elements.a\nname Elements.b\n")
         self.assertEqual(released.run_lean("-- any file\n"), "name Elements.a\nname Elements.b\n")
+        self.assertEqual(self.ran[0], BUILD_COMMAND)
+        self.assertEqual(self.ran[1][:3], LEAN_COMMAND)
 
 
 class WithGit(unittest.TestCase):
@@ -485,6 +481,19 @@ class WithGit(unittest.TestCase):
         self.git("commit", "-q", "-m", "c")
         return self.git("rev-parse", "HEAD")
 
+    def tag(self, files: dict[str, str]) -> str:
+        commit = self.commit(files)
+        self.git("tag", "book-III")
+        return commit
+
+    def assert_list_refused_before_probe(self, path: str):
+        probe = mock.Mock(return_value={"Elements.a": "name"})
+        with mock.patch.object(released, "run_probe", probe):
+            with self.assertRaises(released.Unreadable) as raised:
+                released.make_list("book-III")
+        self.assertIn(path, str(raised.exception))
+        probe.assert_not_called()
+
     def test_what_bars_list_and_what_does_not(self):
         self.commit({"Elements/A.lean": "x\n", str(released.LIST): "old\n",
                      "lakefile.toml": "x\n"})
@@ -500,6 +509,47 @@ class WithGit(unittest.TestCase):
             (self.repo / path).write_text("x\n", encoding="utf-8")
         (self.repo / "Elements/A.lean").write_text("y\n", encoding="utf-8")
         self.assertEqual(sorted(released.modified()), sorted(planted + ["Elements/A.lean"]))
+
+    def test_an_ignored_root_lakefile_refuses_list_before_the_probe(self):
+        self.tag({".gitignore": "/lakefile.lean\n", "Elements/A.lean": "x\n"})
+        (self.repo / "lakefile.lean").write_text("x\n", encoding="utf-8")
+        self.assert_list_refused_before_probe("lakefile.lean")
+
+    def test_build_inputs_inside_an_ignored_directory_refuse_list_before_the_probe(self):
+        self.tag({".gitignore": "ignored/\n", "Elements/A.lean": "x\n"})
+        (self.repo / "ignored").mkdir()
+        (self.repo / "ignored/Source.lean").write_text("x\n", encoding="utf-8")
+        (self.repo / "ignored/lakefile.toml").write_text("x\n", encoding="utf-8")
+        self.assertEqual(released.modified(),
+                         ["ignored/Source.lean", "ignored/lakefile.toml"])
+        self.assert_list_refused_before_probe("ignored/Source.lean")
+
+    def test_a_quoted_untracked_lean_path_refuses_list_before_the_probe(self):
+        self.tag({"Elements/A.lean": "x\n"})
+        path = 'Elements/quoted\t"line\nname.lean'
+        (self.repo / path).write_text("x\n", encoding="utf-8")
+        self.assertEqual(released.modified(), [path])
+        self.assert_list_refused_before_probe(path)
+
+    def test_ignored_build_artifacts_do_not_prevent_listing_a_clean_tag(self):
+        commit = self.tag({".gitignore": ".lake/\n", "Elements/A.lean": "x\n"})
+        artifact = self.repo / ".lake/build/lib/lean/Elements/A.olean"
+        artifact.parent.mkdir(parents=True)
+        artifact.write_text("built\n", encoding="utf-8")
+        (artifact.parent / "A.trace").write_text("trace\n", encoding="utf-8")
+        (self.repo / ".lake/lakefile.olean").write_text("config build\n", encoding="utf-8")
+        probe = mock.Mock(return_value={"Elements.a": "name"})
+        with mock.patch.object(released, "run_probe", probe):
+            made = released.make_list("book-III")
+        self.assertEqual(released.parse_list(made).commit, commit)
+        probe.assert_called_once()
+
+    def test_a_rename_to_the_excepted_list_path_is_still_one_change(self):
+        self.commit({"notes.txt": "x\n"})
+        (self.repo / released.LIST).parent.mkdir(parents=True)
+        self.git("mv", "notes.txt", str(released.LIST))
+        self.assertEqual(released.modified(),
+                         [f"notes.txt -> {released.LIST.as_posix()}"])
 
     def test_the_later_tags_hold_the_lists_commit(self):
         first = self.commit({"a": "1\n"})
@@ -637,7 +687,7 @@ class TheModes(unittest.TestCase):
                 self.assertEqual(out, "")
                 self.assertTrue(err.startswith(f"check_released_names: {STALE}\n"), err)
                 self.assertIn("error: target is out-of-date and needs to be rebuilt", err)
-                self.assertEqual(self.ran, [list(released.BUILD_CHECK)])
+                self.assertEqual(self.ran, [BUILD_COMMAND])
 
     def test_on_a_current_build_the_modes_go_on_to_the_probe(self):
         self.write("name Elements.a")
@@ -645,8 +695,8 @@ class TheModes(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("✓ tests/released_names.txt: 1 names released in book-III", out)
         self.assertEqual(len(self.ran), 2)
-        self.assertEqual(self.ran[0], list(released.BUILD_CHECK))
-        self.assertEqual(self.ran[1][:3], ["lake", "env", "lean"])
+        self.assertEqual(self.ran[0], BUILD_COMMAND)
+        self.assertEqual(self.ran[1][:3], LEAN_COMMAND)
         code, out, err = self.run_lake(["--list", "book-III"], 0)
         self.assertEqual(code, 0, err)
         self.assertEqual(out, released.render_list("book-III", COMMIT, {"Elements.a": "name"}))
