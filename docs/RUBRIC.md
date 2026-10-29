@@ -5,9 +5,9 @@ the rubric every outside reviewer is given. The three sections from "The rubric,
 "What to report" are the words each reviewer receives, word for word. Each measurement records
 the rubric's version, so that every score can be traced to the words it was made by, and a later
 version never rescores an earlier measurement. The scores these measurements give are kept
-outside this repository, so that each reviewer comes in cold, save one in the release forecast
-of [PROGRAM](PROGRAM.md); that page, and the files here that show the first outside review's
-scores, are withheld from each reviewer's copy (step 1).
+outside this repository, save one in the release forecast of [PROGRAM](PROGRAM.md), so that
+each reviewer comes in cold; that page, and the files here that show the first outside
+review's scores, are withheld from each reviewer's copy (step 1).
 
 ## How a measurement is made
 
