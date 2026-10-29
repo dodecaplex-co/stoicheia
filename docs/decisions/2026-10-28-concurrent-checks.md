@@ -49,7 +49,8 @@
   a handler can land just after a lock is taken and leave it held. Once a signal is
   recorded, no further check starts; the checks already running, up to the number of
   workers, run to their end; the previous handlers are put back; and what the first
-  signal would have raised goes on (#NNN), whatever came after it. A terminal's Ctrl-C
+  signal would have raised goes on (#NNN), unless another comes in the moment the
+  handlers are put back, when its own handler raises first. A terminal's Ctrl-C
   reaches the checks too, in the run's process group, and they end; a SIGTERM or SIGHUP
   sent to the harness alone waits for them to end of themselves. Any other exception, a
   refusal or one a check's `run()` raised, waits for them in the same way before it goes

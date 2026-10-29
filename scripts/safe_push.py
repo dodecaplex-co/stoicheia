@@ -3786,7 +3786,8 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
     raises can land just after a lock is taken, in this thread or in a queue, and leave it
     held. Once one is recorded, no further check starts or is reported, the checks running
     (at most `workers`) run to their end, the previous handlers are put back, and what the
-    first signal would have raised is raised (signalled), whatever came after it. A
+    first signal would have raised is raised (signalled), unless another comes in the
+    moment the handlers are put back, when its own handler raises first. A
     terminal's Ctrl-C reaches the checks too, since they share the run's process group,
     and they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to end of
     themselves. A refusal, an exception a check's run() raised, or any other, waits for
@@ -3878,7 +3879,8 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
             # that no handler runs half-way through: one whose handler Python has yet to run
             # is recorded before the first is put back, and one the system still holds for
             # the harness is taken (sigwait) and recorded too; one that comes once they are
-            # back is handled by its own handler.
+            # back, even in the moment before the mask is lifted, is handled by its own
+            # handler, which then raises in place of the first's.
             if previous:
                 held = signal.pthread_sigmask(signal.SIG_BLOCK, GROUP_SIGNALS)
                 for signum in sorted(signal.sigpending() & (set(GROUP_SIGNALS) - held)):
