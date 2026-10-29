@@ -113,9 +113,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `8ce3f1ae4285`, 2026-10-28, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `089badbd8463`, 2026-10-28, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **4,063,299** configurations met an axiom's hypotheses (1,223,826 in the search, 2,243,944 exhaustive, 595,529 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 503,267 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
+In the plane: **3,593,770** configurations met an axiom's hypotheses (1,223,826 in the search, 1,868,465 exhaustive, 501,479 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 503,267 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -156,7 +156,7 @@ In the plane: **4,063,299** configurations met an axiom's hypotheses (1,223,826 
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_congruent` | 54,696 | 375,479 | 94,050 | 10,711 |
+| `Tacit.area_congruent` | 54,696 | · | · | 10,711 |
 | `Tacit.len_add_of_between` | 4,707 | 304 | · | 9,920 |
 | `Tacit.circle_eq` | 791 | 2,448 | 27,089 | 4,410 |
 | `Tacit.angle_eq_zero_of_same_ray` | 14,978 | 1,208 | · | 2,790 |
@@ -168,7 +168,7 @@ In the plane: **4,063,299** configurations met an axiom's hypotheses (1,223,826 
 | `Tacit.area_add_of_between` | 25 | 6,176 | 55,499 | 8,532 |
 | `Tacit.superposition` | 109 | 363,888 | 71,970 | 8,657 |
 
-Separately, **9,895,990** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+Separately, **10,365,519** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
 
 | Derived property | Exhaustive | Structured |
 |---|--:|--:|
@@ -178,6 +178,7 @@ Separately, **9,895,990** configurations met a retained derived property's hypot
 | `derived.inside_of_between` | 76,104 | 39,272 |
 | `derived.outside_of_between` | 281,664 | 47,802 |
 | `derived.between_of_inside_chord` | 3,228 | 37,732 |
+| `derived.area_congruent` | 375,479 | 94,050 |
 | `derived.exists_point_outside_circle` | 72 | 100,000 |
 | `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
 | `derived.triple_incidence3` | 315,152 | 1,246 |
