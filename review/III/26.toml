@@ -5,7 +5,7 @@ fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
-note = "For obtuse angles at the circumferences, III.20 gives reflex central angles and I.4 takes the ordinary angles remaining from four right angles, an additional argument for a case within the statement (Heath, vol. 2, pp. 56–57, discussion on p. 57). For right inscribed angles the bases are diameters, each the sum of two radii. The subtraction of the remaining circumferences follows Euclid: Common Notion 3 gives equal measures, and `Prop26.extend` extends the given segment congruence to one application of the whole circles, which `Prop26.remainder` restricts to the remaining segments and arcs."
+note = "Euclid's argument, with I.4 on the angles BGC, EHF, where those are the angles at the centres, as in his figure (Heath, vol. 2, pp. 56–57). For the other cases the Lean takes the way Heath gives under III.26: \"if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles\" (vol. 2, p. 57). Where the angles at the circumferences are obtuse, the angles at the centres standing on BKC, ELF (`angleAtCentre`, which III.20 makes double of them) are greater than two right angles; our angles, like Euclid's, are each less than two, so I.4 cannot take them, and `angleAtCentre.reflex` with Common Notion 3 takes them from four right angles, leaving the angles BGC, EHF for I.4. That subtraction is a step his written argument lacks, for a case within the statement, so the route is modified. Where the angles at the circumferences are right, the angles at the centres are two right angles and the bases are diameters, each the sum of two radii, the case Heath completes by showing that two radii \"are in a straight line, whence they make equal bases in the two circles as in Euclid's proof\" (vol. 2, p. 57); `Prop26.alike` sorts the cases. The subtraction of the remaining circumferences follows Euclid: Common Notion 3 gives equal measures, and `Prop26.extend` extends the given segment congruence to one application of the whole circles, which `Prop26.remainder` restricts to the remaining segments and arcs."
 
 [representation]
 tags = ["angle-measure"]
@@ -20,7 +20,7 @@ note = "Euclid's figure has the centres on A's and D's sides, where the angles a
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
-note = "In Euclid's figure I.4 applies to the angles BGC, EHF. For obtuse inscribed angles, the central angles are reflex: Common Notion 3 removes them from four right angles before I.4 applies, a different argument within the statement (Heath, vol. 2, p. 57). When the inscribed angles are right, the bases are diameters, each the sum of two equal radii."
+note = "In Euclid's figure I.4 applies to the angles BGC, EHF, which are the angles at the centres (`angleAtCentre.within`). Where the angles at A and D are obtuse, the angles at the centres are greater than two right angles, which no angle of a triangle is, so I.4 cannot take them: `angleAtCentre.reflex` makes each, with the angle BGC or EHF, four right angles, and Common Notion 3 leaves the angles BGC, EHF equal for I.4, a step within the statement that Euclid's written argument lacks. Where they are right, G and H lie on BC and EF, and the bases are diameters, each the sum of two equal radii, as Heath completes that case (vol. 2, p. 57)."
 
 [[passage]]
 at = "therefore the segment BAC is equal to EDF"
