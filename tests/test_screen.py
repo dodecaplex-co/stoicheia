@@ -29,8 +29,13 @@ functions to small inputs, each with the answer the screen should give.
   trains C6a and C6b and of the outlines are listed, and each, left unlisted, stops it, as
   a new word does; the recursors Lean makes, as `MixedAngle.casesOn`, are followed, not
   listed.
-* The known rows: each row of KNOWN (III.5 alone, since III.2 and III.6 left it) must close
-  by a rule; closed only by the bare try, a row is lost.
+* The known rows: each row of KNOWN (III.5 alone, since III.2 and III.6 left it, or, on
+  the screen of #416, its planted canary) must close by a rule; closed only by the bare
+  try, a row is lost.
+* While #416's screen lands, in three trains (these cases, the screen, then the old
+  outcomes retired), the nine cases it moves each name two outcomes, the screen's without
+  a background and the screen's with its background and canary, and hold the screen to
+  exactly the one its generation names and not the other (`exactly`).
 * The lists: the definitions unfolded, chosen and left as they are do not overlap; every
   file of tries proves the controls, and unfolds every definition listed.
 * The record of a run (--write) and its check (--check-current), with a stand-in for git:
@@ -101,6 +106,32 @@ def unfolded() -> list[str]:
     return [f"Elements.{d}" for d in screen.DEFS] + list(screen.CHOSEN.values())
 
 
+def as_named(names: list[str]) -> dict[str, tuple[str, str]]:
+    """The tries `names`, each giving `grind` the rules its name names (as `ident` writes
+    them), as when `grind` refuses none of them; a bare try gives none."""
+    return {n: ("X", ", ".join(f"Elements.{r}" for r in n.split("__")[2:] if r != "forward"))
+            for n in names}
+
+
+def exactly(case: unittest.TestCase, old, new) -> None:
+    """A case that #416's screen moves, while it lands in three trains (these cases, then
+    the screen, then the old outcomes retired), names its two outcomes: `old`, what the
+    screen without a background gives, and `new`, what the screen with its background and
+    planted canary gives, each a whole case. The screen must give exactly the one its
+    generation names (PLANTED, which only the new screen has), and not the other: never
+    a mixture, and never whichever happens to pass."""
+    planted = hasattr(screen, "PLANTED")
+    mine, other = (new, old) if planted else (old, new)
+    try:
+        other()
+    except (Exception, SystemExit):
+        pass
+    else:
+        case.fail(f"the {'old' if planted else 'new'} outcome holds of the "
+                  f"{'new' if planted else 'old'} screen too")
+    mine()
+
+
 def message(line: int, col: int, what: str, name: str = NAME) -> str:
     return f"/somewhere/{name}:{line}:{col}: {what}\n"
 
@@ -126,11 +157,24 @@ class Attempts(unittest.TestCase):
         axioms, families = 2 + len(screen.CIRCLE), 3
         each = (1 + axioms + families + len(list(itertools.combinations(screen.CIRCLE, 2)))
                 + 3)
-        self.assertEqual(len(jobs), 2 * each)
+
+        def old():
+            self.assertEqual(len(jobs), 2 * each)
+            self.assertEqual(sum(1 for _, _, rules in jobs if not rules), 2)
+
+        def new():
+            # The two statements of facts.json, then each planted one, with the same attempts.
+            self.assertEqual(len(jobs), (2 + len(screen.PLANTED)) * each)
+            for k, planted in enumerate(screen.PLANTED):
+                self.assertEqual(jobs[(2 + k) * each],
+                                 (f"bare__{screen.ident(planted)}", planted, []))
+            self.assertEqual(sum(1 for _, _, rules in jobs if not rules),
+                             2 + len(screen.PLANTED))
+
+        exactly(self, old, new)
         self.assertEqual(len({name for name, _, _ in jobs}), len(jobs))
         self.assertEqual(jobs[0], ("bare__BookI_Prop1", "BookI.Prop1", []))
         self.assertEqual(jobs[each], ("bare__BookIII_Prop2", "BookIII.Prop2", []))
-        self.assertEqual(sum(1 for _, _, rules in jobs if not rules), 2)
         self.assertIn(("family__BookI_Prop1__Postulates", "BookI.Prop1", ["Postulate1"]),
                       jobs)
         self.assertIn(("fampair__BookI_Prop1__Metric__Postulates", "BookI.Prop1",
@@ -154,13 +198,16 @@ class Tries(unittest.TestCase):
                 ("single__X__Tacit_len_symm", "X", ["Tacit.len_symm"]),
                 ("pair__X__Postulate1__Tacit_circle_eq", "X",
                  ["Postulate1", "Tacit.circle_eq"])]
-        self.assertEqual(screen.tries(jobs, self.REFUSE), {
+        expected = {
             "bare__X": ("X", ""),
             "single__X__Tacit_len_symm": ("X", "Elements.Tacit.len_symm"),
             "pair__X__Postulate1__Tacit_circle_eq": ("X", "Elements.Tacit.circle_eq"),
             "pair__X__Postulate1__Tacit_circle_eq__forward":
                 ("X", "→ Elements.Tacit.circle_eq"),
-        })
+        }
+        # The new screen takes each try's background too: here none.
+        exactly(self, lambda: self.assertEqual(screen.tries(jobs, self.REFUSE), expected),
+                lambda: self.assertEqual(screen.tries(jobs, self.REFUSE, {}), expected))
 
     def test_the_bare_try_gives_grind_only_the_definitions(self):
         bare = screen.theorem("bare__X", "BookI.Prop1", "", 100)
@@ -308,10 +355,28 @@ class Definitions(unittest.TestCase):
     def test_the_pass_names_every_root_and_every_listed_word(self):
         facts = {"propositions": [{"name": "BookI.Prop1"}],
                  "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"}}
-        text = screen.reach_file(facts)
-        for n in ["BookI.Prop1", "Postulate1"] + screen.DEFS + list(screen.CHOSEN):
-            self.assertIn(f"`Elements.{n}", text)
-        self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
+
+        def old():
+            text = screen.reach_file(facts)
+            for n in ["BookI.Prop1", "Postulate1"] + screen.DEFS + list(screen.CHOSEN):
+                self.assertIn(f"`Elements.{n}", text)
+            self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
+
+        def new():
+            text = screen.reach_file(facts, {"Tacit.ne_of_between": {"Postulate1"}})
+            for n in (["BookI.Prop1", "Postulate1", "Tacit.ne_of_between"] + screen.DEFS
+                      + list(screen.CHOSEN)):
+                self.assertIn(f"`Elements.{n}", text)
+            roots = next(line for line in text.splitlines()
+                         if line.startswith("  let roots : Array Name := #["))
+            self.assertIn("`Elements.Tacit.ne_of_between", roots)
+            # Each planted statement is declared, and its body followed.
+            for k, statement in enumerate(screen.PLANTED.values()):
+                self.assertIn(f"def Screen.planted{k} : Prop :=\n  {statement}\n", text)
+                self.assertIn(f"`Screen.planted{k}", text)
+            self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
+
+        exactly(self, old, new)
 
     # The words train C6a brought in, which the pass reached and no list named until #416
     # (its eighteenth, `MixedAngle.casesOn`, is Lean's own, and followed), and the words of
@@ -363,27 +428,44 @@ class Definitions(unittest.TestCase):
 
 
 class KnownRows(unittest.TestCase):
+    # The tries that close: III.5's (the old screen's known row), or the canary's (the
+    # new screen's), with III.2's and III.6's beside it.
+    RULED_OLD = ["single__BookIII_Prop2__Tacit_inside_of_between",
+                 "single__BookIII_Prop5__Tacit_circle_eq__forward",
+                 "pair__BookIII_Prop6__Tacit_centre_inside__Tacit_circle_eq"]
     RULED = ["single__BookIII_Prop2__Tacit_inside_of_between",
-             "single__BookIII_Prop5__Tacit_circle_eq__forward",
+             "single__Canary_III5_before_0008__Tacit_circle_eq__forward",
              "pair__BookIII_Prop6__Tacit_centre_inside__Tacit_circle_eq"]
 
     def test_the_known_rows_closed_by_rules(self):
-        self.assertEqual(screen.lost(self.RULED), [])
+        # The new screen's `lost` reads what each try gave `grind` as well.
+        exactly(self, lambda: self.assertEqual(screen.lost(self.RULED_OLD), []),
+                lambda: self.assertEqual(screen.lost(self.RULED, as_named(self.RULED)), []))
 
     # The two cases below take the first row of KNOWN, whichever it is, so that they hold
     # while KNOWN moves with the axioms the screen can try.
     def test_a_row_closed_only_by_its_bare_try_is_lost(self):
         row = screen.KNOWN[0]
-        closed = self.RULED + [f"bare__{screen.ident(row)}"]
-        others = {screen.statement_of(n) for n in self.RULED} - {screen.ident(row)}
-        self.assertEqual(screen.by_rule(closed), ({screen.ident(row)}, others))
-        self.assertEqual(screen.lost(closed), [row])
+
+        def outcome(ruled: list[str], lost) -> None:
+            closed = ruled + [f"bare__{screen.ident(row)}"]
+            others = {screen.statement_of(n) for n in ruled} - {screen.ident(row)}
+            self.assertEqual(screen.by_rule(closed), ({screen.ident(row)}, others))
+            self.assertEqual(lost(closed), [row])
+
+        exactly(self, lambda: outcome(self.RULED_OLD, screen.lost),
+                lambda: outcome(self.RULED, lambda c: screen.lost(c, as_named(c))))
 
     def test_a_row_not_closed_is_lost(self):
         row = screen.KNOWN[0]
-        closed = [n for n in self.RULED if screen.statement_of(n) != screen.ident(row)]
-        self.assertEqual(len(closed), len(self.RULED) - 1)
-        self.assertEqual(screen.lost(closed), [row])
+
+        def outcome(ruled: list[str], lost) -> None:
+            closed = [n for n in ruled if screen.statement_of(n) != screen.ident(row)]
+            self.assertEqual(len(closed), len(ruled) - 1)
+            self.assertEqual(lost(closed), [row])
+
+        exactly(self, lambda: outcome(self.RULED_OLD, screen.lost),
+                lambda: outcome(self.RULED, lambda c: screen.lost(c, as_named(c))))
 
     def test_tries_name_their_statements(self):
         facts = {"propositions": [{"name": "BookI.Prop40.general", "ref": "I.40 general"},
@@ -857,7 +939,16 @@ class Record(unittest.TestCase):
                 lean.assert_not_called()
                 self.assertEqual(self.path.read_text(encoding="utf-8"), before)
 
-    def run_with_build_change(self, during_retry: bool) -> tuple[list[list[str]], str]:
+    def background(self, given: bool) -> contextlib.ExitStack:
+        """The stand-ins for a run's background: none for the old screen, and for the new
+        one, which reads it from the proved rules, an empty one (`given`)."""
+        stack = contextlib.ExitStack()
+        if given:
+            stack.enter_context(mock.patch.object(screen, "book_zero", return_value={}))
+        return stack
+
+    def run_with_build_change(self, during_retry: bool,
+                              given: bool) -> tuple[list[list[str]], str]:
         self.path.write_text("existing record\n", encoding="utf-8")
         before = self.path.read_text(encoding="utf-8")
         stale = {"build": False}
@@ -877,6 +968,7 @@ class Record(unittest.TestCase):
         with tempfile.TemporaryDirectory() as out, \
                 mock.patch.object(screen, "ROOT", self.root), \
                 mock.patch.object(screen, "RECORD", self.path), \
+                self.background(given), \
                 mock.patch.object(screen, "reached"), \
                 mock.patch.object(screen, "attempts", return_value=jobs), \
                 mock.patch.object(screen, "refused", return_value={}), \
@@ -892,17 +984,20 @@ class Record(unittest.TestCase):
         self.assertEqual(self.path.read_text(encoding="utf-8"), before)
         return launched, str(stop.exception.code)
 
-    def test_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
-        launched, stopped = self.run_with_build_change(False)
+    def build_change(self, during_retry: bool, given: bool) -> None:
+        launched, stopped = self.run_with_build_change(during_retry, given)
         self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
         self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def test_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
+        exactly(self, lambda: self.build_change(False, False),
+                lambda: self.build_change(False, True))
 
     def test_a_build_left_stale_during_the_retry_pass_is_not_recorded(self):
-        launched, stopped = self.run_with_build_change(True)
-        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
-        self.assertIn("build of Elements changed while the screen ran", stopped)
+        exactly(self, lambda: self.build_change(True, False),
+                lambda: self.build_change(True, True))
 
-    def test_an_unchanged_build_is_checked_again_and_recorded(self):
+    def unchanged_build(self, given: bool) -> None:
         self.path.write_text("existing record\n", encoding="utf-8")
         launched = []
 
@@ -914,6 +1009,7 @@ class Record(unittest.TestCase):
         with tempfile.TemporaryDirectory() as out, \
                 mock.patch.object(screen, "ROOT", self.root), \
                 mock.patch.object(screen, "RECORD", self.path), \
+                self.background(given), \
                 mock.patch.object(screen, "reached"), \
                 mock.patch.object(screen, "attempts", return_value=jobs), \
                 mock.patch.object(screen, "refused", return_value={}), \
@@ -927,6 +1023,9 @@ class Record(unittest.TestCase):
             self.assertEqual(screen.main(), 0)
         self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
         self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+
+    def test_an_unchanged_build_is_checked_again_and_recorded(self):
+        exactly(self, lambda: self.unchanged_build(False), lambda: self.unchanged_build(True))
 
     def test_the_repository_inputs_read(self):
         """The real inputs compute, and every part is present."""
