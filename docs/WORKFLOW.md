@@ -167,9 +167,11 @@ files working in parallel, the renderers, and an integrator followed by blind re
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
   README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
-  between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
-  which `render.py` fills; the rest of README.md has an owner of its own, named in the
-  orders. Section 8's first command block, between the `<!-- checks -->` markers of this
+  between the `<!-- status -->` markers, the notes regions of the briefs and of
+  PROGRAM.md, between the `<!-- notes -->` and `<!-- notes:<section> -->` markers, and
+  inline `count:` values in tracked Markdown, which `render.py` fills; the rest of
+  README.md has an owner of its own, named in the orders. Section 8's first command
+  block, between the `<!-- checks -->` markers of this
   page, is generated too, from the registry of checks in `checks/`, and travels with the
   change to the registry that moves it. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
@@ -189,6 +191,26 @@ files working in parallel, the renderers, and an integrator followed by blind re
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
+
+### Shared hand-written files
+
+Trains collide in hand-written files that tell the same news twice: a dated status paragraph
+added to a brief, a count typed again in a report, the same news in PROGRAM.md's prose
+([#572](https://github.com/jackChallis/stoicheia/issues/572)). So each piece of news is
+written once. A train records its progress in its own decisions entry, whose header names the
+briefs and PROGRAM sections it is news for (section 10, "Decision entries"); `render.py`
+compiles their notes. A count a file states exactly goes between count markers. Everything
+else in these files changes only by its subject owner, one train at a time; a ship with text
+for one sends it to that owner through the coordinator.
+
+| Shared hand-written file | Subject owner |
+|---|---|
+| README.md, outside its generated rows and `count:` values | the ship working the README's issue |
+| PROGRAM.md's prose, outside its generated regions | the coordinator |
+| `docs/FORMALIZATION.md` | the coordinator |
+| A brief in `docs/briefs/`, outside its notes region | its author's ship while it is a draft; the coordinator once it is frozen ([Correcting a frozen brief](#correcting-a-frozen-brief)) |
+| `docs/reports/overlaps.md` and the gap catalogues, `docs/reports/gaps-book-*.md` | the ship doing Book III's circle-rules work |
+| `tests/certificate_expectations.json` | the ship whose train changes the certificate |
 
 ### File names
 
@@ -930,14 +952,18 @@ an older Git they refuse every train and group as unreadable.
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
   tests the counts and markers without Lean. Count markers do not overlap README.md's
-  generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
+  generated scope regions, PROGRAM.md's generated status region or the notes regions of a
+  brief or of PROGRAM.md. `negative_tests.py` runs
   the tests before planting; its `--counts-only` option runs the count plant,
   `scripts/negative/count_markers.py`, and the file-only regressions without a build.
 - **Decision entries are checked before anything is written.** `render.py` refuses a bad
-  file in `docs/decisions/` (section 10, "Decision entries") before it writes, so CI's
-  `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
-  refusals without Lean, and `negative_tests.py` runs it after the count regressions,
-  before planting, with `--counts-only` too.
+  file in `docs/decisions/`, a bad header line in an entry, a bad notes marker in a brief
+  or in PROGRAM.md, and a notes region holding anything but a generated line for one of
+  its entries, with a legitimate stale backlink omission allowed (section 10, "Decision
+  entries"), before it writes, so CI's `check` job and the pre-flight refuse it.
+  `tests/test_decision_entries.py` tests those refusals, and the notes `render.py` fills,
+  without Lean, and `negative_tests.py` runs it after the count regressions, before
+  planting, with `--counts-only` too.
 - **The risk classes are tested without Lean.** `tests/test_risk.py` checks the table of
   `scripts/risk.py`: the first rule that matches wins, a path no rule names is R5, and a
   change takes its highest class. It runs `--diff` on a repository of its own (an empty
@@ -1697,16 +1723,20 @@ there. The page's entry of 20 October 2026, "Decision entries, one file each", b
 the rule: a decision written after that entry landed goes in an entry file. A pull
 request opened before it landed may keep the entry it added to the page, whose new lines
 count as any new line of the page does (step 3, below). The page's entries stay where
-they are. An entry is read where it is, as a page of its own: nothing assembles it into
-another page, and GitHub lists the folder in name order, which is date order
-([the folder's README](decisions/README.md)). To write one, the coordinator:
+they are. An entry is read where it is, as a page of its own: its header line, if it has
+one, is compiled by `render.py` into the notes regions of the briefs and PROGRAM.md
+sections it names, and nothing else of it is assembled anywhere; GitHub lists the folder
+in name order, which is date order ([the folder's README](decisions/README.md)). To write
+one, the coordinator:
 
 1. names it `docs/decisions/<YYYY-MM-DD>-<slug>.md`: the day of the decision, a valid
    date no earlier than 20 October 2026, when the entries began, then a short name of
    lower-case letters and digits joined by hyphens, as
    `docs/decisions/2026-10-21-entry-files.md`;
-2. writes the entry as the page's entries are written (`- **A title (area).** The
-   decision, and why.`), with no date heading, since the name carries the date, and
+2. begins a new entry with its header line, line 1 and the whole of it (its form and
+   rules follow these steps), and then writes the entry as the page's entries are
+   written (`- **A title (area).** The decision, and why.`), with no date heading,
+   since the name carries the date, and
    names each file, statement and lock it approves in a sentence of its own, never on a
    line or in a list repeated from an older entry or the page, for such a line counts
    for nothing (step 3, below); it may hold headings, as any page may, and its relative
@@ -1726,14 +1756,72 @@ another page, and GitHub lists the folder in name order, which is date order
    refusing, with the file's name, its unprintable characters written as escapes, a
    link, a folder or any file but the README and entries, a folder spelled otherwise on
    disk (as `docs/Decisions/`, or `docs/deciſions/` with a long s, which a Mac finds and
-   Git does not), an entry whose name or characters break steps 1 and 3, a count marker
-   in any file there, a README holding a character step 3 keeps out, and an empty entry;
+   Git does not), an entry whose name or characters break steps 1 and 3, a header that
+   breaks the rules below, a count marker in any file there, a README holding a
+   character step 3 keeps out, and an empty entry;
    it passes over a file Git ignores by a rule of the root's `.gitignore`, of
    `.git/info/exclude` or of the user's own excludes file, as Finder's `.DS_Store`,
    which Git never commits, but never one that a nested `.gitignore`, which a commit
    could add, ignores; it stops if Git cannot say which files those are; and it writes
    nothing into the folder, so the pull request carries the entry alone, beside the
    change it records.
+
+The header line says what the entry is news for:
+
+```text
+<!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]] [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]] [reverts=<entry>[,<entry>…]] line="<news>" -->
+```
+
+Its keys stand in that order, each once at most, separated by single spaces; `id`,
+`cards` and `line` are required, no list names an item twice, and the header is 2,000
+characters at most:
+
+- `id`, the entry's name for itself, lower-case letters and digits joined by hyphens,
+  which no other entry's header bears;
+- `cards`, the numbers of its issues, joined by commas;
+- `briefs`, the briefs it is news for, each the stem of a file in `docs/briefs/`, as
+  `0008-centre` or `book-I`, never `0002-decisions`, the decisions page, which is dated
+  history;
+- `program`, the sections of PROGRAM.md it is news for, from a fixed list,
+  `PROGRAM_NOTES`, which `render.py` and the regions' reader in
+  `scripts/heath.py` share, rather than PROGRAM's headings, so that a heading
+  may be renamed. The list is `landed` alone: entries are only ever added, so a region of
+  them only grows, as a record of what landed does. A section whose items leave it, as
+  PROGRAM's open items do, needs a way for an entry to close an earlier entry's item,
+  which the header does not have;
+- `corrects` and `reverts`, the file names of the entries it corrects or reverts, as
+  `2026-10-26-routes-iii-centre.md`, each earlier in name order, an entry without a
+  header among them;
+- `line`, its news, in double quotes: one line of 1 to 300 characters, with no space at
+  either end, holding no `"`, no `<!--` or `-->`, no Markdown link and no `<`, `[` or `]`,
+  since it is copied into pages in other folders, where a relative link would break, raw
+  HTML could hide text or link to a file, and a bracket could bind to a link the page
+  defines.
+
+`render.py` cannot tell a new entry from an old one, so it checks a header where one
+stands and requires none: the entries written before headers began have none, and keep
+none. A brief holds one notes region at most, between `<!-- notes -->` and
+`<!-- /notes -->`, and PROGRAM.md one at most for each section of the list, between
+`<!-- notes:<section> -->` and `<!-- /notes:<section> -->`, each marker on a line of its
+own; the decisions page holds none, and a marker malformed, unpaired, nested, repeated or
+out of its place stops the render. Between a region's markers `render.py` writes a line
+for each entry whose header names the brief, or the section, in name order: the date, the
+cards, the news, a sentence for the entries it corrects or reverts and one for every entry
+whose header corrects or reverts it, whatever that entry names, each linked, and a link to
+the entry. Before replacing a region, `render.py` checks each current line against its
+entry's header and relationships. The cards, news, corrections and reverts must match; a
+stale line may omit backlinks added by later entries. A line of any other form, text
+written by hand or a blank line stops the render, naming the file and the line, so that a
+misplaced marker never swallows text. Duplicate valid lines, or valid lines out of name
+order, are accepted and rewritten in name order, so that a merge of trains can heal. A
+new region's two markers stand on consecutive lines. Where no markers stand, it writes
+nothing. Since an entry is never edited, a brief or a section of the list that an entry
+names is never renamed or removed while an entry names it.
+
+A brief or PROGRAM.md cannot quote a notes marker as it is: inline it is refused, and on a
+line of its own, even in a code fence, it is a live marker. To show one there, write
+`&lt;!-- notes -->` in running text, which reads as the marker; in code it would show as
+written.
 
 An entry is dated history, never edited: the pre-flight refuses a push that modifies,
 deletes or renames an entry origin/main holds (step 3, below), and a correction is a new
