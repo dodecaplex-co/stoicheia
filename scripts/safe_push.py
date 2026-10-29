@@ -4519,7 +4519,9 @@ def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: 
     masks them on purpose. And a verdict may differ in two ways, each stricter, never
     looser: a tree the commit's checks leave changed is refused (below); and a check
     limited by the clock, run alone in its pass, may fail at two passes beside the other
-    pass's load where it passes one after another. origin/main's pass runs in a worktree
+    pass's load where it passes one after another. That holds of checks that keep to their
+    own worktree; code of the commit that reaches origin/main's (below) may make origin/main's
+    pass looser. origin/main's pass runs in a worktree
     of its own, `main`, given `wt`'s build (copy_build), and the commit's in `wt`, each on
     a thread of its own; the checks, `plan`'s, then the negative tests, NEGATIVE, each
     loop with both passes (side_by_side), the second begun once the first is reported.
@@ -4551,9 +4553,12 @@ def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: 
     machine; the cap (pass_workers) bounds the checks the harness starts at once and the
     negative tests' workers, not the cores one check (a build, the sweep) uses. And the
     commit's checks run while origin/main's pass runs in the sibling worktree, `main`, so
-    code of the commit run in its checks could reach that worktree while it runs: the
-    class of #197 and #218 (code of a commit that runs at elaboration), now without
-    needing a process left running.
+    code of the commit run in its checks could reach that worktree while it runs: a
+    changed check could rewrite a later check of origin/main's there, so that origin/main's
+    pass passes what one after another it refuses, and its reset removes the trace. That
+    is looser. It needs the commit's own code to run, through a change to a protected
+    script or its Lean at elaboration: the class of #197 and #218, now without needing a
+    process left running. Nothing runs at once until the lane sets STOICHEIA_PASS_WORKERS.
 
     On the main thread, from the start of each loop's two passes until both have ended, a
     SIGINT, SIGTERM or SIGHUP is recorded and raises nothing (awaited): no further step
@@ -4587,7 +4592,9 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
     commit's negative tests; tests/test_concurrent_passes.py masks them on purpose), and
     but for two ways a verdict may differ, each stricter, never looser: a tree the commit's
     checks leave changed is refused, and a check limited by the clock, run alone in its
-    pass, may fail beside the other pass's load where it passes one after another. However
+    pass, may fail beside the other pass's load where it passes one after another; that
+    for checks that keep to their own worktree, and code of the commit that reaches
+    origin/main's may make that pass looser (at_once). However
     step 4 ends, one plain line then says what the work between its rows took (Between), a
     line and not a row, so that the summary, the record and the pull request's body are as
     before #609."""

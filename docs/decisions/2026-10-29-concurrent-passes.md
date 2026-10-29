@@ -24,8 +24,10 @@
   - the stricter refusal of a tree left changed, below;
   - a check limited by the clock, which may fail under the other pass's load, below.
 
-  Each exception is stricter, never looser. "The first failure stops the run" keeps its
-  meaning, since the failure reported is the first in that order.
+  Each exception is stricter, never looser, for checks that keep to their own worktree.
+  Code of the commit that reaches origin/main's worktree is another matter, and looser,
+  below. "The first failure stops the run" keeps its meaning, since the failure reported
+  is the first in that order.
 
   When origin/main's pass fails outright, or keep_apart refuses, the commit's pass of
   that loop is discarded: its rows are never put in, and its logs are removed. The
@@ -82,10 +84,18 @@
   Leans among it, either may fail at two passes where it passes one after another. The
   failure is stricter, never looser, but it is a false refusal. A stronger guarantee, for
   checks that must run beside nothing at all, is left to a card of its own.
-  `checks/README.md` now says what "alone" means at two passes. The commit's checks
-  also run while origin/main's pass runs in the second worktree. Code of the commit could
-  reach that worktree while the pass runs: the same class as #197 and #218, code of a
-  commit that runs at elaboration, now without needing a process left running.
+  `checks/README.md` now says what "alone" means at two passes.
+
+  The commit's checks also run while origin/main's pass runs in the second worktree.
+  Code of the commit could reach that worktree while the pass runs. A changed check could
+  rewrite a later check of origin/main's there, so that origin/main's pass passes what it
+  would refuse one after another, and the reset that follows removes the trace. That is
+  looser. It needs the commit's own code to run, through a change to a protected script,
+  which the security review reads, or through its Lean at elaboration. It is the class of
+  #197 and #218, now without needing a process left running. Keeping the commit's pass
+  from writing origin/main's worktree, or running the two passes one after another where
+  that cannot be had, is left to a card of its own, for the coordinator to weigh before
+  the lane sets the variable.
 
   Unset or empty, the variable means one pass at a time, and the run is the one before
   this change, but for one line, below. So nothing runs at once until the lane sets the
