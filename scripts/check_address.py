@@ -150,19 +150,52 @@ def emphasis_flanking(line: str, index: int) -> tuple[bool, bool]:
     return left, right
 
 
+def enclosing_emphasis(line: str, offset: int) -> set[str]:
+    opened = []
+    ticks = 0
+    index = 0
+    while index < offset:
+        marker = line[index]
+        if marker == "`":
+            stop = index + 1
+            while stop < offset and line[stop] == marker:
+                stop += 1
+            run = stop - index
+            if not ticks:
+                ticks = run
+            elif ticks == run:
+                ticks = 0
+            index = stop
+            continue
+        if ticks or marker not in "*_":
+            index += 1
+            continue
+        stop = index + 1
+        while stop < offset and line[stop] == marker:
+            stop += 1
+        can_open, can_close = emphasis_flanking(line, index)
+        matched = False
+        if can_close:
+            for opened_index in range(len(opened) - 1, -1, -1):
+                if opened[opened_index] == marker:
+                    del opened[opened_index]
+                    matched = True
+                    break
+        if can_open and not matched:
+            opened.append(marker)
+        index = stop
+    return set(opened)
+
+
 def in_url_query_or_fragment(line: str, offset: int) -> bool:
     enclosing = None
     for match in URL.finditer(line):
-        emphasis = None
-        if match.start() and line[match.start() - 1] in "*_":
-            marker = line[match.start() - 1]
-            if emphasis_flanking(line, match.start() - 1)[0]:
-                emphasis = marker
+        emphasis = enclosing_emphasis(line, match.start())
         depth = 0
         end = len(line)
         for index in range(match.end(), len(line)):
             char = line[index]
-            closes_emphasis = (char == emphasis
+            closes_emphasis = (char in emphasis
                                and emphasis_flanking(line, index)[1])
             if (char.isspace() or char in URL_STOP or closes_emphasis
                     or char == ")" and depth == 0):
@@ -303,6 +336,8 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"*https://example.com/?repo={other}/stoicheia&ok=1*:"
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"*https://example.com/?repo=({other}/stoicheia)&ok=1*:"
+                          f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"*See https://example.com/?repo={other}/stoicheia*:"
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"[x](https://example.com/?repo=({other}/stoicheia)) and "
                           f"{other}/stoicheia", [1]),
