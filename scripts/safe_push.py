@@ -294,8 +294,8 @@ runs here, and takes step 4 from it only when it is of this commit against this
 origin/main, by this harness with origin/main's check inputs, made no more than
 PROOF_HOURS ago nor PROOF_SKEW seconds ahead of this clock, with no note for the security
 review, with each step's name, note, harness and time printable text of at most
-PROOF_TEXT characters, each step's name of PROOF_STEP's characters alone, and of step 4
-in full, every step passed (proof_record); else a note says why, quoting nothing of the
+PROOF_TEXT characters, each step's name of PROOF_STEP's characters alone and nothing
+GitHub would link, and of step 4 in full, every step passed (proof_record); else a note says why, quoting nothing of the
 proof, since the note goes into the pull request's body, and the full pre-flight runs
 here, as without it. So too for a proof that is not standard JSON (a key given twice
 in one object, NaN or Infinity), whose digest is not 64 lower-case hexadecimal
@@ -683,8 +683,9 @@ PROOF_TEXT = 300        # the longest step's name, note, harness or time a proof
 # The characters of a proof's step names: those of every step's name in the records saved
 # so far, with no markup, table bar or backtick, since a name goes into the body as it is;
 # an underscore only within a word, where Markdown makes no emphasis of it, and no web
-# address, which GitHub would make a link.
-PROOF_STEP = re.compile(r"(?!.*(?i:://|www\.))"
+# address, word of 7 or more hexadecimal digits or GH- and a digit, which GitHub would make
+# a link (to a page, a commit or an issue).
+PROOF_STEP = re.compile(r"(?!.*(?i:://|www\.|(?<![a-z0-9])[0-9a-f]{7,}(?![a-z0-9])|gh-[0-9]))"
                         rf"(?:[A-Za-z0-9 '().:/-]|(?<=[A-Za-z0-9])_(?=[A-Za-z0-9])){{1,{PROOF_TEXT}}}")
 PROOF_FIELDS = frozenset({"format", "record", "check_inputs", "machine", "made", "digest"})
 PROOF_MACHINE = re.compile(r"[A-Za-z0-9._-]{1,64}")
@@ -5591,7 +5592,7 @@ def proof_pairs(pairs: list) -> dict:
 def proof_constant(name: str):
     """json.loads's parse_constant for a proof: NaN, Infinity or -Infinity, which Python's
     JSON reads and standard JSON does not hold, is a doubt."""
-    raise ProofDoubt(f"it holds {name}, which is not standard JSON")
+    raise ProofDoubt("it holds NaN or Infinity, which is not standard JSON")
 
 
 def proof_record(path: Path, ctx: Context, risk: Risk,
@@ -5669,7 +5670,7 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     the security review (as review_notes reads them: with one, the full pre-flight runs
     here, so that the note holds the merge), each step's name, each note, its harness and
     its time printable text of at most PROOF_TEXT characters, each step's name of
-    PROOF_STEP's characters alone, and of step 4 in full with every step passed
+    PROOF_STEP's characters alone and nothing GitHub would link, and of step 4 in full with every step passed
     (checks_record); else None, and why."""
     record, inputs, machine = proof["record"], proof["check_inputs"], proof["machine"]
     if record.get("sha") != ctx.sha:
@@ -5688,10 +5689,10 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
                       "differ)")
     age = datetime.datetime.now(datetime.timezone.utc) - made
     if age > datetime.timedelta(hours=PROOF_HOURS):
-        return None, f"it was made at {proof['made']}, more than {PROOF_HOURS} hours ago"
+        return None, f"it was made more than {PROOF_HOURS} hours ago"
     if -age > datetime.timedelta(seconds=PROOF_SKEW):
-        return None, (f"it is dated {proof['made']}, more than {PROOF_SKEW} seconds ahead of "
-                      "this machine's clock")
+        return None, (f"it is dated more than {PROOF_SKEW} seconds ahead of this machine's "
+                      "clock")
     notes = record.get("notes") if isinstance(record.get("notes"), list) else []
     names = [n[0] for n in notes if isinstance(n, list) and n and isinstance(n[0], str)]
     held = [name for name in names if name == "pinned values" or (
@@ -5702,7 +5703,7 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     # Its step names, its notes, its harness and its time may hold no newline, no control
     # and no escape, nor run long, though of these only the step names leave the proof:
     # they are carried into the record, and so into the table of the pull request's body,
-    # as they are, so they are held to PROOF_STEP's characters as well.
+    # as they are, so they are held to PROOF_STEP as well.
     steps = record.get("steps") if isinstance(record.get("steps"), list) else []
     named = [s[1] for s in steps if isinstance(s, list) and len(s) > 1]
     texts = named + [x for n in notes if isinstance(n, list) for x in n] + \
@@ -5715,7 +5716,7 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     if any(isinstance(name, str) and not PROOF_STEP.fullmatch(name) for name in named):
         return None, ("its record holds a step's name with a character other than a letter, "
                       "a digit, a space or one of ' ( ) - . / : _ (an underscore only within "
-                      "a word), or a web address")
+                      "a word), or a web address, commit or issue GitHub would link")
     if checks_record(record, test_mode, risk) is None or record.get("short"):
         return None, ("it is not of step 4 in full with every step passed, by this harness "
                       "(checks_record)")

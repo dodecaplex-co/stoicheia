@@ -5791,8 +5791,8 @@ class PreflightProof(Edge):
             return lambda p: self.planted(p, lambda q: q.update(made=when))
         self.assertFallsBack(sha, proof, (
             ("an old proof", made(old),
-             f"it was made at {old}, more than {safe_push.PROOF_HOURS} hours ago"),
-            ("a proof dated ahead", made(ahead), f"it is dated {ahead}, more than "
+             f"it was made more than {safe_push.PROOF_HOURS} hours ago"),
+            ("a proof dated ahead", made(ahead), f"it is dated more than "
              f"{safe_push.PROOF_SKEW} seconds ahead of this machine's clock")))
 
     def test_a_hand_edited_unreadable_or_missing_proof_falls_back(self):
@@ -5855,7 +5855,7 @@ class PreflightProof(Edge):
             self.assertEqual(p["format"], 1)
             return self.written('{"format": 99, ' + json.dumps(p)[1:])
         self.assertFallsBack(sha, proof, (
-            ("NaN, the digest null", nan, "it holds NaN, which is not standard JSON"),
+            ("NaN, the digest null", nan, "it holds NaN or Infinity, which is not standard JSON"),
             ("a digest in capitals", capitals,
              "its digest is not of this format (64 of 0 to 9 and a to f)"),
             ("a number JSON reads as infinity", infinite,
@@ -5910,8 +5910,9 @@ class PreflightProof(Edge):
 
     def test_a_proof_with_markup_in_a_steps_name_falls_back(self):
         # A step's name goes into a cell of the body's table as it is: printable markup in
-        # one (a line break, a table's bar, a backtick) is no character of PROOF_STEP's, so
-        # the proof falls back.
+        # one (a line break, a table's bar, a backtick) is no character of PROOF_STEP's, and
+        # what GitHub would link (a web address, a commit's hash, GH- and a number) no
+        # name PROOF_STEP matches, so the proof falls back.
         sha, proof = self.proved(self.guide_change)
 
         def step(name):
@@ -5920,7 +5921,7 @@ class PreflightProof(Edge):
             return lambda p: self.planted(p, change)
         why = ("its record holds a step's name with a character other than a letter, a "
                "digit, a space or one of ' ( ) - . / : _ (an underscore only within a word), "
-               "or a web address")
+               "or a web address, commit or issue GitHub would link")
         self.assertFallsBack(sha, proof, (
             ("a line break", step("full local checks<br>EXTRA DISPLAY LINE"), why),
             ("a table's bar", step("full local checks | FAIL | 999"), why),
@@ -5928,7 +5929,10 @@ class PreflightProof(Edge):
             ("emphasis by underscores", step("full local checks __INJECTED__"), why),
             ("an underscore at a word's end", step("full local checks_"), why),
             ("a web address", step("see https://example.invalid/x"), why),
-            ("a web address without a scheme", step("see WWW.example.invalid"), why)))
+            ("a web address without a scheme", step("see WWW.example.invalid"), why),
+            ("a commit's hash", step(f"full local checks {BASE}"), why),
+            ("a commit's short hash", step(f"full local checks ({BASE[:7].upper()})"), why),
+            ("an issue as GitHub names it", step("full local checks gh-678"), why)))
 
     def test_a_reason_to_fall_back_quotes_nothing_of_the_proof(self):
         # The proof's line goes into the record's notes, and so into the pull request's

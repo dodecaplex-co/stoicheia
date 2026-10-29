@@ -46,7 +46,8 @@
   at most 300 characters, and each step's name must use only the letters, digits and few
   marks every step name in the records saved on the Mac uses (a space and ' ( ) - . / :
   _, the underscore only within a word, where Markdown makes no emphasis of it), with no
-  web address in it, which GitHub would make a link, or the proof falls back; step 4's
+  web address, no word of 7 or more hexadecimal digits and no GH- and a digit in it, which
+  GitHub would make a link to a page, a commit or an issue, or the proof falls back; step 4's
   line names the harness running on the Mac and the time the proof was made, never the
   proof's own text for them; and a reason to fall back names no value the proof holds. So
   nothing from a proof can move the terminal, or add a line, a cell or markup to the body.
