@@ -196,7 +196,7 @@ files working in parallel, the renderers, and an integrator followed by blind re
 
 Trains collide in hand-written files that tell the same news twice: a dated status paragraph
 added to a brief, a count typed again in a report, the same news in PROGRAM.md's prose
-([#572](https://github.com/jackChallis/stoicheia/issues/572)). So each piece of news is
+([#572](https://github.com/dodecaplex-co/stoicheia/issues/572)). So each piece of news is
 written once. A train records its progress in its own decisions entry, whose header names the
 briefs and PROGRAM sections it is news for (section 10, "Decision entries"); `render.py`
 compiles their notes. A count a file states exactly goes between count markers. Everything
@@ -398,7 +398,7 @@ artificial hypothesis uses and the concealing helpers, and marks those the recor
 declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each. A
 join under a sentence of Euclid's is written in the Lean only where the formal proof uses
 the line it draws (the coordinator's ruling of 28 October 2026,
-[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted,
+[#482](https://github.com/dodecaplex-co/stoicheia/issues/482)): an idle join is deleted,
 not declared; Heath's sentence stays as its `--` line, and the record says the join is
 drawn in the text and not needed by the formal proof. Another step a sentence of Euclid's
 stands over may stay, and is declared by naming its binding in the `unused` of the
