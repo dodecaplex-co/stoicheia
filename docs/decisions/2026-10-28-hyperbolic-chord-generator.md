@@ -2,8 +2,9 @@
   [#561](https://github.com/dodecaplex-co/stoicheia/issues/561)).** Card #561, the
   coordinator's record of the loose ends Circle 1's retirement left (#477), asks for the
   kind `'chord'` of `gs_cm` in the hyperbolic harness to go. It drew one circle, two points
-  on it and a point of their chord, for the law of `between_of_inside_chord`; that law left
-  the hyperbolic harness when Circle 1 became a theorem, and since then no law has called
+  on it and a point of the straight line through them, most often between them, for the
+  law of `between_of_inside_chord`; that law left the hyperbolic harness when Circle 1
+  became a theorem, and since then no law has called
   `gs_cm('chord')`, so the branch generated nothing any run reads. Deleting it changes no
   law, no generator a law calls, and no configuration: every count in the results is the
   same as before. What changes is the header of each report (the commit and date of the
@@ -15,7 +16,7 @@
   in `gs_cm`, with its comment, is approved, and nothing else in that file changes.
   In `tests/model/MODEL.md`, only the commit and date that its counts paragraph names move,
   to the harness commit the run read; its count markers stand, and this is approved.
-  The exact angle check's output, `tests/model/results/angle_check.txt`, rewritten by that
+  The independent angle check's output, `tests/model/results/angle_check.txt`, rewritten by that
   run with no line changed below its header, is approved.
   Every configuration on the small grids, `tests/model/results/exhaustive.txt`, comes back
   with unchanged counts and new timings under the new header, and is approved so.
