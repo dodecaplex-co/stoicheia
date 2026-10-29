@@ -62,7 +62,7 @@ text = "sha256:dfc6780433d2f9ff"
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "pass"
+representations = "n/a"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
