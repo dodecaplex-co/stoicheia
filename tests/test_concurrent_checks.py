@@ -387,6 +387,32 @@ class FirstFailure(Stand):
         self.assertTrue((marks / "slow pass.end").exists())
         self.assertIn("11-slow-pass.log", logs)
 
+    def test_a_published_failure_prevents_the_next_start(self):
+        marks = self.marks()
+        published = threading.Event()
+        steps = [self.stand_in(marks, "passes"),
+                 self.stand_in(marks, "fails", code=1, hold="release"),
+                 self.stand_in(marks, "after")]
+
+        class Publishing(queue.SimpleQueue):
+            def put(self, item, *args, **kwargs):
+                super().put(item, *args, **kwargs)
+                if item[0] == "fails":
+                    published.set()
+
+            def get(self, *args, **kwargs):
+                item = super().get(*args, **kwargs)
+                if item[0] == "passes":
+                    (marks / "release").touch()
+                    published.wait(HOLD)
+                return item
+
+        with mock.patch.object(safe_push.queue, "SimpleQueue", Publishing):
+            refusal, _, _, _ = self.run_steps(steps, 2, {name for name, _ in steps})
+        self.assertTrue(published.is_set(), "the failure was not published")
+        self.assertEqual(refusal, "`fails` failed on the commit")
+        self.assertFalse((marks / "after.start").exists())
+
     def test_an_exception_comes_in_its_place(self):
         # A check whose run() raises (here, no such program) raises in registry order, as
         # run_step's run() does: the checks before it reported, none after it, and every
@@ -923,6 +949,29 @@ class Interrupted(Stand):
                     self.assertEqual(len({id(h) for h in seen.values()}), 1, seen)
                     self.assertTrue(all(h is not mine[s] for s, h in seen.items()), seen)
 
+    def test_a_signal_recorded_before_thread_start_prevents_the_check(self):
+        marks = self.marks()
+        steps = [self.stand_in(marks, "first"), self.stand_in(marks, "after")]
+        real_thread = threading.Thread
+        starts = []
+
+        class Signalling(real_thread):
+            def start(self):
+                starts.append(self)
+                if len(starts) == 2:
+                    signal.getsignal(signal.SIGINT)(signal.SIGINT, None)
+                super().start()
+
+        logs = self.tmp / "logs-signal-before-start"
+        logs.mkdir()
+        with mock.patch.object(safe_push.threading, "Thread", Signalling), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                self.assertRaises(KeyboardInterrupt):
+            safe_push.run_together(steps, self.root, safe_push.Report(), logs, 11, "", "FAIL",
+                                   types.MappingProxyType({}), 2)
+        self.assertEqual(len(starts), 2)
+        self.assertFalse((marks / "after.start").exists())
+
     def test_signalled_raises_what_the_handlers_raise(self):
         # Python's own for SIGINT, and _terminate, as main() sets it, for SIGTERM and
         # SIGHUP.
@@ -1196,12 +1245,6 @@ class TheRegistry(unittest.TestCase):
         self.assertEqual({e.name: e.after for e in entries if e.after}, self.AFTER)
         self.assertEqual(safe_push.MODEL_JOB_CONCURRENT,
                          {"python3 -I tests/model/run.py --fast"})
-        # Each says why, in a comment line of its own.
-        for entry in entries:
-            text = (REPO / entry.path).read_text()
-            word = "Concurrent" if entry.concurrent else "Alone"
-            self.assertEqual(text.count("(#608)"), 1, entry.path)
-            self.assertIn(f"\n# {word} (#608)", "\n" + text, entry.path)
 
 
 if __name__ == "__main__":

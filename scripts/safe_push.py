@@ -3810,22 +3810,28 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
     begun: dict[str, threading.Thread] = {}
     shut, stopping, reported = False, False, 0
     caught: list[int] = []          # the signals recorded, the first first
+    start_lock = threading.Lock()
     # The handlers to put back, read before any is changed. Off the main thread (a test's),
     # Python runs no handler on this thread, and none is installed.
     previous = ({signum: signal.getsignal(signum) for signum in GROUP_SIGNALS}
                 if threading.current_thread() is threading.main_thread() else {})
 
     def check(name: str, cmd: list[str], env: dict) -> None:
-        begun[name] = threading.current_thread()
-        if shut:
-            return
+        nonlocal stopping
+        with start_lock:
+            begun[name] = threading.current_thread()
+            if shut or caught:
+                return
         t = time.time()
         try:
             r = run(cmd, where, env=env)
             result = ((r.stdout or "") + (r.stderr or ""), r.returncode == 0, time.time() - t)
         except BaseException as e:      # raised in registry order, as run_step's would be
             result = e
-        finished.put((name, result))    # the thread's last act
+        with start_lock:
+            if isinstance(result, BaseException) or (fail == "FAIL" and not result[1]):
+                stopping = True
+            finished.put((name, result))    # the thread's last act
 
     def receive() -> bool:
         """One check's end taken in, and its thread joined; whether the pass goes no further
@@ -3849,12 +3855,15 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
         for signum in previous:
             signal.signal(signum, record)
         while True:
-            while (waiting and not stopping and not caught and len(running) < workers
+            while (waiting and len(running) < workers
                    and all(e in ended for e in after.get(waiting[0][0], ()) if e in names)):
-                name, cmd = waiting.pop(0)
-                running.add(name)
-                threading.Thread(target=check, args=(name, cmd, tool_env()),
-                                 daemon=True).start()
+                with start_lock:
+                    if stopping or caught:
+                        break
+                    name, cmd = waiting.pop(0)
+                    running.add(name)
+                    threading.Thread(target=check, args=(name, cmd, tool_env()),
+                                     daemon=True).start()
             while not caught and reported < len(group) and group[reported][0] in ended:
                 name = group[reported][0]
                 result = ended[name]
