@@ -6,7 +6,7 @@ fingerprint = "sha256:b15027ff1b86720a"
 
 [route]
 kind = "modified"
-note = "Euclid's I.4 argument uses the ordinary central angles standing on lesser circumferences (Heath, vol. 2, p. 60). For greater circumferences, III.27 first gives equal inscribed angles, III.20 doubles them to reflex central angles, and Common Notion 3 removes those from four right angles before I.4. That is an additional argument for a case within the statement, so the route is modified. Semicircles give diameters, each the sum of two equal radii, the elementary case Heath discusses on p. 61. `Prop29` gives III.27 the congruence as it stands (`Prop27`); the companion `Prop29.of_measure` makes its equal measures those of the circumferences on which the angles at A and D stand, gives them to III.27's companion `Prop27.of_measure`, and then follows the same argument."
+note = "Euclid's I.4 argument uses the ordinary central angles standing on lesser circumferences (Heath, vol. 2, p. 60). For greater circumferences, III.27 first gives equal inscribed angles, III.20 doubles them to reflex central angles, and Common Notion 3 removes those from four right angles before I.4. That is an additional argument for a case within the statement, so the route is modified. Semicircles give diameters, each the sum of two equal radii, the elementary case Heath discusses (vol. 2, p. 61). `Prop29` gives III.27 the congruence as it stands (`Prop27`); the companion `Prop29.of_measure` makes its equal measures those of the circumferences on which the angles at A and D stand, gives them to III.27's companion `Prop27.of_measure`, and then follows the same argument."
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]

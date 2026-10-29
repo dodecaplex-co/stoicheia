@@ -32,7 +32,7 @@ circles, the measures are equal exactly when the straight lines joining their en
 the arcs are of the same kind (both less than semicircles, both semicircles, or both greater).
 
 Proved one way by III.29, in its companion for circumferences equal in measure
-(`Prop29.of_measure`: equal circumferences, equal chords), the kind read off from the
+(`Prop29.of_measure`: equal circumferences, equal straight lines), the kind read off from the
 measure (`Prop29.size`); and the other way by III.28 (equal chords, kind decided by the
 centre's side), with the comparison of each kind with a semicircle
 (`Circumference.lt_semicircle`, `.semicircle`, `.gt_semicircle`).

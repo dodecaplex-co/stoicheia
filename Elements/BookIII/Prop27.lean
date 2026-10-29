@@ -273,8 +273,8 @@ theorem Prop27.of_measure {A B C D E F G H : Point} {ABC DEF : Circle}
       OnCircle F DEF → OppositeSidesOf G Q B C → OppositeSidesOf H R E F →
       circumference ABC B Q C = circumference DEF E R F → ∠ E H F < ∠ B G C → False := by
     intro B C E F G H Q R ABC DEF hcircles hG hH hB hC hE hF hGQ hHR hBC hlt
-    /- On BG at G, the angle BGK equal to EHF [I. 23], and K on that ray at the distance GB
-       from G, which puts it on the circle (System E, Diagram-segment 3). -/
+    /- We construct the angle BGK equal to EHF on BG at G [I. 23], then take K on that ray at
+       distance GB from G, which puts it on the circle (System E, Diagram-segment 3). -/
     have hGB : G ≠ B := (ne_of_centre_of_on hG hB).symm
     obtain ⟨K', B', hB', hK'C, hK'GB'⟩ := BookI.Prop23 hGB hHR.triangle.acb hGQ.triangle.cab
     have hK'G : K' ≠ G := hK'C.triangle.ne₁₃.symm

@@ -28,7 +28,7 @@ note = "Euclid constructs BGK by I.23 and takes K on the circle; I.23 in the Lea
 at = "Now equal angles stand on equal circumferences"
 kind = "helper"
 helper = "Prop2.sameSide"
-note = "Euclid applies III.26 to the equal central angles. The Lean first takes a point of each circle on its centre's side of the chord by `Prop2.sameSide` (III.2, for which Heath gives no reference here), supplying the points at the circumferences that III.26 also asks for."
+note = "Euclid applies III.26 to the equal central angles. The Lean first takes a point of each circle on its centre's side of the straight line by `Prop2.sameSide` (III.2, for which Heath gives no reference here), supplying the points at the circumferences that III.26 also asks for."
 
 [[passage]]
 at = "therefore BK is also equal to BC"
