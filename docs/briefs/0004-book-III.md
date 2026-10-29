@@ -173,12 +173,13 @@ two. Since [the decision of 28 October 2026](../decisions/2026-10-28-iii27-iii29
 (`Arc.Congruent`), and congruent circumferences lie in equal circles already, so "in equal
 circles" is redundant in both as stated. In `Prop27` the measure makes it redundant as
 well, for III.24's companion `Prop24.equalMeasure` asks for no equal circles; in `Prop29`
-the congruence alone does, for the measure would not. The statements the
-item speaks of are now the companions `Prop27.of_measure`, which still holds for any two
-circles, and `Prop29.of_measure`, which still needs its equal circles. Both records carry
+the congruence alone does, for the measure would not. The statements the item speaks of
+are now the companions `Prop27.of_measure`, which still holds for any two circles, and
+`Prop29.of_measure`, which still needs its equal circles. Both records carry
 `angle-measure` and `redundant-hypothesis`. `Prop27`'s proof first makes its circumferences
 equal in measure, by III.24's companion `Prop24.equalMeasure`, and then argues as before.
-The phrase table and the note on III.27's statement below have notes of the same date.
+The phrase table, the note on III.27's statement and the list of exceptions below have
+notes of the same date.
 
 **Mixed angles.** "The angle of the semicircle is greater, and the remaining angle less,
 than any acute rectilineal angle" (III.16); "the angle of the greater segment is greater
@@ -534,6 +535,7 @@ worth naming. The first mate's report has a note on every statement.
 - **III.27** likewise: equal circumferences give equal angles at the circumferences, of
   any size (IV.11 needs obtuse ones), and equal angles at the centres where those stand on
   them. As stated it holds for any two circles (above).
+
   **28 October 2026 (#474).** The statement this bullet describes is now the companion
   `Prop27.of_measure`; `Prop27` takes the circumferences congruent, and holds for any two
   circles too, since congruent circumferences lie in equal circles already (the note of
@@ -713,8 +715,9 @@ Book III's routes are still being worked on (#546, #547, #474), so this list too
 date.
 
 **28 October 2026, #474.** III.29's record now carries `redundant-hypothesis` beside
-`angle-measure`, as III.27's does, since the swap of their statements (the note of that
-date under the circumferences).
+`angle-measure`, as III.27's does. It gained the tag that day with III.29's congruent
+companion, whose statement `Prop29` has taken since the swap (the note of that date under
+the circumferences).
 
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,

@@ -101,9 +101,9 @@ measures give equal angles whatever the radii. III.26, III.28 and `Prop29.of_mea
 III.29's companion, need them: III.26 and III.28 conclude that the circumferences are
 congruent as well as equal in measure, which in unequal circles neither equal angles nor
 equal straight lines give, and in III.28 and in `Prop29.of_measure` the measures are tied
-to straight lines in the circles. III.24 proves Euclid's
-equal segments: laid one on the other, they coincide (`Arc.Congruent`); its companion
-`Prop24.equalCircles` proves the circles equal and the measures equal, by the radii.
+to straight lines in the circles. III.24 proves Euclid's equal segments: laid one on the
+other, they coincide (`Arc.Congruent`); its companion `Prop24.equalCircles` proves the
+circles equal and the measures equal, by the radii.
 
 `circumference` chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. That every point `A` gives the same angle is III.21, the angles in the same
