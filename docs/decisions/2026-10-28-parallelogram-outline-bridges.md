@@ -1,3 +1,4 @@
+<!-- entry: id=parallelogram-outline-bridges cards=633 line="The Jev generator supplies Parallelogram.convexOutline and Parallelogram.outline_area as bridges in the rows that measure a parallelogram by quadArea." -->
 - **The Jev generator supplies the parallelogram's outline with its area (tooling,
   [#633](https://github.com/dodecaplex-co/stoicheia/issues/633)).** The coordinator, 28
   October 2026, 23:12: "Name #622's two theorems (Parallelogram.convexOutline,
