@@ -341,10 +341,15 @@ reviewer from the authors of the proof.
 
 `python3 scripts/sweep_citations.py` lists the candidates for the dummy citations, the
 artificial hypothesis uses and the concealing helpers, and marks those the record already
-declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each: a
-step a sentence of Euclid's stands over stays, and is declared by naming its binding in
-the `unused` of the passage over it ([review/SCHEMA.md](../review/SCHEMA.md)), which no
-note and no `#` comment can do; any other is fixed, deleted or its part cleared with `-`.
+declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each. A
+join under a sentence of Euclid's is written in the Lean only where the formal proof uses
+the line it draws (the coordinator's ruling of 28 October 2026,
+[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted,
+Heath's sentence stays as its `--` line, and the record says the join is drawn in the
+text and not needed by the formal proof. Another step a sentence of Euclid's stands over
+may stay, and is declared by naming its binding in the `unused` of the passage over it
+([review/SCHEMA.md](../review/SCHEMA.md)), which no note and no `#` comment can do; any
+other is fixed, deleted or its part cleared with `-`.
 
 For the page, the reviewer's checklist is in [STYLE.md](STYLE.md), section 8; figures are
 checked as geometry.
