@@ -1063,6 +1063,15 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S7", lambda src: spans_of(src, 5, "Another docstring."), SAMPLE_TACIT, None),
     ("S7", lambda src: spans_of(src, 2, "On one line."), "namespace Elements.Tacit\n"
      "/-- On one line. -/ axiom one : True\n", " On one line. "),
+    # A docstring and axiom inside a remark are none; a block nested in a docstring is
+    # part of its text (#349).
+    ("S7", lambda src: spans_of(src, 2, "On one line."), "namespace Elements.Tacit\n"
+     "/- Was: /-- On one line. -/ axiom one : True -/\n/-- Now. -/ axiom one : True\n", None),
+    ("S7", lambda src: spans_of(src, 3, "Now."), "namespace Elements.Tacit\n"
+     "/- Was: /-- On one line. -/ axiom one : True -/\n/-- Now. -/ axiom one : True\n",
+     " Now. "),
+    ("S7", lambda src: spans_of(src, 2, "Outer /- inner -/ text."), "namespace Elements.Tacit\n"
+     "/-- Outer /- inner -/ text. -/ axiom one : True\n", " Outer /- inner -/ text. "),
     ("S7", lambda src: spans_of(src, 2, "The transfer rules: Definition 15 here is in no "
                                 "page."), SAMPLE_TACIT, None),
     ("S22", s22, "the straight line `PQ` and the circle `ABCD`", ["PQ", "ABCD"]),

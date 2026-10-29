@@ -991,10 +991,6 @@ def shown_offsets(src: str, first: int, last: int):
     return offset
 
 
-# render.load_axiom_docs's pattern for an axiom's docstring: the text, then the name.
-AXIOM_DOC = re.compile(r"/--((?:(?!-/).)*?)-/\s*axiom\s+([^\s({]+)", re.S)
-
-
 class Rendered(NamedTuple):
     """A docstring render.py copies onto the pages: its axiom, the first and last
     character of its text in the file, and the text as the pages show it, its white space
@@ -1042,12 +1038,14 @@ def rendered_docstrings() -> dict[str, list[Rendered]]:
 
 def docstring_span(src: str, line: int, doc: str) -> tuple[int, int] | None:
     """The first and last character of the text of the docstring of the axiom whose name
-    stands on line `line` of a Lean source, read with render.py's pattern, if it reads as
-    `doc` once its white space is made one space, as render.py reads it; else None."""
-    for m in AXIOM_DOC.finditer(src):
-        if (src.count("\n", 0, m.start(2)) + 1 == line
-                and " ".join(m.group(1).split()) == doc):
-            return m.span(1)
+    stands on line `line` of a Lean source, read as render.py reads it
+    (`render.axiom_docstrings`, so none inside a remark: #349), if it reads as `doc` once
+    its white space is made one space, as render.py reads it; else None."""
+    for d in heath.documented(src, render.AXIOM_NAME):
+        text = src[d.start + 3:d.close - 2]
+        name = re.compile(render.AXIOM_NAME).match(src, d.keyword).start("name")
+        if src.count("\n", 0, name) + 1 == line and " ".join(text.split()) == doc:
+            return d.start + 3, d.close - 2
     return None
 
 

@@ -260,7 +260,8 @@ class TheoremSpan(NamedTuple):
     `src[start:end]` is the whole declaration, from its docstring's `/--` to the next
     top-level declaration, the namespace's `end` or the end of the file;
     `src[body:end]` is what follows `theorem PropN` and the one blank after it: the
-    statement and the proof; `doc` is the docstring's text, between `/--` and `-/`.
+    statement and the proof; `doc` is the docstring's text, between `/--` and the `-/`
+    that closes it.
     Before `start` come the file's header and its helpers; from `end` on, the porism,
     the companions and anything else after the main theorem."""
     start: int
@@ -269,16 +270,57 @@ class TheoremSpan(NamedTuple):
     doc: str
 
 
+class Documented(NamedTuple):
+    """A declaration with its docstring, as `documented` finds it: `src[start:close]` is
+    the docstring from its `/--` past its `-/`, `src[start + 3:close - 2]` its text, and
+    `src[keyword:after]` the declaration's keyword, its name and what `after` takes in."""
+    start: int
+    close: int
+    keyword: int
+    after: int
+
+
+def documented(src: str, after: str) -> list[Documented]:
+    """Each declaration of the Lean `src` that a docstring documents, as Lean reads the
+    text: a `/-- … -/` comment of `lean_comments`, followed in code, past white space alone
+    (comments blanked as `read_lean` blanks them), by text that the pattern `after`
+    matches, such as `theorem Prop5\\s` or `axiom\\s+(?P<name>[^\\s({]+)`. So a docstring
+    and declaration written inside a remark or a string are none, and a docstring's text
+    runs to the `-/` that closes it, past any block nested in it (#349). Render.py's
+    axioms, check_style's copy of them and `theorem_span` read the docstrings so."""
+    code = read_lean(src)[0]
+    pattern = re.compile(r"\s*(?P<keyword>" + after + ")")
+    found = []
+    for start, close in lean_comments(src):
+        if not src.startswith("/--", start) or not src.startswith("-/", close - 2) \
+                or close - start < 5:
+            continue
+        m = pattern.match(code, close)
+        if m:
+            found.append(Documented(start, close, m.start("keyword"), m.end()))
+    return found
+
+
 def theorem_span(src: str, n: int) -> TheoremSpan | None:
-    """Find the documented `theorem PropN` in `src`; None if there is none."""
-    m = re.search(r"/--((?:(?!-/).)*?)-/\s*theorem Prop%d\s" % n, src, re.S)
-    if not m:
+    """Find the documented `theorem PropN` in `src`, as `documented` reads it; None if
+    there is none."""
+    spans = documented(src, r"theorem Prop%d\s" % n)
+    if not spans:
         return None
-    # The theorem runs until the next top-level declaration or the namespace end.
-    rest = src[m.end():]
-    stop = re.search(r"^(end |theorem |lemma |def |structure |/--|/-!|@\[)", rest, re.M)
-    end = m.end() + (stop.start() if stop else len(rest))
-    return TheoremSpan(m.start(), m.end(), end, m.group(1))
+    d = spans[0]
+    # The theorem runs until the next top-level declaration or the namespace end: a line
+    # that begins one in code, or a line that begins with a docstring or a module comment.
+    # A line of a remark or a string is neither (#349).
+    code = read_lean(src)[0]
+    stop = re.search(r"^(end |theorem |lemma |def |structure |@\[)", code[d.after:], re.M)
+    end = d.after + stop.start() if stop else len(src)
+    for i, _ in lean_comments(src):
+        if i >= end:
+            break
+        if i >= d.after and (i == 0 or src[i - 1] == "\n") and src.startswith(("/--", "/-!"), i):
+            end = i
+            break
+    return TheoremSpan(d.start, d.after, end, src[d.start + 3:d.close - 2])
 
 
 def lean_path(book: str, n: int) -> Path:
@@ -1479,6 +1521,47 @@ def _reader_names() -> list[str]:
     return faults
 
 
+# Docstrings and declarations as Lean reads them (#349): each plant is a Lean text, the
+# theorem number or None for an axiom, and what `theorem_span` must give (the docstring's
+# text, and the line at which the theorem ends, "" at the end of the text) or the axioms
+# `documented` must find (each docstring's text and name).
+DOCUMENTED_PLANTS = [
+    ("a remark holding a fake documented theorem",
+     "/- Once: /-- A fake. -/ theorem Prop5 : False := sorry -/\n"
+     "/-- The real one. -/\ntheorem Prop5 : True := by\n  trivial\n", 5,
+     (" The real one. ", "")),
+    ("a remark whose lines begin `theorem`, `def` and `@[` within the proof",
+     "/-- The real one. -/\ntheorem Prop5 : True := by\n  /- Not this:\ntheorem Prop6 : True\n"
+     "def x := 1\n@[simp] -/\n  trivial\n\ntheorem Prop7 : True := trivial\n", 5,
+     (" The real one. ", "theorem Prop7 : True := trivial")),
+    ("a string holding a fake documented theorem",
+     'def s := "/-- A fake. -/ theorem Prop5 x"\n/-- The real one. -/\ntheorem Prop5 : True :='
+     " trivial\n/-- The next. -/\ndef y := 1\n", 5, (" The real one. ", "/-- The next. -/")),
+    ("a docstring with a block nested in it",
+     "/-- Outer /- inner -/ text. -/\ntheorem Prop5 : True := trivial\n", 5,
+     (" Outer /- inner -/ text. ", "")),
+    ("a remark holding a fake documented axiom",
+     "/- Once: /-- A fake. -/ axiom gone : False -/\n/-- The real one. -/\naxiom kept : True\n",
+     None, [(" The real one. ", "kept")]),
+]
+
+
+def _documented_faults() -> list[str]:
+    """The faults of `theorem_span` and `documented` on DOCUMENTED_PLANTS."""
+    faults = []
+    for what, src, n, want in DOCUMENTED_PLANTS:
+        if n is None:
+            axiom = r"axiom\s+(?P<name>[^\s({]+)"
+            got = [(src[d.start + 3:d.close - 2], re.compile(axiom).match(src, d.keyword)["name"])
+                   for d in documented(src, axiom)]
+        else:
+            span = theorem_span(src, n)
+            got = span and (span.doc, src[span.end:].split("\n")[0])
+        if got != want:
+            faults.append(f"{what}: read as {got!r}, not {want!r} (#349)")
+    return faults
+
+
 def _self_test() -> int:
     """Check the contracts against themselves; return the number of faults."""
     faults = []
@@ -1571,6 +1654,7 @@ def _self_test() -> int:
                     faults.append(str(e))
     faults += _reader_time()
     faults += _reader_names()
+    faults += _documented_faults()
     region_faults, reached = _region_faults()
     faults += region_faults
     for f in faults:
@@ -1584,6 +1668,8 @@ def _self_test() -> int:
         print(f"✓ the reader of Lean reads its {len(READER_NAMES)} plants of a raw or an "
               "interpolated string after a name's `.` as Lean 4.35 reads them, or marks "
               "what it cannot read for certain")
+        print(f"✓ the {len(DOCUMENTED_PLANTS)} plants of a docstring or a declaration in a "
+              "remark, a string or a nested block are read as Lean reads them (#349)")
         kinds = [verdict for _, _, verdict, _ in REGION_PLANTS + NOTES_PLANTS]
         print(f"✓ the generated regions of {', '.join(REGIONS)} hold today, and so do notes "
               f"regions put into docs/PROGRAM.md and {NOTES_BRIEF}; of {len(kinds)} hand "

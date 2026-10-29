@@ -323,18 +323,31 @@ def attached_mark(entry):
 def load_axiom_docs():
     """name -> (first sentence of docstring, path, line) for every axiom."""
     docs = {}
-    pattern = re.compile(r"/--((?:(?!-/).)*?)-/\s*axiom\s+([^\s({]+)", re.S)
     for path in sorted((ROOT / "Elements" / "Foundations").rglob("*.lean")):
         src = read_text(path)
         # facts.json names an axiom by its namespace below `Elements`, e.g.
         # `Tacit.circles_meet` or, for a Euclidean-only rule, `Tacit.Euclidean.…`.
         ns = re.search(r"^namespace Elements\.(\S+)", src, re.M)
         prefix = ns.group(1) + "." if ns else ""
-        for m in pattern.finditer(src):
-            doc = " ".join(m.group(1).split())
-            line = src[: m.start(2)].count("\n") + 1
-            docs[prefix + m.group(2)] = (doc, path.relative_to(ROOT).as_posix(), line)
+        # Each docstring as Lean reads it, so none inside a remark (#349).
+        for doc, name, at in axiom_docstrings(src):
+            line = src[:at].count("\n") + 1
+            docs[prefix + name] = (" ".join(doc.split()), path.relative_to(ROOT).as_posix(),
+                                   line)
     return docs
+
+
+AXIOM_NAME = r"axiom\s+(?P<name>[^\s({]+)"
+
+
+def axiom_docstrings(src):
+    """Each documented axiom of the Lean `src`, as `heath.documented` reads it: its
+    docstring's text, its name and the name's offset. check_style reads them so too."""
+    found = []
+    for d in heath.documented(src, AXIOM_NAME):
+        m = re.compile(AXIOM_NAME).match(src, d.keyword)
+        found.append((src[d.start + 3:d.close - 2], m.group("name"), m.start("name")))
+    return found
 
 
 def svg_desc(path):
