@@ -1,14 +1,17 @@
 - **The angle at the centre gets a tag of its own, and five meanings in the terms list are
   made true (checks, [#524](https://github.com/dodecaplex-co/stoicheia/issues/524),
-  [#370](https://github.com/dodecaplex-co/stoicheia/issues/370)).** Book III's reviews of
-  26 October 2026 showed tag meanings in the terms list whose lists of propositions
-  disagree with the records that carry them (the table of tags and records in
-  [the limitations review](../reports/limitations-01.md) gives the records), and that
-  III.20's record has no tag for its reading of the angle at the centre. This change
+  [#370](https://github.com/dodecaplex-co/stoicheia/issues/370)).** Book III's reviews of 26
+  October 2026 showed tag meanings in the terms list whose lists of propositions disagree
+  with the records that carry them (the table of tags and records in [the limitations
+  review](../reports/limitations-01.md) gives the records). That review read main before the
+  angle at the centre of any size moved in, and asked that III.20's rows be read again once
+  it had; read again, III.20's record has no tag for its reading of that angle. This change
   answers them, in two pull requests. This one, to the terms list and the renderer, lands
   first. III.20's record, which takes up the new tag, and the tag cell of
   [FORMALIZATION](../FORMALIZATION.md)'s row for the angle at the centre follow, because a
-  check input changed with the record it judges is refused at landing.
+  pull request that changes a check input and what the checks judge is refused at landing
+  when a check fails with main's copies, as `check_fidelity.py` would on III.20's record
+  read with main's terms list, which lacks the tag.
 
   III.20 reads the angle at the centre as `angleAtCentre`, the angles BEF and FEC
   together, so that it may be two right angles or more. That reading is ours, made after
