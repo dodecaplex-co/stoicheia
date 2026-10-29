@@ -14,6 +14,5 @@
   the test writes out in full. Since `render.py` names the new home, the test's issue
   address names it too: one constant, with no case added or taken away.
 
-  This entry approves the change to
-  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
-  constant `ISSUE` holds that address.
+  For the new home, this entry approves the one-line change to the regressions,
+  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py) (its `ISSUE`).
