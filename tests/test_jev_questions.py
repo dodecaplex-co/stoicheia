@@ -1099,6 +1099,33 @@ class CoreNames(LeanFiles):
                 self.assertTrue(unresolved)
                 self.assertTrue(all(written in found for found in unresolved), unresolved)
 
+    def test_each_of_lean_s_four_choice_names_resolves_as_iii_26_writes_it(self):
+        # III.26's helpers build a function on points from a proof that each image exists:
+        # `choose` and `choose_spec` as fields of that proof, `Classical.epsilon` and
+        # `True.intro` whole (#656). Each is read alone.
+        exists = '  have e : ∃ n : Nat, n = 0 := ⟨0, rfl⟩\n'
+        for name, body in (
+                ('choose', exists + '  have c := e.choose\n'),
+                ('choose_spec', exists + '  have d := e.choose_spec\n'),
+                ('Classical.epsilon', '  have k := Classical.epsilon (fun n : Nat => n = 0)\n'),
+                ('True.intro', '  have t := True.intro\n')):
+            with self.subTest(name=name):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_choice_name_outside_the_four_is_still_unresolved(self):
+        # Lean's other names for choice, and the two whole names' last words after another
+        # first word, are no part of the list.
+        for written in ('Classical.choice', 'Classical.indefiniteDescription', 'Missing.epsilon',
+                        'True.epsilon', 'Classical.intro', 'Missing.True.intro'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):
