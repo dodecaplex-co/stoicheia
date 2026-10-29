@@ -83,9 +83,10 @@
      Heath's porisms (`heath.heath_porisms`) and nothing else, and companions of
      those propositions, each tied to its proposition by `of` and `attached`;
    - for every entry, propositions, porisms and companions alike: none cites one that
-     does not come before it; only I.4 and I.8 use superposition directly; none
-     before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); none rests on Circle 2 or Circle 3, and each of those rules
+     does not come before it; only I.4 and I.8 use superposition directly, and only I.4
+     Common Notion 4 for figures (`Tacit.figures_coincide`, #517); none before I.29
+     rests on Postulate 5 or any Euclidean-only rule (a later book comes after I.29, and
+     may); none rests on Circle 2 or Circle 3, and each of those rules
      follows one of the allowed routes in docs/FORMALIZATION.md, section 7, "Circle 2 and
      Circle 3"; only III.24 has placement, or a lemma of the `Placement` namespace or of
      placement's files, among its shared steps;
@@ -145,6 +146,12 @@ EXPECTATIONS = ROOT / "tests" / "certificate_expectations.json"
 # Books whose every proposition is proved: they must stay that way.
 COMPLETE = {"I", "II", "III"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
+# Common Notion 4 for figures (`Tacit.figures_coincide`), which takes Metric 9's place in
+# I.4's area clause (#517): only I.4 may have it among its direct axioms, so any other
+# entry reaches it only through what it cites, as I.5 through I.4, or a Common Notion,
+# which direct_axioms leaves out too. While it is no axiom, no entry names it and the rule
+# holds of every entry.
+FIGURES_COINCIDE_ALLOWED = {"I.4"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # The first proposition of each book allowed to rest on Postulate 5. Euclid holds it
 # back until I.29; Books II and III come after the whole of Book I, so they may use the
@@ -1036,6 +1043,9 @@ def check_entries(facts, by_ref) -> None:
                 fail(f"{ref}: cites {c}, which does not come before it")
         if "Tacit.superposition" in p.get("direct_axioms", []) and ref not in SUPERPOSITION_ALLOWED:
             fail(f"{ref}: uses superposition directly (only I.4 and I.8 may)")
+        if "Tacit.figures_coincide" in p.get("direct_axioms", []) \
+                and ref not in FIGURES_COINCIDE_ALLOWED:
+            fail(f"{ref}: uses Common Notion 4 for figures directly (only I.4 may)")
         first = FIRST_EUCLIDEAN.get(r.book, 1)
         if r.n < first:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]

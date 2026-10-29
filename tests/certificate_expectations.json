@@ -357,9 +357,9 @@
     {
       "ref": "I.4",
       "field": "cited_laws",
-      "includes": ["lenSymm", "angleSymm", "areaCongruent", "neOfLen", "rayUnique", "rayOfAngle", "rayOfAngleSide"],
+      "includes": ["lenSymm", "angleSymm", "neOfLen", "rayUnique", "rayOfAngle", "rayOfAngleSide"],
       "count": {"prefix": "", "is": 7},
-      "why": "I.4's derivation cites exactly these seven laws, read from the Cited constants its own Lean names, not through Derives.map (#150, question 4)."
+      "why": "I.4's derivation cites these six laws, each read from the Cited constants its own Lean names, not through Derives.map (#150, question 4). The count pins the whole list: while Metric 9 is an axiom, I.4 cites its law, areaCongruent, as well, seven in all. That law is not among the six named, since #517 is to replace Metric 9 in I.4's area clause with Common Notion 4 for figures."
     },
     {
       "ref": "I.8",
@@ -388,13 +388,6 @@
       "law": "angleSymm",
       "equals": [],
       "why": "Metric 4's law is proved from Tacit.angle_symm alone, with no construction rule, and stays so after the second retirement wave (#150, question 4)."
-    },
-    {
-      "ref": "I.4",
-      "field": "cited_laws",
-      "law": "areaCongruent",
-      "equals": [],
-      "why": "Metric 9's law is proved from Tacit.area_congruent alone, with no construction rule, and stays so after the second retirement wave (#150, question 4)."
     },
     {
       "ref": "I.8",
