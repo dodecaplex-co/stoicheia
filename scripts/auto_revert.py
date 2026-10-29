@@ -19,10 +19,15 @@ relative link of the kept record that resolves at the reverted push's tip but wo
 in the revert (broken_links) would fail the revert's own link check, so such a revert
 is not pushed: the issue names the links and says to revert by hand.
 Unreadable history or metadata, missing credentials and conflicts leave an issue
-without a pull request. Exit 0 means enqueued (or cleared, or nothing to clear because
-main has moved on), 1 means issue only or an incomplete revert, 2 means the issue
-itself could not be recorded or updated, and 3 means the revert was enqueued but the
-issue could not be updated with that outcome.
+without a pull request. A slow failure's issue can open after a later push's run has
+passed and cleared. So, unless the revert is enqueued, this reads main's tip afresh: if
+main has moved on, it removes the issue's main-red when the tip contains after, the
+tip's latest post-merge run completed with success, and main still names that tip just
+before the removal; if main has moved on, or its tip cannot be read, and the label
+stays, the issue says how to clear it. Exit 0 means enqueued (or cleared, or nothing to
+clear because main has moved on), 1 means issue only or an incomplete revert, 2 means
+the issue itself could not be recorded or updated, and 3 means the revert was enqueued
+but the issue could not be updated with that outcome.
 --dry-run describes the actions without network access or changing the repository.
 --clear is the coordinator's, run by hand from a checkout of main: without --after it
 removes main-red from every open issue. With --after it removes the label
@@ -54,9 +59,10 @@ from pathlib import Path
 from urllib.parse import unquote
 
 
-# These are safe_push.py's protected paths, PROTECTED then PROTECTED_JUDGED, in its order.
-# This copy keeps the trusted script independent of the checkout. The tests compare it
-# with that policy, so a train that changes safe_push's list changes this one too.
+# These are safe_push.py's protected paths, PROTECTED and PROTECTED_JUDGED; their order
+# decides nothing, since protected() asks only whether any entry matches. This copy keeps
+# the trusted script independent of the checkout. The tests compare what the two protect,
+# so a train that changes safe_push's list changes this one too.
 PROTECTED = (
     "scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
     "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
@@ -641,6 +647,116 @@ def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
     return result.returncode == 0
 
 
+def github_is_ancestor(api: GitHub, ancestor: str, descendant: str) -> bool:
+    """Whether GitHub's comparison shows `descendant` ahead of `ancestor` and not behind
+    it; any answer that cannot be read so is no."""
+    try:
+        data = api.call("GET", f"{api.root}/compare/{ancestor}...{descendant}")
+    except Exception:
+        return False
+    if not isinstance(data, dict):
+        return False
+    base = data.get("base_commit")
+    merge_base = data.get("merge_base_commit")
+    return (data.get("status") == "ahead"
+            and type(data.get("ahead_by")) is int and data["ahead_by"] > 0
+            and type(data.get("behind_by")) is int and data["behind_by"] == 0
+            and isinstance(base, dict) and base.get("sha") == ancestor
+            and isinstance(merge_base, dict) and merge_base.get("sha") == ancestor)
+
+
+# What a failure's issue says when its main-red stays although main may have moved on.
+HOW_TO_CLEAR = ("Once main's tip has a post-merge run that passed, re-run that run's clear "
+                "job: it removes main-red from every open issue whose After main's tip "
+                "contains (docs/WORKFLOW.md, \"Out of a red main\").")
+
+
+def runs_at(api: GitHub, sha: str) -> list[dict]:
+    """Every post-merge run of a push to main at `sha`, every page read, as the revert job
+    reads the previous main's: a list unreadable, miscounted, with a run twice, or with a
+    run of another commit, branch, event or workflow refuses."""
+    query = (f"{api.root}/actions/workflows/post-merge.yml/runs?head_sha={sha}"
+             "&event=push&branch=main&per_page=100")
+    runs, count = [], None
+    for page in range(1, 1001):
+        data = api.call("GET", f"{query}&page={page}")
+        rows = data.get("workflow_runs") if isinstance(data, dict) else None
+        total = data.get("total_count") if isinstance(data, dict) else None
+        if (not isinstance(rows, list) or type(total) is not int or total < 0
+                or count not in (None, total)):
+            raise Refusal(f"The post-merge runs at {sha} could not be read.")
+        count = total
+        runs.extend(rows)
+        if len(rows) < 100:
+            break
+    else:
+        raise Refusal("GitHub's list exceeded the pagination limit.")
+    if (len(runs) != count or any(
+            not isinstance(run, dict) or type(run.get("id")) is not int or run["id"] <= 0
+            or run.get("head_sha") != sha or run.get("head_branch") != "main"
+            or run.get("event") != "push"
+            or run.get("path") != ".github/workflows/post-merge.yml"
+            or not isinstance(run.get("status"), str) or "conclusion" not in run
+            or not isinstance(run["conclusion"], (str, type(None))) for run in runs)
+            or len({run["id"] for run in runs}) != len(runs)):
+        raise Refusal(f"The post-merge runs at {sha} could not be read.")
+    return runs
+
+
+def clear_moved_on(api: GitHub, repo: str, after: str, number: int) -> str:
+    """What becomes of the main-red of issue `number`, which the failed push `after` has
+    just opened: "" while main's tip is still `after`, since a later push's clear will
+    see the issue. A later push's run may have passed, and cleared, before the issue
+    existed, so the label comes off here, but only on evidence read now: main's tip
+    contains `after`, by GitHub's comparison (the job's checkout holds main only as it
+    stood when the job began), the tip's latest post-merge run, by id with every page
+    read, completed with success, and main names that tip still just before the removal.
+    Otherwise the label stays, and the issue says how to clear it."""
+    try:
+        tip = main_tip(api)
+    except Exception:
+        return (f"Main's tip could not be read to see whether main has moved on from "
+                f"{after}, and main-red stays. {HOW_TO_CLEAR}")
+    if tip == after:
+        return ""
+    try:
+        if not github_is_ancestor(api, after, tip):
+            raise Refusal(f"{tip} could not be shown to contain {after}")
+        try:
+            runs = runs_at(api, tip)
+        except Exception:
+            raise Refusal(f"the post-merge runs at {tip} could not be read") from None
+        if not runs:
+            raise Refusal(f"no post-merge run at {tip} can be read yet")
+        latest = max(runs, key=lambda run: run["id"])
+        if latest["status"] != "completed" or latest["conclusion"] != "success":
+            raise Refusal(f"its latest post-merge run, {latest['id']}, has not completed "
+                          "with success")
+        try:
+            now = main_tip(api)
+        except Exception:
+            raise Refusal("main's tip could not be read again before the label could be "
+                          "removed") from None
+        if now != tip:
+            raise Refusal(f"main moved again, to {now}, before the label could be removed")
+        try:
+            labels = api.call("DELETE", f"{api.root}/issues/{number}/labels/main-red")
+        except Exception:
+            labels = None
+        if (not isinstance(labels, list) or any(not isinstance(label, dict)
+                or not isinstance(label.get("name"), str) or label["name"] == "main-red"
+                for label in labels)):
+            raise Refusal("GitHub did not confirm the removal")
+    except Exception as exc:
+        reason = str(exc) if isinstance(exc, Refusal) else "its evidence could not be read"
+        return (f"Main has moved on from {after} to {tip}, and main-red stays: {reason}. "
+                f"{HOW_TO_CLEAR}")
+    return (f"Main has moved on from {after} to {tip}, which contains it, and its latest "
+            f"post-merge run, {latest['id']}, https://github.com/{repo}/actions/runs/"
+            f"{latest['id']}, completed with success: main-red was removed from this issue; "
+            "blocks-release and the issue remain.")
+
+
 def clear(api: GitHub, repo: str, after: str | None, source: Path) -> int:
     if after:
         tip = main_tip(api)
@@ -707,6 +823,11 @@ def dry_run(args, repo: Path, env: dict) -> int:
     print("Would list labels, create missing blocks-release and main-red labels, "
           "and open the issue.")
     print(issue_body(args, entries, "Dry run; no requests sent."))
+    print("Would, unless a revert is enqueued, read main's tip afresh and remove main-red "
+          "from the issue only if main has moved on to a commit that contains after, whose "
+          "latest post-merge run completed with success, and which main still names just "
+          "before the removal; if main has moved on, or its tip cannot be read, and the "
+          "label stays, say in the issue how to clear it.")
     if not env.get("STOICHEIA_REVERT_APP_ID") or not env.get("STOICHEIA_REVERT_APP_KEY"):
         print("No App secrets: would record issue only, saying automatic revert is unavailable.")
         return 1
@@ -752,7 +873,11 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
     print(f"Opened failure issue #{issue['number']}.")
     if problem:
         print(problem)
-        return 1
+        moved = clear_moved_on(api, args.repo, args.after, issue["number"])
+        if not moved:
+            return 1
+        print(moved)
+        return record(api, args, entries, issue["number"], f"{problem}\n{moved}", 1)
     result = 1
     stage = "No branch pushed and no pull request opened."
     try:
@@ -826,17 +951,26 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
         reason = (str(exc) if isinstance(exc, Refusal)
                   else "The automatic revert could not be completed.")
         outcome = f"{reason}\n{stage}"
+    if result:
+        moved = clear_moved_on(api, args.repo, args.after, issue["number"])
+        outcome += f"\n{moved}" if moved else ""
     print(outcome)
+    return record(api, args, entries, issue["number"], outcome, result)
+
+
+def record(api: GitHub, args, entries: list[Train], number: int, outcome: str,
+           result: int) -> int:
+    """Put the outcome in the failure issue, and exit `result`; if the issue could not be
+    updated, 3 for an enqueued revert and 2 for anything else."""
     try:
-        updated = api.call("PATCH", f"{api.root}/issues/{issue['number']}",
+        updated = api.call("PATCH", f"{api.root}/issues/{number}",
                            {"body": issue_body(args, entries, outcome)})
-        if not isinstance(updated, dict) or updated.get("number") != issue["number"]:
+        if not isinstance(updated, dict) or updated.get("number") != number:
             raise Refusal("GitHub did not confirm the issue's outcome.")
     except Exception as exc:
         reason = str(exc) if isinstance(exc, Refusal) else "The issue could not be updated."
         # An enqueued revert stays enqueued: only the issue's account of it is missing.
-        print(f"Issue #{issue['number']} was not updated with this outcome: {reason}",
-              file=sys.stderr)
+        print(f"Issue #{number} was not updated with this outcome: {reason}", file=sys.stderr)
         return 3 if result == 0 else 2
     return result
 
