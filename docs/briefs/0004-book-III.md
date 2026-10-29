@@ -292,6 +292,11 @@ III.2, by the owner's decision of 25 October 2026
 import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
 unchanged; the rest of `Squares.lean` stands as it says.
 
+**28 October 2026, `Arc.eq_of_aligned` (#561).** `Arc.eq_of_aligned` has been deleted from
+`Squares.lean`, with the two lemmas beneath it, `Aligned.centre_between` and
+`Aligned.eq_on_base`: no proof used them. So nothing in `Squares.lean` now cites I.7.
+The two paragraphs above are unchanged; the rest of the file stands as they say.
+
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
