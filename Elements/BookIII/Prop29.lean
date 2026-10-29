@@ -3,6 +3,7 @@ import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop04
 import Elements.BookIII.Prop02
+import Elements.BookIII.Prop24
 import Elements.BookIII.Prop27
 
 /-!
@@ -110,5 +111,28 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
   exact (BookI.Prop4 hKX.triangle.cab hLY.triangle.cab hrB hrC hBKC).1
   -- Therefore etc.
   -- Q. E. D.
+
+/-- **III.29 with congruent circumferences** (companion of III.29, "III.29 of_congruent").
+In equal circles congruent circumferences are subtended by equal straight lines. We read
+the congruence as III.28 concludes it (`Arc.Congruent`, Common Notion 4); `Prop29` reads
+equal circumferences as equal in measure.
+
+The map that makes the circumferences coincide keeps the distance between their ends, so
+the congruence already gives the equal straight lines (`Prop24.image`). This proof passes
+instead through equal measures (`Prop24.equalMeasure`) and `Prop29`, keeping that proof's
+argument through III.27 and I.4, with its own treatment of semicircles and greater
+circumferences. Congruence of these drawn arcs also implies that the circles are equal; the
+hypothesis keeps Euclid's setting. -/
+theorem Prop29.of_congruent {B C E F G H : Point} {ABC DEF : Circle}
+    (hcircles : EqualCircles ABC DEF)
+    (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hE : OnCircle E DEF) (hF : OnCircle F DEF)
+    (hG : ¬ Collinear B C G) (hH : ¬ Collinear E F H)
+    (hcong : Arc.Congruent ⟨ABC, B, C, G⟩ ⟨DEF, E, F, H⟩) :
+    ‖B C‖ = ‖E F‖ := by
+  /- The congruent circumferences BGC, EHF are equal in measure (`Prop24.equalMeasure`),
+     and III.29 gives the equal straight lines. -/
+  exact Prop29 hcircles hB hC hE hF hG hH
+    (Prop24.equalMeasure (a := ⟨ABC, B, C, G⟩) (b := ⟨DEF, E, F, H⟩)
+      ⟨hB, hC, hG⟩ ⟨hE, hF, hH⟩ hcong)
 
 end Elements.BookIII
