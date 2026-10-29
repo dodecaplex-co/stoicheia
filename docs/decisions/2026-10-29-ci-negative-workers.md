@@ -16,24 +16,27 @@
 
   | Workers | Seconds | CPU used | Largest process | Least free memory |
   |---|---|---|---|---|
-  | 1 | 714 | 119% | 1.7 GB | 10.4 GB |
-  | 4 | 434 | 292% | 1.7 GB | 9.4 GB |
+  | 1 | 714 | 119% | 1.7 GiB | 10.2 GiB |
+  | 4 | 434 | 292% | 1.7 GiB | 9.2 GiB |
 
-  Both machines: ubuntu-latest, 4 cores of an AMD EPYC 9V45, 16 GB, image
+  Both machines: ubuntu-latest, 4 cores of an AMD EPYC 9V45, 15.6 GiB, image
   ubuntu24-20261026.354.1. CPU used is the run's processor time over its wall time;
   memory is GNU time's peak for the largest process, and vmstat's least free memory every
-  five seconds through the job. Both runs ran every plant and caught each but one, the
-  same in both: the benchmark's own file, a `.py` under `.github/` that `check_paths.py`
-  refuses, which `path_faults` found as it should. Four workers took 39% less time, with
-  three in four of the cores at work and more than half the memory free; 2 and 3 workers
-  were not measured, and a second run of the corrected benchmark would measure them.
+  five seconds through the run. In both runs every plant was caught; the one failure, the
+  same in both, was `path_faults`' check of the unplanted index, which refused the
+  benchmark's own file, a `.py` under `.github/`, as it should. Four workers took 39% less
+  time, with swap unused and more than half the memory free, though each plant ran about
+  twice as slowly as alone and the run used 48% more processor time. So four is faster
+  than one; whether two, three or more than four is faster still was not measured, and
+  GitHub draws the runner's CPU by lot (the same run's third job drew an AMD EPYC 7763), so
+  these numbers are for the 9V45.
 
   So the step that runs the negative tests in ci.yml's `negative` job sets
-  `STOICHEIA_NEGATIVE_WORKERS` to 4, one worker for each core, and `scripts/test_safe_push.py`
-  holds that value in the job's contract, so that a change to it is a change to the
-  contract, where review sees it. The cadence's run (safe-push-tests.yml), which holds no
-  landing, stays in one worker; the pre-flight's count on the lane's machine is not
-  changed here.
+  `STOICHEIA_NEGATIVE_WORKERS` to 4, the faster of the two counts measured and one worker
+  for each core, and `scripts/test_safe_push.py` holds that value in the job's contract,
+  so that a change to it is a change to the contract, where review sees it. The cadence's
+  run (safe-push-tests.yml), which holds no landing, stays in one worker; the pre-flight's
+  count on the lane's machine is not changed here.
 
   This entry approves the change to `.github/workflows/ci.yml`, which runs the negative
   tests in four workers.
