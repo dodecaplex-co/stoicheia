@@ -807,8 +807,13 @@ def registry_for(books: tuple[tuple[str, int], ...], bundled: set[str]) -> dict[
 
 
 SYMBOLS = {'‖': 'len', '∠': 'ang', '△': 'area', '∟': 'rightAngle'}
+# A parallelogram's area, `quadArea`, is measured by the diameter AC: the other diameter gives
+# the same (`Parallelogram.quadArea_rotate`), a diameter bisects it (I.34), and it is the area
+# of the parallelogram given by its outline, whose corners are a convex outline
+# (`Parallelogram.convexOutline`, `Parallelogram.outline_area`).
 AREA_BRIDGES = ['Elements.Parallelogram.cross', 'Elements.Parallelogram.quadArea_rotate',
-                'Elements.BookI.Prop34', 'Elements.BookI.Prop34.bisect']
+                'Elements.BookI.Prop34', 'Elements.BookI.Prop34.bisect',
+                'Elements.Parallelogram.convexOutline', 'Elements.Parallelogram.outline_area']
 RECT_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
                 'Elements.Rectangle.eq_rect', 'Elements.Square.eq_sq', 'Elements.Square.described']
 FIGURE_BRIDGES = ['Elements.Fitted.triangle', 'Elements.Fitted.inside_pairwise',
@@ -2442,18 +2447,26 @@ PLANTS = {
         'square: every connection is unavailable for the represented objects.',
         (('premise', None, f'({AREA_PREMISE_NAME} : False)'),)),
     ('P13', 'I.43'): Plant(
-        3, "`Parallelogram.quadArea_rotate`'s conclusion made `quadArea A B C D = quadArea A B C D`",
-        "`quadArea` measures a parallelogram by the diameter AC; the one bridge that said the other "
-        'diameter gives the same area now concludes a triviality, so nothing states that the '
+        3, "`Parallelogram.quadArea_rotate`'s and `Parallelogram.outline_area`'s conclusions made "
+        '`quadArea A B C D = quadArea A B C D`',
+        "`quadArea` measures a parallelogram by the diameter AC; the bridge that said the other "
+        'diameter gives the same area, and the one that said the measure is the area of the '
+        'parallelogram given by its outline, now conclude a triviality, so nothing states that the '
         "measure is the parallelogram's area whichever diameter is drawn.",
         (('replace', ['state', 'bridges', 'Elements.Parallelogram.quadArea_rotate'],
-          'quadArea B C D A = quadArea A B C D', 'quadArea A B C D = quadArea A B C D'),)),
+          'quadArea B C D A = quadArea A B C D', 'quadArea A B C D = quadArea A B C D'),
+         ('replace', ['state', 'bridges', 'Elements.Parallelogram.outline_area'],
+          '(singleOutline [A, B, C, D] (convex_loop_region h.convexOutline).1).area =',
+          'quadArea A B C D ='))),
     ('P13', 'I.36'): Plant(
-        4, '`Parallelogram.quadArea_rotate` given the premise (hAC : A = C)',
+        4, '`Parallelogram.quadArea_rotate` and `Parallelogram.outline_area` given the premise '
+        '(hAC : A = C)',
         "A parallelogram's opposite corners are distinct, so no parallelogram meets the premise; "
-        'the one bridge that the measure is the same whichever diameter is drawn is unavailable '
-        'for every parallelogram.',
-        (('premise', ['Elements.Parallelogram.quadArea_rotate'], '(hAC : A = C)'),)),
+        'the bridge that the measure is the same whichever diameter is drawn, and the one that it '
+        'is the area of the parallelogram given by its outline, are unavailable for every '
+        'parallelogram.',
+        (('premise', ['Elements.Parallelogram.quadArea_rotate', 'Elements.Parallelogram.outline_area'],
+          '(hAC : A = C)'),)),
     ('P13', 'II.8'): Plant(
         1, 'every supplied bridge removed', 'With no bridge supplied, nothing connects '
         "`rect A B B C`, `sq A C` and `sq A D` with Euclid's rectangle contained by AB, BC, his "
