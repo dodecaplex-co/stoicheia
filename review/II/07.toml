@@ -18,6 +18,12 @@ helper = "quadArea_add_of_parallelograms"
 note = "Euclid takes AF as AG and CF together, and CE as CF and GE together. `quadArea_add_of_parallelograms` proves both divisions, so adding CF to the equal complements gives equal wholes; the same divisions later identify AF and CE together as the gnomon and CF."
 
 [[passage]]
+at = "But AF, CE are the gnomon KLM and the square CF"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid takes AF and CE together as the gnomon KLM and CF, and the divisions of AF and CE proved above by `quadArea_add_of_parallelograms` show it. Definition II.2's gnomon has no Lean word of its own: here and in the four later sentences that name it, the Lean carries the gnomon KLM as the sum of the areas of its three parallelograms, AG, CF and GE."
+
+[[passage]]
 at = "But twice the rectangle AB, BC is also double of AF"
 kind = "helper"
 helper = "Square.about_diameter"

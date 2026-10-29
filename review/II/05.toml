@@ -39,7 +39,7 @@ note = "Euclid identifies CM as CH and DM together, and DF as HF and DM together
 at = "therefore the whole AH is equal to the gnomon NOP"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid takes AH as AL and CH together. `Parallel.between` places L between K and H, and `quadArea_add_of_parallelograms` identifies their sum with AH, giving the gnomon CH, DM and HF."
+note = "Euclid takes AH as AL and CH together. `Parallel.between` places L between K and H, and `quadArea_add_of_parallelograms` identifies their sum with AH, giving the gnomon CH, DM and HF. Definition II.2's gnomon has no Lean word of its own: here and in the three later sentences that name it, the Lean carries the gnomon NOP as the sum of the areas of its three parallelograms, CH, DM and HF."
 
 [[passage]]
 at = "But AH is the rectangle AD, DB"
