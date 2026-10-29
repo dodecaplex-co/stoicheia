@@ -93,7 +93,8 @@
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold, and where an
-     expectation gives an entry states (`one_of`), exactly one of them holds;
+     expectation gives an entry states (`one_of`), told apart by a field of it, exactly
+     one of them holds;
    - each name a review record's passage lists as `unused` is bound by the Lean beneath
      the run of `--` lines its `at` begins in (`unbound_unused`, read from the text by
      `bound_names`), so a declaration for the citation sweep cannot outlive its binding;
@@ -1099,11 +1100,13 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
     `equals` and `count`, an object with an integer `is`, are effective whenever present.
 
     An expectation with `one_of` gives an entry (`ref`) two states or more, of which
-    exactly one must hold, as I.4 is held to Metric 9 or to Common Notion 4 for figures
-    and to nothing between them (#517). Each state is an object with a `state`, its name,
-    one of its own, and `expectations`, a nonempty list of that entry's ordinary
-    expectations: each with the same `ref` and a `why` of its own, read as any other is
-    (`malformed`, `unmet`), and none with `one_of` or `every`. A state holds when each of
+    exactly one must hold, and names as its `field` the field of the entry that tells them
+    apart, as I.4 is held to Metric 9 or to Common Notion 4 for figures, told apart by its
+    `own_axioms`, and to nothing between them (#517). Each state is an object with a
+    `state`, its name, one of its own, and `expectations`, a nonempty list of that entry's
+    ordinary expectations, one of them at least reading that field: each with the same
+    `ref` and a `why` of its own, read as any other is (`malformed`, `unmet`), and none
+    with `one_of` or `every`. A state holds when each of
     its expectations does. When none holds, the expectation fails once, naming each state
     with what sank it; when more than one holds, it fails too, for the states were not
     exclusive. A malformed one fails with its own message (`malformed_states`)."""
@@ -1258,19 +1261,26 @@ def unmet(x: dict, label: str, by_ref, facts: dict | None) -> list[str]:
 
 def malformed_states(x: dict, label: str) -> list[str]:
     """Why the expectation with `one_of`, `x`, is malformed: one message for each fault,
-    none when it is well formed (check_expectations). It has a `ref`, `one_of` and a `why`
-    and nothing else; `one_of` is a list of two states or more, each an object with a
-    `state`, a name no other state has, and `expectations`, a nonempty list of ordinary
-    expectations, each with the same `ref`, none with `one_of` or `every`, and each well
-    formed as an ordinary one is (malformed)."""
-    if set(x) != {"ref", "one_of", "why"} or not isinstance(x["ref"], str):
+    none when it is well formed (check_expectations). It has a `ref`, a `field`, `one_of`
+    and a `why` and nothing else; its `field` is a nonempty string; `one_of` is a list of
+    two states or more, each an object with a `state`, a name no other state has, and
+    `expectations`, a nonempty list of ordinary expectations, each with the same `ref`,
+    none with `one_of` or `every`, each well formed as an ordinary one is (malformed), and
+    one of them at least reading the `field`."""
+    if set(x) != {"ref", "field", "one_of", "why"} or not isinstance(x["ref"], str):
         return [f"{label}: an expectation with `one_of` has a `ref`, the name of an entry, "
-                "`one_of`, its states, and a `why`, and nothing else"]
-    ref, states = x["ref"], x["one_of"]
+                "a `field`, the field of it that tells its states apart, `one_of`, its "
+                "states, and a `why`, and nothing else"]
+    ref, field, states = x["ref"], x["field"], x["one_of"]
+    found = []
+    if not isinstance(field, str) or not field.strip():
+        found.append(f"{label}: its `field` must name the field that tells its states apart, "
+                     "with a nonempty string")
+        field = None
     if not isinstance(states, list) or len(states) < 2:
-        return [f"{label}: its `one_of` must be a list of two states or more: with one, it "
-                "would be no choice, but an ordinary expectation"]
-    found, names = [], []
+        return found + [f"{label}: its `one_of` must be a list of two states or more: with "
+                        "one, it would be no choice, but an ordinary expectation"]
+    names = []
     for k, state in enumerate(states, 1):
         if not isinstance(state, dict) or set(state) != {"state", "expectations"}:
             found.append(f"{label}, state {k}: a state is an object with a `state`, its "
@@ -1302,6 +1312,11 @@ def malformed_states(x: dict, label: str) -> list[str]:
                 problem = malformed(y, where)
                 if problem:
                     found.append(problem)
+        if field is not None and not any(isinstance(y, dict) and y.get("field") == field
+                                         for y in inner):
+            found.append(f"{label}, state \"{name}\": one of its expectations must read "
+                         f"{field}, the `field` of the expectation with `one_of`, so that "
+                         "each state reads the field said to tell them apart")
     return found
 
 

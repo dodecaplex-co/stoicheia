@@ -24,9 +24,13 @@
   was relaxed for it.
 
   The two states. `check_expectations` in `scripts/check_fidelity.py` reads a new form,
-  an expectation with `one_of`: an entry's `ref`, a `why`, and two states or more, each
-  with a name of its own and a nonempty list of that entry's ordinary expectations, every
-  one read by the same code as an expectation that stands alone. It passes only when
+  an expectation with `one_of`: an entry's `ref`, a `field`, a `why`, and two states or
+  more, each with a name of its own and a nonempty list of that entry's ordinary
+  expectations, every one read by the same code as an expectation that stands alone. Like
+  every other expectation, it names a `field`: the field of the entry that tells its
+  states apart, which one expectation at least of every state must read, so the field it
+  names is never idle; I.4's is `own_axioms`, which excludes Common Notion 4 for figures
+  in one state and includes it in the other. It passes only when
   exactly one state holds. When none does, it fails once, naming each state with the
   failures that sank it, so a reader sees how far the tree is from either; when two hold,
   the states were not exclusive, and it fails too. A malformed one fails with its own
@@ -45,8 +49,9 @@
   laws and without the new axiom fails "Metric 9" by the law and the count, and the other
   state by the axiom. There is no switch to choose a state, and no state that asks less
   than main did. Nor can the content change a state: `kept_expectations` in
-  `scripts/safe_push.py` compares a key it does not know, as `one_of` is, by equality, so
-  a commit that drops a state, or loosens or even rewords an expectation inside one, does
+  `scripts/safe_push.py` matches the expectation by its `ref`, `field` and `law`, and
+  compares a key it does not know, as `one_of` is, by equality, so a commit that changes
+  the `field`, drops a state, or loosens or even rewords an expectation inside one, does
   not keep main's expectations, and with origin/main's checks failing on it, the
   pre-flight refuses it. This follows #629, which holds the circle to its old
   representation profile or the new one, and to nothing between.
@@ -99,11 +104,12 @@
   expectation of seven cited laws and its expectation of the area law's construction
   rules, unchanged in what they ask, become the state "Metric 9" of one expectation with
   `one_of`, beside the state "Common Notion 4 for figures", each with its demand on I.4's
-  own axioms.
+  own axioms, the `field` that the expectation names as telling them apart.
 
   The cases added to `tests/test_certificate.py` are approved here: each state of I.4
   passing alone, both trees between them failing once with each state named, two states
-  that hold at once failing, and every malformed `one_of` failing with its message.
+  that hold at once failing, and every malformed `one_of` failing with its message, one
+  with no `field` and one whose `field` a state does not read among them.
 
   `scripts/audit/jev_questions.py` may read the cited-law proofs of I.4 and I.8 from
   facts.json instead of naming them; this entry approves that change.
