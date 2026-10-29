@@ -99,7 +99,8 @@ We verified every claim against the code with three read-only explorers. All hol
 **Status, 29 October 2026.** Stage 6's independent audit is now the cold outside reading,
 by two reviewers, Claude and Astra, scoring by the [review rubric](../RUBRIC.md), as the
 owner chose that day ([#703](https://github.com/dodecaplex-co/stoicheia/issues/703)); the
-Jev audit closed as not planned on 28 October. The note under stage 6, below, says more.
+Jev audit's card, [#36](https://github.com/dodecaplex-co/stoicheia/issues/36), closed as not
+planned on 28 October. The note under stage 6, below, says more.
 
 Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the coordinator landing each piece as a reviewed pull request (revised 18 October; the first text had the captain merging and pushing after full CI, and [Landing work: pull requests](#landing-work-pull-requests) points to the rules now). Nothing public (tags, releases, release notes, the GitHub description) happens without the owner's OK.
 
@@ -589,7 +590,7 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 rubric](../RUBRIC.md) says, by three reviewers of three model families, and its gate is
 recorded there.
 
-**Status, 29 October 2026.** The Jev audit,
+**Status, 29 October 2026.** The Jev audit's card,
 [#36](https://github.com/dodecaplex-co/stoicheia/issues/36), closed as not planned on 28
 October. On 29 October the owner made the cold outside reading the independent audit, by two
 reviewers, Claude and Astra: each scores every book by the [review rubric](../RUBRIC.md), on

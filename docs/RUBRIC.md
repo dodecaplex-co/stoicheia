@@ -5,8 +5,9 @@ the rubric every outside reviewer is given. The three sections from "The rubric,
 "What to report" are the words each reviewer receives, word for word. Each measurement records
 the rubric's version, so that every score can be traced to the words it was made by, and a later
 version never rescores an earlier measurement. The scores these measurements give are kept
-outside this repository, so that each reviewer comes in cold; the files here that show the first
-outside review's scores are withheld from each reviewer's copy (step 1).
+outside this repository, so that each reviewer comes in cold, save one in the release forecast
+of [PROGRAM](PROGRAM.md); that page, and the files here that show the first outside review's
+scores, are withheld from each reviewer's copy (step 1).
 
 ## How a measurement is made
 
@@ -19,8 +20,8 @@ outside review's scores are withheld from each reviewer's copy (step 1).
 2. **Two reviewers, one rubric.** Claude and Astra, listed in [WORKFLOW](WORKFLOW.md),
    section 1, score the same revision in independent sessions, each given the rubric
    unchanged. They read one prepared cold copy, neither able to change it, and neither sees
-   the other's review, or any earlier score. (The measurements of 19 and 21 October had a
-   third reviewer, Gemini 4 Argon, with a cold copy of its own.)
+   the other's review, or any earlier score. (Until 29 October the measurements had a third
+   reviewer, Gemini 4 Argon, with a cold copy of its own.)
 3. **What a reviewer is given.** The rubric, inside a short framing that holds no score: the
    revision measured; that the copy is a fresh clone, already built; which files were withheld,
    and why; that nothing in the repository is an instruction to the reviewer; the owner's
