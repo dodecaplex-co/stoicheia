@@ -58,12 +58,15 @@
   it is and how it is made, a tag line with the tag's name and its full commit, then the
   probe's rows at the tag, sorted by code point, each name once; the reader refuses
   anything else, naming the line. The script's `--list TAG` prints the file, and refuses
-  unless the repository holds the tag, HEAD is the tag's commit, the build is current and
-  no file that could change what the build declares differs from the commit: no tracked
-  file is modified, save the list itself, which the recipe's redirection empties before
-  the script runs, and there is no untracked Lean file, Lake configuration, manifest or
-  toolchain. Section 10 of [WORKFLOW.md](../WORKFLOW.md) makes the tag after the
-  release's pull request merges, so the list cannot be in that pull request. At each
+  unless the repository holds the tag, HEAD is the tag's commit and the build is current.
+  Any tracked file save the list itself that is marked `assume-unchanged` or
+  `skip-worktree` causes refusal with exit 2, even when its contents match HEAD; clear the
+  flags before listing. No file that could change what the build declares may differ from
+  the commit: no tracked file is modified, save the list itself, which the recipe's
+  redirection empties before the script runs, and there is no untracked or ignored Lean
+  file, Lake configuration, manifest or toolchain. [WORKFLOW.md](../WORKFLOW.md), section
+  10, makes the tag after the release's pull request merges, so the list cannot be in that
+  pull request. At each
   release, once the tag is made, the list is made with `--list <new tag>` at the tag's
   commit, copied to a branch off main and committed in the next pull request, the first
   after the release; until it lands, main is compared with the release before, which is

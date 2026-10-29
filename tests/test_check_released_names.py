@@ -47,16 +47,17 @@ and leaves the planted namespace out of the check it runs. `--list` refuses (exi
 tag's name that is not one, a tag the repository does not hold, a HEAD at another commit
 and a file that differs from the tag's commit, and otherwise prints a list that reads back.
 
-With git itself, on repositories made for the test: what bars `--list` is a tracked file
-modified, an ordinary or ignored untracked Lean file, `lakefile.lean`, `lakefile.toml`,
-`lake-manifest.json` or `lean-toolchain`, including inside an ignored directory and with
-characters Git quotes, and never the list itself, emptied as the recipe's redirection
-empties it, an untracked script or ignored build artifacts; each refusal happens before
-the probe. Rename records are read as one change, including a rename to the excepted list
-path. The later tags are those whose history holds the list's commit, the list's own left
-out, and none when the repository lacks the commit. The environment of git's commands
-holds none of the variables that point git elsewhere. `run_lean` gives Lean's output as
-printed, which `run_probe` reads.
+With git itself, on repositories made for the test: what bars `--list` is any tracked file
+except the list marked `assume-unchanged` or `skip-worktree`, even while its contents match
+HEAD; a tracked file modified; or an ordinary or ignored untracked Lean file,
+`lakefile.lean`, `lakefile.toml`, `lake-manifest.json` or `lean-toolchain`, including inside
+an ignored directory and with characters Git quotes. The list itself, emptied as the
+recipe's redirection empties it, an untracked script and ignored build artifacts do not bar
+it; each refusal happens before the probe. Rename records are read as one change, including
+a rename to the excepted list path. The later tags are those whose history holds the list's
+commit, the list's own left out, and none when the repository lacks the commit. The
+environment of git's commands holds none of the variables that point git elsewhere.
+`run_lean` gives Lean's output as printed, which `run_probe` reads.
 
 And the real tests/released_names.txt reads, names `book-III` with a full commit, holds 498
 names, none of them the parser of one of the four notations, and holds

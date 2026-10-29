@@ -60,14 +60,17 @@ probe's rows at the tag, sorted by code point, each name once. Anything else is 
 with its line (exit 2): a blank line, a comment after the tag line, a row before it, a
 second tag line, a commit that is not 40 lower-case hex digits, an unknown marker, a name
 listed twice, a row out of order, or no rows at all. `--list TAG` prints the whole file, in
-a built checkout whose HEAD is TAG's commit, and refuses otherwise (exit 2), and so when
-a file that could change what the build declares differs from the commit: a tracked file
-modified, the list itself excepted, or an untracked Lean file, `lakefile.lean`,
-`lakefile.toml`, `lake-manifest.json` or `lean-toolchain`. The list is excepted because the
-recipe writes it in place (`--list TAG > tests/released_names.txt`), and the shell empties
-it before the script runs; the build never reads it. An untracked copy of the script, which
-a tag made before the script needs, is allowed. At each release, once the tag is made, the list is
-made with `--list <new tag>` at the tag's commit, copied to a branch off main and
+a built checkout whose HEAD is TAG's commit, and refuses otherwise (exit 2). Every tracked
+file except the list must be free of the `assume-unchanged` and `skip-worktree` index flags:
+either flag causes refusal even when the file's contents match HEAD, and must be cleared
+before listing. No file that could change what the build declares may differ from the
+commit: no tracked file may be modified, the list itself excepted, and there may be no
+untracked or ignored Lean file, `lakefile.lean`, `lakefile.toml`, `lake-manifest.json` or
+`lean-toolchain`. The list is excepted because the recipe's redirection empties it before
+the script runs (`--list TAG > tests/released_names.txt`); the build never reads it. An
+untracked copy of the script, which a tag made before the script needs, is allowed. At each
+release, once the tag is made, the list is made with `--list <new tag>` at the tag's commit,
+copied to a branch off main and
 committed in the next pull request, the first after the release; until it lands, main is
 compared with the release before, which is still correct for every name that release
 declared. WORKFLOW.md, section 10's release step does not yet name this step: card #700's
@@ -499,9 +502,10 @@ def hidden_index_paths() -> list[str]:
 
 
 def modified() -> list[str]:
-    """The files that bar `--list`, as git status shows them: each tracked file that differs
-    from HEAD, staged or not, but the list itself, and each untracked or ignored
-    BUILD_INPUT."""
+    """The files and index flags that bar `--list`: Unreadable when any tracked file but
+    the list has assume-unchanged or skip-worktree set, even if it matches HEAD; otherwise,
+    each tracked file that differs from HEAD, staged or not, but the list itself, and each
+    untracked or ignored BUILD_INPUT."""
     hidden = hidden_index_paths()
     if hidden:
         shown = ", ".join(hidden[:5]) + (", …" if len(hidden) > 5 else "")
@@ -703,8 +707,9 @@ def run_self_test() -> int:
 
 def make_list(tag: str) -> str:
     """The list file for `tag`, from the built checkout of the tag's commit; Unreadable
-    when the tag is not in the repository, HEAD is another commit, a file that could change
-    the build differs from it (modified()) or the build is not current."""
+    when the tag is not in the repository, HEAD is another commit, any tracked file but the
+    list has assume-unchanged or skip-worktree set, a file that could change the build
+    differs from it (modified()), or the build is not current."""
     if not TAG.fullmatch(tag):
         raise Unreadable(f"--list: `{shorten(tag)}` is not a tag's name")
     commit = tag_commit(tag)
