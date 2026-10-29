@@ -53,10 +53,8 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   have hG_AC : OnLine G AC := on_line_of_between_ends hAGE hA_AC hE_AC
   have hA_G : A ≠ G := ne_of_between hAGE
   -- and let the straight lines FC, GB be joined. [Post. 1]
-  have hF_C : F ≠ C := fun h => hC_AB (h ▸ hF_AB)
-  have hG_B : G ≠ B := fun h => hB_AC (h ▸ hG_AC)
-  obtain ⟨FC, hF_FC, hC_FC⟩ := Postulate1 F C hF_C
-  obtain ⟨GB, hG_GB, hB_GB⟩ := Postulate1 G B hG_B
+  /- FC and GB are named by their ends, as sides of the triangles AFC and AGB, so
+     nothing is drawn for the joins. -/
   -- Then, since AF is equal to AG and AB to AC,
   have hAF_AG : ‖A F‖ = ‖A G‖ := hAG_AF.symm
   -- the two sides FA, AC are equal to the two sides GA, AB, respectively;
@@ -100,6 +98,8 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   have hFB_GC : ‖F B‖ = ‖G C‖ := by rw [len_symm F B, hBF_CG, len_symm C G]
   -- and the angle BFC is equal to the angle CGB,
   /- These are the angles AFC and AGB over again, since B lies on FA and C on GA. -/
+  have hF_C : F ≠ C := fun h => hC_AB (h ▸ hF_AB)
+  have hG_B : G ≠ B := fun h => hB_AC (h ▸ hG_AC)
   have hBFC_CGB : ∠ B F C = ∠ C G B := by
     rw [← angle_onRay_left (OnRay.of_beyond (between_symm hABF)) hF_C.symm,
       ← angle_onRay_left (OnRay.of_beyond (between_symm hACG)) hG_B.symm]
