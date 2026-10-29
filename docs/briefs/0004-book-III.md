@@ -302,6 +302,10 @@ lemmas, `Aligned.centre_between` and `Aligned.eq_on_base`, preceded it and were 
 by its proof, which called `Aligned.centre_between` twice and `Aligned.eq_on_base` once.
 This supersedes the earlier wording "beneath" and "no proof used them."
 
+**28 October 2026, supplement.** #561 also removed the unused
+`RuleProofs.Circle.on_circle_of_len_eq_of_ne` declaration and its docstring from
+`Elements/Figure/RuleBase.lean`.
+
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
