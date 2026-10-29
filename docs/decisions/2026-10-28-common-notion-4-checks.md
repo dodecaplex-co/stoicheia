@@ -35,10 +35,10 @@
   content leaves no such law to read. Between the two trains, then, the file asks less of
   I.4 than it did. The content is to ask more again, and more strongly: it moves the count
   to six, which pins the list exactly without the law, and it adds an expectation that
-  I.4's `own_axioms` include `Tacit.figures_coincide`, pinning by name the axiom the
-  clause rests on, where Metric 9 was pinned only through its law, by the law's name and the construction
-  rules of its proof; and the restriction above, which no expectation could give, holds that axiom to
-  I.4.
+  I.4's `own_axioms` include `Tacit.figures_coincide`, pinning by name the axiom the clause
+  rests on, where I.4's expectations pinned Metric 9 only through its law, by the law's name
+  and the construction rules of its proof; and the restriction above, which no expectation
+  could give, holds that axiom to I.4.
 
   The Jev bundle. The question generator named, for the representation rows of I.4 and
   I.8, the proof of each law their derivations cite, I.4's
