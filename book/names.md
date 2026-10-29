@@ -6,7 +6,7 @@ Every proposition, porism and companion of Books I to III, by Euclid's number: i
 
 `import Elements.BookI.Prop20` brings in I.20 with everything it rests on, and `import Elements` the whole edition. The [README](../README.md) introduces the library, and [FORMALIZATION](../docs/FORMALIZATION.md), section 2, describes its statements. The definitions, postulates and common notions, with their Lean, are on each book's front page: [Book I](I/front.md), [Book II](II/front.md) and [Book III](III/front.md).
 
-Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. A porism or a companion stands under its proposition, in the same module.
+Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Of I.40 and III.12, which Heath prints in brackets, the three are said of the text's enunciation, which may not be Euclid's. A porism or a companion stands under its proposition, in the same module.
 
 ## Book I
 
