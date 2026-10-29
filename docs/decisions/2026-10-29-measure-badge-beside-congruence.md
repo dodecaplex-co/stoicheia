@@ -1,3 +1,4 @@
+<!-- entry: id=measure-badge-beside-congruence cards=662 line="The badge of our measure of circumferences follows what each statement states: and in our measure where it states circumferences that coincide too, with a companion where only a companion uses the measure." -->
 - **The measure's badge beside circumferences that coincide (tooling,
   [#662](https://github.com/jackChallis/stoicheia/issues/662)).** The coordinator's orders
   of 29 October 2026 give this change card #662, filed from a reader's review of Book

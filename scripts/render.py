@@ -1015,10 +1015,11 @@ def overlap_word(overlap):
 
 
 # The Lean words a badge's reading lives in. A record's tag may cover its companions
-# alone (III.24's and III.25's measure), so a tag named here gives its badge only to a
-# statement that uses one of its words, as the decisions page asked on 19 October 2026
-# ("if the badge is first kept to statements that use the measure"); a tag with a badge
-# and no words here gives it to every statement it is on.
+# alone (III.24's and III.25's measure), so a tag named here gives its badge, as it
+# stands, only to a statement that uses one of its words, as the decisions page asked on
+# 19 October 2026 ("if the badge is first kept to statements that use the measure"), and
+# names a companion's use only in the words `BADGE_BESIDE` allows, below; a tag with a
+# badge and no words here gives it to every statement it is on.
 BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
                                  "Elements.Arc.measure"}}
 # The Lean words of the reading a badge's representation stands beside. A statement that
