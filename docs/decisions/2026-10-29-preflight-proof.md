@@ -19,7 +19,9 @@
   judged against, the harness's blob, and each step's verdict and time), the blob of
   every check input as origin/main holds it, which takes in the harness's own modules,
   the machine's name, the time it was made, and a SHA-256 digest of all of these. A
-  failed run writes none, and removes a file left at that path. `--land` given
+  failed run writes none; a run that gets past the parser and the check of the repository
+  it runs in removes a file left at that path as it starts, while one they refuse touches
+  nothing there, since nothing has run. `--land` given
   `--preflight-proof FILE` reads the file after the preconditions and the class, before
   any of the commit's code runs on the Mac, and lets it stand in for step 4 only when
   every one of these holds: it can be read, and is of the expected shape; its digest
@@ -43,10 +45,13 @@
   stay with it. Each note in a proof, and its harness and time, must be printable text of
   at most 300 characters, and each step's name must use only the letters, digits and few
   marks every step name in the records saved on the Mac uses (a space and ' ( ) - . / :
-  _), or the proof falls back; and step 4's line names the harness running on the Mac and
-  the time the proof was made, never the proof's own text for them. So nothing from a
-  proof can move the terminal, or add a line, a cell or markup to the body. So too a proof that is not standard JSON (a key given twice in
-  one object, NaN or Infinity), whose digest is not 64 hexadecimal characters, or that
+  _, the underscore only within a word, where Markdown makes no emphasis of it), with no
+  web address in it, which GitHub would make a link, or the proof falls back; step 4's
+  line names the harness running on the Mac and the time the proof was made, never the
+  proof's own text for them; and a reason to fall back names no value the proof holds. So
+  nothing from a proof can move the terminal, or add a line, a cell or markup to the body.
+  So too a proof that is not standard JSON (a key given twice in one object, NaN or
+  Infinity), whose digest is not 64 hexadecimal characters, or that
   cannot be judged at all: a reason, and the full pre-flight, never a crash. A dry run
   that does not end in exit 0, refused, failed or interrupted once the proof is written,
   removes it again.

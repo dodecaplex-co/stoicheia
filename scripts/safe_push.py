@@ -295,8 +295,9 @@ origin/main, by this harness with origin/main's check inputs, made no more than
 PROOF_HOURS ago nor PROOF_SKEW seconds ahead of this clock, with no note for the security
 review, with each step's name, note, harness and time printable text of at most
 PROOF_TEXT characters, each step's name of PROOF_STEP's characters alone, and of step 4
-in full, every step passed (proof_record); else a note says why, and the full pre-flight
-runs here, as without it. So too for a proof that is not standard JSON (a key given twice
+in full, every step passed (proof_record); else a note says why, quoting nothing of the
+proof, since the note goes into the pull request's body, and the full pre-flight runs
+here, as without it. So too for a proof that is not standard JSON (a key given twice
 in one object, NaN or Infinity), whose digest is not 64 lower-case hexadecimal
 characters, or that cannot be judged at all: a reason, never a crash.
 Only its step 4 is taken, its line naming the harness running here and the time the proof
@@ -680,8 +681,11 @@ PROOF_SKEW = 300        # seconds a proof may be dated ahead of this clock, as c
 PROOF_BYTES = 2 ** 20   # the largest proof read: 1 MiB
 PROOF_TEXT = 300        # the longest step's name, note, harness or time a proof may hold
 # The characters of a proof's step names: those of every step's name in the records saved
-# so far, with no markup, table bar or backtick, since a name goes into the body as it is.
-PROOF_STEP = re.compile(rf"[A-Za-z0-9 '().:/_-]{{1,{PROOF_TEXT}}}")
+# so far, with no markup, table bar or backtick, since a name goes into the body as it is;
+# an underscore only within a word, where Markdown makes no emphasis of it, and no web
+# address, which GitHub would make a link.
+PROOF_STEP = re.compile(r"(?!.*(?i:://|www\.))"
+                        rf"(?:[A-Za-z0-9 '().:/-]|(?<=[A-Za-z0-9])_(?=[A-Za-z0-9])){{1,{PROOF_TEXT}}}")
 PROOF_FIELDS = frozenset({"format", "record", "check_inputs", "machine", "made", "digest"})
 PROOF_MACHINE = re.compile(r"[A-Za-z0-9._-]{1,64}")
 PROOF_MADE = "%Y-%m-%dT%H:%M:%SZ"
@@ -5578,8 +5582,8 @@ def proof_pairs(pairs: list) -> dict:
     seen = {}
     for key, value in pairs:
         if key in seen:
-            raise ProofDoubt(f"it gives the key {printable_text(key)[:80]!r} twice in one "
-                             "object, which JSON leaves ambiguous")
+            raise ProofDoubt("it gives a key twice in one object, which JSON leaves "
+                             "ambiguous")
         seen[key] = value
     return seen
 
@@ -5669,11 +5673,9 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     (checks_record); else None, and why."""
     record, inputs, machine = proof["record"], proof["check_inputs"], proof["machine"]
     if record.get("sha") != ctx.sha:
-        return None, (f"it is of {printable_text(str(record.get('sha')))[:12]}, not of the "
-                      f"commit {ctx.sha[:12]}")
+        return None, f"it is of another commit than {ctx.sha[:12]}"
     if record.get("base") != ctx.base:
-        return None, (f"origin/main moved since it was made, from "
-                      f"{printable_text(str(record.get('base')))[:12]} to {ctx.base[:12]}")
+        return None, f"origin/main moved since it was made: it is {ctx.base[:12]} now"
     if HARNESS_BLOB is None:
         return None, "the harness running here is not origin/main's, so no proof is bound to it"
     if record.get("harness_blob") != HARNESS_BLOB:
@@ -5682,9 +5684,8 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     blobs = check_input_blobs(ctx.repo, ctx.base)
     differ = sorted(p for p in {*blobs, *inputs} if blobs.get(p) != inputs.get(p))
     if differ:
-        return None, (f"its check inputs are not origin/main's (they differ at "
-                      f"{printable_text(differ[0])[:200]}"
-                      + (f" and {len(differ) - 1} more" if len(differ) > 1 else "") + ")")
+        return None, (f"its check inputs are not origin/main's ({len(differ)} of them "
+                      "differ)")
     age = datetime.datetime.now(datetime.timezone.utc) - made
     if age > datetime.timedelta(hours=PROOF_HOURS):
         return None, f"it was made at {proof['made']}, more than {PROOF_HOURS} hours ago"
@@ -5696,8 +5697,8 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     held = [name for name in names if name == "pinned values" or (
         name.endswith(BASE_PASS) and name.removesuffix(BASE_PASS) not in FRESHNESS)]
     if held:
-        return None, (f"it notes origin/main's checks failing on the commit "
-                      f"({printable_text(', '.join(held))[:200]}), for the security review")
+        return None, (f"it notes origin/main's checks failing on the commit ({len(held)} "
+                      "of them), for the security review")
     # Its step names, its notes, its harness and its time may hold no newline, no control
     # and no escape, nor run long, though of these only the step names leave the proof:
     # they are carried into the record, and so into the table of the pull request's body,
@@ -5713,7 +5714,8 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
                       "control or escape)")
     if any(isinstance(name, str) and not PROOF_STEP.fullmatch(name) for name in named):
         return None, ("its record holds a step's name with a character other than a letter, "
-                      "a digit, a space or one of ' ( ) - . / : _")
+                      "a digit, a space or one of ' ( ) - . / : _ (an underscore only within "
+                      "a word), or a web address")
     if checks_record(record, test_mode, risk) is None or record.get("short"):
         return None, ("it is not of step 4 in full with every step passed, by this harness "
                       "(checks_record)")

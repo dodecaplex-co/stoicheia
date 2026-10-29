@@ -5748,9 +5748,9 @@ class PreflightProof(Edge):
         older = git(WORK, "rev-parse", f"{BASE}~1").strip()
         self.assertFallsBack(sha, proof, (
             ("another commit", lambda p: self.planted(p, lambda q: q["record"].update(sha=BASE)),
-             f"it is of {BASE[:12]}, not of the commit {sha[:12]}"),
+             f"it is of another commit than {sha[:12]}"),
             ("a stale main", lambda p: self.planted(p, lambda q: q["record"].update(base=older)),
-             f"origin/main moved since it was made, from {older[:12]} to {BASE[:12]}")))
+             f"origin/main moved since it was made: it is {BASE[:12]} now")))
 
     def test_a_proof_by_another_harness_falls_back(self):
         sha, proof = self.proved(self.guide_change)
@@ -5762,7 +5762,7 @@ class PreflightProof(Edge):
             ("another check input",
              lambda p: self.planted(p, lambda q: q["check_inputs"].update(
                  {"scripts/registry.py": "100644 " + "0" * 40})),
-             "its check inputs are not origin/main's (they differ at scripts/registry.py)")))
+             "its check inputs are not origin/main's (1 of them differ)")))
 
     def test_a_failed_step_or_a_note_for_the_security_review_falls_back(self):
         sha, proof = self.proved(self.guide_change)
@@ -5777,7 +5777,7 @@ class PreflightProof(Edge):
             ("a note for the security review",
              lambda p: self.planted(p, lambda q: q["record"]["notes"].append(
                  [noted, "planted by the test"])),
-             f"it notes origin/main's checks failing on the commit ({noted}), for the "
+             "it notes origin/main's checks failing on the commit (1 of them), for the "
              "security review")))
 
     def test_an_old_proof_or_one_dated_ahead_falls_back(self):
@@ -5865,7 +5865,7 @@ class PreflightProof(Edge):
             ("600 nested arrays", lambda p: self.planted(p, unused(deep)),
              "it could not be judged (RecursionError)"),
             ("a key given twice", twice,
-             "it gives the key 'format' twice in one object, which JSON leaves ambiguous")))
+             "it gives a key twice in one object, which JSON leaves ambiguous")))
 
     def test_an_interruption_while_the_proof_is_judged_is_no_reason(self):
         # Only what a hostile value raises is a reason: an interruption while the proof is
@@ -5919,11 +5919,47 @@ class PreflightProof(Edge):
                 next(s for s in q["record"]["steps"] if s[0] == "4")[1] = name
             return lambda p: self.planted(p, change)
         why = ("its record holds a step's name with a character other than a letter, a "
-               "digit, a space or one of ' ( ) - . / : _")
+               "digit, a space or one of ' ( ) - . / : _ (an underscore only within a word), "
+               "or a web address")
         self.assertFallsBack(sha, proof, (
             ("a line break", step("full local checks<br>EXTRA DISPLAY LINE"), why),
             ("a table's bar", step("full local checks | FAIL | 999"), why),
-            ("a backtick", step("full local checks `ok`"), why)))
+            ("a backtick", step("full local checks `ok`"), why),
+            ("emphasis by underscores", step("full local checks __INJECTED__"), why),
+            ("an underscore at a word's end", step("full local checks_"), why),
+            ("a web address", step("see https://example.invalid/x"), why),
+            ("a web address without a scheme", step("see WWW.example.invalid"), why)))
+
+    def test_a_reason_to_fall_back_quotes_nothing_of_the_proof(self):
+        # The proof's line goes into the record's notes, and so into the pull request's
+        # body: a reason to fall back names no value the proof holds, so markup planted in
+        # one (its commit, its main, a check input's path, a note's name, a key given
+        # twice) reaches neither the body nor the output.
+        sha, proof = self.proved(self.guide_change)
+        mark = "<br>PLANTED_MARK"
+
+        def twice(p):
+            return self.written('{"' + mark + '": 1, "' + mark + '": 2, ' + json.dumps(p)[1:])
+        cases = (
+            ("its commit", lambda p: self.planted(p, lambda q: q["record"].update(sha=mark))),
+            ("its main", lambda p: self.planted(p, lambda q: q["record"].update(base=mark))),
+            ("a check input's path", lambda p: self.planted(p, lambda q: q["check_inputs"].update(
+                {mark: "100644 " + "0" * 40}))),
+            ("a note's name", lambda p: self.planted(p, lambda q: q["record"]["notes"].append(
+                [mark + safe_push.BASE_PASS, "planted by the test"]))),
+            ("a key given twice", twice))
+        for name, plant in cases:
+            with self.subTest(case=name):
+                self.setUp()
+                git(WORK, "checkout", "--quiet", "--detach", sha)
+                r = self.land(plant(proof))
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 0, out)
+                self.assertEqual(self.guard(self.push_part(out), "pre-flight proof"), "note", out)
+                self.assertIn(self.FULL_PATH, out)
+                self.assertNotIn("PLANTED_MARK", out)
+                for pr in self.gh_state()["prs"]:
+                    self.assertNotIn("PLANTED_MARK", pr["body"] or "")
 
     def test_a_proofs_harness_and_time_reach_neither_the_body_nor_the_output(self):
         # Markup planted in the proof's harness and time, printable and short, its digest
