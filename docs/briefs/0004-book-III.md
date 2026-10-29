@@ -245,6 +245,27 @@ stands as follows, and no statement changes:
 - III.4 and III.8 apply their universal geometric conditions to the centre obtained
   through `exists_centre`, with no existence hypothesis.
 
+**28 October 2026, #547.** The convention above is overtaken. Under Heath's "[III. 1]",
+III.2, III.4, III.8 and III.17 now take their centres by III.1's construction, through
+`Prop1.of_circle`, which is now III.1's companion, by the owner's decision of 26 October
+2026 recorded on [#547](https://github.com/jackChallis/stoicheia/issues/547)
+([the entry of that day](../decisions/2026-10-26-centre-by-iii1.md) and
+[the entry for III.2](../decisions/2026-10-28-iii2-centre.md)). III.2's route is now
+`euclid`. So is III.8's: its last step goes by Euclid's two orders in every case, and a
+point of contact, which ends both orders, is never the nearer (`Prop8.contact_last`).
+III.26, III.28 and III.29 remain `modified`, and their records say why.
+
+**28 October 2026, #547, later.** The congruence of the remainders in III.26 and III.28 now
+comes by Euclid's subtraction, not by III.24 applied to the remaining segments, which the
+entries for III.26 and III.28 above describe: the application of the equal segments, extended to
+the whole circles (`Prop26.extend`), is restricted to what remains (`Prop26.remainder`).
+III.26 stays `modified` for its obtuse angles at the circumferences, and III.29 for its
+greater circumferences; III.28's route is `euclid`, its two diameters a case Heath calls
+"scarcely worth giving" (vol. 2, p. 60), declared as a passage, so the note above is
+overtaken for III.28. Each record says why, with Heath's page. III.1 takes each step of its construction under Euclid's sentence, and
+its reductio supposes that the constructed F is not the centre
+([the entry](../decisions/2026-10-28-iii1-under-heath.md)).
+
 ## Where the facts live
 
 The rule is Books I and II's: a fact that needs no proposition goes in Book Zero; one that
