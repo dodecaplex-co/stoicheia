@@ -28,7 +28,7 @@ note = "Euclid takes K where the circles meet without proving they meet; `Prop22
 [[passage]]
 at = "and let KF, KG be joined"
 kind = "given"
-note = "In the Lean a straight line between two points is named by its ends: KF and KG are sides of the triangle KFG, so nothing is drawn for the joins, and Postulate 1 is not called for them."
+note = "In the Lean a straight line between two points is named by its ends: KF and KG are sides of the triangle KFG, so nothing is drawn for the joins, and Postulate 1 is not called for them. The joins are drawn in the text and are not needed by the formal proof."
 
 [[passage]]
 at = "I say that the triangle KFG has been constructed"
@@ -37,11 +37,11 @@ note = "Euclid announces here what the steps below establish, and the Lean carri
 
 [review]
 stage = "full"
-commit = "e22a6f105"
+commit = "a6253fb01"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:eb2d3de362c18a67"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readI, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a2, at e22a6f105"
-text = "sha256:58ae7aa6d7fec982"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m2cx at f2195c72; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readI, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a2, at e22a6f105; card #482, the coordinator's ruling on joins (28 October 2026): read in full by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), reader G2-r482j, at a6253fb01"
+text = "sha256:2aa975ec458a70fb"
 
 [review.items]
 statement = "pass"
