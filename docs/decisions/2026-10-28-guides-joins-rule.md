@@ -13,5 +13,6 @@
   allows. The words change; no rule of a check, key or behaviour does.
 
   This entry approves the change to `docs/WORKFLOW.md`, in section 6's paragraph on
-  `sweep_citations.py`.
-  This entry approves the change to `scripts/sweep_citations.py`, in its docstring only.
+  `sweep_citations.py`, where the rule on idle joins replaces Tw2's.
+  This entry approves the change to `scripts/sweep_citations.py`, in the docstring's
+  paragraph on declared hits, where the rule on idle joins replaces Tw2's.
