@@ -257,21 +257,30 @@ standard library's.
 The repository moved from a personal account to the organization dodecaplex-co on 27
 October 2026 ([#626](https://github.com/dodecaplex-co/stoicheia/issues/626)), and its
 address is `https://github.com/dodecaplex-co/stoicheia`. The pages, which `render.py`
-writes from its constant `REPO`, and every document read as current guidance give that
-address. The dated records keep the old address as they were written: the decision
-entries and the decisions page, the briefs and the reports (`docs/decisions/`,
-`docs/briefs/`, `docs/reports/`). Each was true on its day; GitHub's redirect still
-serves its links; an entry is never edited ([the folder's README](decisions/README.md));
-and rewriting a record's words, however small the change, would make it say what it
-never said when it was written. So nothing new names the old address, and a reader meets
-it only in a record whose date tells them why.
+writes from its constant `REPO`, and the documents outside three exempt folders give that
+address. The decision entries and the decisions page (`docs/decisions/`,
+`docs/briefs/0002-decisions.md`) and the reports (`docs/reports/`) are dated records, and
+keep the old address as they were written. Each was true on its day; GitHub's redirect
+still serves its links; an entry is never edited
+([the folder's README](decisions/README.md)); and rewriting a record's words, however
+small the change, would make it say what it never said when it was written. The briefs
+(`docs/briefs/`) are exempt as a whole, the current book briefs among them (`book-I.md`,
+`book-II.md`, `0004-book-III.md`, `0012-book-IV.md`): these are current guidance, and keep
+their links to the old address until their briefs are next revised
+([section 2](#correcting-a-frozen-brief)).
 [`scripts/check_address.py`](../scripts/check_address.py), in section 8's sequence,
 refuses any address of a repository named `stoicheia` on GitHub under an owner other than
 `dodecaplex-co`: in a web address (with or without `www.` and a port), Git's `git@` form,
-a Pages or raw address, or the bare `<owner>/stoicheia`, unless a path runs into it
-(`~/.cache/stoicheia`), in any Markdown file, and in `CITATION.cff`, `LICENSE` and
-`NOTICE`, outside those three folders. It refuses every other owner rather than the old
-one, so it never needs to name it.
+a Pages, raw, `codeload.` or `api.github.com/repos/` address, the wiki's
+(`stoicheia.wiki`), or the bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` (as
+`gh api` writes it), unless a path runs into it (`~/.cache/stoicheia`), in any Markdown
+file, and in `CITATION.cff`, `LICENSE` and `NOTICE`, outside those three folders. A local
+path that the check would read as bare is written from `./` or `~/` (`./dev/stoicheia`).
+The check does not judge the exempt folders, so it does not refuse an old address added
+there; it counts the addresses they hold. Code and configuration files (`.py`, `.yml`,
+`.toml`, `.json`, `.lean`) are outside its scope; code inside Markdown is read. A named
+file, or a file in scope, that cannot be read or decoded as UTF-8 is refused. It refuses
+every other owner rather than the old one, so it never needs to name it.
 
 ## 5. Proving in parallel: a voyage
 

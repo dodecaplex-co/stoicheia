@@ -1,35 +1,44 @@
-"""Check that the pages and current documents give the repository's address as its home.
+"""Check that the pages and documents in scope give the repository's address as its home.
 
 The repository moved to the organization dodecaplex-co on 27 October 2026, and its
 address is `https://github.com/dodecaplex-co/stoicheia`. An address of a repository named
 `stoicheia` on GitHub, in any of the forms GitHub serves (`github.com/<owner>/stoicheia`,
 with or without `www.` and a port, `git@github.com:<owner>/stoicheia`,
-`<owner>.github.io/stoicheia` and `raw.githubusercontent.com/<owner>/stoicheia`), or as
-the bare `<owner>/stoicheia` that `gh` and the citation read, must name the owner
-`dodecaplex-co`, written so. Every other owner is refused, the old address among them, so
-that the check never needs to name it. A bare `<owner>/stoicheia` is read as a local path,
-and passed over, when a letter, digit, `.`, `/`, `~`, `_` or `-` stands just before it
+`<owner>.github.io/stoicheia`, `raw.githubusercontent.com/<owner>/stoicheia`,
+`codeload.github.com/<owner>/stoicheia` and `api.github.com/repos/<owner>/stoicheia`), or
+as the bare `<owner>/stoicheia` that `gh` and the citation read and the bare
+`repos/<owner>/stoicheia` that `gh api` reads, must name the owner `dodecaplex-co`,
+written so. Every other owner is refused, the old address among them, so that the check
+never needs to name it. A bare `<owner>/stoicheia` is read as a local path, and passed
+over, when a letter, digit, `.`, `/`, `~`, `_` or `-` stands just before it
 (`.git/stoicheia`, `~/.cache/stoicheia`); so a path is written from `./` or `~/`. The name
-must end there: `stoicheia.git` is this repository, and `stoicheia-tools` or
-`stoicheia.notes` another; and the host must be GitHub's own (`not-github.com` is not).
+must end there: `stoicheia.git`, `stoicheia.wiki` and `stoicheia.wiki.git` are this
+repository, and `stoicheia-tools` or `stoicheia.notes` another; and the host must be
+GitHub's own (`not-github.com` is not).
 
 It reads every Markdown file Git knows of, tracked or new but not ignored, and the root's
-`CITATION.cff`, `LICENSE` and `NOTICE`: the generated pages and the documents read as
-current guidance. Code, fenced or
-inline, is read too, since a command to copy is a place a reader takes the address from.
-The dated records are passed over: the decision entries and the decisions page
-(`docs/decisions/`, `docs/briefs/0002-decisions.md`), the briefs (`docs/briefs/`) and the
-reports (`docs/reports/`). They were true when written, GitHub's redirect serves their
-links, and an entry is never edited ([WORKFLOW, section 4](../docs/WORKFLOW.md),
-"The repository's address"). How many addresses they hold that the check would refuse
-elsewhere is printed, so a run shows that the exemption is what lets them pass.
+`CITATION.cff`, `LICENSE` and `NOTICE`. Code, fenced or inline, is read too, since a
+command to copy is a place a reader takes the address from; code and configuration files
+(`.py`, `.yml`, `.toml`, `.json`, `.lean`) are not read. Three folders are exempt. The
+decision entries and the decisions page (`docs/decisions/`, `docs/briefs/0002-decisions.md`)
+and the reports (`docs/reports/`) are dated records, kept as written: they were true when
+written, GitHub's redirect serves their links, and an entry is never edited. The briefs
+(`docs/briefs/`) are exempt as a whole, the current book briefs among them (`book-I.md`,
+`book-II.md`, `0004-book-III.md`, `0012-book-IV.md`), which keep their links until their
+briefs are next revised ([WORKFLOW, section 4](../docs/WORKFLOW.md), "The repository's
+address"). The check refuses nothing in the exempt folders, so an old address added there
+passes; it prints how many addresses their Markdown files hold that it would refuse
+elsewhere, so a run shows that the exemption is what lets them pass.
 
     python3 scripts/check_address.py              every file in scope
-    python3 scripts/check_address.py FILE ...     just these, if in scope
+    python3 scripts/check_address.py FILE ...     just these, judged if in scope
     python3 scripts/check_address.py --self-test  the cases below, then every file
 
-Exits 1 if any address is refused, printing each as `file:line: what is wrong`; the owner
-it names is not printed. Standard library only.
+Exits 1 if any address is refused, printing each as `file:line: what is wrong`, with what
+to write for the form found; the owner it names is not printed. A file named, or a file in
+scope, that cannot be read or decoded as UTF-8 is refused too, as `file: cannot be read
+(why)`. Exits 2, with a usage line, on an option other than `--self-test`. Standard
+library only.
 """
 
 from __future__ import annotations
@@ -43,7 +52,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 HOME = "dodecaplex-co"
 
-# The dated records: folders, and their files, kept as they were written.
+# The exempt folders: the dated records, kept as they were written, and the briefs.
 DATED = ("docs/decisions/", "docs/briefs/", "docs/reports/")
 # Folders never searched when git cannot list the files.
 SKIP_DIRS = {".git", ".lake", ".claude", "__pycache__", "node_modules"}
@@ -52,23 +61,35 @@ SKIP_DIRS = {".git", ".lake", ".claude", "__pycache__", "node_modules"}
 ROOT_DOCUMENTS = ("CITATION.cff", "LICENSE", "NOTICE")
 
 # An owner as GitHub allows it: letters, digits and single hyphens. The repository's name
-# must end there, with or without `.git`: a `.`, `_`, `-`, letter or digit after it makes
-# another name (`stoicheia.notes`, `stoicheia-tools`), but a full stop ending a sentence
-# does not. A host must stand alone (`not-github.com` is not GitHub), and a bare
-# `<owner>/stoicheia` must not continue a path (`.git/stoicheia`, `~/.cache/stoicheia`).
+# must end there, with or without `.wiki` and `.git`: a `.`, `_`, `-`, letter or digit
+# after it makes another name (`stoicheia.notes`, `stoicheia-tools`), but a full stop
+# ending a sentence does not. A host must stand alone (`not-github.com` is not GitHub), and
+# a bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` must not continue a path
+# (`.git/stoicheia`, `~/.cache/stoicheia`, `~/repos/<owner>/stoicheia`). The groups a and b
+# are addresses with a host, c and d bare ones.
 OWNER = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
-NAME_END = r"(?:\.git)?(?![A-Za-z0-9_-])(?!\.[A-Za-z0-9_-])"
+NAME_END = r"(?:\.wiki)?(?:\.git)?(?![A-Za-z0-9_-])(?!\.[A-Za-z0-9_-])"
 HOST = r"(?<![A-Za-z0-9.-])"
+BARE = r"(?<![A-Za-z0-9._/~-])"
 ADDRESS = re.compile(
-    rf"{HOST}(?:(?:www\.)?github\.com(?::\d+)?[/:]|raw\.githubusercontent\.com/)"
+    rf"{HOST}(?:(?:www\.)?github\.com(?::\d+)?[/:]|api\.github\.com/repos/"
+    rf"|codeload\.github\.com/|raw\.githubusercontent\.com/)"
     rf"(?P<a>{OWNER})/stoicheia{NAME_END}"
     rf"|{HOST}(?P<b>{OWNER})\.github\.io/stoicheia{NAME_END}"
-    rf"|(?<![A-Za-z0-9._/~-])(?P<c>{OWNER})/stoicheia{NAME_END}",
+    rf"|{BARE}repos/(?P<d>{OWNER})/stoicheia{NAME_END}"
+    rf"|{BARE}(?P<c>{OWNER})/stoicheia{NAME_END}",
     re.I)
+# What to write instead, by the form found: with a host, or bare (where a local path the
+# check reads as bare is written from `./` or `~/`).
+WRITE_HOSTED = f"write github.com/{HOME}/stoicheia"
+WRITE_BARE = f"write {HOME}/stoicheia, or a local path from ./ or ~/"
+
+USAGE = "usage: check_address.py [--self-test] [FILE ...]"
 
 
 def in_scope(name: str) -> bool:
-    """Is the file, by its path from the root, a page or a current document?"""
+    """Is the file, by its path from the root, one the check judges: Markdown, or a root
+    document, outside the exempt folders?"""
     if name.startswith(DATED):
         return False
     return name.endswith(".md") or name in ROOT_DOCUMENTS
@@ -79,14 +100,38 @@ def problems(text: str) -> list[tuple[int, str]]:
     found = []
     for number, line in enumerate(text.split("\n"), 1):
         for m in ADDRESS.finditer(line):
-            owner = m.group("a") or m.group("b") or m.group("c")
+            owner = m.group("a") or m.group("b") or m.group("c") or m.group("d")
             if owner == HOME:
                 continue
             what = ("names the home in other capitals" if owner.lower() == HOME
                     else "names an owner other than the repository's home")
-            found.append((number, f"an address of this repository on GitHub {what}; "
-                                  f"write github.com/{HOME}/stoicheia"))
+            write = WRITE_HOSTED if m.group("a") or m.group("b") else WRITE_BARE
+            found.append((number,
+                          f"an address of this repository on GitHub {what}; {write}"))
     return found
+
+
+def options(argv: list[str]) -> tuple[bool, list[str], list[str]]:
+    """(the self-test asked for, the files named, the options not known) in `argv`."""
+    unknown = [a for a in argv if a.startswith("--") and a != "--self-test"]
+    files = [a for a in argv if not a.startswith("--")]
+    return "--self-test" in argv, files, unknown
+
+
+def read(path: Path) -> tuple[str | None, str]:
+    """(the file's text, "") or (None, why it cannot be read or decoded as UTF-8)."""
+    try:
+        return decoded(path.read_bytes())
+    except OSError as error:
+        return None, error.strerror or type(error).__name__
+
+
+def decoded(data: bytes) -> tuple[str | None, str]:
+    """(the text, "") or (None, where the bytes are not UTF-8)."""
+    try:
+        return data.decode("utf-8"), ""
+    except UnicodeDecodeError as error:
+        return None, f"not UTF-8 at byte {error.start}"
 
 
 def candidates() -> list[str]:
@@ -112,7 +157,8 @@ def rel(path: Path) -> str:
 
 
 def self_test() -> list[str]:
-    """Each case is (path, text, lines refused); a stand-in owner plays the old one."""
+    """Each case is (path, text, lines refused); a stand-in owner plays the old one. Then
+    the advice given for each form, the files in scope, the options, and the reading."""
     other = "someone-else"
     cases = [
         ("book/I/01.md", f"[a commit](https://github.com/{other}/stoicheia/commit/abc)", [1]),
@@ -146,54 +192,108 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", "`~/.cache/stoicheia/harness/` and `~/.venvs/stoicheia/bin`", []),
         ("docs/STYLE.md", "`~/dev/stoicheia` and `./dev/stoicheia`", []),
         ("README.md", '<img src="assets/stoicheia-social.png">', []),
+        ("docs/STYLE.md", f"https://api.github.com/repos/{other}/stoicheia/releases", [1]),
+        ("docs/STYLE.md", f"https://codeload.github.com/{other}/stoicheia/zip/main", [1]),
+        ("docs/STYLE.md", f"`gh api repos/{other}/stoicheia/pulls`", [1]),
+        ("docs/STYLE.md", f"https://github.com/{other}/stoicheia.wiki", [1]),
+        ("docs/STYLE.md", f"git clone https://github.com/{other}/stoicheia.wiki.git", [1]),
+        ("docs/STYLE.md", "https://api.github.com/repos/dodecaplex-co/stoicheia", []),
+        ("docs/STYLE.md", "https://codeload.github.com/dodecaplex-co/stoicheia/zip/main", []),
+        ("docs/STYLE.md", "`gh api repos/dodecaplex-co/stoicheia/pulls`", []),
+        ("docs/STYLE.md", "https://github.com/dodecaplex-co/stoicheia.wiki.git", []),
+        ("docs/STYLE.md", f"https://github.com/{other}/stoicheia.wikis", []),
+        ("docs/STYLE.md", f"`~/repos/{other}/stoicheia`, `./repos/{other}/stoicheia`", []),
+        ("docs/STYLE.md", f"https://api.github.com/{other}/stoicheia", []),
     ]
     faults = []
     for name, text, lines in cases:
         got = [n for n, _ in problems(text)]
         if got != lines:
             faults.append(f"self-test: {name}: {text!r}: refused lines {got}, expected {lines}")
+    hosted, bare = WRITE_HOSTED, WRITE_BARE
+    advice = [(f"https://github.com/{other}/stoicheia", hosted),
+              (f"git@github.com:{other}/stoicheia.git", hosted),
+              (f"https://{other}.github.io/stoicheia/", hosted),
+              (f"https://api.github.com/repos/{other}/stoicheia", hosted),
+              (f"`gh repo clone {other}/stoicheia`", bare),
+              (f"`gh api repos/{other}/stoicheia`", bare),
+              ("`dev/stoicheia`, a local path read as bare", bare)]
+    for text, wanted in advice:
+        got = [what for _, what in problems(text)]
+        if len(got) != 1 or not got[0].endswith(f"; {wanted}"):
+            faults.append(f"self-test: {text!r}: advised {got}, expected {wanted!r}")
     scope = [("book/III/37.md", True), ("CITATION.cff", True), ("mishnah/intro/I.md", True),
              ("tests/model/MODEL.md", True), ("LICENSE", True), ("NOTICE", True),
              ("LICENSE-PROSE.md", True), ("docs/decisions/2026-10-21-file-names.md", False),
              ("docs/briefs/0002-decisions.md", False), ("docs/briefs/book-I.md", False),
              ("docs/reports/overlaps.md", False), ("scripts/render.py", False),
-             ("review/I/01.toml", False)]
+             ("review/I/01.toml", False), ("docs/briefs/book-II.md", False),
+             ("docs/briefs/0004-book-III.md", False), ("docs/briefs/0012-book-IV.md", False),
+             ("docs/decisions/2026-10-28-repository-address.md", False)]
     for name, wanted in scope:
         if in_scope(name) != wanted:
             faults.append(f"self-test: {name}: in scope {not wanted}, expected {wanted}")
-    count = len(cases) + len(scope)
+    # (arguments, the options refused): only --self-test is known, written in full.
+    argued = [(["--self-tset"], ["--self-tset"]), (["--self"], ["--self"]),
+              (["--self-test", "README.md"], []), (["README.md", "--self-test"], []),
+              (["--", "README.md"], ["--"]), (["NOTICE"], [])]
+    for argv, wanted in argued:
+        if options(argv)[2] != wanted:
+            faults.append(f"self-test: options {argv}: refused {options(argv)[2]}, "
+                          f"expected {wanted}")
+    # (what is read, whether it can be): a path through a file, which no file can have,
+    # bytes that are not UTF-8 (a Latin-1 é, a lone continuation byte), and bytes that are.
+    reading = [(read(Path(__file__).resolve() / "none"), False),
+               (decoded(b"caf\xe9"), False), (decoded(b"\x80"), False),
+               (decoded("café".encode()), True)]
+    for number, ((text, why), wanted) in enumerate(reading, 1):
+        if (text is not None) != wanted or bool(why) == wanted:
+            faults.append(f"self-test: reading case {number}: read {text is not None} "
+                          f"({why}), expected {wanted}")
+    count = len(cases) + len(advice) + len(scope) + len(argued) + len(reading)
     print(f"self-test: {count} cases" + (f", {len(faults)} wrong" if faults else " read rightly"))
     return faults
 
 
 def main(argv: list[str]) -> int:
-    faults = []
-    if argv[:1] == ["--self-test"]:
-        faults = self_test()
-        argv = argv[1:]
-    names = [rel(Path(a).resolve()) for a in argv] if argv else candidates()
+    testing, files, unknown = options(argv)
+    if unknown:
+        print(USAGE, file=sys.stderr)
+        print(f"check_address.py: error: unrecognized arguments: {' '.join(unknown)}",
+              file=sys.stderr)
+        return 2
+    faults = self_test() if testing else []
+    names = [rel(Path(a).resolve()) for a in files] if files else candidates()
     checked = refused = dated = dated_files = 0
     for name in names:
-        try:
-            text = (ROOT / name).read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        # A file named is read whatever its scope; of the rest, only the files in scope and
+        # the exempt folders' Markdown, which is counted.
+        scoped, counted = in_scope(name), name.startswith(DATED) and name.endswith(".md")
+        if not (files or scoped or counted):
             continue
-        if not in_scope(name):
-            if name.startswith(DATED) and name.endswith(".md"):
+        checked += 1 if scoped else 0
+        text, why = read(ROOT / name)
+        if text is None:
+            if files or scoped:
+                refused += 1
+                print(f"{name}: cannot be read ({why})")
+            continue
+        if not scoped:
+            if counted:
                 n = len(problems(text))
                 dated += n
                 dated_files += 1 if n else 0
             continue
-        checked += 1
         for number, what in problems(text):
             refused += 1
             print(f"{name}:{number}: {what}")
     for fault in faults:
         print(fault)
-    note = (f"; the dated records, kept as written, hold {dated} other addresses "
-            f"in {dated_files} files")
+    note = (f"; the exempt folders, the dated records and the briefs, hold {dated} other "
+            f"addresses in {dated_files} files")
     if refused or faults:
-        print(f"✗ address: {refused} refused in {checked} pages and documents{note}")
+        failed = "self-test failed; " if faults else ""
+        print(f"✗ address: {failed}{refused} refused in {checked} pages and documents{note}")
         return 1
     print(f"✓ address: every address of the repository in {checked} pages and documents "
           f"names github.com/{HOME}/stoicheia{note}")

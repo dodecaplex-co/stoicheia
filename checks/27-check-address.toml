@@ -1,6 +1,9 @@
-# Check that every page and current document gives the repository's address on GitHub as
-# its home, dodecaplex-co/stoicheia, the dated records passed over; --self-test first reads
-# a case of each form of address and of each kind of file. It needs no Lean.
+# Check that the pages and the documents in scope (Markdown, CITATION.cff, LICENSE, NOTICE)
+# give the repository's address on GitHub as its home, dodecaplex-co/stoicheia. The dated
+# records and the briefs, the current book briefs among them, are exempt and not judged, so
+# an old address added there is not refused (docs/WORKFLOW.md, section 4, "The
+# repository's address"); --self-test first reads a case of each form of address, of each
+# kind of file, of the options and of a file that cannot be read. It needs no Lean.
 order = 185
 name = "python3 scripts/check_address.py --self-test"
 job = "check"
