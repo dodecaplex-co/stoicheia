@@ -5580,6 +5580,281 @@ class Land(Edge):
         self.assertEqual(safe_push.review_notes(safe_push.Report()), [])
 
 
+class PreflightProof(Edge):
+    """#678, --preflight-proof: --land takes step 4 from a proof that a dry run wrote with
+    --emit-proof, read before any of the commit's code runs, while the secret scan and the
+    guards run on this machine, at the push and again at the merge. A proof of another
+    commit, against a moved main, by another harness or with another check input, with a
+    step failed or a note for the security review, too old or dated ahead (each planted
+    with its digest made again, so that only its own guard can catch it), edited by hand,
+    not JSON, or missing, falls back to the full pre-flight here, never silently accepted,
+    and the head still lands. A dry run writes a proof only once it has passed with step 4
+    in full, and removes one left at the path first. Land's helpers are borrowed, not
+    inherited, so that Land's tests run once."""
+
+    CHECK = Land.CHECK
+    FULL_PATH = Land.FULL_PATH
+    check_change = Land.check_change
+    guide_change = Land.guide_change
+    body = Land.body
+    merge_part = Land.merge_part
+    FROM_PROOF = "from the pre-flight proof made"
+    FALLBACK = "the full pre-flight runs here, as without --preflight-proof"
+
+    def setUp(self):
+        super().setUp()
+        self.proof = TMP / "proof.json"
+        self.proof.unlink(missing_ok=True)
+
+    def emit(self) -> subprocess.CompletedProcess:
+        return self.safe_push("--dry-run", "--emit-proof", str(self.proof))
+
+    def proved(self, head) -> tuple[str, dict]:
+        """The commit `head` makes, and the proof its dry run writes."""
+        sha = head()
+        r = self.emit()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return sha, json.loads(self.proof.read_text())
+
+    def land(self, proof: Path) -> subprocess.CompletedProcess:
+        return self.safe_push("--body-file", str(self.body()), "--ready", "--land",
+                              "--preflight-proof", str(proof))
+
+    def push_part(self, out: str) -> str:
+        """What the push prints, before the merge it goes on to."""
+        return out[:out.index("safe_push: merge of pull request #1 from")]
+
+    def planted(self, proof: dict, change) -> Path:
+        """The proof, with `change` made to a copy of it and its digest made again, so that
+        only the case's own guard can catch it, written where --land reads it."""
+        proof = copy.deepcopy(proof)
+        change(proof)
+        proof["digest"] = safe_push.sha256_of({k: v for k, v in proof.items() if k != "digest"})
+        self.proof.write_text(json.dumps(proof))
+        return self.proof
+
+    def assertFallsBack(self, sha: str, proof: dict, cases):
+        """Each case, a name, the proof's path as `plant` leaves it, and the reason, on a
+        fresh origin with the head `sha` checked out: the proof's line a note naming the
+        reason, the full pre-flight run here, never the proof, and the head merged, since
+        that pre-flight passes."""
+        for name, plant, why in cases:
+            with self.subTest(case=name):
+                self.setUp()
+                git(WORK, "checkout", "--quiet", "--detach", sha)
+                r = self.land(plant(proof))
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 0, out)
+                push = self.push_part(out)
+                self.assertEqual(self.guard(push, "pre-flight proof"), "note", push)
+                self.assertIn(f"not used: {why}", push)
+                self.assertIn(self.FALLBACK, push)
+                self.assertIn(self.FULL_PATH, push)
+                self.assertNotIn(self.FROM_PROOF, out)
+                self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_proof_stands_in_for_step_4_of_a_check_changing_head(self):
+        # The case #678 is for: a head that changes the checks lands in one run, step 4
+        # taken from the proof at the push and at the merge, while the secret scan and the
+        # guards run on this machine at both.
+        sha, proof = self.proved(self.check_change)
+        r = self.land(self.proof)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        push, merged = self.push_part(out), self.merge_part(out)
+        self.assertEqual(self.guard(push, "pre-flight proof"), "ok", push)
+        self.assertIn(f"made on {proof['machine']} at {proof['made']}, digest "
+                      f"{proof['digest'][:12]}: step 4 is taken from it", push)
+        self.assertEqual(self.step(push, "full local checks"), "skip", push)
+        self.assertIn(f"{self.FROM_PROOF} at {proof['made']}", push)
+        # The machine is named in no line the record keeps, and so not in the body.
+        for pr in self.gh_state()["prs"]:
+            self.assertNotIn(proof["machine"], pr["body"] or "")
+        self.assertNotIn(self.FULL_PATH, push)
+        for part in (push, merged):
+            for name in ("secrets", "statements", "protected paths", "paths"):
+                self.assertEqual(self.guard(part, name), "ok", f"{name}:\n{part}")
+        self.assertEqual(self.guard(merged, "pre-flight"), "ok", merged)
+        self.assertIn(f"{sha[:12]} checked against origin/main {BASE[:12]} in this run's "
+                      f"pre-flight, its record kept in memory, its step 4 {self.FROM_PROOF} on "
+                      f"{proof['machine']} at {proof['made']}, which that pre-flight checked "
+                      "before any of the commit's code ran: the secret scan and the guards "
+                      "run again; the full checks are not repeated", merged)
+        self.assertNotIn(Land.MEMORY, merged)
+        self.assertNotIn(self.FULL_PATH, merged)
+        self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1",
+                             self.origin_main()).split()[1:], [BASE, sha])
+
+    def test_the_proof_is_read_before_any_of_the_commits_code_runs(self):
+        # A post-checkout hook, which runs when the commit's first worktree is made, before
+        # any of its code, removes the proof: read before it, the proof still stands in, and
+        # its line comes before steps 2 and 3.
+        sha, _ = self.proved(self.check_change)
+        hook = hooks_dir() / "post-checkout"
+        hook.write_text(f'#!/bin/sh\nrm -f "{self.proof}"\n')
+        hook.chmod(0o755)
+        self.addCleanup(hook.unlink, missing_ok=True)
+        r = self.land(self.proof)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertFalse(self.proof.exists(), "the hook did not run")
+        push = self.push_part(out)
+        self.assertEqual(self.guard(push, "pre-flight proof"), "ok", push)
+        line = push.index("pre-flight proof: ")
+        self.assertLess(line, push.index("\n2. Secret scan"), push)
+        self.assertLess(line, push.index("\n3. Invariant guards"), push)
+        self.assertIn(self.FROM_PROOF, push)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_proof_of_another_commit_or_main_falls_back(self):
+        sha, proof = self.proved(self.guide_change)
+        older = git(WORK, "rev-parse", f"{BASE}~1").strip()
+        self.assertFallsBack(sha, proof, (
+            ("another commit", lambda p: self.planted(p, lambda q: q["record"].update(sha=BASE)),
+             f"it is of {BASE[:12]}, not of the commit {sha[:12]}"),
+            ("a stale main", lambda p: self.planted(p, lambda q: q["record"].update(base=older)),
+             f"origin/main moved since it was made, from {older[:12]} to {BASE[:12]}")))
+
+    def test_a_proof_by_another_harness_falls_back(self):
+        sha, proof = self.proved(self.guide_change)
+        self.assertFallsBack(sha, proof, (
+            ("another harness",
+             lambda p: self.planted(p, lambda q: q["record"].update(harness_blob="0" * 40)),
+             "it was made by another harness than this one, origin/main's (blob "
+             f"{proof['record']['harness_blob'][:12]})"),
+            ("another check input",
+             lambda p: self.planted(p, lambda q: q["check_inputs"].update(
+                 {"scripts/registry.py": "100644 " + "0" * 40})),
+             "its check inputs are not origin/main's (they differ at scripts/registry.py)")))
+
+    def test_a_failed_step_or_a_note_for_the_security_review_falls_back(self):
+        sha, proof = self.proved(self.guide_change)
+        noted = "lake build" + safe_push.BASE_PASS
+
+        def failed(q):
+            next(s for s in q["record"]["steps"] if s[0] == "4")[2] = "FAIL"
+        self.assertFallsBack(sha, proof, (
+            ("a failed step", lambda p: self.planted(p, failed),
+             "it is not of step 4 in full with every step passed, by this harness "
+             "(checks_record)"),
+            ("a note for the security review",
+             lambda p: self.planted(p, lambda q: q["record"]["notes"].append(
+                 [noted, "planted by the test"])),
+             f"it notes origin/main's checks failing on the commit ({noted}), for the "
+             "security review")))
+
+    def test_an_old_proof_or_one_dated_ahead_falls_back(self):
+        sha, proof = self.proved(self.guide_change)
+        now = datetime.datetime.now(datetime.timezone.utc)
+        old = (now - datetime.timedelta(hours=safe_push.PROOF_HOURS, minutes=1)).strftime(
+            safe_push.PROOF_MADE)
+        ahead = (now + datetime.timedelta(hours=1)).strftime(safe_push.PROOF_MADE)
+
+        def made(when):
+            return lambda p: self.planted(p, lambda q: q.update(made=when))
+        self.assertFallsBack(sha, proof, (
+            ("an old proof", made(old),
+             f"it was made at {old}, more than {safe_push.PROOF_HOURS} hours ago"),
+            ("a proof dated ahead", made(ahead), f"it is dated {ahead}, more than "
+             f"{safe_push.PROOF_SKEW} seconds ahead of this machine's clock")))
+
+    def test_a_hand_edited_unreadable_or_missing_proof_falls_back(self):
+        sha, proof = self.proved(self.guide_change)
+
+        def edited(p):
+            # A step's time changed by hand, the digest kept.
+            q = copy.deepcopy(p)
+            next(s for s in q["record"]["steps"] if s[0] == "4")[3] = 12345.0
+            self.assertNotEqual(q, p)
+            self.proof.write_text(json.dumps(q))
+            return self.proof
+
+        def text(p):
+            self.proof.write_text("This is not a proof.\n")
+            return self.proof
+        missing = TMP / "no-such-proof.json"
+        missing.unlink(missing_ok=True)
+        self.assertFallsBack(sha, proof, (
+            ("a hand edit", edited, "its digest does not match the rest of it: it was edited "
+             "by hand, or damaged"),
+            ("not JSON", text, "it is not UTF-8 JSON (JSONDecodeError)"),
+            ("a missing file", lambda p: missing,
+             "it cannot be opened (No such file or directory)")))
+
+    def test_a_passing_dry_run_writes_the_proof(self):
+        sha = self.check_change()
+        r = self.emit()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        proof = json.loads(self.proof.read_text())
+        self.assertEqual(set(proof), {"format", "record", "check_inputs", "machine", "made",
+                                      "digest"})
+        self.assertEqual(proof["digest"], safe_push.sha256_of(
+            {k: v for k, v in proof.items() if k != "digest"}))
+        self.assertEqual(proof["format"], 1)
+        record = proof["record"]
+        self.assertEqual((record["sha"], record["base"]), (sha, BASE))
+        harness = git(WORK, "rev-parse", f"{BASE}:scripts/safe_push.py").strip()
+        self.assertEqual(record["harness_blob"], harness)
+        self.assertEqual(proof["check_inputs"], safe_push.check_input_blobs(WORK, BASE))
+        self.assertTrue(proof["check_inputs"]["scripts/safe_push.py"].endswith(f" {harness}"))
+        self.assertEqual(proof["machine"], platform.node())
+        self.assertRegex(proof["made"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+        self.assertEqual(self.guard(out, "pre-flight proof"), "ok", out)
+        self.assertIn(f"written to {self.proof}: made on {proof['machine']} at "
+                      f"{proof['made']}, digest {proof['digest'][:12]}", out)
+
+    def test_a_dry_run_that_fails_or_leaves_step_4_to_ci_writes_none(self):
+        # Refused by the secret scan, a file left at the path by an earlier run: removed,
+        # and none written in its place.
+        self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        self.proof.write_text("An earlier proof.\n")
+        r = self.emit()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertFlagged(out, "docs/notes.md")
+        self.assertFalse(self.proof.exists(), out)
+        self.assertEqual(self.guard(out, "pre-flight proof"), "note", out)
+        self.assertIn(f"none written to {self.proof}: the dry run did not pass", out)
+        # A head of R0 to R2 passes, leaving step 4 to CI: no proof stands in for that.
+        self.setUp()
+        self.good_commit()
+        self.proof.write_text("An earlier proof.\n")
+        r = self.emit()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertFalse(self.proof.exists(), out)
+        self.assertEqual(self.guard(out, "pre-flight proof"), "note", out)
+        self.assertRegex(out, rf"none written to {re.escape(str(self.proof))}: step 4 was "
+                         r"left to CI for the class R[0-2], and a proof stands in only for "
+                         r"step 4 run in full")
+
+    def test_the_options_go_only_where_they_may(self):
+        # The parser's rules: a usage error, exit 2, and nothing pushed or asked of GitHub.
+        self.check_change()
+        path = str(self.proof)
+        branch = ["--branch", BRANCH, "--label", "docs"]
+        emit = ("--emit-proof goes with --dry-run, and with none of --merge, --land and "
+                "--main-checks-cache: a proof may not rest on a cache entry")
+        land = "--preflight-proof goes with --land"
+        for args, why in (([*branch, "--emit-proof", path], emit),
+                          (["--merge", "1", "--dry-run", "--emit-proof", path], emit),
+                          ([*branch, "--ready", "--land", "--emit-proof", path], emit),
+                          (["--dry-run", "--main-checks-cache", "--emit-proof", path], emit),
+                          ([*branch, "--ready", "--preflight-proof", path], land),
+                          ([*branch, "--dry-run", "--preflight-proof", path], land),
+                          (["--merge", "1", "--preflight-proof", path], land)):
+            with self.subTest(args=args):
+                r = subprocess.run([sys.executable, str(SAFE_PUSH), "--_test-skip-checks", *args],
+                                   cwd=WORK, env=clean_env(), capture_output=True, text=True)
+                self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+                self.assertIn(why, r.stderr)
+        self.assertFalse(self.proof.exists())
+        self.assertIsNone(self.origin_branch())
+        self.assertEqual(self.gh_state()["calls"], [])
+        self.assertEqual(self.origin_main(), BASE)
+
+
 # --------------------------------------------------------------------------------------
 # B: the review's findings, each with a planted commit
 

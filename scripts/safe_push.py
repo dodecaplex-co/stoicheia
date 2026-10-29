@@ -2,7 +2,8 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--land] [--commit <sha>] [--dry-run] [--main-checks-cache]
+                  [--land [--preflight-proof F]] [--commit <sha>] [--dry-run [--emit-proof F]]
+                  [--main-checks-cache]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>] [--main-checks-cache]  # the checks alone
 
@@ -275,6 +276,25 @@ accepts it (of step 4 in full, every step passed; or, for a change still of R0 t
 a pre-flight that left it to CI); else step 4 runs by the class, as for a separate
 --merge. The disk is never read on that path: the record saved there is not loaded,
 whatever it holds. A separate --merge keeps the rule above unchanged.
+
+--preflight-proof FILE, with --land, takes step 4 from a proof that a dry run wrote on
+another machine with --emit-proof FILE, as the owner decided on 29 October 2026: the yard
+VM, which holds no credentials, runs the pre-flight, and the machine that pushes signs off,
+pushes and merges. The proof is the dry run's record (the commit, origin/main's tip, the
+harness's blob, each step's verdict and time), the mode and blob of each check input at
+origin/main (check_input_blobs), the machine's name and the time it was made, with a digest
+of them. A dry run writes one only once it has passed with step 4 in full, removing FILE
+first, so that a run that fails leaves none, and never with --main-checks-cache: a proof
+may not rest on a cache entry. --land reads it after the preconditions and the class,
+before any of the commit's code runs here, and takes step 4 from it only when it is of
+this commit against this origin/main, by this harness with origin/main's check inputs,
+made no more than PROOF_HOURS ago nor PROOF_SKEW seconds ahead of this clock, with no note
+for the security review, and of step 4 in full, every step passed (proof_record); else a
+note says why, and the full pre-flight runs here, as without it. The proof is a file made
+by a run that ran the head's own code, so its digest catches an edit or damage, not a
+forgery: it is believed, as far as that binding reaches, on the owner's decision. The
+secret scan and the guards run on this machine every time, and CI and main's rules gate
+every merge.
 
 When main's rules require a merge queue, --merge keeps these gates, checks the head
 against the newest commit of origin/main's first-parent chain that it contains, as the
@@ -635,6 +655,18 @@ ENTRY_BYTES = 16 * 2 ** 20      # the largest entry read: 16 MiB (one measured 1
 CACHE: Path | None = None
 SANDBOX: str | None = None
 CACHE_HIT = False       # origin/main's pass was taken from the cache in this run (main_checks)
+
+# The pre-flight proof: a dry run's record, written on one machine (--emit-proof,
+# write_proof), that stands in for step 4 of --land on another (--preflight-proof,
+# proof_record).
+PROOF_FORMAT = 1
+PROOF_HOURS = 12        # the oldest proof --land takes
+PROOF_SKEW = 300        # seconds a proof may be dated ahead of this clock, as clocks differ
+PROOF_BYTES = 2 ** 20   # the largest proof read: 1 MiB
+PROOF_FIELDS = frozenset({"format", "record", "check_inputs", "machine", "made", "digest"})
+PROOF_MACHINE = re.compile(r"[A-Za-z0-9._-]{1,64}")
+PROOF_MADE = "%Y-%m-%dT%H:%M:%SZ"
+PROOF_TIME = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 
 class Refusal(Exception):
@@ -4378,8 +4410,9 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
     checks are skipped (short_path), CI running the rest of section 8's sequence before the
     merge and the negative tests running on main after it and on the cadence; for R3 to R5
     they run. `checked`, a record of this commit against this origin/main by origin/main's
-    harness, stands in for step 4 alone (--merge; checks_record); steps 2 and 3,
-    including the train check when given, always run."""
+    harness, stands in for step 4 alone (--merge, --land; checks_record), its step line
+    naming the pre-flight proof it came from when it did (--preflight-proof); steps 2 and
+    3, including the train check when given, always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     rep.heading("3. Invariant guards against origin/main")
     # Before the commit is checked out (#186): on a case-insensitive disk a twin is written
@@ -4401,9 +4434,15 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
             short = short_path(ctx, risk, g, rep)
             if checked is not None and not checked.get("short"):
                 short = False
+                proof = checked.get("proof")
                 rep.add("4", "full local checks", "skip", f"run on {ctx.sha[:12]} against "
-                        f"origin/main {ctx.base[:12]} by {checked.get('harness')}, "
-                        f"{checked.get('time')}")
+                        f"origin/main {ctx.base[:12]} by "
+                        f"{printable_text(str(checked.get('harness')))}, "
+                        f"{printable_text(str(checked.get('time')))}"
+                        # The machine is not named: this line goes into the record's
+                        # notes, and so into the pull request's body.
+                        + (f": from the pre-flight proof made at "
+                           f"{printable_text(proof['made'])}" if proof else ""))
             elif short:
                 rep.add("4", "full local checks", "skip", f"class {risk.cls}: left to CI, "
                         "whose check and model jobs run the builds, Facts.lean, the kernel "
@@ -5321,7 +5360,8 @@ def record_path(sha: str, base: str) -> Path:
 def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Risk,
                 checked: dict | None = None) -> dict:
     """The pre-flight's record. `checked`, the earlier record that stood in for step 4
-    (--merge), gives its step 4 and its notes. "class" is the change's class, by
+    (--merge), gives its step 4 and its notes, and its "proof" when that record came from
+    a pre-flight proof (--preflight-proof). "class" is the change's class, by
     origin/main's risk.py when this record was made, and "short" says that step 4 was left
     to CI for it; "full", that step 4 ran in full (here or in `checked`)."""
     steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
@@ -5335,7 +5375,7 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
                   if s.stage == "4" and s.outcome == "skip"]
         notes += [list(n) for n in checked.get("notes", [])
                   if n[0] != "full local checks" and list(n) not in notes]
-    return {
+    record = {
         "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
         "full": (full and not pre.short) or bool(checked and checked.get("full")),
         "class": risk.cls, "class_why": risk.why, "short": pre.short,
@@ -5345,6 +5385,9 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
         "steps": steps, "notes": notes,
         "protected": pre.protected, "statements": pre.statements,
     }
+    if checked is not None and checked.get("proof"):
+        record["proof"] = checked["proof"]
+    return record
 
 
 def checks_record(record: dict | None, test_mode: bool, risk: Risk) -> dict | None:
@@ -5436,6 +5479,155 @@ def held_record(held: Held, ctx: Context, risk: Risk) -> tuple[dict | None, str]
         return None, (f"the record kept in memory is not of {ctx.sha[:12]} against "
                       f"origin/main {ctx.base[:12]}, so it stands in for nothing: {again}")
     return held.record, ""
+
+
+def check_input_blobs(repo, base) -> dict[str, str]:
+    """Each check input at `base` (CHECK_INPUTS, the harness's own modules among them), as
+    {path: "<mode> <blob id>"}, read by git() with replacement objects off: what a
+    pre-flight against that origin/main ran with origin/main's copies."""
+    blobs = {}
+    for entry in git(repo, "ls-tree", "-r", "-z", base, "--", *CHECK_INPUTS).split("\0"):
+        if entry:
+            info, _, path = entry.partition("\t")
+            mode, _, oid = info.split(" ")
+            blobs[path] = f"{mode} {oid}"
+    return blobs
+
+
+def write_proof(path: Path, ctx: Context, record: dict, rep: Report, test_mode: bool) -> None:
+    """--emit-proof, once the dry run has passed: its record, origin/main's check inputs
+    (check_input_blobs), this machine's name and the time, with a digest of them, written
+    to `path` through a temporary file beside it and renamed into place, for
+    --preflight-proof on another machine (proof_record). Only a record of step 4 in full
+    (full_record) is written; else a note says why none is."""
+    machine = platform.node()
+    why = ""
+    if not full_record(record, test_mode):
+        why = (f"step 4 was left to CI for the class {record.get('class')}, and a proof "
+               "stands in only for step 4 run in full")
+    elif not PROOF_MACHINE.fullmatch(machine):
+        why = (f"this machine's name, {printable_text(machine)[:80]!r}, is not one a proof "
+               "may hold (1 to 64 of A to Z, a to z, 0 to 9, '.', '_' and '-')")
+    if why:
+        rep.add("5", "pre-flight proof", "note", f"none written to {path}: {why}")
+        return
+    proof = {"format": PROOF_FORMAT, "record": record,
+             "check_inputs": check_input_blobs(ctx.repo, ctx.base), "machine": machine,
+             "made": datetime.datetime.now(datetime.timezone.utc).strftime(PROOF_MADE)}
+    proof["digest"] = sha256_of(proof)
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp",
+                                   dir=path.parent)
+        with os.fdopen(fd, "wb") as f:
+            f.write(canonical(proof))
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+        tmp = None
+    except (OSError, ValueError) as e:
+        said = f"{getattr(e, 'strerror', None) or e}"
+        rep.add("5", "pre-flight proof", "FAIL", f"not written to {path}: {said}")
+        raise Refusal(f"the pre-flight proof could not be written to {path}: {said}") from e
+    finally:
+        if tmp is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp)
+    rep.add("5", "pre-flight proof", "ok", f"written to {path}: made on {machine} at "
+            f"{proof['made']}, digest {proof['digest'][:12]}, for --preflight-proof")
+
+
+def proof_record(path: Path, ctx: Context, risk: Risk,
+                 test_mode: bool) -> tuple[dict | None, str]:
+    """--preflight-proof: the record of a proof that a dry run wrote on another machine
+    (--emit-proof, write_proof), to stand in for step 4 here; else None, and why. It is
+    read after the preconditions and the class and before any of the commit's code runs
+    here, and stands in only when it is a regular file of no more than PROOF_BYTES, of
+    this format, its digest matching the rest of it (an edit by hand, or damage; not a
+    forgery, which the digest cannot catch), of this commit against this origin/main, by
+    this harness with origin/main's check inputs, made no more than PROOF_HOURS ago nor
+    more than PROOF_SKEW seconds ahead of this clock, with no note for the security review
+    (as review_notes reads them: with one, the full pre-flight runs here, so that the
+    note holds the merge), and of step 4 in full with every step passed (checks_record).
+    Any error in reading it, whatever it holds, is a reason, never a crash."""
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+    except OSError as e:
+        return None, f"it cannot be opened ({e.strerror or e})"
+    try:
+        with os.fdopen(fd, "rb") as f:
+            st = os.fstat(f.fileno())
+            if not stat.S_ISREG(st.st_mode):
+                return None, "it is not a regular file"
+            # Its size by fstat, and the read itself bounded, should it grow meanwhile.
+            data = f.read(PROOF_BYTES + 1) if st.st_size <= PROOF_BYTES else None
+        if data is None or len(data) > PROOF_BYTES:
+            return None, f"it is larger than {PROOF_BYTES} bytes (1 MiB)"
+        proof = json.loads(data.decode("utf-8"))
+    except Exception as e:      # whatever the file holds: a doubt, never a crash
+        return None, f"it is not UTF-8 JSON ({type(e).__name__})"
+    if not isinstance(proof, dict) or set(proof) != PROOF_FIELDS:
+        return None, (f"it is not a proof, which holds {', '.join(sorted(PROOF_FIELDS))} "
+                      "and nothing more")
+    record, inputs, machine, made = (proof[k] for k in ("record", "check_inputs", "machine",
+                                                        "made"))
+    if type(proof["format"]) is not int or proof["format"] != PROOF_FORMAT:
+        return None, f"it is not of format {PROOF_FORMAT}"
+    if not isinstance(record, dict) or not isinstance(inputs, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) for k, v in inputs.items()):
+        return None, "its record or its check inputs are not of this format"
+    if not isinstance(machine, str) or not PROOF_MACHINE.fullmatch(machine):
+        return None, "its machine's name is not of this format"
+    try:
+        made = datetime.datetime.strptime(made, PROOF_MADE).replace(
+            tzinfo=datetime.timezone.utc) if PROOF_TIME.fullmatch(made) else None
+    except (TypeError, ValueError):
+        made = None
+    if made is None:
+        return None, "its time made is not of this format (YYYY-MM-DDTHH:MM:SSZ, in UTC)"
+    try:
+        digest = sha256_of({k: v for k, v in proof.items() if k != "digest"})
+    except (TypeError, ValueError):     # NaN, which JSON may carry and canonical refuses
+        digest = None
+    if proof["digest"] != digest:
+        return None, ("its digest does not match the rest of it: it was edited by hand, or "
+                      "damaged")
+    if record.get("sha") != ctx.sha:
+        return None, (f"it is of {printable_text(str(record.get('sha')))[:12]}, not of the "
+                      f"commit {ctx.sha[:12]}")
+    if record.get("base") != ctx.base:
+        return None, (f"origin/main moved since it was made, from "
+                      f"{printable_text(str(record.get('base')))[:12]} to {ctx.base[:12]}")
+    if HARNESS_BLOB is None:
+        return None, "the harness running here is not origin/main's, so no proof is bound to it"
+    if record.get("harness_blob") != HARNESS_BLOB:
+        return None, (f"it was made by another harness than this one, origin/main's (blob "
+                      f"{HARNESS_BLOB[:12]})")
+    blobs = check_input_blobs(ctx.repo, ctx.base)
+    differ = sorted(p for p in {*blobs, *inputs} if blobs.get(p) != inputs.get(p))
+    if differ:
+        return None, (f"its check inputs are not origin/main's (they differ at "
+                      f"{printable_text(differ[0])[:200]}"
+                      + (f" and {len(differ) - 1} more" if len(differ) > 1 else "") + ")")
+    age = datetime.datetime.now(datetime.timezone.utc) - made
+    if age > datetime.timedelta(hours=PROOF_HOURS):
+        return None, f"it was made at {proof['made']}, more than {PROOF_HOURS} hours ago"
+    if -age > datetime.timedelta(seconds=PROOF_SKEW):
+        return None, (f"it is dated {proof['made']}, more than {PROOF_SKEW} seconds ahead of "
+                      "this machine's clock")
+    notes = record.get("notes") if isinstance(record.get("notes"), list) else []
+    names = [n[0] for n in notes if isinstance(n, list) and n and isinstance(n[0], str)]
+    held = [name for name in names if name == "pinned values" or (
+        name.endswith(BASE_PASS) and name.removesuffix(BASE_PASS) not in FRESHNESS)]
+    if held:
+        return None, (f"it notes origin/main's checks failing on the commit "
+                      f"({printable_text(', '.join(held))[:200]}), for the security review")
+    if checks_record(record, test_mode, risk) is None or record.get("short"):
+        return None, ("it is not of step 4 in full with every step passed, by this harness "
+                      "(checks_record)")
+    checked = copy.deepcopy(record)
+    checked["proof"] = {"machine": machine, "made": proof["made"], "digest": proof["digest"]}
+    return checked, ""
 
 
 # --------------------------------------------------------------------------------------
@@ -6845,11 +7037,32 @@ def preflight_main(repo: Path, args) -> int:
     held = None         # --land: what the merge takes from this run, once CI is green
     noted: list[str] = []   # --land: notes for the security review, which hold the merge
     try:
+        if args.emit_proof:
+            # So that a run that does not pass leaves no proof behind, an earlier one included.
+            try:
+                Path(args.emit_proof).unlink(missing_ok=True)
+            except OSError as e:
+                raise Refusal(f"could not remove {args.emit_proof}, where --emit-proof writes "
+                              f"the proof: {e.strerror or e}") from e
         ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
                             title=args.title)
         sha, base = ctx.sha, ctx.base
         labels = check_kind_label(ctx, args, rep) if ctx.branch else set()
         risk = risk_class(ctx.repo, ctx.base, ctx.sha, labels)
+        # The proof is read before any of the commit's code runs here: what that code does
+        # afterwards cannot change what this run believes.
+        checked = None
+        if args.preflight_proof:
+            checked, why = proof_record(Path(args.preflight_proof), ctx, risk, args.test_mode)
+            if checked is None:
+                rep.add("1", "pre-flight proof", "note", f"not used: {why}; the full "
+                        "pre-flight runs here, as without --preflight-proof")
+            else:
+                proof = checked["proof"]
+                rep.add("1", "pre-flight proof", "ok", f"made on "
+                        f"{printable_text(proof['machine'])} at "
+                        f"{printable_text(proof['made'])}, digest {proof['digest'][:12]}: "
+                        "step 4 is taken from it; the secret scan and the guards run here")
         # After the class, which serves the cache (R3 to R5 alone), and after risk_class
         # runs origin/main's risk.py, outside run(); before any of the commit's code runs.
         if args.main_checks_cache:
@@ -6858,9 +7071,10 @@ def preflight_main(repo: Path, args) -> int:
             open_cache(rep, risk, train=(ctx.branch or "").startswith("train/"))
         logs = logs_dir(sha)
         body_text = body_input(args)
-        pre = check_commit(ctx, rep, logs, args.test_mode, risk,
+        pre = check_commit(ctx, rep, logs, args.test_mode, risk, checked=checked,
                            train_body=train_input(ctx, body_text))
-        record = make_record(ctx, pre, rep, full=not args.test_mode, risk=risk)
+        record = make_record(ctx, pre, rep, full=not args.test_mode and checked is None,
+                             risk=risk, checked=checked)
         # For --land, the record as made, before it is saved: nothing done to the saved
         # one, or to its file, reaches this copy.
         kept = copy.deepcopy(record) if args.land else None
@@ -6876,6 +7090,8 @@ def preflight_main(repo: Path, args) -> int:
                 (logs / "pr-body.md").write_text(body)
                 print(f"  the body it would post: {logs / 'pr-body.md'}")
             rep.add("5", "git push", "skip", f"dry run: would push {sha[:12]} to {where}")
+            if args.emit_proof:
+                write_proof(Path(args.emit_proof), ctx, record, rep, args.test_mode)
             result, code = "passed every check (dry run, not pushed)", 0
         else:
             # The pull request is settled, its body scanned, before anything is public.
@@ -6927,6 +7143,9 @@ def preflight_main(repo: Path, args) -> int:
             raise
         result, code = f"pushed; CI not followed ({type(e).__name__}: {e})", 3
         print(f"\nPushed; CI not followed: {type(e).__name__}: {e}")
+    if args.emit_proof and not any(s.name == "pre-flight proof" for s in rep.steps):
+        rep.add("5", "pre-flight proof", "note", f"none written to {args.emit_proof}: "
+                + ("the dry run did not pass" if code else "origin/main is already the commit"))
     if held is None and not noted:
         summary(rep, mode, sha, base, result, ci)
         return code
@@ -7011,7 +7230,9 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
         # So too for a head that changes any protected path: CI runs the head's own
         # workflow (.github/) as well as its own checks.
         # A record kept in memory by this same run (--land) was never a file, so nothing
-        # the head's code ran could have written it: the reason does not hold for it.
+        # the head's code ran could have written it: the reason does not hold for it. One
+        # whose step 4 came from a pre-flight proof, a file, is believed as far as the
+        # proof's binding reaches, on the owner's decision (the module's docstring).
         if checked is not None and checked is not kept \
                 and any(under(p, CHECK_INPUTS) or is_protected(p)
                         for _, p in changed_files(repo, ctx.base, ctx.sha)):
@@ -7034,6 +7255,16 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
                     f"never read from a file, its class {checked.get('class')} then and "
                     f"{risk.cls} now: the secret scan and the guards run again; the full "
                     "checks stay with CI, as for any change of R0 to R2")
+        elif checked is not None and checked is kept and checked.get("proof"):
+            # Its step 4 came from a file, the pre-flight proof, which that pre-flight read
+            # and checked (proof_record) before any of the commit's code ran.
+            proof = checked["proof"]
+            rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
+                    f"{ctx.base[:12]} in this run's pre-flight, its record kept in memory, "
+                    f"its step 4 from the pre-flight proof made on "
+                    f"{printable_text(proof['machine'])} at {printable_text(proof['made'])}, "
+                    "which that pre-flight checked before any of the commit's code ran: the "
+                    "secret scan and the guards run again; the full checks are not repeated")
         elif checked is not None and checked is kept:
             rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
                     f"{ctx.base[:12]} in this run's pre-flight, its record kept in memory, "
@@ -7295,6 +7526,20 @@ def main(argv=None) -> int:
                         "load before its sandbox starts. Only the runs that land a train pass "
                         "it (the coordinator ruled): the coordinator's dry run of the "
                         "train and its push")
+    parser.add_argument("--emit-proof", metavar="FILE", help="with --dry-run, and neither "
+                        "--merge, --land nor --main-checks-cache (a proof may not rest on a "
+                        "cache entry): once the dry run has passed with step 4 in full, write "
+                        "a proof of it to FILE, for --preflight-proof on the machine that "
+                        "pushes. FILE is removed first, so a run that does not pass leaves "
+                        "none")
+    parser.add_argument("--preflight-proof", metavar="FILE", help="with --land: take step 4 "
+                        "from FILE, a proof written by --emit-proof on another machine, read "
+                        "before any of the commit's code runs here, when it is of this "
+                        "commit against this origin/main, by this harness with origin/main's "
+                        f"check inputs, no more than {PROOF_HOURS} hours old, with no note "
+                        "for the security review, and of step 4 in full, every step passed; "
+                        "else the full pre-flight runs here. The preconditions, the secret "
+                        "scan and the guards run here every time")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
@@ -7303,6 +7548,12 @@ def main(argv=None) -> int:
     parser.add_argument("--_test-skip-checks", dest="test_mode", action="store_true",
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
+    if args.emit_proof and (not args.dry_run or args.merge is not None or args.land
+                            or args.main_checks_cache):
+        parser.error("--emit-proof goes with --dry-run, and with none of --merge, --land and "
+                     "--main-checks-cache: a proof may not rest on a cache entry")
+    if args.preflight_proof and not args.land:
+        parser.error("--preflight-proof goes with --land")
     if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
                                    or args.label or args.commit != "HEAD"
                                    or args.main_checks_cache):
