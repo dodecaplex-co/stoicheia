@@ -1699,7 +1699,7 @@ class CongruentCircumferences(unittest.TestCase):
     # III.27's and III.29's main statements take Euclid's equal circumferences as ones that
     # coincide (`Arc.Congruent`), their companions as ones equal in measure (#474). Their rows
     # get the words of both readings and the bridges their notes name, and are not asked for the
-    # theorems their notes name that are proved after them (RECORD_LATER, #674).
+    # later theorems RECORD_LATER lists, which their notes name as context (#674).
 
     def test_iii_27_and_iii_29_get_the_congruence_and_the_bridges_their_records_name(self):
         for n in (27, 29):

@@ -1,5 +1,5 @@
-<!-- entry: id=jev-iii27-iii29-bridges cards=674 line="The Jev generator gives III.27's and III.29's rows the congruence and the bridges their records name, and asks them for no theorem their notes name as proved after them." -->
-- **The Jev generator follows III.27's and III.29's records to the bridges they name, and to no theorem proved after them (#674).**
+<!-- entry: id=jev-iii27-iii29-bridges cards=674 line="The Jev generator gives III.27's and III.29's rows the congruence and the earlier bridges their records name, and does not ask them for the two later theorems their notes name as context." -->
+- **The Jev generator follows III.27's and III.29's records to the earlier bridges they name, and not to the later theorems they name as context (#674).**
   Since III.27 and III.29 were swapped ([that entry](2026-10-28-iii27-iii29-swap.md)), their
   main statements read Euclid's equal circumferences as ones that coincide (`Arc.Congruent`)
   and their companions as ones equal in measure. III.27's representation note says that the
