@@ -2,7 +2,7 @@
 scope = "full"
 note = "Equal circumferences that coincide in `Prop29`, equal in measure in `Prop29.of_measure`; of any size, less than a semicircle, a semicircle or greater."
 companions = ["III.29 of_measure"]
-fingerprint = "sha256:b15027ff1b86720a"
+fingerprint = "sha256:c480aaed8eb6d304"
 
 [route]
 kind = "modified"
@@ -38,18 +38,18 @@ note = "III.27 supplies Euclid's ordinary central angles for lesser circumferenc
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
 helper = "Prop26.alike"
-note = "`Prop26.alike` puts the centres in matching cases. For lesser circumferences, III.27's ordinary angles and the equal radii give the bases by I.4. For greater circumferences, `angleAtCentre.reflex` and Common Notion 3 supply the ordinary angles by subtraction before I.4, an additional step within the statement (Heath, vol. 2, p. 60). For semicircles, adding the equal radii gives equal diameters, the elementary case discussed on p. 61."
+note = "`Prop26.alike` puts the centres in matching cases. For lesser circumferences, III.27's ordinary angles and the equal radii give the bases by I.4. For greater circumferences, `angleAtCentre.reflex` and Common Notion 3 supply the ordinary angles by subtraction before I.4, an additional step within the statement (Heath, vol. 2, p. 60). For semicircles, adding the equal radii gives equal diameters, the elementary case discussed (vol. 2, p. 61)."
 
 [figure]
 case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC and EF from G and H"
 
 [review]
 stage = "full"
-commit = "50db90038"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:9deab117dc167f75"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: III.27 before I.4 in every case, the reflex angles at the centres taken from four right angles, the companion through Prop27.of_congruent, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5"
-text = "sha256:05c4bfea3829515b"
+commit = "8cc098277"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:718246bcf01f9234"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: III.27 before I.4 in every case, the reflex angles at the centres taken from four right angles, the companion through Prop27.of_congruent, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5; card #474, ship ER: III.27 and III.29 swapped on the owner's decision of 28 October 2026, the congruence reading the main statement and the measure form the companion, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:2ea1b60e3bd95c1a"
 
 [review.items]
 statement = "pass"
