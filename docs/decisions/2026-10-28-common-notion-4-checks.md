@@ -30,14 +30,14 @@
   9's law, `areaCongruent`, and the content makes both false. The first asked that I.4's
   `cited_laws` include seven laws, the area law among them, and number seven: the area
   law leaves its `includes`, while its count stays at seven, so that on main the number
-  still pins the whole list, and its `why` now says so. The second asked that the area
+  still holds the list to those six and one law more, and its `why` now says so. The second asked that the area
   law, among I.4's cited laws, be proved with no construction rule; it goes, for the
   content leaves no such law to read. Between the two trains, then, the file asks less of
   I.4 than it did. The content is to ask more again, and more strongly: it moves the count
   to six, which pins the list exactly without the law, and it adds an expectation that
   I.4's `own_axioms` include `Tacit.figures_coincide`, pinning by name the axiom the
-  clause rests on, where the area law was pinned only by the construction rules of its
-  proof; and the restriction above, which no expectation could give, holds that axiom to
+  clause rests on, where Metric 9 was pinned only through its law, by the law's name and the construction
+  rules of its proof; and the restriction above, which no expectation could give, holds that axiom to
   I.4.
 
   The Jev bundle. The question generator named, for the representation rows of I.4 and
