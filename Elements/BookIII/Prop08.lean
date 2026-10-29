@@ -41,15 +41,14 @@ other side as far from D, and no third.
 That no third straight line from D is equal to DK is proved by Euclid's own step, "which was
 proved impossible". On DA, a third point N would be A or G, and DA is the greatest and DG the
 least. Off DA, DN and the straight line it is compared with, DB or DK, are on one side of
-DA, and where both fall on the convex circumference the nearer to DG is the less, by the
-order proved earlier in the proof, so they cannot be equal. Two cases Euclid's figure
-leaves aside are taken by his orders as well: two points of the concave circumference are
-compared by that circumference's own order in the same way, and a point of each
-circumference by the two orders together, through the second point where the straight
-line from D making the greater angle with DA meets the circle, which is on the other
-circumference, with the part less than the whole. The angles at the centre M decide only
-the case no order reaches, by I.24: one of the two points a point of contact, which is on
-neither circumference.
+DA, and the one making the less angle with DA is the nearer to DG. Where the nearer falls on
+the convex circumference it is the less, by the order proved earlier in the proof, so the
+two cannot be equal; where it falls on the concave, a case Euclid's figure leaves aside, it
+is the greater, by that circumference's own order. Euclid's argument for each order asks only
+that the nearer be on its circumference, by I.21 within the triangle on the more remote point
+or by I.24 at the centre M, so the more remote may be on the other circumference, or a point
+of contact, which is on neither and ends both orders: no point of the circle on its side makes
+a greater angle with DA (`Prop8.contact_last`), so it is never the nearer.
 
 `Prop8.partner` is the step the companion needs: the partner on the other side makes the
 same angle with DA, and is in the same class. Equal distance alone does not carry a
@@ -101,6 +100,33 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
   have hK_P : ¬ OnLine K P := fun hK_P =>
     hD_P (on_line_of_between (between_symm hDKZ) hZ_P hK_P)
   exact ⟨hKL.swap, hKM, SameSideOf.of_line hLM hL_P hM_P (pasch2 (between_symm hDKZ) hZ_P hK_P)⟩
+
+/-- A point of contact is at the end of both orders. Let T be a point of the circle with no
+point of the circle between D and T, and none on DT produced beyond T: a point where a
+straight line from D touches the circle, on neither circumference. Then no point R of the
+circle on T's side of DM makes a greater angle with DM at D. Otherwise DT, within the angle
+MDR, crosses the radius MR at a point Y within the circle (`crossbar`,
+`InsideCircle.of_between_centre`), and Y is not T. If Y is between D and T, the straight
+line meets the circle between D and Y (System E, Intersections 4); if T is between D and Y,
+it meets it again beyond Y (Intersections 5). Either way T has a point of the circle before
+it or beyond it. -/
+theorem Prop8.contact_last {D M T R : Point} {α : Circle} (hM : Centre M α)
+    (hD : OutsideCircle D α) (hT : OnCircle T α) (hR : OnCircle R α)
+    (hC : ¬ ∃ C : Point, OnCircle C α ∧ Between D T C)
+    (hH : ¬ ∃ H : Point, OnCircle H α ∧ Between D H T)
+    (hTR : SameSideOf T R D M) : ¬ ∠ M D T < ∠ M D R := by
+  intro hlt
+  have hTM : SameSideOf T M D R := BookI.Prop24.within hTR.symm hlt
+  obtain ⟨Y, hMYR, hY⟩ := crossbar hTR hTM
+  have hY_in : InsideCircle Y α := InsideCircle.of_between_centre hM hR hMYR
+  obtain ⟨hDT, hYD, ⟨N, hD_N, hT_N, hY_N⟩, hYDT⟩ := hY
+  have hYT : Y ≠ T := fun e => inside_not_on hY_in (e ▸ hT)
+  rcases between_cases hYD.symm hYT hDT hD_N hY_N hT_N with h | h | h
+  · obtain ⟨F, hF, -, hYFD⟩ := line_circle_between hY_in hY_N hD hD_N
+    exact hH ⟨F, hF, between_of_between_left h (between_symm hYFD)⟩
+  · exact hYDT h
+  · obtain ⟨C, hC', -, hCYD⟩ := line_circle_beyond hY_in hY_N hD_N hYD.symm
+    exact hC ⟨C, hC', between_of_between_left (between_symm hCYD) h⟩
 
 /-- A point of the circle on the straight line DA is A or G, for no three points of a
 circle lie on one straight line. -/
@@ -193,11 +219,12 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
     -- therefore AD is also greater than ED.
     rw [len_symm D E, len_symm D A, hAD]
     exact h20
+  /- Euclid's argument asks only that E, the nearer, be on the concave circumference, so
+     F may be any point of the circle making the greater angle with DA. -/
   have concave : ∀ E F : Point, OnCircle E ABC → OnCircle F ABC →
       (∃ H : Point, OnCircle H ABC ∧ Between D H E) →
-      (∃ L : Point, OnCircle L ABC ∧ Between D L F) →
       SameSideOf E F D A → ∠ A D E < ∠ A D F → ‖D F‖ < ‖D E‖ := by
-    intro E F hE hF ⟨H, hH, hDHE⟩ _ hEF hlt
+    intro E F hE hF ⟨H, hH, hDHE⟩ hEF hlt
     -- Again, since ME is equal to MF,
     have hME_MF : ‖M E‖ = ‖M F‖ := (hMA E hE).trans (hMA F hF).symm
     -- and MD is common,
@@ -234,11 +261,12 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
     -- so that GD is less than KD.
     rw [len_symm D G, len_symm D K]
     exact hGD_KD
+  /- As on the concave circumference, the argument asks only that K, the nearer, be on the
+     convex circumference: L may be any point of the circle making the greater angle. -/
   have convex : ∀ K L : Point, OnCircle K ABC → OnCircle L ABC →
       (∃ C : Point, OnCircle C ABC ∧ Between D K C) →
-      (∃ F : Point, OnCircle F ABC ∧ Between D L F) →
       SameSideOf K L D A → ∠ A D K < ∠ A D L → ‖D K‖ < ‖D L‖ := by
-    intro K L hK hL ⟨C, hC, hDKC⟩ _ hKL hlt
+    intro K L hK hL ⟨C, hC, hDKC⟩ hKL hlt
     -- And, since on MD, one of the sides of the triangle MLD, two straight lines MK, KD were
     -- constructed meeting within the triangle,
     /- K is within the triangle DLM, De Morgan's other placement (`Prop8.within`). -/
@@ -310,96 +338,39 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
     /- Euclid compares DN with DB, on B's side of DA; on K's side, a placing his figure
        leaves aside, DN is compared with DK in the same way. So let P be B or K, on N's
        side, with DN equal to DP. -/
-    have one_side : ∀ P, OnCircle P ABC → ¬ OnLine P Ld → ∀ N, OnCircle N ABC →
+    have one_side : ∀ P, OnCircle P ABC → ∀ N, OnCircle N ABC →
         SameSide N P Ld → ‖D N‖ = ‖D P‖ → N = P := by
-      intro P hP hP_Ld N hN hs hDN
+      intro P hP N hN hs hDN
       have hNP : SameSideOf N P D A := SameSideOf.of_line (ne_of_between_ends hDGA) hD_Ld hA_Ld hs
-      /- Euclid's comparison, with N and P both on the convex circumference. The one making
-         the less angle with DA is the nearer to the least DG, and so the less, by the order
-         on the convex circumference proved above; but DN is equal to DP. -/
-      by_cases hcx : (∃ C : Point, OnCircle C ABC ∧ Between D P C) ∧
-          (∃ C : Point, OnCircle C ABC ∧ Between D N C)
-      · rcases lt_trichotomy (∠ A D N) (∠ A D P) with hl | he | hg
-        · have hlt := convex N P hN hP hcx.2 hcx.1 hNP hl
-          rw [hDN] at hlt
-          exact absurd hlt (lt_irrefl _)
-        · /- Euclid takes DN to be a straight line other than DB, so that one of the two is
-             the nearer. Were the angles ADN and ADP equal, N would lie on the ray DP, as far
-             from D as P is, and so be P itself. -/
-          exact OnRay.eq_of_len_eq (onRay_of_angle_eq hNP he) hDN
-        · have hlt := convex P N hP hN hcx.1 hcx.2 hNP.symm hg
-          rw [hDN] at hlt
-          exact absurd hlt (lt_irrefl _)
-      /- A case Euclid's figure leaves aside: N and P both on the concave circumference, as
-         when K is taken there. The order proved above for that circumference does the same
-         work, the less angle with DA having the greater straight line. -/
-      by_cases hcv : (∃ H : Point, OnCircle H ABC ∧ Between D H P) ∧
-          (∃ H : Point, OnCircle H ABC ∧ Between D H N)
-      · rcases lt_trichotomy (∠ A D N) (∠ A D P) with hl | he | hg
-        · have hlt := concave N P hN hP hcv.2 hcv.1 hNP hl
-          rw [hDN] at hlt
-          exact absurd hlt (lt_irrefl _)
-        · exact OnRay.eq_of_len_eq (onRay_of_angle_eq hNP he) hDN
-        · have hlt := concave P N hP hN hcv.1 hcv.2 hNP.symm hg
-          rw [hDN] at hlt
-          exact absurd hlt (lt_irrefl _)
-      /- A case Euclid's figure leaves aside: N and P on different circumferences. Each
-         order compares two points of one circumference only, for the two points where one
-         straight line from D meets the circle make one angle with DA and are at different
-         distances from D. So the two orders work together, through the second point where
-         a straight line from D meets the circle. Take X on the convex circumference and Y on
-         the concave. If Y makes the less angle with DA, DX produced meets the circle again
-         at C, on the concave circumference, and DC is less than DY by the order there, and
-         DX less than DC, the part than the whole. If X makes the less angle, a point H of
-         the circle between D and Y is on the convex circumference, and DX is less than DH by
-         the order there, and DH less than DY. Either way DX is the less, so the two are
-         equal only if the angles are, and then X is Y. -/
-      have across : ∀ X Y : Point, OnCircle X ABC → OnCircle Y ABC →
-          (∃ C : Point, OnCircle C ABC ∧ Between D X C) →
-          (∃ H : Point, OnCircle H ABC ∧ Between D H Y) →
-          SameSideOf X Y D A → ‖D X‖ = ‖D Y‖ → X = Y := by
-        intro X Y hX hY ⟨C, hC, hDXC⟩ ⟨H, hH, hDHY⟩ hXY hDXY
-        rcases lt_trichotomy (∠ A D Y) (∠ A D X) with hl | he | hg
-        · have hCY : SameSideOf C Y D A := SameSideOf.of_onRay (OnRay.of_beyond hDXC) hXY
-          have hlt := concave Y C hY hC ⟨H, hH, hDHY⟩ ⟨X, hX, hDXC⟩ hCY.symm
-            (by rw [angle_onRay_right (OnRay.of_beyond hDXC) (ne_of_between_ends hDGA).symm]
-                exact hl)
-          have hXY_lt := lt_trans (len_lt_of_between hDXC) hlt
-          rw [hDXY] at hXY_lt
-          exact absurd hXY_lt (lt_irrefl _)
-        · exact (OnRay.eq_of_len_eq (onRay_of_angle_eq hXY.symm he) hDXY.symm).symm
-        · have hHX : SameSideOf H X D A := SameSideOf.of_onRay (OnRay.of_between hDHY) hXY.symm
-          have hlt := convex X H hX hH ⟨C, hC, hDXC⟩ ⟨Y, hY, hDHY⟩ hHX.symm
-            (by rw [angle_onRay_right (OnRay.of_between hDHY) (ne_of_between_ends hDGA).symm]
-                exact hg)
-          have hXY_lt := lt_trans hlt (len_lt_of_between hDHY)
-          rw [hDXY] at hXY_lt
-          exact absurd hXY_lt (lt_irrefl _)
-      by_cases hxv : (∃ C : Point, OnCircle C ABC ∧ Between D P C) ∧
-          (∃ H : Point, OnCircle H ABC ∧ Between D H N)
-      · exact (across P N hP hN hxv.1 hxv.2 hNP.symm hDN.symm).symm
-      by_cases hvx : (∃ H : Point, OnCircle H ABC ∧ Between D H P) ∧
-          (∃ C : Point, OnCircle C ABC ∧ Between D N C)
-      · exact across N P hN hP hvx.2 hvx.1 hNP hDN
-      /- The case left is one no order reaches: one of N and P a point where a straight line
-         from D touches the circle, which is on neither circumference. The angles at the
-         centre M decide it: unequal angles there give unequal straight lines from D by I.24,
-         as in Euclid's comparison on the concave circumference, and equal ones put N on the
-         radius MP, so that N is P. -/
-      have hN_Ld : ¬ OnLine N Ld := not_on_line_of_same_side hs
-      have hNP' : SameSideOf N P M D := SameSideOf.of_line hDM.symm hM_Ld hD_Ld hs
-      have hMN : ‖M P‖ = ‖M N‖ := (hMA P hP).trans (hMA N hN).symm
-      rcases lt_trichotomy (∠ N M D) (∠ P M D) with hl | he | hg
-      · have h24 := BookI.Prop24 (tri P hP_Ld) (tri N hN_Ld) hMN rfl hl
-        rw [len_symm N D, len_symm P D, hDN] at h24
-        exact absurd h24 (lt_irrefl _)
-      · have hray : OnRay N M P := onRay_of_angle_eq hNP' (by
-          rw [angle_symm hDM (ne_of_centre_of_on hM hN), he,
-            angle_symm (ne_of_centre_of_on hM hP) hDM])
-        exact OnRay.eq_of_len_eq hray hMN.symm
-      · have h24 := BookI.Prop24 (tri N hN_Ld) (tri P hP_Ld) hMN.symm rfl hg
-        rw [len_symm N D, len_symm P D, hDN] at h24
-        exact absurd h24 (lt_irrefl _)
+      /- Euclid's comparison. Of two points of the circle on one side of DA, the one making
+         the less angle with DA is the nearer to the least DG. On the convex circumference it
+         is the less, by the order proved there, and on the concave the greater, by that
+         circumference's order, a case Euclid's figure leaves aside; either way the two are
+         not equal. Each order asks only that the nearer be on its circumference, so the
+         other may be on either circumference, or a point where a straight line from D
+         touches the circle: such a point is at the end of both orders, and cannot be the
+         nearer, for no point of the circle on its side makes a greater angle with DA
+         (`Prop8.contact_last`). -/
+      have unequal : ∀ X Y : Point, OnCircle X ABC → OnCircle Y ABC → SameSideOf X Y D A →
+          ∠ A D X < ∠ A D Y → ‖D X‖ = ‖D Y‖ → False := by
+        intro X Y hX hY hXY hlt hDXY
+        by_cases hcx : ∃ C : Point, OnCircle C ABC ∧ Between D X C
+        · have hless := convex X Y hX hY hcx hXY hlt
+          rw [hDXY] at hless
+          exact lt_irrefl _ hless
+        by_cases hcv : ∃ H : Point, OnCircle H ABC ∧ Between D H X
+        · have hless := concave X Y hX hY hcv hXY hlt
+          rw [hDXY] at hless
+          exact lt_irrefl _ hless
+        rw [ang X (hDP X hX), ang Y (hDP Y hY)] at hlt
+        exact Prop8.contact_last hM hD hX hY hcx hcv (side X Y hXY) hlt
+      rcases lt_trichotomy (∠ A D N) (∠ A D P) with hl | he | hg
+      · exact absurd hDN (unequal N P hN hP hNP hl)
+      · /- Euclid takes DN to be a straight line other than DB, so that one of the two is
+           the nearer. Were the angles ADN and ADP equal, N would lie on the ray DP, as far
+           from D as P is, and so be P itself. -/
+        exact OnRay.eq_of_len_eq (onRay_of_angle_eq hNP he) hDN
+      · exact absurd hDN.symm (unequal P N hP hN hNP.symm hg)
     /- On DA itself, N is A or G, and DA is the greatest and DG the least, as proved above,
        so neither is as far from D as K. -/
     by_cases hN_Ld : OnLine N Ld
@@ -411,15 +382,18 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
         rw [hDN] at hlt
         exact absurd hlt (lt_irrefl _)
     by_cases hs : SameSide N K Ld
-    · exact Or.inl (one_side K hK hK_Ld N hN hs hDN)
+    · exact Or.inl (one_side K hK N hN hs hDN)
     · have hsB : SameSide N B Ld := same_side_of_opposite_sides
         ⟨hK_Ld, hN_Ld, fun h => hs (same_side_symm h)⟩
         (hBK.symm.oppositeSides hM_Ld hD_Ld)
-      exact Or.inr (one_side B hB hB_Ld N hN hsB hDB_DN.symm)
+      exact Or.inr (one_side B hB N hN hsB hDB_DN.symm)
   -- Therefore no more than two equal straight lines will fall on the circle ABC from the point
   -- D, one on each side of DG the least.
   -- Therefore etc.
-  exact ⟨greatest, concave, least, convex, two_equal⟩
+  /- The statement's orders ask the more remote point to be on its circumference too; the
+     comparisons above do not need it. -/
+  exact ⟨greatest, fun E F hE hF hHE _ => concave E F hE hF hHE, least,
+    fun K L hK hL hKC _ => convex K L hK hL hKC, two_equal⟩
   -- Q. E. D.
 
 /-- **III.8, the partner equally inclined and in the same class** (a step of III.8

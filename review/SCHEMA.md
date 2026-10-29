@@ -80,11 +80,12 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (III.8, whose last step compares the angles at the centre by I.24).
+  way (III.27, whose reductio, where the angles at the circumference are obtuse, runs on
+  the angles standing on the circumferences that remain).
 - **alternative**: a different proof altogether, labelled as one on the page. No route of
   Books I to III may be one ([ACCEPTANCE](../docs/ACCEPTANCE.md), P3): an alternative proof
   is kept there as a companion beside Euclid's route, as III.24's proof by the radii is
-  (`Prop24.equalCircles`, beside its `modified` route).
+  (`Prop24.equalCircles`, beside its `euclid` route).
 
 ### `[representation]`: how Euclid's objects are put into Lean
 
@@ -163,7 +164,8 @@ One table for each passage declared, in the order of the proof.
 - **grouped**: several sentences carried by one argument, or a "similarly" by one lemma.
 - **case**: a case Euclid's figure leaves aside, or leaves to the reader, which the Lean
   takes as well, in the same argument or in a step of its own (II.14's ED the greater,
-  III.2's AB through the centre); the note says how.
+  III.11's A on GF produced beyond F, which Heath says Euclid would have left to the
+  reader); the note says how.
 - **given**: what the passage does is already given, by the statement or by how our
   objects are put into Lean, so no Lean is needed beneath it (I.5's D and E, which come
   with the statement); the note says what gives it.

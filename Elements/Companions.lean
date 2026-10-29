@@ -3,6 +3,7 @@ import Elements.BookI.Prop45
 import Elements.BookI.Prop47
 import Elements.BookII.Prop01
 import Elements.BookII.Prop14
+import Elements.BookIII.Prop01
 import Elements.BookIII.Prop07
 import Elements.BookIII.Prop08
 import Elements.BookIII.Prop13
@@ -15,6 +16,8 @@ import Elements.BookIII.Prop20
 import Elements.BookIII.Prop23
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop25
+import Elements.BookIII.Prop27
+import Elements.BookIII.Prop29
 import Elements.BookIII.Prop30
 import Elements.BookIII.Prop31
 
@@ -53,6 +56,7 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookII.Prop14.fan, "II.14 fan"),
   (``Elements.BookII.Prop14.outline, "II.14 outline"),
   (``Elements.BookII.Prop14.outline_side, "II.14 outline_side"),
+  (``Elements.BookIII.Prop1.of_circle, "III.1 of_circle"),
   (``Elements.BookIII.Prop7.general, "III.7 general"),
   (``Elements.BookIII.Prop8.general, "III.8 general"),
   (``Elements.BookIII.Prop13.touchesInternally_iff, "III.13 touchesInternally_iff"),
@@ -77,6 +81,8 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookIII.Prop25.complete, "III.25 complete"),
   (``Elements.BookIII.Prop25.kind, "III.25 kind"),
   (``Elements.BookIII.Prop25.of_circle, "III.25 of_circle"),
+  (``Elements.BookIII.Prop27.of_congruent, "III.27 of_congruent"),
+  (``Elements.BookIII.Prop29.of_congruent, "III.29 of_congruent"),
   (``Elements.BookIII.Prop30.halves, "III.30 halves"),
   (``Elements.BookIII.Prop31.greater, "III.31 greater"),
   (``Elements.BookIII.Prop31.less, "III.31 less")]

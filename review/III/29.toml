@@ -1,15 +1,16 @@
 [statement]
 scope = "full"
-note = "Covers equal circumferences of any size, less than a semicircle, a semicircle or greater, compared by the angle measure."
-fingerprint = "sha256:88bb35fd9003b0a0"
+note = "Equal circumferences of any size, less than a semicircle, a semicircle or greater, by the angle measure; `Prop29.of_congruent` takes them to be congruent."
+companions = ["III.29 of_congruent"]
+fingerprint = "sha256:b15027ff1b86720a"
 
 [route]
 kind = "modified"
-note = "Euclid's argument where the circumferences are less than semicircles; when they are semicircles, BC and EF are diameters, and when greater, his argument runs on the circumferences that remain."
+note = "Euclid's I.4 argument uses the ordinary central angles standing on lesser circumferences (Heath, vol. 2, p. 60). For greater circumferences, III.27 first gives equal inscribed angles, III.20 doubles them to reflex central angles, and Common Notion 3 removes those from four right angles before I.4. That is an additional argument for a case within the statement, so the route is modified. Semicircles give diameters, each the sum of two equal radii, the elementary case Heath discusses on p. 61. The companion takes the given congruence through `Prop27.of_congruent` and then follows the same argument."
 
 [representation]
-tags = ["angle-measure"]
-note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; the equal circles do real work here, giving I.4 its equal radii."
+tags = ["angle-measure", "redundant-hypothesis"]
+note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; in `Prop29` the equal circles do real work, giving I.4 its equal radii. In `Prop29.of_congruent` the circumferences are congruent, and the map that lays one on the other keeps the distance between their ends, so the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles with them (`Prop24.equalCircles`): in that companion alone the hypothesis is redundant, kept as Euclid's setting and used along the same route, for the radii of I.4."
 
 [[passage]]
 at = "and let the straight lines BC, EF be joined"
@@ -19,24 +20,37 @@ note = "Euclid's figure puts A and D on the circles beyond BC and EF from G and 
 
 [[passage]]
 at = "For let the centres of the circles be taken"
-kind = "different"
-note = "The given equal circles supply K and L, as the [introduction](index.md) explains. When K lies on BC, `Circumference.semicircle` makes BGC a semicircle and `Prop29.size` makes EHF one too. BC and EF are diameters, each twice the equal radius, so the Lean adds the radii by `Tacit.len_add_of_between` instead of applying III.27 and I.4."
+kind = "given"
+note = "The hypothesis that the circles are equal supplies K and L through `EqualCircles`; the radii are named by their ends."
 
 [[passage]]
 at = "Now, since the circumference BGC is equal to the circumference EHF"
+kind = "helper"
+helper = "standing_eq_circumference"
+note = "The given equal measures of BGC, EHF become equal standing circumferences at A and D, by `standing_eq_circumference`. III.27 takes this equality at the next sentence; the companion instead supplies the given congruence to `Prop27.of_congruent`."
+
+[[passage]]
+at = "the angle BKC is also equal to the angle ELF"
 kind = "different"
-note = "`Prop29.size` puts both circumferences in the same size case. For circumferences greater than semicircles, `Circumference.whole` gives equal wholes, so Common Notion 3 leaves equal remainders BAC and EDF. `Prop2.sameSide` supplies the points at the circumferences needed to apply III.27 to those remainders."
+helper = "Prop20"
+note = "III.27 supplies Euclid's ordinary central angles for lesser circumferences. To cover greater circumferences as well, its inscribed-angle conclusion is doubled by III.20 to compare reflex central angles, which must be subtracted from four right angles before I.4 applies (Heath, vol. 2, p. 60). The companion obtains the same conclusions from `Prop27.of_congruent`."
+
+[[passage]]
+at = "therefore the base BC is equal to the base EF"
+kind = "different"
+helper = "Prop26.alike"
+note = "`Prop26.alike` puts the centres in matching cases. For lesser circumferences, III.27's ordinary angles and the equal radii give the bases by I.4. For greater circumferences, `angleAtCentre.reflex` and Common Notion 3 supply the ordinary angles by subtraction before I.4, an additional step within the statement (Heath, vol. 2, p. 60). For semicircles, adding the equal radii gives equal diameters, the elementary case discussed on p. 61."
 
 [figure]
 case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC and EF from G and H"
 
 [review]
 stage = "full"
-commit = "7b71d1782"
+commit = "50db90038"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:c6ea841e06026dc5"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
-text = "sha256:1f804b9f70dfcc9a"
+lean = "sha256:9deab117dc167f75"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: III.27 before I.4 in every case, the reflex angles at the centres taken from four right angles, the companion through Prop27.of_congruent, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5"
+text = "sha256:05c4bfea3829515b"
 
 [review.items]
 statement = "pass"
