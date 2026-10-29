@@ -4,8 +4,8 @@ the changed page, ` M book/I/01.md`, beside its source, ` M mishnah/I/01.md`, an
 else beyond the status a first render leaves, and the rendered page must hold the changed
 source and not the obsolete sentence planted in it. Editing just the page would be repaired
 back to HEAD and leave that status clean, so the source changes too. The pages are rendered
-once before the plant, and the plant is judged against that status and those bytes: in the
-pre-flight's pass with origin/main's checks, a renderer change finds its own regenerated
+once before the plant, which is planted on those bytes and judged against that status: in
+the pre-flight's pass with origin/main's checks, a renderer change finds its own regenerated
 pages stale, and that is freshness, not this plant's verdict (#677). Every generated output
 is saved and restored, and the worktree must return to its entry status. The plant judges
 the refusal itself, and records it with `nt.refused`.

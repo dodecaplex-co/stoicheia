@@ -6,10 +6,11 @@
   any other test that renders a copy and requires no change, in that file or elsewhere."
   The test is `RenderFillsTheNotes.test_one_brief_changes_between_its_markers_alone` in
   `tests/test_decision_entries.py`; the case came with
-  [#577](https://github.com/dodecaplex-co/stoicheia/issues/577), which ship RT landed as
-  pull request [#651](https://github.com/dodecaplex-co/stoicheia/pull/651), and the file
-  stays ship RT's. This train changes that one case, the docstrings that describe it, and
-  the negative suite's stale-page plant, `scripts/negative/stale_page.py`.
+  [#577](https://github.com/dodecaplex-co/stoicheia/issues/577), which came from ship RT's
+  branch and landed as pull request
+  [#651](https://github.com/dodecaplex-co/stoicheia/pull/651), and the file stays ship RT's.
+  This train changes that one case, the docstrings that describe it, and the negative
+  suite's stale-page plant, `scripts/negative/stale_page.py`.
 
   The case copied the sources, wrote a headed entry, ran `render.py` on the copy and
   required every file of it to be byte for byte as before. In the pre-flight's pass with
