@@ -1,3 +1,4 @@
+<!-- entry: id=jev-iii21-sizes cards=624 line="The Jev generator gives III.21's row the three sizes of the angle at the centre that its record now names." -->
 - **The Jev generator follows III.21's record to the three sizes of the angle at the centre (#624).**
   III.21's record, read in full again for its route label (#546,
   [its entry](2026-10-28-route-labels-iii20-iii21.md)), now says in a passage at "Now,
