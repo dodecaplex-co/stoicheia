@@ -81,8 +81,8 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookIII.Prop25.complete, "III.25 complete"),
   (``Elements.BookIII.Prop25.kind, "III.25 kind"),
   (``Elements.BookIII.Prop25.of_circle, "III.25 of_circle"),
-  (``Elements.BookIII.Prop27.of_congruent, "III.27 of_congruent"),
-  (``Elements.BookIII.Prop29.of_congruent, "III.29 of_congruent"),
+  (``Elements.BookIII.Prop27.of_measure, "III.27 of_measure"),
+  (``Elements.BookIII.Prop29.of_measure, "III.29 of_measure"),
   (``Elements.BookIII.Prop30.halves, "III.30 halves"),
   (``Elements.BookIII.Prop31.greater, "III.31 greater"),
   (``Elements.BookIII.Prop31.less, "III.31 less")]
