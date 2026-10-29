@@ -1885,3 +1885,15 @@ stand as written.
   right angles off `Prop24.angle_type`;
   [#511](https://github.com/jackChallis/stoicheia/issues/511) proposes Euclid's halving
   there.
+
+## Addendum: the centre by III.1's construction (#547)
+
+26 October 2026. By the owner's decision recorded on
+[#547](https://github.com/jackChallis/stoicheia/issues/547), "Yes - follow Euclid when
+possible.", and the coordinator's [decision entry of that day](../decisions/2026-10-26-centre-by-iii1.md),
+III.4, III.8 and III.17, with `Prop8.partner` and `Prop17.general`, take the centre under
+Heath's "[III. 1]" by III.1's construction through `Prop1.of_circle`; III.2 follows after
+ship C7's train P3 ([#477](https://github.com/jackChallis/stoicheia/issues/477)). Every
+audit pin holds unchanged. No entry's axioms change; the five entries cite III.1 through
+the shared step `Prop1.of_circle`, and Heath's references with no call fall from six to
+three. The reading of #131's section above, that such a call does no work, is overtaken.

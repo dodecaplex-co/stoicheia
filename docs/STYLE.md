@@ -253,9 +253,9 @@ I.31's, and `Prop30.meet`, credited to Proclus (Heath, vol. 1, pp. 207 and 316).
 tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`, and how
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
-the pieces make up the whole. Book III's tells how proofs take a circle's centre: by
-`exists_centre` where none is supplied, under Heath's "[III. 1]" as elsewhere, or from
-geometric data such as equal circles. It tells the constructions whose references the text
+the pieces make up the whole. Book III's tells how proofs take a circle's centre: from
+geometric data such as equal circles, by III.1's construction in III.4, III.8 and III.17,
+and from `exists_centre` in III.2 and where Heath gives no reference. It tells the constructions whose references the text
 leaves unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
 twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
@@ -308,8 +308,8 @@ first use in each book (in Book III it is the circle's). Gloss "applied" (I.44) 
 the first time it appears.
 
 **Tightening the language.** These are the habits that the language passes
-([#111](https://github.com/jackChallis/stoicheia/pull/111) and
-[#115](https://github.com/jackChallis/stoicheia/pull/115)) and read-through 02 removed from
+([#111](https://github.com/dodecaplex-co/stoicheia/pull/111) and
+[#115](https://github.com/dodecaplex-co/stoicheia/pull/115)) and read-through 02 removed from
 the commentary, the reading lines, the records and the Lean notes, each with one example;
 section 1 sets the voice and the rule for vague hedges.
 
@@ -372,7 +372,7 @@ representation of a segment includes its circle", "our foundations allow superpo
 only in I.4 and I.8". Not "Lean cannot" **[reported]**.
 
 **A figure given with its triangles.** I.45 and II.14 are full through their outline
-companions ([#116](https://github.com/jackChallis/stoicheia/issues/116)), which take a figure
+companions ([#116](https://github.com/dodecaplex-co/stoicheia/issues/116)), which take a figure
 given by its outline alone; their older companions take a figure "given with a checked
 division into triangles", and every text a reader meets that describes those (a record, a
 commentary, a file's notes, an introduction, a gap catalogue) uses the same words: given
@@ -483,7 +483,9 @@ justification in his form, as a `--` line would: "subtracted from each [C.N. 1, 
 `thirteenbookseu02heibgoog`, where page N is leaf N + 20; volume 2 (Books III–IX) is
 `thirteenbookseu00heibgoog`, where page N is leaf N + 12. Page N's image is
 `https://archive.org/download/<id>/page/n<leaf>.jpg`, and the OCR text, flattened, is what
-a quotation is first checked against. The page image decides.
+a quotation is first checked against. The page image decides. Every file of `heath/` was read
+line by line against its leaves on 28 October 2026; the record of that reading, with each
+leaf's checksum, is [Heath's text against the scans](reports/heath-against-scans.md).
 
 **Quoting Heath.**
 
@@ -796,7 +798,7 @@ D15 listed the figures still italic. Every figure is now upright, and the switch
 back to quiet a figure: the figure is set upright.
 
 **The reach of 19 October.** On that day the rules came to every text a reader meets
-([#66](https://github.com/jackChallis/stoicheia/issues/66)): the Review notes, the overlap
+([#66](https://github.com/dodecaplex-co/stoicheia/issues/66)): the Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names, with S7 in the gap catalogues and the Generated files, S12 beyond the mishnah (and
 the name of a `name : type`), and S22. A file that had findings of that reach on the day was

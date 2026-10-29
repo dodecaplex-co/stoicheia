@@ -5,6 +5,7 @@ import Elements.BookI.Prop20
 import Elements.BookI.Prop21
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop01
 import Elements.BookIII.Prop02
 
 /-!
@@ -146,9 +147,10 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
   -- less than the more remote, namely DK than DL, and DL than DH.
   -- For let the centre of the circle ABC be taken [III. 1], and let it be M; let ME, MF, MC,
   -- MK, ML, MH be joined.
-  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
-     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
-  obtain ⟨M, hM⟩ := exists_centre ABC
+  /- The centre is found by III.1's construction, on a straight line drawn through the
+     circle at random (`Prop1.of_circle`), as Euclid finds it. The proof keeps the centre
+     alone, which is what Euclid takes from III.1. -/
+  obtain ⟨-, -, M, -, -, -, -, -, hM, -⟩ := Prop1.of_circle ABC
   have hAG : A ≠ G := ne_of_between (between_symm hDGA)
   have hGMA : Between G M A := hGA M hM
   have hDGM : Between D G M := between_cut hDGA hGMA
@@ -443,8 +445,8 @@ theorem Prop8.partner {A D G K B : Point} {ABC : Circle}
     ((∃ H : Point, OnCircle H ABC ∧ Between D H B) ↔
       (∃ H : Point, OnCircle H ABC ∧ Between D H K)) := by
   have hpartner := (Prop8 hD hA hG hDGA hGA).2.2.2.2
-  /- Take the centre M from the given circle. -/
-  obtain ⟨M, hM⟩ := exists_centre ABC
+  /- The centre M is found by III.1's construction, as in `Prop8` (`Prop1.of_circle`). -/
+  obtain ⟨-, -, M, -, -, -, -, -, hM, -⟩ := Prop1.of_circle ABC
   have hDMA : Between D M A :=
     between_symm (between_of_between_left (between_symm hDGA)
       (between_symm (hGA M hM)))
