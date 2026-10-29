@@ -67,6 +67,11 @@ through their own proofs and the proved rules beneath them 48 do, 28 proposition
 companions, III.11 and III.14 joining, for Generalities 4, beneath the new proof, takes its
 centre from the rule.
 
+28 October 2026: III.2 now finds its centre by III.1's construction,
+`Prop1.of_circle`, where Heath cites III.1 (#547). It still rests on `exists_centre`
+through III.1's construction, so no axiom overlap or audit pin changes. The
+[decision entry](../decisions/2026-10-28-iii2-centre.md) records the completed move.
+
 ## Current axiom overlaps
 
 | Proposition | Assumption | Kind | First enters | Audit lemma |
@@ -536,8 +541,9 @@ I.9 take a point "at random" with Book Zero's `exists_between_nearer`, which kee
 point near enough by the order of the points on the straight line and the adding of
 lengths, not by a rule about circles.
 
-Our III.2 is Euclid's reductio, by I.5, I.16 and I.19, with its centre from
-`exists_centre`, where Heath's reference is III.1, and it rests on neither rule. Circle 2
+Our III.2 is Euclid's reductio, by I.5, I.16 and I.19, with its centre found by
+III.1's construction (`Prop1.of_circle`), where Heath's reference is III.1, and it rests
+on neither rule. Circle 2
 used to reach it through III.1, which called the rule to put D, the middle point of AB,
 within the circle, so that the straight line drawn through D at right angles to AB meets
 the circle on both sides of it: "a fact which Euclid first

@@ -1897,3 +1897,15 @@ ship C7's train P3 ([#477](https://github.com/jackChallis/stoicheia/issues/477))
 audit pin holds unchanged. No entry's axioms change; the five entries cite III.1 through
 the shared step `Prop1.of_circle`, and Heath's references with no call fall from six to
 three. The reading of #131's section above, that such a call does no work, is overtaken.
+
+## Completion: III.2 and III.8 follow Euclid's routes (#547)
+
+*28 October 2026.*
+
+III.2 now takes its centre by `Prop1.of_circle`, and III.8's last step now uses Euclid's
+two orders throughout, with `Prop8.contact_last` showing that a point of contact cannot
+be the nearer point. The routes of both propositions are therefore `euclid`. The
+[decision entry](../decisions/2026-10-28-iii2-centre.md) records III.2's move, and the
+current route accounts are the records of [III.2](../../review/III/02.toml) and
+[III.8](../../review/III/08.toml); they supersede the earlier accounts in this dated
+report.
