@@ -724,36 +724,25 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     `file -b` from the PATH: environment), nor import a module but a builtin, which
     Python would look for first in the harness's own directory (so plistlib, and tomllib
     on a supported interpreter, which mac_ver and the allow-list imported late, are
-    imported with the rest at the top). Its one sibling is start_check, which starts a
-    check of step 4's concurrent groups as this would run it (wrapped)."""
+    imported with the rest at the top)."""
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
-    # off, by its environment and by its command line (wrapped), lest the scan or the
-    # hand-over read a clean stand-in (#256). No command, git's or another's, gets one of
-    # the caller's variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS;
-    # only a name in `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE),
-    # passes (#357).
+    # off, by its environment and by its command line, lest the scan or the hand-over read
+    # a clean stand-in (#256). No command, git's or another's, gets one of the caller's
+    # variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS; only a name in
+    # `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE), passes (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
+        cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
         env = without_replacements(env, keep)
     else:
         env = own_env(env, keep)
-    cmd = wrapped(cmd)
+    if SANDBOX is not None:
+        cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
     # A time limit only when one is given: the CI watch, among others, has none, and its
     # call carries none (tests/test_release_gate.py).
     limit = {} if timeout is None else {"timeout": timeout}
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
                           text=not binary, **limit)
-
-
-def wrapped(cmd):
-    """A command as run() and start_check start it: git's with replacements off by its
-    command line too, and every one under the sandbox while the main-checks cache is in
-    use."""
-    if cmd and os.path.basename(cmd[0]) == "git":
-        cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
-    if SANDBOX is not None:
-        cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
-    return cmd
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
@@ -3625,11 +3614,11 @@ def step_done(stage, name, out: str, ok: bool, seconds: float, log: Path, rep: R
 # has no limit timed by the clock that a busy machine could fail, and does not itself fill
 # the machine (checks/README.md); MODEL_JOB_CONCURRENT declares the model job so. A group
 # is a run of such checks next to each other in order. Every other check runs alone, after
-# every earlier check has ended and before any later one starts, as before #608.
+# every earlier check has ended and before any later one starts, as before #608. Every
+# check, in a group or alone, is started by run(), as every command is.
 CHECK_WORKERS = "STOICHEIA_CHECK_WORKERS"
 # The step that fails when a group's worktree differs after it: a concurrent check wrote it.
 TREE_GUARD = "concurrent checks left the tree as they found it"
-STOP_GRACE = 5      # seconds a stopped check's process group has between SIGTERM and SIGKILL
 
 
 def check_workers() -> tuple[int, str]:
@@ -3653,41 +3642,6 @@ def check_workers() -> tuple[int, str]:
     return workers, (f"; the concurrent checks run up to {workers} at once ({CHECK_WORKERS}="
                      f"{shown}, {'capped at' if capped else 'the cap'} {cap}, half this "
                      f"machine's {cores} cores)")
-
-
-def start_check(cmd: list[str], cwd: Path) -> subprocess.Popen:
-    """A check of a concurrent group started as run_step's run() runs one: tool_env()'s
-    environment, rebuilt as run() builds it, and the command wrapped as run() wraps it;
-    its output captured as run() captures it, with no input, and in a session of its own,
-    so that stop_checks can reach its children with it: sweep's lake and lean, and
-    check_kernel's leanchecker, outlive a check stopped alone."""
-    if cmd and os.path.basename(cmd[0]) == "git":
-        env = without_replacements(tool_env())
-    else:
-        env = own_env(tool_env())
-    return subprocess.Popen(wrapped(cmd), cwd=cwd, env=env, stdin=subprocess.DEVNULL,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                            start_new_session=True)
-
-
-def signal_group(proc: subprocess.Popen, signum: int) -> None:
-    with contextlib.suppress(ProcessLookupError, PermissionError):
-        os.killpg(proc.pid, signum)
-
-
-def stop_checks(procs: list[subprocess.Popen]) -> None:
-    """Each check's process group sent SIGTERM, then SIGKILL once STOP_GRACE seconds have
-    passed, and each check waited for: so no check is left reading the worktree while the
-    pass cleans it (base_copies, at_commit) or removes it (worktree)."""
-    for proc in procs:
-        signal_group(proc, signal.SIGTERM)
-    deadline = time.monotonic() + STOP_GRACE
-    for proc in procs:
-        with contextlib.suppress(subprocess.TimeoutExpired):
-            proc.wait(timeout=max(0.0, deadline - time.monotonic()))
-    for proc in procs:
-        signal_group(proc, signal.SIGKILL)
-        proc.wait()
 
 
 def on_disk(path: Path) -> tuple:
@@ -3716,7 +3670,11 @@ def tree_state(wt: Path) -> dict[str, tuple]:
     letters for it and what is on disk there (on_disk), so that a file changed again, or
     put back as the index holds it, shows too. git runs with its settings as at_commit asks
     (DISK_AS_IS) and no optional lock, so it writes neither the worktree's index nor an
-    object; nothing is written."""
+    object; nothing is written. Not a tree id from a temporary copy of the index, `git add
+    -A` into it and `git write-tree`: that writes a blob of every changed and untracked
+    file, and the tree, into the repository's objects, which the worktree shares with the
+    main checkout, and needs GIT_INDEX_FILE kept through run(), which base_tree alone may
+    keep (#357)."""
     r = run(["git", "--no-optional-locks", *DISK_AS_IS, "status", "--porcelain", "-z",
              "--untracked-files=all", "--no-renames"], wt, binary=True)
     if r.returncode != 0:
@@ -3740,100 +3698,127 @@ def tree_changes(before: dict[str, tuple], after: dict[str, tuple]) -> str:
     return shown + (f" and {len(changes) - 8} more" if len(changes) > 8 else "")
 
 
-def run_group(stage, group: list[tuple[str, list[str]]], where: Path, rep: Report,
-              logs: Path, first: int, label: str, fail: str,
-              after: dict[str, tuple[str, ...]], workers: int, cache=None) -> None:
-    """One group of concurrent checks, the first logged as `first`: started in registry
-    order, each in its own process (start_check), at most `workers` at once, and each only
-    once the checks its `after` names have ended; reported and logged in registry order,
-    each once every check before it has ended, with its own time and output, so the lines
-    and logs are those of the checks run one at a time. Where a failure fails the pass
-    (FAIL), none starts after one fails; every running check is waited for; and the steps
-    are reported up to the first failure in registry order, which refuses, as run_step
-    does. Where a failure is a note, every check runs, each reported in order, `cache`
-    collecting it. Left by any exception, a KeyboardInterrupt among them, the running
-    checks are stopped (stop_checks) before it goes on. Around the group, at every
-    `workers`, the worktree's state (tree_state): if the group changed it, the step
-    TREE_GUARD fails, naming the checks and the paths, as a note in a noting pass, which
-    then keeps the pass out of the main-checks cache."""
+def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, logs: Path,
+                 first: int, label: str, fail: str, after: dict[str, tuple[str, ...]],
+                 workers: int, cache=None) -> None:
+    """One group of concurrent checks at more than one worker, the first logged as `first`:
+    each run by run(), as run_step runs it, with tool_env()'s environment built on this
+    thread, but on a thread of its own; at most `workers` at once, started in registry
+    order, each once the checks its `after` names have ended. This thread alone reports
+    and logs them, in registry order, each once every check before it has ended, with its
+    own time and output, so the lines and logs are those of the checks run one at a time.
+    Where a failure fails the pass (FAIL), none starts after one fails, and the steps are
+    reported up to the first failure in registry order, which refuses, as run_step does;
+    where a failure is a note, every check runs and is reported in order, `cache`
+    collecting it. An exception a check's run() raised is raised here at its place in
+    registry order, as run_step's run() would raise it.
+
+    However this is left, by a refusal, such an exception, Ctrl-C's KeyboardInterrupt,
+    _terminate's for a SIGTERM or SIGHUP, or any other exception, no check starts after
+    it, and every check already running (at most `workers`) is waited for, and its
+    thread, before the exception goes on: so none still reads the worktree while the pass
+    cleans it (base_copies, at_commit) or removes it (worktree). Such a check is not
+    stopped. An exception reaches this thread alone, and a check in run() is not killed on
+    another thread's behalf, so an interrupt or a termination waits for the checks running
+    to end. A terminal's Ctrl-C reaches them too, since they share the run's process
+    group, and they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to
+    end of themselves. A further interrupt while they are waited for is passed over, and
+    the first exception goes on once they have ended."""
     names = {name for name, _ in group}
-    before = tree_state(where)
     waiting = list(group)           # not started, in registry order
-    running: dict[str, subprocess.Popen] = {}
-    ended: dict[str, tuple[bool, str, float]] = {}
+    running: set[str] = set()       # started, their ends not yet taken in
+    ended: dict[str, tuple[str, bool, float] | BaseException] = {}
     finished: queue.Queue = queue.Queue()
-    readers: list[threading.Thread] = []
-    stopping, reported = False, 0
+    # A check's thread lets its run() begin only under `gate`, while `shut` is false. Once
+    # wait() has set `shut` under it, the checks in `begun` are all that run, even if an
+    # exception came between a thread's start and the line after it.
+    gate = threading.Lock()
+    begun: dict[str, threading.Thread] = {}
+    shut, stopping, reported = False, False, 0
 
-    def ready(name: str) -> bool:
-        return all(earlier in ended for earlier in after.get(name, ()) if earlier in names)
-
-    def start(name: str, cmd: list[str]) -> None:
+    def check(name: str, cmd: list[str], env: dict) -> None:
+        with gate:
+            if shut:
+                return
+            begun[name] = threading.current_thread()
         t = time.time()
-        proc = start_check(cmd, where)
-        running[name] = proc
-
-        def read() -> None:
-            try:
-                out, err = proc.communicate()
-                finished.put((name, ((out or "") + (err or ""), proc.returncode == 0,
-                                     time.time() - t)))
-            except BaseException as e:      # handed to the harness, as run() raises it
-                finished.put((name, e))
-        reader = threading.Thread(target=read, daemon=True)
-        reader.start()
-        readers.append(reader)
+        try:
+            r = run(cmd, where, env=env)
+            result = ((r.stdout or "") + (r.stderr or ""), r.returncode == 0, time.time() - t)
+        except BaseException as e:      # raised in registry order, as run_step's would be
+            result = e
+        finished.put((name, result))    # the thread's last act
 
     def receive() -> bool:
-        """One check's end, taken in; whether it failed. Waited for a second at a time, so
-        that a signal's handler (Ctrl-C's KeyboardInterrupt, _terminate's) runs between
-        waits: a lock waited on without a limit need not wake for one."""
+        """One check's end taken in, and its thread joined; whether the pass goes no further
+        than it. Waited for a second at a time, so that a signal's handler (Ctrl-C's
+        KeyboardInterrupt, _terminate's) runs between waits: a lock waited on without a
+        limit need not wake for one."""
         while True:
             try:
                 name, result = finished.get(timeout=1)
                 break
             except queue.Empty:
                 continue
-        if isinstance(result, BaseException):
-            raise result
-        del running[name]
-        out, ok, seconds = result
-        ended[name] = (ok, out, seconds)
-        return not ok
+        ended[name] = result
+        running.discard(name)
+        begun[name].join()
+        return isinstance(result, BaseException) or (fail == "FAIL" and not result[1])
+
+    def wait() -> None:
+        """No check begun after this, and every check begun ended, and its thread."""
+        nonlocal shut
+        while True:
+            try:
+                with gate:
+                    shut = True
+                for name, thread in begun.items():
+                    while name not in ended:
+                        receive()
+                    thread.join()
+                return
+            except BaseException:       # a further interrupt: the checks are still awaited
+                continue
 
     try:
         while True:
             while (waiting and not stopping and len(running) < workers
-                   and ready(waiting[0][0])):
-                start(*waiting.pop(0))
+                   and all(e in ended for e in after.get(waiting[0][0], ()) if e in names)):
+                name, cmd = waiting.pop(0)
+                running.add(name)
+                threading.Thread(target=check, args=(name, cmd, tool_env()),
+                                 daemon=True).start()
             while reported < len(group) and group[reported][0] in ended:
                 name = group[reported][0]
-                ok, out, seconds = ended[name]
+                result = ended[name]
+                if isinstance(result, BaseException):
+                    raise result
+                out, ok, seconds = result
                 log = logs / f"{first + reported:02d}{slug_of(name + label)}.log"
                 log.write_text(out)
                 reported += 1
-                try:
-                    out = step_done(stage, name + label, out, ok, seconds, log, rep, fail)
-                except Refusal:
-                    while running:
-                        receive()
-                    raise
+                out = step_done("4", name + label, out, ok, seconds, log, rep, fail)
                 if cache is not None:
                     cache.collect(rep, out)
             if reported == len(group):
-                break
-            if receive() and fail == "FAIL":
+                return
+            if receive():
                 stopping = True
     except BaseException:
-        stop_checks(list(running.values()))
+        wait()
         raise
-    finally:
-        for reader in readers:
-            reader.join(timeout=STOP_GRACE)
+
+
+def guard_group(group, before: dict[str, tuple], where: Path, rep: Report, label: str,
+                fail: str, cache=None) -> None:
+    """The worktree's state (tree_state) after a group of concurrent checks, against
+    `before`, taken before it: if the group changed it, the step TREE_GUARD fails, naming
+    the checks and the paths, as a note in a noting pass, which then keeps the pass out of
+    the main-checks cache."""
     now = tree_state(where)
     if now == before:
         return
-    rep.add(stage, TREE_GUARD + label, fail, f"the worktree differs after "
+    rep.add("4", TREE_GUARD + label, fail, f"the worktree differs after "
             f"{', '.join(name for name, _ in group)}, each declared concurrent, which "
             f"promises it writes nothing there but ignored bytecode (checks/README.md): "
             f"{tree_changes(before, now)}")
@@ -3845,26 +3830,33 @@ def run_group(stage, group: list[tuple[str, list[str]]], where: Path, rep: Repor
 
 def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: str,
                  excludes, first: int, plan: CheckList | None = None, cache=None) -> None:
-    """A pass's steps, each logged as `first` and its place: a check `plan` declares
-    concurrent with those beside it (run_group, at most plan.workers at once), and every
-    other alone (run_step), the steps of a list with no plan among them; `cache`, if
-    given, collecting each as it is reported."""
+    """A pass's steps, each logged as `first` and its place, `cache`, if given, collecting
+    each as it is reported. A check `plan` declares concurrent runs in a group with those
+    next to it in order, and the worktree's state is taken around the group at every
+    number of workers (guard_group), so that no verdict depends on the number; every other
+    check runs alone, as do the steps of a list with no plan. At one worker, a group's
+    checks run as every check runs, one after another on this thread (run_step), so the
+    run is the one before #608 but for the guard; at more, together (run_together)."""
     concurrent = plan.concurrent if plan is not None else frozenset()
     at = 0
     while at < len(steps):
         end = at
         while end < len(steps) and steps[end][0] in concurrent:
             end += 1
-        if end > at:
-            run_group("4", steps[at:end], where, rep, logs, first + at + 1, label, fail,
-                      plan.after, plan.workers, cache)
-            at = end
-            continue
-        name, cmd = steps[at]
-        at += 1
-        out = run_step("4", name + label, cmd, where, rep, logs, first + at, fail, excludes)
-        if cache is not None:
-            cache.collect(rep, out)
+        alone = end == at
+        group = steps[at:at + 1] if alone else steps[at:end]
+        before = None if alone else tree_state(where)
+        if not alone and plan.workers > 1:
+            run_together(group, where, rep, logs, first + at + 1, label, fail, plan.after,
+                         plan.workers, cache)
+        else:
+            for index, (name, cmd) in enumerate(group, first + at + 1):
+                out = run_step("4", name + label, cmd, where, rep, logs, index, fail, excludes)
+                if cache is not None:
+                    cache.collect(rep, out)
+        if not alone:
+            guard_group(group, before, where, rep, label, fail, cache)
+        at += len(group)
 
 
 def copy_build(src: Path, dst: Path) -> None:
@@ -4091,9 +4083,9 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
             kept.save(rep)
 
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
-    # the worktree back before the worktree is removed. A group of concurrent checks
-    # stops or waits for every check it started before it lets such a refusal go
-    # (run_group), so none is still reading the worktree when it is put back.
+    # the worktree back before the worktree is removed. A group of concurrent checks waits
+    # for every check it started before it lets such a refusal, or any exception, go
+    # (run_together), so none is still reading the worktree when it is put back.
     with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
         for label, fail, excludes in each:
             checks(plan.steps, wt, label, fail, excludes, 10, plan)

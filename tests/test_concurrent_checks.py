@@ -7,18 +7,22 @@ registry's two fields that declare them, in scripts/registry.py.
 The run is put to stand-in checks, small Python commands, in a Git repository of the
 test's own: the same steps, outcomes, order and logs whether a sequence declares nothing,
 or runs its groups one at a time or three at once; the first failure in registry order
-refusing, nothing after it reported or logged, and a check still running waited for; a
-check never started before the checks its `after` names have ended; a check that runs
-alone between two groups as a barrier; a check declared concurrent that writes in the tree
-refused, at one worker and at three; the worktree's state taken writing nothing, and a
-check started as run() would start it; never more checks at once than the workers, the cap
-of STOICHEIA_CHECK_WORKERS said, and a bad value failing the check list line; and, interrupted
-while two checks run, no check and no child of one left running. The registry's reader
-accepts `concurrent = true` and refuses every other use of the two fields; as_json carries
-them; safe_push's check_sequence reads them, and holds their rules itself; a registry
-without them declares nothing concurrent; and the real registry declares what #608's
-audit found, so that a change to it is made on purpose. It runs alone in the sequence,
-since it starts processes of its own and measures how many run at once.
+refusing, nothing after it reported or logged, a check still running waited for, and an
+exception a check's run() raised coming in its place; a check never started before the
+checks its `after` names have ended; a check that runs alone between two groups as a
+barrier; a check declared concurrent that writes in the tree refused, at one worker and at
+three; the worktree's state taken writing nothing; every check started by run(), at one
+worker exactly as before #608, on this thread with no thread started, and at more on
+threads of their own, the report and logs written on this thread; never more checks at
+once than the workers, the cap of STOICHEIA_CHECK_WORKERS said, and a bad value failing
+the check list line; and, interrupted while two checks run, by Ctrl-C or by SIGTERM and
+again while it waits, the pass going on only once both checks and their children have
+ended. The registry's reader accepts `concurrent = true` and refuses every other use of
+the two fields; as_json carries them; safe_push's check_sequence reads them, and holds
+their rules itself; a registry without them declares nothing concurrent; and the real
+registry declares what #608's audit found, so that a change to it is made on purpose. It
+runs alone in the sequence, since it starts processes of its own and measures how many
+run at once.
 """
 
 import contextlib
@@ -66,20 +70,22 @@ mark("end")
 sys.exit(code)
 """
 
-# A check that starts a child, which ignores SIGTERM, and sleeps; each writes its pid.
+# A check that starts a child, which sleeps the seconds given, notes both pids, and waits
+# for the child before it marks its own end.
 PARENT = """
 import os, subprocess, sys, time
-marks, name = sys.argv[1], sys.argv[2]
-def note(what, pid):
+marks, name, seconds = sys.argv[1], sys.argv[2], sys.argv[3]
+def note(what, text):
     path = os.path.join(marks, name + "." + what)
     with open(path + ".tmp", "w") as f:
-        f.write(str(pid))
+        f.write(text)
     os.replace(path + ".tmp", path)
-CHILD = "import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(60)"
-child = subprocess.Popen([sys.executable, "-c", CHILD])
-note("child", child.pid)
-note("check", os.getpid())
-time.sleep(60)
+SLEEP = "import sys, time; time.sleep(float(sys.argv[1]))"
+child = subprocess.Popen([sys.executable, "-c", SLEEP, seconds])
+note("child", str(child.pid))
+note("check", str(os.getpid()))
+child.wait()
+note("end", repr(time.time()))
 """
 
 
@@ -306,6 +312,30 @@ class FirstFailure(Stand):
         self.assertLess(self.times(marks, "quick fail")[1], self.times(marks, "slow pass")[1])
         self.assertIn("11-slow-pass.log", logs)
 
+    def test_an_exception_comes_in_its_place(self):
+        # A check whose run() raises (here, no such program) raises in registry order, as
+        # run_step's run() does: the checks before it reported, none after it, and every
+        # check started waited for, at one worker and at three, in either kind of pass.
+        missing = str(self.tmp / "no-such-program")
+        for fail in ("FAIL", "note"):
+            for workers in (1, 3):
+                with self.subTest(fail=fail, workers=workers):
+                    marks = self.marks()
+                    steps = [self.stand_in(marks, "slow", 0.6), ("missing", [missing]),
+                             self.stand_in(marks, "beside", 0.0),
+                             ("alone", py(f"open({str(marks / 'alone-ran')!r}, 'w')"))]
+                    with self.assertRaises(FileNotFoundError) as raised:
+                        self.run_steps(steps, workers, {"slow", "missing", "beside"},
+                                       fail=fail)
+                    self.assertIn(missing, str(raised.exception))
+                    self.assertTrue((marks / "slow.end").exists())
+                    started = {p.stem for p in marks.glob("*.start")}
+                    self.assertEqual(started, {p.stem for p in marks.glob("*.end")})
+                    self.assertEqual(started, {"slow", "beside"} if workers == 3 else {"slow"})
+                    self.assertFalse((marks / "alone-ran").exists())
+                    logs = sorted(p.name for p in self.tmp.glob(f"logs-{self.runs}-*/*"))
+                    self.assertEqual(logs, ["11-slow.log"])
+
 
 class Order(Stand):
     """`after` holds a check back until the checks it names have ended, and a check that
@@ -401,8 +431,7 @@ class Planted(Stand):
 
 class State(Stand):
     """tree_state takes the worktree as git status sees it, each file listed hashed, and
-    writes nothing: not the index, not an object. start_check starts a check as run()
-    would start it."""
+    writes nothing: not the index, not an object."""
 
     def test_the_state_is_taken_writing_nothing(self):
         git_dir = self.root / ".git"
@@ -438,32 +467,86 @@ class State(Stand):
         moved = safe_push.tree_state(self.root)
         self.assertEqual(safe_push.tree_changes(back, moved), "?? link, M tracked.txt")
 
-    def test_a_check_starts_as_run_would_start_it(self):
-        seen = {}
+class ThroughRun(Stand):
+    """Every check is started by run(), as every command the harness starts is. At one
+    worker, as before #608: one after another on this thread, no thread started, run()
+    given for every check what run_step gave it before, and only the guard's `git status`
+    added around each group. At more, each check of a group on a thread of its own, given
+    the same, its environment built on this thread, and the report and the logs written on
+    this thread alone."""
 
-        def popen(cmd, **kw):
-            seen["start_check"] = (cmd, kw["env"])
-            raise OSError("not started, for the test")
+    CONCURRENT = {"one", "two", "three", "four"}
 
-        def ran(cmd, **kw):
-            seen["run"] = (cmd, kw["env"])
-            return subprocess.CompletedProcess(cmd, 0, "", "")
-        hook = {"GIT_DIR": str(self.tmp / "elsewhere"), "GIT_INDEX_FILE": str(self.tmp / "i")}
-        for sandbox in (None, "(version 1) (allow default)"):
-            for cmd in (["true"], ["git", "status"]):
-                with self.subTest(sandbox=sandbox, cmd=cmd), \
-                        mock.patch.dict(os.environ, hook), \
-                        mock.patch.object(safe_push, "SANDBOX", sandbox), \
-                        mock.patch.object(safe_push.subprocess, "Popen", popen), \
-                        mock.patch.object(safe_push.subprocess, "run", ran):
-                    with self.assertRaises(OSError):
-                        safe_push.start_check(cmd, self.root)
-                    safe_push.run(cmd, self.root, env=safe_push.tool_env())
-                    self.assertEqual(seen["start_check"], seen["run"])
-                    started, env = seen["start_check"]
-                    self.assertEqual(started[0] == safe_push.SANDBOX_EXEC, sandbox is not None)
-                    self.assertNotIn("GIT_DIR", env)
-                    self.assertNotIn("GIT_INDEX_FILE", env)
+    def recorded(self, workers: int, plan: bool = True):
+        """Each call of run() in order: the check's name (None for another command), its
+        command with the marks' folder masked, its directory, keywords and thread; the
+        threads that built an environment, reported a step and wrote a file; the steps'
+        names; and the refusal, if any."""
+        marks = self.marks()
+        steps = [self.stand_in(marks, "one", 0.2), self.stand_in(marks, "two", 0.0),
+                 ("alone", py("print('alone')")), self.stand_in(marks, "three", 0.1),
+                 self.stand_in(marks, "four", 0.0)]
+        names = {tuple(cmd): name for name, cmd in steps}
+        calls, threads = [], {}
+        real_run = safe_push.run
+
+        def run(cmd, cwd, **kw):
+            calls.append((names.get(tuple(cmd)), [a.replace(str(marks), "MARKS") for a in cmd],
+                          cwd, kw, threading.current_thread()))
+            return real_run(cmd, cwd, **kw)
+
+        def noted(what, real):
+            def call(*args, **kw):
+                threads.setdefault(what, set()).add(threading.current_thread())
+                return real(*args, **kw)
+            return call
+        with mock.patch.object(safe_push, "run", run), \
+                mock.patch.object(safe_push, "tool_env", noted("tool_env", safe_push.tool_env)), \
+                mock.patch.object(safe_push, "step_done",
+                                  noted("step_done", safe_push.step_done)), \
+                mock.patch.object(Path, "write_text", noted("write_text", Path.write_text)):
+            refusal, done, _, _ = self.run_steps(steps, workers, self.CONCURRENT, plan=plan)
+        return calls, threads, [s.name for s in done], refusal
+
+    def test_at_one_worker_every_check_runs_as_before(self):
+        main = threading.main_thread()
+        with mock.patch.object(safe_push.threading, "Thread",
+                               side_effect=AssertionError("a thread was started")):
+            # No plan: every check alone, as every check ran before #608.
+            before, _, steps, refusal = self.recorded(1, plan=False)
+            self.assertIsNone(refusal)
+            git(self.root, "clean", "-fdxq")
+            now, threads, same, refusal = self.recorded(1)
+        self.assertIsNone(refusal)
+        self.assertEqual(same, steps)
+        checks = [call for call in now if call[0] is not None]
+        self.assertEqual([call[:4] for call in checks], [call[:4] for call in before])
+        self.assertEqual([call[0] for call in checks], ["one", "two", "alone", "three", "four"])
+        for name, _, cwd, kw, thread in checks:
+            self.assertEqual((cwd, kw), (self.root, {"env": safe_push.tool_env()}), name)
+            self.assertIs(thread, main, name)
+        # Beside them, only the guard's git status, before and after each of the two groups.
+        others = [call[1][:2] for call in now if call[0] is None]
+        self.assertEqual(others, [["git", "--no-optional-locks"]] * 4)
+        self.assertEqual(threads, {"tool_env": {main}, "step_done": {main},
+                                   "write_text": {main}})
+
+    def test_at_more_each_check_runs_through_run_on_a_thread_of_its_own(self):
+        main = threading.main_thread()
+        one, _, steps, _ = self.recorded(1)
+        git(self.root, "clean", "-fdxq")
+        three, threads, same, refusal = self.recorded(3)
+        self.assertIsNone(refusal)
+        self.assertEqual(same, steps)
+        by_name = {call[0]: call for call in three if call[0] is not None}
+        self.assertEqual({name: call[1:4] for name, call in by_name.items()},
+                         {call[0]: call[1:4] for call in one if call[0] is not None})
+        self.assertIs(by_name["alone"][4], main)
+        workers = {by_name[name][4] for name in self.CONCURRENT}
+        self.assertNotIn(main, workers)
+        self.assertEqual(len(workers), 4, "each check on a thread of its own")
+        self.assertEqual(threads, {"tool_env": {main}, "step_done": {main},
+                                   "write_text": {main}})
 
 
 class Workers(Stand):
@@ -551,35 +634,95 @@ class Workers(Stand):
 
 
 class Interrupted(Stand):
-    """Interrupted while two checks run, each with a child that ignores SIGTERM: the run
-    stops both groups, and no check or child is left running when it returns."""
+    """Interrupted while two checks run at two workers, each waiting for a child that sleeps,
+    by Ctrl-C's KeyboardInterrupt or by _terminate's for a SIGTERM, and again while the pass
+    waits: the pass raises the first, and only once both checks and both children have
+    ended, no process of theirs left and no later check started. And an interrupt that
+    comes just after a check's thread is started: that check runs whole, or not at all."""
 
-    def test_no_check_or_child_is_left_running(self):
+    SECONDS = 3     # each child's sleep
+
+    def test_the_pass_waits_for_the_checks_running(self):
+        for first, second, said in ((signal.SIGINT, signal.SIGINT, ""),
+                                    (signal.SIGTERM, signal.SIGINT, f"signal {signal.SIGTERM}")):
+            with self.subTest(first=first.name):
+                self.interrupted(first, second, said)
+
+    def interrupted(self, first: int, second: int, said: str):
         marks = self.marks()
         alone_ran = marks / "alone-ran"
-        steps = [("one", py(PARENT) + [str(marks), "one"]),
-                 ("two", py(PARENT) + [str(marks), "two"]),
-                 ("alone", py(f"open({str(alone_ran)!r}, 'w')"))]
+        steps = [(name, py(PARENT) + [str(marks), name, str(self.SECONDS)])
+                 for name in ("one", "two")] + [("alone", py(f"open({str(alone_ran)!r}, 'w')"))]
         pids = [marks / f"{name}.{what}" for name in ("one", "two")
                 for what in ("check", "child")]
+        sent, returned = [], threading.Event()
 
         def interrupt():
-            deadline = time.monotonic() + 30
+            deadline = time.monotonic() + 20
             while time.monotonic() < deadline and not all(p.exists() for p in pids):
                 time.sleep(0.05)
-            os.kill(os.getpid(), signal.SIGINT)
-        previous = signal.signal(signal.SIGINT, signal.default_int_handler)
+            for signum in (first, second):
+                if returned.is_set():
+                    break
+                sent.append(time.time())
+                os.kill(os.getpid(), signum)
+                time.sleep(0.5)
+        handlers = {signum: signal.getsignal(signum) for signum in (signal.SIGINT, signal.SIGTERM)}
+        signal.signal(signal.SIGINT, signal.default_int_handler)
+        signal.signal(signal.SIGTERM, safe_push._terminate)
+        began = time.monotonic()
+        sender = threading.Thread(target=interrupt, daemon=True)
         try:
-            threading.Thread(target=interrupt, daemon=True).start()
-            with mock.patch.object(safe_push, "STOP_GRACE", 0.5), \
-                    self.assertRaises(KeyboardInterrupt):
-                self.run_steps(steps, 3, {"one", "two"})
+            sender.start()
+            with self.assertRaises(KeyboardInterrupt) as raised:
+                self.run_steps(steps, 2, {"one", "two"})
+            out = time.time()
+            returned.set()
+            while sender.is_alive():
+                with contextlib.suppress(KeyboardInterrupt):
+                    sender.join(1)
         finally:
-            signal.signal(signal.SIGINT, previous)
+            for signum, handler in handlers.items():
+                signal.signal(signum, handler)
         self.assertTrue(all(p.exists() for p in pids), "the checks never started their children")
         left = [p.name for p in pids if running(int(p.read_text()))]
-        self.assertEqual(left, [], "left running when the run returned")
+        for p in pids:      # only what is still running, so that no other process is hit
+            if p.name in left:
+                os.kill(int(p.read_text()), signal.SIGKILL)
+        self.assertEqual(left, [], "left running when the pass raised")
+        self.assertEqual(str(raised.exception), said, "not the first exception")
+        self.assertEqual(len(sent), 2, "the pass raised before the second signal")
+        self.assertLess(sent[1], out)
+        for name in ("one", "two"):
+            ended = marks / f"{name}.end"
+            self.assertTrue(ended.exists(), f"{name} had not ended when the pass raised")
+            self.assertLess(sent[0], float(ended.read_text()), "it ended before the signal")
+            self.assertLess(float(ended.read_text()), out)
         self.assertFalse(alone_ran.exists())
+        self.assertLess(time.monotonic() - began, 30)
+
+    def test_a_check_whose_start_is_interrupted_runs_whole_or_not_at_all(self):
+        marks = self.marks()
+        steps = [self.stand_in(marks, "first", 0.5), self.stand_in(marks, "second", 0.5)]
+        starts = []
+
+        class Interrupting(threading.Thread):
+            def start(self):
+                super().start()
+                starts.append(self)
+                if len(starts) == 2:
+                    raise KeyboardInterrupt
+        with mock.patch.object(safe_push.threading, "Thread", Interrupting), \
+                self.assertRaises(KeyboardInterrupt):
+            self.run_steps(steps, 2, {"first", "second"})
+        out = time.time()
+        time.sleep(1.5)     # long enough for a check left running to mark its start and end
+        self.assertEqual(len(starts), 2)
+        self.assertLess(self.times(marks, "first")[1], out)
+        started = {p.stem for p in marks.glob("*.start")}
+        self.assertEqual(started, {p.stem for p in marks.glob("*.end")})
+        for name in started:
+            self.assertLess(self.times(marks, name)[1], out, f"{name} ran on after the pass")
 
 
 def folder(files: dict) -> Path:

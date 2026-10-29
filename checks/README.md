@@ -54,14 +54,15 @@ verdict, as it did when they ran one after another.
 
 The pre-flight (`git safe-push`, step 4) runs concurrent checks that come next to each
 other in order as a group: up to `STOICHEIA_CHECK_WORKERS` of them at once, each in its
-own process, and never more than half the machine's cores. The variable unset or empty
-runs them one at a time. Their lines and logs come in the registry's order, each as it
-would be run alone, and a failure refuses at the first failing check in that order. Around
-each group, however many run at once, the pre-flight takes the worktree's state as `git
-status` sees it, untracked files with it and each listed file's bytes hashed, and a group
-that changes it fails the step "concurrent checks left the tree as they found it", naming
-its checks and the paths. CI's `scripts/run_checks.py` runs
-every check one after another, as before.
+own process, and never more than half the machine's cores. The variable unset, empty or 1
+runs them one at a time, as before. Their lines and logs come in the registry's order, each
+as it would be run alone, and a failure refuses at the first failing check in that order.
+Interrupted, or refused, the pre-flight waits for the checks already running to end before
+it cleans or removes the worktree. Around each group, however many run at once, the
+pre-flight takes the worktree's state as `git status` sees it, untracked files with it and
+each listed file's bytes hashed, and a group that changes it fails the step "concurrent
+checks left the tree as they found it", naming its checks and the paths. CI's
+`scripts/run_checks.py` runs every check one after another, as before.
 
 ## Adding a check
 
