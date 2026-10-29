@@ -339,8 +339,8 @@ construction, its premises, and the diagram fact or lemma it needed.
   proof's whole conclusion (below).
   Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
   the record: the passage whose `at` begins a sentence of that run of `--` lines lists
-  the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
-  for the joins by Postulate 1 in I.5, or `this` for an anonymous `have`; and
+  the binding, by the name the proof gives it, in its `unused`, as `unused = ["hAB_FC"]`
+  for I.16's equal bases, or `this` for an anonymous `have`; and
   `check_fidelity.py` fails a name there that the Lean beneath does not bind
   ([review/SCHEMA.md](../review/SCHEMA.md);
   [decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). Nothing else
@@ -713,7 +713,7 @@ such word to begin an interpolated string (the list above). It refuses a token t
 declares that ends in a character a name may hold (the list above). It does not read the
 rest, and these stay open, each example built in Lean 4.35 as written:
 - Lean's own tokens that begin with `#`
-  ([#320](https://github.com/jackChallis/stoicheia/issues/320)), which the scan reads as
+  ([#320](https://github.com/dodecaplex-co/stoicheia/issues/320)), which the scan reads as
   `#` and the name after it. Lean reads the longest token it knows, so
   `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
   `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
@@ -725,7 +725,7 @@ rest, and these stay open, each example built in Lean 4.35 as written:
   so the list would misread a file that lacks one and could hide the code after it
   (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
   closes the hole).
-- Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
+- Lean's other own tokens ([#317](https://github.com/dodecaplex-co/stoicheia/issues/317)).
   Of those that end in a name's character, four end in `'`, `]'`, `×'`, `Σ'` and `⊕'`;
   the scan blanks the `Σ` and refuses a literal after it, but
   takes the `'` of the other three for a character literal's opening, so that
@@ -735,7 +735,7 @@ rest, and these stay open, each example built in Lean 4.35 as written:
   `//` and `\/`, and before a `-` the scan reads a comment where Lean reads none:
   `def S : Type := {x : Int //-1 < x}` and that `set_option` line build on `sorryAx`.
 - A token the file declares that ends in a symbol, which is allowed
-  ([#317](https://github.com/jackChallis/stoicheia/issues/317)): one that holds a
+  ([#317](https://github.com/dodecaplex-co/stoicheia/issues/317)): one that holds a
   comment's opening or a quote hides the code after it, as `infixl:65 " ⊕-- " => Nat.add`
   and `def k : Nat := 1 ⊕--2set_option«debug».byAsSorry true in theorem …` do.
 - A token of a library a file imports, as Mathlib's `''` or `#find`, and a token declared
@@ -903,7 +903,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/dodecaplex-co/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
