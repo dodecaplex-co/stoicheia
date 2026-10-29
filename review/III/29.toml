@@ -1,16 +1,16 @@
 [statement]
 scope = "full"
-note = "Equal circumferences that coincide in `Prop29.of_congruent`, equal in measure in `Prop29`; of any size, less than a semicircle, a semicircle or greater."
-companions = ["III.29 of_congruent"]
+note = "Equal circumferences that coincide in `Prop29`, equal in measure in `Prop29.of_measure`; of any size, less than a semicircle, a semicircle or greater."
+companions = ["III.29 of_measure"]
 fingerprint = "sha256:b15027ff1b86720a"
 
 [route]
 kind = "modified"
-note = "Euclid's I.4 argument uses the ordinary central angles standing on lesser circumferences (Heath, vol. 2, p. 60). For greater circumferences, III.27 first gives equal inscribed angles, III.20 doubles them to reflex central angles, and Common Notion 3 removes those from four right angles before I.4. That is an additional argument for a case within the statement, so the route is modified. Semicircles give diameters, each the sum of two equal radii, the elementary case Heath discusses on p. 61. The companion takes the given congruence through `Prop27.of_congruent` and then follows the same argument."
+note = "Euclid's I.4 argument uses the ordinary central angles standing on lesser circumferences (Heath, vol. 2, p. 60). For greater circumferences, III.27 first gives equal inscribed angles, III.20 doubles them to reflex central angles, and Common Notion 3 removes those from four right angles before I.4. That is an additional argument for a case within the statement, so the route is modified. Semicircles give diameters, each the sum of two equal radii, the elementary case Heath discusses on p. 61. `Prop29` gives III.27 the congruence as it stands (`Prop27`); the companion `Prop29.of_measure` makes its equal measures those of the circumferences on which the angles at A and D stand, gives them to III.27's companion `Prop27.of_measure`, and then follows the same argument."
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]
-note = "Euclid's equal circumferences are read through Common Notion 4 as circumferences that coincide when one is placed on the other (`Arc.Congruent`), as III.28 concludes them, and `Prop29.of_congruent` states III.29 with them. `Prop29` states it with circumferences equal in measure: the form in which the proof carries Euclid's argument, and in which `Arc.measure_eq_iff`, after III.29, cites it. In equal circles the two readings agree: drawn circumferences coincide exactly when they are equal in measure (`Arc.congruent_iff`). In `Prop29` the equal circles do real work: in unequal circles, circumferences equal in measure are cut off by unequal straight lines, and the equal circles give I.4 its equal radii. In `Prop29.of_congruent` the map that lays one circumference on the other keeps the distance between their ends, so the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles with them (`Prop24.equalCircles`): in that companion alone the hypothesis is redundant, kept as Euclid's setting and used along the same route, for the radii of I.4."
+note = "Euclid's equal circumferences are read through Common Notion 4 as circumferences that coincide when one is placed on the other (`Arc.Congruent`), as III.28 concludes them, and `Prop29` states III.29 with them; its proof carries Euclid's argument, taking its equal angles from III.27, which `Prop27` states with the same congruence. `Prop29.of_measure` states it with circumferences equal in measure, the form in which `Arc.measure_eq_iff`, after III.29, cites it, and repeats the argument through III.27's companion `Prop27.of_measure`. In equal circles the two readings agree: drawn circumferences coincide exactly when they are equal in measure (`Arc.congruent_iff`). In `Prop29` the map that lays one circumference on the other keeps the distance between their ends, so the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles with them (`Prop24.equalCircles`): there the hypothesis is redundant, kept as Euclid's setting and used along his route, for the radii of I.4. In `Prop29.of_measure` the equal circles do real work: in unequal circles, circumferences equal in measure are cut off by unequal straight lines, and the equal circles give I.4 its equal radii."
 
 [[passage]]
 at = "and let the straight lines BC, EF be joined"
@@ -25,15 +25,14 @@ note = "The hypothesis that the circles are equal supplies K and L through `Equa
 
 [[passage]]
 at = "Now, since the circumference BGC is equal to the circumference EHF"
-kind = "helper"
-helper = "standing_eq_circumference"
-note = "The given equal measures of BGC, EHF become equal standing circumferences at A and D, by `standing_eq_circumference`. III.27 takes this equality at the next sentence; the companion instead supplies the given congruence to `Prop27.of_congruent`."
+kind = "given"
+note = "The circumferences BGC, EHF are given as circumferences that coincide, and III.27, as `Prop27` states it, takes them so at the next clause, so no step stands between. The companion `Prop29.of_measure` first makes its given equal measures those of the circumferences on which the angles at A and D stand (`standing_eq_circumference`), as `Prop27.of_measure` takes them."
 
 [[passage]]
 at = "the angle BKC is also equal to the angle ELF"
 kind = "different"
 helper = "Prop20"
-note = "III.27 supplies Euclid's ordinary central angles for lesser circumferences. To cover greater circumferences as well, its inscribed-angle conclusion is doubled by III.20 to compare reflex central angles, which must be subtracted from four right angles before I.4 applies (Heath, vol. 2, p. 60). The companion obtains the same conclusions from `Prop27.of_congruent`."
+note = "III.27 supplies Euclid's ordinary central angles for lesser circumferences. To cover greater circumferences as well, its inscribed-angle conclusion is doubled by III.20 to compare reflex central angles, which must be subtracted from four right angles before I.4 applies (Heath, vol. 2, p. 60). The companion `Prop29.of_measure` obtains the same conclusions from III.27's companion `Prop27.of_measure`."
 
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
