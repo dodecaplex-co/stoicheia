@@ -37,8 +37,8 @@ elsewhere, so a run shows that the exemption is what lets them pass.
 Exits 1 if any address is refused, printing each as `file:line: what is wrong`, with what
 to write for the form found; the owner it names is not printed. A file named, or a file in
 scope, that cannot be read or decoded as UTF-8 is refused too, as `file: cannot be read
-(why)`. Exits 2, with a usage line, on an option other than `--self-test`. Standard
-library only.
+(why)`. Exits 2, with a usage line, on an argument beginning `--` other than
+`--self-test`. Standard library only.
 """
 
 from __future__ import annotations

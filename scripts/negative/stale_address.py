@@ -7,7 +7,7 @@ found: `github.com/dodecaplex-co/stoicheia` for the two web addresses,
 `dodecaplex-co/stoicheia` for the bare one. Then a byte that is not UTF-8 (a Latin-1 é)
 is planted in `NOTICE`, and the check must fail saying `NOTICE: cannot be read`.
 A stand-in owner plays the old address, which the check refuses as it refuses any owner
-but the home, and which no new file names.
+but the home, so that this file need not name it.
 """
 
 import sys

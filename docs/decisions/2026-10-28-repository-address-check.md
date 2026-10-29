@@ -13,12 +13,12 @@
   whose owner is not `dodecaplex-co`, in each form GitHub serves (the API's
   `api.github.com/repos/`, `codeload.` and the wiki's `stoicheia.wiki` among them), as a
   bare `<owner>/stoicheia` that no path runs into and as the bare `repos/<owner>/stoicheia`
-  of `gh api`, rather than the old address alone, so that no new file, the check among
-  them, names the old one; each refusal says what to write for the form found. It reads
+  of `gh api`, rather than the old address alone, so that the check need not name the
+  old one; each refusal says what to write for the form found. It reads
   every Markdown file and the root's `CITATION.cff`, `LICENSE` and `NOTICE`, code inside
   Markdown included; code and configuration files are outside its scope. A file named, or
-  a file in scope, that cannot be read or decoded as UTF-8 is refused, and an option other
-  than `--self-test` stops the run with a usage line. Its self-test reads 76 cases, among
+  a file in scope, that cannot be read or decoded as UTF-8 is refused, and an argument
+  beginning `--` other than `--self-test` stops the run with a usage line. Its self-test reads 76 cases, among
   them addresses it must pass over (another host, another repository's name, a local
   path), the advice for each form, the options and files that cannot be read; and a plant
   puts a stand-in owner's address in a generated page, in `CITATION.cff` and, bare, in
