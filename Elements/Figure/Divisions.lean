@@ -27,7 +27,9 @@ list or area; these theorems supply them.
   sum (`divisions_equal`), so the area chosen from its divisions (`Outline.area`) is the sum
   of every division (`area_eq`). Equal regions, and so equal boundaries, have equal areas
   (`area_congr`, `area_of_same_boundary`), and a convex outline's area is its fan's sum
-  (`convex_fan_area`).
+  (`convex_fan_area`). A parallelogram's outline is convex (`Parallelogram.convexOutline`),
+  so its area as an outline is `quadArea`, the two triangles its diameter cuts it into
+  (`Parallelogram.outline_area`).
 
 Through these, I.45 and II.14 take a figure by its outline (`Prop45.outline`,
 `Prop14.outline`, `Prop14.outline_side`). Nothing in Book Zero cites a proposition of the
@@ -125,5 +127,47 @@ theorem convex_fan_area {cs : List Point} (h : ConvexOutline cs) :
   rw [area_eq _ R hR]
   unfold Apart.area fanSum
   rw [hp]
+
+/-- A parallelogram is a convex outline: its corners A, B, C and D, in order, are four
+different points, and the two corners off each side lie on one side of it. Each side is
+parallel to the side opposite, whose ends therefore lie on one side of it
+(`AreParallel.sameSideOf`); and the ends of each diameter differ, since C is off AB and D is
+off BC (`AreParallel.triangle`). -/
+theorem _root_.Elements.Parallelogram.convexOutline {A B C D : Point}
+    (h : Parallelogram A B C D) : ConvexOutline [A, B, C, D] := by
+  have hAC : A ≠ C := h.1.triangle.ne₁₃
+  have hBD : B ≠ D := h.2.triangle.ne₁₃
+  refine ⟨by simp, ?_, ?_⟩
+  · simp [List.nodup_cons, h.1.1, hAC, h.2.2.1.symm, h.2.1, hBD, h.1.2.1]
+  · intro s hs P hP Q hQ hP₁ hP₂ hQ₁ hQ₂
+    have pair {E F X Y U V : Point} (hXY : SameSideOf X Y E F) (hU : U = X ∨ U = Y)
+        (hV : V = X ∨ V = Y) : SameSideOf U V E F := by
+      rcases hU with rfl | rfl <;> rcases hV with rfl | rfl
+      · exact hXY.trans hXY.symm
+      · exact hXY
+      · exact hXY.symm
+      · exact hXY.symm.trans hXY
+    simp only [sides, List.cons_append, List.nil_append, segments, List.mem_cons,
+      List.not_mem_nil, or_false] at hs
+    rcases hs with rfl | rfl | rfl | rfl
+    · exact pair h.1.symm.sameSideOf (by simpa [hP₁, hP₂] using hP)
+        (by simpa [hQ₁, hQ₂] using hQ)
+    · exact pair h.2.symm.sameSideOf.symm (by simpa [hP₁, hP₂] using hP)
+        (by simpa [hQ₁, hQ₂] using hQ)
+    · exact pair h.1.sameSideOf (by simpa [hP₁, hP₂] using hP)
+        (by simpa [hQ₁, hQ₂] using hQ)
+    · exact pair h.2.sameSideOf (by simpa [hP₁, hP₂] using hP)
+        (by simpa [hQ₁, hQ₂] using hQ)
+
+/-- The parallelogram ABCD, as a figure given by its outline, has for area the two triangles
+ABC and ACD into which its diameter AC cuts it (`quadArea`). Its outline is convex
+(`Parallelogram.convexOutline`), so its area is the sum of its fan from A
+(`convex_fan_area`), and that fan is those two triangles. -/
+theorem _root_.Elements.Parallelogram.outline_area {A B C D : Point}
+    (h : Parallelogram A B C D) :
+    (singleOutline [A, B, C, D] (convex_loop_region h.convexOutline).1).area =
+      quadArea A B C D := by
+  rw [convex_fan_area h.convexOutline]
+  simp only [fanSum, fan, segments, List.map, Magnitude.sum, Tacit.add_zero, quadArea]
 
 end Elements.Figures
