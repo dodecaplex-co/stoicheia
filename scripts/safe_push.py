@@ -443,7 +443,8 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
 # checks/ is the registry of CI's `check` job, one file per check (#229): a check added,
-# removed, or with its command, job or order changed, is named in a decisions entry.
+# removed, or with its command, job, order, `concurrent` or `after` changed, is named in a
+# decisions entry.
 # docs/ACCEPTANCE.md's table of the limitations allowed is what tests/test_acceptance_limits.py
 # ties to check_acceptance.py's ALLOWED_LIMITS, so it is a check input, protected as one
 # (#249). PROTECTED_JUDGED, below, joins them. scripts/auto_revert.py keeps its own copy of the
@@ -3652,11 +3653,12 @@ def on_disk(path: Path, hashed: bool = True) -> tuple:
     """What is at `path`: nothing, a link and its target, a file with its executable bit
     and the SHA-256 of its bytes, another kind of file, or, when it cannot be looked at or
     read, the error's number. Not `hashed`, whatever is there is its lstat: size,
-    modification time, inode and mode."""
+    modification time, change time, inode and mode."""
     try:
         st = os.lstat(path)
         if not hashed:
-            return ("stat", st.st_size, st.st_mtime_ns, st.st_ino, st.st_mode)
+            return ("stat", st.st_size, st.st_mtime_ns, st.st_ctime_ns, st.st_ino,
+                    st.st_mode)
         if stat.S_ISLNK(st.st_mode):
             return ("link", os.readlink(path))
         if not stat.S_ISREG(st.st_mode):
@@ -3692,10 +3694,11 @@ def tree_state(wt: Path) -> TreeState:
     (on_disk), hashed but under the build's caches (CACHED), where its lstat is compared:
     so a file changed again, or put back as the index holds it, shows too, and so do a
     commit, a checkout, a file the shared info/exclude comes to ignore, and an entry newly
-    flagged so that git status passes over its file. A write under the caches that puts
-    back the file's size, time, inode and mode does not show. git runs with its settings
-    as at_commit asks (DISK_AS_IS) and no optional lock, so it writes neither the
-    worktree's index nor an object; nothing is written. Not a tree id from a temporary copy
+    flagged so that git status passes over its file. A write under the caches shows even
+    when it puts back the file's size and modification time, since it moves the change
+    time, which only the system sets. git runs with its settings as at_commit asks
+    (DISK_AS_IS) and no optional lock, so it writes neither the worktree's index nor an
+    object; nothing is written. Not a tree id from a temporary copy
     of the index, `git add -A` into it and `git write-tree`: that writes a blob of every
     changed and untracked file, and the tree, into the repository's objects, which the
     worktree shares with the main checkout, and needs GIT_INDEX_FILE kept through run(),
@@ -3743,6 +3746,26 @@ def tree_changes(before: TreeState, after: TreeState) -> str:
     return shown + (f" and {len(changes) - 8} more" if len(changes) > 8 else "")
 
 
+# The signals a group of concurrent checks records, not raises, while it runs at more than
+# one worker (run_together).
+GROUP_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+
+
+def recorder(caught: list[int]):
+    """A signal's handler that only puts each signal it is given at the end of `caught`."""
+    def record(signum, frame):
+        caught.append(signum)
+    return record
+
+
+def signalled(signum: int):
+    """Raise what one of GROUP_SIGNALS raises outside a group: Python's KeyboardInterrupt
+    for Ctrl-C's SIGINT, and _terminate's for SIGTERM and SIGHUP, as main() sets them."""
+    if signum == signal.SIGINT:
+        raise KeyboardInterrupt
+    _terminate(signum, None)
+
+
 def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, logs: Path,
                  first: int, label: str, fail: str, after: types.MappingProxyType,
                  workers: int, cache=None) -> None:
@@ -3758,39 +3781,43 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
     collecting it. An exception a check's run() raised is raised here at its place in
     registry order, as run_step's run() would raise it.
 
-    However this is left, by a refusal, such an exception, Ctrl-C's KeyboardInterrupt,
-    _terminate's for a SIGTERM or SIGHUP, or any other exception, no check starts after
-    it, and every check already running (at most `workers`) is waited for, by joining its
-    thread, before the exception goes on: so none still reads the worktree while the pass
-    cleans it (base_copies, at_commit) or removes it (worktree). The thread is joined, not
-    its end received, since an interrupt can come just after the queue has given up an end
-    and before it is taken in, and that end is then lost. Such a check is not stopped. An
-    exception reaches this thread alone, and a check in run() is not killed on another
-    thread's behalf, so an interrupt or a termination waits for the checks running to end.
-    A terminal's Ctrl-C reaches them too, since they share the run's process group, and
-    they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to end of
-    themselves. A further interrupt while they are waited for, or one already pending as
-    the wait begins, is passed over and the wait begun again, and the first exception goes
-    on once they have ended. Python runs a signal's handler only between its own steps, so
-    a signal that comes in the instant after another has been passed over, before the wait
-    is begun again, could still go on at once."""
+    On the main thread, while the group runs, a SIGINT, SIGTERM or SIGHUP (GROUP_SIGNALS)
+    raises nothing: its handler only records it (recorder), since an exception a handler
+    raises can land just after a lock is taken, in this thread or in a queue, and leave it
+    held. Once one is recorded, no further check starts or is reported, the checks running
+    (at most `workers`) run to their end, the previous handlers are put back, and what the
+    first signal would have raised is raised (signalled), whatever came after it. A
+    terminal's Ctrl-C reaches the checks too, since they share the run's process group,
+    and they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to end of
+    themselves. A refusal, an exception a check's run() raised, or any other, waits for
+    them so too before it goes on, unless a signal was recorded, whose exception then goes
+    on instead. So no check still reads the worktree while the pass cleans it
+    (base_copies, at_commit) or removes it (worktree). Each check is waited for by joining
+    its thread, whether or not its end was taken in. Python runs a handler only between
+    its own steps, so a signal stops the starts once its handler has run, not the instant
+    it comes."""
     names = {name for name, _ in group}
     waiting = list(group)           # not started, in registry order
     running: set[str] = set()       # started, their ends not yet taken in
     ended: dict[str, tuple[str, bool, float] | BaseException] = {}
-    finished: queue.Queue = queue.Queue()
-    # A check's thread lets its run() begin only under `gate`, while `shut` is false. Once
-    # wait() has set `shut` under it, the checks in `begun` are all that run, even if an
-    # exception came between a thread's start and the line after it.
-    gate = threading.Lock()
+    finished: queue.SimpleQueue = queue.SimpleQueue()     # its put never blocks
+    # A check's thread puts itself in `begun` before it reads `shut`, and wait() sets `shut`
+    # before it lists `begun`. Python, with its GIL, runs one thread's step at a time, so a
+    # thread that wait() does not list reads `shut` set, and begins no check: the checks in
+    # the list are all that run, even if an exception came between a thread's start and
+    # the line after it.
     begun: dict[str, threading.Thread] = {}
     shut, stopping, reported = False, False, 0
+    caught: list[int] = []          # the signals recorded, the first first
+    # The handlers to put back, read before any is changed. Off the main thread (a test's),
+    # Python runs no handler on this thread, and none is installed.
+    previous = ({signum: signal.getsignal(signum) for signum in GROUP_SIGNALS}
+                if threading.current_thread() is threading.main_thread() else {})
 
     def check(name: str, cmd: list[str], env: dict) -> None:
-        with gate:
-            if shut:
-                return
-            begun[name] = threading.current_thread()
+        begun[name] = threading.current_thread()
+        if shut:
+            return
         t = time.time()
         try:
             r = run(cmd, where, env=env)
@@ -3801,46 +3828,33 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
 
     def receive() -> bool:
         """One check's end taken in, and its thread joined; whether the pass goes no further
-        than it. Waited for a second at a time, so that a signal's handler (Ctrl-C's
-        KeyboardInterrupt, _terminate's) runs between waits: a lock waited on without a
-        limit need not wake for one."""
-        while True:
-            try:
-                name, result = finished.get(timeout=1)
-                break
-            except queue.Empty:
-                continue
+        than it."""
+        name, result = finished.get()
         ended[name] = result
         running.discard(name)
         begun[name].join()
         return isinstance(result, BaseException) or (fail == "FAIL" and not result[1])
 
     def wait() -> None:
-        """No check begun after this, and every check begun ended: its thread joined, a
-        second at a time, as receive() waits, whether or not its end was taken in; then
-        the ends left on the queue taken in."""
+        """No check begun after this, and every check begun ended: its thread joined,
+        whether or not its end was taken in."""
         nonlocal shut
-        with gate:
-            shut = True
+        shut = True
         for thread in list(begun.values()):
-            while thread.is_alive():
-                thread.join(1)
-        while True:
-            try:
-                name, result = finished.get_nowait()
-            except queue.Empty:
-                return
-            ended[name] = result
+            thread.join()
 
     try:
+        record = recorder(caught)
+        for signum in previous:
+            signal.signal(signum, record)
         while True:
-            while (waiting and not stopping and len(running) < workers
+            while (waiting and not stopping and not caught and len(running) < workers
                    and all(e in ended for e in after.get(waiting[0][0], ()) if e in names)):
                 name, cmd = waiting.pop(0)
                 running.add(name)
                 threading.Thread(target=check, args=(name, cmd, tool_env()),
                                  daemon=True).start()
-            while reported < len(group) and group[reported][0] in ended:
+            while not caught and reported < len(group) and group[reported][0] in ended:
                 name = group[reported][0]
                 result = ended[name]
                 if isinstance(result, BaseException):
@@ -3852,23 +3866,31 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
                 out = step_done("4", name + label, out, ok, seconds, log, rep, fail)
                 if cache is not None:
                     cache.collect(rep, out)
-            if reported == len(group):
-                return
+            if reported == len(group) or caught:
+                return          # a signal recorded is raised below
             if receive():
                 stopping = True
-    except BaseException:
-        # The wait is begun here, inside a try, so that a signal pending as wait() is
-        # called, whose handler Python runs on entering it, is passed over too.
-        while True:
-            try:
-                wait()
-                break
-            except BaseException:   # a further interrupt: the checks are waited for again
-                continue
-        raise
+    finally:
+        try:
+            wait()
+        finally:
+            # Put back with the signals held on this thread, the checks' threads ended, so
+            # that no handler runs half-way through: one whose handler Python has yet to run
+            # is recorded before the first is put back, and one the system still holds for
+            # the harness is taken (sigwait) and recorded too; one that comes once they are
+            # back is handled by its own handler.
+            if previous:
+                held = signal.pthread_sigmask(signal.SIG_BLOCK, GROUP_SIGNALS)
+                for signum in sorted(signal.sigpending() & (set(GROUP_SIGNALS) - held)):
+                    caught.append(signal.sigwait({signum}))
+                for signum, handler in previous.items():
+                    signal.signal(signum, handler)
+                signal.pthread_sigmask(signal.SIG_SETMASK, held)
+        if caught:
+            signalled(caught[0])
 
 
-def guard_group(group, before: dict[str, tuple], where: Path, rep: Report, label: str,
+def guard_group(group, before: TreeState, where: Path, rep: Report, label: str,
                 fail: str, cache=None) -> None:
     """The worktree's state (tree_state) after a group of concurrent checks, against
     `before`, taken before it: if the group changed it, the step TREE_GUARD fails, naming

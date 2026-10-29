@@ -44,22 +44,26 @@
   logged; where a failure is noted, every check runs and is noted in order, and the
   main-checks cache records each in order.
 
-  A signal (Ctrl-C's SIGINT, SIGTERM or SIGHUP), or any other exception, starts no further
-  check. At more than one worker, a termination (SIGTERM or SIGHUP) or an interrupt waits
-  for the checks already running, up to the number of workers, before the pass cleans its
-  worktree, and passes over further signals while it waits (#NNN); at one worker, a check
-  in `run()` is stopped as before. The pass waits by joining each check's thread, so an
-  end that an interrupt takes from the queue before the pass has taken it in leaves
-  nothing to wait for. A terminal's Ctrl-C reaches the checks too, in the run's process
-  group, and they end. Python handles a signal only between its own steps, so one that
-  comes in the instant after another has been passed over could still go on at once.
+  At more than one worker, while a group runs, the harness's handlers for Ctrl-C's SIGINT,
+  SIGTERM and SIGHUP only record a signal and raise nothing, since an exception raised by
+  a handler can land just after a lock is taken and leave it held. Once a signal is
+  recorded, no further check starts; the checks already running, up to the number of
+  workers, run to their end; the previous handlers are put back; and what the first
+  signal would have raised goes on (#NNN), whatever came after it. A terminal's Ctrl-C
+  reaches the checks too, in the run's process group, and they end; a SIGTERM or SIGHUP
+  sent to the harness alone waits for them to end of themselves. Any other exception, a
+  refusal or one a check's `run()` raised, waits for them in the same way before it goes
+  on. So no check still reads the worktree when the pass cleans it. The pass waits by
+  joining each check's thread, whether or not it has taken in the check's end. At one
+  worker, nothing changes: a signal raises as before, and a check in `run()` is stopped.
 
   Around each group, at every number of workers, the pre-flight takes the worktree's
   state: HEAD; the index's entries, with their skip-worktree and assume-unchanged flags;
   each path `git status` lists; and every other file that `git ls-files -o` lists with no
   exclude rules, ignored files with them, but Python's bytecode. Each file's bytes are
   hashed, but under the build's caches, `.lake/` and `model/.lake/`, where its size,
-  modification time, inode and mode are compared; nothing is written, neither the index
+  modification and change times, inode and mode are compared, so that a write which puts
+  back the size and modification time still shows; nothing is written, neither the index
   nor an object. A group that changes the state fails the step "concurrent checks left
   the tree as they found it", naming the group's checks and what changed, and in
   origin/main's pass that note keeps the pass out of the main-checks cache.
@@ -73,8 +77,8 @@
   processes of its own and measures how many run at once.
 
   This entry approves the change to `scripts/safe_push.py`, which reads the two fields,
-  runs the groups, guards the tree around each and waits for their checks on an
-  interrupt.
+  runs the groups, guards the tree around each, records a signal while a group runs, and
+  waits for a group's checks before a signal or any other exception goes on.
 
   This entry approves the change to `scripts/registry.py`, which reads and checks the two
   fields and prints them in its JSON.

@@ -61,10 +61,10 @@ Interrupted, or refused, the pre-flight waits for the checks already running to 
 it cleans or removes the worktree. Around each group, however many run at once, the
 pre-flight takes the worktree's state: HEAD, the index's entries, and every file that
 `git status` or `git ls-files -o` lists, ignored files with them but Python's bytecode,
-each file's bytes hashed but under `.lake/` and `model/.lake/`, where its size, time,
-inode and mode are compared. A group that changes it fails the step "concurrent checks
-left the tree as they found it", naming its checks and what changed. CI's
-`scripts/run_checks.py` runs every check one after another, as before.
+each file's bytes hashed but under `.lake/` and `model/.lake/`, where its size,
+modification and change times, inode and mode are compared. A group that changes it fails
+the step "concurrent checks left the tree as they found it", naming its checks and what
+changed. CI's `scripts/run_checks.py` runs every check one after another, as before.
 
 ## Adding a check
 

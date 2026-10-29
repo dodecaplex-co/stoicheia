@@ -12,14 +12,16 @@ exception a check's run() raised coming in its place; a check never started befo
 checks its `after` names have ended; a check that runs alone between two groups as a
 barrier; a check declared concurrent that writes in the tree refused, at one worker and at
 three, whether it writes a tracked file, an untracked one, an ignored one, one under the
-build's cache, or moves the index; the worktree's state taken writing nothing; every check
-started by run(), at one worker exactly as before #608, on this thread with no thread
-started, and at more on threads of their own, the report and logs written on this thread;
-never more checks at once than the workers, the cap of STOICHEIA_CHECK_WORKERS said, a bad
-value failing the check list line, and the variable not read for a sequence that declares
-nothing concurrent; and, interrupted while two checks run, by Ctrl-C or by SIGTERM and
-again while it waits, or with a check's end lost to the interrupt, the pass going on only
-once both checks and their children have ended. The registry's reader accepts
+build's cache, or flags an entry of the index; the worktree's state taken writing nothing;
+every check started by run(), at one worker exactly as before #608, on this thread with no
+thread or handler started, and at more on threads of their own, the report and logs
+written on this thread; never more checks at once than the workers, the cap of
+STOICHEIA_CHECK_WORKERS said, a bad value failing the check list line, and the variable not
+read for a sequence that declares nothing concurrent; and, sent SIGINT, SIGTERM and SIGHUP
+again and again while two checks run, the pass raising what the first would have raised,
+only once both checks and their children have ended, with the handlers put back, as they
+are on every way out; or with a check's end lost to an exception, the pass still going on
+once both checks have ended. The registry's reader accepts
 `concurrent = true` and refuses every other use of the two fields; as_json carries them;
 safe_push's check_sequence reads them, and holds their rules itself; a registry without
 them declares nothing concurrent; and the real registry declares what #608's audit found,
@@ -107,6 +109,51 @@ note("check", str(os.getpid()))
 child.wait()
 note("end", "")
 """
+
+# A pass of its own, on the main thread of a Python of its own, which alone takes a signal's
+# handler: two such checks at two workers, each released by its own mark, then a check that
+# runs alone. Its harness's handlers are set as main() sets them; each signal the group's
+# handler records is marked as it comes, numbered. It prints what the pass raised, which
+# checks had ended as it raised, the signals that handler took, and whether the handlers
+# were put back.
+SIGNALLED = """
+import contextlib, io, json, os, signal, sys
+from pathlib import Path
+scripts, root, marks, logs, parent = sys.argv[1:6]
+sys.path.insert(0, scripts)
+import safe_push
+for signum in (signal.SIGTERM, signal.SIGHUP):
+    signal.signal(signum, safe_push._terminate)
+before = {signum: signal.getsignal(signum) for signum in safe_push.GROUP_SIGNALS}
+real, handled = safe_push.recorder, []
+def recorder(caught):
+    record = real(caught)
+    def marking(signum, frame):
+        handled.append(signum)
+        open(os.path.join(marks, f"handled.{len(handled)}"), "w").close()
+        record(signum, frame)
+    return marking
+safe_push.recorder = recorder
+steps = [(name, [sys.executable, "-c", parent, marks, name,
+                 os.path.join(marks, "release-" + name)]) for name in ("one", "two")]
+alone = os.path.join(marks, "alone-ran")
+steps.append(("alone", [sys.executable, "-c", f"open({alone!r}, 'w')"]))
+plan = safe_push.CheckList(steps, "", concurrent=frozenset({"one", "two"}), workers=2)
+raised = None
+try:
+    with contextlib.redirect_stdout(io.StringIO()):
+        safe_push.run_sequence(steps, Path(root), safe_push.Report(), Path(logs), "", "FAIL",
+                               [], 10, plan)
+except BaseException as e:
+    raised = [type(e).__name__, str(e)]
+ended = sorted(n for n in ("one", "two") if os.path.exists(os.path.join(marks, n + ".end")))
+restored = all(signal.getsignal(signum) is before[signum] for signum in before)
+print(json.dumps({"raised": raised, "ended": ended, "handled": handled,
+                  "restored": restored}))
+"""
+# How many passes the signals are put to, and how many signals each burst sends.
+ROUNDS = 12
+BURST = 20
 
 
 def py(code: str) -> list[str]:
@@ -425,6 +472,10 @@ class Planted(Stand):
                       "'--skip-worktree', 'tracked.txt'], check=True); "
                       "open('tracked.txt', 'a').write('more')",
          "the index changed (git ls-files --stage -v)"),
+        ("the index, an entry assumed unchanged",
+         "import subprocess; subprocess.run(['git', 'update-index', '--assume-unchanged', "
+         "'tracked.txt'], check=True); open('tracked.txt', 'a').write('more')",
+         "the index changed (git ls-files --stage -v)"),
     )
 
     def planted(self, marks: Path, write: str):
@@ -434,6 +485,7 @@ class Planted(Stand):
     def reset(self):
         """The repository as committed, and .lake/x as a build left it."""
         git(self.root, "update-index", "--no-skip-worktree", "tracked.txt")
+        git(self.root, "update-index", "--no-assume-unchanged", "tracked.txt")
         git(self.root, "checkout", "-q", "--", ".")
         git(self.root, "clean", "-fdxq")
         (self.root / ".lake").mkdir()
@@ -552,9 +604,10 @@ class State(Stand):
 
 class ThroughRun(Stand):
     """Every check is started by run(), as every command of step 4 is. At one worker, as
-    before #608: one after another on this thread, no thread started, run() given for every
-    check what run_step gave it before, and only the guard's reads of git added around each
-    group. At more, each check of a group on a thread of its own, given the same, its
+    before #608: one after another on this thread, no thread started and no signal's
+    handler installed, run() given for every check what run_step gave it before, and only
+    the guard's reads of git added around each group. At more, each check of a group on a
+    thread of its own, given the same, its
     environment built on this thread, and the report and the logs written on this thread
     alone."""
 
@@ -594,7 +647,9 @@ class ThroughRun(Stand):
     def test_at_one_worker_every_check_runs_as_before(self):
         main = threading.main_thread()
         with mock.patch.object(safe_push.threading, "Thread",
-                               side_effect=AssertionError("a thread was started")):
+                               side_effect=AssertionError("a thread was started")), \
+                mock.patch.object(safe_push.signal, "signal",
+                                  side_effect=AssertionError("a handler was installed")):
             # No plan: every check alone, as every check ran before #608.
             before, _, steps, refusal = self.recorded(1, plan=False)
             self.assertIsNone(refusal)
@@ -739,93 +794,150 @@ class Workers(Stand):
 
 
 class Interrupted(Stand):
-    """Interrupted while two checks run at two workers, each waiting for a child that holds
-    until it is released: by Ctrl-C's KeyboardInterrupt or by _terminate's for a SIGTERM,
-    and again while the pass waits, the pass raises the first, and only once both checks
-    and both children have ended, no process of theirs left and no later check started.
-    With a check's end lost to the interrupt, taken from the queue but not taken in, the
-    pass still raises once the checks have ended. And an interrupt that comes just after a
-    check's thread is started: that check runs whole, or not at all."""
+    """Sent SIGINT, SIGTERM and SIGHUP while two checks run at two workers, each waiting for
+    a child that holds until it is released: the first, then a burst of SIGINT and SIGTERM
+    close together, then, once one check has ended, another, round after round, the pass
+    raises what the first signal would have raised, and only once both checks and both
+    children have ended, no process of theirs left and no later check started, with the
+    harness's handlers put back. Those handlers are put back on every way out of a group,
+    and raise what signalled raises. With a check's end lost to an exception, taken from
+    the queue but not taken in, the pass still raises once the checks have ended. And an
+    exception that comes just after a check's thread is started: that check runs whole, or
+    not at all."""
 
-    def test_the_pass_waits_for_the_checks_running(self):
-        for first, second, said in ((signal.SIGINT, signal.SIGINT, ""),
-                                    (signal.SIGTERM, signal.SIGINT, f"signal {signal.SIGTERM}")):
-            with self.subTest(first=first.name):
-                self.interrupted(first, second, said)
+    def test_signals_while_a_group_runs_wait_for_its_checks(self):
+        # Each pass is a Python of its own, so that its group runs on a main thread, which
+        # alone takes a signal's handler. All the rounds together have HOLD seconds: a pass
+        # still running then is killed, and the test fails, not wedges.
+        said = {signal.SIGINT: "", signal.SIGTERM: f"signal {signal.SIGTERM}",
+                signal.SIGHUP: f"signal {signal.SIGHUP}"}
+        given_up = time.monotonic() + HOLD
+        for round_ in range(ROUNDS):
+            first = safe_push.GROUP_SIGNALS[round_ % len(safe_push.GROUP_SIGNALS)]
+            with self.subTest(round=round_, first=first.name):
+                marks = self.marks()
+                outcome = self.signalled(marks, first, given_up)
+                pids = [marks / f"{name}.{what}" for name in ("one", "two")
+                        for what in ("check", "child")]
+                self.assertTrue(all(p.exists() for p in pids),
+                                "the checks never started their children")
+                left = [p.name for p in pids if running(int(p.read_text()))]
+                for p in pids:      # only what still runs, so that no other process is hit
+                    if p.name in left:
+                        with contextlib.suppress(ProcessLookupError):
+                            os.kill(int(p.read_text()), signal.SIGKILL)
+                self.assertEqual(left, [], "left running when the pass raised")
+                self.assertEqual(outcome["raised"], ["KeyboardInterrupt", said[first]],
+                                 "not what the first signal raises")
+                self.assertEqual(outcome["ended"], ["one", "two"],
+                                 "the pass raised before the checks ended")
+                self.assertTrue(outcome["restored"], "the handlers were not put back")
+                self.assertEqual(outcome["handled"][0], first)
+                self.assertGreater(len(outcome["handled"]), 1, "no signal after the first")
+                self.assertFalse((marks / "alone-ran").exists())
 
-    def interrupted(self, first: int, second: int, said: str):
-        marks = self.marks()
-        release, alone_ran = marks / "release", marks / "alone-ran"
-        steps = [(name, py(PARENT) + [str(marks), name, str(release)])
-                 for name in ("one", "two")] + [("alone", py(f"open({str(alone_ran)!r}, 'w')"))]
-        pids = [marks / f"{name}.{what}" for name in ("one", "two")
-                for what in ("check", "child")]
-        sent, handled = [], []
+    def signalled(self, marks: Path, first: int, given_up: float) -> dict:
+        """A pass of its own (SIGNALLED) sent `first` once both checks and their children
+        run; once it has recorded it, a burst; once check `one`, released, has ended,
+        another; then `two` released: what it printed. Killed, failing, at `given_up`."""
+        logs = self.tmp / f"logs-{self.runs}-signalled"
+        logs.mkdir()
+        child = subprocess.Popen([sys.executable, "-I", "-c", SIGNALLED, str(SCRIPTS),
+                                  str(self.root), str(marks), str(logs), PARENT],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-        def waiting() -> bool:
-            """Is this thread, the pass's, in run_together's wait() for the checks?"""
-            frame = sys._current_frames().get(threading.main_thread().ident)
-            while frame is not None and frame.f_code.co_qualname != "run_together.<locals>.wait":
-                frame = frame.f_back
-            return frame is not None
+        def until(*paths: Path) -> bool:
+            """Whether the paths exist while the pass still runs: polled last, so that a
+            signal sent after a true answer reaches it, or its unreaped end, never another
+            process given its pid."""
+            while child.poll() is None and time.monotonic() < given_up:
+                if all(p.exists() for p in paths):
+                    return True
+                time.sleep(0.01)
+            return False
 
-        def handling(real):
-            def handler(signum, frame):
-                handled.append(signum)
-                return real(signum, frame)
-            return handler
-
-        def interrupt():
-            # Each signal once the pass has reached the point it is for: the first once both
-            # checks and their children are running, the second once the pass waits; and
-            # the children released only once the second has been handled, so that the pass
-            # cannot have ended first.
-            try:
-                given_up = time.monotonic() + HOLD
-                while time.monotonic() < given_up and not all(p.exists() for p in pids):
-                    time.sleep(0.01)
-                sent.append(first)
-                os.kill(os.getpid(), first)
-                while time.monotonic() < given_up and not waiting():
-                    time.sleep(0.01)
-                if waiting():
-                    sent.append(second)
-                    os.kill(os.getpid(), second)
-                while time.monotonic() < given_up and len(handled) < len(sent):
-                    time.sleep(0.01)
-            finally:
-                release.touch()
-        handlers = {signum: signal.getsignal(signum) for signum in (signal.SIGINT, signal.SIGTERM)}
-        signal.signal(signal.SIGINT, handling(signal.default_int_handler))
-        signal.signal(signal.SIGTERM, handling(safe_push._terminate))
-        began = time.monotonic()
-        sender = threading.Thread(target=interrupt, daemon=True)
+        def burst(kinds):
+            for n in range(BURST):
+                os.kill(child.pid, kinds[n % len(kinds)])
         try:
-            sender.start()
-            with self.assertRaises(KeyboardInterrupt) as raised:
-                self.run_steps(steps, 2, {"one", "two"})
-            ended = {name for name in ("one", "two") if (marks / f"{name}.end").exists()}
-            while sender.is_alive():
-                with contextlib.suppress(KeyboardInterrupt):
-                    sender.join(1)
+            if until(*(marks / f"{name}.{what}" for name in ("one", "two")
+                       for what in ("check", "child"))):
+                os.kill(child.pid, first)
+                if until(marks / "handled.1"):
+                    burst((signal.SIGINT, signal.SIGTERM))
+                    (marks / "release-one").touch()
+                    if until(marks / "one.end"):
+                        burst((signal.SIGTERM, signal.SIGINT))
+        except ProcessLookupError:
+            pass        # the pass has ended: what it printed says how
         finally:
-            for signum, handler in handlers.items():
-                signal.signal(signum, handler)
-        self.assertTrue(all(p.exists() for p in pids), "the checks never started their children")
-        left = [p.name for p in pids if running(int(p.read_text()))]
-        for p in pids:      # only what is still running, so that no other process is hit
-            if p.name in left:
-                os.kill(int(p.read_text()), signal.SIGKILL)
-        self.assertEqual(left, [], "left running when the pass raised")
-        self.assertEqual(str(raised.exception), said, "not the first exception")
-        self.assertEqual(sent, [first, second], "the pass raised before the second signal")
-        self.assertEqual(handled, sent)
-        self.assertEqual(ended, {"one", "two"}, "the pass raised before the checks ended")
-        self.assertFalse(alone_ran.exists())
-        self.assertLess(time.monotonic() - began, HOLD)
+            (marks / "release-one").touch()
+            (marks / "release-two").touch()
+        try:
+            out, err = child.communicate(timeout=max(0.0, given_up - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.communicate()
+            self.fail(f"a pass still ran after {HOLD} s")
+        self.assertEqual(child.returncode, 0, err)
+        return json.loads(out)
 
-    def test_an_end_lost_to_the_interrupt_is_not_waited_for(self):
-        # The interrupt comes just after the queue has given up the quick check's end, which
+    def test_the_handlers_are_put_back_on_every_way_out(self):
+        # Handlers of the test's own, on this, the main thread: during the group each is
+        # the recorder, and after it each is the test's again, whether the group passed,
+        # refused, or raised what a check's run() raised. (A signal's way out is the test
+        # above's.)
+        signals = safe_push.GROUP_SIGNALS
+        before = {signum: signal.getsignal(signum) for signum in signals}
+        mine = {signum: (lambda signum, frame: None) for signum in signals}
+        for signum, handler in mine.items():
+            signal.signal(signum, handler)
+        self.addCleanup(lambda: [signal.signal(s, h) for s, h in before.items()])
+        during, real_run = [], safe_push.run
+
+        def run(cmd, cwd, **kw):
+            during.append({signum: signal.getsignal(signum) for signum in signals})
+            return real_run(cmd, cwd, **kw)
+        marks = self.marks()
+        missing = str(self.tmp / "no-such-program")
+        ways = (("passed", [self.stand_in(marks, "a"), self.stand_in(marks, "b")], None),
+                ("refused", [self.stand_in(marks, "c", code=1), self.stand_in(marks, "d")],
+                 safe_push.Refusal),
+                ("raised", [("missing", [missing]), self.stand_in(marks, "e")],
+                 FileNotFoundError))
+        for way, steps, raised in ways:
+            with self.subTest(way):
+                during.clear()
+                logs = self.tmp / f"logs-{way}"
+                logs.mkdir()
+                with mock.patch.object(safe_push, "run", run), \
+                        contextlib.redirect_stdout(io.StringIO()), \
+                        contextlib.ExitStack() as stack:
+                    if raised is not None:
+                        stack.enter_context(self.assertRaises(raised))
+                    safe_push.run_together(steps, self.root, safe_push.Report(), logs, 11,
+                                           "", "FAIL", types.MappingProxyType({}), 2)
+                self.assertEqual({s: signal.getsignal(s) for s in signals}, mine)
+                self.assertTrue(during)     # the first check's run() is called, at least
+                for seen in during:
+                    self.assertEqual(len({id(h) for h in seen.values()}), 1, seen)
+                    self.assertTrue(all(h is not mine[s] for s, h in seen.items()), seen)
+
+    def test_signalled_raises_what_the_handlers_raise(self):
+        # Python's own for SIGINT, and _terminate, as main() sets it, for SIGTERM and
+        # SIGHUP.
+        for signum, handler in ((signal.SIGINT, signal.default_int_handler),
+                                (signal.SIGTERM, safe_push._terminate),
+                                (signal.SIGHUP, safe_push._terminate)):
+            with self.subTest(signal=signum.name):
+                with self.assertRaises(KeyboardInterrupt) as ours:
+                    safe_push.signalled(signum)
+                with self.assertRaises(KeyboardInterrupt) as theirs:
+                    handler(signum, None)
+                self.assertEqual(ours.exception.args, theirs.exception.args)
+
+    def test_an_end_lost_to_an_exception_is_not_waited_for(self):
+        # An exception comes just after the queue has given up the quick check's end, which
         # is lost; the held check is released only then. The pass runs on a thread of the
         # test's own, so that a pass waiting for the lost end fails the test, not wedges it.
         marks = self.marks()
@@ -833,13 +945,13 @@ class Interrupted(Stand):
         steps = [self.stand_in(marks, "quick"), self.stand_in(marks, "held", hold="release")]
         lost, outcome = [], []
 
-        class Losing(queue.Queue):
+        class Losing(queue.SimpleQueue):
             def get(self, *args, **kw):
                 item = super().get(*args, **kw)
                 if not lost:
                     lost.append(item[0])
                     release.touch()
-                    raise KeyboardInterrupt("after the end was taken")
+                    raise RuntimeError("after the end was taken")
                 return item
 
         def pass_():
@@ -848,13 +960,13 @@ class Interrupted(Stand):
                 outcome.append(("returned", None))
             except BaseException as e:
                 outcome.append((e, self.marked(marks, "end")))
-        with mock.patch.object(safe_push.queue, "Queue", Losing):
+        with mock.patch.object(safe_push.queue, "SimpleQueue", Losing):
             runner = threading.Thread(target=pass_, daemon=True)
             runner.start()
             runner.join(HOLD)
         self.assertFalse(runner.is_alive(), f"the pass still waited {HOLD} s on")
         [(raised, ended)] = outcome
-        self.assertIsInstance(raised, KeyboardInterrupt)
+        self.assertIsInstance(raised, RuntimeError)
         self.assertEqual(str(raised), "after the end was taken")
         self.assertEqual(lost, ["quick"])
         self.assertEqual(ended, {"quick", "held"}, "the pass raised before the checks ended")
