@@ -444,6 +444,8 @@ python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carr
 python3 -I tests/test_acceptance_limits.py
 python3 -I tests/test_check_superposition_pins.py
 python3 -I scripts/check_superposition_pins.py
+python3 -I tests/test_check_released_names.py
+python3 -I scripts/check_released_names.py --self-test
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain                 # prints nothing
