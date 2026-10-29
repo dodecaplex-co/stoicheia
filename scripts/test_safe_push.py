@@ -5608,10 +5608,11 @@ class PreflightProof(Edge):
     with its digest made again, so that only its own guard can catch it), edited by hand,
     not JSON, missing, malformed in any way a hostile file could be (a key twice, NaN, a
     digest of another form, a number too large, nesting too deep), or holding a step's
-    name or a note that is not short printable text, falls back to the full pre-flight
-    here, never silently accepted and never a crash (an interruption while it is judged
-    stays one), and the head still lands; the notes
-    of a proof that stands in reach neither the body nor the merge. A dry run writes a
+    name or a note that is not short printable text, or a step's name with markup, falls
+    back to the full pre-flight here, never silently accepted and never a crash (an
+    interruption while it is judged stays one), and the head still lands; the notes, the
+    harness and the time of a proof that stands in reach neither the body nor the merge.
+    A dry run writes a
     proof only once it has passed with step 4 in full, removes one left at the path first,
     and removes its own should it then not end in exit 0. Land's helpers are borrowed, not
     inherited, so that Land's tests run once."""
@@ -5906,6 +5907,47 @@ class PreflightProof(Edge):
             ("a bell in its harness", lambda p: self.planted(
                 p, lambda q: q["record"].update(harness=q["record"]["harness"] + "\x07")),
              why)))
+
+    def test_a_proof_with_markup_in_a_steps_name_falls_back(self):
+        # A step's name goes into a cell of the body's table as it is: printable markup in
+        # one (a line break, a table's bar, a backtick) is no character of PROOF_STEP's, so
+        # the proof falls back.
+        sha, proof = self.proved(self.guide_change)
+
+        def step(name):
+            def change(q):
+                next(s for s in q["record"]["steps"] if s[0] == "4")[1] = name
+            return lambda p: self.planted(p, change)
+        why = ("its record holds a step's name with a character other than a letter, a "
+               "digit, a space or one of ' ( ) - . / : _")
+        self.assertFallsBack(sha, proof, (
+            ("a line break", step("full local checks<br>EXTRA DISPLAY LINE"), why),
+            ("a table's bar", step("full local checks | FAIL | 999"), why),
+            ("a backtick", step("full local checks `ok`"), why)))
+
+    def test_a_proofs_harness_and_time_reach_neither_the_body_nor_the_output(self):
+        # Markup planted in the proof's harness and time, printable and short, its digest
+        # made again: the proof stands in, and step 4's line names the harness running here
+        # and the time the proof was made, so neither the pull request's body nor anything
+        # the run prints holds what was planted.
+        sha, proof = self.proved(self.check_change)
+        harness, time = "<br>INJECTED_HARNESS", "<br>INJECTED_TIME"
+        self.planted(proof, lambda q: q["record"].update(
+            harness=q["record"]["harness"] + harness, time=q["record"]["time"] + time))
+        r = self.land(self.proof)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(self.push_part(out), "pre-flight proof"), "ok", out)
+        for planted in (harness, time):
+            self.assertNotIn(planted, out)
+        bodies = [pr["body"] or "" for pr in self.gh_state()["prs"]]
+        self.assertTrue(bodies)
+        for body in bodies:
+            self.assertIn(f"by {proof['record']['harness']}: {self.FROM_PROOF} at "
+                          f"{proof['made']}", body)
+            for planted in (harness, time):
+                self.assertNotIn(planted, body)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
 
     def test_a_proofs_notes_reach_neither_the_body_nor_the_merge(self):
         # A harmless note planted in the proof, its digest made again: the proof stands in,

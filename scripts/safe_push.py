@@ -283,27 +283,31 @@ VM, which holds no credentials, runs the pre-flight, and the machine that pushes
 pushes and merges. The proof is the dry run's record (the commit, origin/main's tip, the
 harness's blob, each step's verdict and time), the mode and blob of each check input at
 origin/main (check_input_blobs), the machine's name and the time it was made, with a digest
-of them. A dry run writes one only once it has passed with step 4 in full, removing FILE
-first and removing the proof again should the run not then end in exit 0 (a refusal, an
-error or an interruption, in its summary or before it), so that only a run that passes
-leaves one, and never with --main-checks-cache: a proof may not rest on a cache entry.
+of them. A dry run writes one only once it has passed with step 4 in full, and never with
+--main-checks-cache: a proof may not rest on a cache entry. The parser's own refusals (an
+unknown option, a combination it refuses) and the checks of the repository it is run in
+come before anything runs and touch nothing at FILE; a dry run past them removes FILE as
+it starts, and again unless it returns 0 (a refusal, an error or an interruption, in its
+summary or before it), so that only a run that passes leaves one.
 --land reads it after the preconditions and the class, before any of the commit's code
 runs here, and takes step 4 from it only when it is of this commit against this
 origin/main, by this harness with origin/main's check inputs, made no more than
 PROOF_HOURS ago nor PROOF_SKEW seconds ahead of this clock, with no note for the security
 review, with each step's name, note, harness and time printable text of at most
-PROOF_TEXT characters, and of step 4 in full, every step passed (proof_record); else a
-note says why, and the full pre-flight runs here, as without it. So too for a proof that
-is not standard JSON (a key given twice in one object, NaN or Infinity), whose digest is
-not 64 lower-case hexadecimal characters, or that cannot be judged at all: a reason, never
-a crash.
-Only its step 4 is taken: its notes are not carried into the record, and the machine is
-named on the terminal and in the record saved here, never in a line the pull request's
-body holds. The proof is a file made by a run that ran the head's own code, so its digest
-catches an edit or damage, not a forgery: anyone who can write the proof file can make
-one for any commit and origin/main they know, with failures and notes left out and the
-digest computed afresh, and CI, which runs a check-changing head's own checks and not
-origin/main's, would not catch that. The proof is believed, as far as its binding
+PROOF_TEXT characters, each step's name of PROOF_STEP's characters alone, and of step 4
+in full, every step passed (proof_record); else a note says why, and the full pre-flight
+runs here, as without it. So too for a proof that is not standard JSON (a key given twice
+in one object, NaN or Infinity), whose digest is not 64 lower-case hexadecimal
+characters, or that cannot be judged at all: a reason, never a crash.
+Only its step 4 is taken, its line naming the harness running here and the time the proof
+was made, nothing else of the proof's: its notes, which are the VM run's, are not carried
+into the record (the preconditions, the secret scan and the guards run here again), and
+the machine is named on the terminal and in the record saved here, never in a line the
+pull request's body holds. The proof is a file made by a run that ran the head's own
+code, so its digest catches an edit or damage, not a forgery: anyone who can write the
+proof file can make one for any commit and origin/main they know, with failures and notes
+left out and the digest computed afresh, and CI, which runs a check-changing head's own
+checks and not origin/main's, would not catch that. The proof is believed, as far as its binding
 reaches, on the owner's decision. The secret scan and the guards run on this machine
 every time, and CI and main's rules gate every merge.
 
@@ -675,6 +679,9 @@ PROOF_HOURS = 12        # the oldest proof --land takes
 PROOF_SKEW = 300        # seconds a proof may be dated ahead of this clock, as clocks differ
 PROOF_BYTES = 2 ** 20   # the largest proof read: 1 MiB
 PROOF_TEXT = 300        # the longest step's name, note, harness or time a proof may hold
+# The characters of a proof's step names: those of every step's name in the records saved
+# so far, with no markup, table bar or backtick, since a name goes into the body as it is.
+PROOF_STEP = re.compile(rf"[A-Za-z0-9 '().:/_-]{{1,{PROOF_TEXT}}}")
 PROOF_FIELDS = frozenset({"format", "record", "check_inputs", "machine", "made", "digest"})
 PROOF_MACHINE = re.compile(r"[A-Za-z0-9._-]{1,64}")
 PROOF_MADE = "%Y-%m-%dT%H:%M:%SZ"
@@ -4447,14 +4454,16 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
             if checked is not None and not checked.get("short"):
                 short = False
                 proof = checked.get("proof")
+                # This line goes into the record's notes, and so into the pull request's
+                # body. Of a proof it takes only the time made, held to PROOF_TIME: the
+                # harness named is the one running here, whose blob the proof's matches,
+                # and the machine is not named.
+                by = (f"{HARNESS}: from the pre-flight proof made at "
+                      f"{printable_text(proof['made'])}" if proof else
+                      f"{printable_text(str(checked.get('harness')))}, "
+                      f"{printable_text(str(checked.get('time')))}")
                 rep.add("4", "full local checks", "skip", f"run on {ctx.sha[:12]} against "
-                        f"origin/main {ctx.base[:12]} by "
-                        f"{printable_text(str(checked.get('harness')))}, "
-                        f"{printable_text(str(checked.get('time')))}"
-                        # The machine is not named: this line goes into the record's
-                        # notes, and so into the pull request's body.
-                        + (f": from the pre-flight proof made at "
-                           f"{printable_text(proof['made'])}" if proof else ""))
+                        f"origin/main {ctx.base[:12]} by {by}")
             elif short:
                 rep.add("4", "full local checks", "skip", f"class {risk.cls}: left to CI, "
                         "whose check and model jobs run the builds, Facts.lean, the kernel "
@@ -5373,8 +5382,9 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
                 checked: dict | None = None) -> dict:
     """The pre-flight's record. `checked`, the earlier record that stood in for step 4
     (--merge), gives its step 4 and its notes; one from a pre-flight proof
-    (--preflight-proof) gives its step 4 and its "proof", never its notes, which are
-    another machine's. "class" is the change's class, by
+    (--preflight-proof) gives its step 4 and its "proof", never its notes, which are the
+    VM run's, not this run's, a freshness note of stage 4 about the checks taken from the
+    proof included. "class" is the change's class, by
     origin/main's risk.py when this record was made, and "short" says that step 4 was left
     to CI for it; "full", that step 4 ran in full (here or in `checked`)."""
     steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
@@ -5386,9 +5396,11 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
             [list(s) for s in checked.get("steps", []) if s and s[0] == "4"]
         notes += [[s.name, f"{s.outcome}, {s.detail}"] for s in rep.steps
                   if s.stage == "4" and s.outcome == "skip"]
-        # A proof's notes stay behind: they are another machine's (its paths, its home
-        # directory), steps 1 to 3 ran again here, and one for the security review made
-        # the proof fall back (proof_record).
+        # A proof's notes stay behind because they are the VM run's (its paths, its home
+        # directory), not this run's, even a freshness note of stage 4 about the checks
+        # taken from the proof. Apart from that, the preconditions, the secret scan and
+        # the guards run here again, and one for the security review made the proof fall
+        # back (proof_record).
         if not checked.get("proof"):
             notes += [list(n) for n in checked.get("notes", [])
                       if n[0] != "full local checks" and list(n) not in notes]
@@ -5652,8 +5664,9 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     PROOF_HOURS ago nor more than PROOF_SKEW seconds ahead of this clock, with no note for
     the security review (as review_notes reads them: with one, the full pre-flight runs
     here, so that the note holds the merge), each step's name, each note, its harness and
-    its time printable text of at most PROOF_TEXT characters, and of step 4 in full with
-    every step passed (checks_record); else None, and why."""
+    its time printable text of at most PROOF_TEXT characters, each step's name of
+    PROOF_STEP's characters alone, and of step 4 in full with every step passed
+    (checks_record); else None, and why."""
     record, inputs, machine = proof["record"], proof["check_inputs"], proof["machine"]
     if record.get("sha") != ctx.sha:
         return None, (f"it is of {printable_text(str(record.get('sha')))[:12]}, not of the "
@@ -5685,18 +5698,22 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
     if held:
         return None, (f"it notes origin/main's checks failing on the commit "
                       f"({printable_text(', '.join(held))[:200]}), for the security review")
-    # Its step names are carried into the record, and so into the pull request's body, and
-    # its harness and time into step 4's line: none may hold a newline, a control or an
-    # escape, nor run long. Its notes, which stay behind, are held to the same.
+    # Its step names, its notes, its harness and its time may hold no newline, no control
+    # and no escape, nor run long, though of these only the step names leave the proof:
+    # they are carried into the record, and so into the table of the pull request's body,
+    # as they are, so they are held to PROOF_STEP's characters as well.
     steps = record.get("steps") if isinstance(record.get("steps"), list) else []
-    texts = [s[1] for s in steps if isinstance(s, list) and len(s) > 1] + \
-        [x for n in notes if isinstance(n, list) for x in n] + \
+    named = [s[1] for s in steps if isinstance(s, list) and len(s) > 1]
+    texts = named + [x for n in notes if isinstance(n, list) for x in n] + \
         [record.get("harness"), record.get("time")]
     if any(isinstance(t, str) and not (t.isprintable() and len(t) <= PROOF_TEXT)
            for t in texts):
         return None, (f"its record holds a step's name, a note, a harness or a time that is "
                       f"not printable text of at most {PROOF_TEXT} characters (no newline, "
                       "control or escape)")
+    if any(isinstance(name, str) and not PROOF_STEP.fullmatch(name) for name in named):
+        return None, ("its record holds a step's name with a character other than a letter, "
+                      "a digit, a space or one of ' ( ) - . / : _")
     if checks_record(record, test_mode, risk) is None or record.get("short"):
         return None, ("it is not of step 4 in full with every step passed, by this harness "
                       "(checks_record)")

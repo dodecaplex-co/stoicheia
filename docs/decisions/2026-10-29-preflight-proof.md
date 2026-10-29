@@ -39,10 +39,13 @@
   and in the record saved on the Mac, never in a line the pull request's body holds: that line gives the time the proof was made and not the machine, since a
   machine's name can be a person's. Nor does the record made from a proof take the
   proof's notes: the ones that matter, for the security review, make it fall back, and
-  the rest are another machine's, written of steps the Mac runs again itself. Each step's
-  name and note in a proof, and its harness and time, must be printable text of at most
-  300 characters, or the proof falls back, so nothing from it can move the terminal or
-  add a line to the body. So too a proof that is not standard JSON (a key given twice in
+  the rest belong to the VM's run, its paths and its home directory among them, so they
+  stay with it. Each note in a proof, and its harness and time, must be printable text of
+  at most 300 characters, and each step's name must use only the letters, digits and few
+  marks every step name in the records saved on the Mac uses (a space and ' ( ) - . / :
+  _), or the proof falls back; and step 4's line names the harness running on the Mac and
+  the time the proof was made, never the proof's own text for them. So nothing from a
+  proof can move the terminal, or add a line, a cell or markup to the body. So too a proof that is not standard JSON (a key given twice in
   one object, NaN or Infinity), whose digest is not 64 hexadecimal characters, or that
   cannot be judged at all: a reason, and the full pre-flight, never a crash. A dry run
   that does not end in exit 0, refused, failed or interrupted once the proof is written,
