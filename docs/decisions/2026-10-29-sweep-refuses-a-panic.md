@@ -13,7 +13,7 @@
   Lean 4.35's runtime), and the sweep refused that run already, since its standard error
   is not empty; a promise dropped unresolved prints `PANIC: Promise.result!: …`. Now a
   line of either stream that begins `PANIC at `, `PANIC: ` or `INTERNAL PANIC` fails the
-  sweep, whatever the exit, before either reading: its
+  sweep, whatever the exit, before the run is read: its
   `SweepError` names the stream and the line, and the sweep exits 2. A message that only
   quotes the words within a line is read as before.
 
@@ -21,7 +21,7 @@
   plants on exit 0 (a panic and its backtrace; a warning, then an internal panic; a
   warning, and a panic on standard error; a dropped promise) and one control (a warning
   that quotes a panic within its line), and the self-test now requires each refusal for a
-  panic, the earlier exit-1 plant's among them, to come from the panic's rule and to end
+  panic, the earlier exit-1 plant among them, to come from the panic's rule and to end
   with the panic's line. Main's sweep reads all four exit-0 plants as whole runs. The
   module's docstring names the new refusal, among the causes of exit 2 and in the
   self-test's account.
