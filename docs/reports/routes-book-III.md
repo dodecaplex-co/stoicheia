@@ -1743,10 +1743,12 @@ statement and proof unchanged; the staged step is not kept, `angleAtCentre.refle
 `angleAtCentre.size` cite it, and the docstring of `angleAtCentre.reflex_gt` gains a clause
 naming it. I.13's review record is read again for the removal of `private` and the rename to
 `Prop13.angle_lt_two_right`. `Elements/` also has the
-fact in public, in Book I after I.29, as `Figures.OutlineBound.angle_lt_two_right`, which
+fact in public, in Book I after I.29, as Figures.OutlineBound.angle_lt_two_right, which
 `exact?` found for the staged statement; it rests on Metric 5
 (`Tacit.angle_le_two_right`, no angle exceeds two right angles), and citing it would have
 added that axiom to III.26 and to the propositions that cite III.26, so it is not cited.
+(28 October 2026, #515: that duplicate is gone, and its two uses in
+`Elements/BookI/OutlineBound.lean` now cite `Prop13.angle_lt_two_right`.)
 No other staged step is a fact of `Elements/`: a scan of every
 declaration of `Elements/` found none with the type of any of the 21 staged declarations,
 but for the three staged proofs of statements in `Elements/`, and `circumference` and
@@ -1839,7 +1841,7 @@ and III.28's P2 and P11 to P16, until their records are read again and stamped.
 
 **Completion on the delivered revision.** After that snapshot, I.13's lemma became the one
 home of the fact that an angle of a triangle is less than two right angles, in place of
-Book I's `Figures.OutlineBound.angle_lt_two_right`, as said above, so I.13's record was
+Book I's Figures.OutlineBound.angle_lt_two_right, as said above, so I.13's record was
 stale too; III.26 to III.30 then rest on the axioms they rested on before, and III.20
 alone gains one, `Tacit.exists_centre`. The gap catalogue's entry for III.27 was made true
 as well. An independent reader who wrote none of them read the records of III.20, III.21,
@@ -1897,3 +1899,23 @@ ship C7's train P3 ([#477](https://github.com/jackChallis/stoicheia/issues/477))
 audit pin holds unchanged. No entry's axioms change; the five entries cite III.1 through
 the shared step `Prop1.of_circle`, and Heath's references with no call fall from six to
 three. The reading of #131's section above, that such a call does no work, is overtaken.
+
+28 October 2026. After ship C7's train P3
+([#477](https://github.com/jackChallis/stoicheia/issues/477)), III.2 too takes its centre
+under Heath's "[III. 1]" by III.1's construction, through `Prop1.of_circle`, which is now
+listed as III.1's companion, with a certificate entry of its own
+([decision entry](../decisions/2026-10-28-iii2-centre.md)); its route is `euclid`. III.8's
+last step now goes by Euclid's two orders in every case, I.21 for the convex circumference
+and I.24 for the concave, and a point of contact, which ends both orders, is never the
+nearer (`Prop8.contact_last`); its route is `euclid`. III.26, III.28 and III.29 remain
+`modified`, and their records say why.
+
+28 October 2026, later (#547). III.26 and III.28 now subtract the remainders as Euclid does,
+for the congruence as for the measures: the application of the equal segments, extended to
+the whole circles (`Prop26.extend`, by I.2, I.4, I.8, I.12, I.17, I.19, I.20's collinear lemmas, III.2 and
+III.9),
+is restricted to what remains (`Prop26.remainder`). III.26's route stays modified for its obtuse
+angles at the circumferences, I.4 taking the angles that remain of four right angles
+(Heath, vol. 2, p. 57), and III.29's for its greater circumferences (vol. 2, pp. 60 to 61).
+III.28's route is euclid: its two diameters are a case Heath calls "scarcely worth giving"
+(vol. 2, p. 60), declared as a passage, so the note above is overtaken for III.28.

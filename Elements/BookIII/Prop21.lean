@@ -13,9 +13,10 @@ Heath: "Under the restriction that the 'angle at the centre' used in III. 20 mus
 than two right angles, Euclid's proof of this proposition only applies to the case of a
 segment greater than a semicircle" (vol. 2, p. 49). Here the angle at the centre may be two
 right angles or more (`angleAtCentre`, with III.20 in `Elements/BookIII/Prop20.lean`), a
-reading that is ours, after Heath's notes, and not Euclid's. So Euclid's own two steps cover
-every segment: the angles BAD and BED are each half of the one angle at the centre standing
-on the circumference BCD (`Prop20`), and halves of one angle are equal.
+reading that is ours, after Heath's notes, and not Euclid's. So Euclid's two steps cover
+every segment, the first of them argued another way in the semicircle and the less segment:
+the angles BAD and BED are each half of the one angle at the centre standing on the
+circumference BCD (`Prop20`), and halves of one angle are equal.
 -/
 
 namespace Elements.BookIII
@@ -48,7 +49,8 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle}
      (`angleAtCentre.size`). Heath says Euclid's proof, with the angle at the centre less
      than two right angles, covers only the greater segment (vol. 2, p. 49). With the
      angle at the centre of any size, III.20 carries his two steps to the semicircle and
-     the less segment too, the cases his figure leaves aside. -/
+     the less segment too, cases of his statement that his proof does not reach, so there
+     this step is argued another way. -/
   have h₁ : angleAtCentre ABCD B C D = ∠ B A D + ∠ B A D :=
     Prop20 hA hB hD hCA.symm
   -- For the same reason

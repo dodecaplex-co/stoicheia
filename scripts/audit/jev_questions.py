@@ -826,16 +826,12 @@ SUPERPOSITION_BRIDGES = ['Elements.Superposition.Atom.holds_map',
                          'Elements.Superposition.Lit.holds_map',
                          'Elements.Superposition.Metric.holds_map',
                          'Elements.Superposition.Derives.sound', 'Elements.Superposition.Rule.apply']
-CITED_LAWS = {
-    4: ['Elements.Superposition.Cited.holds_lenSymm', 'Elements.Superposition.Cited.holds_angleSymm',
-        'Elements.Superposition.Cited.holds_areaCongruent',
-        'Elements.Superposition.Cited.holds_neOfLen', 'Elements.Superposition.Cited.holds_rayUnique',
-        'Elements.Superposition.Cited.holds_rayOfAngle',
-        'Elements.Superposition.Cited.holds_rayOfAngleSide'],
-    8: ['Elements.Superposition.Cited.holds_lenSymm', 'Elements.Superposition.Cited.holds_neOfLen',
-        'Elements.Superposition.Cited.holds_rayUnique', 'Elements.BookI.Prop8.holds_prop7',
-        'Elements.SameSideOf.of_line'],
-}
+# The proofs of the laws each cites are the certificate's, read from its entry of facts.json
+# (`Generator.cited_laws`), so that a law its Lean no longer cites leaves the row with it. The
+# one bridge named here is no law's proof: holds_prop7, the proof facts.json gives for I.7's
+# law, turns I.7's same side of a straight line into the same side of its two points through
+# SameSideOf.of_line, which I.8's record checks too.
+CITED_EXTRAS = {'I.4': [], 'I.8': ['Elements.SameSideOf.of_line']}
 # I.45 and II.14 take a figure by its outline too (`Prop45.outline`, `Prop14.outline`): the
 # outline's words, and Book Zero's bridges, that it has a division into triangles that lie
 # apart, that every such division has one sum, the content theorem, and that this sum is the
@@ -848,18 +844,19 @@ OUTLINE_BRIDGES = ['Elements.Figures.division_exists', 'Elements.Figures.Apart.a
 # bridge, a definition or one of the statements the row judges (`Generator.checked`). Every
 # name a [representation] note gives in backticks is read from the record itself. These are
 # the others: what the comment on I.4's and I.8's representations item says it checked, each
-# law cited with its meaning and its proof; and, where the row's statements take a figure by
-# its outline, the bridges I.45's and II.14's notes on the route and the passages give for it,
-# with the region and the area of an outline they speak of.
+# law cited with its meaning and its proof, the proofs with CITED_EXTRAS read from facts.json
+# (`Generator.record_checked`); and, where the row's statements take a figure by its outline,
+# the bridges I.45's and II.14's notes on the route and the passages give for it, with the
+# region and the area of an outline they speak of.
 RECORD_CHECKED = {
     'I.4': ('Elements.Superposition.Atom.Holds', 'Elements.Superposition.Lit.Holds',
             'Elements.Superposition.Metric.Holds', *SUPERPOSITION_BRIDGES,
             'Elements.Superposition.Cited.Holds', 'Elements.Superposition.Law.Holds',
-            'Elements.Superposition.Cited.law', *CITED_LAWS[4]),
+            'Elements.Superposition.Cited.law'),
     'I.8': ('Elements.Superposition.Atom.Holds', 'Elements.Superposition.Lit.Holds',
             'Elements.Superposition.Metric.Holds', *SUPERPOSITION_BRIDGES,
             'Elements.Superposition.Cited.Holds', 'Elements.Superposition.Law.Holds',
-            'Elements.Superposition.Cited.law', *CITED_LAWS[8]),
+            'Elements.Superposition.Cited.law'),
 }
 OUTLINE_CHECKED = {
     'I.45': ('Elements.Figures.Outline', 'Elements.Figures.Outline.Region',
@@ -906,14 +903,16 @@ RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
 SQUARE_BRIDGES = ['Elements.Square.eq_sq', 'Elements.Square.described']
 
 
-def bundle(book: str, n: int, outline: bool = False) -> tuple[list[str], list[str]]:
+def bundle(book: str, n: int, outline: bool = False,
+           cited: list[str] = ()) -> tuple[list[str], list[str]]:
     """The definitions and bridges that connect the objects a record's representation item
-    judges with Euclid's; `outline` when the statements take a figure by its outline.
+    judges with Euclid's; `outline` when the statements take a figure by its outline; `cited`,
+    for I.4 and I.8, the proofs of the laws their derivations cite (`Generator.cited_laws`).
     `Generator.bundle` supplies none where the record marks the item `n/a`."""
     definitions, bridges = [], []
     if (book, n) in [('I', 4), ('I', 8)]:
         definitions += SUPERPOSITION_DEFINITIONS
-        bridges += SUPERPOSITION_BRIDGES + CITED_LAWS[n]
+        bridges += SUPERPOSITION_BRIDGES + list(cited)
     if book == 'I' and (34 <= n <= 38 or 41 <= n <= 48):
         definitions += ['Parallelogram', 'quadArea']
         bridges += AREA_BRIDGES
@@ -1578,13 +1577,35 @@ class Generator:
         record = tomllib.loads(self.evidence.read(f'review/{book}/{n:02d}.toml'))
         if record['review'].get('items', {}).get('representations') == 'n/a':
             return [], []
-        return bundle(book, n, f'{book}.{n} outline' in self.facts[f'{book}.{n}']['attached'])
+        ref = f'{book}.{n}'
+        cited = self.cited_laws(ref) if ref in CITED_EXTRAS else []
+        return bundle(book, n, f'{ref} outline' in self.facts[ref]['attached'], cited)
+
+    def cited_laws(self, ref: str) -> list[str]:
+        """The bridges of the laws that the derivation of `ref`, I.4 or I.8, cites: each proof
+        of each law of its `cited_laws` in facts.json, in the certificate's order, with
+        `Elements.` before it, and then its CITED_EXTRAS. A derivation whose entry names no law,
+        or a law no proof, is refused, since its record checked each law with its proof."""
+        laws = self.facts[ref].get('cited_laws')
+        require(laws, f'{ref}: facts.json gives its derivation no cited_laws')
+        proofs = []
+        for law in laws:
+            require(law.get('proofs'), f'{ref}: facts.json gives no proof of its law {law.get("law")}')
+            proofs += ['Elements.' + proof['name'] for proof in law['proofs']]
+        return list(dict.fromkeys(proofs + CITED_EXTRAS[ref]))
+
+    def record_checked(self, ref: str) -> tuple[str, ...]:
+        """RECORD_CHECKED's names for the record of `ref`, with, for I.4 and I.8, the bridges of
+        the laws its derivation cites (cited_laws)."""
+        cited = self.cited_laws(ref) if ref in CITED_EXTRAS else []
+        return (*RECORD_CHECKED.get(ref, ()), *cited)
 
     def checked(self, ref: str, record: dict, state: dict) -> list[str]:
         """What the record says its representations verdict rests on that the row does not
         supply, as a bridge, a definition or one of the statements it judges: each name its
-        [representation] note gives in backticks, and its entries of RECORD_CHECKED and, where
-        the row's statements take a figure by its outline, OUTLINE_CHECKED."""
+        [representation] note gives in backticks, and its names of RECORD_CHECKED, the laws
+        it cites among them (record_checked), and, where the row's statements take a figure by
+        its outline, OUTLINE_CHECKED."""
         consumer = self.index.get(heath.parse_ref(ref).lean)
         names = []
         for token in re.findall(r'`([^`]+)`', record.get('representation', {}).get('note', '')):
@@ -1592,7 +1613,7 @@ class Generator:
                 name = self.index.resolve(token, consumer, commentary=True)
                 require(name, f'{ref}: its record names {token}, which is no declaration')
                 names.append(name)
-        names += RECORD_CHECKED.get(ref, ())
+        names += self.record_checked(ref)
         if f'{ref} outline' in self.facts[ref]['attached']:
             names += OUTLINE_CHECKED.get(ref, ())
         supplied = set(state['bridges']) | {'Elements.' + name for name in state['definitions']}
