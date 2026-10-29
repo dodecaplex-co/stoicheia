@@ -70,6 +70,7 @@ ROOT_DOCUMENTS = ("CITATION.cff", "LICENSE", "NOTICE")
 # are addresses with a host, c and d bare ones.
 OWNER = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
 NAME_END = r"(?:\.wiki)?(?:\.git)?(?![A-Za-z0-9_-])(?!\.[A-Za-z0-9_-])"
+BARE_END = rf"{NAME_END}(?!@)"
 HOST = r"(?<![A-Za-z0-9._-])"
 BARE = r"(?<![A-Za-z0-9@._/~-])"
 PORT = r"(?::\d+)?"
@@ -78,11 +79,12 @@ ADDRESS = re.compile(
     rf"|codeload\.github\.com{PORT}/|raw\.githubusercontent\.com{PORT}/)"
     rf"(?P<a>{OWNER})/stoicheia{NAME_END}"
     rf"|{HOST}(?P<b>{OWNER})\.github\.io{PORT}/stoicheia{NAME_END}"
-    rf"|{BARE}repos/(?P<d>{OWNER})/stoicheia{NAME_END}"
-    rf"|{BARE}(?P<c>{OWNER})/stoicheia{NAME_END}",
+    rf"|{BARE}repos/(?P<d>{OWNER})/stoicheia{BARE_END}"
+    rf"|{BARE}(?P<c>{OWNER})/stoicheia{BARE_END}",
     re.I)
 URL = re.compile(
-    r"(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*://[^\s<>()\[\]{}\"']+", re.I)
+    r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*:|"
+    r"(?<![A-Za-z0-9_+./:-]))//[^\s<>()\[\]{}\"']+", re.I)
 # What to write instead, by the form found: with a host, or bare (where a local path the
 # check reads as bare is written from `./` or `~/`).
 WRITE_HOSTED = f"write github.com/{HOME}/stoicheia"
@@ -233,6 +235,17 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"https://example.com/?repo=https://github.com/{other}/stoicheia", [1]),
         ("docs/STYLE.md", "https://api.github.com:443/repos/dodecaplex-co/stoicheia", []),
         ("docs/STYLE.md", "https://dodecaplex-co.github.io:443/stoicheia", []),
+        ("docs/STYLE.md", f"//example.com/?repo={other}/stoicheia", []),
+        ("docs/STYLE.md", f"//example.com/#repo={other}/stoicheia", []),
+        ("docs/STYLE.md", f"//example.com/?repo={other}/stoicheia and "
+                          f"https://github.com/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"//github.com/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"mailto:{other}/stoicheia@example.com", []),
+        ("docs/STYLE.md", f"mailto:{other}/stoicheia.git@example.com", []),
+        ("docs/STYLE.md", f"mailto:{other}/stoicheia.wiki.git@example.com", []),
+        ("docs/STYLE.md", f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"{other}/stoicheia.wiki.git", [1]),
+        ("docs/STYLE.md", f"https://github.com/{other}/stoicheia@example.com", [1]),
     ]
     faults = []
     for name, text, lines in cases:
