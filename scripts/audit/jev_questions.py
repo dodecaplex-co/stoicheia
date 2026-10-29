@@ -1584,12 +1584,7 @@ class Generator:
         record = tomllib.loads(self.evidence.read(f'review/{book}/{n:02d}.toml'))
         if record['review'].get('items', {}).get('representations') == 'n/a':
             return [], []
-        outline = f'{book}.{n} outline' in self.facts[f'{book}.{n}']['attached']
-        definitions, bridges = bundle(book, n, outline)
-        # The evidence commit of the audit of Books I and II, of 19 October, holds no outline of
-        # a parallelogram: its two bridges are supplied where the evidence declares them.
-        return definitions, [name for name in bridges if name not in PARALLELOGRAM_OUTLINE_BRIDGES
-                             or name in self.index.decls]
+        return bundle(book, n, f'{book}.{n} outline' in self.facts[f'{book}.{n}']['attached'])
 
     def checked(self, ref: str, record: dict, state: dict) -> list[str]:
         """What the record says its representations verdict rests on that the row does not
@@ -1635,6 +1630,10 @@ class Generator:
 
     def bridges(self, source: dict, book: str, n: int) -> tuple[dict, list[str], dict]:
         objects, names = self.bundle(book, n)
+        # The evidence commit of the audit of Books I and II, of 19 October, holds no outline of
+        # a parallelogram: its two bridges are supplied where the evidence declares them.
+        names = [name for name in names if name not in PARALLELOGRAM_OUTLINE_BRIDGES
+                 or name in self.index.decls]
         quoted = {name: self.index.quote(source, 'bridges.' + name, name,
                                         full=self.index.get(name).kind in ('def', 'abbrev'))
                   for name in sorted(set(names))}

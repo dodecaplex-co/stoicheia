@@ -24,5 +24,5 @@
   descriptions.
   This entry approves the change to `tests/test_jev_questions.py`: one new case, which
   checks the bundle, the rows and both plants.
-  `docs/FORMALIZATION.md` names the two theorems in its catalogue's row on a rectilineal
-  figure.
+  The order's other half, the two theorems named in `docs/FORMALIZATION.md`'s catalogue, is
+  a change of its own, since other changes in flight write the rows beside it.
