@@ -763,11 +763,14 @@ class Workers(Stand):
 
     def listed(self, root: Path, value: str):
         """check_list on the registry at `root`, with STOICHEIA_CHECK_WORKERS `value` on a
-        machine of eight cores: the list, the refusal if any, and the step."""
+        machine of eight cores, and no STOICHEIA_PASS_WORKERS, which adds to the line
+        (#609) and which the lane may set for the run this test is a check of: the list,
+        the refusal if any, and the step."""
         ctx = types.SimpleNamespace(repo=root, base="HEAD")
         rep, refusal = safe_push.Report(), None
-        env = dict(os.environ, **{safe_push.CHECK_WORKERS: value})
-        with mock.patch.dict(os.environ, env), \
+        env = {k: v for k, v in os.environ.items() if k != safe_push.PASS_WORKERS}
+        env[safe_push.CHECK_WORKERS] = value
+        with mock.patch.dict(os.environ, env, clear=True), \
                 mock.patch.object(safe_push.os, "cpu_count", return_value=8), \
                 contextlib.redirect_stdout(io.StringIO()):
             try:
