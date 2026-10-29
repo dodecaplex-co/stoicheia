@@ -432,6 +432,25 @@ class TrainChecks(Repository):
                 train._placeholder_word(f"{self.member} {cell}")
                 self.assertLess(time.perf_counter() - started, 1.0)
 
+    def test_the_incompletion_and_verdict_readings_are_linear(self):
+        # 200,000 characters of separators after each new phrase's start, of phrases
+        # that never end, and of verdicts each read back to its phrase.
+        size = 200_000
+        for cell in ("to follow" + " " * size + "x", "to be" + " " * size + "x",
+                     "after the" + " " * size + "x", "after merge" + " " * size + "x",
+                     "later" + " " * size + "x", "review not" + "-" * size + "x",
+                     "review in" + " " * size + "x", " " + "-" * size, "? " * (size // 2),
+                     "review, " * (size // 8), "found" + " " * size + "x",
+                     "no " + "nor " * (size // 4) + "x", "pass " * (size // 5),
+                     ("not " * 30 + "passed ") * (size // 127), "w<i></i>" * (size // 8)):
+            with self.subTest(cell=cell[:12]):
+                self.assertGreaterEqual(len(cell), size - 200)
+                started = time.perf_counter()
+                train._placeholder_word(f"{self.member} {cell}")
+                train._review_content(f"{self.member} {cell}", security=True)
+                train._says_not_required(f"{self.member} {cell}")
+                self.assertLess(time.perf_counter() - started, 1.0)
+
     def test_findings_that_begin_like_a_placeholder_pass(self):
         for cell in (f"To do so, the reader re-ran the checks at {self.member[:7]}: no "
                      "findings.",
@@ -469,6 +488,214 @@ class TrainChecks(Repository):
             with self.subTest(protected=cell):
                 self.refused("/security-review says", head=head, text=body(
                     [member_row(member, security_review=cell)], f"- check: {CHECK}"))
+
+    def test_review_cells_that_say_the_review_is_incomplete_refuse(self):
+        # #259: "Findings will be added later at <sha>" passed, since any letter beyond
+        # the commit counted. Each refuses beside a verdict too, and markup inside a word,
+        # HTML or Markdown, or an invisible letter, hides it from no reading. Then the 27
+        # October review's cells (its B1 and B2), each passed by the first fix.
+        own = self.member[:12]
+        cells = (f"{own}: PASS; review\N{INVISIBLE SEPARATOR}\u2065pending.",
+                 f"{own}: PASS; review\u2065pending.", f"{own}: PASS; findings\u2065tbd.",
+                 f"{own}: PASS; findings\U000E0002to come.", f"{own}: PASS; x\ufff0n/a",
+                 f"Did {own} pass?Unknown.",
+                 f"{own}: PASS; findings pen[d](#x)ing.", f"{own}: PASS; w[i](#x)ll be added.",
+                 f"{own}: PASS; [pen](#x)ding.", f"{own}: PASS; to [co](#x)me.",
+                 f"{own}: PASS; review [incom](#x)plete.",
+                 f"Findings will be added later at {own}",
+                 f"A first pass over {own}; the full review follows.",
+                 f"{own}: PASS, with findings to be reported after the merge",
+                 f"Review of {own} is incomplete: no findings.",
+                 f"Quick pass at {own}, full review after the merge.",
+                 f"{own}: PASS (review deferred)", f"{own}: PASS, the rest is outstanding",
+                 f"Did {own} pass? Unknown.", f"{own}: PASS; the rest to be done.",
+                 f"{own}: PASS; the security review is unfinished.",
+                 f"{own}: PASS; a partial review.",
+                 f"{own}: PASS; the review is not yet done.", f"{own}: PASS; findings to come.",
+                 f"Findings w<i></i>ill be added la<i></i>ter at {own}: PASS.",
+                 f"PASS at {own}; the review is pen<i></i>ding.",
+                 f"PASS at {own}; the review is de<b></b>ferred.",
+                 f"{own}: no findings yet.", f"{own}: PASS (preliminary).",
+                 f"{own}: PASS; not finished.", f"{own}: TODO; approved for now.",
+                 f"{own}: passed, more to do.", f"{own}: PASS (to be continued).",
+                 f"{own}: PASS; the second commit is not reviewed.",
+                 f"{own}: passed lens A; lens B not started.",
+                 f"{own}: passed the first half; the second half is unreviewed.",
+                 f"{own}: passed on a skim; the full read is tomorrow.",
+                 f"{own}: interim verdict: pass.",
+                 f"{own}: provisional PASS, subject to the security reader's sign-off.",
+                 f"{own}: approved in principle; details next week.",
+                 f"{own}: PASS; the review is still running.",
+                 f"{own}: no findings yet; the review continues.",
+                 f"the earlier commit passed at {own}, this one is unread",
+                 f"{own}: no findings as of now; reading continues.",
+                 f"{own}: PASS; haven't read tests/ yet.", f"{own}: PASS; reading continues.",
+                 f"{own}: no findings at this point, review continuing.",
+                 f"{own}: PASS, review half done.", f"{own}: PASS. Second lens: TBA.",
+                 f"{own}: passed up to scripts/; tests/ still unread.",
+                 f"{own}: PASS; findings w*i*ll be added la*t*er.",
+                 f"{own}: PASS; the review is pen**d**ing.",
+                 f"{own}: PASS; the review is in*complete*.",
+                 f"{own}: PASS; findings to co`m`e.",
+                 f"{own}: PASS; the review is out**stand**ing.",
+                 f"{own}: PASS; findings _will_ be added.",
+                 f"{own}: PASS; findings ~~w~~ill be added.",
+                 *(f"{own}: PASS; findings wi{mark}ll be added, the review pend{mark}ing."
+                   for mark in ("\N{HANGUL FILLER}", "\N{HANGUL CHOSEONG FILLER}",
+                                "\N{HANGUL JUNGSEONG FILLER}",
+                                "\N{HALFWIDTH HANGUL FILLER}", "⁥", "￰",
+                                "\U000e0002", "\N{COMBINING GRAPHEME JOINER}")))
+        for cell in cells:
+            for key, label in (("code_review", "/code-review"),
+                               ("security_review", "/security-review")):
+                with self.subTest(cell=cell, key=key):
+                    text = body([dict(self.row, **{key: cell})])
+                    self.refused(f"{label} says", text=text)
+                    self.assertIn("a review cell may not say",
+                                  "\n".join(train.body_problems(text)))
+        # The rest of the review's B1 cells, which name no listed word: no verdict stands
+        # in the clause that names the commit.
+        for cell in (f"Started at {own}; CI passed.",
+                     f"{own}: findings to be written up at the merge; PASS.",
+                     f"{own}: passed (partial).", f"{own}: PASS, incomplete."):
+            for key, label in (("code_review", "/code-review"),
+                               ("security_review", "/security-review")):
+                with self.subTest(cell=cell, key=key):
+                    self.refused(f"{label} gives no visible review verdict",
+                                 text=body([dict(self.row, **{key: cell})]))
+
+    def test_review_cells_must_give_a_verdict_that_stands(self):
+        # A verdict, not any letter: none negated, hedged or as a noun ("pass" after "a
+        # first" or "quick"), and none that either reading lacks or negates.
+        own = self.member[:12]
+        cells = (f"Findings at {own}: see the thread.", f"Reviewed {own}.",
+                 f"{own}: may have passed", f"{own}: almost passed",
+                 f"{own}: would have passed", f"{own}: not fully passed",
+                 f"{own}: hasn't actually passed", f"{own}: never really approved",
+                 f"{own}: nothing passes", f"{own}: didnt pass",
+                 f"{own}: hasn\N{MODIFIER LETTER APOSTROPHE}t actually passed",
+                 f"A first pass at {own}.", f"Quick pass at {own}: clean.",
+                 f"{own}: two passes.", f"{own}: n<i></i>ot passed.",
+                 f"{own}: <span title='PASS'>notes</span>",
+                 f"{own}: <span title='not'></span> passed.",
+                 # Markdown inside a word hides no negation, and a struck verdict is none.
+                 f"{own}: ne**v**er passed.", f"{own}: n_o_t passed.", f"{own}: ~~passed~~",
+                 f"{own}: ~PASS~, no notes.", f"{own}: ~~PASS, no findings~~ (see thread)",
+                 # A verdict beside capitals, which name no commit as the commit is read.
+                 f"Reviewed {own}; ABCDEF1: PASS.")
+        for cell in cells:
+            for key, label in (("code_review", "/code-review"),
+                               ("security_review", "/security-review")):
+                with self.subTest(cell=cell, key=key):
+                    self.refused(f"{label} gives no visible review verdict",
+                                 text=body([dict(self.row, **{key: cell})]))
+        self.refused("/code-review gives no visible review verdict",
+                     text=body([dict(self.row, code_review=f"{own}: not required.")]))
+        for cell in (f"{own}: not in scope, fixed.", f"Final PASS at {own}.",
+                     f"{own}: the second pass found nothing.",
+                     f"Re-review after the merge of main at {own}: PASS.",
+                     f"{own}: PASS; two minors sent to follow-up #245."):
+            with self.subTest(cell=cell):
+                self.assertEqual(self.problems(text=body([dict(self.row, code_review=cell)])),
+                                 [])
+
+    def test_each_listed_word_refuses_alone(self):
+        # Each word of the lists, the only one in its cell, after a verdict that stands
+        # beside the commit: the refusal names that word, so no word can leave a list
+        # unnoticed, and "later" is read before each word that says when.
+        own = self.member[:12]
+        words = (
+            ("the review is pending", "pending"), ("TBD", "tbd"), ("TBC", "tbc"),
+            ("TBA", "tba"), ("WIP", "wip"), ("findings will be added", "will"),
+            ("findings to come", "to come"), ("not needed", "not needed"),
+            ("the rest is outstanding", "outstanding"), ("in progress", "in progress"),
+            ("under way", "under way"), ("underway", "underway"), ("ongoing", "ongoing"),
+            ("awaiting the lens", "awaiting"), ("waiting on CI", "waiting"),
+            ("so far", "so far"), ("still to read tests/", "still to"),
+            ("lens B not started", "not started"), ("not finished", "not finished"),
+            ("tests/ not reviewed", "not reviewed"), ("tests/ unreviewed", "unreviewed"),
+            ("preliminary", "preliminary"), ("provisional", "provisional"),
+            ("the read continues", "continues"), ("the read continuing", "continuing"),
+            ("the read resumes", "resumes"), ("the rest tomorrow", "tomorrow"),
+            ("details next week", "next week"), ("approved for now", "for now"),
+            ("CI still running", "still running"), ("half done", "half done"),
+            ("in principle", "in principle"), ("N/A", "n/a"), ("TODO", "todo"),
+            ("more to do", "to do"), ("notes to follow", "to follow"),
+            ("no findings yet", "yet"), ("tests/ still unread", "still unread"),
+            ("tests/ is unread", "is unread"), ("tests/ are unread", "are unread"),
+            ("tests/ remains unread", "remains unread"),
+            ("tests/ remain unread", "remain unread"), ("tests/ stays unread", "stays unread"),
+            ("tests/ stay unread", "stay unread"), ("tests/ left unread", "left unread"),
+            ("tests/ marked as unread", "as unread"),
+            ("notes after the merge", "after the merge"), ("notes after merge", "after merge"),
+            ("notes later", "later"), ("which run?", "?"),
+            *((f"notes to be {verb}", f"to be {verb}") for verb in (
+                "added", "given", "reported", "reviewed", "read", "run", "completed",
+                "finished", "confirmed", "decided", "determined", "continued")),
+            *((f"notes later {when} noon", "later") for when in (
+                "at", "on", "in", "by", "today", "tonight", "tomorrow", "this", "next",
+                "when", "once", "after", "with", "for", "if", "and", "or", "but")))
+        for fragment, word in words:
+            with self.subTest(fragment=fragment):
+                self.refused(f"/code-review says {word!r}",
+                             text=body([dict(self.row, code_review=f"{own}: PASS; {fragment}.")]))
+
+    def test_a_negation_or_hedge_alone_unseats_a_verdict(self):
+        # Each negation, modal or hedge alone before the cell's one verdict, and one three
+        # words before it: the verdict is none.
+        own = self.member[:12]
+        cells = (f"{own}: not really fully passed.", f"{own}: hasn't passed.",
+                 *(f"{own}: {word} passed." for word in (
+                     "not", "no", "never", "neither", "nor", "nothing", "cannot", "without",
+                     "to", "be", "being", "would", "could", "should", "might", "may",
+                     "must", "can", "shall", "if", "unless", "until", "once", "when",
+                     "whether", "almost", "nearly", "hardly", "barely", "probably",
+                     "possibly", "perhaps", "maybe", "likely", "aint", "arent", "cant",
+                     "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt", "havent",
+                     "isnt", "mightnt", "mustnt", "neednt", "shant", "shouldnt", "wasnt",
+                     "werent", "wont", "wouldnt")))
+        for cell in cells:
+            with self.subTest(cell=cell):
+                self.refused("/code-review gives no visible review verdict",
+                             text=body([dict(self.row, code_review=cell)]))
+
+    def test_the_third_reading_and_the_clauses_are_linear(self):
+        # 200,000 characters of struck spans that never close, of Markdown markers, of
+        # invisible letters, of clauses each holding a verdict, and of separators after a
+        # verdict that an unfinished word might follow.
+        size = 200_000
+        for cell in ("~" * size, "~~" + "x" * size, "*" * size, "`" * size, "_" * size,
+                     "~a" * (size // 2), "passed. " * (size // 8),
+                     "abcdef1 passed; " * (size // 16), "pass ~" * (size // 6),
+                     "\N{HANGUL FILLER}" * size, "\U000e0100" * size,
+                     "passed (" + " " * size + "x", "pass in" + " " * size + "x",
+                     "<p " * (size // 3), "<p" * (size // 2), "<br " * (size // 4),
+                     "[a](" * (size // 4)):
+            with self.subTest(cell=cell[:12]):
+                self.assertGreaterEqual(len(cell), size - 200)
+                started = time.perf_counter()
+                train._placeholder_word(f"{self.member} {cell}")
+                train._review_content(f"{self.member} {cell}", security=True)
+                train._says_not_required(f"{self.member} {cell}")
+                self.assertLess(time.perf_counter() - started, 1.0)
+
+    def test_markup_hides_not_required_from_neither_reading(self):
+        # A protected member's security cell, "not required" split by markup that a
+        # reader does not see.
+        member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
+        head = self.merge(self.base, member)
+        for cell in (f"Security reader at {member}: not <em>required</em>.",
+                     f"Security reader at {member}: PASS; not<i></i> required.",
+                     f"Security reader at {member}: PASS; not[](#x) required.",
+                     f"Security reader at {member}: PASS; n*o*t required.",
+                     f"Security reader at {member}: PASS; no`t` required.",
+                     f"Security reader at {member}: PASS; ~~not~~ required.",
+                     f"Security reader at {member}: PASS; n[o](#x)t required.",
+                     f"Security reader at {member}: PASS; not\N{HANGUL FILLER}required."):
+            with self.subTest(cell=cell):
+                self.refused("/security-review says Not required for protected paths",
+                             head=head, text=body([member_row(member, security_review=cell)],
+                                                  f"- check: {CHECK}"))
 
     def own(self, cell: str, commit: str) -> str:
         """The cell as written, its first commit name standing for `commit`, by as many
@@ -533,6 +760,214 @@ class TrainChecks(Repository):
             "PASS, Spec PASS.", member)
         row = member_row(member, code_review=code, security_review=security)
         self.assertEqual(self.problems(head=head, text=body([row], f"- check: {CHECK}")), [])
+
+    def test_the_coordinator_s_fed_rows_pass(self):
+        # Completed cells from the coordinator's fed rows, as written, each with a verdict
+        # in a clause that names a commit: words that say other work is deferred, follows,
+        # is interim, is not done or went unread ("the deferred hardening", "the write
+        # follows", "#116's interim texts", "promotion, not done", "the records were
+        # unread", "#240 unread", "notes ... went unread"), another file's run line "to be
+        # written at the merge", "found no" as the only verdict, and "final PASS". The
+        # commit each names first is the member's, here this fixture's member.
+        cells = (
+            ("security_review",
+             "Independent security reviews (Claude crew): at 2a39c2b7 (PF-sec1) nothing "
+             "blocking, three material (bytecode could run in place of a plant or the "
+             "runner; a linked plants folder took plants off the protected paths; a plant "
+             "could rebind the runner) and five minor; at 5bf660e4 (PF-sec2) two blocking "
+             "false claims (the entry status was taken after the regressions load the "
+             "plants; exit claims overstated) and one material (the name guard catches "
+             "mistakes, not deceit). All fixed by 7afb9a1e; the deferred hardening is filed "
+             "as #221, #222 and #223. Protected files: scripts/negative_tests.py, "
+             "tests/test_negative_tests.py and the 44 plant files, all named in the "
+             "decision entry. Needs the label security-review."),
+            ("security_review",
+             "Independent security review (C7-scaf-rev) at f3a0b097: pass. No check "
+             "weakened or bypassed: signature strings, docstrings, one comment and a rename "
+             "in a hand-run tool that no check, test, CI job or harness imports; no new file "
+             "input; scripts/scaffold_book.py named in the decisions entry (guard_protected "
+             "ok); keep_apart refuses nothing; secret scan ok. One minor finding in older "
+             "code (B1: the book argument used before it is checked, and the write follows "
+             "a dangling symlink) for a check change of its own before Book IV's scaffold "
+             "step. safe_push dry run of d299e04a with origin/main 0a05f96f merged "
+             "(314166b9): passed every check, steps 1 to 4, both origin/main's and the "
+             "commit's checks and negative tests (1509 s). Needs the label security-review."),
+            ("code_review",
+             "Independent reviews (Claude crew). Lean: every proof read in full by a reader "
+             "who wrote none of it (G2-rd-cut, rd-cells, rd-loops2, rd-arr, rd-cover, "
+             "rd-diag, rd-extract, rd-fan, rd-bound, rd-polish, and rd-proto for ship G's 19 "
+             "October prototype): all approve or approve with minor findings, save rd-bound "
+             "(changes required: two false module notes, fixed in G2-polish and re-read by "
+             "rd-polish, approve with minor). Standards (G2-cr-std, at b2c0580a, the final "
+             "Lean, unchanged since): changes required; B1 (no recorded approval for proofs "
+             "in Staging) answered by the decision entry, which records the coordinator's "
+             "assignment of 20 October; M2 (stale brief) fixed by the docs rounds; M3 met "
+             "(#116, blocks-release, named under Unfinished work); M1 (outline_bounded's "
+             "I.23 import reaches Outline.lean's importers) recorded as an owner approval "
+             "item for promotion, not done, since moving a staged statement needs approval; "
+             "its minors are on the brief's before-promotion list. Spec (G2-cr-spec, at "
+             "e8db9f89): changes required, F1 material (the approvals list missed #116's "
+             "interim texts) and F2-F5 minor, all fixed. Docs: rd-docs and rd-docs2 asked "
+             "for changes (fixed in two rounds, G2-docs2 to G2-docs5b); G2-rd-docs3 at "
+             "76cb183a approve with minor (no blocking or material); the entry's move to "
+             "docs/decisions/ (#254), G2-rd-entry at d1a02ed4, approve with minor. "
+             "Remaining minors go to a follow-up card (text given to the coordinator)."),
+            ("code_review",
+             "Independent crew review, Claude Opus 5.5 (ER-cr126, Standards and Spec) at "
+             "527dddc7: Standards FAIL (Book III's brief contradicted by the Lean; the entry "
+             "and addendum said the records were unread after they were stamped; "
+             "Touching.Near is Surrounds by rfl and no text said so), Spec PASS (all "
+             "eighteen moved declarations equal the staged ones by Lean; no staged theorem "
+             "duplicates a fact of Elements). Fixed in a245221b1; delta re-review ER-cr126b "
+             "at 2c4499d6a: Standards PASS, Spec PASS, two wording minors in the entry fixed "
+             "in de8d97152 (the second and last fix round); /no-mistakes passed again there. "
+             "Proposals and minors left to cards: define Touching.Near through Surrounds "
+             "before release (the owner's); FORMALIZATION's row for touching circles and the "
+             "rule for companions; the steps' namespaces."),
+            ("code_review",
+             "Independent Claude crew code review, Standards and Spec, of "
+             "8fbee723..fe1118b0 (RT-cr6): Standards PASS with minor findings, Spec FAIL on "
+             "two false sentences in the addendum and #240 unread; fix round 1 (f87bd4e4) "
+             "re-reviewed (RT-cr7): one blocking point, a sign-off count against moving "
+             "branches; fix round 2 (8f404de2) re-reviewed (RT-cr8): PASS, no blocking "
+             "point. Minors left for follow-up cards: chapter notes for six works in the "
+             "reading list, Prop23.lean line 55's wording, I.18's re-stamp after its reading "
+             "line's change."),
+            ("security_review",
+             "Independent security review in both rounds (Claude crew), told to find any "
+             "path by which a file on disk, an environment variable set by the commit's "
+             "code, or a moved main lets step 4 be skipped. Round 0: no such route; "
+             "material, notes for the security review went unread with --land (now held), "
+             "and the harness check re-read the disk so a moved main's harness could be "
+             "matched by a rewritten copy (now a moved main is refused before the harness). "
+             "Confirmation at 9765c407: PASS; a differential probe of keep_apart over 4000 "
+             "reports identical before and after; no route opened. Pre-existing in both "
+             "flows, to cards: train_check re-reading safe_push.py from disk (A), fetch "
+             "redirection by git settings (B), planted modules and PATH shims. Protected "
+             "files named in the entry: scripts/safe_push.py, scripts/test_safe_push.py, "
+             "scripts/hooks/safe-push. Needs the label security-review. The commits "
+             "accepted at dabd4ebd change only what --land prints and its exit status when "
+             "interrupted or refused before the merge: no check, guard or trust decision "
+             "moves."),
+            ("code_review",
+             "Independent Claude crew code review (RT-cr35), Standards and Spec, at "
+             "5ed77255: Standards PASS with one minor finding (the run line, to be written "
+             "at the merge with text/cross-family-signoff-B, as the intro gives), Spec "
+             "PASS. Every -- line identical; the mishnah blob identical to a557715d's; no "
+             "other place on I.35's page over-credits Proclus. Since then only the merge of "
+             "main at 31e2ab77, whose one hand-resolved file (review/I/35.toml) takes "
+             "exactly the stamps and run line that review proposed."),
+            ("security_review",
+             "Independent security reviews (Claude crew), both rounds: the new step's "
+             "routes were checked (root pip.py or pip package: closed by -P; sitecustomize, "
+             "usercustomize, .pth, PYTHONSTARTUP, pip.conf in the checkout: not routes; a "
+             "changed requirements file: runs code, but the file is under the protected "
+             "scripts/, so it needs a decision entry and security-review). Nothing weakened. "
+             "Protected files: checks/24-lane-condition.toml, .github/workflows/ci.yml, "
+             "scripts/test_safe_push.py, each named in the entry. Needs the label "
+             "security-review. RE-POST: the confirmation review at 5499d312 found no new "
+             "route: only the exact parser line with the exact string ${{ runner.temp }} may "
+             "have a working directory (planted on the other steps: refused; variants such "
+             "as ${{runner.temp}}, ${{ runner.temp }}/.., lists, mappings: refused); -I from "
+             "runner.temp keeps a root pip.py or pip/ out (planted and run); "
+             "$GITHUB_WORKSPACE is the runner's, and no earlier step can rewrite it. "
+             "Protected files now also tests/test_check_queue.py, named in the entry."),
+            ("security_review",
+             "Independent security review (Claude crew) in all three rounds, final PASS at "
+             "3533f4f8: the scan refuses at least what it refused before on every file (its "
+             "output over the tree is byte-identical to main's); the plant writes only to "
+             "temporary trees. Protected paths scripts/check_fidelity.py and "
+             "scripts/negative_tests.py, named in the decisions entry; safe_push.py and "
+             "ci.yml untouched. Needs the label security-review."),
+        )
+        for key, cell in cells:
+            with self.subTest(cell=cell[:40]):
+                self.assertEqual(train.body_problems(body([dict(self.row, **{key: cell})])),
+                                 [])
+                row = dict(self.row, **{key: self.own(cell, self.member)})
+                self.assertEqual(self.problems(text=body([row])), [])
+        # Two fed cells that give the verdict only in a sentence of their own, the commit
+        # in another: no verdict stands beside the commit, so each refuses.
+        for cell in (
+                "C7-g-rev, lens B: pass. Nothing weakened against main or the guard at "
+                "344423f; losing centre_unique from the pinned absences is no weakening, "
+                "since it is a theorem after wave one and cannot appear; a pin on the "
+                "proved rules each entry uses is #168's. Both protected paths named whole "
+                "in the dated entry. Needs the label security-review.",
+                "C7-t429-rev lens C: PASS. The form is strictly additive: kept_expectations "
+                "holds from origin/main and from 1e0619d2; dropping the pin, dropping or "
+                "changing every, changing field, adding a ref or shrinking excludes all "
+                "read as not kept. origin/main's checker fails on this tree only on the "
+                "unknown key every; judged_files is empty (both pages change in generated "
+                "parts only) and pinned(EXPECTATIONS) holds, so keep_apart notes it and "
+                "does not refuse. Each protected file approved in a sentence of its own; no "
+                "owner's decision claimed. Needs the label security-review."):
+            with self.subTest(refused=cell[:40]):
+                row = dict(self.row, security_review=self.own(cell, self.member))
+                self.refused("/security-review gives no visible review verdict",
+                             text=body([row]))
+
+    def test_a_look_around_cut_short_unseats_a_verdict(self):
+        # The look-back reads 60 characters; a negation beyond them, still among the three
+        # words before the verdict, leaves it unread, so the verdict does not stand.
+        long = "x" * 70
+        for cell in (f"1a2b3c4: not {long} fully passed.", f"1a2b3c4: never {long} passed."):
+            with self.subTest(refused=cell[:24]):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.refused("/code-review gives no visible review verdict", text=body([row]))
+        # Likewise after it: the 20 characters read there must not end inside separators.
+        for cell in ("1a2b3c4: passed" + " " * 21 + "(partial).",
+                     "1a2b3c4: passed" + " " * 40 + "(partial)."):
+            with self.subTest(refused=cell[:24]):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.refused("/code-review gives no visible review verdict", text=body([row]))
+        cell = f"1a2b3c4: read {long} and the rest: passed."
+        row = dict(self.row, code_review=self.own(cell, self.member))
+        self.assertEqual(self.problems(text=body([row])), [])
+
+    def test_a_stop_inside_a_name_or_number_ends_no_clause(self):
+        # Reviewers' cells name their model and files beside the commit ("Claude Opus
+        # 5.5", "review/SCHEMA.md", as four fed cells do); a stop between two letters or
+        # digits ends no clause, while one before a space, as between sentences, does.
+        for cell in ("Independent reader, Claude Opus 5.5, at 1a2b3c4: PASS.",
+                     "Reviewed review/SCHEMA.md and docs/ACCEPTANCE.md at 1a2b3c4: PASS.",
+                     "1a2b3c4 (v1.2.3): no findings."):
+            with self.subTest(passes=cell):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.assertEqual(self.problems(text=body([row])), [])
+        for cell in ("Run https://example.org/runs/1?pr=2 of 1a2b3c4: PASS!",
+                     "1a2b3c4 (run https://example.org/runs/1?pr=2): PASS"):
+            with self.subTest(passes=cell):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.assertEqual(self.problems(text=body([row])), [])
+        # But an exclamation or question mark, or a stop of another script, ends a clause
+        # wherever it stands, as does a line break a reader sees.
+        for cell in ("Started at 1a2b3c4. CI passed.", "Started at 1a2b3c4! CI passed.",
+                     "Started at 1a2b3c4 .CI passed.", "Started at 1a2b3c4!CI passed.",
+                     "Started at 1a2b3c4?CI passed.",
+                     "Started at 1a2b3c4\N{IDEOGRAPHIC FULL STOP} CI passed.",
+                     "Started at 1a2b3c4\N{ARABIC FULL STOP} CI passed.",
+                     "Lens A at 1a2b3c4: started<br>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<br/>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<p>Lens B: PASS",
+                     'Lens A at 1a2b3c4: started<br class="x">Lens B: PASS',
+                     "Lens A at 1a2b3c4: started<br/ >Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<div>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<hr>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<ul><li>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<h4>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<blockquote>Lens B: PASS",
+                     "Lens A at 1a2b3c4: started<dd>Lens B: PASS"):
+            with self.subTest(refused=cell):
+                row = dict(self.row, code_review=self.own(cell, self.member))
+                self.refused("/code-review gives no visible review verdict or findings "
+                             "beyond the reviewed commit: it must say the review is done "
+                             "(pass, approved, fixed, no findings, a number of findings), "
+                             "not negated, in the clause that names the commit, which ends "
+                             "at every ';', '!', <br> and block tag, every '?' but one "
+                             "before a name and '=' (as in a link's query), and every '.' "
+                             "but one between two letters or digits (SCHEMA.md, 5.5)",
+                             text=body([row]))
 
     def test_review_cells_must_name_a_commit_of_the_member_s_own_history(self):
         later = self.commit([self.member], {LEAN: "-- a later, unreviewed change\n"})
