@@ -10,9 +10,10 @@ replacement, so that Lean warns at every use and names the replacement. Each may
 the release after the one that first ships it deprecated.
 
 The module comes after the books, since a replacement may be a proposition's companion
-or corollary. `import Elements` brings it in. A name that lived in an earlier module,
-such as a Book Zero lemma, is found here and not there: a citer who imports that module
-alone adds `import Elements.Deprecated`.
+or corollary. `import Elements` brings it in, and no other module imports it. A name that
+lived in an earlier module, such as a Book Zero lemma, is found here and not there: a
+citer who imports single modules, even one that once brought the name in, adds
+`import Elements.Deprecated`.
 -/
 
 namespace Elements

@@ -9,8 +9,10 @@ Zero lemmas of `Elements.Figure.OnCircles` that main later removed.
 `Elements/Deprecated.lean` declares them again, deprecated, each pointing to the corollary
 of III.2 that replaces it (docs/FORMALIZATION.md, section 2, "A released name stays, or is
 deprecated first"). They live in the module `Elements.Deprecated`, which `import Elements`
-brings in, as this file's import does; a citer who imports `Elements.Figure.OnCircles`
-alone must add `import Elements.Deprecated`, since Book Zero cannot import III.2.
+brings in, as this file's import does, and no other module imports it, since Book Zero
+cannot import III.2. At the tag every proposition's module reached them through
+`Elements.Figure.Basics`; a citer who imports single modules now adds
+`import Elements.Deprecated`.
 
 For each name, two pins. The `#check` pin prints its signature, every binder by name,
 implicit ones and hypotheses alike, so it pins that the alias is the statement `book-III`
@@ -19,7 +21,7 @@ hypotheses, named as at the tag, and applies the old name to them, as a citer ou
 repository would; its pin is Lean's warning, the whole of it, which names the replacement.
 A change to either statement or to a hypothesis's name, a lost `deprecated` attribute or a
 replacement renamed fails `lake build Audit`. The file sets no option: under
-`warningAsError` the pinned warnings would become errors, which no pin may hold.
+`warningAsError` the pinned warnings would become errors, which no audit pin may hold.
 -/
 
 namespace Audit
