@@ -60,6 +60,7 @@
   the fifth step of the dry run that writes it, and in the merge's third; the record's field that names the proof; and the docstring and
   help that describe them.
 
-  Approved here as well is the change to `scripts/test_safe_push.py` that adds the class
-  `PreflightProof` and its tests: a proof accepted for a head that changes the checks, and
-  each case the card plants falling back to the full pre-flight on the Mac.
+  The landing tool's tests move with it: `scripts/test_safe_push.py` gains a class,
+  `PreflightProof`, whose tests show a proof accepted for a head that changes the checks,
+  read before that head's code runs, and every planted case of the card falling back to
+  the full pre-flight on the Mac; this entry approves that change too.
