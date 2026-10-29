@@ -2516,12 +2516,14 @@ class MeasureBadge(unittest.TestCase):
                      "Elements.Arc.Congruent a b → Eq (Elements.Arc.measure a) "
                      "(Elements.Arc.measure b)")
 
-    def line_and_dagger(self, statement, companions):
+    def line_and_dagger(self, statement, companions, porism=None):
         """The line under the enunciation and the certificate's Statement cell of a whole
         statement of III.2 tagged `angle-measure`, with `companions` attached, read from
         a facts.json held in memory."""
         attached = {f"III.2 c{i}": {"ref": f"III.2 c{i}", "statement": s}
                     for i, s in enumerate(companions)}
+        if porism is not None:
+            attached["III.2 Por."] = {"ref": "III.2 Por.", "statement": porism}
         p = {"ref": "III.2", "status": "proved", "statement": statement,
              "attached": list(attached), "axioms": [], "common_notions": [], "cites": [],
              "own_axioms": [], "inherited": []}
@@ -2572,6 +2574,15 @@ class MeasureBadge(unittest.TestCase):
                 self.assertEqual(line, "**In Lean:** ✅ proved, as Euclid states it"
                                  + (f", {badge}" if badge else "") + " · Euclid's argument")
                 self.assertEqual(cell, "whole†" if dagger else "whole")
+
+        line, cell = self.line_and_dagger(c, [], porism=m)
+        self.assertEqual(line, "**In Lean:** ✅ proved, as Euclid states it · Euclid's argument")
+        self.assertEqual(cell, "whole")
+
+        line, cell = self.line_and_dagger(c, [m], porism=m)
+        self.assertEqual(line, "**In Lean:** ✅ proved, as Euclid states it, with a companion "
+                         "in our measure of circumferences · Euclid's argument")
+        self.assertEqual(cell, "whole")
 
 
 class FigureCaption(unittest.TestCase):

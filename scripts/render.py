@@ -1098,7 +1098,8 @@ def representation_badge(record, entry=None, companions=None):
         elif beside:
             if companions is None:
                 companions = attached_entries(entry, load_facts())
-            if any(BADGE_WORDS[t] & statement_names(c.get("statement", ""))
+            if any(heath.parse_ref(c["ref"]).kind == "companion"
+                   and BADGE_WORDS[t] & statement_names(c.get("statement", ""))
                    for c in companions):
                 badges.append(f"with a companion {badge}")
     return and_list(badges) if badges else ""
