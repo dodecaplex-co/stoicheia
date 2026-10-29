@@ -595,8 +595,7 @@ October. On 29 October the owner made the cold outside reading the independent a
 reviewers, Claude and Astra: each scores every book by the [review rubric](../RUBRIC.md), on
 the release candidate, and the gate is recorded there. The owner's words are quoted in
 [#703](https://github.com/dodecaplex-co/stoicheia/issues/703), the coordinator's record of
-them, and the decisions entry that carries the change to WORKFLOW and ACCEPTANCE quotes them
-too. The plan for Jev above stays as it was written.
+them. The plan for Jev above stays as it was written.
 
 ## Crew, tools and safety
 - **Lean proofs:** Codex sailors, best of two, with Claude bosuns and reviewers, as on the Book III voyages. Placement goes to the strongest prover and to Codex in the order under stage 3, with no time limit (revised 18 October). The sailors read AGENTS.md automatically.
