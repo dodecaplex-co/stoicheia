@@ -26,15 +26,23 @@
   are, and is where later aliases go. Each replacement has the old theorem's hypotheses,
   by name, order and type, and its implicit binders, `{A B C : Point} {α : Circle}` and
   `{B C K : Point} {α : Circle}`, as at the tag; so `type_of%` gives each alias the
-  statement `book-III` released, and a citation written against `book-III` elaborates as
-  before, with a warning that names the replacement.
+  statement `book-III` released, hypotheses' names included.
 
-  The audit. `Audit/Deprecated.lean` pins, for each name, its statement by `#check`, with
-  every binder shown, and Lean's warning at a use: an `example` that states the old
-  theorem's hypotheses, named as at the tag, and applies the old name to them, as a citer
-  outside the repository would. Each pin is the whole of what Lean 4.35 prints, under a
-  bare `#guard_msgs`. A change to a statement, a lost `deprecated` attribute or a
-  replacement renamed fails `lake build Audit`.
+  Where a citer finds them. The names now live in the module `Elements.Deprecated`, not in
+  `Elements.Figure.OnCircles`, where `book-III` declared them: that module is Book Zero
+  and cannot import III.2. A citation written against `book-III` under `import Elements`,
+  the import the README shows, elaborates as before, with a warning that names the
+  replacement. A citer who imported `Elements.Figure.OnCircles` alone gets an unknown
+  identifier until they add `import Elements.Deprecated`; the release notes say so beside
+  the three names.
+
+  The audit. `Audit/Deprecated.lean` pins, for each name, its signature by `#check`, which
+  prints every binder by name, the hypotheses' names included, and Lean's warning at a
+  use: an `example` that states the old theorem's hypotheses, named as at the tag, and
+  applies the old name to them, as a citer outside the repository would. Each pin is the
+  whole of what Lean 4.35 prints, under a bare `#guard_msgs`. A change to a statement or
+  to a hypothesis's name, a lost `deprecated` attribute or a replacement renamed fails
+  `lake build Audit`.
 
   What does not change. No statement, definition or `--` line; no axiom, so the lock and
   the certificate's axioms are as they were; no proposition's Lean file, so no review
@@ -43,9 +51,13 @@
   nothing in the new module.
 
   When they go. Each alias stays through the release that first ships it deprecated, and
-  may be removed in the release after. That release's notes list the three names with
-  their replacements, as section 2 asks; the release map's draft card 03, a generated
-  list of every name removed or deprecated since the last tag, is to produce that list.
+  may be removed in the release after. As section 2 asks, the notes of the release that
+  first ships them list the three names as deprecated, with their replacements and the
+  import above, and the notes of the release that removes them list them as removed; the
+  generated list of names removed or deprecated since the last tag
+  ([#702](https://github.com/dodecaplex-co/stoicheia/issues/702)) is to produce both.
+  Each `since` is the day the name reaches main: if this train lands on a later day, the
+  three dates, in `Elements/Deprecated.lean` and in this entry, move with it.
 
   This entry approves the new `Audit/Deprecated.lean`, the pins of the three aliases'
   statements and warnings.
