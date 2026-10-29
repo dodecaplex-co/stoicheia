@@ -259,7 +259,7 @@ def main(argv: list[str]) -> int:
     testing, files, unknown = options(argv)
     if unknown:
         print(USAGE, file=sys.stderr)
-        print(f"check_address.py: error: unrecognized arguments: {' '.join(unknown)}",
+        print(f"check_address.py: error: unrecognised arguments: {' '.join(unknown)}",
               file=sys.stderr)
         return 2
     faults = self_test() if testing else []
