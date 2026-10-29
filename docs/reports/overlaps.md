@@ -19,7 +19,7 @@ day ("Please do both. 79 is rather large with so many books in front of us."), h
 theorems, again with their names and exact types unchanged, among them
 Generalities 3 and 4 (`centre_inside`, `inside_not_on`) and the rules of Diagram-segments 3
 and 4 that give III.5's other short proofs (`on_circle_of_len_eq`, `len_lt_of_inside`). The
-lock now holds <!-- count:axioms -->49<!-- /count --> axioms, including <!-- count:tacit-rules -->43<!-- /count --> tacit rules, `exists_centre`
+lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules, `exists_centre`
 among them. The current table reflects this change too.
 
 24 October 2026: Circle 3 (`outside_of_between`), the last assumption that gave III.2 at
@@ -34,20 +34,38 @@ proved from the rule, so no proved rule of Book Zero rests on Diagram-segment 2 
 III.5 and III.6 now rest on neither Diagram-segment 2 nor Circle 1. Diagram-segment 2 still
 gives each at once, so their rows stay; their notes below say what changed.
 
-26 October 2026, later: Book Zero no longer uses Circle 1 (`between_of_inside_chord`), which
-is still an assumption (#477). Generalities 2 and 4 and Intersection 4 are proved again, from
-the circle's centre and our radius rule, and a new lemma, `between_of_centre_chord`, gives
-Circle 1 where the point within is the centre; III.1, its porism and III.2 use it, and rest
-on Circle 1 no longer. Of the 149 entries, 144 rested on Circle 1 and 37 now do, the first
-III.7: 23 propositions, no porism and 14 companions. Through their own proofs and the
-proved rules beneath them, without the entries they cite, 59 rested on it and 23 do.
-Intersection 4 takes the first circle's centre from `exists_centre`, but I.22, which
-used it, has that centre already and now gives it to the lemma that carries the proof
-(`circles_meet_of_centre`), so I.22 rests on neither Circle 1 nor our rule, and no entry
-rests on `exists_centre` that did not: 53 do, as before, the first III.1: 28 propositions,
-no porism and 25 companions. Through their own proofs and the proved rules beneath them 46
-do, where 31 did, since Generalities 4 now takes its centre from the rule. No row leaves or
-joins the table; the notes on Generalities 2, 3 and 4 below say what moved.
+26 October 2026, later: Book Zero no longer uses Circle 1 (`between_of_inside_chord`),
+which was then still an assumption (#477). Generalities 2 and 4 and Intersection 4 are
+proved again, from the circle's centre and our radius rule, and a new lemma,
+`between_of_centre_chord`, gives Circle 1 where the point within is the centre; III.1, its
+porism and III.2 use it, and rest on Circle 1 no longer. Of the 149 entries, 144 had rested
+on Circle 1 and 37 then did, the first III.7: 23 propositions, no porism and 14 companions.
+Through their own proofs and the proved rules beneath them, without the entries they cite,
+59 had rested on it and 23 then did. Intersection 4 takes the first circle's centre from
+`exists_centre`, but I.22, which used it, has that centre already and now gives it to the
+lemma that carries the proof (`circles_meet_of_centre`), so I.22 rests on neither Circle 1
+nor our rule, and no entry came to rest on `exists_centre` that had not: 53 did, as before,
+the first III.1: 28 propositions, no porism and 25 companions. Through their own proofs and
+the proved rules beneath them 46 did, where 31 had, since Generalities 4 now takes its
+centre from the rule. No row leaves or joins the table; the notes on Generalities 2, 3 and
+4 below say what moved.
+
+26 October 2026, last: Circle 1 has become a theorem with its name and exact type
+unchanged, proved after III.2 from its corollary `Prop2.within`, with Between 6 and
+Generalities 4, beside Circle 2 and Circle 3 (#477). It never had a row here, and no row
+leaves or joins the table. No entry rests on it now. Through their own proofs and the
+proved rules beneath them 19 entries use it, the first III.7: 15 propositions, no porism and
+4 companions; each cites III.2, which III.14, III.35 and III.36 cite for the first time.
+Counting the entries they cite, 37 use it: 24 propositions, no porism and 13 companions;
+III.10 reaches it through `CirclesCut.of_meet` and III.7 and III.8.
+Where the point within is the centre, `Prop14.general`, `Prop15.le_diameter`,
+`Prop15.nearer` and `Prop36.through_centre` take the step from Book Zero's
+`between_of_centre_chord` instead, so that III.14's and III.15's companions and III.37 cite
+nothing new. III.2 takes its centre from `exists_centre`, so III.14 and its companion III.14
+general now rest on that rule: 55 entries do, 29 propositions, no porism and 26 companions;
+through their own proofs and the proved rules beneath them 48 do, 28 propositions and 20
+companions, III.11 and III.14 joining, for Generalities 4, beneath the new proof, takes its
+centre from the rule.
 
 ## Current axiom overlaps
 
@@ -55,17 +73,18 @@ joins the table; the notes on Generalities 2, 3 and 4 below say what moved.
 |---|---|---|---|---|
 | I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
 | [III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step, in two places: inside the construction, a centre for the proof that D is within the circle, by III.2's argument; and, in the reductio, the supposed centre G | III.1 | None |
-| [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`), a former assumption now proved (below) | Gives it at once: circles about one centre through one point coincide, and the point of one within the other would be within that circle and on it | III.10, which names it in its own Lean | `Audit.III_5` |
-| [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`), former assumptions now proved (below) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | III.10, which names it in its own Lean | `Audit.III_6` |
+| [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`), a former assumption now proved (below) | Gives it at once: circles about one centre through one point coincide, and the point of one within the other would be within that circle and on it | III.10, through `CirclesCut.of_meet` | `Audit.III_5` |
+| [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`), former assumptions now proved (below) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | III.10, through `CirclesCut.of_meet` | `Audit.III_6` |
 
 "First enters" here includes the axioms of proved rules. Until 26 October 2026 I.1
 reached `circle_eq` through `centre_inside` and `len_ne_zero`; since then no proved rule
-of Book Zero rests on it (#473), and III.10, the first
-proposition whose own Lean names the axiom, is the first entry to rest on it. III.5 and
-III.6 do not rest on it: Book Zero's `ne_of_centre_of_on` and `len_lt_of_between`, and for
-III.6 `centre_inside` as well, rest instead on our radius rule (`radius_ne_zero`), which
-gives neither proposition, for it says only that a radius is something. Generalities 3 and
-4 are proved rules, so they enter no certificate as assumptions.
+of Book Zero rests on it (#473). III.10 is the first entry to rest on it, through
+`CirclesCut.of_meet`, and since 26 October 2026 no proposition's own Lean names the axiom:
+the first entry whose own Lean names it is III.25's companion `BookIII.Prop25.complete`.
+III.5 and III.6 do not rest on it: Book Zero's `ne_of_centre_of_on` and `len_lt_of_between`,
+and for III.6 `centre_inside` as well, rest instead on our radius rule (`radius_ne_zero`),
+which gives neither proposition, for it says only that a radius is something. Generalities
+3 and 4 are proved rules, so they enter no certificate as assumptions.
 
 Circle 2 and Circle 3 are no longer assumptions. Since 24 October 2026 both
 are proved after III.2, in `Elements/BookIII/Prop02.lean`, from its corollary
@@ -81,9 +100,16 @@ CD, and Intersection 3 (`line_meets_circle_of_inside`), proved since 19 October
 Intersection 2 has no user in `Elements/`, `Staging/` or `Audit/`; its declaration in
 `Elements/BookIII/Prop02.lean` is the only occurrence of its name there.
 
+Circle 1 (`between_of_inside_chord`) is no longer an assumption either. Since 26 October
+2026 it is proved after III.2 in the same file, from `Prop2.within`: the point within is
+neither point of the circle, and were either of those between the other two it would be
+within the circle, not on it. [facts.json](../../facts.json) records III.2 as what it
+cites, so an entry before III.2 that used it would cite III.2, and the check on later
+citations refuses that.
+
 Our III.2 follows Euclid through I.5, I.16 and I.19, and neither it nor its corollaries
-`Prop2.triangle`, `Prop2.oppositeSide` and `Prop2.sameSide` uses Circle 2 or Circle 3,
-which are proved after them.
+`Prop2.triangle`, `Prop2.oppositeSide` and `Prop2.sameSide` uses Circle 1, Circle 2 or
+Circle 3, which are proved after them.
 
 ### III.5
 
@@ -101,9 +127,11 @@ other short proofs were rows of their own until the second axiom retirement prov
 rules (below, among the former overlaps): one compares the distance to a point within with
 the radius, which Definition I.15 makes equal to it; the other uses Definition I.15 to make
 EF equal to EC, then Diagram-segment 3's second half to put F on CDG, though F is within it.
-Each audit lemma has the restated III.5's type. III.10 is the first proposition to call
-Diagram-segment 2 itself, to identify circles with a common centre and point; III.23
-reaches it through III.10. The first propositions to call Generalities 4 and
+Each audit lemma has the restated III.5's type. III.10 called Diagram-segment 2 itself
+until 26 October 2026, to identify circles with a common centre and point; it now ends by
+III.5 and reaches the rule through `CirclesCut.of_meet`, which tells the two centres apart
+by it, and III.23 reaches it through III.10. The first entry whose own Lean calls it is
+III.25's companion `BookIII.Prop25.complete`. The first propositions to call Generalities 4 and
 Diagram-segment 4 themselves are III.7 and III.17, and Diagram-segment 3's second half is
 first called by II.14; all three are theorems now, and enter no certificate as
 assumptions. The magnitude law `lt_irrefl` first enters at I.1 through
@@ -117,11 +145,12 @@ and points. Every other axiom still holds, but the two copies meet and share the
 centre. This is a model argument checked by hand, not by Lean. It does not apply to the
 restated III.5, since neither copy has a point within the other.
 
-The bridge `Audit.CirclesCut.of_meet` shows that two different circles meeting at
-two points do cross. It takes their centres from `exists_centre` and uses III.7 and
-III.8, with `circle_eq`. Consequently the earlier statement of III.5 follows from the
-restated one with no centre given. This comparison of readings is separate
-from III.5's proof and cites later propositions. Heath's combined enunciation for III.5
+The bridge `CirclesCut.of_meet`, proved in `Elements/BookIII/Cutting.lean` after III.8
+since 26 October 2026, shows that two different circles meeting at two points do cross.
+It takes their centres from `exists_centre` and uses III.7 and III.8, with `circle_eq`.
+Consequently the earlier statement of III.5 follows from the restated one with no centre
+given (`Audit.III_5_today`). The bridge is separate from III.5's proof and cites later
+propositions; III.10's last step cites it with III.5. Heath's combined enunciation for III.5
 and III.6 concerns two different circles merely meeting (vol. 2, p. 12); Diagram-segment 2
 gives that assertion at once. It is not a proposition of ours, so it has no separate row.
 
@@ -490,6 +519,12 @@ left with III.14. Walking Lean's proof terms on 22 October 2026 finds the theore
 eight entries and in no other, and searching `Elements/` for the rule's name finds the one
 call, III.36's, beside the three lemmas above.
 
+26 October 2026 update (#547): III.17 again obtains its centre by `Prop1.of_circle`, as
+III.4 and III.8 now do, by the coordinator's
+[decision of that day](../decisions/2026-10-26-centre-by-iii1.md). None of them calls
+`centre_unique`, and a walk of Lean's proof terms on 26 October 2026 finds that none of
+them, nor their companions, reaches it.
+
 ##### III.2
 
 Two rules contain III.2, and no proposition rests on either. Circle 2 says it outright, and more,
@@ -617,8 +652,8 @@ and no run of the screen yet includes it.
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
 gave Generalities 2 as the corollary Heath would add to III.1. III.2's commentary explains
 how Circle 2 and Circle 3 give III.2; III.5's and III.6's explain how the point within
-supplies the straight line and the order of its points; and III.10's names `circle_eq` as
-its changed final step. The axiom docstrings name one
+supplies the straight line and the order of its points; and III.10's tells how its last step
+reaches III.5 through `CirclesCut.of_meet`, which tells the two centres apart by `circle_eq`. The axiom docstrings name one
 more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
 is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
 belongs to the [gap catalogue for Book I](gaps-book-I.md).
@@ -763,8 +798,8 @@ the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`, `Arc.measure`,
 issue #160; until then the run on the restated readings, above, cannot be made. The
 outline companions of I.45 and II.14 also reach definitions in none of the screen's lists,
 such as `Figures.Outline.area`, which their statements name; the screen stops on these too
-until they are listed. The screen now tries the <!-- count:axioms -->49<!-- /count -->
-axioms of the certificate, 10 of them
+until they are listed. The screen now tries the <!-- count:axioms -->48<!-- /count -->
+axioms of the certificate, 9 of them
 in its list of rules about circles, `Tacit.exists_centre` among them (the radius rule of 25
 October 2026 is not in that list), and unfolds, budgets and leaves out rules as the
 revised screen does. No run of it on the restated statements is recorded yet.

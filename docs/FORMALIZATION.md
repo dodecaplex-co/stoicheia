@@ -254,12 +254,12 @@ The representations Books I–III rest on:
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)). The rule numbers a figure's symbols internally, from the list of the figure's lettered points and straight lines (`Symbols.ofList`): a proof names only those, so section 2's sentence, that no number appears in a statement or a proof, holds of I.4 and I.8 too | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
-| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data or from the rule, which they use wherever a call of III.1 would do no work, Heath's "[III. 1]" staying on the page as his reference ([decision of 22 October 2026](decisions/2026-10-22-iii1-calls-dropped.md)) | |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data, by that construction where Heath's "[III. 1]" stands (`Prop1.of_circle`), except, for now, in III.2, which still takes its centre from `exists_centre` under that reference, or from the rule where Euclid takes a centre with no reference ([decision of 26 October 2026](decisions/2026-10-26-centre-by-iii1.md)) | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; III.20's companion `Prop20.circumference` proves that every circumference is its angle at the centre (`angleAtCentre`, the next row), whatever its size; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | the angle at the centre standing on a circumference | `angleAtCentre α B K C`: for the centre E and a diameter AEF with A and F on opposite sides of BC, F on K's side, the angles BEF and FEC together, as in III.20's first figure; it may be two right angles or more, a reading made after Heath's notes on III.20 and III.21 (vol. 2, pp. 47–49), not Euclid's, whose angles are less than two right angles | `angleAtCentre.diameter`: every such diameter gives the same angle; `angleAtCentre.congr`: it is the same for every point that names K's side of BC; `angleAtCentre.within`: it is the rectilineal angle BEC when E is on the other side of BC from K; `angleAtCentre.semicircle`: two right angles when E is on BC; `angleAtCentre.reflex`: with the angle BEC it makes four right angles when E is on K's side; `angleAtCentre.reflex_gt`: it is then greater than two right angles; `angleAtCentre.size`: less than two right angles, two right angles or greater, as E lies; and `Prop20.circumference`: the measure `circumference α B K C` is this angle, for every circumference | |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; III.18's carry the angle of contact, with its comparisons, to every straight line touching a circle, and `Prop18.contact_locallyEqual` shows that near the point of contact it does not depend on the straight line into the circle that names its branch; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
-| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, obtaining centres internally, by III.7 and III.8 | |
+| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet`, in `Elements/BookIII/Cutting.lean` after III.8, derives this reading from two different circles meeting at two points, obtaining centres internally, by III.7 and III.8; III.10's last step cites it with III.5, and `Audit/Crossing.lean` checks it against the statement proved there before | |
 | circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both; beside it, the reading at the point of contact, which Heath prefers (`TouchesInternallyAt`, `TouchesExternallyAt`, `CirclesTouchAt`): the circles meet at the point; within, they are two circles, and near the point no point of the inner circle is outside the outer; without, near the point no point is within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, with no centre input; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact. III.13's companions `Prop13.touchesInternally_iff`, `Prop13.touchesExternally_iff` and `Prop13.circlesTouch_iff` prove, for any two circles and any point, that each whole-circle definition holds exactly when its reading at the point does, so a statement that speaks of circles touching may be read either way | `touching-whole-circles` |
 
 The details, and the reasons, are in the book briefs.
@@ -311,9 +311,12 @@ construction, its premises, and the diagram fact or lemma it needed.
   repeated conclusions and "similarly" need no artificial tactics. A clause proved as a
   porism or a helper points to that declaration.
 - **No dummy citations.** Never add a theorem call to make the Lean's dependencies match
-  Heath's references. The Lean cites what its argument uses; a difference from Heath's
-  references is shown on the page (the generated line, a passage note), and explained in the
-  mishnah only when it is this proposition's story.
+  Heath's references. A call that obtains what Euclid's step obtains, by Euclid's means,
+  is not a dummy citation, even when the proof then uses less than the call returns
+  ([decision of 26 October 2026](decisions/2026-10-26-centre-by-iii1.md)). The Lean
+  cites what its argument uses; a difference from Heath's references is shown on the page
+  (the generated line, a passage note), and explained in the mishnah only when it is this
+  proposition's story.
 - **No artificial hypothesis uses.** Never mention a hypothesis only to silence an
   unused-variable warning.
 - **Unused hypotheses and surprising dependencies are review prompts, not verdicts.** An
@@ -404,8 +407,9 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   cite Book I; in `Elements/BookIII/Squares.lean` for Book III's that cite Books I or II; and
   in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; in
   `Elements/BookIII/Feet.lean`, after III.2, for `foot_between`, whose last step is Circle
-  1, which is to be proved after III.2
-  ([its decisions entry](decisions/2026-10-25-circle-1-bookzero.md)); and in
+  1, proved after III.2 since 26 October 2026
+  ([the entry that moved the step](decisions/2026-10-25-circle-1-bookzero.md),
+  [the retirement](decisions/2026-10-26-circle-1-retired.md)); and in
   `Elements/BookI/OutlineBound.lean`, after I.29, for `outline_bounded`, which cites I.23
   and uses Postulate 5 (brief 0013). A new shared module (stage 2's
   `Elements/Figure/Sums.lean`, stage 3's placement and arcs, brief 0013's figures given by
@@ -434,7 +438,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->43<!-- /count --> tacit rules, <!-- count:axioms -->49<!-- /count --> in all, each tacit rule from System E (or
+  Definition I.15 and <!-- count:tacit-rules -->42<!-- /count --> tacit rules, <!-- count:axioms -->48<!-- /count --> in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation, save two of our own: every circle has
   a centre (`exists_centre`), added by the owner's decision of 18 October 2026, whose
   content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
@@ -855,6 +859,21 @@ by `InsideCircle.of_between_centre`, and uses Intersection 3
 the circle on AB. The proved
 Intersection 2 has no user in the published proofs.
 
+26 October 2026: Circle 1 became a theorem, taking the lock from 49 axioms to 48 (#477;
+[the decision entry](decisions/2026-10-26-circle-1-retired.md)). It keeps its name and
+exact type, and is proved after III.2 in `Prop02.lean`, beside Circle 2 and Circle 3. Book
+Zero, III.1, its porism and III.2 had stopped using it that day: where the point within is
+the centre, Book Zero's `between_of_centre_chord` gives the step from Definition I.15,
+Between 6 and our radius rule, without it.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `between_of_inside_chord` | Circle 1 | The point within is neither point of the circle (Generalities 4), so of the three points one is between the other two (Between 6); were either point of the circle between the others, III.2's corollary `Prop2.within` would put it within the circle. Proved after III.2 in [`Prop02.lean`](../Elements/BookIII/Prop02.lean). |
+
+From III.7 on, 19 entries use it through their own proofs and the proved rules beneath
+them, and each cites III.2; an entry before III.2 that used it would cite III.2 too, which
+the check on later citations refuses.
+
 ## 8. Completion claims
 
 A completion label and its certificate cover the same declarations: the main theorem, its
@@ -884,7 +903,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->49<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of

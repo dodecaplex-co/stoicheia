@@ -186,9 +186,9 @@ companion.
 nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sentence of
 Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
 of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
-`#` comment. `unused` is a key, which the records' `text` stamp will cover once
-[#77](https://github.com/jackChallis/stoicheia/issues/77) lands; TOML does not read a
-comment, so that stamp would never see one change. `heath.load_review` checks that
+`#` comment. `unused` is a key, which the records' `text` stamp covers
+([#77](https://github.com/jackChallis/stoicheia/issues/77)); TOML does not read a
+comment, so that stamp never sees one change. `heath.load_review` checks that
 `unused` lists distinct names, each one Lean identifier; `scripts/check_fidelity.py`,
 that the Lean beneath the run binds each, so a declaration cannot outlive its binding.
 The page does not show the key, but it does show the passage: one added only to hold
@@ -221,7 +221,7 @@ The section needs a `case` or a `note`, or both, and is left out when it has nei
 | `stage` | `"exceptions"` or `"full"` | yes | See "Two stages". |
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
-| `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. A record stamped before it may lack it for now (below). |
+| `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
@@ -251,10 +251,10 @@ order of keys are not part of the text; every key and value of the other section
 after the stamp is not caught by `text`, and is seen only by whoever reviews the pull
 request.
 
-A record stamped before `text` was introduced may lack it until it gains it as
-[WORKFLOW](../docs/WORKFLOW.md), section 6, says; `scripts/check_fidelity.py` names each
-record without it in a note. Once every record carries `text`, it is required like the
-other stamps.
+`text` is required like the other stamps: `heath.load_review` refuses a record without
+it, and so `scripts/check_fidelity.py` fails it. A record stamped before `text` was
+introduced, as one may be on an older branch, gains it as
+[WORKFLOW](../docs/WORKFLOW.md), section 6, says.
 
 ## What the machine checks
 
