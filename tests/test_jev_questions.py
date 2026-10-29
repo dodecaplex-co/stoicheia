@@ -1099,6 +1099,33 @@ class CoreNames(LeanFiles):
                 self.assertTrue(unresolved)
                 self.assertTrue(all(written in found for found in unresolved), unresolved)
 
+    def test_each_of_lean_s_four_choice_names_resolves_as_iii_26_writes_it(self):
+        # III.26's helpers build a function on points from a proof that each image exists:
+        # `choose` and `choose_spec` as fields of that proof, `Classical.epsilon` and
+        # `True.intro` whole (#656). Each is read alone.
+        exists = '  have e : ∃ n : Nat, n = 0 := ⟨0, rfl⟩\n'
+        for name, body in (
+                ('choose', exists + '  have c := e.choose\n'),
+                ('choose_spec', exists + '  have d := e.choose_spec\n'),
+                ('Classical.epsilon', '  have k := Classical.epsilon (fun n : Nat => n = 0)\n'),
+                ('True.intro', '  have t := True.intro\n')):
+            with self.subTest(name=name):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_choice_name_outside_the_four_is_still_unresolved(self):
+        # Lean's other names for choice, and the two whole names' last words after another
+        # first word, are no part of the list.
+        for written in ('Classical.choice', 'Classical.indefiniteDescription', 'Missing.epsilon',
+                        'True.epsilon', 'Classical.intro', 'Missing.True.intro'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):
@@ -1519,26 +1546,52 @@ class BookThree(unittest.TestCase):
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
         # Derives.sound and Rule.apply, and the laws each cites, with their meaning; I.8's,
-        # holds_prop7 and SameSideOf.of_line, which give I.7's law, too.
+        # holds_prop7 and SameSideOf.of_line, which give I.7's law, too. The laws' proofs are
+        # read from facts.json, each proof of each law of the entry's `cited_laws`; of them, the
+        # core that I.4 and I.8 cite with or without Metric 9's law is named here.
         checked = {'Elements.Superposition.Atom.holds_map', 'Elements.Superposition.Lit.holds_map',
                    'Elements.Superposition.Metric.holds_map', 'Elements.Superposition.Derives.sound',
                    'Elements.Superposition.Rule.apply'}
         laws = {'Elements.Superposition.Cited.holds_' + law for law in ('lenSymm', 'neOfLen', 'rayUnique')}
         meanings = {'Superposition.Atom.Holds', 'Superposition.Lit.Holds', 'Superposition.Metric.Holds',
                     'Superposition.Cited.Holds', 'Superposition.Law.Holds', 'Superposition.Cited.law'}
+        self.assertEqual(questions.CITED_EXTRAS, {'I.4': [], 'I.8': ['Elements.SameSideOf.of_line']})
+        generator = shared()['generator']
         rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
-        for ref, extra in (('I.4', {'Elements.Superposition.Cited.holds_' + law for law in
-                                    ('angleSymm', 'areaCongruent', 'rayOfAngle', 'rayOfAngleSide')}),
-                           ('I.8', {'Elements.BookI.Prop8.holds_prop7', 'Elements.SameSideOf.of_line'})):
+        for ref, core in (('I.4', {'Elements.Superposition.Cited.holds_' + law for law in
+                                   ('angleSymm', 'rayOfAngle', 'rayOfAngleSide')}),
+                          ('I.8', {'Elements.BookI.Prop8.holds_prop7', 'Elements.SameSideOf.of_line'})):
             with self.subTest(ref=ref):
+                proofs = ['Elements.' + proof['name'] for law in generator.facts[ref]['cited_laws']
+                          for proof in law['proofs']]
+                cited = proofs + questions.CITED_EXTRAS[ref]
+                self.assertEqual(generator.cited_laws(ref), cited)
+                self.assertEqual(generator.record_checked(ref)[-len(cited):], tuple(cited))
                 state = rows[ref]['state']
-                self.assertEqual(set(state['bridges']), checked | laws | extra)
+                self.assertEqual(set(state['bridges']), checked | set(cited))
+                self.assertTrue(laws | core <= set(state['bridges']), (laws | core) - set(state['bridges']))
                 self.assertTrue(meanings <= set(state['definitions']))
                 self.assertTrue(meanings <= set(state['represented_objects']))
                 # Each law, as data, is what the bridges' `c.Holds` speaks of.
                 self.assertIn('| prop7 =>', state['definitions']['Superposition.Cited.law'])
         self.assertIn('Cited.prop7.Holds primitives',
                       rows['I.8']['state']['bridges']['Elements.BookI.Prop8.holds_prop7'])
+
+    def test_cited_laws_are_refused_where_the_certificate_gives_no_law_or_no_proof(self):
+        # An entry of facts.json with no cited law, or a law with no proof, is refused, never
+        # read as a derivation that cites nothing; the extras follow the proofs read.
+        generator = questions.Generator.__new__(questions.Generator)
+        for fact, message in (({}, 'gives its derivation no cited_laws'),
+                              ({'cited_laws': []}, 'gives its derivation no cited_laws'),
+                              ({'cited_laws': [{'law': 'lenSymm', 'proofs': []}]},
+                               'no proof of its law lenSymm')):
+            generator.facts = {'I.4': fact}
+            with self.subTest(fact=fact), self.assertRaisesRegex(questions.Refusal, message):
+                generator.cited_laws('I.4')
+        generator.facts = {'I.8': {'cited_laws': [{'law': 'prop7',
+                                                   'proofs': [{'name': 'BookI.Prop8.holds_prop7'}]}]}}
+        self.assertEqual(generator.cited_laws('I.8'),
+                         ['Elements.BookI.Prop8.holds_prop7', 'Elements.SameSideOf.of_line'])
 
     def test_figures_taken_by_their_outline_get_book_zero_s_bridges(self):
         rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
@@ -1569,7 +1622,7 @@ class BookThree(unittest.TestCase):
         for ref in passed:
             with self.subTest(ref=ref):
                 self.assertEqual(generator.checked(ref, records[ref], rows[ref]['state']), [])
-        required = {ref: tuple(dict.fromkeys((*questions.RECORD_CHECKED.get(ref, ()),
+        required = {ref: tuple(dict.fromkeys((*generator.record_checked(ref),
                                              *questions.OUTLINE_CHECKED.get(ref, ()))))
                     for ref in set(questions.RECORD_CHECKED) | set(questions.OUTLINE_CHECKED)}
         for ref, names in required.items():
