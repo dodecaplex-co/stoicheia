@@ -39,13 +39,14 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
         ‖D E‖ < ‖A B‖ → False := by
       intro A B C D E F hABC hDEF hB hC hBC hlt
       -- Let AB be greater, and let BG be made equal to DE; and let GC be joined.
-      /- I.3 supplies the cut and says explicitly that G is between B and A. -/
+      /- I.3 supplies the cut and says explicitly that G is between B and A. GC is
+         named by its ends, as a side of the triangle GBC, so nothing is drawn for the
+         join. -/
       obtain ⟨G, hBGA, hBG⟩ := Prop3 hDEF.ne₁₂ (by rwa [len_symm B A])
       obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hABC.ne₁₂
       have hG_AB := on_line_of_between_ends hBGA hB_AB hA_AB
       have hBGC : Triangle B G C := Triangle.of_line hB_AB hG_AB
         (ne_of_between hBGA) (hABC.off_line hA_AB hB_AB)
-      obtain ⟨GC, hG_GC, hC_GC⟩ := Postulate1 G C hBGC.ne₂₃
       -- Then, since BG is equal to DE, and BC to EF,
       -- the two sides GB, BC are equal to the two sides DE, EF respectively;
       have hBG_ED : ‖B G‖ = ‖E D‖ := hBG.trans (len_symm D E)
@@ -53,14 +54,13 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
       have hGBC : ∠ G B C = ∠ D E F :=
         (angle_onRay_left (OnRay.of_between hBGA) hABC.ne₂₃.symm).trans hB
       -- therefore the base GC is equal to the base DF,
-      obtain ⟨hGC, harea, hG, hC'⟩ := Prop4 hBGC hDEF.bac hBG_ED hBC hGBC
+      obtain ⟨hGC, harea, -, hC'⟩ := Prop4 hBGC hDEF.bac hBG_ED hBC hGBC
       -- and the triangle GBC is equal to the triangle DEF,
       have : △ G B C = △ D E F := by
         rw [area_swap G B C, area_rotate G C B, area_swap D E F, area_rotate D F E]
         exact harea
       -- and the remaining angles will be equal to the remaining angles, namely those which the
       -- equal sides subtend; [I. 4]
-      have : ∠ B G C = ∠ E D F ∧ ∠ B C G = ∠ E F D := ⟨hG, hC'⟩
       -- therefore the angle GCB is equal to the angle DFE.
       have hGCB : ∠ G C B = ∠ D F E :=
         (angle_symm hBGC.ne₂₃ hBGC.ne₁₃).trans
@@ -102,6 +102,8 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
         ‖E F‖ < ‖B C‖ → False := by
       intro A B C D E F hABC hDEF hB hC hAB hlt
       -- Let BC be greater, if possible, and let BH be made equal to EF; let AH be joined.
+      /- AH is named by its ends, as a side of the triangle ABH, so nothing is drawn
+         for the join. -/
       obtain ⟨H, hBHC, hBH⟩ := Prop3 hDEF.ne₂₃ hlt
       obtain ⟨BC, hB_BC, hC_BC⟩ := Postulate1 B C hABC.ne₂₃
       have hH_BC := on_line_of_between_ends hBHC hB_BC hC_BC
@@ -109,7 +111,6 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
         (ne_of_between hBHC) (hABC.bca.off_line hB_BC hC_BC)
       have hCHA : Triangle C H A := Triangle.of_line hC_BC hH_BC
         (ne_of_between (between_symm hBHC)) (hABC.bca.off_line hB_BC hC_BC)
-      obtain ⟨AH, hA_AH, hH_AH⟩ := Postulate1 A H hBHA.ne₂₃.symm
       -- Then, since BH is equal to EF, and AB to DE,
       -- the two sides AB, BH are equal to the two sides DE, EF respectively, and they contain
       -- equal angles;
@@ -118,14 +119,13 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
       have hABH : ∠ A B H = ∠ D E F :=
         (angle_onRay_right (OnRay.of_between hBHC) hABC.ne₁₂).trans hB
       -- therefore the base AH is equal to the base DF,
-      obtain ⟨hAH, harea, hA, hH⟩ := Prop4 hBHA.acb hDEF.bac hBA_ED hBH hABH
+      obtain ⟨hAH, harea, -, hH⟩ := Prop4 hBHA.acb hDEF.bac hBA_ED hBH hABH
       -- and the triangle ABH is equal to the triangle DEF,
       have : △ A B H = △ D E F := by
         rw [area_swap A B H, area_rotate A H B, area_swap D E F, area_rotate D F E]
         exact harea
       -- and the remaining angles will be equal to the remaining angles, namely those which the
       -- equal sides subtend; [I. 4]
-      have : ∠ B A H = ∠ E D F ∧ ∠ B H A = ∠ E F D := ⟨hA, hH⟩
       -- therefore the angle BHA is equal to the angle EFD.
       have hBHA_EFD : ∠ B H A = ∠ E F D := hH
       -- But the angle EFD is equal to the angle BCA;

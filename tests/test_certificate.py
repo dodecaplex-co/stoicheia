@@ -46,8 +46,10 @@ and a law named with no proof found fails the run (I.5).
 A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
 construction rules, a field of facts.json's top level, a field of every entry and an
-entry's proved rules, apart from the top level's, are read, and an expectation that is
-malformed, unmet or asks nothing fails.
+entry's proved rules, apart from the top level's, are read; an entry's states, given with
+`one_of` and told apart by a field that each of them reads, hold when exactly one does, and
+fail once when none does, naming each state with what sank it, or when two do, naming them;
+and an expectation that is malformed, unmet or asks nothing fails.
 
 A fifth class compiles a fixture written in the test, over the foundations' Common
 Notions: a tacit rule proved from III.2, which III.3 calls itself and III.4 only through a
@@ -467,8 +469,13 @@ class ExpectationTests(unittest.TestCase):
     without Lean (#150, question 4): a cited law's construction rules, read by its `law`; a
     field of facts.json's top level, read with no `ref`; a field of every entry, read with
     `"every": "entry"`, a shared step by its `name` (#429); an entry's `proved_rules`, read
-    by its `ref` apart from the top level's (#168); and each expectation that is
-    malformed, unmet or asks nothing, failing with its own message."""
+    by its `ref` apart from the top level's (#168); an entry's states, read with `one_of`
+    and told apart by a `field` that each state reads, of which exactly one must hold
+    (#517): I.4 by Metric 9 or by Common Notion 4 for figures, told apart by its
+    `own_axioms`, each passing, and a tree between them failing once, naming both states,
+    as do states that hold together; and each expectation that is malformed, unmet or asks
+    nothing, failing with its own message, a malformed `one_of` among them, one with no
+    `field` or with a `field` a state does not read."""
 
     def facts(self, **i4):
         return {
@@ -732,6 +739,154 @@ class ExpectationTests(unittest.TestCase):
         # Read as empty, an entry without the field would let every `excludes` pass.
         self.assertFailsOnce({"ref": "I.4", "field": "proved_rules", "excludes": used},
                              "but its entry has no field `proved_rules`")
+
+    # #517: I.4 in one of two states, as tests/certificate_expectations.json holds it: its
+    # area clause by Metric 9, through its law, or by Common Notion 4 for figures, and
+    # nothing between.
+    METRIC_9 = {"state": "Metric 9", "expectations": [
+        {"ref": "I.4", "field": "cited_laws", "includes": ["lenSymm", "areaCongruent"],
+         "count": {"prefix": "", "is": 2}, "why": "the seven laws"},
+        {"ref": "I.4", "field": "cited_laws", "law": "areaCongruent", "equals": [],
+         "why": "Metric 9's law"},
+        {"ref": "I.4", "field": "own_axioms", "excludes": ["Tacit.figures_coincide"],
+         "why": "not the new axiom"}]}
+    CN_4 = {"state": "Common Notion 4 for figures", "expectations": [
+        {"ref": "I.4", "field": "cited_laws", "includes": ["lenSymm"],
+         "count": {"prefix": "", "is": 1}, "why": "the six laws"},
+        {"ref": "I.4", "field": "own_axioms", "includes": ["Tacit.figures_coincide"],
+         "why": "the new axiom"}]}
+    STATES = {"ref": "I.4", "field": "own_axioms", "one_of": [METRIC_9, CN_4]}
+    LEN_SYMM = {"law": "lenSymm", "proofs": [], "construction_rules": []}
+    AREA = {"law": "areaCongruent", "proofs": [], "construction_rules": []}
+
+    def i4(self, laws, own):
+        return self.facts(cited_laws=laws, own_axioms=own)
+
+    def test_one_state_of_two_holds(self):
+        for name, facts in (("Metric 9", self.i4([self.LEN_SYMM, self.AREA], ["Postulate1"])),
+                            ("Common Notion 4 for figures",
+                             self.i4([self.LEN_SYMM], ["Postulate1", "Tacit.figures_coincide"]))):
+            with self.subTest(state=name):
+                self.assertEqual(self.problems(self.STATES, facts=facts), [])
+
+    def test_a_tree_between_the_states_fails_once_naming_each(self):
+        # The new axiom with the seven laws, or the six laws without it: in neither state.
+        for between, facts, sunk in (
+                ("the new axiom with Metric 9's law",
+                 self.i4([self.LEN_SYMM, self.AREA], ["Tacit.figures_coincide"]),
+                 ("its own_axioms should not include Tacit.figures_coincide",
+                  "its cited_laws has 2 names beginning '', not 1")),
+                ("neither", self.i4([self.LEN_SYMM], ["Postulate1"]),
+                 ("its cited_laws should include areaCongruent",
+                  "its cited_laws has no law areaCongruent with construction_rules",
+                  "its own_axioms should include Tacit.figures_coincide"))):
+            with self.subTest(between=between):
+                errors = self.problems(self.STATES, facts=facts)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertTrue(errors[0].startswith("I.4: "), errors[0])
+                self.assertIn("expectations.json, expectation 1 asks that exactly one of its "
+                              "states hold, and none does (for the test) The state ", errors[0])
+                metric, cn = (errors[0].index('The state "Metric 9" fails: '),
+                              errors[0].index('The state "Common Notion 4 for figures" fails: '))
+                self.assertLess(metric, cn)
+                for message in sunk:
+                    self.assertIn(message, errors[0])
+                # Each failure stands under the state it sank, with its own label.
+                self.assertIn('expectation 1, state "Metric 9", expectation ', errors[0][:cn])
+                self.assertIn('expectation 1, state "Common Notion 4 for figures", expectation ',
+                              errors[0][cn:])
+
+    def test_states_that_hold_together_fail(self):
+        both = {"ref": "I.4", "field": "axioms", "one_of": [
+            {"state": "one", "expectations": [
+                {"ref": "I.4", "field": "cited_laws", "includes": ["lenSymm"], "why": "a"},
+                {"ref": "I.4", "field": "axioms", "excludes": ["Postulate5"], "why": "a"}]},
+            {"state": "two", "expectations": [
+                {"ref": "I.4", "field": "axioms", "includes": ["Tacit.len_symm"], "why": "b"}]},
+            {"state": "three", "expectations": [
+                {"ref": "I.4", "field": "axioms", "includes": ["Postulate5"], "why": "c"}]}]}
+        self.assertFailsOnce(both, 'expectations.json, expectation 1 asks that exactly one of '
+                                   'its states hold, but "one" and "two" hold at once, so the '
+                                   'states are not exclusive (for the test)')
+        self.assertTrue(self.problems(both)[0].startswith("I.4: "))
+
+    def test_a_malformed_choice_of_states_fails(self):
+        laws, inner = self.CN_4["expectations"]
+        def states(*one_of):
+            return {"ref": "I.4", "field": "own_axioms", "one_of": list(one_of)}
+        for shape, expectation, message in (
+                ("one state", states(self.CN_4),
+                 "expectation 1: its `one_of` must be a list of two states or more"),
+                ("no list", dict(self.STATES, one_of={"Metric 9": self.METRIC_9}),
+                 "expectation 1: its `one_of` must be a list of two states or more"),
+                ("an empty state", states(self.METRIC_9, dict(self.CN_4, expectations=[])),
+                 'expectation 1, state "Common Notion 4 for figures": its `expectations` must '
+                 "be a nonempty list"),
+                ("a nested one_of", states(self.METRIC_9, dict(self.CN_4, expectations=[
+                    dict(self.STATES, why="nested")])),
+                 'state "Common Notion 4 for figures", expectation 1: a state\'s expectations '
+                 "are ordinary ones of its entry, with no `one_of` or `every`"),
+                ("an inner every", states(self.METRIC_9, dict(self.CN_4, expectations=[
+                    {"every": "entry", "field": "own_axioms", "excludes": ["Postulate5"],
+                     "why": "every"}])),
+                 'state "Common Notion 4 for figures", expectation 1: a state\'s expectations '
+                 "are ordinary ones of its entry, with no `one_of` or `every`"),
+                ("an inner ref that differs", states(self.METRIC_9, dict(self.CN_4, expectations=[
+                    dict(inner, ref="I.8")])),
+                 'state "Common Notion 4 for figures", expectation 1: its `ref` must be I.4, '
+                 "the `ref` of the expectation with `one_of`"),
+                ("an inner expectation with no ref", states(self.METRIC_9, dict(
+                    self.CN_4, expectations=[{k: v for k, v in inner.items() if k != "ref"}])),
+                 'state "Common Notion 4 for figures", expectation 1: its `ref` must be I.4'),
+                ("an inner expectation with no why", states(self.METRIC_9, dict(
+                    self.CN_4, expectations=[{k: v for k, v in inner.items() if k != "why"}])),
+                 'state "Common Notion 4 for figures", expectation 1: needs `field` and `why`'),
+                ("an unknown key outside", dict(self.STATES, law="areaCongruent"),
+                 "expectation 1: an expectation with `one_of` has a `ref`, the name of an "
+                 "entry, a `field`, the field of it that tells its states apart, `one_of`, "
+                 "its states, and a `why`, and nothing else"),
+                ("no ref", {"field": "own_axioms", "one_of": [self.METRIC_9, self.CN_4]},
+                 "expectation 1: an expectation with `one_of` has a `ref`"),
+                ("no outer field", {k: v for k, v in self.STATES.items() if k != "field"},
+                 "expectation 1: an expectation with `one_of` has a `ref`, the name of an "
+                 "entry, a `field`"),
+                ("an outer field that is no string", dict(self.STATES, field=["own_axioms"]),
+                 "expectation 1: its `field` must name the field that tells its states apart, "
+                 "with a nonempty string"),
+                ("an empty outer field", dict(self.STATES, field=""),
+                 "expectation 1: its `field` must name the field that tells its states apart, "
+                 "with a nonempty string"),
+                ("an outer field one state does not read", states(
+                    self.METRIC_9, dict(self.CN_4, expectations=[laws])),
+                 'expectation 1, state "Common Notion 4 for figures": one of its expectations '
+                 "must read own_axioms, the `field` of the expectation with `one_of`, so that "
+                 "each state reads the field said to tell them apart"),
+                ("an unknown key in a state", states(self.METRIC_9, dict(self.CN_4, why="w")),
+                 "expectation 1, state 2: a state is an object with a `state`, its name, and "
+                 "`expectations`, and nothing else"),
+                ("an unknown key inside", states(self.METRIC_9, dict(self.CN_4, expectations=[
+                    dict(inner, extra=1)])),
+                 'state "Common Notion 4 for figures", expectation 1: needs `field` and `why`'),
+                ("a state with no name", states(
+                    self.METRIC_9, {"state": "", "expectations": self.CN_4["expectations"]}),
+                 "expectation 1, state 2: its `state` must name it, with a nonempty string"),
+                ("a state named by no string", states(
+                    self.METRIC_9, {"state": 2, "expectations": self.CN_4["expectations"]}),
+                 "expectation 1, state 2: its `state` must name it, with a nonempty string"),
+                ("duplicate names", states(self.METRIC_9, dict(self.CN_4, state="Metric 9")),
+                 'expectation 1: two of its states are named "Metric 9": each state needs a '
+                 "name of its own")):
+            with self.subTest(shape=shape):
+                # Malformed, it fails by its shape alone, in a tree that holds a state.
+                self.assertFailsOnce(expectation, message, facts=self.i4(
+                    [self.LEN_SYMM, self.AREA], ["Postulate1"]))
+        # A field that no state reads fails once for each state, in their order.
+        errors = self.problems(dict(self.STATES, field="axioms"), facts=self.i4(
+            [self.LEN_SYMM, self.AREA], ["Postulate1"]))
+        self.assertEqual(len(errors), 2, errors)
+        for error, name in zip(errors, ("Metric 9", "Common Notion 4 for figures")):
+            self.assertIn(f'expectation 1, state "{name}": one of its expectations must read '
+                          "axioms, the `field` of the expectation with `one_of`", error)
 
 
 class SharedStepTests(unittest.TestCase):
