@@ -6,7 +6,7 @@ The [README](../../../README.md#how-it-was-made) says in a few lines how Stoiche
 
 Stoicheia is built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch, writing the statements and testing them; sailors prove each proposition, in parallel; bosuns and first mates merge their work and review it for faithfulness to Euclid; artists drew the at-a-glance figures in Byrne's colours; inspectors audited Book I for consistency.
 
-From the third voyage OpenAI's Codex joined the crew: Codex sailors proved I.26, I.28, I.30, I.32, all of I.33–I.48 and all of Books II and III, some of them from scratch proofs Claude's first mates had written to test the statements; they drew Euclid's figure for each and wrote the first draft of its mishnah, and Claude's bosuns, first mates and captains reviewed and edited their work. Early planning also drew on conversations with ChatGPT.
+From the third voyage OpenAI's Codex joined the crew: Codex sailors proved I.26, I.28, I.30, I.32, all of I.33–I.48 and all of Books II and III, some of them from scratch proofs Claude's first mates had written to test the statements; they drew Euclid's figure for each and wrote the first draft of its mishnah, and Claude's bosuns, first mates and captains reviewed and edited their work. Later edits, to proofs and records alike, came from both families. Early planning also drew on conversations with ChatGPT.
 
 ## Who read what
 
@@ -27,6 +27,6 @@ Each record's `reviewer` names the reader of its latest stamp. The first cross-f
 | [orders-03.md](orders-03.md), [orders-04.md](orders-04.md), [orders-II.md](orders-II.md), [orders-III.md](orders-III.md) | The sailing orders |
 | [inspection-01.md](inspection-01.md), [inspection-02.md](inspection-02.md) | The inspections of Book I |
 | [voice-01.md](voice-01.md), [voice-02.md](voice-02.md) | Books I to III brought into one voice |
-| [scratch-IV](scratch-IV), [scratch-figures](scratch-figures) | Scratch Lean, committed unbuilt: Book IV's prototypes and statements, and two scratch files on figures (WORKFLOW, section 2) |
+| [scratch-IV](scratch-IV), [scratch-figures](scratch-figures) | Scratch Lean, committed unbuilt (WORKFLOW, section 2): draft statements and prototypes for Book IV, and two scratch proofs on figures |
 
 Astra's outside review, and [our response](../outside-review-01.md), are in `docs/reports/`.
