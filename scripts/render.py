@@ -2606,6 +2606,11 @@ def content_wording_at(root):
 
     placement = placement_note(props)
     definitions = FRONT_LEAN_III["Definitions"]
+    # Heath's reading of touching at the point, named beside ours once III.13's companions
+    # prove the two the same.
+    at_point = ({"TouchesInternallyAt", "TouchesExternallyAt", "CirclesTouchAt"} <= words.keys()
+                and stated("III.13 touchesInternally_iff", "III.13 touchesExternally_iff",
+                           "III.13 circlesTouch_iff"))
     choices = (
         ("MixedAngle.ofSegment" in words and companion_of("III.16", "III.31"), (
             (definitions[7],
@@ -2634,7 +2639,15 @@ def content_wording_at(root):
              "the other; `TouchesInternally α β C`: they meet at C, a point of β is within α, "
              "and no point of β falls outside α; `TouchesExternally α β C`: they meet at C, "
              "and no point is within both; `CirclesTouch α β C`: either touches the other "
-             "within, or they touch without. Touching is read of the whole circles"),
+             "within, or they touch without. Touching is read of the whole circles"
+             + (". Beside it is defined the reading at the point of contact, which Heath "
+                "prefers. `TouchesInternallyAt α β C`: they meet at C, they are two circles, "
+                "and near C no point of β falls outside α; `TouchesExternallyAt α β C`: they "
+                "meet at C, and near C no point is within both; `CirclesTouchAt α β C`: either "
+                "touches the other within, or they touch without, read at C. III.13's "
+                "companions prove, for any two circles and any point, that each whole-circle "
+                "definition holds exactly when its reading at the point does, so a statement "
+                "may be read either way" if at_point else "")),
         )),
         ("Foot" in words and stated("III.14", "III.14 general"), (
             (definitions[4],
