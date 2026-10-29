@@ -44,19 +44,30 @@
   logged; where a failure is noted, every check runs and is noted in order, and the
   main-checks cache records each in order.
 
+  The change lands as groundwork, with one worker the default. On 28 October the
+  coordinator decided that the lane keeps one worker until card #648 has moved the sweep
+  after the kernel self-test, so that the two long checks can run beside each other, and
+  runs at one and at more workers, taken in turn on the Mac, show a gain. In an
+  end-to-end run on a copy of origin/main with this change, four workers gave the same
+  reports as one, times aside, for a passing commit and a failing one; but step 4 was not
+  shorter, since the sweep, which runs alone, parts `tests/test_certificate.py` from the
+  kernel self-test, and the machine's load drifted more between the runs than the short
+  checks could gain.
+
   At more than one worker, while a group runs, the harness's handlers for Ctrl-C's SIGINT,
   SIGTERM and SIGHUP only record a signal and raise nothing, since an exception raised by
   a handler can land just after a lock is taken and leave it held. Once a signal is
   recorded, no further check starts; the checks already running, up to the number of
   workers, run to their end; the previous handlers are put back; and what the first
-  signal would have raised goes on (#NNN), unless another comes in the moment the
-  handlers are put back, when its own handler raises first. A terminal's Ctrl-C
-  reaches the checks too, in the run's process group, and they end; a SIGTERM or SIGHUP
-  sent to the harness alone waits for them to end of themselves. Any other exception, a
-  refusal or one a check's `run()` raised, waits for them in the same way before it goes
-  on. So no check still reads the worktree when the pass cleans it. The pass waits by
-  joining each check's thread, whether or not it has taken in the check's end. At one
-  worker, nothing changes: a signal raises as before, and a check in `run()` is stopped.
+  signal would have raised goes on, unless another comes in the moment the handlers are
+  put back, when its own handler raises first. A terminal's Ctrl-C reaches the checks
+  too, in the run's process group, and they end; a SIGTERM or SIGHUP sent to the harness
+  alone waits for them to end of themselves, and stopping them by their process groups
+  is left to card #647. Any other exception, a refusal or one a check's `run()` raised,
+  waits for them in the same way before it goes on. So no check still reads the worktree
+  when the pass cleans it. The pass waits by joining each check's thread, whether or not
+  it has taken in the check's end. At one worker, nothing changes: a signal raises as
+  before, and a check in `run()` is stopped.
 
   Around each group, at every number of workers, the pre-flight takes the worktree's
   state: HEAD; the index's entries, with their skip-worktree and assume-unchanged flags;
