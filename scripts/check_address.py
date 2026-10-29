@@ -88,7 +88,8 @@ ADDRESS = re.compile(
     re.I)
 URL = re.compile(
     r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*:|"
-    r"(?<![A-Za-z0-9_+./:-]))//[^\s<>()\[\]{}\"']+", re.I)
+    r"(?<![A-Za-z0-9_+./:-]))//", re.I)
+URL_STOP = frozenset("<>[]{}\"'")
 GITHUB_URL = re.compile(
     rf"^(?:[A-Za-z][A-Za-z0-9+.-]*:)?//(?:[^/?#@]*@)?"
     rf"(?:(?:www\.)?github\.com|api\.github\.com|codeload\.github\.com"
@@ -128,15 +129,29 @@ def problems(text: str) -> list[tuple[int, str]]:
 
 
 def in_url_query_or_fragment(line: str, offset: int) -> bool:
+    enclosing = None
     for match in URL.finditer(line):
-        if not match.start() <= offset < match.end():
-            continue
-        address = match.group()
-        if GITHUB_URL.match(address):
-            return False
-        starts = [i for mark in "?#" if (i := address.find(mark)) >= 0]
-        return bool(starts) and offset > match.start() + min(starts)
-    return False
+        depth = 0
+        end = len(line)
+        for index in range(match.end(), len(line)):
+            char = line[index]
+            if char.isspace() or char in URL_STOP or char == ")" and depth == 0:
+                end = index
+                break
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+        if match.start() <= offset < end:
+            enclosing = (match.start(), end)
+    if enclosing is None:
+        return False
+    start, end = enclosing
+    address = line[start:end]
+    if GITHUB_URL.match(address):
+        return False
+    starts = [i for mark in "?#" if (i := address.find(mark)) >= 0]
+    return bool(starts) and offset > start + min(starts)
 
 
 def options(argv: list[str]) -> tuple[bool, list[str], list[str]]:
@@ -248,6 +263,11 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"https://example.com/?repo={other}/stoicheia and "
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"https://example.com/?repo=https://github.com/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://example.com/?next=https://github.com/search?q="
+                          f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://example.com/?repo=({other}/stoicheia)", []),
+        ("docs/STYLE.md", f"[x](https://example.com/?repo=({other}/stoicheia)) and "
+                          f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", "https://api.github.com:443/repos/dodecaplex-co/stoicheia", []),
         ("docs/STYLE.md", "https://dodecaplex-co.github.io:443/stoicheia", []),
         ("docs/STYLE.md", f"//example.com/?repo={other}/stoicheia", []),
