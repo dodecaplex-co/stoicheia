@@ -1021,6 +1021,13 @@ def overlap_word(overlap):
 # and no words here gives it to every statement it is on.
 BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
                                  "Elements.Arc.measure"}}
+# The Lean words of the reading a badge's representation stands beside. A statement that
+# uses one of them states Euclid's equal circumferences as circumferences that coincide,
+# so the measure is not the whole reading: where it uses the measure too (III.26's and
+# III.28's clauses conclude both), its badge says "and in our measure of circumferences";
+# where only a companion uses the measure (III.24's), "with a companion in our measure of
+# circumferences".
+BADGE_BESIDE = {"angle-measure": {"Elements.Arc.Congruent"}}
 
 
 def statement_names(statement):
@@ -1064,17 +1071,35 @@ def bracketed_key(books):
             "the text's enunciation, which may not be Euclid's.")
 
 
-def representation_badge(record, entry=None):
+def representation_badge(record, entry=None, companions=None):
     """A few words beside the badge for a representation that changes how the whole
     statement is read (review/terms.toml `badge`): "in our measure of circumferences".
     `entry` is the statement's facts.json entry, whose words decide a badge that
     `BADGE_WORDS` keeps to the statements using them; with none, such a badge is not
-    given."""
+    given. A statement that uses them and a word of `BADGE_BESIDE` is read both ways:
+    "and in our measure of circumferences". One that uses a word of `BADGE_BESIDE` and
+    none of `BADGE_WORDS` has "with a companion in our measure of circumferences" if one
+    of `companions` uses them, and no badge otherwise; `companions` are the entries
+    facts.json attaches to `entry`, read from it when not given."""
     terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
     used = statement_names((entry or {}).get("statement", ""))
-    badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})
-              and (t not in BADGE_WORDS or BADGE_WORDS[t] & used)]
+    badges = []
+    for t in tags:
+        if "badge" not in terms.get(t, {}):
+            continue
+        badge = terms[t]["badge"]
+        beside = BADGE_BESIDE.get(t, set()) & used
+        if t not in BADGE_WORDS:
+            badges.append(badge)
+        elif BADGE_WORDS[t] & used:
+            badges.append(f"and {badge}" if beside else badge)
+        elif beside:
+            if companions is None:
+                companions = attached_entries(entry, load_facts())
+            if any(BADGE_WORDS[t] & statement_names(c.get("statement", ""))
+                   for c in companions):
+                badges.append(f"with a companion {badge}")
     return and_list(badges) if badges else ""
 
 
@@ -2466,7 +2491,9 @@ def certificate_row(entry, link, refs, record=None):
     Argument) or, indented under it, its porism or a companion."""
     status = STATUS_SHORT[entry["status"]] if entry else "🚧"
     statement = SCOPE_WORD[record["statement"]["scope"]] if record else ""
-    if record and representation_badge(record, entry):
+    # The dagger marks a statement that itself uses the representation, so no companion
+    # is given: III.24's, whose companions alone use the measure, has none.
+    if record and representation_badge(record, entry, companions=()):
         statement += "†"
     r = heath.parse_ref(entry["ref"]) if entry else None
     argument = route_word(record, r.book, r.n) if record and r else ""
