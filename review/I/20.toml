@@ -16,7 +16,7 @@ note = "Euclid draws BA through far enough to make DA equal to CA. The Lean firs
 at = "let DA be made equal to CA, and let DC be joined"
 kind = "helper"
 helper = "between_cut"
-note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX and `between_cut` to place A between B and D. DC is named by its ends, as a side of the triangle ADC, so nothing is drawn for the join, and Postulate 1 is not called for it."
+note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX and `between_cut` to place A between B and D. DC is named by its ends, as a side of the triangle ADC, so nothing is drawn for the join, and Postulate 1 is not called for it. The join is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the angle BCD is greater than the angle ADC"

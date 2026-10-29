@@ -20,7 +20,7 @@ note = "The statement gives the goal, AD parallel to BC. The distinct vertices A
 at = "and let EC be joined"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`); EC is named by its ends, as a side of the triangle EBC, so the Lean draws nothing for the join and does not call Postulate 1 for it."
+note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`); EC is named by its ends, as a side of the triangle EBC, so the Lean draws nothing for the join and does not call Postulate 1 for it. The join is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "But ABC is equal to DBC"

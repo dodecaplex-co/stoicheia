@@ -16,7 +16,7 @@ note = "Euclid bisects AC and produces BE; the Lean uses I.10 for E and `produce
 at = "let EF be made equal to BE"
 kind = "helper"
 helper = "between_cut"
-note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F, and Postulate 2 draws AC through to G. FC is named by its ends, as a side of the triangle ECF, so nothing is drawn for the join, and Postulate 1 is not called for it."
+note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F, and Postulate 2 draws AC through to G. FC is named by its ends, as a side of the triangle ECF, so nothing is drawn for the join, and Postulate 1 is not called for it. The join is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "Therefore the base AB is equal to the base FC"

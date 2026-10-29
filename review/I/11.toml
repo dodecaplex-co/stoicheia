@@ -21,7 +21,7 @@ note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyon
 [[passage]]
 at = "and let FC be joined;"
 kind = "given"
-note = "In the Lean a straight line between two points is named by its ends: FC is a side of the triangles CDF and CEF, so nothing is drawn for the join, and Postulate 1 is not called for it."
+note = "In the Lean a straight line between two points is named by its ends: FC is a side of the triangles CDF and CEF, so nothing is drawn for the join, and Postulate 1 is not called for it. The join is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "Therefore the straight line CF has been drawn at right angles"

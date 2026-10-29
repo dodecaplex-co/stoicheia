@@ -25,7 +25,7 @@ note = "Euclid assumes he can find F on BD near enough to B that AF remains less
 [[passage]]
 at = "and let the straight lines FC, GB be joined"
 kind = "given"
-note = "In the Lean a straight line between two points is named by its ends: FC and GB are sides of the triangles AFC and AGB, so nothing is drawn for the joins, and Postulate 1, which Heath cites, is not called for them."
+note = "In the Lean a straight line between two points is named by its ends: FC and GB are sides of the triangles AFC and AGB, so nothing is drawn for the joins, and Postulate 1, which Heath cites, is not called for them. The joins are drawn in the text and are not needed by the formal proof."
 
 [[passage]]
 at = "and they contain a common angle"

@@ -12,7 +12,7 @@ kind = "euclid"
 at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it."
+note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it. The join of GC is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base GC is equal to the base DF"
@@ -46,7 +46,7 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it."
+note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it. The join of AH is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base AH is equal to the base DF"

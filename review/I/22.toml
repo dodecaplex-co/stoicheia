@@ -28,7 +28,7 @@ note = "Euclid takes K where the circles meet without proving they meet; `Prop22
 [[passage]]
 at = "and let KF, KG be joined"
 kind = "given"
-note = "In the Lean a straight line between two points is named by its ends: KF and KG are sides of the triangle KFG, so nothing is drawn for the joins, and Postulate 1 is not called for them."
+note = "In the Lean a straight line between two points is named by its ends: KF and KG are sides of the triangle KFG, so nothing is drawn for the joins, and Postulate 1 is not called for them. The joins are drawn in the text and are not needed by the formal proof."
 
 [[passage]]
 at = "I say that the triangle KFG has been constructed"
