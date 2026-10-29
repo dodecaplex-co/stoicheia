@@ -32,6 +32,86 @@ saying how many of the plants it ran and that the others were not run; an unknow
 exits 2, naming the plants there are. `--counts-only` runs the file-only regressions and
 count_markers alone, without the Git bracket.
 
+`--workers N` runs the chosen plants in N workers at once, N cut to the number of plants
+chosen; with one, the run is the one described here, with no worker and no worktree.
+STOICHEIA_NEGATIVE_WORKERS gives N when `--workers` is absent, unset or empty meaning one,
+so that the pre-flight and any other caller choose it without changing their commands. In
+either, anything but a whole number from 1 exits 2, naming it. `--counts-only` takes no
+workers: it refuses `--workers` and passes the variable over.
+
+Each worker is a Git worktree of its own at the tree's commit, never a copy of a `.git`
+file, made with `git worktree add --detach --no-checkout` outside the tree, under the
+system's temporary directory (`stoicheia-negative-*`). TMPDIR chooses that directory, so
+the run asks `git rev-parse --is-inside-work-tree` there, with a worker's environment: if
+it is inside a Git work tree, where a fixture meant to have no repository above it would
+find one, the run fails before any worker is made, naming it and TMPDIR. A worker is
+given the tree's state, not just its commit: every file Git lists that is present,
+tracked or untracked and not ignored, with its mode, a symbolic link as a link; the tree's
+index, refreshed; and a clone of `.lake` (`cp -c -R` on macOS, whose copies share their
+blocks until one side writes; `cp -a --reflink=auto` elsewhere), in which no file may be a
+symbolic link or have a second name, since a plant that builds writes there. So in the
+pre-flight's pass with origin/main's checks it lacks the files the commit adds while its
+index lists them, as the tree does. Its Git status must be the tree's entry status, or the
+run fails before any plant runs: each is the one-worker bracket's `git status --porcelain`,
+bound to its tree with `--work-tree` and given the caller's inline Git configuration. It
+runs its own copy of this file in its own tree, its share given by `--plant`, its output to
+a log of its own. It, and every Git command the run runs for its workers except those
+status snapshots, has the run's environment but for the variables that name a repository
+or a part of one (its work tree, index, object store, grafts, shallow file, replace refs or
+namespace), carry Git settings inline or name `git config`'s file, set a ceiling on Git's
+search for a repository, or name a build, and STOICHEIA_NEGATIVE_WORKERS (WITHHELD and
+WITHHELD_PREFIXES), lest a worker read another tree's index or build, or its Git act on
+another tree. It keeps the variables that name or shut out the configuration files the run
+reads (GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM, GIT_CONFIG_NOSYSTEM and GIT_ATTR_NOSYSTEM,
+the four of scripts/safe_push.py's CONFIG_FILE_VARIABLES, #430), so that a worker and the
+tree under test read the same configuration files. Those files can
+still tell them apart: a conditional include keyed on a repository's path (`includeIf
+"gitdir:…"`) can give a worker's tree settings the tree under test lacks, `status` ones
+among them, and so a different verdict. Like a plant's file (below), configuration written
+to do that is not caught: the run trusts the configuration of the machine it runs on.
+
+The shares are dealt longest first, by the seconds each plant took as
+tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
+lines): each plant, heaviest first, ties going to a plant that builds and then to the
+stable order, goes to the worker with the least so far, and each worker runs its share in
+the stable order. A plant the record does not name weighs their median; with no record,
+every plant weighs the same. The deal is printed on stderr, so stdout is unchanged, and
+changes only the speed, never a verdict: a stale record only balances less well.
+
+A worker is a run that `--plant` narrows, with all of its bracket, its Git status taken as
+above: its entry status, the guard, `nothing refused`, the closing check of its unplanted
+tree, the guard after it and its final status. Only the file-only regressions are left to
+the run that made it, which runs them once, before it makes any worker, where a one-worker
+run runs them, and keeps a bracket of its own round the whole, its Git status taken as a
+worker's; its tree is never planted. Each worker writes one
+report (`--worker-report FILE`, given only by a run with workers): each plant's output and
+the failures it added, in order; its own failures; and its exit status. Once every worker
+has ended, the run prints each chosen plant's output in the stable order, its failures
+under its heading, so that its stdout is a one-worker run's apart from the times; then the
+run's own failures, any one of which fails it: a worker's own, named by the worker and its
+plants; a worker that crashed (one that exited other than 0 or 1, or whose report is
+missing, unreadable, lacks a field the run reads or has one of the wrong type, lacks a
+plant it was given or disagrees with its exit), with its log's tail, its plants that did
+not report counting as not run, the other workers' reports read all the same; and a
+worker's tree whose Git status, read once the worker has ended, is not the entry status or
+can no longer be read, which catches a worker that ended without its `finally` (os._exit,
+a signal). Interrupted, or left by any other exception while its workers run, the run
+interrupts each worker still running and waits for it (stop). The interrupt reaches a
+worker whatever SIGINT disposition the run inherited: a run started with SIGINT ignored,
+as a background job of a non-interactive shell is, would pass the ignore on, so each
+worker starts with SIGINT at its default, Python puts its handler there, and the worker's
+`finally` restores its tree; one interrupted while Python starts ends at once, having
+planted nothing. In its `finally`
+the run removes every worker's tree with `git worktree remove --force --force`, with SIGINT
+ignored, each successfully registered tree whatever became of those before it; one that
+Git cannot remove fails the run, even when its directory can be deleted, because its
+record remains in the repository's worktree list; a tree, or the workers' directory,
+still there after that fails the run too, naming it. The run never runs `git worktree
+prune`, which would prune other trees' records too. As
+with a plant's restoration (below), a forced kill defeats this: a run ended by SIGKILL, or
+by a signal Python does not turn into an exception, leaves its workers running and their
+trees registered.
+
 The loader is checked too. It lists scripts/negative/ itself, never Git's index, so the
 pre-flight's pass with origin/main's checks, which takes out the files a commit adds, runs
 main's plants. It compiles each plant from the file's text, never from bytecode, so
@@ -107,16 +187,20 @@ Standard library only; Python 3.11 or later, for the review records.
 
 import argparse
 import inspect
+import io
 import json
 import os
 import re
 import shutil
+import signal
+import stat
+import statistics
 import subprocess
 import sys
 import tempfile
 import types
 from collections.abc import Callable
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from pathlib import Path
 from time import perf_counter
 from typing import NamedTuple
@@ -143,6 +227,30 @@ SHARED = ("check_fidelity", "check_kernel", "generated_counts", "heath", "subpro
 # module a warning is attributed to, ignored warnings too, so a warning raised through a
 # helper here would read as a plant's change; it decides only which warnings repeat.
 UNGUARDED = frozenset({"__warningregistry__"})
+# The workers (the docstring): the variable that gives their number; the variables a worker
+# is started without, and how the names of the others it is started without begin (every
+# `LAKE…`, and the keys and values of inline Git settings): the audit of #607 named
+# GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_COMMON_DIR, the two object directories,
+# GIT_NAMESPACE, GIT_PREFIX, LEAN_PATH, every `LAKE…` and the variable itself, and the rest
+# came from the review of #607; the record of the plants' times, from ROOT; and a plant's
+# line in it as a run prints it (run_plant).
+WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
+WITHHELD = frozenset({"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG",
+                      "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS", "GIT_DIR",
+                      "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE", "GIT_INDEX_FILE",
+                      "GIT_INTERNAL_SUPER_PREFIX", "GIT_OBJECT_DIRECTORY", "GIT_PREFIX",
+                      "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE", "GIT_WORK_TREE",
+                      "GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES", "LEAN_PATH", WORKERS})
+WITHHELD_PREFIXES = ("LAKE", "GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
+TIMES = Path("tests", "negative_times.json")
+TIME_LINE = re.compile(r"  ([a-z][a-z0-9_]*): (\d+\.\d+)s \(including restoration\)")
+TIMES_ABOUT = ("Seconds each plant of scripts/negative_tests.py took, restoration included, "
+               "to a tenth of a second, written by `python3 scripts/negative_tests.py "
+               "--times-from-log` from the time lines of {count} plants in the log {log}. "
+               "`--workers N` deals the plants out by these times, longest first; a plant "
+               "missing here weighs their median, and with no file every plant weighs the "
+               "same. A stale time only balances the workers less well: it changes no "
+               "verdict.")
 
 
 # `True.intro` given as a proof of `False`, added past the kernel as the read-through found
@@ -815,47 +923,490 @@ def regressions() -> bool:
     return True
 
 
-def main(argv=()) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    only = parser.add_mutually_exclusive_group()
-    only.add_argument("--counts-only", action="store_true",
-                      help="only the count plants and file-only regressions; no build needed")
-    only.add_argument("--plant", action="append", metavar="NAME",
-                      help=f"only the plant {PLANTS}/NAME.py, in the usual Git bracket; "
-                           "may be given more than once")
-    args = parser.parse_args(argv)
-    sources: dict[int, str] = {}
-    if args.counts_only:
-        if not regressions():
-            return 1
-        # Made before any plant's file is read, and held here, so no plant can rebind it.
-        changes = guard()
-        loaded = choose(parser, args, sources)
-        if loaded is None:
-            return close(sources)
-        run_plant(loaded[0][0], sources, changes)
-        if failures:
-            print("\n".join(failures))
-            return 1
-        print("✓ count plants passed; other plants were not run (--counts-only)")
-        return 0
+def worker_count(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    """The workers the run asks for: --workers, or else STOICHEIA_NEGATIVE_WORKERS, unset or
+    empty for one. A worker, --times-from-log and --counts-only read no variable, so that one
+    the lane sets for every run leaves them as they are, and take no --workers. Anything but
+    a whole number from 1 exits 2, naming it."""
+    if args.workers is not None:
+        text, named = args.workers, "--workers"
+        if args.worker_report is not None or args.times_from_log is not None:
+            parser.error("--workers is for a run of the plants, not with --worker-report or "
+                         "--times-from-log")
+        if args.counts_only:
+            parser.error("--workers is not for --counts-only, which takes no workers")
+    elif (args.worker_report is None and args.times_from_log is None and not args.counts_only
+          and os.environ.get(WORKERS)):
+        text, named = os.environ[WORKERS], WORKERS
+    else:
+        return 1
+    if not (text.isascii() and text.isdigit() and int(text) >= 1):
+        parser.error(f"{named} must be a whole number from 1, not {text!r}")
+    return int(text)
+
+
+def recorded_times() -> dict[str, float]:
+    """The seconds by plant that tests/negative_times.json records: none without the file,
+    as in the pre-flight's pass with a main that has none, or with one that cannot be read,
+    which is named on stderr, since the record only balances the workers."""
+    try:
+        data = json.loads((ROOT / TIMES).read_text(encoding="utf-8"))
+        return {str(name): float(seconds) for name, seconds in data["seconds"].items()}
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        print(f"note: {TIMES} cannot be read ({type(error).__name__}: {error}); every plant "
+              "weighs the same", file=sys.stderr)
+        return {}
+
+
+def deal(plants: list[Plant], count: int,
+         seconds: dict[str, float]) -> tuple[list[list[Plant]], list[float]]:
+    """`plants` dealt to `count` workers, longest first: each plant, heaviest first, ties
+    going to a plant that builds and then to the order of `plants`, goes to the worker with
+    the least weight so far, then the fewest plants, then the lowest number. A plant weighs
+    its `seconds`, or their median when it has none; with none at all, every plant weighs
+    the same. Each share keeps the order of `plants`, and every plant is in exactly one;
+    with each share, its weight."""
+    median = statistics.median(seconds.values()) if seconds else 1.0
+    weight = [seconds.get(p.name, median) for p in plants]
+    shares: list[list[int]] = [[] for _ in range(count)]
+    loads = [0.0] * count
+    for i in sorted(range(len(plants)), key=lambda i: (-weight[i], not plants[i].builds, i)):
+        k = min(range(count), key=lambda k: (loads[k], len(shares[k]), k))
+        shares[k].append(i)
+        loads[k] += weight[i]
+    return [[plants[i] for i in sorted(share)] for share in shares], loads
+
+
+def write_times(log: Path) -> int:
+    """`--times-from-log LOG`: tests/negative_times.json, from the time lines of a run's
+    output in LOG, each to a tenth of a second, sorted by name, the log named by its folder
+    and file. 1, with nothing written, when LOG cannot be read, times a plant twice or
+    times none."""
+    try:
+        text = log.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        print(f"No times written to {TIMES}: {error}", file=sys.stderr)
+        return 1
+    seconds: dict[str, float] = {}
+    twice = []
+    for line in text.splitlines():
+        found = TIME_LINE.fullmatch(line)
+        if found:
+            if found[1] in seconds:
+                twice.append(found[1])
+            seconds[found[1]] = round(float(found[2]), 1)
+    if twice or not seconds:
+        print(f"No times written to {TIMES}: {log} "
+              + (f"times {', '.join(twice)} more than once, so it is not one run's output"
+                 if twice else "holds no plant's time line"), file=sys.stderr)
+        return 1
+    where = log.resolve()
+    data = {"about": TIMES_ABOUT.format(count=len(seconds),
+                                        log=f"{where.parent.name}/{where.name}"),
+            "seconds": dict(sorted(seconds.items()))}
+    (ROOT / TIMES).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                              encoding="utf-8")
+    print(f"Wrote {TIMES}: {len(seconds)} plants.")
+    return 0
+
+
+class Tee(io.TextIOBase):
+    """Text written to `stream`, and a copy of it kept."""
+
+    def __init__(self, stream):
+        self.stream, self.copy = stream, io.StringIO()
+
+    def write(self, text: str) -> int:
+        self.copy.write(text)
+        return self.stream.write(text)
+
+    def flush(self) -> None:
+        self.stream.flush()
+
+
+def run_reported(plant: Plant, sources: dict[int, str], changes: Callable[[], list[str]],
+                 report: dict) -> None:
+    """run_plant, in a worker: what the plant prints is printed and kept, and `report`
+    gains it with the failures the plant added, noting their places in `failures`."""
+    start = len(failures)
+    tee = Tee(sys.stdout)
+    with redirect_stdout(tee):
+        run_plant(plant, sources, changes)
+    report["plants"].append({"name": plant.name, "output": tee.copy.getvalue(),
+                             "failures": failures[start:]})
+    report["taken"].update(range(start, len(failures)))
+
+
+def write_report(path: Path, report: dict, status: int | None) -> None:
+    """A worker's report: each plant's output and failures, the failures recorded outside
+    any plant, and the exit status (None when the run raised). Written beside `path` and
+    moved over it, so that no one reads half of one."""
+    data = {"plants": report["plants"],
+            "failures": [f for i, f in enumerate(failures) if i not in report["taken"]],
+            "status": status}
+    partial = path.with_name(path.name + ".partial")
+    partial.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    os.replace(partial, path)
+
+
+def worker_env() -> dict[str, str]:
+    """The run's environment, but for WITHHELD and every name WITHHELD_PREFIXES begins: the
+    variables that name the configuration files the run reads, the four of safe_push.py's
+    CONFIG_FILE_VARIABLES, are kept (#430), and with them any conditional include those
+    files hold (the docstring)."""
+    return {name: value for name, value in os.environ.items()
+            if name not in WITHHELD and not name.startswith(WITHHELD_PREFIXES)}
+
+
+def in_tree(tree: Path, *cmd: str) -> subprocess.CompletedProcess:
+    """A command in `tree`, a worker's or the run's directory, with a worker's environment."""
+    return subprocess.run(cmd, cwd=tree, env=worker_env(), capture_output=True, text=True)
+
+
+def root_git(*cmd: str) -> subprocess.CompletedProcess:
+    """A Git command bound to the tree under test and its sanitized environment."""
+    return in_tree(ROOT, "git", f"--work-tree={ROOT}", *cmd)
+
+
+def worker_status(tree: Path) -> subprocess.CompletedProcess:
+    """The one-worker bracket's `git status --porcelain`, bound to `tree` with --work-tree
+    and run with a worker's environment plus the caller's inline Git configuration: the
+    snapshot a run with workers compares."""
+    env = worker_env()
+    env.update({name: value for name, value in os.environ.items()
+                if name in ("GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS")
+                or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_"))})
+    return subprocess.run(("git", f"--work-tree={tree}", "status", "--porcelain"),
+                          cwd=tree, env=env, capture_output=True, text=True)
+
+
+def linked(root: Path) -> Path | None:
+    """The first entry under `root` that is a symbolic link, or a file with a second name."""
+    for folder, folders, files in os.walk(root):
+        for name in folders + files:
+            path = Path(folder, name)
+            info = path.lstat()
+            if stat.S_ISLNK(info.st_mode) or (stat.S_ISREG(info.st_mode) and info.st_nlink > 1):
+                return path
+    return None
+
+
+def make_worker(tree: Path, entry: str, registered: list[Path]) -> tuple[str, str] | None:
+    """Make a worker's tree at `tree` (the docstring): None when its Git status is `entry`,
+    the tree's entry status; else what is wrong, to follow "worker k's tree", and what to
+    show with it."""
+    mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    try:
+        added = root_git("worktree", "add", "--detach", "--no-checkout", str(tree), "HEAD")
+        if added.returncode == 0:
+            registered.append(tree)
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, mask)
+    if added.returncode != 0:
+        return f"could not be made: git worktree add: exit {added.returncode}", (
+            added.stdout + added.stderr)
+    listed = subprocess.run(("git", f"--work-tree={ROOT}", "ls-files", "-z", "--cached",
+                             "--others", "--exclude-standard"), cwd=ROOT,
+                            env=worker_env(), capture_output=True)
+    if listed.returncode != 0:
+        return f"could not be made: git ls-files: exit {listed.returncode}", (
+            listed.stderr.decode(errors="replace"))
+    try:
+        for name in dict.fromkeys(os.fsdecode(name) for name in listed.stdout.split(b"\0")
+                                  if name):
+            source, target = ROOT / name, tree / name
+            if source.is_symlink() or source.is_file():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if source.is_symlink():
+                    target.symlink_to(os.readlink(source))
+                else:
+                    shutil.copy2(source, target)
+        indexes = [root_git("rev-parse", "--git-path", "index"),
+                   in_tree(tree, "git", "rev-parse", "--git-path", "index")]
+        if any(index.returncode != 0 for index in indexes):
+            return "could not be made: git rev-parse --git-path index failed", "".join(
+                index.stderr for index in indexes)
+        source_index = ROOT / indexes[0].stdout.strip()
+        target_index = tree / indexes[1].stdout.strip()
+        shutil.copyfile(source_index, target_index)
+        for shared in source_index.parent.glob("sharedindex.*"):
+            shutil.copyfile(shared, target_index.parent / shared.name)
+    except OSError as error:
+        return f"could not be made: {type(error).__name__}: {error}", ""
+    in_tree(tree, "git", "update-index", "-q", "--refresh")
+    lake = ROOT / ".lake"
+    if lake.is_symlink():
+        return ("could not be made: .lake is a symbolic link; a worker needs a build of its "
+                "own"), ""
+    if lake.exists():
+        flags = ("-c", "-R") if sys.platform == "darwin" else ("-a", "--reflink=auto")
+        copied = run("cp", *flags, str(lake), str(tree / ".lake"))
+        if copied.returncode != 0:
+            return (f"could not be made: cp {' '.join(flags)} .lake: exit {copied.returncode}",
+                    copied.stdout + copied.stderr)
+        shared = linked(tree / ".lake")
+        if shared is not None:
+            return (f"could not be made: {shared.relative_to(tree)} is a symbolic link or has "
+                    "a second name; a worker's build shares nothing"), ""
+    status = worker_status(tree)
+    if status.returncode != 0 or status.stdout != entry:
+        return "does not match the tree under test", status.stdout + status.stderr
+    return None
+
+
+def well_formed(report) -> bool:
+    """Whether `report` has the form write_report gives it: every field read_report and
+    run_workers read is there, with its type, `status` among them, which may be None but
+    not missing."""
+    def strings(value) -> bool:
+        return isinstance(value, list) and all(isinstance(s, str) for s in value)
+    return (isinstance(report, dict) and {"plants", "failures", "status"} <= report.keys()
+            and strings(report["failures"])
+            and (report["status"] is None or type(report["status"]) is int)
+            and isinstance(report["plants"], list)
+            and all(isinstance(p, dict) and isinstance(p.get("name"), str)
+                    and isinstance(p.get("output"), str) and strings(p.get("failures"))
+                    for p in report["plants"]))
+
+
+def read_report(path: Path, names: list[str], code: int) -> tuple[list[dict], list[str],
+                                                                   list[str]]:
+    """What a worker that was given the plants `names` and exited with `code` reported: the
+    plants it ran, in order, each with its output and failures; its own failures; and why
+    it crashed, if it did (the docstring). A report that names other plants than its own,
+    in their order, is trusted for none."""
+    crashed = [] if code in (0, 1) else [f"exit {code}"]
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return [], [], crashed + ["no report"]
+    except (OSError, ValueError) as error:
+        return [], [], crashed + [f"its report cannot be read ({type(error).__name__}: "
+                                  f"{error})"]
+    if not well_formed(report):
+        return [], [], crashed + ["its report is not in the form a worker writes"]
+    plants, own = report["plants"], report["failures"]
+    given = [p["name"] for p in plants]
+    if given != names[:len(given)]:
+        crashed.append(f"its report names {', '.join(given) or 'no plant'}, not its plants "
+                       "in order")
+        plants = []
+    elif len(given) < len(names):
+        crashed.append(f"its report lacks {', '.join(names[len(given):])}")
+    found = own or any(p["failures"] for p in report["plants"])
+    if code in (0, 1) and (report["status"] != code or (code == 0) == bool(found)):
+        crashed.append(f"its exit disagrees with its report (status {report['status']!r}, "
+                       f"{'with' if found else 'without'} failures)")
+    return plants, own, crashed
+
+
+def stop(workers: list[subprocess.Popen]) -> None:
+    """Interrupt each worker still running, so that its `finally` restores its tree, and
+    wait for every one; interrupted while waiting, kill them all, wait, and raise. The
+    interrupt reaches a worker whatever SIGINT disposition the run inherited: a run
+    started with it ignored, as a background job of a non-interactive shell is, would pass
+    the ignore on, so each worker starts with SIGINT at its default (run_workers), and
+    Python puts its handler there as it starts. One interrupted before then ends at once,
+    having planted nothing. The workers share the run's process group, so a worker the
+    terminal's interrupt has already reached is interrupted a second time here, which may
+    cut its `finally` short. Its tree is removed either way (remove), and the tree under
+    test is never planted: only the workers' trees are."""
+    for worker in workers:
+        if worker.poll() is None:
+            worker.send_signal(signal.SIGINT)
+    try:
+        for worker in workers:
+            worker.wait()
+    except BaseException:
+        for worker in workers:
+            worker.kill()
+        for worker in workers:
+            worker.wait()
+        raise
+
+
+def remove(trees: list[Path], base: Path) -> None:
+    """Remove the successfully registered workers' trees, each with Git's record of it,
+    then `base`, with their reports and logs: SIGINT ignored throughout, and the previous
+    handler put back after, so that an interruption leaves none of them; each removal
+    whatever became of those before it. A tree that Git cannot remove fails the run even
+    when its directory is deleted: never `git worktree prune`, which would prune other
+    trees' records too. A tree, or `base`, still there fails the run too, naming it."""
+    previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        for k, tree in enumerate(trees, 1):
+            try:
+                removed = root_git("worktree", "remove", "--force", "--force", str(tree))
+                if removed.returncode == 0:
+                    continue
+                why = f"exit {removed.returncode}: {(removed.stdout + removed.stderr).strip()}"
+            except Exception as error:
+                why = f"{type(error).__name__}: {error}"
+            shutil.rmtree(tree, ignore_errors=True)
+            if tree.exists():
+                message = (f"worker {k}'s tree {tree} could not be removed ({why}) nor "
+                           "deleted; remove it, and then its record (git worktree remove)")
+                failures.append(message)
+                print(f"✗ {message}")
+                continue
+            message = (f"worker {k}'s tree {tree} could not be removed ({why}); its "
+                       "directory was deleted, but its record remains in the repository's "
+                       "worktree list")
+            failures.append(message)
+            print(f"✗ {message}")
+        shutil.rmtree(base, ignore_errors=True)
+        if base.exists():
+            message = f"the workers' directory {base} could not be deleted; remove it"
+            failures.append(message)
+            print(f"✗ {message}")
+    finally:
+        signal.signal(signal.SIGINT, previous)
+
+
+def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, str]) -> int:
+    """Run `chosen` in `count` workers (the docstring), `entry` the tree's entry status, and
+    print what they found: each plant's output in the stable order, its failures recorded
+    under its heading in `sources`, then the run's own. Return how many plants reported.
+    Every worker's tree is removed before it returns or raises."""
+    seconds = recorded_times()
+    shares, loads = deal(chosen, count, seconds)
+    if seconds:
+        print(f"The plants in {count} workers, dealt longest first by {TIMES}:",
+              file=sys.stderr)
+        unmeasured = [p.name for p in chosen if p.name not in seconds]
+        if unmeasured:
+            print(f"  no time for {', '.join(unmeasured)}: each weighs their median, "
+                  f"{statistics.median(seconds.values()):g} s", file=sys.stderr)
+    else:
+        print(f"The plants in {count} workers, dealt in turn: with no times in {TIMES}, "
+              "every plant weighs the same:", file=sys.stderr)
+    for k, (share, load) in enumerate(zip(shares, loads), 1):
+        print(f"  worker {k}{f', about {load:.0f} s' if seconds else ''}: "
+              f"{', '.join(p.name for p in share)}", file=sys.stderr)
+    base = Path(tempfile.mkdtemp(prefix="stoicheia-negative-")).resolve()
+    trees = [base / f"worker-{k}" for k in range(1, count + 1)]
+    registered: list[Path] = []
+    workers: list[subprocess.Popen] = []
+    try:
+        # A failure or "false" is the good answer: no repository above the workers' trees.
+        inside = in_tree(base, "git", "rev-parse", "--is-inside-work-tree")
+        if inside.returncode == 0 and inside.stdout.strip() != "false":
+            tmpdir = os.environ.get("TMPDIR")
+            message = (f"the run's directory {base} is inside a Git work tree, where a "
+                       "plant's fixture would find a repository above it; no worker was "
+                       "made: set TMPDIR elsewhere ("
+                       + (f"it is {tmpdir!r})" if tmpdir is not None else "it is not set)"))
+            failures.append(message)
+            print(f"✗ {message}")
+            return 0
+        for k, tree in enumerate(trees, 1):
+            fault = make_worker(tree, entry, registered)
+            if fault is not None:
+                message, shown_with = f"worker {k}'s tree {fault[0]}", fault[1]
+                failures.append(message)
+                print(f"✗ {message}" + (":" if shown_with else ""))
+                if shown_with:
+                    print(shown_with, end="" if shown_with.endswith("\n") else "\n")
+                return 0
+        env = worker_env()
+        for k, (tree, share) in enumerate(zip(trees, shares), 1):
+            with open(base / f"worker-{k}.log", "wb") as log:
+                # SIGINT at its default, whatever the run inherited, so that stop() reaches
+                # every worker (stop). A preexec_fn is safe only while the run has one
+                # thread, as it has here.
+                workers.append(subprocess.Popen(
+                    [sys.executable, str(tree / "scripts/negative_tests.py"),
+                     *(arg for p in share for arg in ("--plant", p.name)),
+                     "--worker-report", str(base / f"worker-{k}.json")],
+                    cwd=tree, env=env, stdin=subprocess.DEVNULL, stdout=log,
+                    stderr=subprocess.STDOUT,
+                    preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL)))
+        for worker in workers:
+            worker.wait()
+        reports = [read_report(base / f"worker-{k}.json", [p.name for p in share],
+                               worker.returncode)
+                   for k, (share, worker) in enumerate(zip(shares, workers), 1)]
+        outputs = {p["name"]: p for plants, _, _ in reports for p in plants}
+        for plant in chosen:
+            if plant.name in outputs:
+                sys.stdout.write(outputs[plant.name]["output"])
+                for failure in outputs[plant.name]["failures"]:
+                    sources[len(failures)] = f"{plant.name} ({shown(plant.path)}):"
+                    failures.append(failure)
+        for k, (tree, share, (_, own, crashed)) in enumerate(zip(trees, shares, reports), 1):
+            label = f"worker {k} ({', '.join(p.name for p in share)})"
+            for failure in own:
+                failures.append(f"{label}: {failure}")
+                print(f"✗ {label}: {failure}")
+            if crashed:
+                message = f"{label} crashed: {'; '.join(crashed)}"
+                failures.append(message)
+                print(f"✗ {message}; its log ends:")
+                tail = (base / f"worker-{k}.log").read_text(encoding="utf-8",
+                                                            errors="replace")[-3000:]
+                if tail:
+                    print(tail, end="" if tail.endswith("\n") else "\n")
+            try:
+                after = worker_status(tree)
+            except OSError as error:
+                message = (f"worker {k}'s tree did not return to its entry Git status "
+                           f"({type(error).__name__}: {error})")
+                failures.append(message)
+                print(f"✗ {message}")
+                continue
+            if after.returncode != 0 or after.stdout != entry:
+                message = f"worker {k}'s tree did not return to its entry Git status"
+                failures.append(message)
+                print(f"✗ {message}:")
+                output = after.stdout + after.stderr
+                if output:
+                    print(output, end="" if output.endswith("\n") else "\n")
+        return len(outputs)
+    finally:
+        try:
+            stop(workers)
+        finally:
+            remove(registered, base)
+
+
+def bracket(parser: argparse.ArgumentParser, args: argparse.Namespace,
+            sources: dict[int, str], workers: int, report: dict | None = None) -> int:
+    """The run in its Git bracket, and its closing list and exit status: the chosen plants
+    in `workers` workers when that is more than one, else here, each kept in `report` when
+    the run is a worker's."""
     # First of all: the restoration regressions load the real plants' folder, so a file
     # that a plant's file writes as it loads, there or here, shows at the close.
-    before = run("git", "status", "--porcelain")
+    parallel_before = worker_status(ROOT) if report is not None or workers > 1 else None
+    before = parallel_before if report is not None else run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
+    parallel = False
     ran = total = 0
     try:
-        if regressions():
+        # A worker leaves the regressions to the run that made it, which ran them first.
+        if report is not None or regressions():
             changes = guard()  # as for --counts-only
             loaded = choose(parser, args, sources)
             if loaded is not None:
                 chosen, total = loaded
                 expected = len(chosen)
-                for plant in chosen:
-                    run_plant(plant, sources, changes)
-                    ran += 1
-                # Fewer only when the list of the plants chosen changes as the loop runs.
+                count = min(workers, expected)
+                if count > 1:
+                    parallel = True
+                    assert parallel_before is not None
+                    if expect_success("entry Git status", parallel_before):
+                        ran = run_workers(chosen, count, parallel_before.stdout, sources)
+                else:
+                    for plant in chosen:
+                        if report is None:
+                            run_plant(plant, sources, changes)
+                        else:
+                            run_reported(plant, sources, changes, report)
+                        ran += 1
+                # Fewer only when the list of the plants chosen changes as the loop runs, or
+                # when a worker does not report them all.
                 if ran < expected:
                     message = f"only {ran} of the {expected} plants chosen were run"
                     failures.append(message)
@@ -873,22 +1424,78 @@ def main(argv=()) -> int:
     finally:
         original = sys.exception()
         try:
-            after = run("git", "status", "--porcelain")
-            if expect_success("final Git status", after):
-                if after.stdout != before.stdout:
-                    message = "the working tree did not return to its entry Git status"
-                    failures.append(message)
-                    print(f"✗ {message}:")
-                    output = after.stdout + after.stderr
-                    if output:
-                        print(output, end="" if output.endswith("\n") else "\n")
-                else:
-                    print("✓ working tree restored to its entry Git status")
+            canonical = report is not None or parallel
+            reference = parallel_before if canonical else before
+            assert reference is not None
+            # A failed entry status is a failure already, with nothing to compare with.
+            if reference.returncode == 0:
+                after = (worker_status(ROOT) if canonical
+                         else run("git", "status", "--porcelain"))
+                if expect_success("final Git status", after):
+                    if after.stdout != reference.stdout:
+                        message = "the working tree did not return to its entry Git status"
+                        failures.append(message)
+                        print(f"✗ {message}:")
+                        output = after.stdout + after.stderr
+                        if output:
+                            print(output, end="" if output.endswith("\n") else "\n")
+                    else:
+                        print("✓ working tree restored to its entry Git status")
         except BaseException as error:
             if original is None:
                 raise
             print(f"Final Git status also failed: {type(error).__name__}: {error}")
     return close(sources, ran, total)
+
+
+def main(argv=()) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    only = parser.add_mutually_exclusive_group()
+    only.add_argument("--counts-only", action="store_true",
+                      help="only the count plants and file-only regressions; no build needed")
+    only.add_argument("--plant", action="append", metavar="NAME",
+                      help=f"only the plant {PLANTS}/NAME.py, in the usual Git bracket; "
+                           "may be given more than once")
+    only.add_argument("--times-from-log", metavar="LOG",
+                      help=f"write {TIMES} from the plants' time lines in LOG, a run's output")
+    parser.add_argument("--workers", metavar="N",
+                        help="run the plants in N workers, each in a worktree of its own "
+                             f"(default: {WORKERS} if set, else 1)")
+    parser.add_argument("--worker-report", metavar="FILE", help=argparse.SUPPRESS)
+    args = parser.parse_args(argv)
+    if args.worker_report is not None and not args.plant:
+        parser.error("--worker-report is for a worker, which is given its plants by --plant")
+    workers = worker_count(parser, args)
+    if args.times_from_log is not None:
+        return write_times(Path(args.times_from_log))
+    sources: dict[int, str] = {}
+    if args.counts_only:
+        if not regressions():
+            return 1
+        # Made before any plant's file is read, and held here, so no plant can rebind it.
+        changes = guard()
+        loaded = choose(parser, args, sources)
+        if loaded is None:
+            return close(sources)
+        run_plant(loaded[0][0], sources, changes)
+        if failures:
+            print("\n".join(failures))
+            return 1
+        print("✓ count plants passed; other plants were not run (--counts-only)")
+        return 0
+    if args.worker_report is None:
+        return bracket(parser, args, sources, workers)
+    # A worker: its output goes to a log, line by line, so that a crash leaves what it
+    # printed; and its report is written whatever happens.
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(line_buffering=True)
+    report: dict = {"plants": [], "taken": set()}
+    status = None
+    try:
+        status = bracket(parser, args, sources, 1, report)
+        return status
+    finally:
+        write_report(Path(args.worker_report), report, status)
 
 
 if __name__ == "__main__":

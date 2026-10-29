@@ -2,9 +2,9 @@
 
 # Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
+**All 48 propositions proved in Lean**, every one as Euclid states it, or for [I.40](40.md) as the text states it. Every proof follows Euclid's argument save [I.40](40.md)'s, which follows the argument Heath prints; each page notes where the Lean departs from the text's sentences. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
 
-Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Each page says how.
+Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Of I.40, which Heath prints in brackets, the three are said of the text's enunciation, which may not be Euclid's. Each page says how.
 
 **From a triangle to Pythagoras.** Book I opens with an equilateral triangle on a given straight line and closes with Pythagoras' theorem and its converse (I.47, I.48). Heath sees three sections in it (vol. 1, p. 308): triangles, and how their sides and angles compare, up to I.26; parallels, from I.27, with the angles of a triangle (I.32) and the first parallelograms (I.33, I.34); and from I.35 on, areas that are equal without being congruent. Euclid holds his parallel postulate back until I.29, and so do our proofs. The decisions behind our statements, words and shared lemmas are gathered in [Book I's brief](../../docs/briefs/book-I.md).
 
