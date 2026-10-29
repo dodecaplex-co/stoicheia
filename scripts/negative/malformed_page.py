@@ -1,6 +1,6 @@
-"""A `page` stamp not of its form is refused: I.1's record given `page = "sha256:"` and
-three letters in its [review] table, and `check_fidelity.py` must fail, saying that `page`
-is 64 lowercase hex digits, and must not stop with a traceback.
+"""A `page` stamp not of the stamps' form is refused: I.1's record given `page = "sha256:"`
+and three letters in its [review] table, and `check_fidelity.py` must fail, saying that
+`page` is `sha256:` and 16 hex digits, and must not stop with a traceback.
 """
 
 import negative_tests as nt
@@ -14,8 +14,8 @@ def plant() -> None:
     saved = path.read_text()
     try:
         path.write_text(review_stamp.set_stamp(saved, "review", "page", "sha256:xyz"))
-        nt.expect_failure("a `page` stamp not of its form", nt.fidelity(),
-                          "review/I/01.toml: [review]: `page` is 64 lowercase hex digits",
+        nt.expect_failure("a `page` stamp not of the stamps' form", nt.fidelity(),
+                          "review/I/01.toml: [review]: `page` is 'sha256:' and 16 hex digits",
                           unwanted=("Traceback",))
     finally:
         path.write_text(saved)
