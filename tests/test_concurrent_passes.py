@@ -870,6 +870,80 @@ class Interrupted(Stand):
                 self.assertEqual(sorted(p.name for p in logs.iterdir()),
                                  ["11-long-origin-main-s-checks.log"])
 
+    def test_signals_at_cache_and_row_publication_boundaries(self):
+        if threading.current_thread() is not threading.main_thread():
+            self.skipTest("a signal's handler runs on the main thread alone")
+        for boundary in (1, 2):
+            with self.subTest(boundary=boundary):
+                marks = self.marks()
+                release = marks / "release"
+                commit = {"hold": "release"} if boundary == 1 else {}
+                steps = [self.stand_in(marks, "only", {}, commit)]
+                parent = self.tmp / f"run-publication-{boundary}"
+                logs = parent / "logs"
+                logs.mkdir(parents=True)
+                ctx = types.SimpleNamespace(repo=ROOT, base=BASE, sha=SHA)
+                rep, out, judged = safe_push.Report(), io.StringIO(), []
+                calls, passes = [], []
+                raised = None
+                before = signal.getsignal(signal.SIGINT)
+                real_publication = safe_push.publication
+                real_thread = threading.Thread
+
+                @contextlib.contextmanager
+                def interrupting(caught):
+                    calls.append(len(calls) + 1)
+                    if len(calls) == boundary:
+                        os.kill(os.getpid(), signal.SIGINT)
+                        release.touch(exist_ok=True)
+                    with real_publication(caught) as publish:
+                        yield publish
+
+                class Watched(real_thread):
+                    def __init__(self, *args, **kw):
+                        super().__init__(*args, **kw)
+                        if kw.get("args") in ((BASE_PASS,), (OWN_PASS,)):
+                            passes.append(self)
+
+                def watched(repo, base, sha, report, stage):
+                    judged.append([(s.name, s.outcome) for s in report.steps])
+                    return False
+
+                with self.missed(steps, []) as written, \
+                        mock.patch.object(safe_push, "NEGATIVE", []), \
+                        mock.patch.object(safe_push, "publication", interrupting), \
+                        mock.patch.object(safe_push, "keep_apart", watched), \
+                        mock.patch.object(safe_push.threading, "Thread", Watched), \
+                        contextlib.redirect_stdout(out), \
+                        safe_push.worktree(ROOT, SHA, parent, "check") as wt:
+                    try:
+                        safe_push.full_checks(
+                            ctx, wt, parent, INPUTS, rep, logs,
+                            safe_push.CheckList(steps, "", passes=2))
+                    except KeyboardInterrupt as e:
+                        raised = e
+
+                self.assertIsInstance(raised, KeyboardInterrupt)
+                self.assertEqual(signal.getsignal(signal.SIGINT), before)
+                self.assertEqual(calls, list(range(1, boundary + 1)))
+                self.assertEqual(len(passes), 2)
+                self.assertFalse([thread for thread in passes if thread.is_alive()])
+                self.assertTrue((marks / f"{key('main', 'only')}.end").exists())
+                self.assertTrue((marks / f"{key('commit', 'only')}.end").exists())
+                self.assertFalse((parent / "main").exists())
+                self.assertNotIn(str(parent / "main"), git(ROOT, "worktree", "list"))
+                self.assertFalse([p for p in logs.iterdir() if "the-commit" in p.name])
+                if boundary == 1:
+                    self.assertEqual(rep.steps, [])
+                    self.assertEqual(judged, [])
+                    self.assertEqual(written, [])
+                    self.assertNotIn(BASE_PASS, out.getvalue())
+                else:
+                    self.assertEqual([s.name for s in rep.steps], ["only" + BASE_PASS])
+                    self.assertEqual(len(judged), 1)
+                    self.assertEqual(len(written), 1)
+                    self.assertNotIn(OWN_PASS, out.getvalue())
+
     def signalled(self, release_on: str):
         """full_checks at two passes, on this, the main thread, sent SIGINT and SIGTERM once
         both passes' first checks have begun, those checks released as `release_on` says:

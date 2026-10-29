@@ -4422,6 +4422,20 @@ def ended(thread: threading.Thread, caught: list[int], stop: Halt) -> bool:
     return not caught
 
 
+@contextlib.contextmanager
+def publication(caught: list[int]):
+    if threading.current_thread() is not threading.main_thread():
+        yield not caught
+        return
+    held = signal.pthread_sigmask(signal.SIG_BLOCK, GROUP_SIGNALS)
+    try:
+        for signum in sorted(signal.sigpending() & (set(GROUP_SIGNALS) - held)):
+            caught.append(signal.sigwait({signum}))
+        yield not caught
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, held)
+
+
 def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, steps,
                  first: int, declared: CheckList | None, checks, kept_apart, keep,
                  between: Between) -> None:
@@ -4489,20 +4503,26 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
             base, own = threads
             if not ended(base, caught, stop):
                 return          # awaited() raises the signal's exception
-            if BASE_PASS in ran and not caught:
-                keep(held[BASE_PASS])
-            held[BASE_PASS].into(rep)
-            if outcome[BASE_PASS] is not None:
-                raise outcome[BASE_PASS]
-            kept_apart(BASE_PASS)
-            if then:
-                raise then[0]
+            with publication(caught) as publish:
+                if not publish:
+                    return
+                if BASE_PASS in ran:
+                    keep(held[BASE_PASS])
+                held[BASE_PASS].into(rep)
+                if outcome[BASE_PASS] is not None:
+                    raise outcome[BASE_PASS]
+                kept_apart(BASE_PASS)
+                if then:
+                    raise then[0]
             if not ended(own, caught, stop):
                 return
-            held[OWN_PASS].into(rep)
-            put_in = True
-            if outcome[OWN_PASS] is not None:
-                raise outcome[OWN_PASS]
+            with publication(caught) as publish:
+                if not publish:
+                    return
+                held[OWN_PASS].into(rep)
+                put_in = True
+                if outcome[OWN_PASS] is not None:
+                    raise outcome[OWN_PASS]
     finally:
         if not put_in:
             for i, (name, _) in enumerate(steps, 1):
