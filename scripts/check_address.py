@@ -128,14 +128,27 @@ def problems(text: str) -> list[tuple[int, str]]:
     return found
 
 
+def escaped(line: str, index: int) -> bool:
+    backslashes = 0
+    while index and line[index - 1] == "\\":
+        backslashes += 1
+        index -= 1
+    return backslashes % 2 == 1
+
+
 def emphasis_flanking(line: str, index: int) -> tuple[bool, bool]:
     marker = line[index]
+    if escaped(line, index):
+        return False, False
     start = index
-    while start and line[start - 1] == marker:
+    while start and line[start - 1] == marker and not escaped(line, start - 1):
         start -= 1
     stop = index + 1
-    while stop < len(line) and line[stop] == marker:
+    while (stop < len(line) and line[stop] == marker
+           and not escaped(line, stop)):
         stop += 1
+    if marker == "~" and stop - start < 2:
+        return False, False
     before = line[start - 1] if start else " "
     after = line[stop] if stop < len(line) else " "
     before_punctuation = not before.isspace() and not before.isalnum()
@@ -156,9 +169,10 @@ def enclosing_emphasis(line: str, offset: int) -> set[str]:
     index = 0
     while index < offset:
         marker = line[index]
-        if marker == "`":
+        if marker == "`" and not escaped(line, index):
             stop = index + 1
-            while stop < offset and line[stop] == marker:
+            while (stop < offset and line[stop] == marker
+                   and not escaped(line, stop)):
                 stop += 1
             run = stop - index
             if not ticks:
@@ -167,11 +181,12 @@ def enclosing_emphasis(line: str, offset: int) -> set[str]:
                 ticks = 0
             index = stop
             continue
-        if ticks or marker not in "*_":
+        if ticks or marker not in "*_~" or escaped(line, index):
             index += 1
             continue
         stop = index + 1
-        while stop < offset and line[stop] == marker:
+        while (stop < offset and line[stop] == marker
+               and not escaped(line, stop)):
             stop += 1
         can_open, can_close = emphasis_flanking(line, index)
         matched = False
@@ -187,17 +202,29 @@ def enclosing_emphasis(line: str, offset: int) -> set[str]:
     return set(opened)
 
 
+def bracketed_host(line: str, start: int) -> tuple[int, int] | None:
+    match = re.match(r"(?:[^/?#\s@]+@)?(\[[^\]\s/?#]+\])", line[start:])
+    if match is None or ":" not in match.group(1):
+        return None
+    opening, closing = start + match.start(1), start + match.end(1)
+    if closing < len(line) and line[closing] not in ":/?#":
+        return None
+    return opening, closing
+
+
 def in_url_query_or_fragment(line: str, offset: int) -> bool:
     enclosing = None
     for match in URL.finditer(line):
         emphasis = enclosing_emphasis(line, match.start())
+        host = bracketed_host(line, match.end())
         depth = 0
         end = len(line)
         for index in range(match.end(), len(line)):
             char = line[index]
             closes_emphasis = (char in emphasis
                                and emphasis_flanking(line, index)[1])
-            if (char.isspace() or char in URL_STOP or closes_emphasis
+            in_host = host is not None and host[0] <= index < host[1]
+            if (char.isspace() or char in URL_STOP and not in_host or closes_emphasis
                     or char == ")" and depth == 0):
                 end = index
                 break
@@ -339,6 +366,11 @@ def self_test() -> list[str]:
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"*See https://example.com/?repo={other}/stoicheia*:"
                           f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"~~https://example.com/?repo={other}/stoicheia~~:"
+                          f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://[2001:db8::1]/?repo={other}/stoicheia", []),
+        ("docs/STYLE.md", f"\\*See [x](https://example.com/?first={other}/stoicheia*:"
+                          f"second={other}/stoicheia)", []),
         ("docs/STYLE.md", f"[x](https://example.com/?repo=({other}/stoicheia)) and "
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", "https://api.github.com:443/repos/dodecaplex-co/stoicheia", []),
