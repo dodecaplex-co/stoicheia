@@ -236,7 +236,9 @@ class QueueTests(unittest.TestCase):
     def pr(self, number, head, ref, body, labels=None, author=None):
         self.snapshot["pull_requests"][str(number)] = {
             "number": number,
+            "title": f"Fixture pull request #{number}",
             "head": {"sha": head, "ref": ref, "repo": {"full_name": "owner/repository"}},
+            "base": {"ref": "main", "repo": {"full_name": "owner/repository"}},
             "body": body,
             "labels": [{"name": label} for label in (labels or ["tooling"])],
             "state": "open", "merged": False, "merge_commit_sha": None,
@@ -245,13 +247,13 @@ class QueueTests(unittest.TestCase):
         nodes = self.nodes()
         for node in nodes:
             if node["pullRequest"]["number"] == number:
-                node["pullRequest"]["headRefOid"] = head
+                node["pullRequest"].update(headRefOid=head, body=body)
                 break
         else:
             nodes.append({"position": len(nodes) + 1,
                           "enqueuer": {"__typename": "User", "login": "fixture"},
                           "pullRequest": {"number": number, "headRefOid": head,
-                                          "editor": None,
+                                          "body": body, "editor": None,
                                           "timelineItems": {"nodes": []}}})
 
     def nodes(self):
@@ -261,7 +263,12 @@ class QueueTests(unittest.TestCase):
         return self.snapshot["pull_requests"][str(number)]["body"]
 
     def set_body(self, body, number=1):
+        """Edit a pull request's body, as both of GitHub's answers then give it: its REST
+        answer and, while it is queued, the queue's GraphQL answer."""
         self.snapshot["pull_requests"][str(number)]["body"] = body
+        for node in self.nodes():
+            if node["pullRequest"]["number"] == number:
+                node["pullRequest"]["body"] = body
 
     def checkout(self, head):
         self.git("read-tree", "--reset", "-u", head)
@@ -645,6 +652,33 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=group), 1,
                      "not overwriting: #1 changed lines were overwritten: README.md")
 
+    def test_valid_later_train_deleting_readme_markers_is_caught(self):
+        # #578: README.md's markers are written by hand, so its hand-written part is read
+        # with each region's body emptied and its markers kept (heath.outside). Train 1
+        # adds Book II's region inline in a line of prose; a reviewed member of train 2, on
+        # train 1's member, deletes it, markers and all, and keeps the prose. Every merge is
+        # automatic, and with the regions taken out whole, markers and all, as before #578,
+        # the hand-written part read as train 1 left it.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        added = readme + "Book II: <!-- scope:II -->Row two.<!-- /scope:II --> Read it.\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {"README.md": added})
+        member = queue.parents(self.repo, one)[1]
+        deleted = self.make([member], {"README.md": readme + "Book II:  Read it.\n"})
+        head = self.merge(self.merge(self.base, member), deleted)
+        rows = "".join(f"| content/{name} | {sha} | {REVIEW} {sha[:12]}: pass. | "
+                       f"{REVIEW} {sha[:12]}: pass. | passed at {sha} |\n"
+                       for name, sha in (("1b", member), ("2", deleted)))
+        self.pr(2, head, "train/area-2", (
+            "## Members\n\n| Branch | Head | /code-review | /security-review | "
+            "/no-mistakes |\n|---|---|---|---|---|\n" + rows
+            + "\n## What is new\n\nNone.\n\n" + self.block(head)))
+        group = self.merge(self.merge(self.base, one, 1), head, 2)
+        self.verdict(self.cli(head=group), 1,
+                     "not overwriting: #1 changed lines were overwritten: README.md")
+
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
         self.base = self.make([old_base], {
@@ -916,6 +950,54 @@ class QueueTests(unittest.TestCase):
         self.assertIn("timelineItems(itemTypes:[RENAMED_TITLE_EVENT],last:1)", query)
         self.assertIn("...on RenamedTitleEvent{actor{__typename login}}", query)
 
+    def test_the_queue_read_asks_for_each_entry_s_body(self):
+        # A field of the pull request itself, in the same answer as its head and editor.
+        with patch.dict(os.environ, {"GH_TOKEN": "fixture-token"}), \
+                patch.object(queue.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0, "{}", "")) as call:
+            queue.GitHub("owner/repository", None).read("queue")
+        query = next(arg for arg in call.call_args.args[0] if arg.startswith("query="))
+        self.assertRegex(query, r"pullRequest\{[^{}]*\bheadRefOid\b[^{}]*\bbody\b")
+
+    def test_a_body_edited_after_the_queue_read_is_unreadable(self):
+        # The queue's GraphQL answer names each entry's last editor, a person here. A bot's
+        # edit after it, which the later REST read sees, would be judged as that person's:
+        # here it adds the line that lets the entries land as a red main's fix; or, main
+        # green, it adds only a line break. The body judged must be the one the queue read
+        # gave, character for character, or none.
+        bodies = {number: self.body(number) for number in (1, 2)}
+        for node in self.nodes():
+            node["pullRequest"]["editor"] = {"__typename": "User", "login": "someone"}
+        for red, edit in ((self.RED, "Fixes main-red: #9\n\n{}"), ([[]], "{}\n")):
+            with self.subTest(edit=edit):
+                self.snapshot["main_red"] = red
+                for number, body in bodies.items():
+                    self.set_body(body, number)
+                    self.snapshot["pull_requests"][str(number)]["body"] = edit.format(body)
+                self.verdict(self.cli(), 2, "#1's body differs between the queue's answer "
+                             "and its pull request's")
+        # The same edit, given by both reads, is judged as ever: a person's passes.
+        self.snapshot["main_red"] = self.RED
+        for number, body in bodies.items():
+            self.set_body("Fixes main-red: #9\n\n" + body, number)
+        self.verdict(self.cli(), 0, "queue: PASS")
+
+    def test_any_queued_entry_s_body_edited_after_the_queue_read_is_unreadable(self):
+        # The second entry's body alone, edited after the queue read: every open entry's
+        # body is compared, not only the first's.
+        self.snapshot["pull_requests"]["2"]["body"] = self.body(2) + "\n"
+        self.verdict(self.cli(), 2, "#2's body differs between the queue's answer and its "
+                     "pull request's")
+
+    def test_an_unreadable_queued_body_is_unreadable(self):
+        node = self.nodes()[0]["pullRequest"]
+        for body in (None, 3, ["a body"]):
+            with self.subTest(body=body):
+                node["body"] = body
+                self.verdict(self.cli(), 2, "could not read each queued entry's body")
+        del node["body"]
+        self.verdict(self.cli(), 2, "could not read each queued entry's body")
+
     RED = [[{"number": 9, "state": "open", "labels": [{"name": "main-red"}],
              "body": "Main's integration checks failed.\n"}]]
 
@@ -1067,6 +1149,16 @@ class QueueTests(unittest.TestCase):
         return self.merge(self.base, head, 3), old_base
 
     def failed_run(self, before, after):
+        """Run 71, a failed post-merge run of the push before..after, as GitHub records it:
+        the run, the push, an open main-red issue naming the run, and each pull request
+        that a merge of the push's first-parent chain names, merged as that merge."""
+        for line in self.git("log", "--first-parent", "--format=%H %s",
+                             f"{before}..{after}").splitlines():
+            sha, subject = line.split(" ", 1)
+            match = queue.SUBJECT.fullmatch(subject)
+            if match and match.group(1) in self.snapshot["pull_requests"]:
+                self.snapshot["pull_requests"][match.group(1)].update(
+                    state="closed", merged=True, merge_commit_sha=sha)
         self.snapshot["runs"] = {"71": {
             "id": 71, "path": ".github/workflows/post-merge.yml", "event": "push",
             "head_branch": "main", "status": "completed", "conclusion": "failure",
@@ -1293,6 +1385,140 @@ class QueueTests(unittest.TestCase):
         group = self.queued_revert(self.base, old_base, head, [self.base])
         self.verdict(self.cli(head=group), 1,
                      "the failed push holds a commit that is not a two-parent merge")
+
+    def refused_before_any_revert(self, group, message, code=1):
+        """The queue refuses the revert group `group`, with exit `code`, naming `message`;
+        and exact_revert does so before it computes any revert (revert_checkout)."""
+        self.verdict(self.cli(head=group), code, message)
+        pr = dict(queue.pull_request(self.snapshot["pull_requests"]["3"], 3), main=self.base)
+        api = queue.GitHub("owner/repository", self.fixture)
+        with patch.object(queue, "revert_checkout",
+                          side_effect=AssertionError("a revert was computed")), \
+                self.assertRaisesRegex(queue.Refused if code == 1 else ValueError, message):
+            queue.exact_revert(self.repo, pr, api)
+
+    def test_auto_revert_of_a_merge_that_names_no_pull_request_refuses(self):
+        # auto_revert reverts only a push of pull request merges, each named by its
+        # subject exactly as it reads it; nor does the queue admit the revert of another
+        # two-parent merge.
+        old_base, original = self.base, self.trees[self.base]
+        snapshot = copy.deepcopy(self.snapshot)
+        for subject in ("Merge reviewed member", "Merge branch 'train/area-1'",
+                        "Merge pull request #1", "Merge pull request #01 from owner/train-1"):
+            with self.subTest(subject=subject):
+                self.snapshot = copy.deepcopy(snapshot)
+                self.base = self.merge(old_base, self.one, subject=subject)
+                self.snapshot["main"]["sha"] = self.base
+                head = self.make([self.base], {TEXT: original[TEXT]})
+                group = self.queued_revert(self.base, old_base, head, [self.base])
+                self.refused_before_any_revert(group, "names no pull request in its subject")
+
+    def test_auto_revert_reads_a_merge_s_subject_as_auto_revert_reads_it(self):
+        # Git's %s keeps a subject's leading space and drops a trailing one: auto_revert,
+        # which takes off only the line end, finds no pull request in the first and #1
+        # in the second, and so does the queue.
+        import auto_revert
+        old_base, original = self.base, self.trees[self.base]
+        snapshot = copy.deepcopy(self.snapshot)
+        for subject, number in ((" Merge pull request #1 from owner/train-1", None),
+                                ("\tMerge pull request #1 from owner/train-1", None),
+                                ("Merge pull request #1 from owner/train-1 ", 1),
+                                ("Merge pull request #1 from owner/train-1\t", 1)):
+            with self.subTest(subject=subject):
+                self.snapshot = copy.deepcopy(snapshot)
+                self.base = self.merge(old_base, self.one, subject=subject)
+                self.snapshot["main"]["sha"] = self.base
+                head = self.make([self.base], {TEXT: original[TEXT]})
+                group = self.queued_revert(self.base, old_base, head, [self.base])
+                if number is None:
+                    with self.assertRaisesRegex(auto_revert.Refusal,
+                                                "does not identify a pull request"):
+                        auto_revert.trains(self.repo, old_base, self.base)
+                    self.refused_before_any_revert(group, "names no pull request in its "
+                                                   "subject")
+                else:
+                    self.assertEqual([train.number for train in auto_revert.trains(
+                        self.repo, old_base, self.base)], [number])
+                    self.verdict(self.cli(head=group), 0, "queue: PASS")
+
+    def test_auto_revert_of_a_push_repeating_a_pull_request_refuses(self):
+        # Both merges of the push name #1: auto_revert reverts neither.
+        old_base, original = self.base, self.trees[self.base]
+        self.base = self.merge(self.first, self.two, 1)
+        self.snapshot["main"]["sha"] = self.base
+        head = self.make([self.make([self.base], {SECOND: original[SECOND]})],
+                         {TEXT: original[TEXT]})
+        group = self.queued_revert(self.base, old_base, head, [self.base, self.first])
+        self.refused_before_any_revert(group, "the failed push repeats pull request #1")
+
+    def pull_request_refuses(self, *cases, code=1):
+        """Each (change, message) case, a change to #1 as GitHub's REST answer gives it,
+        the pull request of the failed push's one merge, refuses the exact revert of that
+        merge before any revert is computed; #1 as it was passes. The group is returned."""
+        group, _ = self.revert_group()
+        original = copy.deepcopy(self.snapshot["pull_requests"]["1"])
+        for change, message in cases:
+            with self.subTest(change=change):
+                self.snapshot["pull_requests"]["1"] = {**original, **change}
+                self.refused_before_any_revert(group, message, code)
+        self.snapshot["pull_requests"]["1"] = original
+        self.verdict(self.cli(head=group), 0, "queue: PASS")
+        return group
+
+    def test_auto_revert_of_a_merge_its_pull_request_does_not_record_refuses(self):
+        # #1 names another merge commit, or is not merged at all.
+        message = "#1 does not confirm the failed push's merge"
+        self.pull_request_refuses(({"merge_commit_sha": self.head}, message),
+                                  ({"state": "open", "merged": False}, message))
+
+    def test_auto_revert_of_a_merge_from_another_head_refuses(self):
+        self.pull_request_refuses(
+            ({"head": {"sha": self.two, "ref": "train/area-1",
+                       "repo": {"full_name": "owner/repository"}}},
+             "#1 does not confirm the failed push's merge"))
+
+    def test_auto_revert_of_a_merge_into_another_branch_refuses(self):
+        self.pull_request_refuses(
+            ({"base": {"ref": "develop", "repo": {"full_name": "owner/repository"}}},
+             "#1 was not merged into main of owner/repository"))
+
+    def test_auto_revert_of_a_merge_into_another_repository_refuses(self):
+        self.pull_request_refuses(
+            ({"base": {"ref": "main", "repo": {"full_name": "fork/repository"}}},
+             "#1 was not merged into main of owner/repository"))
+
+    def test_auto_revert_of_a_merge_into_another_repository_of_the_owner_refuses(self):
+        # The whole name of the base repository is compared, not its owner alone.
+        self.pull_request_refuses(
+            ({"base": {"ref": "main", "repo": {"full_name": "owner/other"}}},
+             "#1 was not merged into main of owner/repository"))
+
+    def test_auto_revert_of_a_pull_request_with_a_blank_title_refuses(self):
+        self.pull_request_refuses(({"title": ""}, "#1 has a blank title"),
+                                  ({"title": " \t\n"}, "#1 has a blank title"))
+
+    def test_auto_revert_of_a_pull_request_without_a_kind_label_refuses(self):
+        message = "#1 has no kind label, one of tooling, text, lean, docs"
+        self.pull_request_refuses(
+            ({"labels": []}, message),
+            ({"labels": [{"name": "auto-revert"}, {"name": "security-review"}]}, message))
+
+    def test_auto_revert_of_a_merge_whose_pull_request_is_unreadable(self):
+        message = "could not read pull request #1"
+        group = self.pull_request_refuses(
+            *(({key: value}, message) for key, value in (
+                ("number", 2), ("merged", "true"), ("merge_commit_sha", "invalid"),
+                ("head", {"ref": "train/area-1"}), ("base", None),
+                ("base", {"ref": "main", "repo": None}), ("base", {"ref": 7}),
+                ("title", None), ("labels", None), ("labels", ["tooling"]),
+                ("labels", [{"name": ""}]))), code=2)
+        for key in ("title", "base", "labels"):
+            with self.subTest(missing=key):
+                original = self.snapshot["pull_requests"]["1"].pop(key)
+                self.refused_before_any_revert(group, message, code=2)
+                self.snapshot["pull_requests"]["1"][key] = original
+        del self.snapshot["pull_requests"]["1"]
+        self.refused_before_any_revert(group, "fixture lacks pull_requests", code=2)
 
     def test_auto_revert_reads_merge_attributes_from_before(self):
         # As the revert job reads them: from the main whose own run passed, never from the
@@ -1620,6 +1846,129 @@ class QueueTests(unittest.TestCase):
         self.checkout(one)
         self.assertEqual(queue.gap_commands(self.repo, {CHECK}, {CHECK}), [])
 
+    # The tests of each file under .github/, written here as the contract that
+    # check_queue's map must keep (GITHUB_TESTS, which says what reads each).
+    AUTO_REVERT = ["python3", "-I", "tests/test_auto_revert.py"]
+    QUEUE_TESTS = ["python3", "-I", "tests/test_check_queue.py"]
+    RELEASE_GATE = ["python3", "-I", "tests/test_release_gate.py"]
+    SAFE_PUSH = ["python3", "scripts/test_safe_push.py"]
+    GITHUB_TESTS = {
+        ".github/pull_request_template.md": [RELEASE_GATE, SAFE_PUSH],
+        ".github/workflows/ci.yml": [AUTO_REVERT, QUEUE_TESTS, SAFE_PUSH],
+        ".github/workflows/post-merge.yml": [AUTO_REVERT, QUEUE_TESTS, SAFE_PUSH],
+        ".github/workflows/release-gate.yml": [SAFE_PUSH],
+        ".github/workflows/safe-push-tests.yml": [SAFE_PUSH],
+    }
+
+    def github_group(self, changes, new):
+        """A group whose first train makes `changes`, on a main that holds the files of
+        .github/ and the tests they ask for, each test printing that it ran."""
+        tests = ("tests/test_auto_revert.py", "tests/test_check_queue.py",
+                 "tests/test_release_gate.py")
+        self.base = self.make([self.base], {
+            **{path: "name: fixture\n" for path in self.GITHUB_TESTS},
+            **{path: f"print('{path} ran')\n" for path in tests}})
+        self.snapshot["main"]["sha"] = self.base
+        two = self.train(2, {SECOND: "The second train's reviewed line.\n"})
+        one = self.train(1, changes, new=new)
+        return self.merge(self.merge(self.base, one, 1), two, 2)
+
+    def test_gaps_runs_the_tests_of_each_changed_or_deleted_github_file(self):
+        # A train that replaces an enforced command with `true` changes only a workflow:
+        # its tests must still run, and a deleted workflow's too.
+        for number, (path, commands) in enumerate(self.GITHUB_TESTS.items()):
+            for deleted in (False, True):
+                with self.subTest(path=path, deleted=deleted):
+                    change = None if deleted else "name: fixture\njobs: {check: {run: true}}\n"
+                    group = self.github_group({path: change}, f"- check: {path}")
+                    plan = self.root / f"github-plan-{number}-{deleted}.json"
+                    self.verdict(self.cli("--gaps", "--plan", str(plan), head=group), 0,
+                                 "queue: PASS")
+                    self.assertEqual(json.loads(plan.read_text(encoding="utf-8")),
+                                     {"head": group, "commands": commands})
+                    output = self.verdict(self.run_plan(plan, group), 0, "queue: PASS")
+                    for command in commands:
+                        self.assertEqual(output.count(f"gaps: {' '.join(command)}\n"), 1)
+
+    def test_gaps_refuses_a_github_file_it_maps_no_tests_to(self):
+        # A new workflow, or any other file under .github/, has no tests until main's
+        # check_queue.py names them: the group is refused, naming the file, not passed.
+        for number, path in enumerate((".github/workflows/new.yml", ".github/workflows/ci.yaml",
+                                       ".github/CODEOWNERS", ".github/actions/run/action.yml",
+                                       ".github/workflows/ci.yml.orig")):
+            with self.subTest(path=path):
+                group = self.github_group({path: "name: new\n"}, f"- check: {path}")
+                plan = self.root / f"unmapped-plan-{number}.json"
+                self.verdict(self.cli("--gaps", "--plan", str(plan), head=group), 1,
+                             f"queue: REFUSED: gaps: no tests are mapped to {path}")
+                self.assertFalse(plan.exists())
+
+    def test_gaps_refuses_a_changed_workflow_whose_mapped_test_is_deleted(self):
+        # A group that changes ci.yml and deletes a test mapped to it would run fewer of
+        # its tests, or none: each mapped test it deletes, alone or with the others,
+        # refuses the group, naming it, until main's copy maps others.
+        ci = ".github/workflows/ci.yml"
+        mapped = ["scripts/test_safe_push.py", "tests/test_auto_revert.py",
+                  "tests/test_check_queue.py"]
+        for number, deleted in enumerate([mapped, *([test] for test in mapped)]):
+            with self.subTest(deleted=deleted):
+                changes = {ci: "name: fixture\njobs: {check: {run: true}}\n",
+                           **{test: None for test in deleted}}
+                group = self.github_group(changes, "\n".join(f"- check: {p}" for p in changes))
+                plan = self.root / f"deleted-test-plan-{number}.json"
+                self.verdict(self.cli("--gaps", "--plan", str(plan), head=group), 1,
+                             "queue: REFUSED: gaps: declared test is missing or not a regular "
+                             f"file: {deleted[0]}, which GITHUB_TESTS names for {ci}")
+                self.assertFalse(plan.exists())
+
+    def test_gap_commands_keeps_the_tests_of_a_deleted_github_file(self):
+        group = self.github_group({TEXT: "A change elsewhere.\n"}, "None.")
+        self.checkout(group)
+        ci = ".github/workflows/ci.yml"
+        # A deleted workflow asks for its tests, and a deletion excuses none of them.
+        self.assertEqual(queue.gap_commands(self.repo, {ci}, {ci}), self.GITHUB_TESTS[ci])
+        self.assertEqual(queue.gap_commands(self.repo, {ci}, {ci, "tests/test_auto_revert.py"}),
+                         self.GITHUB_TESTS[ci])
+        # A file it maps no tests to refuses, deleted or not, and so does .github itself.
+        for path in (".github/old.yml", ".github"):
+            with self.subTest(path=path):
+                for deleted in (set(), {path}):
+                    with self.assertRaisesRegex(queue.Refused,
+                                                "no tests are mapped to " + re.escape(path)):
+                        queue.gap_commands(self.repo, {path}, deleted)
+        # A mapped test that is missing refuses, naming it and the file it is mapped to,
+        # whether the group deleted it or not.
+        (self.repo / "tests/test_auto_revert.py").unlink()
+        for deleted in (set(), {"tests/test_auto_revert.py"}, {ci, "tests/test_auto_revert.py"}):
+            with self.subTest(deleted=sorted(deleted)):
+                with self.assertRaisesRegex(queue.Refused, re.escape(
+                        "missing or not a regular file: tests/test_auto_revert.py, which "
+                        f"GITHUB_TESTS names for {ci}")):
+                    queue.gap_commands(self.repo, {ci}, deleted)
+
+    def test_gaps_refuses_a_deleted_mapped_test_whatever_else_the_group_changes(self):
+        # A group that deletes a test GITHUB_TESTS names, and changes nothing under
+        # .github/, leaves that file's next change with fewer of its tests to run: the
+        # deletion refuses, naming the test and the files it reads, until main's copy of
+        # the map names others.
+        for number, (test, first) in enumerate((
+                ("tests/test_release_gate.py", ".github/pull_request_template.md"),
+                ("scripts/test_safe_push.py", ".github/pull_request_template.md"),
+                ("tests/test_auto_revert.py", ".github/workflows/ci.yml"),
+                ("tests/test_check_queue.py", ".github/workflows/ci.yml"))):
+            with self.subTest(test=test):
+                message = (f"declared test is missing or not a regular file: {test}, which "
+                           f"GITHUB_TESTS names for {first}")
+                group = self.github_group({test: None}, f"- check: {test}")
+                plan = self.root / f"deleted-mapped-plan-{number}.json"
+                self.verdict(self.cli("--gaps", "--plan", str(plan), head=group), 1,
+                             f"queue: REFUSED: gaps: {message}")
+                self.assertFalse(plan.exists())
+                # Asked for whether the group's changes name it or not.
+                for checks in ({test}, set(), {TEXT}):
+                    with self.assertRaisesRegex(queue.Refused, re.escape(message)):
+                        queue.gap_commands(self.repo, checks, {test})
+
     def queue_job(self, head, base):
         """Execute the workflow's extraction and invocation with local fixture objects."""
         with (SCRIPTS.parent / ".github/workflows/ci.yml").open(encoding="utf-8") as source:
@@ -1925,6 +2274,23 @@ class QueueTests(unittest.TestCase):
         self.checkout(self.head)
         (self.repo / TEXT).write_text("A working copy change.\n", encoding="utf-8")
         self.verdict(self.cli(prepare=False), 1, "checkout has source changes")
+
+    def test_working_edits_to_readme_prose_refuse_and_to_a_body_do_not(self):
+        # #578: README.md is generated only between its markers, so a working-tree edit of
+        # its prose is a source change; one inside a scope body is render's, which the
+        # render freshness check catches.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        group = self.merge(self.base, self.train(1, {TEXT: "A reviewed line.\n"}), 1)
+        for old, new, code, message in (
+                ("Prose by hand.", "Prose, edited.", 1, "the part of README.md written by hand"),
+                ("Row.", "Row, regenerated.", 0, "queue: PASS")):
+            with self.subTest(new=new):
+                self.checkout(group)
+                (self.repo / "README.md").write_text(readme.replace(old, new), encoding="utf-8")
+                self.verdict(self.cli(head=group, prepare=False), code, message)
 
     def test_deleted_tracked_file_is_unreadable_in_tree_mode(self):
         # Rule (d) reads the decisions page alone; conflict markers are S23's.

@@ -17,11 +17,12 @@ Each item is one of two kinds:
   verdict is right is the reviewer's, and the independent audit's, to answer.
 
 The checklist merges the criteria of brief 0005's stage 6, Astra's measure of 95/100, with
-the release criteria of [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity), section 9,
-and with what has changed since both were written: the kernel replay, the stricter rule for
-runs of `--` lines, review stamps tied to a commit, companions as certificate entries,
-stage 4b's goal of a full statement for every record, and Staging. [Where the older
-criteria went](#where-the-older-criteria-went) traces each one here.
+the ten release criteria that [WORKFLOW](WORKFLOW.md#9-release-criteria-and-severity),
+section 9, once listed, and with what has changed since both were written: the kernel
+replay, the stricter rule for runs of `--` lines, review stamps tied to a commit,
+companions as certificate entries, stage 4b's goal of a full statement for every record,
+and Staging. [Where the older criteria went](#where-the-older-criteria-went) traces each
+one here.
 
 ## Running it
 
@@ -34,14 +35,22 @@ python3 scripts/check_acceptance.py           # every item, in about two minutes
 python3 scripts/check_acceptance.py --quick   # the kernel replay and the model tests not run
 python3 scripts/check_acceptance.py --json verdicts.json   # every verdict as JSON as well
 python3 scripts/check_acceptance.py --compare main.json verdicts.json   # no check run
+python3 scripts/check_acceptance.py --check-current   # no check run: the committed report
 ```
 
 It writes [the report](reports/acceptance-books-I-III.md): a table of items by book, a table
 of every proposition against every item, and every failure, each with what to do about it.
 It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every
 item passes and every check ran; 1 when anything fails or was not run (a check not run is
-not a pass); and 2 when it cannot begin. It needs Python 3.11 or later, `lake` on the
-PATH, and the commits the records name, so a full clone rather than a shallow one.
+not a pass); and 2 when it cannot begin. To pass every item it needs Python 3.11 or later,
+`lake` on the PATH, and the commits the records name, so a full clone rather than a shallow
+one. Before any check runs it asks Lake, with `lake build --no-build Elements Audit`,
+whether the build is current, since the Lean the checks ask is the build and not the
+sources; when Lake says it is not, by its exit 3, the script says why and what to build,
+and exits 2 with nothing written; and when Lake cannot answer (any other exit, a toolchain
+or lakefile problem, say), it says so, and exits 2 as well. If there is no `lake`
+executable, it keeps the earlier path: the run continues, and each check that needs Lean
+reports that it could not ask it.
 
 The script stands on the checks already in place rather than restating them:
 `check_fidelity.py`'s functions, `check_style.py`, `check_links.py`, `check_kernel.py`,
@@ -57,15 +66,24 @@ it reads two such files, main's first, and compares their verdicts by the rule b
 listing each; and 2 when a file cannot be read in the verdict format, or the two name
 different copies of the script by their hashes. CI uses both options.
 
+`--check-current` runs no check and needs no Lean: it reads the report as HEAD holds it,
+and exits 0 when that report is a run of every item on a commit that HEAD descends from
+and differs from in nothing but the report, with no staged, unstaged or untracked change
+Git reports in the worktree and no tracked file marked assume-unchanged or skip-worktree;
+1, giving each reason, when it is not; and 2 when it cannot begin. It asks Git with
+replacement objects disabled, and reads the report, not the run that wrote it. It is a
+release step, not one of CI's ([In CI](#in-ci)).
+
 ## In CI
 
-CI's required `acceptance` job runs on pull request events and is skipped on pushes.
+CI's required `acceptance` job runs on every event CI runs on: each pull request, each
+merge-queue group, and each push to main, through the post-merge workflow, which calls CI.
 Its executable definitions are [the workflow](../.github/workflows/ci.yml),
 [`scripts/check_acceptance.py`](../scripts/check_acceptance.py) and
 [`scripts/copy_acceptance_checks.sh`](../scripts/copy_acceptance_checks.sh). It fetches
 the whole history (`fetch-depth: 0`) for the records' commits. Until the consolidation
 release, `ACCEPTANCE_GATE` is `ratchet`: **a pass on main may not turn into a fail on the
-pull request**, save the staging exception below. The
+checked-out revision**, save the staging exception below. The
 [report committed on main](reports/acceptance-books-I-III.md) records failures
 at the revision it names; CI recomputes the individual verdicts for comparison on each
 run. The ratchet allows the checklist's exit 1, then weighs its verdicts. The checker's
@@ -75,32 +93,37 @@ be compared, fail the job. In three steps:
 1. After its comparison tests, the builds of `Elements` and `Audit`, and the computation
    of the certificate, the script checks every item on CI's checked-out revision,
    normally the pull request's test merge commit, and writes its verdicts with `--json`.
-2. It checks main in a worktree beside it: the checkout's first parent if it has two
-   parents, otherwise the pull request's recorded base commit. Main is built and its
-   certificate computed with the pull request's own checks copied in (`scripts/`, `tests/`,
-   `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
-   checks judges both. Main keeps its own values pinned to its content:
+2. It checks main in a worktree beside it. On a pull request, main is the checkout's first
+   parent when the checkout has two parents and the second is the pull request's head (the
+   test merge commit); otherwise, when the checkout is the pull request's head itself, the
+   pull request's recorded base commit; and any other checkout fails the job. In a
+   merge-queue group, main is the group's base commit; on a push to main, main as it was
+   before the push. Main is built and its
+   certificate computed with the checked-out revision's own checks copied in (`scripts/`,
+   `tests/`, `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy
+   of the checks judges both. Main keeps its own values pinned to its content:
    `Certificate/axioms.lock`, `tests/certificate_expectations.json`,
    `tests/model/lock.sha256`, `tests/model/laws.toml`, `tests/model/MODEL.md` and
    `tests/model/results/` ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10,
    the pre-flight's step 4, "The full checks"). The formal model's `model/` directory is
    not copied. An updated definition or expected count must not make unchanged main fail
-   and so hide a pull request's failure. A stricter check, which lands in a pull request
-   of its own before the content it judges
+   and so hide the checked-out revision's failure. A stricter check, which lands in a pull
+   request of its own before the content it judges
    ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10), judges both revisions.
-   An item it fails on main is reported but does not hold the pull request back.
+   An item it fails on main is reported but does not hold the checked-out revision back.
    Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are recorded
-   as `not run`, so the comparison does not hold them. The pull request's checklist run
-   runs them, and CI's `check` and `model` jobs require them to pass.
-3. `--compare` sets main's verdicts beside the pull request's, and fails for each item that
-   passes on main and does not pass on the pull request (a fail, a check not run, or an
-   item missing), save a staging item (P10 or E6) that turns into a fail, which it lists.
+   as `not run`, so the comparison does not hold them. The checked-out revision's
+   checklist run runs them, and CI's `check` and `model` jobs require them to pass.
+3. `--compare` sets main's verdicts beside the checked-out revision's, and fails for each
+   item that passes on main and does not pass on the checked-out revision (a fail, a check
+   not run, or an item missing), save a staging item (P10 or E6) that turns into a fail,
+   which it lists.
    Both staging items read `Staging/` alone, where a statement that a stage adds or changes
    is staged before its proof ([WORKFLOW](WORKFLOW.md#2-briefs-before-proofs), section 2).
    A staging item that was passing and is now `not run` or missing still fails the
    comparison.
 
-The run's artifact is named `acceptance`: the pull request's `report.md` and
+The run's artifact is named `acceptance`: the checked-out revision's `report.md` and
 `verdicts.json`, and, when main is checked, its `main-report.md` and `main.json`. The
 upload step runs even after a failure and keeps whichever of these files were produced.
 
@@ -110,7 +133,12 @@ file with its decisions entry; from then on the job skips main and the compariso
 any failing item or check not run fails it, the staging items included. That is step 9
 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10: the checklist
 passes in CI with no failures. Any other value fails the job before the checklist runs,
-so that no misspelling turns the gate off.
+so that no misspelling turns the gate off. At the release candidate the report is
+regenerated on a freshly built tree and committed, and `--check-current` passes, as step
+10 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, says.
+Every pull request's job has the build and the run, but only the release candidate is
+held to committing the regenerated report, so an ordinary pull request is not held to
+`--check-current`.
 
 The distinction between GitHub's five required checks and the merge gate's local presence
 test, including what a skipped job means, is in
@@ -123,7 +151,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | # | Item | Kind | What passes |
 |---|---|---|---|
 | P1 | Proved | machine | The proposition, its porism and every companion that facts.json attaches to it are `proved`: no `sorry` stands in them or beneath them, so no `sorryAx` is in their dependencies. The page's table under "What it rests on" has a column, the certificate, for each attached entry. Each companion is listed in the record's `companions`, so that the scope counts it. |
-| P2 | A current record | machine | The record reads against [review/SCHEMA.md](../review/SCHEMA.md) and is at the stage `full`, so it classifies every substantive passage and names its run and a reviewer with a role. Its stamps are current: its `fingerprint` matches the statements in facts.json, its `lean` the Lean file and, once it carries one, its `text` the record's own text (`check_fidelity.py`). Its `commit` is a commit of this repository, in the history of the revision checked. Its `[review] items` use only the keys of P11 to P16. |
+| P2 | A current record | machine | The record reads against [review/SCHEMA.md](../review/SCHEMA.md) and is at the stage `full`, so it classifies every substantive passage and names its run and a reviewer with a role. Its stamps are current: its `fingerprint` matches the statements in facts.json, its `lean` the Lean file and its `text` the record's own text (`check_fidelity.py`). Its `commit` is a commit of this repository, in the history of the revision checked. Its `[review] items` use only the keys of P11 to P16. |
 | P3 | Full | machine | The statement's scope is `full`, but for the limitations allowed below, each carrying its tag; and the route is Euclid's or `modified`, never `alternative`. |
 | P4 | Disclosed | machine | On the committed page, the line under the enunciation, the field table under "In Lean" and, for a statement in part, the clause map are exactly those that `render.py` makes from the record, so every scope, route, representation and overlap exception the record declares stands in the page's top line and field table. A record with an `unformalized` passage has a `[coverage]` clause map. No sentence of the mishnah says that our statement or the Lean leaves something of Euclid's out (restricts, excludes, omits, leaves out, does not prove or cover, adds an extra hypothesis) when the record declares no departure at all: a scope short of full, a route not Euclid's, an overlap, a scope tag or `hypothesis-dropped`, a `different` or `unformalized` passage. |
 | P5 | Policies | machine | For the proposition, its porism and its companions (`check_fidelity.py`): no later citation; superposition used directly only by I.4 and I.8; nothing before I.29 resting on Postulate 5 or a rule of `Elements.Tacit.Euclidean`; no axiom and no forbidden command in its Lean file. Its entries pass `check_fidelity.py`'s checks of them: each porism Heath prints has its entry, word for word, and each porism and companion is tied to this proposition. Placement is cited only by III.24 and the theorems on arcs: no other file of `Elements/` names it. The lock is E2's. |
@@ -228,7 +256,9 @@ evidence = "docs/reports/…"
 
 ## Where the older criteria went
 
-Brief 0005's stage 6, item by item:
+The two older lists of criteria, brief 0005's stage 6 and the ten criteria WORKFLOW's
+section 9 once listed, are retired: this checklist replaces both. The tables below name,
+for each older criterion, the items that take it up. Brief 0005's stage 6, item by item:
 
 | Brief 0005 | Here |
 |---|---|
@@ -257,7 +287,7 @@ WORKFLOW, section 9, criterion by criterion:
 | 5. Route accurate; every exception visible | P4, P12 |
 | 6. Dependency closure, axiom boundaries and certificate cover every claim | P1, P5, E1, E2 |
 | 7. Quotations, attributions and commentary checked | P7, P14 |
-| 8. Figures and page inspected | P8, P15 |
+| 8. Figures and page inspected | P8, P15 for the figures; for the page, P9 (the committed page is exactly what `render.py` makes), P4 (its top line, field table and clause map disclose the record) and B3 (the book read straight through) |
 | 9. The required checks pass on the integrated revision | E1 to E5, with the rest of the [machine] items |
 | 10. A reviewer other than the author, named with the commit | P2, P16 |
 

@@ -10,10 +10,11 @@
 #                            the reader needs in order to read the statement rightly.
 #
 # `meaning` is one plain line. A tag that changes how a whole statement is read may
-# also have `badge`, a few words that stand beside the green check on the page ("as
-# Euclid states it, in our measure of circumferences") and mark its row of the
-# certificate with a †. A new tag is added here, with its meaning, before any record uses
-# it. Python reads this file with tomllib; heath.load_terms() checks it.
+# also have `badge`, a few words eligible to stand beside the green check on the page
+# ("as Euclid states it, in our measure of circumferences"). The renderer may keep that
+# badge to statements that use the representation; when shown, it also marks the row of
+# the certificate with a †. A new tag is added here, with its meaning, before any record
+# uses it. Python reads this file with tomllib; heath.load_terms() checks it.
 
 [tag.adjacent-bases]
 kind = "scope"
@@ -31,17 +32,9 @@ meaning = "A straight line cut into any number of segments is cut into exactly t
 kind = "scope"
 meaning = "Straight lines through the centre are excluded by hypothesis, so the case at distance zero from the centre is not covered (III.14)."
 
-[tag.mixed-angles-omitted]
-kind = "scope"
-meaning = "A clause about an angle contained by a straight line and a circumference is left out, and the rectilineal facts Euclid proves it by are stated. No record carries it now that III.16 and III.31 state their mixed angles; the worked example in review/SCHEMA.md shows it, as III.16 stood at commit d040117."
-
 [tag.mixed-angles-local]
 kind = "representation"
 meaning = "An angle contained by a straight line and a circumference (Definition III.7) is read as the region it opens near its vertex, and compared with a rectilineal angle placed at that vertex, along its straight arm and on its side, by containment near the vertex with whole small circles to spare: the comparisons use local containment of curved angular regions, and no general arithmetic or ratio theory of mixed angles is claimed, nor any motion of one (III.16, III.31)."
-
-[tag.centre-given]
-kind = "representation"
-meaning = "The statement gives the circle its centre, named or as `∃ G, Centre G α`, as a hypothesis, where Euclid's setting-out takes the centre or a proof needs one. Brief 0008's centre rule, once it is in the axiom lock, gives every circle a centre, so the hypothesis then asks only for a centre the circle already has and excludes no circle (briefs 0004 and 0008)."
 
 [tag.touching-whole-circles]
 kind = "representation"
@@ -53,7 +46,7 @@ meaning = "A segment is given as its whole circle, a straight line in it and one
 
 [tag.angle-measure]
 kind = "representation"
-meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.24, III.26-III.29)."
+meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.26–III.30, both companions of III.24, and III.25's `Prop25.kind`)."
 badge = "in our measure of circumferences"
 
 [tag.redundant-hypothesis]

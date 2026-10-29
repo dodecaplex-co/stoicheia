@@ -70,9 +70,9 @@ JOBS = ("check",)
 PYTHON = "python3"
 EMPTY_COMMAND = ("git", "status", "--porcelain")
 EMPTY_NAME = "git status --porcelain is empty"
-# Section 8's first command block, which render.py writes from the registry between these
-# markers, and the line that opens it.
-MARKERS = re.compile(r"(<!-- checks -->\n)(.*?)(<!-- /checks -->)", re.S)
+# The line that opens section 8's first command block, which render.py writes from the
+# registry between docs/WORKFLOW.md's checks markers (heath.REGIONS; this file imports
+# nothing of the repository's, since safe_push.py runs origin/main's copy of it alone).
 PATH_LINE = "export PATH=$HOME/.elan/bin:$PATH"
 USAGE = "usage: registry.py [--rev REV] [--json] [ROOT]"
 
@@ -264,8 +264,9 @@ def of_job(entries: list[Entry], job: str) -> list[Entry]:
 
 
 def section8_block(entries: list[Entry]) -> str:
-    """Section 8's first command block, as render.py writes it between MARKERS: the line
-    that puts Lean's tools on the PATH, then each entry of the `check` job's line."""
+    """Section 8's first command block, as render.py writes it between docs/WORKFLOW.md's
+    checks markers (heath.REGIONS): the line that puts Lean's tools on the PATH, then each
+    entry of the `check` job's line."""
     lines = [PATH_LINE, *(e.section8 for e in of_job(entries, "check"))]
     return "```sh\n" + "\n".join(lines) + "\n```\n"
 

@@ -2,6 +2,7 @@ module
 
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Incidence
+public import Model.Euclidean.Sides
 public import Model.Laws.superposition
 public import Elements.Foundations.Superposition.Soundness
 public import Mathlib.Geometry.Euclidean.Projection
@@ -26,10 +27,11 @@ orthogonal projection onto L. Distances and all three angles survive both isomet
 The angle helper also covers repeated points, whose angle is zero in this reading, since
 an isometry repeats a point exactly when its image is repeated.
 
-The retained placement theorem supplies the triangle. Its third corner C' is off L,
-whereas D is on L, so Postulate 1 supplies the side through D and C'. The generic
-`Rule.of_placement` then proves the restricted law. The library may use that law directly
-only in I.4 and I.8; it exports metric equalities about the given figure.
+The retained placement theorem supplies the triangle. Its third corner C' is off L, by
+Same side 3, whereas D is on L, so Postulate 1 supplies the side through D and C'. The
+generic `Rule.of_placement_of_join` takes those three and proves the restricted law,
+through `Rule.of_placement`. The library may use that law directly only in I.4 and I.8;
+it exports metric equalities about the given figure.
 
 We thank Zhouhang Zhou, Frédéric Dupuis and Heather Macbeth for Mathlib's linear
 reflection lemmas, Heather Macbeth for its affine isometries, Joseph Myers and Manuel
@@ -155,15 +157,8 @@ theorem superposition_placement : Hand.Superposition.placement plane := by
   · simpa only [hgD, hgB'] using angle_map_isometry g C B A
 
 /-- **Restricted superposition holds in the plane**, including the side laid down. -/
-theorem superposition : Hand.Superposition.superposition plane := by
-  apply Elements.Superposition.Rule.of_placement
-  intro A B C D G H L hABC hD hG hDG hH
-  obtain ⟨B', C', hp⟩ := superposition_placement hABC hD hG hDG hH
-  have hDC' : D ≠ C' := by
-    intro heq
-    have hs : L.1.SSameSide C' H := hp.2.2.1
-    exact hs.left_notMem (heq ▸ hD)
-  obtain ⟨N, hDN, hC'N⟩ := Postulate1 D C' hDC'
-  exact ⟨B', C', N, hp, hDN, hC'N⟩
+theorem superposition : Hand.Superposition.superposition plane :=
+  Elements.Superposition.Rule.of_placement_of_join superposition_placement
+    not_on_line_of_same_side fun h => Postulate1 _ _ h
 
 end Model.Euclidean

@@ -1373,8 +1373,9 @@ file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls ei
 `Prop1.of_circle`'s own call of III.1.
 `lake build Audit` then failed on eleven pins and on no other, and each was renewed from
 Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
-`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
-`Audit.CirclesCut.of_meet` and `Audit.within_point`; in `Audit/Overlaps.lean`, those of
+`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, of the crossing bridge
+and its step (since 26 October 2026 `Elements.CirclesCut.of_meet` and
+`Elements.CirclesCut.cut_point`, pinned there still) and of `Audit.within_point`; in `Audit/Overlaps.lean`, those of
 `Audit.III_26_any`, `Audit.III_27_any`, `Audit.III_24_measure` and
 `Audit.III_30_measure`. Each lost one name, `Tacit.exists_point_same_side`, and gained
 none. The pin of `Audit/Centre.lean` holds unchanged.
@@ -1849,3 +1850,50 @@ III.28's Lean comments on the diameters untrue of the new Lean, and asked that I
 now public, take a name by FORMALIZATION's rule; all four were corrected, and the records
 of I.13, III.20, III.21, III.27 and III.28 read and stamped again. The stale stamps and failures of the snapshot above belong
 to its revision, not to the delivered one.
+
+**Follow-up, 26 October 2026.** The review of the second reading round found five things
+this addendum leaves out or says loosely; they are recorded here, and the paragraphs above
+stand as written.
+
+- **The second round's stamps.** The records of I.13, III.20, III.21, III.24 and III.27
+  were stamped again at `5afb1d6a4`, III.24's for its run line, which the reader corrected
+  to name the change it was read for, and III.28's at `7d4aa4370`. III.26's record was not
+  read in that round; it was read again in full, and stamped at `90238039b`, for #252.
+- **Whose words were read.** The corrected sentence of III.27's mishnah, III.28's passage
+  note on the diameters and the text of III.28's two Lean comments on them were written by
+  the reader of that round, GPT-6 Astra (Codex), in the session that then stamped III.27,
+  at `5afb1d6a4`, a commit before that sentence, which `688cabe4d` carries; the corrected
+  sentence of III.28's mishnah was written by a second session of the same reader; and
+  each was committed word for word (commits `688cabe4d` and `3e021eb5a`). A third session,
+  which wrote none of them, stamped III.28. Every one of these readings is of the family
+  that wrote the sentences, so the stamps on those sentences rest on a reading by their
+  authors' family, not by the other family. The review checked each sentence and found it
+  true of the Lean.
+- **The rule for the name.** The rule cited above for `Prop13.angle_lt_two_right`,
+  "FORMALIZATION's rule for a proposition's helpers", should be FORMALIZATION's section 6,
+  "Where lemmas live", and its rule for a porism or any corollary: a consequence of one
+  proposition that later proofs share is a corollary after it, as this lemma is, after
+  I.13. The rule for a helper puts it before its proposition.
+- **III.28's corrections.** Besides its Lean comments, III.28's passage note on the
+  diameters, its mishnah and its entry in the gap catalogue (commit `68b862505`) were
+  corrected, and its record read again for all of them; the account above, and the gap
+  entries it lists, leave those out.
+- **The right angles of III.27.** In the section on #127 above, the sentence that in the
+  right case "there is no angle at the centre to halve" is of that section's date: the
+  angle at the centre standing on a semicircle is now `angleAtCentre`, two right angles
+  (`angleAtCentre.semicircle`). III.27's proof does not halve it, and still reads its
+  right angles off `Prop24.angle_type`;
+  [#511](https://github.com/jackChallis/stoicheia/issues/511) proposes Euclid's halving
+  there.
+
+## Addendum: the centre by III.1's construction (#547)
+
+26 October 2026. By the owner's decision recorded on
+[#547](https://github.com/jackChallis/stoicheia/issues/547), "Yes - follow Euclid when
+possible.", and the coordinator's [decision entry of that day](../decisions/2026-10-26-centre-by-iii1.md),
+III.4, III.8 and III.17, with `Prop8.partner` and `Prop17.general`, take the centre under
+Heath's "[III. 1]" by III.1's construction through `Prop1.of_circle`; III.2 follows after
+ship C7's train P3 ([#477](https://github.com/jackChallis/stoicheia/issues/477)). Every
+audit pin holds unchanged. No entry's axioms change; the five entries cite III.1 through
+the shared step `Prop1.of_circle`, and Heath's references with no call fall from six to
+three. The reading of #131's section above, that such a call does no work, is overtaken.
