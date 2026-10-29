@@ -66,6 +66,7 @@ names, none of them the parser of one of the four notations, and holds
 """
 
 import io
+import os
 import subprocess
 import sys
 import tempfile
@@ -494,6 +495,15 @@ class WithGit(unittest.TestCase):
         self.assertIn(path, str(raised.exception))
         probe.assert_not_called()
 
+    def write_bytes_path(self, path: bytes):
+        raw = os.fsencode(self.repo) + b"/" + path
+        try:
+            descriptor = os.open(raw, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        except OSError as error:
+            self.skipTest(f"the filesystem does not support this bytes path: {error}")
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(b"x\n")
+
     def test_what_bars_list_and_what_does_not(self):
         self.commit({"Elements/A.lean": "x\n", str(released.LIST): "old\n",
                      "lakefile.toml": "x\n"})
@@ -550,6 +560,57 @@ class WithGit(unittest.TestCase):
         self.git("mv", "notes.txt", str(released.LIST))
         self.assertEqual(released.modified(),
                          [f"notes.txt -> {released.LIST.as_posix()}"])
+
+    def test_an_assume_unchanged_source_refuses_list_without_changing_the_flag(self):
+        self.tag({"Elements/A.lean": "x\n"})
+        self.git("update-index", "--assume-unchanged", "Elements/A.lean")
+        (self.repo / "Elements/A.lean").write_text("changed\n", encoding="utf-8")
+        self.assert_list_refused_before_probe("assume-unchanged: Elements/A.lean")
+        self.assertEqual(self.git("ls-files", "-v", "Elements/A.lean"),
+                         "h Elements/A.lean")
+
+    def test_a_skip_worktree_source_refuses_list_without_changing_the_flag(self):
+        self.tag({"Elements/A.lean": "x\n"})
+        self.git("update-index", "--skip-worktree", "Elements/A.lean")
+        (self.repo / "Elements/A.lean").write_text("changed\n", encoding="utf-8")
+        self.assert_list_refused_before_probe("skip-worktree: Elements/A.lean")
+        self.assertEqual(self.git("ls-files", "-t", "Elements/A.lean"),
+                         "S Elements/A.lean")
+
+    def test_index_flags_preserve_the_released_list_exception(self):
+        self.commit({str(released.LIST): "old\n", "Elements/A.lean": "x\n"})
+        self.git("update-index", "--assume-unchanged", str(released.LIST))
+        self.git("update-index", "--skip-worktree", str(released.LIST))
+        (self.repo / released.LIST).write_text("", encoding="utf-8")
+        self.assertEqual(released.modified(), [])
+        self.assertEqual(self.git("ls-files", "-v", str(released.LIST)),
+                         f"s {released.LIST.as_posix()}")
+        self.assertEqual(self.git("ls-files", "-t", str(released.LIST)),
+                         f"S {released.LIST.as_posix()}")
+
+    def test_an_unrelated_non_utf8_untracked_path_remains_allowed(self):
+        commit = self.tag({"Elements/A.lean": "x\n"})
+        self.write_bytes_path(b"unrelated-\xff.txt")
+        self.assertEqual(released.modified(), [])
+        probe = mock.Mock(return_value={"Elements.a": "name"})
+        with mock.patch.object(released, "run_probe", probe):
+            made = released.make_list("book-III")
+        self.assertEqual(released.parse_list(made).commit, commit)
+        probe.assert_called_once()
+
+    def test_a_non_utf8_untracked_lean_path_exits_2_before_the_probe(self):
+        self.tag({"Elements/A.lean": "x\n"})
+        self.write_bytes_path(b"Elements/untracked-\xff.lean")
+        probe = mock.Mock(return_value={"Elements.a": "name"})
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.object(released, "run_probe", probe), \
+                redirect_stdout(out), redirect_stderr(err):
+            code = released.main(["--list", "book-III"])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn(r"Elements/untracked-\xff.lean", err.getvalue())
+        self.assertNotIn("Traceback", err.getvalue())
+        probe.assert_not_called()
 
     def test_the_later_tags_hold_the_lists_commit(self):
         first = self.commit({"a": "1\n"})

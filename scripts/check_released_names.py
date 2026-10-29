@@ -246,7 +246,12 @@ class Listed(NamedTuple):
     names: dict[str, str]
 
 
+def printable(text: str) -> str:
+    return text.encode("utf-8", "surrogateescape").decode("utf-8", "backslashreplace")
+
+
 def shorten(line: str, width: int = 80) -> str:
+    line = printable(line)
     return line if len(line) <= width else line[:width - 1] + "…"
 
 
@@ -437,7 +442,7 @@ def git_env() -> dict[str, str]:
 def git(*args: str) -> subprocess.CompletedProcess:
     try:
         return subprocess.run(["git", *args], cwd=ROOT, env=git_env(), capture_output=True,
-                              text=True)
+                              text=True, encoding="utf-8", errors="surrogateescape")
     except OSError as error:
         raise Unreadable(f"git cannot be run: {error}") from None
 
@@ -473,10 +478,35 @@ BUILD_INPUT = re.compile(r"(.*\.lean|(.*/)?lakefile\.(lean|toml)|(.*/)?lake-mani
                          r"|(.*/)?lean-toolchain)", re.DOTALL)
 
 
+def hidden_index_paths() -> list[str]:
+    flagged: dict[str, list[str]] = {}
+    for option, label in (("-v", "assume-unchanged"), ("-t", "skip-worktree")):
+        done = git("--no-optional-locks", "ls-files", option, "-z")
+        if done.returncode != 0:
+            raise Unreadable(f"git cannot say which index flags are set: "
+                             f"{shorten(done.stderr.strip())}")
+        for record in done.stdout.split("\0"):
+            if not record:
+                continue
+            if len(record) < 3 or record[1] != " ":
+                raise Unreadable("git returned an index record that cannot be read")
+            marker, path = record[0], record[2:]
+            marked = marker.islower() if option == "-v" else marker == "S"
+            if marked and path != LIST.as_posix():
+                flagged.setdefault(path, []).append(label)
+    return [f"{' and '.join(labels)}: {printable(path)}"
+            for path, labels in flagged.items()]
+
+
 def modified() -> list[str]:
     """The files that bar `--list`, as git status shows them: each tracked file that differs
     from HEAD, staged or not, but the list itself, and each untracked or ignored
     BUILD_INPUT."""
+    hidden = hidden_index_paths()
+    if hidden:
+        shown = ", ".join(hidden[:5]) + (", …" if len(hidden) > 5 else "")
+        raise Unreadable(f"git index flags hide {len(hidden)} tracked files from status "
+                         f"({shown}); clear the flags before --list")
     done = git("--no-optional-locks", "status", "--porcelain=v1", "-z",
                "--untracked-files=all", "--ignored=matching")
     if done.returncode != 0:
@@ -486,7 +516,7 @@ def modified() -> list[str]:
 
     def add(path: str) -> None:
         if path not in seen:
-            found.append(path)
+            found.append(printable(path))
             seen.add(path)
 
     records = done.stdout.split("\0")
