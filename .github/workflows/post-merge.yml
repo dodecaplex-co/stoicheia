@@ -2,7 +2,8 @@
 # that authority independent, so the App's power is bounded instead. It reads the
 # repository's contents and writes none (this job's own token pushes the revert
 # branch), so a key taken from it can make no branch, tag or release; it is no
-# ruleset's bypass actor; and queue-integrity, run from main's copy, refuses any entry
+# ruleset's bypass actor; and the queue's judge (queue-judge.yml, run from main by the
+# organization ruleset) refuses any entry
 # any bot wrote, queued, last edited or last renamed, save the exact revert of a failed push's merges
 # while an open main-red issue names the run. WORKFLOW, section 10, and the owner's
 # setup steps say what the owner configures.
