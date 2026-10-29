@@ -339,8 +339,8 @@ construction, its premises, and the diagram fact or lemma it needed.
   proof's whole conclusion (below).
   Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
   the record: the passage whose `at` begins a sentence of that run of `--` lines lists
-  the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
-  for the joins by Postulate 1 in I.5, or `this` for an anonymous `have`; and
+  the binding, by the name the proof gives it, in its `unused`, as `unused = ["hAB_FC"]`
+  for I.16's equal bases, or `this` for an anonymous `have`; and
   `check_fidelity.py` fails a name there that the Lean beneath does not bind
   ([review/SCHEMA.md](../review/SCHEMA.md);
   [decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). Nothing else
