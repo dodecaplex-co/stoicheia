@@ -36,11 +36,13 @@ theorem Prop30.point_on_side {L T : Line} {G P : Point}
     exact ⟨B, hBL, same_side_of_opposite_sides ⟨hAT, hBT, pasch3 hAGB hGT⟩
       ⟨hAT, hP, hs⟩⟩
 
-/-- Euclid's enunciation also covers EF lying outside AB and CD, where a
-straight line from one to the other need not cross it. For that case: two straight
-lines through one point, each parallel to a third, are one straight line. A
-straight line from the point to the third makes, with each, interior angles equal
-to two right angles (I.29); Common Notion 3 takes away the angle they share, and
+/-- Two straight lines through one point, each parallel to a third, are one
+straight line. Euclid's enunciation also covers EF lying outside AB and CD,
+where a straight line from one to the other need not cross it. There this shows
+that a straight line from AB to EF meets CD, and so falls on all three, as
+Euclid's GK does; his own argument does the rest. A straight line from the point
+to the third makes, with each, interior angles equal to two right angles (I.29);
+Common Notion 3 takes away the angle they share, and
 `onRay_of_angle_eq` makes the two rays one. This is the uniqueness of the
 parallel, often called Playfair's axiom, proved here from I.29 rather than
 assumed. Later proofs cite `Prop30.meet` instead: the same uniqueness, drawn
@@ -144,15 +146,95 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
     -- Therefore AB is parallel to CD.
     exact (Prop27 hAGB (between_symm hDKC) hAD hequal).parallel hA_AB hB_AB hC_CD hD_CD
   /- When EF lies outside AB and CD, a straight line from one to the other
-     need not cross it. Then if AB and CD met, they would be two parallels to
-     EF through one point, and so one straight line (`Prop30.unique`); but C
-     is off AB. -/
+     need not cross it, and either of them may lie in the middle. Euclid's
+     argument goes through all the same, with the straight lines in another
+     order: here the straight line GK falls on L at G, on M at K and on EF
+     at H, with K between G and H, so that M is in the middle. We choose the
+     ends of each straight line as in Heath's case. -/
+  have outer : ∀ {L M : Line} {G K H : Point}, Parallel L EF → Parallel M EF →
+      OnLine G L → OnLine K M → OnLine H EF → Between G K H → Parallel L M := by
+    intro L M G K H hL_EF hM_EF hG_L hK_M hH_EF hGKH
+    have hG_K := ne_of_between hGKH
+    have hG_H := ne_of_between_ends hGKH
+    have hK_H := (ne_of_between (between_symm hGKH)).symm
+    obtain ⟨GK, hG_GK, hH_GK⟩ := Postulate1 G H hG_H
+    have hK_GK := on_line_of_between_ends hGKH hG_GK hH_GK
+    have hEF_GK : EF ≠ GK := fun e => hL_EF.not_onLine hG_L (e ▸ hG_GK)
+    obtain ⟨F, hF_EF, hF_GK, -⟩ := exists_point_on_line_off_line hEF_GK []
+    have hF_H : F ≠ H := fun e => hF_GK (e ▸ hH_GK)
+    obtain ⟨E, hFHE⟩ := produce hF_H
+    have hE_GK : ¬ OnLine E GK := fun h =>
+      hF_GK (on_line_of_between (between_symm hFHE) h hH_GK)
+    have hEF : OppositeSides E F GK :=
+      ⟨hE_GK, hF_GK, pasch3 (between_symm hFHE) hH_GK⟩
+    have hL_GK : L ≠ GK := fun e => hL_EF.not_onLine (e ▸ hH_GK) hH_EF
+    have hM_GK : M ≠ GK := fun e => hM_EF.not_onLine (e ▸ hH_GK) hH_EF
+    obtain ⟨A, hA_L, hAE⟩ := Prop30.point_on_side hG_L hG_GK hL_GK hE_GK
+    obtain ⟨D, hD_M, hDF⟩ := Prop30.point_on_side hK_M hK_GK hM_GK hF_GK
+    have hA_G : A ≠ G := fun e => not_on_line_of_same_side hAE (e ▸ hG_GK)
+    have hD_K : D ≠ K := fun e => not_on_line_of_same_side hDF (e ▸ hK_GK)
+    obtain ⟨B, hAGB⟩ := produce hA_G
+    obtain ⟨C, hDKC⟩ := produce hD_K
+    have hB_L := on_line_of_between hAGB hA_L hG_L
+    have hC_M := on_line_of_between hDKC hD_M hK_M
+    have hAF : OppositeSidesOf A F G H :=
+      (SameSideOf.of_line hG_H hG_GK hH_GK hAE).trans_opposite
+        (OppositeSidesOf.of_line hG_H hG_GK hH_GK hEF)
+    have hDF_KH : SameSideOf D F K H := SameSideOf.of_line hK_H hK_GK hH_GK hDF
+    /- L is parallel to EF, so I.29 makes the alternate angles AGH, GHF equal;
+       and AGH is AGK, for K lies between G and H. -/
+    have hpar := AreParallel.of_parallel hA_G hF_H.symm hA_L hG_L hH_EF hF_EF hL_EF
+    have hAGK : ∠ A G K = ∠ G H F :=
+      (angle_onRay_right (OnRay.of_between hGKH) hA_G).trans (Prop29.alternate hpar hAF)
+    /- M is parallel to EF, so I.29 makes the exterior angle GKD equal to the
+       interior and opposite angle KHF, which is GHF, for K lies between H and
+       G. -/
+    have hpar' := AreParallel.of_parallel hD_K.symm hF_H.symm hK_M hD_M hH_EF hF_EF hM_EF
+    have hGKD : ∠ G K D = ∠ G H F :=
+      (Prop29.exterior hpar' hDF_KH hGKH).trans
+        (angle_onRay_left (OnRay.of_between (between_symm hGKH)) hF_H)
+    /- Common Notion 1 joins the two, so AGK is equal to GKD. They are
+       alternate angles, for A is on E's side of GK and D on F's, and I.27
+       makes L parallel to M. -/
+    have hequal : ∠ A G K = ∠ G K D := CommonNotion1 hAGK hGKD
+    have hAF_GK : OppositeSidesOf A F G K :=
+      OppositeSidesOf.of_line hG_K hG_GK hK_GK (hAF.oppositeSides hG_GK hH_GK)
+    have hDF_GK : SameSideOf D F G K := SameSideOf.of_line hG_K hG_GK hK_GK hDF
+    have hAD : OppositeSidesOf A D G K := (hDF_GK.trans_opposite hAF_GK.symm).symm
+    exact (Prop27 hAGB (between_symm hDKC) hAD hequal).parallel hA_L hB_L hC_M hD_M
+  /- So when A and C lie on one side of EF, take G on AB off CD (C is off AB,
+     so they are two straight lines), take H on EF, and join GH. It meets CD,
+     at K: otherwise GH and EF would be two straight lines through H, each
+     parallel to CD, and so one straight line (`Prop30.unique`), though G is off
+     EF. Uniqueness gives only this meeting, which Euclid's "let the straight
+     line GK fall upon them" takes for granted. Each of AB and CD lies wholly on
+     one side of EF, and A and C on one side, so G and K are on one side of EF,
+     and H is not between them. Either K lies between G and H, and CD is in the
+     middle, or G lies between K and H, and the argument above runs with AB and
+     CD exchanged. When A and C lie on opposite sides of EF, it separates them,
+     and this is Heath's case. -/
   have hparallel : Parallel AB CD := by
     by_cases hs : SameSide A C EF
-    · apply Parallel.of_not_meet hA_AB
-      intro G hG_AB hG_CD
-      have heq := Prop30.unique hAB_EF hCD_EF hG_AB hG_CD hE_EF
-      exact hC ⟨AB, hA_AB, hB_AB, heq ▸ hC_CD⟩
+    · have hAB_CD : AB ≠ CD := fun e => hC ⟨AB, hA_AB, hB_AB, e ▸ hC_CD⟩
+      obtain ⟨G, hG_AB, hG_CD, -⟩ := exists_point_on_line_off_line hAB_CD []
+      obtain ⟨H, hH_EF, -⟩ := exists_point_on_line EF []
+      have hG_H : G ≠ H := fun e => hAB_EF.not_onLine hG_AB (e ▸ hH_EF)
+      obtain ⟨GK, hG_GK, hH_GK⟩ := Postulate1 G H hG_H
+      obtain ⟨K, hK_GK, hK_CD⟩ : ∃ K : Point, OnLine K GK ∧ OnLine K CD := by
+        refine Classical.byContradiction fun hno => ?_
+        have hGK_CD : Parallel GK CD :=
+          Parallel.of_not_meet hH_GK fun P hP_GK hP_CD => hno ⟨P, hP_GK, hP_CD⟩
+        have hGK_EF : GK = EF := Prop30.unique hGK_CD hCD_EF.symm hH_GK hH_EF hC_CD
+        exact hAB_EF.not_onLine hG_AB (hGK_EF ▸ hG_GK)
+      have hG_K : G ≠ K := fun e => hG_CD (e ▸ hK_CD)
+      have hK_H : K ≠ H := fun e => hCD_EF.not_onLine hK_CD (e ▸ hH_EF)
+      have hGC : SameSide G C EF := same_side_trans (hAB_EF.sameSide hA_AB hG_AB) hs
+      have hGK : SameSide G K EF :=
+        same_side_trans (same_side_symm hGC) (hCD_EF.sameSide hC_CD hK_CD)
+      rcases between_cases hG_K hK_H hG_H hG_GK hK_GK hH_GK with hGKH | hKGH | hGHK
+      · exact outer hAB_EF hCD_EF hG_AB hK_CD hH_EF hGKH
+      · exact (outer hCD_EF hAB_EF hK_CD hG_AB hH_EF hKGH).symm
+      · exact absurd hGK (pasch3 hGHK hH_EF)
     · exact separated hA_AB hC_CD
         ⟨hAB_EF.not_onLine hA_AB, hCD_EF.not_onLine hC_CD, hs⟩
   exact AreParallel.of_parallel h₁.1 h₂.1 hA_AB hB_AB hC_CD hD_CD hparallel

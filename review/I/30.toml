@@ -11,7 +11,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that AB is also parallel to CD"
 kind = "case"
-note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD it need not, and that case rests on `Prop30.unique`: two straight lines through one point, each parallel to EF, are one (from I.29)."
+note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD, a straight line GH from AB to EF meets CD at K, by `Prop30.unique` (from I.29), and the Lean runs Euclid's chase on it, by I.29, Common Notion 1 and I.27, with CD or AB in the middle."
 
 [[passage]]
 at = "For let the straight line GK fall upon them"
