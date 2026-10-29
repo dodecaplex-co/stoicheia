@@ -8,10 +8,10 @@
   October 2026): "A join under a sentence of Euclid's is written in the Lean only where
   the formal proof uses the line it draws. Heath's sentence stays as its `--` line in
   every case, so the text is unchanged, and the record says the join is drawn in the
-  text and not needed by the formal proof." The ruling follows the owner's guidance of 22 October:
-  "take out what Euclid does not use, disclose what a representation needs". The
-  measurement of 28 October found idle joins deducted with Claude and Argon, and #482's
-  removal of them earned 0.75 on Book I with Claude.
+  text and not needed by the formal proof." The ruling follows the owner's guidance of 22
+  October: "take out what Euclid does not use, disclose what a representation needs".
+  The measurement of 28 October found idle joins deducted with Claude and Argon, and the
+  removal of them by #482 earned 0.75 on Book I with Claude.
 
   So the joins of I.5, I.11, I.16, I.20, I.22, I.26, I.39 and I.40, which no later step
   of those proofs uses, are gone from the Lean: a straight line between two points is
