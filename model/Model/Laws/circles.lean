@@ -13,18 +13,19 @@ library's own words in for `S` and asks the kernel whether each result is the or
 declaration; the build fails if it is not. The generator described in the
 [README](../../README.md) writes the laws from the elaborated declarations, and
 `Check/Circles.lean` also compares each locked law's translation here with
-its generated field. The retired rules `centre_unique`, `inside_of_between`,
-`outside_of_between`, `not_same_side_of_circles_meet` and `exists_point_outside_circle`
-are compared directly with their library declarations, including binder kinds. Their concrete plane proofs
+its generated field. The retired rules `centre_unique`, `between_of_inside_chord`,
+`inside_of_between`, `outside_of_between`, `not_same_side_of_circles_meet` and
+`exists_point_outside_circle` are compared directly with their library declarations,
+including binder kinds. Their concrete plane proofs
 remain as derived facts, with no generated assumption fields. Overlapping translations
 keep their statements under distinct names.
 
 The laws here are those about a single circle, or about where a circle and its points lie:
 
 * Postulate 3, which draws a circle, and Definition 15, which makes its radii equal;
-* the generalities about a centre (`centre_unique`, `centre_inside`, `circle_eq`) and about
-  the inside of a circle (`inside_not_on`, `inside_of_len_lt`, `len_lt_of_inside`,
-  `on_circle_of_len_eq`);
+* the generalities about a centre (`centre_unique`, `centre_inside`, `circle_eq`), with our
+  own rule that a radius is not nothing (`radius_ne_zero`), and about the inside of a
+  circle (`inside_not_on`, `inside_of_len_lt`, `len_lt_of_inside`, `on_circle_of_len_eq`);
 * System E's Circle 1 to 4 (`between_of_inside_chord`, `inside_of_between`,
   `outside_of_between`, `not_same_side_of_circles_meet`), which the library owes to Jeremy
   Avigad, Edward Dean and John Mumma, with our thanks;
@@ -112,10 +113,18 @@ def on_circle_of_len_eq_circles : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
     S.len A C = S.len A B → S.OnCircle C α
 
+/-- `Elements.Tacit.radius_ne_zero`, hand-translated: a rule of our own, not System E's, that
+a radius is not nothing. The lock prints it as `∀ {A B : Elements.Point} {α :
+Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Ne (Elements.len A B) 0`. -/
+def radius_ne_zero : Prop :=
+  ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
+    S.len A B ≠ (0 : S.Length)
+
 /-! ## System E's Circle 1 to 4 -/
 
-/-- `Elements.Tacit.between_of_inside_chord` (Circle 1), hand-translated. The lock prints it
-as `∀ {A B C : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.OnLine A L
+/-- `Elements.Tacit.between_of_inside_chord` (Circle 1), hand-translated.
+The theorem's unchanged type is
+`∀ {A B C : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.OnLine A L
 → Elements.OnLine B L → Elements.OnLine C L → Elements.InsideCircle A α → Elements.OnCircle B
 α → Elements.OnCircle C α → Ne B C → Elements.Between B A C`. -/
 def between_of_inside_chord : Prop :=

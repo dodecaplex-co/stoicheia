@@ -10,7 +10,7 @@ kind = "euclid"
 at = "Let AC, BD be joined"
 kind = "helper"
 helper = "OppositeSides.exists_between"
-note = "Euclid joins the diagonals and reads their crossing from the figure; `OppositeSides.exists_between` finds X between A and C on BD. The Lean puts X within the circle by III.2, for which Heath prints no reference here, then between B and D by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "Euclid joins the diagonals and reads their crossing from the figure; `OppositeSides.exists_between` finds X between A and C on BD. The Lean puts X within the circle by III.2, for which Heath prints no reference here, then between B and D by `Tacit.between_of_inside_chord`, System E's Circle 1, which is also proved from III.2."
 
 [[passage]]
 at = "therefore the whole angle ADC is equal to the angles BAC, ACB"
@@ -25,11 +25,11 @@ note = "Euclid leaves the other pair of opposite angles to the same argument wit
 
 [review]
 stage = "full"
-commit = "e572d5c0"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "689ab169f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:6e648f85a153eb0a"
-run = "brief 0005 stage 5, ship R3 (#29)"
-text = "sha256:01f15bb382711e51"
+run = "brief 0005 stage 5, ship R3 (#29); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
+text = "sha256:c5f85c040facb9c1"
 
 [review.items]
 statement = "pass"

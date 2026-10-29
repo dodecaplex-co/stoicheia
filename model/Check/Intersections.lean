@@ -86,8 +86,8 @@ example (S : Model.Signature) : Model.Hand.line_circle_between S =
     Model.Law.Tacit.line_circle_between S := rfl
 example (S : Model.Signature) : Model.Hand.line_circle_beyond S =
     Model.Law.Tacit.line_circle_beyond S := rfl
-example (S : Model.Signature) : Model.Hand.between_of_inside_chord_intersections S =
-    Model.Law.Tacit.between_of_inside_chord S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.between_of_inside_chord_intersections
+  ``Elements.Tacit.between_of_inside_chord)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_between_intersections
   ``Elements.Tacit.inside_of_between)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.outside_of_between_intersections

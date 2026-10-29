@@ -37,7 +37,8 @@ lies. With them are the eight magnitude laws, which test the translation of the 
 and of the kinds of magnitude, and the rule that every circle has a centre.
 
 Intersection 4 and Intersections 9 are now proved in `Elements/Figure/Incidence.lean`:
-the former from Intersection 5, Circle 1 and `line_circle_between`; the latter by choosing
+the former from Intersection 5 and `line_circle_between`, with the first circle's centre
+taken by the rule that every circle has one, and without Circle 1; the latter by choosing
 a point on the opposite side and applying the retained Intersections 8 to it.
 -/
 

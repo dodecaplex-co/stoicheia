@@ -17,6 +17,7 @@ alone, never a Lean run or build outputs. Run this module to print every availab
 count and its current value.
 """
 
+import ast
 from dataclasses import dataclass
 from functools import partial
 import os
@@ -300,6 +301,282 @@ def acceptance_passing(root):
     return acceptance_summary(root)[1]
 
 
+SCREEN = "Audit/screen.py"
+SUPERPOSITION = "Audit/Superposition.lean"
+MUTATIONS = "tests/model/mutations.py"
+FORMALIZATION = "docs/FORMALIZATION.md"
+_PART = r"[^\W\d][\w'!?₀-₉]*"
+IDENTIFIER = re.compile(rf"{_PART}(?:\.{_PART})*")
+NAME_END = r"(?![\w.'!?₀-₉])"
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+# A dependency check as the audit pins one: a bare `#guard_msgs in`, then `#print axioms`
+# and one name, ended as check_superposition_pins ends a name. Every `#print axioms` in the
+# code must be one, or the file is refused rather than miscounted.
+AXIOM_PIN = re.compile(rf"#guard_msgs\s+in\s*#print\s+axioms\s+{IDENTIFIER.pattern}{NAME_END}")
+PRINT_AXIOMS = re.compile(r"#print\s+axioms")
+SYNTAX_QUOTATION = re.compile(r"`\(")
+# The section of FORMALIZATION.md whose tables list the rules now proved, and the one form of
+# table it may hold.
+RULES_PROVED = "### Rules now proved"
+RULES_HEADER = "| Theorem under `Elements.Tacit` | System E label | Derivation and home |"
+RULES_DELIMITER = "|---|---|---|"
+RULE_CELL = r"(?:\\.|[^|\\])*"
+RULE_ROW = re.compile(rf"\|\s*`({IDENTIFIER.pattern})`\s*\|{RULE_CELL}\|{RULE_CELL}\|")
+RULES_BOUNDARY = re.compile(r"^ {0,3}#{1,3}(?:[ \t]+|$)")
+UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+LIST_MUTATORS = frozenset({"__delattr__", "__delitem__", "__iadd__", "__imul__", "__init__",
+                           "__setattr__", "__setitem__", "append", "clear", "extend", "insert",
+                           "pop", "remove", "reverse", "sort"})
+
+
+def source(root, path, read=Path.read_bytes):
+    """Read a file a count parses with `read`, refusing it by name unless it reads and decodes."""
+    try:
+        return read(repository_path(root, path))
+    except OSError as error:
+        raise ValueError(f"{path}: cannot read the file ({error.strerror})") from error
+    except UnicodeError as error:
+        raise ValueError(f"{path}: cannot decode the file as UTF-8") from error
+
+
+def python_module(root, path):
+    """Parse a Python file from its bytes, coding cookie included, as Python reads it, never
+    importing or running it."""
+    data = source(root, path)
+    try:
+        return ast.parse(data, path)
+    except (SyntaxError, ValueError, MemoryError, RecursionError) as error:
+        raise ValueError(f"{path}: cannot parse the file") from error
+
+
+def refuse_other_bindings(tree, path, name, kept, start, outside, mutating_methods=None):
+    """Refuse, with its line, each node of `tree` but those `kept` that binds `name`, or
+    stores through it; direct attributes are all refused unless `mutating_methods` limits
+    refusal to the methods it names. A star import is refused after tree.body[start], the
+    statement that binds the name, since one before it is overridden by that binding."""
+    alias_names = {}
+    called_attributes = {node.func for node in ast.walk(tree)
+                         if isinstance(node, ast.Call)
+                         and isinstance(node.func, ast.Attribute)}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            alias_names.update({alias: alias.asname or alias.name.split(".")[0]
+                                for alias in node.names})
+        elif isinstance(node, ast.ImportFrom):
+            alias_names.update({alias: alias.asname or alias.name for alias in node.names})
+    for index, statement in enumerate(tree.body):
+        for node in ast.walk(statement):
+            through = node.value if isinstance(node, (ast.Attribute, ast.Subscript)) else None
+            if node in kept:
+                changed = False
+            elif isinstance(node, ast.alias) and node.name == "*":
+                if index > start:
+                    raise ValueError(f"{path}:{node.lineno}: a star import after {name} is "
+                                     "bound may bind it again")
+                changed = False
+            elif isinstance(node, ast.alias):
+                changed = alias_names[node] == name
+            elif isinstance(node, ast.Name):
+                changed = node.id == name and not isinstance(node.ctx, ast.Load)
+            elif isinstance(through, ast.Name) and through.id == name:
+                changed = (not isinstance(node.ctx, ast.Load)
+                           or (isinstance(node, ast.Attribute)
+                               and (mutating_methods is None
+                                    or (node.attr in mutating_methods
+                                        and node in called_attributes))))
+            elif isinstance(node, ast.keyword):
+                changed = False
+            else:
+                changed = name in (getattr(node, "name", None), getattr(node, "arg", None),
+                                   getattr(node, "rest", None), *getattr(node, "names", ()))
+            if changed:
+                raise ValueError(f"{path}:{node.lineno}: {name} is bound or changed "
+                                 f"outside {outside}")
+
+
+def screen_circle_rules(root):
+    """Count the names in Audit/screen.py's CIRCLE, parsed with ast, never imported or run."""
+    tree = python_module(root, SCREEN)
+    assigned = [index for index, node in enumerate(tree.body) if isinstance(node, ast.Assign)
+                and any(isinstance(target, ast.Name) and target.id == "CIRCLE"
+                        for target in node.targets)]
+    if len(assigned) != 1 or len(tree.body[assigned[0]].targets) != 1:
+        raise ValueError(f"{SCREEN}: expected one module-level assignment to CIRCLE alone")
+    target, value = tree.body[assigned[0]].targets[0], tree.body[assigned[0]].value
+    if not (isinstance(value, ast.Call) and not value.args and not value.keywords
+            and isinstance(value.func, ast.Attribute) and value.func.attr == "split"
+            and isinstance(value.func.value, ast.Constant)
+            and isinstance(value.func.value.value, str)):
+        raise ValueError(f"{SCREEN}: CIRCLE is not a string literal split with no arguments")
+    # That assignment must be the file's only binding of the name: another, at any depth
+    # (augmented, annotated, in a loop, a def, a parameter, an import, a
+    # `global`, a pattern's capture or **rest, or a star import after it), a mutating method
+    # of it, as CIRCLE.append, or a store or deletion through it is refused, rather than
+    # counted as if the literal were the list the screen uses. What reaches the list by
+    # another name (globals(), an alias, exec) is left to the review of Audit/, a protected
+    # path.
+    refuse_other_bindings(tree, SCREEN, "CIRCLE", {target}, assigned[0], "its one assignment",
+                          LIST_MUTATORS)
+    names = value.func.value.value.split()
+    if len(names) != len(set(names)):
+        raise ValueError(f"{SCREEN}: CIRCLE names a rule twice")
+    # The prose counts how many of the certificate's axioms are in the list, so a name that
+    # is not one, as a rule since proved, is refused.
+    axioms = lock_table(root, "axioms")
+    unknown = [name for name in names if name not in axioms]
+    if unknown:
+        raise ValueError(f"{SCREEN}: CIRCLE names what is not an axiom of "
+                         f"Certificate/axioms.lock: {', '.join(unknown)}")
+    return len(names)
+
+
+def superposition_dependency_checks(root):
+    """Count the guarded #print axioms pins in Audit/Superposition.lean, outside comments and
+    strings."""
+    # check_fidelity imports this module too, so its reader of a Lean file's bytes is
+    # imported here; neither import runs a check.
+    from check_fidelity import LONE_CR, lean_text
+
+    text = source(root, SUPERPOSITION, lean_text)
+    if lone := LONE_CR.search(text):
+        raise ValueError(f"{SUPERPOSITION}:{text.count(chr(10), 0, lone.start()) + 1}: a lone "
+                         "carriage return, which Lean does not end a `--` comment at")
+    # read_lean reads a comment or a string that never closes on to the end of the file
+    # without counting it unsure, so a line of code is set after the end: it is blanked
+    # only when something the file opens is left open. It is taken off before counting.
+    code, unsure = heath.read_lean(text + "\nend")
+    if unsure or not code.endswith("\nend"):
+        raise ValueError(f"{SUPERPOSITION}: cannot read every comment and string for certain")
+    code = code.removesuffix("\nend")
+    # read_lean leaves a «…» name's text as code, so a `#print axioms` could stand in one.
+    if (quoted := code.find("«")) >= 0:
+        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quoted) + 1}: a «…» name, "
+                         "whose text is read as code")
+    if quotation := SYNTAX_QUOTATION.search(code):
+        raise ValueError(f"{SUPERPOSITION}:{code.count(chr(10), 0, quotation.start()) + 1}: "
+                         "a syntax quotation, whose commands are not run")
+    pins = len(AXIOM_PIN.findall(code))
+    if pins != len(PRINT_AXIOMS.findall(code)):
+        raise ValueError(f"{SUPERPOSITION}: a `#print axioms` that is not a guarded pin of one "
+                         "name, a bare `#guard_msgs in` then `#print axioms <name>`")
+    return pins
+
+
+def model_statement_mutations(root):
+    """Count the module-level M.append calls of tests/model/mutations.py, each one planted
+    mutation, parsed with ast, never imported or run."""
+    tree = python_module(root, MUTATIONS)
+    bound = [index for index, node in enumerate(tree.body) if isinstance(node, ast.Assign)
+             and any(isinstance(target, ast.Name) and target.id == "M"
+                     for target in node.targets)]
+    if len(bound) != 1 or len(tree.body[bound[0]].targets) != 1 or not (
+            isinstance(tree.body[bound[0]].value, ast.List)
+            and not tree.body[bound[0]].value.elts):
+        raise ValueError(f"{MUTATIONS}: expected one module-level assignment M = [] alone")
+    start = bound[0]
+    appends = []
+    for node in tree.body[start + 1:]:
+        call = node.value if isinstance(node, ast.Expr) else None
+        if (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+                and call.func.attr == "append" and isinstance(call.func.value, ast.Name)
+                and call.func.value.id == "M"):
+            if len(call.args) != 1 or isinstance(call.args[0], ast.Starred) or call.keywords:
+                raise ValueError(f"{MUTATIONS}:{node.lineno}: M.append is given other than "
+                                 "one mutation")
+            appends.append(call.func)
+    # As for the screen's CIRCLE: the assignment and the module-level appends after it are
+    # the only bindings or changes of M; reads through it are permitted. What reaches the
+    # list by another name is left to the review of tests/, a protected path.
+    refuse_other_bindings(tree, MUTATIONS, "M", {tree.body[start].targets[0], *appends}, start,
+                          "its one assignment and the module-level appends after it",
+                          mutating_methods=LIST_MUTATORS)
+    return len(appends)
+
+
+def rules_now_proved(root):
+    """Count the rows of the tables of rules in FORMALIZATION.md's "Rules now proved", each
+    naming one theorem, none twice."""
+    text = source(root, FORMALIZATION, partial(Path.read_text, encoding="utf-8"))
+    # Each count marker's value is taken out first: the count never rests on a value the
+    # generator writes, so a marker can stand in the file without a cycle.
+    for span in reversed(markers(text, FORMALIZATION)):
+        text = text[:span.value_start] + text[span.value_end:]
+    lines = text.split("\n")
+    enclosed, comment, fence = [], False, None
+    for line in lines:
+        enclosed.append(comment or fence is not None)
+        marker = FENCE.match(line)
+        marker_visible = not comment
+        if fence is not None:
+            if (marker and marker.group(1)[0] == fence[0]
+                    and len(marker.group(1)) >= len(fence)
+                    and not line[marker.end():].strip()):
+                fence = None
+            continue
+        position = 0
+        while True:
+            if comment:
+                end = line.find("-->", position)
+                if end < 0:
+                    break
+                comment = False
+                position = end + 3
+            else:
+                opening = line.find("<!--", position)
+                if opening < 0:
+                    break
+                comment = True
+                position = opening + 4
+        if marker_visible and marker:
+            fence = marker.group(1)
+    starts = []
+    for i, line in enumerate(lines):
+        if line.rstrip() != RULES_PROVED:
+            continue
+        if enclosed[i]:
+            raise ValueError(f"{FORMALIZATION}:{i + 1}: {RULES_PROVED!r} is inside a comment "
+                             "or fenced code")
+        starts.append(i)
+    if len(starts) != 1:
+        raise ValueError(f"{FORMALIZATION}: expected one heading {RULES_PROVED!r}")
+    names, table = {}, None
+    for number, line in enumerate(lines[starts[0] + 1:], starts[0] + 2):
+        where = f"{FORMALIZATION}:{number}"
+        if table == "header":
+            if line.rstrip() != RULES_DELIMITER:
+                raise ValueError(f"{where}: expected the delimiter row {RULES_DELIMITER!r}")
+            table = "rows"
+            continue
+        if RULES_BOUNDARY.match(line):
+            break
+        if FENCE.match(line) or "<!--" in without_markers(line) or UNDERLINE.fullmatch(line):
+            raise ValueError(f"{where}: fenced code, a comment or an underline, which may hide "
+                             "or end a table, in the section of rules now proved")
+        if not line.startswith("|"):
+            if table == "rows" and line.strip():
+                raise ValueError(f"{where}: a line that continues a table of rules as a row")
+            if "|" in line:
+                raise ValueError(f"{where}: a table row that does not open with '|'")
+            table = None
+        elif table is None:
+            if line.rstrip() != RULES_HEADER:
+                raise ValueError(f"{where}: a table that is not a table of rules now proved")
+            table = "header"
+        else:
+            row = RULE_ROW.fullmatch(line.rstrip())
+            if row is None:
+                raise ValueError(f"{where}: a row that is not exactly three cells with one "
+                                 "theorem's name in backticks")
+            if row[1] in names:
+                raise ValueError(f"{where}: `{row[1]}` is named twice, first at line "
+                                 f"{names[row[1]]}")
+            names[row[1]] = number
+    if table == "header":
+        raise ValueError(f"{FORMALIZATION}:{len(lines) + 1}: expected the delimiter row "
+                         f"{RULES_DELIMITER!r}")
+    return len(names)
+
+
 COUNTS = {
     "axioms": axioms,
     "tacit-rules": tacit_rules,
@@ -312,6 +589,10 @@ COUNTS = {
     **{f"reviews:{book}:full": partial(full_reviews, book=book) for book in heath.BOOKS},
     "acceptance:failing": acceptance_failing,
     "acceptance:passing": acceptance_passing,
+    "screen-circle-rules": screen_circle_rules,
+    "superposition-dependency-checks": superposition_dependency_checks,
+    "model-statement-mutations": model_statement_mutations,
+    "rules-now-proved": rules_now_proved,
 }
 
 
@@ -334,9 +615,7 @@ def number_word(n):
                     + ((" and " if rest < 100 else " ") + number_word(rest) if rest else ""))
 
 
-START = re.compile(r"<!--\s*/?\s*count\b", re.I)
-OPEN = re.compile(r"<!-- count:([A-Za-z0-9]+(?:[-:][A-Za-z0-9]+)*) -->")
-CLOSE = "<!-- /count -->"
+START, OPEN, CLOSE = heath.COUNT_START, heath.COUNT_OPEN, heath.COUNT_CLOSE
 
 
 @dataclass(frozen=True)
@@ -382,7 +661,8 @@ def markers(text, path):
 
 def whole_output(path):
     """Whether render.py owns the whole Markdown file."""
-    return path.parts[0] == "book" or path.as_posix() in {"CERTIFICATE.md", "GRAPH.md"}
+    return any(path.as_posix() == name or name.endswith("/") and path.as_posix().startswith(name)
+               for name in heath.GENERATED_WHOLE)
 
 
 def historical(path):
@@ -394,22 +674,18 @@ def historical(path):
                               or re.fullmatch(r"gaps-book-[IVX]+\.md", path.name)))))
 
 
-README_SCOPE_MARKERS = re.compile(
-    r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
-PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+README_SCOPE_MARKERS = heath.REGIONS["README.md"]
+PROGRAM_STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 
 
 def partial_output_region(path, text, span):
     """Name a renderer-owned region containing a count marker, if there is one."""
-    if path == Path("README.md"):
-        pattern, name = README_SCOPE_MARKERS, "README.md scope region"
-    elif path == Path("docs/PROGRAM.md"):
-        pattern, name = PROGRAM_STATUS_MARKERS, "docs/PROGRAM.md status region"
-    else:
+    pattern = heath.REGIONS.get(path.as_posix())
+    if pattern is None:
         return None
     if any(span.start < region.end() and region.start() < span.end
            for region in pattern.finditer(text)):
-        return name
+        return f"{path.as_posix()} {heath.MARKER_WORDS[path.as_posix()]} region"
     return None
 
 

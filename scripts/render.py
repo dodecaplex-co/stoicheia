@@ -590,10 +590,14 @@ def figure_note(record):
     record's `[figure]`, whose keys review/SCHEMA.md defines: its `case`, as "Drawn for one
     case: D between C and B, as in Heath's figure." (one full stop, whether or not the case
     ends with its own), or as "Drawn for every case: …" where `every_case` is true, the
-    figure drawing every case the theorem covers (III.25's three side by side); then its
-    `note`. Nothing when the record gives neither."""
+    figure drawing every case the theorem covers (III.25's three side by side), or as
+    "Drawn for some of its cases: …" where `some_cases` is true, the figure drawing more
+    than one case but not every one (III.35's two of Euclid's, and none of Simson's); then
+    its `note`. Nothing when the record gives neither."""
     figure = (record or {}).get("figure") or {}
-    lead = "Drawn for every case" if figure.get("every_case") else "Drawn for one case"
+    lead = ("Drawn for every case" if figure.get("every_case")
+            else "Drawn for some of its cases" if figure.get("some_cases")
+            else "Drawn for one case")
     said = ([f"{lead}: {figure['case'].rstrip('.')}."] if figure.get("case") else [])
     return " ".join(said + ([figure["note"]] if figure.get("note") else []))
 
@@ -840,7 +844,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         summary = f"The {len(tacit)} {rules} beneath this proof" + (
             ", counting those of the propositions it cites" if cited else "")
         if only:
-            marks = sorted(set(only.values()), key=lambda m: m != "porism")
+            marks = sorted(dict.fromkeys(only.values()), key=lambda m: m != "porism")
             where = " and ".join("its porism" if m == "porism" else m for m in marks)
             # Inside <summary>, Markdown's backticks are not read: write <code>.
             where = re.sub(r"`([^`]+)`", r"<code>\1</code>", where)
@@ -2399,7 +2403,12 @@ def certificate_intro(facts, records):
         "[`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` gives "
         "exactly which postulates, definitions and tacit rules each proof rests on, and a "
         "walk through the same proofs gives the propositions it cites and the Common "
-        "Notions. None of this is typed in by hand. Definitions that Lean defines rather "
+        "Notions. The \"C.N.\" column counts citations, not use: it lists a Common Notion "
+        "when the proof, or something beneath it, names that Notion's lemma in "
+        "[`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean), or, for Common "
+        "Notion 4, the coincidence step of superposition. A proof that reasons with equals "
+        "by Lean's own logic, without naming the lemma, does not count it. "
+        "None of this is typed in by hand. Definitions that Lean defines rather "
         "than assumes (the right angle and parallels of Book I, Book II's rectangle and "
         "square, Book III's equal circles and touching) are not assumptions, and so do not "
         f"appear: the only definition taken as an axiom is {assumed}. Of the postulates, "
@@ -2664,21 +2673,29 @@ def certificate(facts, docs, records):
 
 
 # README.md is generated in part: each book's completion summary stands between
-# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand".
-SCOPE_MARKERS = generated_counts.README_SCOPE_MARKERS
+# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand". The
+# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, the one
+# account of them (#578), and each page is filled through heath.fill.
+SCOPE_MARKERS = heath.REGIONS["README.md"]
+
+
+def fill_regions(path, text, write):
+    """heath.fill, with a fault in the markers as SystemExit naming the file and the
+    fault: render.py writes between markers only where heath.regions finds each region
+    once and whole, and main() fills the three pages before it writes anything."""
+    try:
+        return heath.fill(path, text, write)
+    except heath.RegionError as error:
+        raise SystemExit(f"{error}; render.py writes between these markers, so nothing "
+                         "was rendered") from None
 
 
 def readme(text, facts, records):
     """README.md's text with every book's summary filled in between its markers; the
-    rest of the file is left as it is."""
-    def fill(m):
-        book = m.group(2)
-        if book not in BOOKS:
-            return m.group(0)
-        summary = book_summary(book, facts, records,
-                               lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md")
-        return m.group(1) + summary + m.group(4)
-    return SCOPE_MARKERS.sub(fill, text)
+    rest of the file is left as it is. SystemExit unless it holds one region for each
+    book, well formed (heath.regions)."""
+    return fill_regions("README.md", text, lambda book, body: book_summary(
+        book, facts, records, lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md"))
 
 
 # docs/PROGRAM.md is generated in part: its status table, one row for each book, stands
@@ -2687,7 +2704,7 @@ def readme(text, facts, records):
 # file of the edition holds, from docs/program.toml, kept by hand.
 PROGRAM = ROOT / "docs" / "PROGRAM.md"
 PROGRAM_TOML = ROOT / "docs" / "program.toml"
-STATUS_MARKERS = generated_counts.PROGRAM_STATUS_MARKERS
+STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 PROGRAM_STAGES = ("brief", "statements", "proofs", "voice", "records", "acceptance",
                   "released")
 PROGRAM_KEYS = {"stage", "outside", "tag", "release"}
@@ -2736,18 +2753,17 @@ def load_program():
 def record_current(ref, record, facts):
     """Do a record's stamps still match the statements in facts.json, its Lean file and
     its own text (review/SCHEMA.md)? check_fidelity.py fails when they do not; the status
-    table counts them. A record with no `text` stamp yet counts as current, as the check
-    only names it (docs/WORKFLOW.md, section 6)."""
+    table counts them. A record with no `text` stamp is not current, as one with no
+    fingerprint or `lean` is not, and check_fidelity.py fails it."""
     r = heath.parse_ref(ref)
     try:
         want = heath.review_fingerprint({"propositions": list(facts.values())}, ref)
     except KeyError:
         return False
-    text = record["review"].get("text")
     return (record["statement"].get("fingerprint") == want and
             record["review"].get("lean") == heath.file_hash(heath.lean_path(r.book, r.n)) and
-            (text is None
-             or text == heath.text_hash(heath.review_path(r.book, r.n).read_text())))
+            record["review"].get("text")
+            == heath.text_hash(heath.review_path(r.book, r.n).read_text()))
 
 
 def propositions_cell(book, count, facts):
@@ -2823,19 +2839,17 @@ def status_table(facts, records, program):
 
 def program_page(text, facts, records, program):
     """PROGRAM.md's text with the status table filled in between its markers; the rest
-    of the file is left as it is."""
-    if not STATUS_MARKERS.search(text):
-        raise SystemExit("docs/PROGRAM.md has lost its <!-- status --> and <!-- /status --> "
-                         "markers, between which render.py writes the status table")
-    table = status_table(facts, records, program)
-    return STATUS_MARKERS.sub(lambda m: m.group(1) + "\n" + table + "\n\n" + m.group(3), text,
-                              count=1)
+    of the file is left as it is. SystemExit unless it holds one status region, well
+    formed (heath.regions)."""
+    return fill_regions("docs/PROGRAM.md", text, lambda name, body: "\n" + status_table(
+        facts, records, program) + "\n\n")
 
 
 # docs/WORKFLOW.md is generated in part: section 8's first command block, CI's `check`
 # job's sequence, stands between `<!-- checks -->` and `<!-- /checks -->`, written from the
-# registry of checks, one file per check in checks/ (scripts/registry.py, whose MARKERS and
-# section8_block these are). The rest of the page is written by hand.
+# registry of checks, one file per check in checks/ (scripts/registry.py, whose
+# section8_block this is; the markers are heath.REGIONS's). The rest of the page is written
+# by hand.
 WORKFLOW = ROOT / "docs" / "WORKFLOW.md"
 
 
@@ -2849,13 +2863,10 @@ def load_checks():
 
 def workflow_page(text, checks):
     """WORKFLOW.md's text with section 8's first command block written between its
-    markers from the registry's entries; the rest of the file is left as it is."""
-    if len(registry.MARKERS.findall(text)) != 1:
-        raise SystemExit("docs/WORKFLOW.md must hold one <!-- checks --> and <!-- /checks --> "
-                         "pair, between which render.py writes section 8's first command "
-                         "block from the registry of checks")
-    block = registry.section8_block(checks)
-    return registry.MARKERS.sub(lambda m: m.group(1) + block + m.group(3), text, count=1)
+    markers from the registry's entries; the rest of the file is left as it is.
+    SystemExit unless it holds one checks region, well formed (heath.regions)."""
+    return fill_regions("docs/WORKFLOW.md", text,
+                        lambda name, body: registry.section8_block(checks))
 
 
 DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
@@ -3365,6 +3376,16 @@ def main() -> None:
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
+    # The pages generated in part are filled before anything is written, each on the text
+    # its count markers leave it: so a fault in their markers (heath.regions), or in
+    # docs/program.toml, still renders nothing, as a fault in the counts or the registry
+    # does, and each is written after the pages written whole, as before.
+    readme_path = ROOT / "README.md"
+    parts = {readme_path: readme(changes.get(readme_path, read_text(readme_path)), facts,
+                                 records),
+             PROGRAM: program_page(changes.get(PROGRAM, read_text(PROGRAM)), facts, records,
+                                   load_program()),
+             WORKFLOW: workflow_page(changes.get(WORKFLOW, read_text(WORKFLOW)), checks)}
     for path, text in changes.items():
         write_text(path, text)
     for book, (count, titles) in BOOKS.items():
@@ -3378,19 +3399,9 @@ def main() -> None:
     write_text(ROOT / "book" / "names.md", names_page(facts, records))
     write_text(ROOT / "CERTIFICATE.md", certificate(facts, docs, records))
     write_text(ROOT / "GRAPH.md", graph(facts))
-    path = ROOT / "README.md"
-    text = read_text(path)
-    filled = readme(text, facts, records)
-    if filled != text:
-        write_text(path, filled)
-    text = read_text(PROGRAM)
-    filled = program_page(text, facts, records, load_program())
-    if filled != text:
-        write_text(PROGRAM, filled)
-    text = read_text(WORKFLOW)
-    filled = workflow_page(text, checks)
-    if filled != text:
-        write_text(WORKFLOW, filled)
+    for path, filled in parts.items():
+        if filled != read_text(path):
+            write_text(path, filled)
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
           "scope summaries, PROGRAM.md's status table and WORKFLOW.md's check sequence")
 

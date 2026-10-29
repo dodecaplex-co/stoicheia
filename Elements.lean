@@ -135,12 +135,14 @@ import Elements.BookII.Prop14
 import Elements.BookIII.Squares
 import Elements.BookIII.Prop01
 import Elements.BookIII.Prop02
+import Elements.BookIII.Feet
 import Elements.BookIII.Prop03
 import Elements.BookIII.Prop04
 import Elements.BookIII.Prop05
 import Elements.BookIII.Prop06
 import Elements.BookIII.Prop07
 import Elements.BookIII.Prop08
+import Elements.BookIII.Cutting
 import Elements.BookIII.Prop09
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop11

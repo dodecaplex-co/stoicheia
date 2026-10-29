@@ -62,9 +62,9 @@ If either changes, the message changes, `#guard_msgs` fails, and so does the bui
 module of `Model` is imported here. `Model.euclidean_laws`, which `Model/Assembly.lean`
 generates from every theorem that proves a law in the plane, is audited after them, and
 `Model.model_exists` last, so a law's theorem is audited through it as soon as the generator
-gathers it; the theorems listed one by one before it are every law's, `exists_centre`
-among them, the copies kept under suffixed names, and `circlesMeet_self`.
-The 40 retired rules keep their individual audits as derived facts even though the
+gathers it; the theorems listed one by one before it are every law's, `exists_centre` and
+`radius_ne_zero` among them, the copies kept under suffixed names, and `circlesMeet_self`.
+The 41 retired rules keep their individual audits as derived facts even though the
 generated assembly no longer has assumption fields for them.
 -/
 
@@ -387,6 +387,12 @@ info: 'Model.Euclidean.centre_inside_circles' depends on axioms: [propext, Class
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.centre_inside_circles
+
+/--
+info: 'Model.Euclidean.radius_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.radius_ne_zero
 
 /--
 info: 'Model.Euclidean.inside_not_on_circles' depends on axioms: [propext, Classical.choice, Quot.sound]

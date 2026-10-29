@@ -3,9 +3,12 @@ import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Helpers
 import Elements.BookI.Prop08
+import Elements.BookI.Prop13
+import Elements.BookI.Prop14
 import Elements.BookI.Prop26
 import Elements.BookI.Prop32
 import Elements.BookIII.Prop02
+import Elements.BookIII.Prop10
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop22
 import Elements.BookIII.Prop23
@@ -22,14 +25,20 @@ carries it out.
 segments coincide (`Arc.Congruent`), one map putting A on C and B on D, the segment on the
 segment and the circumference on the circumference, keeping every distance between their
 points. No magnitude of a segment is defined. The proof keeps Euclid's application of one
-segment to the other (`placement`: A on C, AB on CD, B on D), and argues the coincidence of
-the circumferences by the angles, point by point (`Prop23.point`, III.23's companion), in
-place of his reductio. Euclid refutes a segment falling within the other, or outside it, by
-a tacit reference to III.23, as Heath notes (vol. 2, p. 54), and one falling awry by III.10;
-the Lean settles every point directly, and needs neither the reductio nor III.10. The points
-of the base are settled by the lemma before it, `Prop24.chord_cases`: a point of the straight
-line through two points of a circle is on the circle exactly when it is one of them, and
-within it exactly when it lies between them, by III.2.
+segment to the other (`placement`: A on C, AB on CD, B on D), and his reductio. The applied
+segment is a segment of a circle through C and D, the moved circle: the application carries
+the circle AEB onto it, each point keeping its distance from the centre, which has a place
+of its own (`Prop24.moved`, with `Prop24.across` for a centre across AB from E). Suppose
+the moved circle is not CFD. Euclid refutes a segment falling within the other, or outside
+it, by a tacit reference to III.23, as Heath notes (vol. 2, p. 54): the Lean takes the image
+of E, at which CD subtends the angle at F, so that it is neither within CFD nor outside it,
+by III.23's companion `Prop23.point`. It is then on CFD, a third point common to the two
+circles with C and D, and by III.10 they are one circle, as Euclid refutes a segment falling
+awry. So the moved circle is CFD, and the segments coincide.
+
+The lemma before the theorem, `Prop24.chord_cases`, says where the points of a straight line
+through two points of a circle lie: on the circle exactly at the two, and within it exactly
+between them, by III.2. `Prop24.image` uses it, after the theorem.
 
 After it come its companions: `Prop24.equalCircles`, that the circles are equal and the
 circumferences equal in measure, proved by the radii, an alternative to Euclid's argument;
@@ -43,12 +52,12 @@ open Tacit
 
 /-- **A straight line in a circle, along its own line.** For two different points A, B of a
 circle, and a point P of the straight line AB: P is on the circle exactly when
-it is A or B, and within the circle exactly when it lies between them. Euclid takes it for
-granted when AB coincides with CD: the ends go to the ends, and the points between to points
-between, so that the base of one segment falls on the base of the other. A point between A
-and B is within the circle by III.2, and so no third point of the straight line is on the
-circle (`Prop2.triangle`); a point within the circle on AB lies between A and B by System E's
-Circle 1 (`between_of_inside_chord`). [III. 2] -/
+it is A or B, and within the circle exactly when it lies between them. `Prop24.image` uses
+it, after the theorem, to keep the image of a point of an arc off its base; in the theorem the
+points of the base are settled, as the rest are, by their distances from the centre's place
+(`Prop24.moved`). A point between A and B is within the circle by III.2, and so no third
+point of the straight line is on the circle (`Prop2.triangle`); a point within the circle on
+AB lies between A and B by System E's Circle 1 (`between_of_inside_chord`). [III. 2] -/
 theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
     (hAB : A ≠ B) (hP : Collinear A B P) :
     (OnCircle P α ↔ P = A ∨ P = B) ∧ (InsideCircle P α ↔ Between A P B) := by
@@ -62,6 +71,168 @@ theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (h
   · obtain ⟨L, hA_L, hB_L, hP_L⟩ := hP
     exact between_of_inside_chord hP_L hA_L hB_L hin hA hB hAB
 
+/-- **A point across the base has a place too.** Let a map place E's side of AB, with AB
+itself, on F's side of CD, with CD, as the application does: A on C, B on D, every distance
+kept, each point as far from C and D as it was from A and B. A point M across AB from E is
+not placed by it; but the application of M's side of AB to the other side of CD places it
+(`placement`), at a point as far from the image of each point P of E's side, or of AB, as M
+is from P. Euclid applies the whole segment, its circle with it, and takes this for granted.
+
+On AB the two applications agree, a point of CD being fixed by its distances from C and D
+(`Placement.unique`). For P off AB, the finite straight line MP crosses AB at a point X, and
+K, an end of AB other than X, is off MP. The triangles MXK and PXK keep their sides, so the
+angles at X are kept [I. 8]; the angles MXK, KXP are together two right angles [I. 13], so
+the images of M and P lie on one straight line through the image of X, which is between
+them [I. 14], and the images are as far apart as MX and XP together, which is MP. -/
+theorem Prop24.across {A B C D E F M : Point} {f : Point → Point}
+    (hF : ¬ Collinear C D F) (hAB : ‖A B‖ = ‖C D‖)
+    (hplace : Places f (OnSideOrLine · E A B) (OnSideOrLine · F C D))
+    (hf : ∀ P : Point, OnSideOrLine P E A B → ‖C (f P)‖ = ‖A P‖ ∧ ‖D (f P)‖ = ‖B P‖ ∧
+      (SameSideOf P E A B ↔ SameSideOf (f P) F C D) ∧ (Between A P B ↔ Between C (f P) D))
+    (hM : OppositeSidesOf M E A B) :
+    ∃ O : Point, ∀ P : Point, OnSideOrLine P E A B → ‖O (f P)‖ = ‖M P‖ := by
+  have hABM : Triangle A B M := hM.triangle
+  have hCDF : Triangle C D F := hF
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hABM.ne₁₂
+  obtain ⟨N, hC_N, hD_N⟩ := Postulate1 C D hCDF.ne₁₂
+  obtain ⟨Y, hY, -⟩ := exists_oppositeSidesOf hCDF []
+  /- M's side of AB is applied to Y's side of CD, the other side from F. -/
+  obtain ⟨g, -, -, ⟨hginto, -, hgdist⟩, hg⟩ := placement hABM hY.triangle hAB
+  have hMM : OnSideOrLine M M A B := Or.inl (sameSideOf_self hABM)
+  /- On AB the two applications agree. -/
+  have hsame : ∀ X : Point, OnLine X L → g X = f X ∧ Collinear C D (f X) := by
+    intro X hX_L
+    have hX : Collinear A B X := ⟨L, hA_L, hB_L, hX_L⟩
+    obtain ⟨g₁, g₂, gside, -⟩ := hg X (Or.inr hX)
+    obtain ⟨f₁, f₂, fside, -⟩ := hf X (Or.inr hX)
+    have hgX : Collinear C D (g X) := by
+      rcases hginto X (Or.inr hX) with h | h
+      · exact absurd hX (gside.mpr h).triangle
+      · exact h
+    have hfX : Collinear C D (f X) := by
+      rcases hplace.1 X (Or.inr hX) with h | h
+      · exact absurd hX (fside.mpr h).triangle
+      · exact h
+    exact ⟨Placement.unique hF (Or.inr hgX) (Or.inr hfX) (g₁.trans f₁.symm)
+      (g₂.trans f₂.symm), hfX⟩
+  refine ⟨g M, fun P hP => ?_⟩
+  rcases hP with hPE | hPl
+  case inr =>
+    /- P on AB: the application of M's side places it too. -/
+    obtain ⟨L', hA_L', hB_L', hP_L'⟩ := hPl
+    have hP_L : OnLine P L := line_unique hABM.ne₁₂ hA_L' hB_L' hA_L hB_L ▸ hP_L'
+    rw [← (hsame P hP_L).1]
+    exact hgdist M P hMM (Or.inr ⟨L, hA_L, hB_L, hP_L⟩)
+  /- P on E's side: MP crosses AB at X. -/
+  have hMP : OppositeSidesOf M P A B := (hPE.trans_opposite hM.symm).symm
+  obtain ⟨X, hX_L, hMXP⟩ := OppositeSides.exists_between (hMP.oppositeSides hA_L hB_L)
+  have hM_L : ¬ OnLine M L := hABM.off_line hA_L hB_L
+  have hP_L : ¬ OnLine P L := hPE.triangle.off_line hA_L hB_L
+  /- K, an end of AB other than X. -/
+  obtain ⟨K, hK_L, hKX⟩ : ∃ K : Point, OnLine K L ∧ K ≠ X := by
+    by_cases hXA : X = A
+    · exact ⟨B, hB_L, fun e => hABM.ne₁₂ (hXA.symm.trans e.symm)⟩
+    · exact ⟨A, hA_L, Ne.symm hXA⟩
+  have hXcol : Collinear A B X := ⟨L, hA_L, hB_L, hX_L⟩
+  have hKcol : Collinear A B K := ⟨L, hA_L, hB_L, hK_L⟩
+  obtain ⟨hgX, hX'⟩ := hsame X hX_L
+  obtain ⟨hgK, hK'⟩ := hsame K hK_L
+  /- The images: X′, K′ on CD, M′ on Y's side, P′ on F's side. -/
+  have hM'Y : SameSideOf (g M) Y C D := ((hg M hMM).2.2.1).mp (sameSideOf_self hABM)
+  have hP'F : SameSideOf (f P) F C D := ((hf P (Or.inl hPE)).2.2.1).mp hPE
+  have hM'P' : OppositeSidesOf (g M) (f P) C D :=
+    (hP'F.trans_opposite (hM'Y.trans_opposite hY).symm).symm
+  have hX'_N : OnLine (f X) N := onLine_of_collinear hCDF.ne₁₂ hX' hC_N hD_N
+  have hK'_N : OnLine (f K) N := onLine_of_collinear hCDF.ne₁₂ hK' hC_N hD_N
+  /- The sides of the triangles MXK and PXK, and of their images. -/
+  have dXM : ‖X M‖ = ‖(f X) (g M)‖ := by
+    rw [← hgX]; exact (hgdist X M (Or.inr hXcol) hMM).symm
+  have dXK : ‖X K‖ = ‖(f X) (f K)‖ :=
+    (hplace.2.2 X K (Or.inr hXcol) (Or.inr hKcol)).symm
+  have dMK : ‖M K‖ = ‖(g M) (f K)‖ := by
+    rw [← hgK]; exact (hgdist M K hMM (Or.inr hKcol)).symm
+  have dXP : ‖X P‖ = ‖(f X) (f P)‖ :=
+    (hplace.2.2 X P (Or.inr hXcol) (Or.inl hPE)).symm
+  have dPK : ‖P K‖ = ‖(f P) (f K)‖ :=
+    (hplace.2.2 P K (Or.inl hPE) (Or.inr hKcol)).symm
+  have hX'K' : f X ≠ f K := fun e => len_ne_zero hKX.symm (dXK.trans (by rw [e, len_self]))
+  have hM'_N : ¬ OnLine (g M) N := hM'Y.triangle.off_line hC_N hD_N
+  have hP'_N : ¬ OnLine (f P) N := hP'F.triangle.off_line hC_N hD_N
+  /- The angles at X are kept [I. 8]. -/
+  have aM : ∠ M X K = ∠ (g M) (f X) (f K) :=
+    BookI.Prop8 (Triangle.of_line hX_L hK_L hKX.symm hM_L).acb
+      (Triangle.of_line hX'_N hK'_N hX'K' hM'_N).acb dXM dXK dMK
+  have aP : ∠ P X K = ∠ (f P) (f X) (f K) :=
+    BookI.Prop8 (Triangle.of_line hX_L hK_L hKX.symm hP_L).acb
+      (Triangle.of_line hX'_N hK'_N hX'K' hP'_N).acb dXP dXK dPK
+  /- The angles MXK, KXP are two right angles [I. 13]; K is off MP, which meets AB at X
+     alone. -/
+  have hK_MP : ¬ Collinear M P K := by
+    rintro ⟨Q, hM_Q, hP_Q, hK_Q⟩
+    have hX_Q : OnLine X Q := on_line_of_between_ends hMXP hM_Q hP_Q
+    exact hM_L (line_unique hKX hK_Q hX_Q hK_L hX_L ▸ hM_Q)
+  have h13 := BookI.Prop13 hMXP hK_MP
+  rw [aM, angle_symm hKX (ne_of_between (between_symm hMXP)), aP] at h13
+  /- So the images of M and P are on one straight line through the image of X, which is
+     between them [I. 14]. -/
+  have hM'X' : g M ≠ f X := fun e => hM'_N (e ▸ hX'_N)
+  have hP'X' : f P ≠ f X := fun e => hP'_N (e ▸ hX'_N)
+  have h14 : Between (g M) (f X) (f P) :=
+    BookI.Prop14 (OppositeSidesOf.of_line hX'K'.symm hK'_N hX'_N
+      (hM'P'.oppositeSides hC_N hD_N))
+      (by rw [angle_symm hX'K'.symm hM'X', angle_symm hX'K'.symm hP'X']; exact h13)
+  rw [← len_add_of_between h14, len_symm (g M) (f X), ← dXM, ← dXP, len_symm X M]
+  exact len_add_of_between hMXP
+
+/-- **The applied segment is a segment of a circle.** When the segment AEB is applied to CD,
+A on C and B on D, as the application does (`placement`), there is a circle through C and D,
+the moved circle, onto which it carries the circle AEB: a point on E's side of AB, or on AB,
+is on the circle AEB, or within it, exactly when its image is on the moved circle, or within
+it. Euclid takes this for granted when he says that the applied segment, if it does not
+coincide with CFD, falls within it, outside it, or awry: the applied figure is still a
+segment of a circle on CD.
+
+The moved circle is drawn about the place of the centre of AEB [Post. 3], through C. The
+centre's place is as far from the image of each point as the centre is from the point: its
+image, when the centre is on E's side of AB or on AB, and otherwise its place across CD
+(`Prop24.across`). So each point is as far from the centre's place, compared with C, as it was
+from the centre, compared with A, and is on or within the one circle as it was on or within
+the other (Definition I.15 and System E's Diagram-segments 3 and 4). -/
+theorem Prop24.moved {A B C D E F : Point} {AEB : Circle} {f : Point → Point}
+    (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : ¬ Collinear A B E)
+    (hF : ¬ Collinear C D F) (hAB : ‖A B‖ = ‖C D‖) (hAC : f A = C) (hBD : f B = D)
+    (hplace : Places f (OnSideOrLine · E A B) (OnSideOrLine · F C D))
+    (hf : ∀ P : Point, OnSideOrLine P E A B → ‖C (f P)‖ = ‖A P‖ ∧ ‖D (f P)‖ = ‖B P‖ ∧
+      (SameSideOf P E A B ↔ SameSideOf (f P) F C D) ∧ (Between A P B ↔ Between C (f P) D)) :
+    ∃ Γ : Circle, OnCircle C Γ ∧ OnCircle D Γ ∧ ∀ P : Point, OnSideOrLine P E A B →
+      (OnCircle P AEB ↔ OnCircle (f P) Γ) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) Γ) := by
+  have hABE : Triangle A B E := hE
+  obtain ⟨M, hM⟩ := exists_centre AEB
+  /- The centre's place, O. -/
+  obtain ⟨O, hO⟩ : ∃ O : Point, ∀ P : Point, OnSideOrLine P E A B → ‖O (f P)‖ = ‖M P‖ := by
+    by_cases hME : OnSideOrLine M E A B
+    · exact ⟨f M, fun P hP => hplace.2.2 M P hME hP⟩
+    · exact Prop24.across hF hAB hplace hf
+        (oppositeSidesOf_of_not_sameSideOf (fun h => hME (Or.inr h)) (sameSideOf_self hABE)
+          (fun h => hME (Or.inl h)))
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hABE.ne₁₂
+  have hA' : OnSideOrLine A E A B := Or.inr ⟨L, hA_L, hB_L, hA_L⟩
+  have hB' : OnSideOrLine B E A B := Or.inr ⟨L, hA_L, hB_L, hB_L⟩
+  have hOC : ‖O C‖ = ‖M A‖ := hAC ▸ hO A hA'
+  have hOC_ne : O ≠ C := fun e => len_ne_zero (ne_of_centre_of_on hM hA).symm
+    (hOC.symm.trans (by rw [e, len_self]))
+  obtain ⟨Γ, hOΓ, hCΓ⟩ := Postulate3 O C hOC_ne
+  have hmove : ∀ P : Point, OnSideOrLine P E A B →
+      (OnCircle P AEB ↔ OnCircle (f P) Γ) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) Γ) := by
+    intro P hP
+    have hd : ‖O (f P)‖ = ‖M P‖ := hO P hP
+    refine ⟨⟨fun h => ?_, fun h => ?_⟩, ⟨fun h => ?_, fun h => ?_⟩⟩
+    · exact on_circle_of_len_eq hOΓ hCΓ (by rw [hd, Definition15 hM h hA, hOC])
+    · exact on_circle_of_len_eq hM hA (by rw [← hd, Definition15 hOΓ h hCΓ, hOC])
+    · exact inside_of_len_lt hOΓ hCΓ (by rw [hd, hOC]; exact len_lt_of_inside hM hA h)
+    · exact inside_of_len_lt hM hA (by rw [← hd, ← hOC]; exact len_lt_of_inside hOΓ hCΓ h)
+  exact ⟨Γ, hCΓ, hBD ▸ (hmove B hB').1.mp hB, hmove⟩
+
 /-- Similar segments of circles on equal straight lines are equal to one another. -/
 theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
     (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
@@ -69,7 +240,6 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
     (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
     Arc.Congruent ⟨AEB, A, B, E⟩ ⟨CFD, C, D, F⟩ := by
   -- For let AEB, CFD be similar segments of circles on equal straight lines AB, CD;
-  have hA_B : A ≠ B := (show Triangle A B E from hE_AB).ne₁₂
   have hC_D : C ≠ D := (show Triangle C D F from hF_CD).ne₁₂
   -- I say that the segment AEB is equal to the segment CFD.
   -- For, if the segment AEB be applied to CFD, and if the point A be placed on C and the
@@ -78,77 +248,55 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
      of CD, with CD, keeping every distance, and A goes to C. -/
   obtain ⟨f, hAC, hBD, ⟨hinto, honto, hdist⟩, hf⟩ := placement hE_AB hF_CD hAB
   -- the point B will also coincide with the point D, because AB is equal to CD;
-  /- The placement on the equal straight lines AB, CD puts B on D. -/
   -- and, AB coinciding with CD,
-  /- The points of AB go to points of CD: a point of the base is an end, or between the ends,
-     exactly when its image is. -/
-  have hbase : ∀ P : Point, OnSideOrLine P E A B → Collinear A B P →
-      Collinear C D (f P) ∧ (P = A ∨ P = B ↔ f P = C ∨ f P = D) ∧
-        (Between A P B ↔ Between C (f P) D) := by
-    intro P hP hPl
-    obtain ⟨h₁, h₂, hside, hbet⟩ := hf P hP
-    have hcol : Collinear C D (f P) := by
-      rcases hinto P hP with h | h
-      · exact absurd hPl (hside.mpr h).triangle
-      · exact h
-    refine ⟨hcol, ⟨?_, ?_⟩, hbet⟩
-    · rintro (h | h)
-      · left; rw [h]; exact hAC
-      · right; rw [h]; exact hBD
-    · rintro (h | h)
-      · left; rw [h, len_self] at h₁; exact (eq_of_len_eq_zero h₁.symm).symm
-      · right; rw [h, len_self] at h₂; exact (eq_of_len_eq_zero h₂.symm).symm
+  /- The placement on the equal straight lines AB, CD puts B on D, and every point of AB on a
+     point of CD, as far from C and D as it was from A and B. -/
   -- the segment AEB will also coincide with CFD.
-  /- The claim is shown by the sentences that follow; the Lean begins that argument here,
-     with where the points off the base fall. A point P on E's side goes to a point on F's
-     side, and the triangles APB, C(fP)D have their three sides equal, so the angle at P is
-     the angle at its image [I. 8]. -/
-  have hang : ∀ P : Point, SameSideOf P E A B →
-      SameSideOf (f P) F C D ∧ ∠ A P B = ∠ C (f P) D := by
-    intro P hPE
-    obtain ⟨h₁, h₂, hside, -⟩ := hf P (Or.inl hPE)
-    have hQF : SameSideOf (f P) F C D := hside.mp hPE
-    exact ⟨hQF, BookI.Prop8 hPE.triangle.cab hQF.triangle.cab
-      (by rw [len_symm P A, ← h₁, len_symm C (f P)])
-      (by rw [len_symm P B, ← h₂, len_symm D (f P)]) hAB⟩
+  /- The claim is shown by the sentences that follow. The Lean begins with what Euclid takes
+     for granted in them: the applied segment is a segment of a circle through C and D, the
+     moved circle Γ, onto which the application carries the circle AEB, each point of E's
+     side of AB, or of AB, on Γ or within it exactly as it was on AEB or within it
+     (`Prop24.moved`). -/
+  obtain ⟨Γ, hCΓ, hDΓ, hmove⟩ :=
+    Prop24.moved hA hB hE_AB hF_CD hAB hAC hBD ⟨hinto, honto, hdist⟩ hf
   -- For, if the straight line AB coincide with CD but the segment AEB do not coincide with
   -- CFD,
-  -- it will either fall within it, or outside it;
-  /- In place of Euclid's reductio, the Lean argues directly, point by point, by the angles.
-     Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54);
-     here III.23's companion `Prop23.point` does that work. On F's side of CD a point is on
-     the circle CFD exactly when the angle it subtends on CD is the angle at F, and within it
-     exactly when that angle is greater; on E's side of AB, alike for AEB. The angle at each
-     point is the angle at its image, and the angles at E and F are equal, the segments being
-     similar; so no point of the arc AEB falls within CFD or outside it, and the points within
-     AEB fall within CFD, and back again. -/
-  have hoff : ∀ P : Point, SameSideOf P E A B →
-      (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
-    intro P hPE
-    obtain ⟨hQF, hPQ⟩ := hang P hPE
-    obtain ⟨on₁, in₁⟩ := Prop23.point hA hB hE hPE
-    obtain ⟨on₂, in₂⟩ := Prop23.point hC hD hF hQF
-    rw [on₁, on₂, in₁, in₂, hPQ, hsim]
-    exact ⟨Iff.rfl, Iff.rfl⟩
-  -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
-  -- impossible. [III. 10]
-  /- III.10 is not needed: the angles have settled every point of the arc, so the arc cannot
-     fall awry, and no third case is left to refute. -/
+  /- The segment AEB fails to coincide with CFD when the moved circle is not CFD: suppose
+     so. -/
+  have hΓ : Γ = CFD := by
+    refine Classical.byContradiction fun hne => ?_
+    -- it will either fall within it, or outside it;
+    /- Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54).
+       Take the image of E, a point of the applied circumference on F's side of CD. Its
+       distances from C and D are those of E from A and B, so CD subtends at it the angle
+       that AB subtends at E [I. 8], which is the angle at F, the segments being similar.
+       By III.23's companion (`Prop23.point`), a point on F's side of CD within the circle
+       CFD sees CD under a greater angle than F does, and one seeing it under the angle at F
+       is on the circle: so the image of E falls neither within CFD nor outside it. -/
+    have hEE : SameSideOf E E A B := sameSideOf_self hE_AB
+    obtain ⟨h₁, h₂, hside, -⟩ := hf E (Or.inl hEE)
+    have hE'F : SameSideOf (f E) F C D := hside.mp hEE
+    have hang : ∠ C (f E) D = ∠ C F D := by
+      rw [← hsim]
+      exact (BookI.Prop8 hEE.triangle.cab hE'F.triangle.cab
+        (by rw [len_symm E A, ← h₁, len_symm C (f E)])
+        (by rw [len_symm E B, ← h₂, len_symm D (f E)]) hAB).symm
+    obtain ⟨on₂, in₂⟩ := Prop23.point hC hD hF hE'F
+    have hwithin : ¬ InsideCircle (f E) CFD := fun h => lt_irrefl _ (hang ▸ in₂.1 h)
+    have houtside : ¬ OutsideCircle (f E) CFD := fun h => h.2 (on₂.2 hang)
+    -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
+    -- impossible. [III. 10]
+    /- So the image of E is on CFD, and it is on the moved circle, as E is on AEB. With C and
+       D it is a third point common to two circles supposed different, which III.10 forbids:
+       three common points make them one circle. -/
+    have hon : OnCircle (f E) CFD := Classical.byContradiction fun h => houtside ⟨hwithin, h⟩
+    have hEΓ : OnCircle (f E) Γ := (hmove E (Or.inl hEE)).1.mp hE
+    exact hne (Prop10 hCΓ hC hDΓ hD hEΓ hon hC_D hE'F.triangle.ne₁₃ hE'F.triangle.ne₂₃)
   -- Therefore, if the straight line AB be applied to CD, the segment AEB will not fail to
   -- coincide with CFD also;
-  /- So every point of the half-plane is on the circle AEB, or within it, exactly when its
-     image is on the circle CFD, or within it: off the base by the angles, on the base by its
-     ends and their order (`Prop24.chord_cases`). -/
-  have hcirc : ∀ P : Point, OnSideOrLine P E A B →
-      (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
-    intro P hP
-    rcases hP with hPE | hPl
-    · exact hoff P hPE
-    · obtain ⟨hQl, hends, hbet⟩ := hbase P (Or.inr hPl) hPl
-      obtain ⟨on₁, in₁⟩ := Prop24.chord_cases hA hB hA_B hPl
-      obtain ⟨on₂, in₂⟩ := Prop24.chord_cases hC hD hC_D hQl
-      rw [on₁, on₂, in₁, in₂]
-      exact ⟨hends, hbet⟩
+  /- The moved circle is CFD: every point of E's side of AB, or of AB, is on the circle AEB,
+     or within it, exactly when its image is on CFD, or within it. -/
+  rw [hΓ] at hmove
   -- therefore it will coincide with it and will be equal to it.
   /- One map puts A on C and B on D, the segment AEB on the segment CFD and the arc on the
      arc, keeping every distance between their points: the segments coincide, and are equal
@@ -157,21 +305,21 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
   · rintro P ⟨hio, hP⟩
     refine ⟨?_, hinto P hP⟩
     rcases hio with h | h
-    · exact Or.inl ((hcirc P hP).2.mp h)
-    · exact Or.inr ((hcirc P hP).1.mp h)
+    · exact Or.inl ((hmove P hP).2.mp h)
+    · exact Or.inr ((hmove P hP).1.mp h)
   · rintro Q ⟨hio, hQ⟩
     obtain ⟨P, hP, rfl⟩ := honto Q hQ
     refine ⟨P, ⟨?_, hP⟩, rfl⟩
     rcases hio with h | h
-    · exact Or.inl ((hcirc P hP).2.mpr h)
-    · exact Or.inr ((hcirc P hP).1.mpr h)
+    · exact Or.inl ((hmove P hP).2.mpr h)
+    · exact Or.inr ((hmove P hP).1.mpr h)
   · intro P Q hP hQ
     exact hdist P Q hP.2 hQ.2
   · rintro P ⟨hon, hP⟩
-    exact ⟨(hcirc P hP).1.mp hon, hinto P hP⟩
+    exact ⟨(hmove P hP).1.mp hon, hinto P hP⟩
   · rintro Q ⟨hon, hQ⟩
     obtain ⟨P, hP, rfl⟩ := honto Q hQ
-    exact ⟨P, ⟨(hcirc P hP).1.mpr hon, hP⟩, rfl⟩
+    exact ⟨P, ⟨(hmove P hP).1.mpr hon, hP⟩, rfl⟩
   · intro P Q hP hQ
     exact hdist P Q hP.2 hQ.2
   -- Therefore etc.
@@ -263,7 +411,7 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCir
       SameSideOf N Q C D → ∠ A P B = ∠ C Q D → ‖M A‖ = ‖N C‖ := by
     intro P Q hP hQ hMP hNQ hPQ
     exact Prop24.isosceles hMP.triangle hNQ.triangle hMA hNC hAB (by
-      rw [Prop20 hM hP hA hB hMP, Prop20 hN hQ hC hD hNQ, hPQ])
+      rw [Prop20.special hM hP hA hB hMP, Prop20.special hN hQ hC hD hNQ, hPQ])
   have diam : Between A M B → Between C N D → ‖M A‖ = ‖N C‖ := by
     intro hAMB hCND
     have d₁ : ‖A B‖ = ‖M A‖ + ‖M A‖ := by

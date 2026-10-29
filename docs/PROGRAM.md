@@ -71,7 +71,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 25 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 27 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -165,15 +165,13 @@ and `Prop25.meets` beside III.25 in `Elements/BookIII/Prop25.lean`. III.1's cons
 is at home in `Elements/BookIII/Prop01.lean`, with its guard, `Audit/Centre.lean` (brief
 0008's step 4). Brief 0008's step 6 is done as well: the Book III statements that only
 assumed a centre now take it inside their proofs, and III.30's halves is proved as the
-companion "III.30 halves" ([#67]). On 22 October, with the owner's approval, brief
+companion "III.30 halves" ([#67]). The brief's last step, step 7, is done too ([#59]): the unused
+tag `centre-given` has left `review/terms.toml`, and III.1's expected certificate names
+the rule, `Tacit.exists_centre`. On 22 October, with the owner's approval, brief
 0013's figures followed ([#116]): I.45 and II.14 hold for any rectilineal figure, given by
 its outline (`Prop45.outline`, `Prop14.outline`), and their records are full again. How
 work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
 
-- **The centre rule's tag revision** remains under [#59]: step 7 of frozen
-  [brief 0008](briefs/0008-centre.md) removes the unused `centre-given` from
-  `review/terms.toml`. The construction (step 3), its guard (step 4) and the restatements
-  with their records (step 6) are done.
 - **Book III's review records** are all at `full` ([#29]), as Books I and II's are
   ([#115]).
 - **Acceptance** still has failing items in its report. CI now checks every pull request
@@ -213,7 +211,7 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 - **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition,
   and on 22 Oct for the figures given by their outlines).
   The lock holds every word that the axioms' statements or the entries' statements
-  reach: <!-- count:vocabulary -->267<!-- /count -->, including the restricted calculus and its interpretation,
+  reach: <!-- count:vocabulary -->268<!-- /count -->, including the restricted calculus and its interpretation,
   as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
   A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
