@@ -25,12 +25,11 @@
   five seconds through the run. In both runs every plant was caught; the one failure, the
   same in both, was `path_faults`' check of the unplanted index, which refused the
   benchmark's own file, a `.py` under `.github/`, as it should. Four workers took 39% less
-  time, with swap unused and more than half the memory free, though the plants’ recorded
+  time, with swap unused and more than half the memory free, though the plants' recorded
   times totalled about twice the one-worker total and the run used 48% more processor
   time. So four is faster than one; whether two, three or more than four is faster still
-  was not measured, and
-  GitHub draws the runner's CPU by lot (the same run's third job drew an AMD EPYC 7763), so
-  these numbers are for the 9V45.
+  was not measured, and GitHub draws the runner's CPU by lot (the same run's third job
+  drew an AMD EPYC 7763), so these numbers are for the 9V45.
 
   So the step that runs the negative tests in ci.yml's `negative` job sets
   `STOICHEIA_NEGATIVE_WORKERS` to 4, the faster of the two counts measured and one worker
