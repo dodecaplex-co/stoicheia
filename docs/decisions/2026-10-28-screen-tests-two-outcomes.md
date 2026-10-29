@@ -4,11 +4,11 @@
   nine of the cases of [`tests/test_screen.py`](../../tests/test_screen.py): their calls
   take the background, or the tries the screen made, and their expected values follow
   the canary. Main's cases fail on that screen, so the pre-flight keeps the screen and
-  its new cases apart, and the new cases cannot land before the screen they call. On 28
-  October 2026 the coordinator ruled that it lands in three trains, with no check
-  loosened between them: first these cases, then the screen, then the old outcomes
-  retired. Nothing in Lean changes here, nor any statement, definition, lock or `--`
-  line, nor `facts.json`, nor `Audit/screen.py`.
+  the cases that require it apart: the new outcomes cannot become active before the
+  screen they call. On 28 October 2026 the coordinator ruled that it lands in three
+  trains, with no check loosened between them: first these cases, then the screen, then
+  the old outcomes retired. Nothing in Lean changes here, nor any statement, definition,
+  lock or `--` line, nor `facts.json`, nor `Audit/screen.py`.
 
   Each of the nine names its two outcomes as whole cases, each a method of its own:
   `old_`, main's case as written, for the screen without a background, and `new_`, the
