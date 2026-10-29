@@ -356,7 +356,7 @@ construction, its premises, and the diagram fact or lemma it needed.
 
 Where the page promises Euclid's argument, the Lean follows it: the propositions he uses, in
 his order, and nothing later. Some propositions can be reached by a shortcut he did not take
-(III.2 by an axiom; III.27, III.30 and III.26's measures by the circumference measure
+(III.27, III.30 and III.26's measures by the circumference measure
 alone: III.27's companion `Prop27.of_measure` at once, and III.27 itself once III.24's
 companion `Prop24.equalMeasure` has made its coinciding circumferences equal in measure);
 take his route, for his inferences are the proposition's content.

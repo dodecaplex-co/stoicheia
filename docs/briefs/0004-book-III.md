@@ -171,7 +171,9 @@ What this costs, and what it does not:
 two. Since [the decision of 28 October 2026](../decisions/2026-10-28-iii27-iii29-swap.md),
 `Prop27` and `Prop29` state Euclid's congruence reading: their equal circumferences coincide
 (`Arc.Congruent`), and congruent circumferences lie in equal circles already, so "in equal
-circles" is redundant in both, for that reason and not the measure's. The statements the
+circles" is redundant in both as stated. In `Prop27` the measure makes it redundant as
+well, for III.24's companion `Prop24.equalMeasure` asks for no equal circles; in `Prop29`
+the congruence alone does, for the measure would not. The statements the
 item speaks of are now the companions `Prop27.of_measure`, which still holds for any two
 circles, and `Prop29.of_measure`, which still needs its equal circles. Both records carry
 `angle-measure` and `redundant-hypothesis`. `Prop27`'s proof first makes its circumferences
@@ -531,10 +533,11 @@ worth naming. The first mate's report has a note on every statement.
   comes from III.24 applied to the remaining segments, not by subtraction.
 - **III.27** likewise: equal circumferences give equal angles at the circumferences, of
   any size (IV.11 needs obtuse ones), and equal angles at the centres where those stand on
-  them. As stated it holds for any two circles (above). **28 October 2026 (#474):** this
-  is now the companion `Prop27.of_measure`; `Prop27` takes the circumferences congruent,
-  and holds for any two circles too, since congruent circumferences lie in equal circles
-  already (the note of that date above).
+  them. As stated it holds for any two circles (above).
+  **28 October 2026 (#474).** The statement this bullet describes is now the companion
+  `Prop27.of_measure`; `Prop27` takes the circumferences congruent, and holds for any two
+  circles too, since congruent circumferences lie in equal circles already (the note of
+  that date above).
 - **III.28** asks of "the greater" only that it be no less (`≤`), so that two diameters,
   which Heath says the proposition covers "as the proof can easily be supplied" (vol. 2,
   p. 60), cut off semicircles. Since stage 3 of [brief 0006](0006-statements.md), it
@@ -708,6 +711,10 @@ silent, from the table; a step changed is still a `different` passage of the rec
 
 Book III's routes are still being worked on (#546, #547, #474), so this list too is of its
 date.
+
+**28 October 2026, #474.** III.29's record now carries `redundant-hypothesis` beside
+`angle-measure`, as III.27's does, since the swap of their statements (the note of that
+date under the circumferences).
 
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,

@@ -870,10 +870,13 @@ rule.
   and their measure forms are the companions `Prop27.of_measure` and `Prop29.of_measure`
   ([the decision](../decisions/2026-10-28-iii27-iii29-swap.md)). So "III.27 whole" above
   now means `Prop27.of_measure` whole: that is the statement `Audit.III_27_any` proves
-  without the equal circles, and the one its example gives back. III.27 itself, `Prop27`,
-  is not among these near misses: it takes its circumferences congruent, and congruent
-  circumferences lie in equal circles already, so its equal circles are idle for another
-  reason than the measure, as `Audit/Overlaps.lean` says.
+  without the equal circles, and the one its example gives back. III.27 itself,
+  `BookIII.Prop27`, takes its circumferences congruent, and its equal circles are idle
+  twice over: congruent circumferences lie in equal circles already, and III.24's
+  companion `Prop24.equalMeasure`, which asks for no equal circles, makes them equal in
+  measure, after which `Audit.III_27_any` gives the conclusion in any two circles. No audit
+  theorem states that route for `BookIII.Prop27`; [FORMALIZATION](../FORMALIZATION.md),
+  section 5, lists it among the shortcuts Euclid did not take.
 
 - **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
   on the halves DB and AD. Each half is measured by the angle standing on it, taken twice,

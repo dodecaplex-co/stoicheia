@@ -97,8 +97,8 @@ need it as stated. III.27 and III.29 take circumferences that coincide (`Arc.Con
 below), and those lie in equal circles already, so their statements do not need the equal
 circles, and their proofs keep them along Euclid's route. III.27's companion
 `Prop27.of_measure`, for circumferences equal in measure, holds for any two circles: equal
-measures give equal angles whatever the radii. III.26, III.28 and III.29's companion
-`Prop29.of_measure` need them: III.26 and III.28 conclude that the circumferences are
+measures give equal angles whatever the radii. III.26, III.28 and `Prop29.of_measure`,
+III.29's companion, need them: III.26 and III.28 conclude that the circumferences are
 congruent as well as equal in measure, which in unequal circles neither equal angles nor
 equal straight lines give, and in III.28 and in `Prop29.of_measure` the measures are tied
 to straight lines in the circles. III.24 proves Euclid's
