@@ -3,8 +3,9 @@
 the changed page, ` M book/I/01.md`, beside its source, ` M mishnah/I/01.md`, and nothing
 else beyond the status a first render leaves, and the rendered page must hold the changed
 source and not the obsolete sentence planted in it. Editing just the page would be repaired
-back to HEAD and leave that status clean, so the source changes too. The pages are rendered
-once before the plant, which is planted on those bytes and judged against that status: in
+to the first render's bytes and add nothing to that status, so the source changes too. The
+pages are rendered once before the plant, which is planted on those bytes and judged
+against that status: in
 the pre-flight's pass with origin/main's checks, a renderer change finds its own regenerated
 pages stale, and that is freshness, not this plant's verdict (#677). Every generated output
 is saved and restored, and the worktree must return to its entry status. The plant judges
@@ -23,10 +24,10 @@ def plant() -> None:
     whole-worktree `git status --porcelain` of section 8, CI's check job and the
     pre-flight.
 
-    Rendering a hand edit alone restores HEAD, so it cannot test the post-render
-    Git status. Change the source too, then require both its rendered text and the
-    status lines of the page and its source beside the status the first render left, and
-    nothing else. Save every output, including pre-existing local edits.
+    Rendering a hand edit alone restores the first render's bytes, so it cannot test a new
+    post-render Git status. Change the source too, then require both its rendered text and
+    the status lines of the page and its source beside the status the first render left,
+    and nothing else. Save every output, including pre-existing local edits.
     """
     source = nt.ROOT / "mishnah/I/01.md"
     page = nt.ROOT / "book/I/01.md"
