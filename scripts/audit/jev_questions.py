@@ -2465,8 +2465,11 @@ PLANTS = {
         'the bridge that the measure is the same whichever diameter is drawn, and the one that it '
         'is the area of the parallelogram given by its outline, are unavailable for every '
         'parallelogram.',
-        (('premise', ['Elements.Parallelogram.quadArea_rotate', 'Elements.Parallelogram.outline_area'],
-          '(hAC : A = C)'),)),
+        # `quadArea_rotate` takes its corners from the file's variables; `outline_area` binds
+        # them itself, so its premise follows its binders, where A and C are its corners.
+        (('premise', ['Elements.Parallelogram.quadArea_rotate'], '(hAC : A = C)'),
+         ('replace', ['state', 'bridges', 'Elements.Parallelogram.outline_area'],
+          '(h : Parallelogram A B C D) :', '(h : Parallelogram A B C D) (hAC : A = C) :'))),
     ('P13', 'II.8'): Plant(
         1, 'every supplied bridge removed', 'With no bridge supplied, nothing connects '
         "`rect A B B C`, `sq A C` and `sq A D` with Euclid's rectangle contained by AB, BC, his "

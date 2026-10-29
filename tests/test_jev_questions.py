@@ -1841,8 +1841,12 @@ class Calibration(unittest.TestCase):
                 self.assertEqual(changed, {rotate, outline})
         self.assertIn('singleOutline', plants['I.43']['mutation']['base_state']['bridges'][outline])
         self.assertNotIn('singleOutline', plants['I.43']['state']['bridges'][outline])
-        for name in (rotate, outline):
-            self.assertIn('(hAC : A = C)', plants['I.36']['state']['bridges'][name])
+        # The premise speaks of the bridge's own corners: `quadArea_rotate`'s are the file's
+        # variables, and `outline_area`'s are bound before it.
+        self.assertIn('(hAC : A = C)', plants['I.36']['state']['bridges'][rotate])
+        text = plants['I.36']['state']['bridges'][outline]
+        self.assertEqual(text.count('(hAC : A = C)'), 1)
+        self.assertLess(text.index('{A B C D : Point}'), text.index('(hAC : A = C)'))
 
     def test_the_manifest_the_bar_and_the_refusals_name_both_entries(self):
         manifest = shared()['calibration']

@@ -12,8 +12,9 @@
   `outline_area` ties `quadArea` to the figure's area by itself, so P13's two plants that
   broke only `Parallelogram.quadArea_rotate` would no longer be faults. Each now breaks
   `outline_area` the same way: at I.43 its conclusion is made
-  `quadArea A B C D = quadArea A B C D`, at I.36 it is given the premise (hAC : A = C).
-  Each plant keeps its base, its kind and its expected answer.
+  `quadArea A B C D = quadArea A B C D`, at I.36 it is given the premise (hAC : A = C)
+  after the binders of its own corners, which `quadArea_rotate` takes from its file's
+  variables. Each plant keeps its base, its kind and its expected answer.
 
   This entry approves the change to `scripts/audit/jev_questions.py`: the two bridges, a
   comment on the list, and the two plants with their descriptions.
