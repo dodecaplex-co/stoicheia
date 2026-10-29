@@ -344,7 +344,7 @@ artificial hypothesis uses and the concealing helpers, and marks those the recor
 declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each. A
 join under a sentence of Euclid's is written in the Lean only where the formal proof uses
 the line it draws (the coordinator's ruling of 28 October 2026,
-[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted,
+[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted, not declared;
 Heath's sentence stays as its `--` line, and the record says the join is drawn in the
 text and not needed by the formal proof. Another step a sentence of Euclid's stands over
 may stay, and is declared by naming its binding in the `unused` of the passage over it
