@@ -4,7 +4,7 @@ The [README](../../../README.md#how-it-was-made) says in a few lines how Stoiche
 
 ## The crew
 
-Stoicheia is built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch, writing the statements and testing them; sailors prove each proposition, in parallel; bosuns and first mates merge their work and review it for faithfulness to Euclid; artists drew the at-a-glance figures in Byrne's colours; inspectors audited Book I for consistency.
+Stoicheia is built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; from the second voyage on, first mates prepare each stretch, writing or reviewing its statements and testing them; sailors prove each proposition, in parallel; bosuns and first mates merge their work and review it for faithfulness to Euclid; artists drew most of the at-a-glance figures in Byrne's colours and lettered them all; inspectors audited Book I for consistency. Book I's statements and the proofs of I.1–I.3 came with the first commit, before the crew sailed, and three sample figures at a glance, for I.1, I.5 and I.47, came before the artists.
 
 From the third voyage OpenAI's Codex joined the crew: Codex sailors proved I.26, I.28, I.30, I.32, all of I.33–I.48 and all of Books II and III, some of them from scratch proofs Claude's first mates had written to test the statements; they drew Euclid's figure for each and wrote the first draft of its mishnah, and Claude's bosuns, first mates and captains reviewed and edited their work. Later edits, to proofs and records alike, came from both families. Early planning also drew on conversations with ChatGPT.
 
