@@ -297,6 +297,11 @@ unchanged; the rest of `Squares.lean` stands as it says.
 `Aligned.eq_on_base`: no proof used them. So nothing in `Squares.lean` now cites I.7.
 The two paragraphs above are unchanged; the rest of the file stands as they say.
 
+**28 October 2026, correction.** `Arc.eq_of_aligned` had no consumers. Its two supporting
+lemmas, `Aligned.centre_between` and `Aligned.eq_on_base`, preceded it and were used only
+by its proof, which called `Aligned.centre_between` twice and `Aligned.eq_on_base` once.
+This supersedes the earlier wording "beneath" and "no proof used them."
+
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
