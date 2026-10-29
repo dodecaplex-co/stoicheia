@@ -1080,8 +1080,9 @@ def representation_badge(record, entry=None, companions=None):
     given. A statement that uses them and a word of `BADGE_BESIDE` is read both ways:
     "and in our measure of circumferences". One that uses a word of `BADGE_BESIDE` and
     none of `BADGE_WORDS` has "with a companion in our measure of circumferences" if one
-    of `companions` uses them, and no badge otherwise; `companions` are the entries
-    facts.json attaches to `entry`, read from it when not given."""
+    of `companions` uses them, and no badge otherwise. `companions` supplies the entries
+    facts.json attaches to `entry`, read from it when not given; only entries whose refs
+    are companions are considered."""
     terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
     used = statement_names((entry or {}).get("statement", ""))
