@@ -1,3 +1,4 @@
+<!-- entry: id=preflight-proof cards=678 line="The yard VM's dry run writes a pre-flight proof, and git safe-push --land takes step 4 from it when it matches." -->
 - **A pre-flight proof: the yard VM runs step 4, and the Mac pushes on its proof (landing,
   [#678](https://github.com/dodecaplex-co/stoicheia/issues/678)).** On 29 October 2026 the
   owner was asked how work should ship from the yard VM, `stoicheia-yard-1`, a machine of
@@ -34,9 +35,14 @@
   the train check among them, run there every time, before the push; the merge that
   `--land` goes on to runs the scan and the guards again, and takes its step 4 from the
   record the push made, as it does without a proof. Its step 3 says when that record's
-  step 4 came from a proof, and from which machine. The machine is named only on the
-  terminal: the line the record keeps, which goes into the pull request's body, gives the
-  time the proof was made and not the machine, since a machine's name can be a person's.
+  step 4 came from a proof, and from which machine. The machine is named on the terminal
+  and in the record and logs kept on the Mac, never in a line the pull request's body
+  holds: that line gives the time the proof was made and not the machine, since a
+  machine's name can be a person's. Nor does the record made from a proof take the
+  proof's notes: the ones that matter, for the security review, make it fall back, and
+  the rest are another machine's, written of steps the Mac runs again itself. Each step's
+  name and note in a proof must be printable text, or the proof falls back, so nothing
+  from it can move the terminal or add a line to the body.
 
   The trust, stated plainly. The proof is a file, and the run that made it ran the head's
   own code. The entry for `--land`, of 26 October, gives that as the reason a separate
@@ -44,13 +50,17 @@
   or a protected path. The proof is let stand in for such heads all the same, since nearly
   every landing that runs step 4 in full changes a check input or a protected path (each of
   the 31 heavy merges #557 counted did), and a proof refused for them would spare the Mac
-  almost nothing. Its digest catches an edit by hand or damage in
-  transit, not a forgery: what binds it is the commit, origin/main's tip, the harness and
-  the check inputs, the age limit, and the owner's decision above that the VM runs the
-  pre-flight. Code a head leaves running on the VM could write a proof for that head, as
-  code left running on the Mac could already change a check's verdict there (the routes
-  #218 lists). The checks CI runs on every pull request, and main's rules, still gate
-  every merge.
+  almost nothing. Its digest catches an edit by hand or damage in transit, and is no
+  authentication: anyone who can write the proof file, code a head leaves running on the
+  VM among them, can make one for any commit and main they know, with failures and notes
+  left out and the digest computed afresh, and the Mac would believe it. CI would not
+  catch that for a head that changes the checks, since CI runs that head's own checks and
+  not origin/main's. What binds a proof is the commit, origin/main's tip, the harness and
+  the check inputs, and the age limit; what it rests on beyond that is the owner's
+  decision above that the VM runs the pre-flight. Code left running on the Mac could
+  already change a check's verdict there (the routes #218 lists); the proof widens that to
+  the VM, and to the file between the two. The checks CI runs on every pull request, and
+  main's rules, still gate every merge.
 
   This entry approves the change to `scripts/safe_push.py` that brings the options
   `--emit-proof` and `--preflight-proof` with their rules in the parser; the constants
