@@ -4423,7 +4423,7 @@ def ended(thread: threading.Thread, caught: list[int], stop: Halt) -> bool:
 
 
 def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, steps,
-                 first: int, declared: CheckList | None, checks, kept_apart,
+                 first: int, declared: CheckList | None, checks, kept_apart, keep,
                  between: Between) -> None:
     """One loop of step 4, `steps` logged from `first`, for both passes at once, each on a
     thread of its own in its worktree, where[label] (at_once). Each pass begins at the
@@ -4435,24 +4435,30 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
     or the exception it raised, whatever it is.
 
     This thread reports them in the order of one after another. It waits for origin/main's
-    pass and puts its rows into `rep` (Deferred.into); if the pass raised, it raises that;
-    else `kept_apart` judges, on `rep`, and may refuse; else what origin/main's next
-    at_commit raised, if anything, is raised; else it waits for the commit's pass, puts
-    its rows into `rep`, and raises what that pass raised, a failure's Refusal among
-    them. On every way out but the last, the commit's rows are discarded: never put in,
-    and each log of its steps in this loop unlinked. On a refusal or an exception, one
-    after another would not have run them. On a signal, one after another would have kept
-    the rows and logs of the commit's steps run before it; here they are dropped, and the
-    run ends interrupted, with no verdict, as there. awaited() has first set `stop` and
-    joined both threads, so a refusal of keep_apart, or an exception of origin/main's
-    pass, waits for the commit's current step (at more than one worker, its current group)
-    to end before it goes on. Once a signal is recorded, no further row is put in, `stop`
-    is set, and awaited() raises what the first signal would have raised once both passes'
-    current steps (or groups) have ended."""
+    pass. If that pass's checks returned, and no signal is recorded, it keeps them for the
+    main-checks cache (`keep`, full_checks' own), into the pass's report, where one after
+    another keeps them: here, and not on the pass's thread, since a Ctrl-C reaches the
+    checks too, and a step it ended is no outcome to keep, but the signal's handler runs on
+    this thread alone, perhaps only once the pass has looked at `stop`, and has run by the
+    time the wait for the pass has ended here. It then puts the pass's rows into `rep`
+    (Deferred.into); if the pass raised, it raises that; else `kept_apart` judges, on
+    `rep`, and may refuse; else what origin/main's next at_commit raised, if anything, is
+    raised; else it waits for the commit's pass, puts its rows into `rep`, and raises what
+    that pass raised, a failure's Refusal among them. On every way out but the last, the
+    commit's rows are discarded: never put in, and each log of its steps in this loop
+    unlinked. On a refusal or an exception, one after another would not have run them. On a
+    signal, one after another would have kept the rows and logs of the commit's steps run
+    before it; here they are dropped, and the run ends interrupted, with no verdict, as
+    there. awaited() has first set `stop` and joined both threads, so a refusal of
+    keep_apart, or an exception of origin/main's pass, waits for the commit's current step
+    (at more than one worker, its current group) to end before it goes on. Once a signal is
+    recorded, no further row is put in, `stop` is set, and awaited() raises what the first
+    signal would have raised once both passes' current steps (or groups) have ended."""
     stop = Halt()
     held = {label: Deferred() for label in where}
     outcome: dict[str, BaseException | None] = {}
     then: list[BaseException] = []      # what origin/main's next at_commit raised
+    ran: set[str] = set()               # the passes whose checks returned
 
     def one(label: str) -> None:
         try:
@@ -4460,6 +4466,7 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
                           between) as (_, fail, excludes):
                 checks(steps, where[label], label, fail, excludes, first, declared,
                        held[label], stop)
+                ran.add(label)
             if label == BASE_PASS:
                 try:
                     with piece(between, "at_commit"):
@@ -4482,6 +4489,8 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
             base, own = threads
             if not ended(base, caught, stop):
                 return          # awaited() raises the signal's exception
+            if BASE_PASS in ran and not caught:
+                keep(held[BASE_PASS])
             held[BASE_PASS].into(rep)
             if outcome[BASE_PASS] is not None:
                 raise outcome[BASE_PASS]
@@ -4502,15 +4511,18 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
 
 
 def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: CheckList,
-            checks, kept_apart, between: Between) -> None:
+            checks, kept_apart, keep, between: Between) -> None:
     """Step 4's two passes at once (#609), for full_checks, with the verdicts, the logs
     and the rows of one after another, but for the paths in them, which name the worktree
     each pass ran in: `main` for origin/main's pass, and `wt` (`check`), not the second
     worktree (`negative`), for the commit's negative tests; tests/test_concurrent_passes.py
-    masks them on purpose. origin/main's pass runs in a worktree of its own, `main`, given
-    `wt`'s build (copy_build), and the commit's in `wt`, each on a thread of its own; the
-    checks, `plan`'s, then the negative tests, NEGATIVE, each loop with both passes
-    (side_by_side), the second begun once the first is reported.
+    masks them on purpose. And a verdict may differ in two ways, each stricter, never
+    looser: a tree the commit's checks leave changed is refused (below); and a check
+    limited by the clock, run alone in its pass, may fail at two passes beside the other
+    pass's load where it passes one after another. origin/main's pass runs in a worktree
+    of its own, `main`, given `wt`'s build (copy_build), and the commit's in `wt`, each on
+    a thread of its own; the checks, `plan`'s, then the negative tests, NEGATIVE, each
+    loop with both passes (side_by_side), the second begun once the first is reported.
 
     One after another, both passes run in `wt`, then both in a second worktree, given
     `wt`'s build, for the negative tests. Here each pass runs both loops in its own
@@ -4527,7 +4539,7 @@ def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: 
     begin with in that worktree, which side_by_side raises after keep_apart, before the
     commit's rows (a flag such as skip-worktree, or a repository nested in an untracked
     folder, outlasts the reset); such a refusal names the worktree it looked at, `main`
-    where one after another names `wt` or the second worktree. The one difference: the
+    where one after another names `wt` or the second worktree. The first difference: the
     commit's negative tests begin with at_commit in `wt`, after its checks, where one
     after another they begin in a fresh worktree, so a tree the commit's checks leave
     changed, and that no check of theirs refuses, is refused here, and not there:
@@ -4561,7 +4573,7 @@ def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: 
         where = {BASE_PASS: main, OWN_PASS: wt}
         for steps, first, declared in ((plan.steps, 10, plan), (NEGATIVE, 30, None)):
             side_by_side(ctx, where, inputs, rep, logs, steps, first, declared, checks,
-                         kept_apart, between)
+                         kept_apart, keep, between)
 
 
 def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
@@ -4572,10 +4584,13 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
     input and an origin/main's pass that is run, not taken from the cache, the two passes
     run at once instead (at_once), with the same verdicts, logs and rows, but for the
     paths in them, which name the worktree each pass ran in (`main`, and `wt` for the
-    commit's negative tests; tests/test_concurrent_passes.py masks them on purpose).
-    However step 4 ends, one plain line then says what the work between its rows took
-    (Between), a line and not a row, so that the summary, the record and the pull
-    request's body are as before #609."""
+    commit's negative tests; tests/test_concurrent_passes.py masks them on purpose), and
+    but for two ways a verdict may differ, each stricter, never looser: a tree the commit's
+    checks leave changed is refused, and a check limited by the clock, run alone in its
+    pass, may fail beside the other pass's load where it passes one after another. However
+    step 4 ends, one plain line then says what the work between its rows took (Between), a
+    line and not a row, so that the summary, the record and the pull request's body are as
+    before #609."""
     between = Between()
     together = False
 
@@ -4598,11 +4613,17 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
         kept = cache if label == BASE_PASS else None
         run_sequence(steps, where, report, logs, label, fail, excludes, first, declared, kept,
                      stop, between)
-        # Never from a pass told to stop: a step a signal ended (a terminal's Ctrl-C reaches
-        # the checks too) would be kept as its outcome, and replayed by every later run.
-        if kept is not None and (stop is None or not stop.is_set()):
+        if kept is not None and stop is None:      # at two passes, side_by_side keeps it
+            keep(report)
+
+    # Never from a pass told to stop: a step a signal ended (a terminal's Ctrl-C reaches the
+    # checks too) would be kept as its outcome, and replayed by every later run. At one
+    # pass the signal's handler raises before this; at two it only records the signal, on
+    # the main thread, which alone asks this (side_by_side).
+    def keep(report: Report) -> None:
+        if cache is not None:
             with between.piece("cache save"):
-                kept.save(report)
+                cache.save(report)
 
     try:
         # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
@@ -4612,7 +4633,8 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
                 cache = main_checks(ctx, wt, inputs, rep, plan.steps)
         together = plan.passes > 1 and bool(inputs) and not (cache is not None and cache.hit)
         if together:
-            at_once(ctx, wt, parent, inputs, rep, logs, plan, checks, kept_apart, between)
+            at_once(ctx, wt, parent, inputs, rep, logs, plan, checks, kept_apart, keep,
+                    between)
             return
         # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
         # the worktree back before the worktree is removed. A group of concurrent checks

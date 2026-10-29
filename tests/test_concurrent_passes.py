@@ -16,15 +16,17 @@ and when it refuses only after origin/main's negative tests, the commit's negati
 and logs discarded; when the main-checks cache misses, the same entry kept; when either
 pass's run() raises; and when a pass leaves its tree changed, the clean-tree
 check refusing, or the at_commit that one after another begins the next pass with: after
-step 3, after origin/main's checks, after its negative tests. The one difference, which is
-stricter, is pinned: a tree the commit's checks leave changed, and that none of them
-refuses, is refused before its negative tests at two passes and not at one. One pass
-stays for a commit that changes no check input and for origin/main's pass taken from the
-cache. At two the passes are shown to overlap, and at one never to. SIGINT and SIGTERM sent
-while both passes run raise KeyboardInterrupt only once both passes' checks have ended,
-no further step started, the handlers put back and the second worktree removed; a pass a
-SIGINT stopped keeps no cache entry; and with stop set no further check of a group starts
-at one worker, while at two a group begun runs to its end.
+step 3, after origin/main's checks, after its negative tests. Of the two differences in a
+verdict, each stricter, the first is pinned: a tree the commit's checks leave changed, and
+that none of them refuses, is refused before its negative tests at two passes and not at
+one; the second, a check limited by the clock failing beside the other pass's load, needs
+a loaded machine, and is not. One pass stays for a commit that changes no check input and
+for origin/main's pass taken from the cache. At two the passes are shown to overlap, and
+at one never to. SIGINT and SIGTERM sent while both passes run raise KeyboardInterrupt
+only once both passes' checks have ended, no further step started, the handlers put back
+and the second worktree removed; a pass a SIGINT stopped keeps no cache entry, even when
+the harness's handler runs only once the pass has ended; and with stop set no further
+check of a group starts at one worker, while at two a group begun runs to its end.
 STOICHEIA_PASS_WORKERS is read, taken up to two, capped against the check and negative
 workers by half the cores, said on the check list line, and refused unless a whole number
 from 1. The work between the rows is timed piece by piece, the guard of each group and
@@ -522,7 +524,7 @@ class Verdicts(Stand):
 class Trees(Stand):
     """A pass that leaves its tree changed: the same verdict and rows at one pass and at
     two, whether a check refuses it or the at_commit one after another begins the next
-    pass with; and the one difference, stricter."""
+    pass with; and the first difference, stricter."""
 
     def test_g_a_tracked_file_written(self):
         for whose, behave, raised in (
@@ -575,7 +577,7 @@ class Trees(Stand):
         self.assertEqual(one.steps, [])
         self.assertFalse(list(two.marks.iterdir()), "a check ran")
 
-    def test_the_one_difference_is_stricter(self):
+    def test_the_first_difference_is_stricter(self):
         # The commit's last check leaves a nested repository, and no check after it looks.
         # One after another, its negative tests begin in a fresh worktree, and it passes;
         # at two, they begin with at_commit in its own, which refuses it.
@@ -836,7 +838,8 @@ class Interrupted(Stand):
     removed. The checks end either the moment both signals are recorded, before the main
     thread has looked, so that the passes must read the record themselves; or only once
     the harness joins the passes' threads, so that a harness that did not wait would
-    raise first. And no main-checks cache entry is kept from a pass a signal stopped."""
+    raise first. And no main-checks cache entry is kept from a pass a signal stopped, even
+    when the harness's handler runs only once that pass has ended."""
 
     def test_i_signals_wait_for_both_passes(self):
         if threading.current_thread() is not threading.main_thread():
@@ -992,6 +995,73 @@ class Interrupted(Stand):
                     self.assertTrue((marks / f"{key('main', last)}.end").exists(),
                                     "origin/main's last step did not end as planted")
                 self.assertEqual(written, [], "an entry was kept from a pass a signal stopped")
+
+    def test_no_entry_when_the_handler_runs_late(self):
+        # As above, at two passes, but the Ctrl-C reaches origin/main's last step first,
+        # which ends, and the harness's handler runs late, as when the signal reaches another
+        # thread and the main thread runs the handler only once its wait next returns: it
+        # records the signal only once the step's .end mark is made and the pass's thread
+        # has ended, all it does after the step done. Neither that thread nor the main
+        # thread keeps an entry.
+        if threading.current_thread() is not threading.main_thread():
+            self.skipTest("a signal's handler runs on the main thread alone")
+        marks = self.marks()
+        last = "negative: last"
+        steps = [self.stand_in(marks, "first")]
+        negative = [self.stand_in(marks, last, {"hold": "release", "code": 130})]
+        end = marks / f"{key('main', last)}.end"
+        real = safe_push.recorder
+        bases: list[threading.Thread] = []      # origin/main's pass's thread, in each loop
+        late: list[bool] = []
+
+        class Watched(threading.Thread):
+            def __init__(self, *args, **kw):
+                super().__init__(*args, **kw)
+                if kw.get("args") == (BASE_PASS,):
+                    bases.append(self)
+
+        def recorder(caught):
+            record = real(caught)
+
+            def recording_late(signum, frame):
+                (marks / "release").touch()
+                given_up = time.monotonic() + HOLD
+                while not end.exists() and time.monotonic() < given_up:
+                    time.sleep(0.01)
+                while bases[-1].is_alive() and time.monotonic() < given_up:
+                    time.sleep(0.01)
+                late.append(end.exists() and not bases[-1].is_alive())
+                record(signum, frame)
+            return recording_late
+
+        def send():
+            given_up = time.monotonic() + HOLD
+            started = marks / f"{key('main', last)}.start"
+            while not started.exists() and time.monotonic() < given_up:
+                time.sleep(0.01)
+            signal.pthread_kill(threading.main_thread().ident, signal.SIGINT)
+        sender = threading.Thread(target=send, daemon=True)
+        parent = self.tmp / "run-late"
+        logs = parent / "logs"
+        logs.mkdir(parents=True)
+        ctx = types.SimpleNamespace(repo=ROOT, base=BASE, sha=SHA)
+        raised = None
+        with self.missed(steps, negative) as written, \
+                mock.patch.object(safe_push, "NEGATIVE", negative), \
+                mock.patch.object(safe_push, "recorder", recorder), \
+                mock.patch.object(safe_push.threading, "Thread", Watched), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                safe_push.worktree(ROOT, SHA, parent, "check") as wt:
+            sender.start()
+            try:
+                safe_push.full_checks(ctx, wt, parent, INPUTS, safe_push.Report(), logs,
+                                      safe_push.CheckList(steps, "", passes=2))
+            except KeyboardInterrupt as e:
+                raised = e
+        sender.join(HOLD)
+        self.assertIsInstance(raised, KeyboardInterrupt)
+        self.assertEqual(late, [True], "the handler did not run late, as planted")
+        self.assertEqual(written, [], "an entry was kept from a pass a signal stopped")
 
 
 def folder(files: dict) -> Path:

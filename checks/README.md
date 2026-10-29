@@ -47,7 +47,9 @@ check:
 - does not itself fill the machine.
 
 A check without the field runs alone: after every earlier check has ended, and before any
-later one starts. So every new check runs alone until a reviewed change declares it. The
+later one starts. So every new check runs alone until a reviewed change declares it. When
+the pre-flight runs its two passes at once (`STOICHEIA_PASS_WORKERS`, #609), alone holds
+within each pass, and the check may run beside a check of the other pass. The
 check with `empty` judges the whole worktree, and is never concurrent. `after` names a
 check's own test, so that a rule read wrongly stops the sequence before the check's
 verdict, as it did when they ran one after another.
