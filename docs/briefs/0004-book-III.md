@@ -167,6 +167,19 @@ What this costs, and what it does not:
   from III.20–III.22, in `Elements/BookIII/Circumferences.lean`, and so a proposition that
   uses them cites those three.
 
+**28 October 2026, III.27 and III.29 (#474).** The second item above is overtaken for these
+two. Since [the decision of 28 October 2026](../decisions/2026-10-28-iii27-iii29-swap.md),
+`Prop27` and `Prop29` state Euclid's congruence reading: their equal circumferences coincide
+(`Arc.Congruent`), and congruent circumferences lie in equal circles already, so "in equal
+circles" is redundant in both as stated. In `Prop27` the measure makes it redundant as
+well, for III.24's companion `Prop24.equalMeasure` asks for no equal circles; in `Prop29`
+the congruence alone does, for the measure would not. The statements the item speaks of
+are now the companions `Prop27.of_measure`, which still holds for any two circles, and
+`Prop29.of_measure`, which still needs its equal circles. Both records carry
+`angle-measure` and `redundant-hypothesis`. `Prop27`'s proof first makes its circumferences
+equal in measure, by III.24's companion `Prop24.equalMeasure`, and then argues as before.
+The phrase table and the note on III.27's statement below have notes of the same date.
+
 **Mixed angles.** "The angle of the semicircle is greater, and the remaining angle less,
 than any acute rectilineal angle" (III.16); "the angle of the greater segment is greater
 than a right angle" (III.31). These angles are "contained by a straight line and a
@@ -313,6 +326,11 @@ III.2, by the owner's decision of 25 October 2026
 import `Squares.lean`, so a step that uses it must stand after III.2. The paragraph above is
 unchanged; the rest of `Squares.lean` stands as it says.
 
+**28 October 2026, `Arc.eq_of_aligned` (#561).** `Arc.eq_of_aligned` has been deleted from
+`Squares.lean`, with `Aligned.centre_between` and `Aligned.eq_on_base`, the two lemmas its
+proof called: no other proof used any of the three. So nothing in `Squares.lean` now cites
+I.7. The two paragraphs above are unchanged; the rest of the file stands as they say.
+
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
@@ -395,6 +413,13 @@ for the result from which its "from this it is manifest" follows.
 | "the circumference BKC is equal to the circumference ELF" (III.26, III.28) | `circumference ABC B K C = circumference DEF E L F ∧ Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩`: equal in measure and congruent |
 | "similar segments ACB, ADB" | `∠ A C B = ∠ A D B` |
 | "the given segment ABC" (III.25), "the given circumference ADB" (III.30) | the circle, the straight line `AC` (or `AB`), and a point `P` on the side of the segment, for every such `P`; for III.25's construction, the ends `A`, `C`, the point `P` and the segment's points as a predicate `S`, with the meeting fact |
+
+**28 October 2026, III.27 and III.29 (#474).** The row for "on equal circumferences BC, EF"
+now gives the companion `Prop27.of_measure`. `Prop27` says it as
+`Arc.Congruent ⟨ABC, B, C, Q⟩ ⟨DEF, E, F, R⟩`, with `Q` across `BC` from `A` and `R` across
+`EF` from `D`; and III.29's equal circumferences are
+`Arc.Congruent ⟨ABC, B, C, G⟩ ⟨DEF, E, F, H⟩` in `Prop29`, and equal in measure,
+`circumference ABC B G C = circumference DEF E H F`, in `Prop29.of_measure`.
 
 Hypotheses come from the setting-out and conclusions from "I say that", with these choices
 worth naming. The first mate's report has a note on every statement.
@@ -514,6 +539,11 @@ worth naming. The first mate's report has a note on every statement.
 - **III.27** likewise: equal circumferences give equal angles at the circumferences, of
   any size (IV.11 needs obtuse ones), and equal angles at the centres where those stand on
   them. As stated it holds for any two circles (above).
+
+  **28 October 2026 (#474).** The statement this bullet describes is now the companion
+  `Prop27.of_measure`; `Prop27` takes the circumferences congruent, and holds for any two
+  circles too, since congruent circumferences lie in equal circles already (the note of
+  that date above).
 - **III.28** asks of "the greater" only that it be no less (`≤`), so that two diameters,
   which Heath says the proposition covers "as the proof can easily be supplied" (vol. 2,
   p. 60), cut off semicircles. Since stage 3 of [brief 0006](0006-statements.md), it

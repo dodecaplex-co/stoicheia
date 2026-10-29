@@ -47,7 +47,7 @@ What the proofs show:
 | ✅ | [I.19](book/I/19.md) | whole | Euclid's | I.5, I.18 | I.5, I.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 4 | 3 |
 | ✅ | [I.20](book/I/20.md) | whole | Euclid's | I.5, I.19 | I.3, I.5, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 6 | 27 |
 | ✅ | [I.21](book/I/21.md) | whole | Euclid's | I.16, I.20 | I.16, I.20 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 12 | 21 |
-| ✅ | [I.22](book/I/22.md) | whole | Euclid's | I.3, I.20 | I.2, I.3 | 1, 2, 3 | Def. I.15 | 1, 3, 5 | 26 | 15 | 14 |
+| ✅ | [I.22](book/I/22.md) | whole | Euclid's | I.3, I.20 | I.2, I.3 | 1, 2, 3 | Def. I.15 | 1, 3, 5 | 26 | 14 | 15 |
 | ✅ | [I.23](book/I/23.md) | whole | Euclid's | I.8, I.22 | I.8, I.20, I.22 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 3 | 2 |
 | ✅ | [I.24](book/I/24.md) | whole | Euclid's | I.4, I.5, I.19, I.23 | I.4, I.5, I.19, I.21, I.23 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 10 | 23 |
 | ✅ | [I.25](book/I/25.md) | whole | Euclid's | I.4, I.24 | I.4, I.24 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 3 | 0 |
@@ -81,9 +81,9 @@ What the proofs show:
 | ✅ | &emsp;[I.45 outline](book/I/45.md#outline) |  |  |  | I.45 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 0 | 37 |
 | ✅ | &emsp;[I.45 sum](book/I/45.md#sum) |  |  |  | I.42, I.45 append | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 3 | 35 |
 | ✅ | [I.46](book/I/46.md) | whole | Euclid's | I.11, I.29, I.31, I.34 | I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 4 | 28 |
-| ✅ | [I.47](book/I/47.md) | whole | Euclid's | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 12 | 27 |
-| ✅ | &emsp;[I.47 general](book/I/47.md#general) |  |  |  | I.4, I.28, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 37 |
-| ✅ | [I.48](book/I/48.md) | whole | Euclid's | I.8, I.47 | I.3, I.4, I.8, I.11, I.28, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 37 |
+| ✅ | [I.47](book/I/47.md) | whole | Euclid's | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 13 | 25 |
+| ✅ | &emsp;[I.47 general](book/I/47.md#general) |  |  |  | I.4, I.28, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 0 | 37 |
+| ✅ | [I.48](book/I/48.md) | whole | Euclid's | I.8, I.47 | I.3, I.4, I.8, I.11, I.28, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 37 |
 
 ## Book II
 
@@ -106,24 +106,24 @@ What the proofs show:
 | ✅ | [II.6](book/II/06.md) | whole | Euclid's | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 4 | 34 |
 | ✅ | [II.7](book/II/07.md) | whole | Euclid's | I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 35 |
 | ✅ | [II.8](book/II/08.md) | whole | Euclid's | I.36, I.43 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 4 | 34 |
-| ✅ | [II.9](book/II/09.md) | whole | Euclid's | I.6, I.29, I.32, I.34, I.47 | I.4, I.5, I.6, I.11, I.13, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 31 |
-| ✅ | [II.10](book/II/10.md) | whole | Euclid's | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 | I.3, I.4, I.5, I.6, I.11, I.15, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 11 | 29 |
-| ✅ | [II.11](book/II/11.md) | whole | Euclid's | I.46, I.47, II.6 | I.4, I.10, I.13, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 7 | 32 |
-| ✅ | [II.12](book/II/12.md) | whole | Euclid's | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 31 |
-| ✅ | [II.13](book/II/13.md) | whole | Euclid's | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 10 | 28 |
-| ✅ | [II.14](book/II/14.md) | whole | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 13 | 26 |
-| ✅ | &emsp;[II.14 apart](book/II/14.md#apart) |  |  |  | II.14 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 0 |
-| ✅ | &emsp;[II.14 fan](book/II/14.md#fan) |  |  |  | I.13, II.14 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 34 |
-| ✅ | &emsp;[II.14 figure](book/II/14.md#figure) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 22 |
-| ✅ | &emsp;[II.14 outline](book/II/14.md#outline) |  |  |  | II.14 square | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 37 |
-| ✅ | &emsp;[II.14 outline_side](book/II/14.md#outline_side) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 37 |
-| ✅ | &emsp;[II.14 rectangle](book/II/14.md#rectangle) |  |  |  | I.4, I.10, I.13, I.28, I.34, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 13 | 26 |
-| ✅ | &emsp;[II.14 square](book/II/14.md#square) |  |  |  | I.4, I.28, I.34, I.46, II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 35 |
-| ✅ | &emsp;[II.14 sum](book/II/14.md#sum) |  |  |  | I.11, I.29, I.45 sum, II.14 rectangle | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 29 |
+| ✅ | [II.9](book/II/09.md) | whole | Euclid's | I.6, I.29, I.32, I.34, I.47 | I.4, I.5, I.6, I.11, I.13, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 8 | 31 |
+| ✅ | [II.10](book/II/10.md) | whole | Euclid's | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 | I.3, I.4, I.5, I.6, I.11, I.15, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 11 | 29 |
+| ✅ | [II.11](book/II/11.md) | whole | Euclid's | I.46, I.47, II.6 | I.4, I.10, I.13, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 32 |
+| ✅ | [II.12](book/II/12.md) | whole | Euclid's | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 8 | 31 |
+| ✅ | [II.13](book/II/13.md) | whole | Euclid's | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 10 | 28 |
+| ✅ | [II.14](book/II/14.md) | whole | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 13 | 26 |
+| ✅ | &emsp;[II.14 apart](book/II/14.md#apart) |  |  |  | II.14 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 0 |
+| ✅ | &emsp;[II.14 fan](book/II/14.md#fan) |  |  |  | I.13, II.14 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 34 |
+| ✅ | &emsp;[II.14 figure](book/II/14.md#figure) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 22 |
+| ✅ | &emsp;[II.14 outline](book/II/14.md#outline) |  |  |  | II.14 square | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 37 |
+| ✅ | &emsp;[II.14 outline_side](book/II/14.md#outline_side) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 37 |
+| ✅ | &emsp;[II.14 rectangle](book/II/14.md#rectangle) |  |  |  | I.4, I.10, I.13, I.28, I.34, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 13 | 26 |
+| ✅ | &emsp;[II.14 square](book/II/14.md#square) |  |  |  | I.4, I.28, I.34, I.46, II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 35 |
+| ✅ | &emsp;[II.14 sum](book/II/14.md#sum) |  |  |  | I.11, I.29, I.45 sum, II.14 rectangle | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 2 | 29 |
 
 ## Book III
 
-**All 37 propositions proved in Lean**, every one as Euclid states it, or for [III.12](book/III/12.md) as the text states it. 33 proofs follow Euclid's argument, 3 follow it with one or more steps changed ([III.26](book/III/26.md), [III.27](book/III/27.md), [III.29](book/III/29.md)) and [III.12](book/III/12.md)'s follows the argument Heath prints; each page says how. In [III.5](book/III/05.md) and [III.6](book/III/06.md) our tacit rules contain the propositions too, but our proofs never use those rules. In [III.1](book/III/01.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 37 propositions proved in Lean**, every one as Euclid states it, or for [III.12](book/III/12.md) as the text states it. 32 proofs follow Euclid's argument, 4 follow it with one or more steps changed ([III.21](book/III/21.md), [III.26](book/III/26.md), [III.27](book/III/27.md), [III.29](book/III/29.md)) and [III.12](book/III/12.md)'s follows the argument Heath prints; each page says how. In [III.5](book/III/05.md) and [III.6](book/III/06.md) our tacit rules contain the propositions too, but our proofs never use those rules. In [III.1](book/III/01.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. [The overlap catalogue](docs/reports/overlaps.md) gives each.
 
 What the proofs show:
 
@@ -152,11 +152,11 @@ What the proofs show:
 | ✅ | &emsp;[III.13 circlesTouch_iff](book/III/13.md#circlesTouch_iff) |  |  |  | III.13 touchesExternally_iff, III.13 touchesInternally_iff | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 0 |
 | ✅ | &emsp;[III.13 touchesExternally_iff](book/III/13.md#touchesExternally_iff) |  |  |  | I.12, I.17, I.19, I.20, I.24, III.2 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 1 | 33 |
 | ✅ | &emsp;[III.13 touchesInternally_iff](book/III/13.md#touchesInternally_iff) |  |  |  | I.12, I.17, I.19, I.20, I.24 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 1 | 34 |
-| ✅ | [III.14](book/III/14.md) | whole | Euclid's | I.47, III.1, III.3 | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47, III.2, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 5 | 36 |
-| ✅ | &emsp;[III.14 general](book/III/14.md#general) |  |  |  | I.20, III.14 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 4 | 8 |
-| ✅ | [III.15](book/III/15.md) | whole | Euclid's | I.20, I.24, III.14 | I.3, I.11, I.13, I.17, I.19, I.20, I.24, III.2, III.14 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 16 | 19 |
+| ✅ | [III.14](book/III/14.md) | whole | Euclid's | I.47, III.1, III.3 | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47, III.2, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 36 |
+| ✅ | &emsp;[III.14 general](book/III/14.md#general) |  |  |  | I.20, III.14 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 4 | 8 |
+| ✅ | [III.15](book/III/15.md) | whole | Euclid's | I.20, I.24, III.14 | I.3, I.11, I.13, I.17, I.19, I.20, I.24, III.2, III.14 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 16 | 19 |
 | ✅ | &emsp;[III.15 le_diameter](book/III/15.md#le_diameter) |  |  |  | I.20 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 5 | 19 |
-| ✅ | &emsp;[III.15 nearer](book/III/15.md#nearer) |  |  |  | III.15, III.15 le_diameter | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 5 | 19 |
+| ✅ | &emsp;[III.15 nearer](book/III/15.md#nearer) |  |  |  | III.15, III.15 le_diameter | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 19 |
 | ✅ | [III.16](book/III/16.md) | whole | Euclid's | I.5, I.17, I.19 | I.5, I.12, I.13, I.17, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 7 | 26 |
 | ✅ | &emsp;[III.16 Por.](book/III/16.md#porism) |  |  |  | III.16 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 1 | 26 |
 | ✅ | &emsp;[III.16 acute](book/III/16.md#acute) |  |  |  | I.12, I.17, I.19, I.20, I.23, III.2, III.16 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 33 |
@@ -173,7 +173,7 @@ What the proofs show:
 | ✅ | [III.20](book/III/20.md) | whole | Euclid's | I.5, I.32 | I.5, I.13, I.32, III.2 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 10 | 25 |
 | ✅ | &emsp;[III.20 circumference](book/III/20.md#circumference) |  |  |  | III.2, III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 30 |
 | ✅ | &emsp;[III.20 special](book/III/20.md#special) |  |  |  | I.13, III.2, III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 35 |
-| ✅ | [III.21](book/III/21.md) | whole | Euclid's | III.20 | III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 1 | 29 |
+| ✅ | [III.21](book/III/21.md) | whole | Euclid's, one step changed | III.20 | III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 1 | 29 |
 | ✅ | [III.22](book/III/22.md) | whole | Euclid's | I.32, III.21 | I.32, III.2, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 4 | 29 |
 | ✅ | [III.23](book/III/23.md) | whole | Euclid's | I.16 | I.16, III.2, III.10, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 22 |
 | ✅ | &emsp;[III.23 point](book/III/23.md#point) |  |  |  | I.21, III.2, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 21 |
@@ -185,11 +185,11 @@ What the proofs show:
 | ✅ | &emsp;[III.25 kind](book/III/25.md#kind) |  |  |  | I.5, I.32, III.2, III.20 special, III.21, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 35 |
 | ✅ | &emsp;[III.25 of_circle](book/III/25.md#of_circle) |  |  |  | III.2, III.25, III.25 complete | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 3 | 28 |
 | ✅ | [III.26](book/III/26.md) | whole† | Euclid's, one step changed | I.4, III.24 | I.2, I.4, I.8, I.12, I.13, I.17, I.19, I.20, III.2, III.9, III.20, III.21, III.22, III.24, III.24 equalMeasure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 11 | 25 |
-| ✅ | [III.27](book/III/27.md) | whole† | Euclid's, one step changed | I.23, III.20, III.26 | I.5, I.13, I.23, I.32, III.2, III.20, III.20 special, III.21, III.22, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 30 |
-| ✅ | &emsp;[III.27 of_congruent](book/III/27.md#of_congruent) |  |  |  | III.24 equalMeasure, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 30 |
+| ✅ | [III.27](book/III/27.md) | whole | Euclid's, one step changed | I.23, III.20, III.26 | I.5, I.13, I.23, I.32, III.2, III.20, III.20 special, III.21, III.22, III.24 equalMeasure, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 30 |
+| ✅ | &emsp;[III.27 of_measure](book/III/27.md#of_measure) |  |  |  | I.5, I.13, I.23, I.32, III.2, III.20, III.20 special, III.21, III.22, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 5 | 30 |
 | ✅ | [III.28](book/III/28.md) | whole† | Euclid's | I.8, III.26 | I.2, I.4, I.5, I.8, I.12, I.17, I.19, I.20, I.32, III.2, III.9, III.20 special, III.21, III.22, III.24, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 6 | 30 |
-| ✅ | [III.29](book/III/29.md) | whole† | Euclid's, two steps changed | I.4, III.27 | I.4, I.13, III.2, III.20, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 32 |
-| ✅ | &emsp;[III.29 of_congruent](book/III/29.md#of_congruent) |  |  |  | I.4, I.13, III.2, III.20, III.27 of_congruent | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 32 |
+| ✅ | [III.29](book/III/29.md) | whole | Euclid's, two steps changed | I.4, III.27 | I.4, I.13, III.2, III.20, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 32 |
+| ✅ | &emsp;[III.29 of_measure](book/III/29.md#of_measure) |  |  |  | I.4, I.13, III.2, III.20, III.27 of_measure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 32 |
 | ✅ | [III.30](book/III/30.md) | whole† | Euclid's | I.4, III.28 | I.4, I.10, I.11, I.17, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 11 | 24 |
 | ✅ | &emsp;[III.30 halves](book/III/30.md#halves) |  |  |  | I.6, I.17, I.32, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 13 | 21 |
 | ✅ | [III.31](book/III/31.md) | whole | Euclid's | I.5, I.17, I.32, III.22 | I.5, I.17, I.32, III.2, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 10 | 25 |
@@ -198,8 +198,8 @@ What the proofs show:
 | ✅ | [III.32](book/III/32.md) | whole | Euclid's | I.32, III.19, III.22, III.31 | I.11, I.13, I.32, III.2, III.19, III.21, III.22, III.31 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 10 | 25 |
 | ✅ | [III.33](book/III/33.md) | whole | Euclid's | I.4, III.16 Por., III.31, III.32 | I.4, I.10, I.11, I.23, III.2, III.16 Por., III.31, III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 13 | 23 |
 | ✅ | [III.34](book/III/34.md) | whole | Euclid's | I.23, III.32 | I.11, I.23, III.2, III.16, III.16 Por., III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 27 |
-| ✅ | [III.35](book/III/35.md) | whole | Euclid's | I.47, II.5, III.3 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.5, III.2, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 9 | 30 |
-| ✅ | [III.36](book/III/36.md) | whole | Euclid's | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.2, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 7 | 32 |
-| ✅ | [III.37](book/III/37.md) | whole | Euclid's | I.8, III.16 Por., III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, III.16 Por., III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 10 | 31 |
+| ✅ | [III.35](book/III/35.md) | whole | Euclid's | I.47, II.5, III.3 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.5, III.2, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 9 | 30 |
+| ✅ | [III.36](book/III/36.md) | whole | Euclid's | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.2, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 7 | 32 |
+| ✅ | [III.37](book/III/37.md) | whole | Euclid's | I.8, III.16 Por., III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, III.16 Por., III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 10 | 31 |
 
 The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print axioms` cannot see them; the walk that finds them goes everywhere `#print axioms` goes. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.

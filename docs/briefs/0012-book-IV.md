@@ -625,6 +625,11 @@ stage 3's arcs, so that a reader of `Arc` and a reader of `Polygon.arcs` meet on
 circumference. That an equiangular inscribed figure need not be equilateral (a rectangle)
 is why the second runs both ways and the third one way only.
 
+**28 October 2026 (#474).** Since [the decision of that day](../decisions/2026-10-28-iii27-iii29-swap.md),
+III.27 and III.29 take circumferences that coincide (`Arc.Congruent`), and their measure forms
+are the companions `Prop27.of_measure` and `Prop29.of_measure`. The bridges above compare
+circumferences by measure, so where they cite III.27 and III.29 they mean those companions.
+
 **Where they sit.** Each cites Book III alone, so each can stand before IV.1, and IV.16,
 the porism and the general companions cite them. The main theorems of IV.11 and IV.15 do
 not: Euclid proves their equal angles step by step, and a helper that did every corner at

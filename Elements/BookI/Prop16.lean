@@ -95,8 +95,8 @@ theorem Prop16 {A B C D : Point} (hABC : Triangle A B C) (hBCD : Between B C D) 
     have hE_F : E ≠ F := (ne_of_between (between_symm hBEF)).symm
     have hF_AC : ¬ OnLine F AC := fun h =>
       hB_AC ((line_unique hE_F hE_BE hF_BE hE_AC h) ▸ hB_BE)
-    have hF_C : F ≠ C := fun h => hF_AC (h ▸ hC_AC)
-    obtain ⟨FC, hF_FC, hC_FC⟩ := Postulate1 F C hF_C
+    /- FC is named by its ends, as a side of the triangle ECF, so nothing is drawn
+       for the join. AC is drawn through to G. -/
     obtain ⟨G, -, hACG, -⟩ := Postulate2 hA_AC hC_AC hA_C []
     -- Then, since AE is equal to EC, and BE to EF,
     have hBE_EF : ‖B E‖ = ‖E F‖ := hEF_BE.symm

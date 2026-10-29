@@ -102,7 +102,6 @@ theorem Prop21 {A B C D : Point} (hABC : Triangle A B C) (hD : InsideTriangle D 
     rw [← len_add_of_between (between_symm hBDE), ← add_assoc]
     exact hCDB
   -- But BA, AC were proved greater than BE, EC;
-  have : ‖B E‖ + ‖E C‖ < ‖B A‖ + ‖A C‖ := hBA_AC
   -- therefore BA, AC are much greater than BD, DC.
   /- BD, DC are CD, DB taken the other way round, and BE, EC are CE, EB. -/
   have hsides : ‖B D‖ + ‖D C‖ < ‖B A‖ + ‖A C‖ := by
