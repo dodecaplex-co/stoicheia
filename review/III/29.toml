@@ -38,7 +38,7 @@ note = "III.27 supplies Euclid's ordinary central angles for lesser circumferenc
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
 helper = "Prop26.alike"
-note = "`Prop26.alike` puts the centres in matching cases. For lesser circumferences, III.27's ordinary angles and the equal radii give the bases by I.4. For greater circumferences, `angleAtCentre.reflex` and Common Notion 3 supply the ordinary angles by subtraction before I.4, an additional step within the statement (Heath, vol. 2, p. 60). For semicircles, adding the equal radii gives equal diameters, the elementary case discussed on p. 61."
+note = "`Prop26.alike` puts the centres in matching cases. For lesser circumferences, III.27's ordinary angles and the equal radii give the bases by I.4. For greater circumferences, `angleAtCentre.reflex` and Common Notion 3 supply the ordinary angles by subtraction before I.4, an additional step within the statement (Heath, vol. 2, p. 60). For semicircles, adding the equal radii gives equal diameters, the elementary case discussed (vol. 2, p. 61)."
 
 [figure]
 case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC and EF from G and H"
