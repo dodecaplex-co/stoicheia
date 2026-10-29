@@ -866,6 +866,15 @@ rule.
   and measure comparisons, without supplied centres in `Prop25.complete` or `Prop25.of_circle`. These belong to
   the review records, under `[representation]` and `[statement]`.
 
+  28 October 2026 update (#474): III.27 and III.29 now state Euclid's congruence reading,
+  and their measure forms are the companions `Prop27.of_measure` and `Prop29.of_measure`
+  ([the decision](../decisions/2026-10-28-iii27-iii29-swap.md)). So "III.27 whole" above
+  now means `Prop27.of_measure` whole: that is the statement `Audit.III_27_any` proves
+  without the equal circles, and the one its example gives back. III.27 itself, `Prop27`,
+  is not among these near misses: it takes its circumferences congruent, and congruent
+  circumferences lie in equal circles already, so its equal circles are idle for another
+  reason than the measure, as `Audit/Overlaps.lean` says.
+
 - **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
   on the halves DB and AD. Each half is measured by the angle standing on it, taken twice,
   so the halves are equal. Euclid goes instead from the equal straight lines AD and DB, by

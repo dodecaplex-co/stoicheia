@@ -620,6 +620,11 @@ in the scratch file with `sorry`, and the first proved as a prototype too (secti
 | `Polygon.arcs_measure` | each circumference of `Polygon.arcs` is stage 3's `Arc.measure` of the arc on that side, away from the figure, and no other corner is on that arc: the corners are in order round the circle | `standing_eq_circumference`, `OnArc`; no proposition | Book Zero |
 | `Polygon.triangle_iff` | `Polygon [A, B, C]` exactly when `Triangle A B C` | none | Book Zero |
 
+**28 October 2026 (#474).** Since [the decision of that day](../decisions/2026-10-28-iii27-iii29-swap.md),
+III.27 and III.29 take circumferences that coincide (`Arc.Congruent`), and their measure forms
+are the companions `Prop27.of_measure` and `Prop29.of_measure`. The bridges above compare
+circumferences by measure, so where they cite III.27 and III.29 they mean those companions.
+
 The first three tie the new words to Book III's circumferences; the fourth ties them to
 stage 3's arcs, so that a reader of `Arc` and a reader of `Polygon.arcs` meet one
 circumference. That an equiangular inscribed figure need not be equilateral (a rectangle)
