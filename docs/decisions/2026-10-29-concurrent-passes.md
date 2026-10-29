@@ -31,9 +31,10 @@
   that loop is discarded: its rows are never put in, and its logs are removed. The
   negative tests begin only once both passes of the checks have been judged. A pass is
   told to stop between its steps, so a refusal of this kind waits for the commit's
-  current step, or group, to end before it is reported. When a signal stops the run, no
-  entry is written to the main-checks cache. The harness's own thread decides that, once
-  it has taken in the signal.
+  current step, or group, to end before it is reported. No main-checks cache entry is
+  kept from a pass a signal stopped. The harness's own thread decides that, once it has
+  taken in the signal. An entry written before the signal, once origin/main's negative
+  tests have ended, stays, as it does one after another.
 
   Each pass still begins at the commit, as `at_commit` checks. Once origin/main's
   worktree is reset, its pass is also asked what the commit's pass would begin with in
@@ -57,6 +58,10 @@
   - the previous handlers go back with the signals held, the hold lifted whatever happens,
     as #650 does for a group;
   - only then is what the first signal would have raised raised.
+
+  No row of the loop a signal stopped is put in, and the commit's logs of that loop are
+  removed, where one after another keeps the rows and logs of the steps run before the
+  signal. An interrupted run has no verdict either way.
 
   A terminal's Ctrl-C reaches the checks too, through the run's process group, and they
   end. So no check of either pass still runs when a worktree is cleaned or removed.
@@ -125,10 +130,12 @@
   08:23. The runs were taken in turn (B, A, B, A), at nice 10, with negative workers 4
   and check workers unset, as the lane runs them, while the lane, yards, ships and other
   work ran as usual. They ran in a simulated clone whose main was this change at
-  2ecac9271. Reviews came after the measurement. They changed three things, none of
+  2ecac9271. Reviews came after the measurement. They changed four things, none of
   which changes the work a passing run does:
   - where a pass told to stop saves to the cache, which acts only once a signal is
     recorded;
+  - where the entry is saved at two passes: on the harness's own thread once
+    origin/main's pass has ended, the same save moved;
   - a stop check between the checks of a group at one worker, likewise;
   - three more pieces timed in the line of the work between the rows, which only reads
     the clock around work the run already did.

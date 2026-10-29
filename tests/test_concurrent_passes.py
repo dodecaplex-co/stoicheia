@@ -1001,7 +1001,7 @@ class Interrupted(Stand):
         # which ends, and the harness's handler runs late, as when the signal reaches another
         # thread and the main thread runs the handler only once its wait next returns: it
         # records the signal only once the step's .end mark is made and the pass's thread
-        # has ended, all it does after the step done. Neither that thread nor the main
+        # has ended, all it does once the step is done. Neither that thread nor the main
         # thread keeps an entry.
         if threading.current_thread() is not threading.main_thread():
             self.skipTest("a signal's handler runs on the main thread alone")
