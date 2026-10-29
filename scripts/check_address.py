@@ -63,8 +63,9 @@ SKIP_DIRS = {".git", ".lake", ".claude", "__pycache__", "node_modules"}
 # The documents at the root that are neither Markdown nor in a folder.
 ROOT_DOCUMENTS = ("CITATION.cff", "LICENSE", "NOTICE")
 
-# An owner as GitHub allows it: letters, digits and single hyphens. The repository's name
-# must end there, with or without `.wiki` and `.git`: a `.`, `_`, `-`, letter or digit
+# An owner in the check's fixed syntax: letters, digits and hyphens, with a letter or digit
+# at each end. The repository's name must end there, with or without `.wiki` and `.git`:
+# a `.`, `_`, `-`, letter or digit
 # after it makes another name (`stoicheia.notes`, `stoicheia-tools`), but a full stop
 # ending a sentence does not. A host must stand alone (`not-github.com` is not GitHub), and
 # a bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` must not continue a path
