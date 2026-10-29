@@ -178,8 +178,7 @@ are now the companions `Prop27.of_measure`, which still holds for any two circle
 `Prop29.of_measure`, which still needs its equal circles. Both records carry
 `angle-measure` and `redundant-hypothesis`. `Prop27`'s proof first makes its circumferences
 equal in measure, by III.24's companion `Prop24.equalMeasure`, and then argues as before.
-The phrase table, the note on III.27's statement and the list of exceptions below have
-notes of the same date.
+The phrase table and the note on III.27's statement below have notes of the same date.
 
 **Mixed angles.** "The angle of the semicircle is greater, and the remaining angle less,
 than any acute rectilineal angle" (III.16); "the angle of the greater segment is greater
@@ -713,11 +712,6 @@ silent, from the table; a step changed is still a `different` passage of the rec
 
 Book III's routes are still being worked on (#546, #547, #474), so this list too is of its
 date.
-
-**28 October 2026, #474.** III.29's record now carries `redundant-hypothesis` beside
-`angle-measure`, as III.27's does. It gained the tag that day with III.29's congruent
-companion, whose statement `Prop29` has taken since the swap (the note of that date under
-the circumferences).
 
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,
