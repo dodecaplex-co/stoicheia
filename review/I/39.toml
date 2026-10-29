@@ -20,8 +20,7 @@ note = "The statement gives the goal, AD parallel to BC. The distinct vertices A
 at = "and let EC be joined"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`), then joins EC by Postulate 1."
-unused = ["EC"]
+note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`); EC is named by its ends, as a side of the triangle EBC, so the Lean draws nothing for the join and does not call Postulate 1 for it. The join is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "But ABC is equal to DBC"
@@ -44,11 +43,11 @@ note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Hea
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
+commit = "a6253fb01"
 reviewer = "Claude Opus 5.5, independent reader"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex at 9c52ab48, begun from the Claude first mate's scratch T39 (54a08e61) and keeping some of its lines; closing reductio rewritten at 2a80d18a, whose proof author's family is unrecorded; current proof read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I37-I39, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x)"
-lean = "sha256:ed110b7f428be948"
-text = "sha256:2e5b84c089b7cdb2"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex at 9c52ab48, begun from the Claude first mate's scratch T39 (54a08e61) and keeping some of its lines; closing reductio rewritten at 2a80d18a, whose proof author's family is unrecorded; current proof read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I37-I39, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01"
+lean = "sha256:53a1d4f866c33db4"
+text = "sha256:7b67f2ec225df35c"
 
 [review.items]
 statement = "pass"

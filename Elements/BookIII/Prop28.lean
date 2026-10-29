@@ -19,10 +19,9 @@ Each clause concludes that the circumferences are equal in measure and congruent
 (`Arc.Congruent`): equal circumferences are read as in III.26, which says more than Heath's
 words. The proof follows Euclid's route where it can: the angles AKB, DLE at the centres are
 equal [I. 8], so the less circumferences are equal in measure and congruent [III. 26], and
-the greater are equal in measure as the remainders [C.N. 3]. Two steps depart from it, as
-III.26's own congruence does. The congruence of the greater circumferences cannot come by
-subtraction; it comes from III.24 applied to the greater segments, which are similar, the
-angles in them being the halves of the equal angles at the centres [III. 20]. And when AB
+the greater are equal in measure as the remainders [C.N. 3]. Their congruence follows by
+restricting the same application of the whole circles to the remaining segments
+(`Prop26.remainder`). When AB
 passes through the centre, the four circumferences are semicircles. The angle at the centre
 of each is two right angles (`angleAtCentre.semicircle`), but there are no triangle angles
 AKB, DLE for III.26's central-angle clause to use; the angle in each semicircle is right
@@ -164,21 +163,10 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- remains.
   have hgreater : circumference ABC A C B = circumference DEF D F E :=
     CommonNotion3 (hw₁.trans hw₂.symm) hless.1
-  /- The congruence of the greater circumferences cannot come by subtraction. X and Y lie on
-     the greater arcs, and the angles AXB, DYE are the halves of the equal angles AKB, DLE at
-     the centres [III. 20]; so the greater segments are similar, and on the equal straight
-     lines AB, DE they are congruent [III. 24], named by C and F
-     (`Arc.Congruent.congr_side`). -/
-  have hKX : SameSideOf K X A B := OppositeSidesOf.sameSideOf hKG.symm hXG.symm
-  have hLY : SameSideOf L Y D E := OppositeSidesOf.sameSideOf hLH.symm hYH.symm
-  have hXY : ∠ A X B = ∠ D Y E := Magnitude.eq_of_add_self_eq
-    ((Prop20.special hK hX hA hB hKX).symm.trans
-      (hAKB.trans (Prop20.special hL hY hD hE hLY)))
-  have hAXB := Prop24 hA hB hX hD hE hY
-    hXG.triangle hYH.triangle hAB hXY
+  /- Restrict the common application of the whole circles to the complements of the
+     lesser segments (`Prop26.remainder`), using the extension proved in `Prop26.extend`. -/
   have hACB : Arc.Congruent ⟨ABC, A, B, C⟩ ⟨DEF, D, E, F⟩ :=
-    hAXB.congr_side (OppositeSidesOf.sameSideOf hXG.symm hCG.symm)
-      (OppositeSidesOf.sameSideOf hYH.symm hFH.symm)
+    Prop26.remainder hA hB hD hE hCG.symm hFH.symm hless.2
   -- Therefore etc.
   exact ⟨⟨hgreater, hACB⟩, hless⟩
   -- Q. E. D.

@@ -104,7 +104,7 @@ theorem Prop47.within {A B C D : Point} (hABC : Triangle A B C) (hD : OppositeSi
       have h₄ : ∟ + ∟ < ∠ A B D := by
         rw [hsum, hYBD]
         exact add_lt_add_right ∟ hgt
-      exact angle_le_two_right A B D h₄
+      exact lt_irrefl _ (lt_trans h₄ (Prop13.angle_lt_two_right hADB.acb))
     · /- So Y lies on the ray from B through C, and within the angle ABD. -/
       have hray : OnRay C B Y := OnRay.symm ⟨hABC.ne₂₃, hYB, ⟨BC, hB_BC, hC_BC, hY_BC⟩, hYBC⟩
       have h₁ : SameSideOf Y A B D :=
