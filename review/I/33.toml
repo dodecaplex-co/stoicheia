@@ -14,36 +14,28 @@ helper = "AreParallel.oppositeSidesOf"
 note = "Euclid treats ABC and BCD as alternate angles; `AreParallel.oppositeSidesOf` puts A and D on opposite sides of BC. It uses the given parallels and B and D lying on one side of AC, the statement's meaning of joining in the same directions."
 
 [[passage]]
-at = "the two sides AB, BC are equal to the two sides DC, CB"
-kind = "carried"
-note = "The Lean states the two pairs of equal sides here, as Euclid does; I.4 is then given BA equal to CD and BC equal to CB directly, and the pair is not used again."
-unused = ["this"]
-
-[[passage]]
 at = "and the triangle ABC is equal to the triangle DCB"
 kind = "carried"
-note = "The Lean proves that the triangle ABC equals DCB here, as Euclid states it; the statement asks only that AC and BD be equal and parallel, so this is not used again."
+note = "The Lean proves that the triangle ABC equals DCB here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at B and C."
 unused = ["this"]
 
 [[passage]]
 at = "and the remaining angles will be equal to the remaining angles respectively"
-kind = "carried"
-note = "The Lean states both pairs of remaining angles here, as Euclid does; the next step takes the angles ACB and CBD from I.4 directly, and the pairs are not used again."
-unused = ["this"]
+kind = "grouped"
+note = "I.4, applied under \"therefore the base AC is equal to the base BD\", gives the remaining angles. One step carries both sentences: it takes the pair at C and B, read as ACB and CBD, the only pair Euclid goes on with."
 
 [[passage]]
 at = "And it was also proved equal to it"
-kind = "carried"
-note = "The Lean restates here that AC equals BD, as Euclid recalls it; the conclusion cites the equality where it was first proved, and does not use the restatement."
-unused = ["this"]
+kind = "grouped"
+note = "Euclid recalls that AC equals BD, and concludes. One step carries both sentences: it gives the equality, as proved under \"therefore the base AC is equal to the base BD\", with the parallels that I.27 gives."
 
 [review]
 stage = "full"
-commit = "1e482112"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:fec349a6407fd3c6"
-run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 969d8382 (reader RT-y10); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
-text = "sha256:da9654d9474c4b66"
+commit = "071dc41c5"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:b63dee237f87759e"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 969d8382 (reader RT-y10); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5"
+text = "sha256:3cba2fd0be428d94"
 
 [review.items]
 statement = "pass"
