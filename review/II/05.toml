@@ -64,11 +64,11 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "5c03d00b"
+commit = "dd9307b3c"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:32a63d68fefabf5f"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; card 168, the right angle HDA proved in place by I.13 and Common Notion 3, written by Claude Opus 5.5 at cb01d567, read with the whole record by GPT-6 Astra (Codex); ship F2, reader F2-ii14cx, independent re-read at d4b21d06; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 5c03d00b (reader RT-y6)"
-text = "sha256:4646ae43488fe0fd"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; card 168, the right angle HDA proved in place by I.13 and Common Notion 3, written by Claude Opus 5.5 at cb01d567, read with the whole record by GPT-6 Astra (Codex); ship F2, reader F2-ii14cx, independent re-read at d4b21d06; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 5c03d00b (reader RT-y6); card #481, ship BI: the gnomon sentences, read in full by Claude Opus 5.5, reader BI-r481, at dd9307b3c"
+text = "sha256:34bb7fa735e30522"
 
 [review.items]
 statement = "pass"
