@@ -122,7 +122,7 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
 
 ## Use it
 
-Stoicheia is a Lean library as well as a book, and a Lean project of yours can build on it. Add it to your `lakefile.toml`, pinned to the release tag `v1.0`:
+Stoicheia is a Lean library as well as a book, and a Lean project of yours can build on it. Once the release of Books I to III is published, pin it in your `lakefile.toml` to the release's tag, `v1.0`; until then, put a commit of main in place of `v1.0`:
 
 ```toml
 [[require]]
@@ -131,9 +131,9 @@ git = "https://github.com/dodecaplex-co/stoicheia"
 rev = "v1.0"
 ```
 
-`v1.0` is the name of the release of Books I to III: the owner makes the tag when the release is published. Until then, `git ls-remote --tags https://github.com/dodecaplex-co/stoicheia v1.0` prints nothing, and you set `rev` to a commit of main instead, which is what this page and the book's pages describe; a name not yet released may still change. `book-III`, of 17 October 2026, is an older tag, kept as history: its lock, for one, lists 87 axioms, where main's lists <!-- count:axioms -->48<!-- /count -->.
+`v1.0` is the name of the release of Books I to III, and the tag is made when that release is published. Until then, `git ls-remote --tags https://github.com/dodecaplex-co/stoicheia v1.0` prints nothing; set `rev` to a commit of main instead, since main is what this page and the book's pages describe. A declaration not yet in a release may still be renamed or restated. `book-III`, of 17 October 2026, is an older tag, kept as history, and main has moved on since: the lock of `book-III` lists 87 axioms, where main's lists <!-- count:axioms -->48<!-- /count -->.
 
-In a `lakefile.lean` it is one line: `require stoicheia from git "https://github.com/dodecaplex-co/stoicheia" @ "v1.0"`. Your `lean-toolchain` must name the same Lean, `leanprover/lean4:v4.35.0`. There is nothing else to download. In a new project, `lake build` fetches it and builds the modules you import; in one that already has a `lake-manifest.json`, run `lake update stoicheia` first, which adds Stoicheia to the manifest and leaves your other dependencies as they are (a bare `lake update` would update them all). The same command moves you to another tag or commit once you change `rev`. Then import a proposition and use it; here I.20, that any two sides of a triangle are together greater than the third, gives one of its three inequalities:
+In a `lakefile.lean` it is one line: `require stoicheia from git "https://github.com/dodecaplex-co/stoicheia" @ "v1.0"`. Your `lean-toolchain` must name the same Lean, `leanprover/lean4:v4.35.0`. There is nothing else to download. In a new project, `lake build` fetches Stoicheia at that `rev` and builds the modules you import; in one that already has a `lake-manifest.json`, run `lake update stoicheia` first, which adds Stoicheia to the manifest and leaves your other dependencies as they are (a bare `lake update` would update them all). The same command moves you to another tag or commit once you change `rev`. Then import a proposition and use it; here I.20, that any two sides of a triangle are together greater than the third, gives one of its three inequalities:
 
 ```lean
 import Elements.BookI.Prop20
