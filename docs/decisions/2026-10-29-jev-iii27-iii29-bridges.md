@@ -55,10 +55,10 @@
   a parallelogram's outline convex, so that its area as an outline is `quadArea`, and writes
   Lean's `List.nodup_cons` whole inside `simp [...]` to show its four corners different. The
   generator's reader did not know the name and reported it unresolved, which stops a
-  generation. The coordinator ruled on 29 October 2026 that this change for #674, which
-  lands after that file's, "gains that one name in the generator's allowlist, with a planted
-  case (the name resolves, and an unlisted neighbour stays refused). Nothing wider". The
-  ruling is the coordinator's, not the owner's.
+  generation. The coordinator ruled on 29 October 2026, in these words: "XS-jev674 is
+  already a check train queued after G2-bridges633, so it gains that one name in the
+  generator's allowlist, with a planted case (the name resolves, and an unlisted neighbour
+  stays refused). Nothing wider." The ruling is the coordinator's, not the owner's.
   `Calls.CORE_NAMES` now holds `List.nodup_cons`, read as its other names are, only whole
   and after a first word that names no declaration of the project; no other name or rule
   changes. Two tests in `CoreNames` check it: the name read inside `simp [...]` and as
