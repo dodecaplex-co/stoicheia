@@ -8,3 +8,12 @@
 
   This entry approves the change to [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py),
   whose class `Units` holds those assertions.
+
+  The regressions of the decision entries build the lines `render.py` writes in a notes
+  region, each linking its cards at the repository's address, and compare them with lines
+  the test writes out in full. Since `render.py` names the new home, the test's issue
+  address names it too: one constant, with no case added or taken away.
+
+  This entry approves the change to
+  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
+  constant `ISSUE` holds that address.
