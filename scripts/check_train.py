@@ -23,8 +23,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from safe_push import (
-    CHECK_INPUTS, DECISIONS, GENERATED, GENERATED_REGIONS, SECTION, Refusal, changed_files,
-    generated_parts, git,
+    CHECK_INPUTS, DECISIONS, GENERATED, GENERATED_REGIONS, IGNORABLE, SECTION, Refusal,
+    changed_files, generated_parts, git,
     is_protected, judged_files, pinned, run, sections, shown, under, visible, written,
 )
 
@@ -39,13 +39,106 @@ PLACEHOLDER = re.compile(
     r"(?:pending|waiting|awaiting(?: (?:review|the review))?|(?:still )?to come|to ?do|"
     r"tbd|tbc|wip|queued|skipped|later|soon|in progress|n/?a|none|nothing|-+|\?+|"
     r"not (?:yet )?(?:run|done|started|reviewed)(?: yet)?|will run after (?:the )?merge)")
-# Words that say a review is absent or still to come, which a review cell may not hold
-# anywhere, beside the member's commit too: in any case, with any separators between
-# words, and through character references, compatibility forms and invisible marks.
-# Each repeated part is followed by a character it cannot take, so no match backtracks
-# over more than one run of separators.
-PLACEHOLDER_WORD = re.compile(
-    r"\b(?:pending|tbd|to[\W_]*come|not[\W_]*needed|n(?:[^\w/]|_)*/(?:[^\w/]|_)*a)\b")
+# Words that say a review is absent, incomplete or still to come, which a review cell may
+# not hold anywhere, beside the member's commit too: in any case, with any separators
+# between words, through character references, compatibility forms and invisible marks,
+# and in each of the cell's readings (_readings, and _kept), so that HTML tags, emphasis,
+# code, strikethrough or a link inside a word ("w<i></i>ill", "w*i*ll", "pen**d**ing",
+# "pen[d](#x)ing") cannot hide it from all of them: one reading or another reads it
+# whole. They are a second layer,
+# under the verdict that must stand beside the commit (CLAUSE), since a rule read from
+# prose cannot list every way of saying that a review is not done. "To do" counts but
+# not "to do so", "later" where it says when, not which ("Later commits" pass), "yet"
+# but not "yet exist" ("checks/ does not yet exist" passes), "unread" after "still",
+# "is" and their like ("the records were unread" passes), "after the merge" but not
+# "after the merge of main", and a question mark unless a name and "=" follow it, as in
+# a link's query ("?pr=2"). Each repeated part is followed by a character it cannot take, so no
+# match backtracks over more than one run of separators.
+LATER_WHEN = ("at", "on", "in", "by", "today", "tonight", "tomorrow", "this", "next",
+              "when", "once", "after", "with", "for", "if", "and", "or", "but")
+PLACEHOLDER_WORD = re.compile(r"\b(?:" + "|".join((
+    *(r"[\W_]*".join(phrase.split()) for phrase in (
+        "pending", "tbd", "tbc", "tba", "wip", "will", "to come", "not needed",
+        "outstanding", "in progress", "under way", "underway", "ongoing", "awaiting",
+        "waiting", "so far", "still to", "not started", "not finished", "not reviewed",
+        "unreviewed", "preliminary", "provisional", "continues", "continuing", "resumes",
+        "tomorrow", "next week", "for now", "still running", "half done",
+        "in principle")),
+    r"n(?:[^\w/]|_)*/(?:[^\w/]|_)*a",
+    r"to[\W_]*do(?![\W_]*so\b)",
+    r"to[\W_]*follow(?![\W_]*up\b)",
+    r"to[\W_]*be[\W_]*(?:added|given|reported|reviewed|read|run|completed|finished|"
+    r"confirmed|decided|determined|continued)",
+    r"yet(?![\W_]*exists?\b)",
+    r"(?:still|is|are|remains?|stays?|left|as)[\W_]+unread",
+    r"after[\W_]*(?:the[\W_]*)?merge(?![\W_]*(?:of|with)\b)",
+    r"later(?=\s*(?:$|[.,;:!?)\]]|(?:" + "|".join(LATER_WHEN) + r")\b))",
+)) + r")\b|\?(?![\w-]+=)")
+# Words that also describe other work ("the deferred hardening is filed as #221", "a
+# partial switch", "a card to be done before the queue", "#116's interim texts") refuse
+# in a phrase that names the review: "the full review follows", "PASS (review
+# deferred)", "interim verdict". A phrase ends at a comma, colon, semicolon, bracket,
+# sentence end, question mark, quotation mark or dash.
+SUBJECT = re.compile(
+    r"\b(?:reviews?|reviewed|readings?|verdicts?|findings?|rest|remainder)\b")
+UNFINISHED = re.compile(
+    r"\b(?:follows|deferred|incomplete|unfinished|partial(?:ly)?|partly|in[\W_]+part|"
+    r"interim|not[\W_]+(?:yet|done|run|complete|completed|finished)|"
+    r"to[\W_]+be[\W_]+done)\b")
+PHRASE = re.compile("[,:;()\\[\\]{}.!?\"\N{LEFT DOUBLE QUOTATION MARK}"
+                    "\N{RIGHT DOUBLE QUOTATION MARK}\N{EN DASH}\N{EM DASH}]|\\s-+\\s")
+# A completed review's verdict, which a review cell must give in the clause that names
+# the commit it reviewed (CLAUSE), in each of its three readings: pass, passes or passed;
+# approve, approves or approved; fixed, resolved or stamped; "found no", "found nothing",
+# "skipped nothing", "nothing blocking" or "nothing found"; and "no findings" or a number
+# of findings ("one finding", "2 material findings"), "defect" standing for "finding".
+# On /security-review, "not required" stands too. A verdict stands only as one: none
+# after one of the NEGATIONS among the three words before it in its phrase ("not fully
+# passed", "may have passed", "almost passed"), none straight before an UNFINISHED word
+# ("passed (partial)"), and "pass" none as a noun, after one of the PASS_NOUN words ("a
+# first pass") or "passes" after a number.
+COUNT = r"(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
+KINDS = (r"(?:(?:blocking|material|minor|editorial|major|new|further|other|open|"
+         r"remaining|security|or|and|nor)[\W_]+)*")
+VERDICT = re.compile(
+    r"\b(?:pass(?:es|ed)?|approve[sd]?|fixed|resolved|stamped|"
+    r"found[\W_]+no(?:thing)?|skipped[\W_]+nothing|nothing[\W_]+(?:blocking|found)|"
+    rf"(?:no|{COUNT})[\W_]+{KINDS}(?:findings?|defects?))\b")
+SECURITY_VERDICT = re.compile(r"\bnot[\W_]+required\b")
+NEGATIONS = frozenset((
+    "not", "no", "never", "neither", "nor", "nothing", "cannot", "without", "to", "be",
+    "being", "will", "would", "could", "should", "might", "may", "must", "can", "shall",
+    "yet", "if", "unless", "until", "once", "when", "whether", "almost", "nearly",
+    "hardly", "barely", "probably", "possibly", "perhaps", "maybe", "likely",
+    # The "t" of "n't", and the contracted negations written without their apostrophe.
+    "t", "aint", "arent", "cant", "couldnt", "didnt", "doesnt", "dont", "hadnt", "hasnt",
+    "havent", "isnt", "mightnt", "mustnt", "neednt", "shant", "shouldnt", "wasnt",
+    "werent", "wont", "wouldnt"))
+PASS_NOUN = frozenset((
+    "a", "an", "the", "this", "that", "each", "every", "another", "one", "first", "second",
+    "third", "next", "quick", "full", "fresh", "brief", "own", "its", "their", "further",
+    "extra", "separate", "new", "light", "short", "single", "initial", "earlier", "later",
+    "previous"))
+WORD = re.compile(r"(?<![^\W_])[^\W_]+")
+SEPARATORS = re.compile(r"[\W_]*")
+# A clause, in which a review cell's verdict must stand beside the commit it is for
+# ("Started at <sha>; CI passed" gives none), ends at every semicolon, line end, <br>
+# and HTML block tag (each drawn on a line of its own), every exclamation mark, every
+# question mark but one before a name and "=", as in a link's query ("?pr=2"), five
+# other scripts' full stops, and every full stop but one between two letters or digits,
+# inside a name or a number ("SCHEMA.md", "Claude Opus 5.5"), which reviewers' cells
+# name beside their commits. A tag's pattern takes no "<" or ">", so it stays linear.
+CLAUSE = re.compile(r"[;\n!\u3002\uff61\u0589\u06d4\u0964]|<br\b[^<>]*>|"
+                    r"</?(?:p|div|hr|li|ul|ol|h[1-6]|blockquote|dl|dd|dt|table|tr|td|th|"
+                    r"pre|details|summary)\b[^<>]*>|"
+                    r"\?(?![\w-]+=)|(?<![^\W_])\.|\.(?![^\W_])")
+# The inline Markdown markers, of emphasis, code, strikethrough and a link's text, which
+# a reader of the rendered cell does not see, inside a word ("w*i*ll", "to co`m`e",
+# "pen[d](#x)ing", its destination already cut) or at its edges.
+MARKERS = re.compile(r"[*_`~\[\]]")
+# Unicode's default-ignorable characters that are no format characters or marks (the
+# Hangul fillers among them), which _fold drops with those.
+IGNORED = dict.fromkeys(c for low, high in IGNORABLE for c in range(low, high + 1))
 # A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits that a
 # reader sees (_review_text), and with a repository that commit must be one of the
 # member's own (check_train); on /security-review, "Not required" stands instead, where
@@ -193,21 +286,52 @@ def _placeholder(cell: str) -> bool:
                                       .rstrip(".!;:, ").casefold()))
 
 
+def _fold(text: str, ignored: bool = True) -> str:
+    """Text as it reads, its character references already decoded: NFKC, casefolding and
+    NFKC again, then without format characters, combining marks and, unless `ignored` is
+    false, Unicode's other default-ignorable characters (IGNORED). NFKC comes before
+    casefolding as well as after, since a compatibility capital (the black-letter R) folds
+    only once NFKC has made it a letter; and the marks are dropped last, since casefolding
+    the dotted capital I adds one."""
+    text = unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", text).casefold())
+    return "".join(c for c in (text.translate(IGNORED) if ignored else text)
+                   if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
+
+
+def _kept(cell: str) -> str:
+    """A fourth reading for the word lists: as written, with the default-ignorable
+    characters that are no format characters or marks kept, as separators, so that one
+    of them between two words ("review" U+2065 "pending"), which the other readings drop,
+    does not join them in every reading."""
+    return _fold(html.unescape(cell), ignored=False)
+
+
 def _normal(cell: str) -> str:
-    """A cell's text as it reads: character references decoded, then NFKC, casefolding
-    and NFKC again, then without format characters and combining marks. NFKC comes
-    before casefolding as well as after, since a compatibility capital (the black-letter
-    R) folds only once NFKC has made it a letter; and the marks are dropped last, since
-    casefolding the dotted capital I adds one."""
-    text = unicodedata.normalize("NFKC", html.unescape(cell))
-    text = unicodedata.normalize("NFKC", text.casefold())
-    return "".join(c for c in text if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
+    """A cell's text as it reads: character references decoded, then folded (_fold)."""
+    return _fold(html.unescape(cell))
+
+
+def _readings(cell: str, struck: bool = True) -> tuple[str, str, str]:
+    """A review cell's three readings, each folded (_fold): as written (_normal); as a
+    reader sees it (_review_text); and as a reader sees it rendered, without the inline
+    Markdown markers (MARKERS) and, unless `struck`, without struck text ("~~passed~~"),
+    each struck span cut to its nearest closing, since a struck verdict is none."""
+    seen = _review_text(cell)
+    shown = seen if struck else _cut(seen, "~", (("~~", "~~"), ("~", "~")), keep=0)
+    return _normal(cell), _fold(seen), MARKERS.sub("", _fold(shown))
 
 
 def _placeholder_word(cell: str) -> str | None:
-    """The first word anywhere in the cell that says the review is absent or to come."""
-    match = PLACEHOLDER_WORD.search(_normal(cell))
-    return match.group() if match else None
+    """The first word that says the review is absent, incomplete or to come, anywhere in
+    the cell (PLACEHOLDER_WORD) or in a phrase that names the review (UNFINISHED), in any
+    of its readings (_readings, and _kept)."""
+    for text in (*_readings(cell), _kept(cell)):
+        if match := PLACEHOLDER_WORD.search(text):
+            return match.group()
+        for phrase in PHRASE.split(text):
+            if SUBJECT.search(phrase) and (match := UNFINISHED.search(phrase)):
+                return match.group()
+    return None
 
 
 def _cut(text: str, opener: str, spans: tuple[tuple[str, str], ...], keep: int) -> str:
@@ -245,10 +369,57 @@ def _review_text(cell: str) -> str:
     return _cut(text, "]", (("](", ")"), ("][", "]")), keep=1)
 
 
-def _review_content(cell: str) -> bool:
-    """Whether a review cell says something visible beyond commit names and markup, read
-    in its text as a reader sees it (_review_text)."""
-    return any(character.isalpha() for character in COMMIT.sub("", _review_text(cell)))
+def _stands(text: str, match: re.Match) -> bool:
+    """Whether a verdict in folded text stands as one: no NEGATIONS among the three words
+    before it in its phrase (each read without its letters outside ASCII, so a
+    modifier-letter apostrophe hides no "n't"), no "pass" after a PASS_NOUN word or
+    "passes" after a number, and no UNFINISHED word straight after it ("passed
+    (partial)", "PASS, incomplete"). Only the 60 characters before it and the 20 after
+    are read, so a cell of many verdicts is still read in linear time; when those 60 cut
+    a phrase before three whole words of it, the verdict does not stand, since the third
+    word back is unread, and likewise when the 20 after it end inside a run of
+    separators."""
+    begin = max(0, match.start() - 60)
+    capped = begin > 0
+    for end in PHRASE.finditer(text, begin, match.start()):
+        begin, capped = end.end(), False
+    found = WORD.findall(text, begin, match.start())
+    if capped and len(found) < 4:
+        return False
+    words = [w.encode("ascii", "ignore").decode() for w in found[-3:]]
+    said = match.group()
+    after = SEPARATORS.match(text, match.end(), match.end() + 20).end()
+    if after == match.end() + 20 and SEPARATORS.match(text, after, after + 1).end() > after:
+        return False  # The 20 end inside a run of separators, so what follows is unread.
+    return not any(w in NEGATIONS for w in words) and not (words and (
+        said == "pass" and words[-1] in PASS_NOUN
+        or said == "passes" and re.fullmatch(COUNT, words[-1]))) \
+        and not UNFINISHED.match(text, after)
+
+
+def _anchors(cell: str, security: bool = False) -> list[set[str]]:
+    """For each of a review cell's three readings (_readings, struck text taken out), the
+    commit names that stand in a clause (CLAUSE) with a completed verdict that stands
+    (VERDICT, or on /security-review "not required"; _stands). A name counts only if the
+    commit reading reads it, in the cell as a reader sees it (COMMIT, in _review_text)."""
+    patterns = (VERDICT, SECURITY_VERDICT) if security else (VERDICT,)
+    seen = set(COMMIT.findall(_review_text(cell)))
+    anchors = []
+    for text in _readings(cell, struck=False):
+        names = set()
+        for clause in CLAUSE.split(text):
+            if any(_stands(clause, match) for pattern in patterns
+                   for match in pattern.finditer(clause)):
+                names.update(name for name in COMMIT.findall(clause) if name in seen)
+        anchors.append(names)
+    return anchors
+
+
+def _review_content(cell: str, security: bool = False) -> bool:
+    """Whether a review cell gives, in each of its readings, a completed verdict that
+    stands in a clause that names a reviewed commit (_anchors): a verdict that a reading
+    lacks or negates, or gives only in a clause without the commit, is none."""
+    return all(_anchors(cell, security))
 
 
 def _evidence(rows: list[dict]) -> list[str]:
@@ -273,14 +444,23 @@ def _evidence(rows: list[dict]) -> list[str]:
                 if word := _placeholder_word(cell):
                     problems.append(f"Members: {branch}: {label} says {word!r}: a review "
                                     "cell may not say a review is pending, to come, TBD, "
-                                    "not needed or N/A, even beside the member's commit")
+                                    "not needed, N/A, incomplete or still to follow, even "
+                                    "beside the member's commit")
                 not_required = key == "security_review" and NOT_REQUIRED.match(cell)
                 if not COMMIT.search(_review_text(cell)) and not not_required:
                     problems.append(f"Members: {branch}: {label} names no reviewed commit "
                                     "(7 to 40 lower-case hex digits)")
-                elif not not_required and not _review_content(cell):
+                elif not not_required and not _review_content(
+                        cell, security=key == "security_review"):
                     problems.append(f"Members: {branch}: {label} gives no visible review "
-                                    "verdict or findings beyond the reviewed commit")
+                                    "verdict or findings beyond the reviewed commit: it "
+                                    "must say the review is done (pass, approved, fixed, "
+                                    "no findings, a number of findings), not negated, in "
+                                    "the clause that names the commit, which ends at every "
+                                    "';', '!', <br> and block tag, every '?' but one before "
+                                    "a name and '=' (as in a link's query), and every '.' "
+                                    "but one between two letters or digits (SCHEMA.md, "
+                                    "5.5)")
         evidence = row["no_mistakes"]
         if match := PASSED.fullmatch(evidence):
             checked = match.group(1)
@@ -421,8 +601,10 @@ def _named_commits(repo: Path, cells: list[str]) -> set[str]:
 
 
 def _says_not_required(cell: str) -> bool:
-    """Whether the cell says "Not required" anywhere, however spelt."""
-    return bool(SAYS_NOT_REQUIRED.search(_normal(cell)))
+    """Whether the cell says "Not required" anywhere, however spelt, in any of its
+    readings (_readings, and _kept), so markup ("not<i></i> required", "n*o*t required")
+    cannot hide it from all at once."""
+    return any(SAYS_NOT_REQUIRED.search(text) for text in (*_readings(cell), _kept(cell)))
 
 
 def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
