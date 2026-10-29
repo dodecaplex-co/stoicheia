@@ -16,7 +16,12 @@ every book in `heath.BOOKS`:
                        (and likewise for each book): the book's completion summary
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
-                       release read from `docs/program.toml`
+                       release read from `docs/program.toml`, and each notes region,
+                       between `<!-- notes:<section> -->` and `<!-- /notes:<section> -->`:
+                       a line for each decision entry whose header names the section
+    docs/briefs/       only a brief's notes region, between `<!-- notes -->` and
+                       `<!-- /notes -->`, where it has one: a line for each decision
+                       entry whose header names the brief
     docs/WORKFLOW.md   only section 8's first command block, between `<!-- checks -->`
                        and `<!-- /checks -->`: CI's `check` job's sequence, from the
                        registry of checks, one file per check in `checks/`
@@ -25,9 +30,11 @@ every book in `heath.BOOKS`:
 
 Before it writes anything, the script checks the dated decision entries of
 `docs/decisions/` (`decision_entries`): each is a page of its own, read where it is, and
-nothing is assembled from them. It computes the inline count updates next, then reads the
-registry of checks by `scripts/registry.py`, which refuses a registry that breaks its
-rules, naming the file. A fault in any of the three leaves every generated file unwritten.
+nothing is assembled from them but the header line an entry may begin with, which it
+checks next (`entry_headers`). It computes the inline count updates after that, then reads
+the registry of checks by `scripts/registry.py`, which refuses a registry that breaks its
+rules, naming the file, and then the notes markers of every brief and of PROGRAM.md
+(`notes_updates`). A fault in any of them leaves every generated file unwritten.
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -196,8 +203,8 @@ STATUS_LINE = {
 }
 
 # A review record's answers in a word, for the index and the certificate. The scope
-# words are the same everywhere a reader meets them: whole (as Euclid states it),
-# restricted, in part.
+# words are the same everywhere a reader meets them: whole (the whole enunciation),
+# restricted, in part. The keys qualify "whole" for the bracketed I.40 and III.12.
 SCOPE_WORD = {"full": "whole", "restricted": "restricted", "partial": "in part"}
 ROUTE_WORD = {"euclid": "Euclid's", "modified": "Euclid's", "alternative": "different"}
 # A proposition Heath prints in brackets as a later addition (I.40, III.12) has no
@@ -336,21 +343,37 @@ def svg_desc(path):
     return " ".join(m.group(1).split()) if m else ""
 
 
+DECLARATION_KEYWORDS = r"theorem|lemma|def|abbrev|structure|inductive|instance"
 DECLARATION = re.compile(
-    r"^(?:theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s({:]+)", re.M)
+    r"^(?:private\s+)?(?:" + DECLARATION_KEYWORDS + r")\s+([^\s({:]+)", re.M)
+# The same, with the keyword: a theorem or lemma is proved, and the rest are definitions.
+DECLARATION_KIND = re.compile(
+    r"^(?:private\s+)?(" + DECLARATION_KEYWORDS + r")\s+([^\s({:]+)", re.M)
 
 
 class LeanParts:
     """A proposition file cut in three for its page (see `lean_parts`). Each part is
-    Lean text, possibly empty, and each `*_names` lists the declarations in it. The names
-    are read from the corresponding spans of `check_fidelity.without_comments(src)`, with
+    Lean text, possibly empty; each `*_decls` lists the declarations in it, one
+    (keyword, name) pair for each, in order, and each `*_names` their names. They are
+    read from the corresponding spans of `check_fidelity.without_comments(src)`, with
     comments, docstrings and literals blanked, so a docstring line that begins "lemma
     beside III.13" declares nothing."""
 
     def __init__(self, before, main, after, before_code, after_code):
         self.before, self.main, self.after = before, main, after
-        self.before_names = DECLARATION.findall(before_code)
-        self.after_names = DECLARATION.findall(after_code)
+        self.before_decls = DECLARATION_KIND.findall(before_code)
+        self.after_decls = DECLARATION_KIND.findall(after_code)
+        self.before_names = [name for _, name in self.before_decls]
+        self.after_names = [name for _, name in self.after_decls]
+
+
+def counted(decls, proved="lemma", more=""):
+    """Declarations, (keyword, name) pairs, counted by their own keywords, definitions
+    apart from what is proved: "two definitions and one lemma", "two more theorems"."""
+    defs = sum(kind not in ("theorem", "lemma") for kind, _ in decls)
+    parts = [(defs, "definition"), (len(decls) - defs, proved)]
+    return and_list([f"{number_word(k)} {more}{word}{'' if k == 1 else 's'}"
+                     for k, word in parts if k])
 
 
 def lean_parts(book, n):
@@ -383,7 +406,7 @@ def lean_parts(book, n):
 
 def axiom_kind(path: str) -> str:
     if path.endswith("Tacit/Magnitudes.lean"):
-        return "Laws of magnitude"
+        return "Rules of magnitude"
     if path.endswith(("Tacit/Constructions.lean", "Tacit/Diagram.lean")):
         return "Reading the figure"
     if path.endswith(("Tacit/Metric.lean", "Tacit/Transfer.lean")):
@@ -836,7 +859,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         out += f"\n<details><summary>{summary}</summary>\n\n"
         out += tacit_key(book, up, cited, marked, bool(unmarked)) + "\n\n"
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
-                     "Laws of magnitude", "Other"]:
+                     "Rules of magnitude", "Other"]:
             if kind not in by_kind:
                 continue
             out += f"**{kind}**\n\n"
@@ -991,12 +1014,67 @@ def overlap_word(overlap):
     return f"{number_word(len(rules))} of our {kind} together"
 
 
-def representation_badge(record):
+# The Lean words a badge's reading lives in. A record's tag may cover its companions
+# alone (III.24's and III.25's measure), so a tag named here gives its badge only to a
+# statement that uses one of its words, as the decisions page asked on 19 October 2026
+# ("if the badge is first kept to statements that use the measure"); a tag with a badge
+# and no words here gives it to every statement it is on.
+BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
+                                 "Elements.Arc.measure"}}
+
+
+def statement_names(statement):
+    """The names a facts.json statement uses, each a whole token, read as Lean reads
+    them: a `«…»` component is one piece of its name, whatever it holds; a string literal
+    is no name; anything else is cut at white space and brackets; and a prefix `@`, `↑`
+    or `¬` is taken off. So `Elements.circumference℃`, `Other.«Elements.circumference»`,
+    `Other.«(Elements.circumference)»` and a quoted "Elements.circumference" are not
+    `Elements.circumference`."""
+    tokens, token, i = [], "", 0
+    while i < len(statement):
+        c = statement[i]
+        if c == "«":
+            end = statement.find("»", i)
+            end = len(statement) if end < 0 else end + 1
+            token, i = token + statement[i:end], end
+            continue
+        if c == '"' or c.isspace() or c in "()[]{},⟨⟩":
+            tokens.append(token)
+            token = ""
+        if c == '"':                # skip the literal, escapes and all
+            i += 1
+            while i < len(statement) and statement[i] != '"':
+                i += 2 if statement[i] == "\\" else 1
+        elif not (c.isspace() or c in "()[]{},⟨⟩"):
+            token += c
+        i += 1
+    tokens.append(token)
+    return {t.lstrip("@↑¬") for t in tokens if t}
+
+
+def bracketed_key(books):
+    """The keys' sentence after their three scope words, which speak of Euclid's words:
+    for a proposition of `books` that Heath prints in brackets (I.40, III.12), they are
+    said of the text's enunciation. Empty for a book with none."""
+    refs = [f"{b}.{n}" for b in books for n in range(1, BOOKS[b][0] + 1)
+            if heath.bracketed(b, n)]
+    if not refs:
+        return ""
+    return (f" Of {and_list(refs)}, which Heath prints in brackets, the three are said of "
+            "the text's enunciation, which may not be Euclid's.")
+
+
+def representation_badge(record, entry=None):
     """A few words beside the badge for a representation that changes how the whole
-    statement is read (review/terms.toml `badge`): "in our measure of circumferences"."""
+    statement is read (review/terms.toml `badge`): "in our measure of circumferences".
+    `entry` is the statement's facts.json entry, whose words decide a badge that
+    `BADGE_WORDS` keeps to the statements using them; with none, such a badge is not
+    given."""
     terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
-    badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})]
+    used = statement_names((entry or {}).get("statement", ""))
+    badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})
+              and (t not in BADGE_WORDS or BADGE_WORDS[t] & used)]
     return and_list(badges) if badges else ""
 
 
@@ -1014,8 +1092,11 @@ def in_lean_line(p, record, book, n):
     st, route = record["statement"], record["route"]
     short = clause(st.get("short", ""))
     if st["scope"] == "full":
-        badge = representation_badge(record)
-        first = f"{head}, as Euclid states it" + (f", {badge}" if badge else "")
+        badge = representation_badge(record, p)
+        # A proposition Heath prints in brackets (I.40, III.12) may be a later addition,
+        # so its enunciation is the text's, not surely Euclid's.
+        whole = "as the text states it" if heath.bracketed(book, n) else "as Euclid states it"
+        first = f"{head}, {whole}" + (f", {badge}" if badge else "")
     elif st["scope"] == "restricted":
         first = f"{head} for a restricted statement ({short})"
     else:
@@ -1563,10 +1644,15 @@ CARRIED_CASES = [   # (the helpers of the carried passages; how the sentence mar
     (["Prop40.general"], None),   # another proposition's companion
 ]
 
+DECLARATION_CASES = [
+    ("theorem shown : True := trivial\nprivate theorem hidden : True := trivial\n",
+     [("theorem", "shown"), ("theorem", "hidden")]),
+]
+
 
 def use_self_check():
-    """USE_CASES, read from USE_FILES, ORDER_CASES and CARRIED_CASES; returns the number
-    of cases and the faults."""
+    """USE_CASES, read from USE_FILES, ORDER_CASES, CARRIED_CASES and DECLARATION_CASES;
+    returns the number of cases and the faults."""
     code = {path: check_fidelity.without_comments(src) for path, src in USE_FILES.items()}
     declared = declared_names(code)
     own = next(iter(USE_FILES))
@@ -1593,7 +1679,16 @@ def use_self_check():
             faults.append(f"the carried {helpers!r} were not refused")
         elif f" The list below marks where {want};" not in got:
             faults.append(f"the carried {helpers!r} read as {got!r}, not as {want!r}")
-    return len(USE_CASES) + len(ORDER_CASES) + len(CARRIED_CASES), faults
+    for source, want in DECLARATION_CASES:
+        got = DECLARATION_KIND.findall(source)
+        if got != want:
+            faults.append(f"the declarations read as {got!r}, not as {want!r}")
+        got_names = DECLARATION.findall(source)
+        want_names = [name for _, name in want]
+        if got_names != want_names:
+            faults.append(f"the declaration names read as {got_names!r}, not as {want_names!r}")
+    count = len(USE_CASES) + len(ORDER_CASES) + len(CARRIED_CASES) + 2 * len(DECLARATION_CASES)
+    return count, faults
 
 
 def lean_listing(book, n, facts):
@@ -1620,21 +1715,24 @@ def lean_listing(book, n, facts):
 
     out = []
     if parts.before:
-        k = len(parts.before_names)
-        what = f"{number_word(k)} lemma" + ("" if k == 1 else "s")
+        what = counted(parts.before_decls)
         out += fold(f"Before the theorem, {what}: {names(parts.before_names)} "
                     f"({lines(parts.before)})", parts.before)
     out += ["```lean", parts.main, "```", ""]
     if parts.after:
         porism = [x for x in parts.after_names if x == f"Prop{n}.porism"]
         comp = [x for x in parts.after_names if x in companions]
-        rest = [x for x in parts.after_names if x not in porism + comp]
+        # The rest as declarations, each counted by its own keyword.
+        rest = [d for d in parts.after_decls if d[1] not in porism + comp]
         own = heath.lean_path(book, n)
         proofs = {f"Prop{n}", f"Prop{n}.porism"} | companions
-        kind = {x: use_kind(x, own, lean_code(), lean_declared(), proofs) for x in rest}
-        later = [x for x in rest if kind[x] == "later"]
-        local = [x for x in rest if kind[x] == "own"]
-        beside = [x for x in rest if kind[x] == "beside"]
+        kind = {x: use_kind(x, own, lean_code(), lean_declared(), proofs) for _, x in rest}
+        later = [d for d in rest if kind[d[1]] == "later"]
+        local = [d for d in rest if kind[d[1]] == "own"]
+        beside = [d for d in rest if kind[d[1]] == "beside"]
+
+        def listed(decls):
+            return names([x for _, x in decls])
         what = []   # (a clause, the number of names it lists)
         if porism:
             what.append((f"its porism, {names(porism)}", len(porism)))
@@ -1644,16 +1742,13 @@ def lean_listing(book, n, facts):
         if later:
             k = len(later)
             more = "more " if porism or comp else ""
-            what.append((f"{number_word(k)} {more}theorem{'s' if k > 1 else ''} "
-                         f"later propositions use, {names(later)}", k))
+            what.append((f"{counted(later, 'theorem', more)} later propositions use, "
+                         f"{listed(later)}", k))
         if local:
-            k = len(local)
-            what.append((f"{number_word(k)} lemma{'s' if k > 1 else ''} for its own "
-                         f"proofs, {names(local)}", k))
+            what.append((f"{counted(local)} for its own proofs, {listed(local)}", len(local)))
         if beside:
-            k = len(beside)
-            what.append((f"{number_word(k)} lemma{'s' if k > 1 else ''} beside the "
-                         f"proposition, {names(beside)}", k))
+            what.append((f"{counted(beside)} beside the proposition, {listed(beside)}",
+                         len(beside)))
         anchors = "".join(f'<a name="{x.split(".", 1)[1]}"></a>' for x in comp)
         if anchors:
             out += [anchors, ""]
@@ -1684,8 +1779,7 @@ def page_nav(book, n, count):
 
 
 # The line under the heading "Mishnah", for a reader who meets the word on this page.
-MISHNAH_LEAD = ("_Our commentary: what Euclid assumes, what Lean made us say out loud, and "
-                "how the result looks by modern means._")
+MISHNAH_LEAD = "_Our commentary: why Euclid's proof, and ours, look as they do._"
 
 JUMP_LINKS = ("[Euclid's proof](#euclids-proof) · [In Lean](#in-lean) · "
               "[What it rests on](#what-it-rests-on) · [Mishnah](#mishnah)")
@@ -1987,14 +2081,21 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
     reviewed = [r for r in proved if records.get(r)]
     scope = {s: [r for r in reviewed if records[r]["statement"]["scope"] == s]
              for s in ("full", "restricted", "partial")}
+    # A whole statement of a proposition Heath prints in brackets (I.40, III.12) is the
+    # text's, as its page says.
+    texts = [r for r in scope["full"] if heath.bracketed(book, int(r.split(".")[1]))]
+    text = (f", or for {links(texts)} as the text states {'it' if len(texts) == 1 else 'them'}"
+            if texts else "")
+
     def states(k):
-        return f"{k} as Euclid states {'it' if k == 1 else 'them'}"
+        return f"{k} as Euclid states {'it' if k == 1 else 'them'}{text}"
 
     out = []
     if not reviewed:
         out.append(head + ".")
     elif not scope["restricted"] and not scope["partial"]:
-        out.append(head + (", every one as Euclid states it." if len(reviewed) == len(proved)
+        out.append(head + (f", every one as Euclid states it{text}."
+                           if len(reviewed) == len(proved)
                            else f": {states(len(scope['full']))}."))
     else:
         parts = [states(len(scope["full"]))] if scope["full"] else []
@@ -2009,11 +2110,23 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
     if unreviewed:
         out.append(f"Not yet reviewed against Euclid's enunciation: {links(unreviewed)}.")
     if reviewed:
-        route = {k: [r for r in reviewed if records[r]["route"]["kind"] == k]
+        # A proposition Heath prints in brackets (I.40, III.12) has no argument of
+        # Euclid's to follow: a proof that follows the text follows the argument Heath
+        # prints, and is named apart, with its steps changed if any.
+        text = [r for r in reviewed if heath.bracketed(book, int(r.split(".")[1]))
+                and records[r]["route"]["kind"] != "alternative"]
+        changed = {r: f", {steps_changed(records[r], 'with ')}"
+                   if records[r]["route"]["kind"] == "modified" else "" for r in text}
+        route = {k: [r for r in reviewed if records[r]["route"]["kind"] == k and r not in text]
                  for k in ("euclid", "modified", "alternative")}
         if len(route["euclid"]) == len(reviewed):
             out.append("Every proof follows Euclid's argument, and each page notes where the "
                        "Lean departs from his sentences.")
+        elif len(route["euclid"]) + len(text) == len(reviewed):
+            save = and_list([f"{links([r])}'s, which follows the argument Heath prints"
+                             f"{changed[r]}" for r in text])
+            out.append(f"Every proof follows Euclid's argument save {save}; each page notes "
+                       "where the Lean departs from the text's sentences.")
         else:
             k = len(route["euclid"])
             parts = [f"{k} proof{'' if k == 1 else 's'} follow{'s' if k == 1 else ''} "
@@ -2032,6 +2145,8 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
                 k = len(route["alternative"])
                 parts.append(f"{k} {'argues' if k == 1 else 'argue'} differently "
                              f"({links(route['alternative'])})")
+            parts += [f"{links([r])}'s follows the argument Heath prints{changed[r]}"
+                      for r in text]
             out.append(and_list(parts) + "; each page says how.")
         overlap = [r for r in reviewed if "overlap" in records[r]]
         if overlap:
@@ -2057,7 +2172,8 @@ def index(book, count, titles, facts, records):
     out = [GENERATED, f"# Book {book}", "", summary, "",
            f"Key to the table: {legend}. The Lean statement is *whole*, as Euclid states it; "
            "*restricted*, with hypotheses that leave out cases his words admit; or *in "
-           "part*, leaving a clause to his words. Each page says how.", ""]
+           f"part*, leaving a clause to his words.{bracketed_key([book])} Each page says how.",
+           ""]
     intro = book_intro(book)
     if intro:
         out += [intro, "", "## The propositions", ""]
@@ -2325,7 +2441,8 @@ def certificate_intro(facts, records):
         "**How to read the table.** ✅: proved in Lean, and nothing it rests on contains "
         "`sorryAx`, Lean's mark of a step left unproved. In \"Statement\", *whole* is the "
         "whole enunciation, as Euclid states it; *restricted* adds hypotheses that exclude "
-        "cases Euclid's words admit; *in part* leaves some clause to Euclid's words." + dagger
+        "cases Euclid's words admit; *in part* leaves some clause to Euclid's words."
+        + bracketed_key(BOOKS) + dagger
         + " In \"Argument\", *Euclid's* is his argument, with the lemmas, groupings and "
         "further cases each page notes; *Euclid's, one step changed* is his argument with "
         "one step argued another way, *Euclid's, two steps changed* with two, and so on, "
@@ -2349,7 +2466,7 @@ def certificate_row(entry, link, refs, record=None):
     Argument) or, indented under it, its porism or a companion."""
     status = STATUS_SHORT[entry["status"]] if entry else "🚧"
     statement = SCOPE_WORD[record["statement"]["scope"]] if record else ""
-    if record and representation_badge(record):
+    if record and representation_badge(record, entry):
         statement += "†"
     r = heath.parse_ref(entry["ref"]) if entry else None
     argument = route_word(record, r.book, r.n) if record and r else ""
@@ -2459,6 +2576,11 @@ def content_wording_at(root):
 
     placement = placement_note(props)
     definitions = FRONT_LEAN_III["Definitions"]
+    # Heath's reading of touching at the point, named beside ours once III.13's companions
+    # prove the two the same.
+    at_point = ({"TouchesInternallyAt", "TouchesExternallyAt", "CirclesTouchAt"} <= words.keys()
+                and stated("III.13 touchesInternally_iff", "III.13 touchesExternally_iff",
+                           "III.13 circlesTouch_iff"))
     choices = (
         ("MixedAngle.ofSegment" in words and companion_of("III.16", "III.31"), (
             (definitions[7],
@@ -2487,7 +2609,15 @@ def content_wording_at(root):
              "the other; `TouchesInternally α β C`: they meet at C, a point of β is within α, "
              "and no point of β falls outside α; `TouchesExternally α β C`: they meet at C, "
              "and no point is within both; `CirclesTouch α β C`: either touches the other "
-             "within, or they touch without. Touching is read of the whole circles"),
+             "within, or they touch without. Touching is read of the whole circles"
+             + (". Beside it is defined the reading at the point of contact, which Heath "
+                "prefers. `TouchesInternallyAt α β C`: they meet at C, they are two circles, "
+                "and near C no point of β falls outside α; `TouchesExternallyAt α β C`: they "
+                "meet at C, and near C no point is within both; `CirclesTouchAt α β C`: either "
+                "touches the other within, or they touch without, read at C. III.13's "
+                "companions prove, for any two circles and any point, that each whole-circle "
+                "definition holds exactly when its reading at the point does, so a statement "
+                "may be read either way" if at_point else "")),
         )),
         ("Foot" in words and stated("III.14", "III.14 general"), (
             (definitions[4],
@@ -2564,8 +2694,9 @@ def certificate(facts, docs, records):
 
 # README.md is generated in part: each book's completion summary stands between
 # `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand". The
-# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, the one
-# account of them (#578), and each page is filled through heath.fill.
+# regions, here and in docs/PROGRAM.md and docs/WORKFLOW.md, are heath.REGIONS's, and the
+# notes regions of docs/PROGRAM.md and the briefs heath.notes's, the one account of them
+# (#578, #577), and each page is filled through heath.fill.
 SCOPE_MARKERS = heath.REGIONS["README.md"]
 
 
@@ -2728,11 +2859,12 @@ def status_table(facts, records, program):
 
 
 def program_page(text, facts, records, program):
-    """PROGRAM.md's text with the status table filled in between its markers; the rest
-    of the file is left as it is. SystemExit unless it holds one status region, well
-    formed (heath.regions)."""
-    return fill_regions("docs/PROGRAM.md", text, lambda name, body: "\n" + status_table(
-        facts, records, program) + "\n\n")
+    """PROGRAM.md's text with the status table filled in between its markers, and each
+    notes region as notes_updates filled it; the rest of the file is left as it is.
+    SystemExit unless it holds one status region, and its notes regions, well formed
+    (heath.regions)."""
+    return fill_regions("docs/PROGRAM.md", text, lambda name, body: (
+        "\n" + status_table(facts, records, program) + "\n\n" if name == "status" else body))
 
 
 # docs/WORKFLOW.md is generated in part: section 8's first command block, CI's `check`
@@ -2911,8 +3043,10 @@ def git_ignored(names):
 def decision_entries():
     """Check docs/decisions/, the folder of dated decision entries, and return the
     entries' names. Each entry is a page of its own, read where it is, and nothing is
-    assembled from them: so an entry may hold whatever a page may, headings included, and
-    needs no date heading, since its name carries its date. The folder may be absent.
+    assembled from it but its header line, if it has one (entry_headers checks it), whose
+    news render.py copies into the notes regions it names: so an entry may hold whatever
+    a page may, headings included, and needs no date heading, since its name carries its
+    date. The folder may be absent.
     Where it is not, it is a folder under no link, spelled so on disk with nothing beside
     it spelled otherwise, and holds regular files alone: its README.md, which is no entry,
     and entries named `<YYYY-MM-DD>-<slug>.md`, a valid date no earlier than FIRST_ENTRY
@@ -2990,6 +3124,371 @@ def decision_entries():
         if match:
             entries.append(name)
     return entries
+
+
+# The header line an entry may begin with, its line 1 (docs/WORKFLOW.md, section 10,
+# "Decision entries"): what the entry is news for, from which render.py compiles the notes
+# regions of the briefs and of PROGRAM.md (heath.notes). Its keys stand in the order of
+# ENTRY_KEYS, each once at most, separated by single spaces; `id`, `cards` and `line` are
+# required:
+#
+#   <!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]]
+#        [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]]
+#        [reverts=<entry>[,<entry>…]] line="<news>" -->
+ENTRY_KEYS = ("id", "cards", "briefs", "program", "corrects", "reverts", "line")
+ENTRY_REQUIRED = ("id", "cards", "line")
+ENTRY_LISTS = ("cards", "briefs", "program", "corrects", "reverts")
+ENTRY_START = re.compile(r"<!--\s*entry", re.I)
+ENTRY_OPEN = "<!-- entry:"
+ENTRY_KEY = re.compile(r"([^= ]+)=")
+ENTRY_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+ENTRY_CARD = re.compile(r"[1-9][0-9]*")
+ENTRY_LINE_LIMIT = 300
+# The longest header read: a longer line 1 is refused before it is parsed.
+ENTRY_HEADER_LIMIT = 2000
+# The sections of PROGRAM.md that may hold notes (heath.py, beside the reader of the
+# regions, which every tool that reads them shares).
+PROGRAM_NOTES = heath.PROGRAM_NOTES
+MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
+          "September", "October", "November", "December")
+
+
+def brief_stems():
+    """The stems of the Markdown files of docs/briefs/, as the disk holds them, the
+    decisions page's among them; none where the folder is absent."""
+    try:
+        folder = generated_counts.repository_path(ROOT, ROOT / "docs" / "briefs")
+    except ValueError as error:
+        raise SystemExit(f"docs/briefs: {error}") from None
+    if not folder.is_dir():
+        return []
+    return sorted(name[:-3] for name in os.listdir(folder) if name.endswith(".md"))
+
+
+def entry_header(name, text, stems, earlier):
+    """The header that the entry `name`, whose text is `text`, begins with, as a dict of
+    ENTRY_KEYS (each list split at its commas, the cards as numbers), or None where it
+    has none. `stems` are the briefs' (brief_stems), `earlier` the names of the entries
+    that sort before it. Anything but the exact form is refused, naming the file and the
+    line: a `<!-- entry` comment anywhere but at the start of line 1; a header longer than
+    ENTRY_HEADER_LIMIT, before it is parsed; an unknown key, a key out of order or twice,
+    extra spaces, a missing `-->` or text after it; an id that is not lower-case letters
+    and digits joined by hyphens; a card that is not an issue number; a brief not in
+    docs/briefs/, or the decisions page, which is dated history; a section not in
+    PROGRAM_NOTES; a correction or revert of an entry that is not earlier; an item
+    repeated or empty; and a line that is no news (news_fault)."""
+    where = f"docs/decisions/{name}"
+
+    def refuse(number, why):
+        raise SystemExit(printable_text(f"{where}:{number}: {why}"))
+
+    tokens = list(ENTRY_START.finditer(text))
+    for token in tokens:
+        if token.start():
+            refuse(text.count("\n", 0, token.start()) + 1,
+                   "an entry's header is its line 1, and it has one at most")
+    if not tokens:
+        return None
+    first = text.split("\n", 1)[0]
+    if len(first) > ENTRY_HEADER_LIMIT:
+        refuse(1, f"a header is {ENTRY_HEADER_LIMIT:,} characters at most, not "
+                  f"{len(first):,}")
+    if not first.startswith(ENTRY_OPEN):
+        refuse(1, f'a header begins "{ENTRY_OPEN}" exactly')
+    if "-->" not in first:
+        refuse(1, "line 1 holds no --> to close the header")
+    if not first.endswith("-->"):
+        refuse(1, "text after the header's -->: the header is the whole of line 1")
+    body = first[len(ENTRY_OPEN):-len("-->")]
+    spaced = "single spaces separate entry:, each key and the closing -->"
+    if body[:1] != " " or body[-1:] != " " or "  " in (body[:2], body[-2:]):
+        refuse(1, spaced)
+    inner, fields, at = body[1:-1], {}, 0
+    while at < len(inner):
+        if inner[at] == " ":
+            refuse(1, spaced)
+        match = ENTRY_KEY.match(inner, at)
+        if match is None:
+            refuse(1, f"expected key=value, not {inner[at:].split(' ')[0]!r}")
+        key = match[1]
+        if key not in ENTRY_KEYS:
+            refuse(1, f"unknown key {key!r}; the keys are {', '.join(ENTRY_KEYS)}")
+        if key in fields:
+            refuse(1, f"the key {key!r} is given twice")
+        if fields and ENTRY_KEYS.index(key) < ENTRY_KEYS.index(list(fields)[-1]):
+            refuse(1, f"the key {key!r} is out of order; the keys stand in the order "
+                      f"{', '.join(ENTRY_KEYS)}")
+        start = match.end()
+        if key == "line":
+            if not (inner[start:start + 1] == '"' and inner.endswith('"')
+                    and len(inner) > start + 1):
+                refuse(1, 'the line comes last, in double quotes: line="<news>"')
+            fields[key], at = inner[start + 1:-1], len(inner)
+        else:
+            stop = inner.find(" ", start)
+            stop = len(inner) if stop < 0 else stop
+            fields[key], at = inner[start:stop], stop + 1
+    for key in ENTRY_REQUIRED:
+        if key not in fields:
+            refuse(1, f"the key {key!r} is required")
+    if not ENTRY_ID.fullmatch(fields["id"]):
+        refuse(1, f"the id {fields['id']!r} is not lower-case letters and digits joined by "
+                  "hyphens")
+    lists = {key: fields[key].split(",") if key in fields else [] for key in ENTRY_LISTS}
+    for key, items in lists.items():
+        if "" in items:
+            refuse(1, f"{key} is a list joined by commas, with no empty item")
+        seen = set()
+        for item in items:
+            if item in seen:
+                refuse(1, f"{key} names {item!r} twice")
+            seen.add(item)
+    for card in lists["cards"]:
+        if not ENTRY_CARD.fullmatch(card):
+            refuse(1, f"the card {card!r} is not an issue number: digits, with no leading "
+                      "zero")
+    for stem in lists["briefs"]:
+        if stem == "0002-decisions":
+            refuse(1, "the decisions page, 0002-decisions, is dated history and holds no "
+                      "notes")
+        if stem not in stems:
+            refuse(1, f"no brief docs/briefs/{stem}.md")
+    for section in lists["program"]:
+        if section not in PROGRAM_NOTES:
+            refuse(1, f"unknown PROGRAM.md section {section!r}; the sections that hold notes "
+                      f"are {', '.join(PROGRAM_NOTES)}")
+    for key in ("corrects", "reverts"):
+        for other in lists[key]:
+            if other not in earlier:
+                refuse(1, f"{key} {other!r}: a correction or revert must name an earlier "
+                          "entry")
+    line = fields["line"]
+    fault = news_fault(line)
+    if fault:
+        refuse(1, fault)
+    return {"id": fields["id"], **lists, "cards": [int(card) for card in lists["cards"]],
+            "line": line}
+
+
+def news_fault(line):
+    """Why `line` may not be an entry's news, or None where it may. The news is copied
+    into pages of other folders, so it is one line of 1 to ENTRY_LINE_LIMIT characters,
+    with no space at either end, and holds no `"`, which would end it; no comment's `<!--`
+    or `-->`, which would hide part of the page; no Markdown link, where a relative link
+    would break; and no `<`, `[` or `]`, since raw HTML could hide text or link to a file,
+    and a bracket could bind to a link the page defines."""
+    if not 1 <= len(line) <= ENTRY_LINE_LIMIT:
+        return f"the line is 1 to {ENTRY_LINE_LIMIT} characters, not {len(line)}"
+    if line != line.strip():
+        return "the line has no space at its start or its end"
+    if '"' in line:
+        return 'the line holds no "'
+    if "<!--" in line or "-->" in line:
+        return "the line holds no <!-- or -->"
+    if "](" in line:
+        return ("the line holds no Markdown link, since it is copied into pages in other "
+                "folders, where a relative link would break")
+    if any(char in line for char in "<[]"):
+        return ("the line holds no <, [ or ]: raw HTML could hide text or link to a file, "
+                "and a bracket could bind to a link the page it is copied into defines")
+    return None
+
+
+def entry_headers(entries):
+    """Read and check the header line that each of `entries`, the names decision_entries
+    returns, may begin with (entry_header), and return {name: header} for those that have
+    one. render.py cannot tell a new entry from an old one, so it checks a header where
+    one stands and requires none; docs/WORKFLOW.md asks every new entry for one. An id is
+    unique: a second is refused, naming both files."""
+    folder = ROOT / "docs" / "decisions"
+    stems, headers, ids = set(brief_stems()), {}, {}
+    for number, name in enumerate(entries):
+        path = generated_counts.repository_path(ROOT, folder / name)
+        header = entry_header(name, path.read_bytes().decode("utf-8"), stems,
+                              set(entries[:number]))
+        if header is None:
+            continue
+        if header["id"] in ids:
+            raise SystemExit(printable_text(
+                f"docs/decisions/{name}:1: the id {header['id']!r} is the id of "
+                f"docs/decisions/{ids[header['id']]} too; an id is unique"))
+        ids[header["id"]] = name
+        headers[name] = header
+    return headers
+
+
+def entry_day(name):
+    """"27 October 2026": the date an entry's name carries, as the repository writes
+    dates."""
+    day = date.fromisoformat(DECISION_FILE.fullmatch(name).group(1))
+    return f"{day.day} {MONTHS[day.month - 1]} {day.year}"
+
+
+# The sentences a notes line gives after its news, in this order: the entries it corrects,
+# those it reverts, and those that correct it or revert it.
+NOTES_VERBS = ("Corrects", "Reverts", "Corrected by", "Reverted by")
+
+
+def notes_line(name, cards, news, linked, up):
+    """The line of a notes region for the entry `name`: its date, its `cards` in numeric
+    order and its `news`; then, for each of NOTES_VERBS that `linked` gives entries to, a
+    sentence naming them in name order, each linked; then the link to the entry itself.
+    `up` leads from the page to docs/: "../" from a brief, "" from PROGRAM.md."""
+    def sentence(verb, others):
+        if not others:
+            return ""
+        return f" {verb} " + and_list(f"[the entry of {entry_day(other)}]"
+                                      f"({up}decisions/{other})"
+                                      for other in sorted(others)) + "."
+
+    links = ", ".join(f"[#{card}]({REPO}/issues/{card})" for card in sorted(cards))
+    return (f"- {entry_day(name)}, {links}: {news}"
+            + "".join(sentence(verb, others) for verb, others in zip(NOTES_VERBS, linked))
+            + f" ([the entry]({up}decisions/{name}))")
+
+
+def notes_relationships(headers):
+    """The four relationship lists for every headed entry, in NOTES_VERBS order, including
+    the entries that correct or revert it from every header."""
+    by = {"corrects": {}, "reverts": {}}
+    for other, header in headers.items():
+        for key, named_by in by.items():
+            for name in header[key]:
+                named_by.setdefault(name, []).append(other)
+    return {name: tuple(sorted(items) for items in
+                        (header["corrects"], header["reverts"],
+                         by["corrects"].get(name, []), by["reverts"].get(name, [])))
+            for name, header in headers.items()}
+
+
+def notes_lines(headers, named, up, relationships=None):
+    """The lines of a notes region (notes_line): one for each of `named`, the entries whose
+    headers name it, in name order, which is date order. The entries that correct or
+    revert an entry are read from every header of `headers`, whatever it names, so that a
+    correction is shown wherever the entry it corrects is."""
+    relationships = relationships or notes_relationships(headers)
+    return [notes_line(name, headers[name]["cards"], headers[name]["line"],
+                       relationships[name], up)
+            for name in sorted(named)]
+
+
+@functools.cache
+def notes_form(up):
+    """The pattern of a line notes_line writes on a page whose way to docs/ is `up`, read
+    into its cards, its news, the entries each of NOTES_VERBS names (`v0` to `v3`) and the
+    entry's own name; notes_rendered checks the rest."""
+    up = re.escape(up)
+    name = r"[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md"
+    link = rf"\[the entry of [^\]\n]*\]\({up}decisions/{name}\)"
+    card = rf"\[#[1-9][0-9]*\]\({re.escape(REPO)}/issues/[1-9][0-9]*\)"
+    sentences = "".join(rf"(?: {verb} (?P<v{number}>{link}(?:(?:, | and ){link})*)\.)?"
+                        for number, verb in enumerate(NOTES_VERBS))
+    return re.compile(rf"- [^,\n]+, (?P<cards>{card}(?:, {card})*): "
+                      rf"(?P<news>[^\"<\[\]\n]+){sentences} "
+                      rf"\(\[the entry\]\({up}decisions/(?P<name>{name})\)\)")
+
+
+def notes_rendered(line, up, headers, named, relationships):
+    """Whether `line` is a line notes_line writes on a page whose way to docs/ is `up`:
+    read into its parts (notes_form), its news is news an entry may give (news_fault),
+    with no character an entry may not hold (invisible), it names no card or entry twice,
+    and written again from its parts it is the same line, so that its date is its entry's
+    and its cards and entries stand in order. Its entry names this region, its cards, news
+    and direct relationships match its header, and its backlinks are present in the
+    relationship graph; a stale line may omit backlinks added by later entries."""
+    match = notes_form(up).fullmatch(line)
+    if (match is None or news_fault(match["news"])
+            or any(invisible(char) for char in match["news"])):
+        return False
+    cards = [int(card) for card in re.findall(r"\[#([0-9]+)\]", match["cards"])]
+    linked = [re.findall(r"decisions/([^)]*)\)", match[f"v{number}"] or "")
+              for number in range(len(NOTES_VERBS))]
+    if any(len(set(items)) < len(items) for items in (cards, *linked)):
+        return False
+    try:
+        again = notes_line(match["name"], cards, match["news"], linked, up)
+    except ValueError:  # a name whose date is no day of the calendar
+        return False
+    if again != line or match["name"] not in named:
+        return False
+    header = headers[match["name"]]
+    actual = relationships[match["name"]]
+    return (cards == sorted(header["cards"]) and match["news"] == header["line"]
+            and linked[0] == actual[0] and linked[1] == actual[1]
+            and set(linked[2]).issubset(actual[2])
+            and set(linked[3]).issubset(actual[3]))
+
+
+def notes_named(headers, rel, name):
+    """The entries whose headers name the notes region `name` of the page `rel`: in
+    PROGRAM.md, a section's ("notes:landed" names `landed`), and in a brief ("notes"),
+    the brief's."""
+    section = name.partition(":")[2]
+    return [entry for entry, header in headers.items()
+            if (section in header["program"] if section else rel.stem in header["briefs"])]
+
+
+def notes_updates(headers, changes):
+    """The briefs and PROGRAM.md with their notes regions filled, each region with the
+    lines (notes_lines) of the entries whose headers name it, the brief or the PROGRAM
+    section, and nothing else: {path: text} for each page whose text changes, read as the
+    count markers leave it (`changes`, generated_counts.updates); then the number of
+    regions and the number of pages that hold one. A page without markers is left as it
+    is, and a region no header names is left empty, its two markers on consecutive lines.
+    Every page's notes markers are read (heath.notes) before anything is written, the
+    decisions page's among them, which may hold none, and every line between them must
+    have the provenance of a line render.py wrote (notes_rendered), so that a misplaced
+    marker never swallows text written by hand; a page that holds a region is then filled
+    through heath.fill, which reads all its regions (heath.regions) and refuses a write
+    that reaches outside a body. A fault in any stops the render, naming each page's
+    faults, the first line of each region that holds another."""
+    rels = [(ROOT / "docs" / "briefs" / f"{stem}.md").relative_to(ROOT)
+            for stem in brief_stems()]
+    program = (ROOT / "docs" / "PROGRAM.md").relative_to(ROOT)
+    if os.path.lexists(ROOT / program):
+        rels.append(program)
+    filled, errors, regions, pages = {}, [], 0, 0
+    relationships = notes_relationships(headers)
+    for rel in rels:
+        path = ROOT / rel
+        try:
+            text = changes[path] if path in changes else read_text(path)
+            found = heath.notes(rel.as_posix(), text)
+        except (ValueError, OSError) as error:
+            errors.append(printable_text(str(error)))
+            continue
+        up, faults = "" if rel == program else "../", len(errors)
+        for region in found:
+            named = notes_named(headers, rel, region["name"])
+            first = text.count("\n", 0, region.start("body")) + 1
+            lines = region["body"].split("\n")[:-1]
+            stray = next((number for number, line in enumerate(lines, first)
+                          if not notes_rendered(line, up, headers, named, relationships)), None)
+            if stray is not None:
+                errors.append(printable_text(
+                    f"{rel}:{stray}: a notes region holds only the lines render.py writes, "
+                    "and this is not one; move the text written by hand, or the marker, so "
+                    "that the region does not swallow it"))
+        regions, pages = regions + len(found), pages + bool(found)
+        if not found or len(errors) > faults:
+            continue
+
+        def write(name, body):
+            if not name.startswith("notes"):
+                return body
+            return "".join(line + "\n" for line in notes_lines(
+                headers, notes_named(headers, rel, name), up, relationships))
+        try:
+            new = heath.fill(rel.as_posix(), text, write)
+        except heath.RegionError as error:
+            errors.append(printable_text(f"{error}; render.py writes between these markers, "
+                                         "so nothing was rendered"))
+            continue
+        if new != text:
+            filled[path] = new
+    if errors:
+        raise SystemExit("notes regions: nothing was rendered:\n" + "\n".join(errors))
+    return filled, regions, pages
 
 
 def heath_edges(book, count):
@@ -3234,7 +3733,8 @@ def names_page(facts, records):
            f"book's front page: {fronts}.", "",
            f"Key to the tables: {legend}. The Lean statement is *whole*, as Euclid states "
            "it; *restricted*, with hypotheses that leave out cases his words admit; or *in "
-           "part*, leaving a clause to his words. A porism or a companion stands under its "
+           f"part*, leaving a clause to his words.{bracketed_key(BOOKS)} A porism or a "
+           "companion stands under its "
            "proposition, in the same module.", ""]
     return "\n".join(out + sections)
 
@@ -3255,6 +3755,7 @@ def main() -> None:
     print(f"self-check: the modern figure is placed or refused rightly in {count} cases")
     entries = decision_entries()
     print(f"decision entries: {len(entries)} checked in docs/decisions/")
+    headers = entry_headers(entries)
     changes, errors = generated_counts.updates(ROOT)
     if errors:
         raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))
@@ -3262,6 +3763,9 @@ def main() -> None:
     # so a fault in either still renders nothing, and each is reported as it was before.
     checks = load_checks()
     print(f"registry of checks: {len(checks)} read from {registry.FOLDER}/")
+    # The notes regions last, read from the pages as the count markers leave them.
+    notes, regions, pages = notes_updates(headers, changes)
+    changes.update(notes)
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
@@ -3277,6 +3781,7 @@ def main() -> None:
              WORKFLOW: workflow_page(changes.get(WORKFLOW, read_text(WORKFLOW)), checks)}
     for path, text in changes.items():
         write_text(path, text)
+    print(f"notes regions: {regions} filled in {pages} page{'' if pages == 1 else 's'}")
     for book, (count, titles) in BOOKS.items():
         out_dir = generated_counts.repository_path(ROOT, ROOT / "book" / book)
         out_dir.mkdir(parents=True, exist_ok=True)
