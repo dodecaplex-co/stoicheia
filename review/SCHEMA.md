@@ -80,8 +80,8 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (III.28, whose greater circumferences are equal in measure by subtraction, while
-  their congruence comes through III.20 and III.24).
+  way (III.27, whose reductio, where the angles at the circumference are obtuse, runs on
+  the angles standing on the circumferences that remain).
 - **alternative**: a different proof altogether, labelled as one on the page. No route of
   Books I to III may be one ([ACCEPTANCE](../docs/ACCEPTANCE.md), P3): an alternative proof
   is kept there as a companion beside Euclid's route, as III.24's proof by the radii is

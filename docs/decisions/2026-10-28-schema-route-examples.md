@@ -4,9 +4,9 @@
 
   The example of a `modified` route that `review/SCHEMA.md` gave, III.8, becomes false
   when #547's III.8 lands: its last step then goes by Euclid's two orders, and its route is
-  `euclid`. The example is now III.28, whose greater circumferences are equal in measure by
-  subtraction, while their congruence comes through III.20 and III.24, as
-  review/III/28.toml records. The companion `Prop24.equalCircles` now stands beside
+  `euclid`. The example is now III.27, whose reductio, where the angles at the
+  circumference are obtuse, runs on the angles standing on the circumferences that remain,
+  as review/III/27.toml records. The companion `Prop24.equalCircles` now stands beside
   III.24's `euclid` route, as review/III/24.toml records.
 
   The example of a `case` passage changes too, to one that fits the wording of the ruling
