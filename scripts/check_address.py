@@ -88,6 +88,10 @@ ADDRESS = re.compile(
 URL = re.compile(
     r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*:|"
     r"(?<![A-Za-z0-9_+./:-]))//[^\s<>()\[\]{}\"']+", re.I)
+GITHUB_URL = re.compile(
+    rf"^(?:[A-Za-z][A-Za-z0-9+.-]*:)?//(?:[^/?#@]*@)?"
+    rf"(?:(?:www\.)?github\.com|api\.github\.com|codeload\.github\.com"
+    rf"|raw\.githubusercontent\.com|{OWNER}\.github\.io){PORT}(?:[/?#]|$)", re.I)
 # What to write instead, by the form found: with a host, or bare (where a local path the
 # check reads as bare is written from `./` or `~/`).
 WRITE_HOSTED = f"write github.com/{HOME}/stoicheia"
@@ -126,7 +130,10 @@ def in_url_query_or_fragment(line: str, offset: int) -> bool:
     for match in URL.finditer(line):
         if not match.start() <= offset < match.end():
             continue
-        starts = [i for mark in "?#" if (i := match.group().find(mark)) >= 0]
+        address = match.group()
+        if GITHUB_URL.match(address):
+            return False
+        starts = [i for mark in "?#" if (i := address.find(mark)) >= 0]
         return bool(starts) and offset > match.start() + min(starts)
     return False
 
@@ -233,6 +240,10 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"https://example.com/?repo={other}/stoicheia", []),
         ("docs/STYLE.md", f"https://example.com/#repo={other}/stoicheia", []),
         ("docs/STYLE.md", f"https://example.com/?repo=repos/{other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://github.com/search?q={other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://github.com/search#repo={other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://github.com/search?q=repos/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://github.com/search#repo=repos/{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"https://example.com/?repo={other}/stoicheia and "
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"https://example.com/?repo=https://github.com/{other}/stoicheia", [1]),
