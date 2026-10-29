@@ -245,6 +245,27 @@ stands as follows, and no statement changes:
 - III.4 and III.8 apply their universal geometric conditions to the centre obtained
   through `exists_centre`, with no existence hypothesis.
 
+**28 October 2026, #547.** The convention above is overtaken. Under Heath's "[III. 1]",
+III.2, III.4, III.8 and III.17 now take their centres by III.1's construction, through
+`Prop1.of_circle`, which is now III.1's companion, by the owner's decision of 26 October
+2026 recorded on [#547](https://github.com/jackChallis/stoicheia/issues/547)
+([the entry of that day](../decisions/2026-10-26-centre-by-iii1.md) and
+[the entry for III.2](../decisions/2026-10-28-iii2-centre.md)). III.2's route is now
+`euclid`. So is III.8's: its last step goes by Euclid's two orders in every case, and a
+point of contact, which ends both orders, is never the nearer (`Prop8.contact_last`).
+III.26, III.28 and III.29 remain `modified`, and their records say why.
+
+**28 October 2026, #547, later.** The congruence of the remainders in III.26 and III.28 now
+comes by Euclid's subtraction, not by III.24 applied to the remaining segments, which the
+entries for III.26 and III.28 above describe: the application of the equal segments, extended to
+the whole circles (`Prop26.extend`), is restricted to what remains (`Prop26.remainder`).
+III.26 stays `modified` for its obtuse angles at the circumferences, and III.29 for its
+greater circumferences; III.28's route is `euclid`, its two diameters a case Heath calls
+"scarcely worth giving" (vol. 2, p. 60), declared as a passage, so the note above is
+overtaken for III.28. Each record says why, with Heath's page. III.1 takes each step of its construction under Euclid's sentence, and
+its reductio supposes that the constructed F is not the centre
+([the entry](../decisions/2026-10-28-iii1-under-heath.md)).
+
 ## Where the facts live
 
 The rule is Books I and II's: a fact that needs no proposition goes in Book Zero; one that
@@ -646,6 +667,26 @@ step changed is a `different` passage of the record:
 - With no row: III.1, its overlap `Tacit.exists_centre`; III.4, `modified`, one step
   changed, the centre F, from `exists_centre` (#131); and III.11, III.12 and III.13, tag
   `touching-whole-circles`.
+
+**28 October 2026, the table and the records (#523).** The note of 25 October gives the
+records' state at main bedbba23e; this list gives it at main 20d14b0a3, and the records in
+`review/III/` remain the authority. These rows now differ from that note, or, where it is
+silent, from the table; a step changed is still a `different` passage of the record:
+
+- III.4: `euclid`, the centre F found by III.1's construction (#547).
+- III.8: one step changed, its last step; the centre M is found by III.1's construction
+  (#547).
+- III.10: `euclid`, its last step by III.5, through `CirclesCut.of_meet` (#475).
+- III.16: `euclid`, the angle clauses by Euclid's reductio from the second part (#547).
+- III.17: `euclid`, the centre E found by III.1's construction (#547).
+- III.18: tag `mixed-angles-local`, for its companions on the angle of contact (#130).
+- III.20: tag `angle-measure`, for its companion `Prop20.circumference` (#129).
+- III.21: `euclid`, Euclid's two steps for a segment of any size (#129).
+- III.24: `euclid`, Euclid's application and his reductio (#547).
+- III.26: one step changed, the congruence of the remainders (#129).
+
+Book III's routes are still being worked on (#546, #547, #474), so this list too is of its
+date.
 
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,

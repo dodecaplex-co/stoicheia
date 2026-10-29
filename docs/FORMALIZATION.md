@@ -254,7 +254,7 @@ The representations Books I–III rest on:
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)). The rule numbers a figure's symbols internally, from the list of the figure's lettered points and straight lines (`Symbols.ofList`): a proof names only those, so section 2's sentence, that no number appears in a statement or a proof, holds of I.4 and I.8 too | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
-| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data, by that construction where Heath's "[III. 1]" stands (`Prop1.of_circle`), except, for now, in III.2, which still takes its centre from `exists_centre` under that reference, or from the rule where Euclid takes a centre with no reference ([decision of 26 October 2026](decisions/2026-10-26-centre-by-iii1.md)) | |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs obtain other centres from the geometric data, by that construction where Heath's "[III. 1]" stands (`Prop1.of_circle`), or from the rule where Euclid takes a centre with no reference ([decision of 26 October 2026](decisions/2026-10-26-centre-by-iii1.md)) | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; III.20's companion `Prop20.circumference` proves that every circumference is its angle at the centre (`angleAtCentre`, the next row), whatever its size; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | the angle at the centre standing on a circumference | `angleAtCentre α B K C`: for the centre E and a diameter AEF with A and F on opposite sides of BC, F on K's side, the angles BEF and FEC together, as in III.20's first figure; it may be two right angles or more, a reading made after Heath's notes on III.20 and III.21 (vol. 2, pp. 47–49), not Euclid's, whose angles are less than two right angles | `angleAtCentre.diameter`: every such diameter gives the same angle; `angleAtCentre.congr`: it is the same for every point that names K's side of BC; `angleAtCentre.within`: it is the rectilineal angle BEC when E is on the other side of BC from K; `angleAtCentre.semicircle`: two right angles when E is on BC; `angleAtCentre.reflex`: with the angle BEC it makes four right angles when E is on K's side; `angleAtCentre.reflex_gt`: it is then greater than two right angles; `angleAtCentre.size`: less than two right angles, two right angles or greater, as E lies; and `Prop20.circumference`: the measure `circumference α B K C` is this angle, for every circumference | |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
@@ -339,8 +339,8 @@ construction, its premises, and the diagram fact or lemma it needed.
   proof's whole conclusion (below).
   Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
   the record: the passage whose `at` begins a sentence of that run of `--` lines lists
-  the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
-  for the joins by Postulate 1 in I.5, or `this` for an anonymous `have`; and
+  the binding, by the name the proof gives it, in its `unused`, as `unused = ["hAB_FC"]`
+  for I.16's equal bases, or `this` for an anonymous `have`; and
   `check_fidelity.py` fails a name there that the Lean beneath does not bind
   ([review/SCHEMA.md](../review/SCHEMA.md);
   [decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). Nothing else
@@ -382,10 +382,12 @@ reads each proof term and lists a proposition, porism or companion whose proof c
 in every case, to one helper that none of its own steps feeds, or that cites a helper
 stating exactly what it states.
 
-A construction core kept apart under section 4, as III.1's `Prop1.construction`, carries
-Euclid's sentences of construction, not a step he takes for granted; the record shows it as
-a `grouped` passage naming it, and the proposition keeps the correctness argument under his
-sentences.
+A construction core kept apart under section 4 carries Euclid's sentences of construction,
+not a step he takes for granted; where the proposition calls it, the record shows it as a
+`grouped` passage naming it, and the proposition keeps the correctness argument under his
+sentences. III.1 takes its three steps under his sentences, by I.10,
+`Prop1.perpendicular_chord` and I.10; `Prop1.construction` gathers them in one theorem,
+which `Audit/Centre.lean` pins.
 
 ## 6. Where lemmas live
 
