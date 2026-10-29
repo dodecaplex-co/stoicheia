@@ -27,5 +27,6 @@ Each record's `reviewer` names the reader of its latest stamp. The first cross-f
 | [orders-03.md](orders-03.md), [orders-04.md](orders-04.md), [orders-II.md](orders-II.md), [orders-III.md](orders-III.md) | The sailing orders |
 | [inspection-01.md](inspection-01.md), [inspection-02.md](inspection-02.md) | The inspections of Book I |
 | [voice-01.md](voice-01.md), [voice-02.md](voice-02.md) | Books I to III brought into one voice |
+| [scratch-IV](scratch-IV), [scratch-figures](scratch-figures) | Scratch Lean, committed unbuilt: Book IV's prototypes and statements, and two scratch files on figures (WORKFLOW, section 2) |
 
-In October 2026 Astra, an OpenAI model run in ChatGPT, read the whole work cold and wrote a careful outside review; we are very grateful, and [our response](../outside-review-01.md) says what we are doing with it.
+Astra's outside review, and [our response](../outside-review-01.md), are in `docs/reports/`.
