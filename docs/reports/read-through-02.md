@@ -84,7 +84,7 @@ I.4 that on a ray only one point lies at a given distance from its start: their 
 circles and straight lines too, and only Metric 3 is proved with no construction." facts.json
 gives, for I.8's `cited_laws`, `"construction_rules": ["Postulate3"]` for both `neOfLen` and
 `rayUnique`; only the law `prop7` has `Postulate1` and `Postulate2` beneath it. The page's own
-table of the laws cited inside the placement says the same (book/I/08.md:350-351). So these
+table of the laws cited inside the placement says the same (book/I/08.md:351-352). So these
 proofs describe a circle and draw no straight line, and "and straight lines" is false. The
 sentence stands unchanged on main at 559237731. *What it should say:* "... from its start:
 their proofs draw a circle too (Postulate 3), and only Metric 3 is proved with no
@@ -95,7 +95,7 @@ construction." facts.json is computed from the Lean and checked against it by
 **M2. The overlap at I.13.** At 3938eacc7 the catalogue's table of current overlaps had the
 row "| I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step:
 the upper bound on an angle | I.47 | None |" (docs/reports/overlaps.md:74), and
-review/SCHEMA.md:120-122 gives this very overlap as its example of the kind `step`, which
+review/SCHEMA.md:120-125 gives this very overlap as its example of the kind `step`, which
 "the page words ... in the line under the enunciation". No Book I record carried it, and
 I.13's status line read only "proved, as Euclid states it · Euclid's argument"; I.47's page
 told it in a passage note alone. Pull request #699, merged as 559237731, makes I.47 rule out
@@ -283,8 +283,9 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
     review/II/06.toml:3, review/II/10.toml:1-2. RD-r5 4; RD-f2 4.
 16. II.8's commentary retells its listing note and its docstring on the points in order and
     `Prop8.cell`, mishnah/II/08.md:1 and :3. RD-r6 3.
-17. II.10's four notes repeat II.9's word for word, review/II/10.toml:46, :53, :65, :71
-    against review/II/09.toml:41, :48, :54, :60. RD-r6 2; RD-f2 5.
+17. II.10's four notes repeat II.9's prose, one verbatim and three with angle names changed,
+    review/II/10.toml:46, :53, :65, :71 against review/II/09.toml:41, :48, :54, :60. RD-r6
+    2; RD-f2 5.
 18. II.12's note retells its commentary's argument for where D falls, review/II/12.toml:13
     against mishnah/II/12.md:1. RD-f2 6.
 19. I.45 and II.14 each tell the outline route in the Argument row and again in a passage
