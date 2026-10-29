@@ -138,9 +138,9 @@ Each hit is printed as `file:line: kind: name: why`, a declared one followed by
 `(declared in review/…)`, then a summary for each book. Exits 0 after listing;
 `--fail-on-undeclared` exits 1 when any undeclared hit remains (the release gate,
 docs/WORKFLOW.md, section 10); 2 when the sweep cannot run (no Lean, an unbuilt library,
-a file that does not elaborate, that sets the linter's options itself, that captures its
-messages with `#guard_msgs` or that, outside `Staging/`, has a `sorry` or `admit`, a
-facts.json that does not match Lean).
+a run of Lean that prints a panic, a file that does not elaborate, that sets the linter's
+options itself, that captures its messages with `#guard_msgs` or that, outside `Staging/`,
+has a `sorry` or `admit`, a facts.json that does not match Lean).
 
     python3 scripts/sweep_citations.py                       Elements/
     python3 scripts/sweep_citations.py Elements Staging Audit  these trees (or files)
@@ -176,11 +176,11 @@ its options, one behind a `/--/` and one behind a `/-/-`, three `#guard_msgs` an
 `#guard_msgs` around `#print`; a file that does not elaborate; a run of Lean that fails
 with no error at a line (a file that is not there); and a run that ends in a signal or an
 exit but 0 or 1, or exits 1 with anything but the linter's reports, one promoted to an
-error, even a panic after them; and a run that prints a line beginning `PANIC at ` or
-`INTERNAL PANIC`, on either stream, whatever its exit, 0 among them, naming the line
-(#236), but not a message that quotes the words within a line. Read without Lean, a file with
-an `admit` must be refused, naming its line, but not in `Staging/`; and the reader must
-begin every comment's body at its fourth character, as Lean does. It exits 1
+error, even a panic after them; and a run that prints a line beginning `PANIC at `,
+`PANIC: ` or `INTERNAL PANIC`, on either stream, whatever its exit, 0 among them, naming
+the line (#236), but not a message that quotes the words within a line. Read without
+Lean, a file with an `admit` must be refused, naming its line, but not in `Staging/`; and
+the reader must begin every comment's body at its fourth character, as Lean does. It exits 1
 naming any plant missed, control reported, binding misread or file not refused. Both it
 and the sweep need the library built by `lake build`
 and the Lean tools on PATH (`export PATH=$HOME/.elan/bin:$PATH`); the sweep also reads
@@ -252,8 +252,10 @@ LINT_TAIL = re.compile(
     r"|  \[apply\] _\S.*"
     r"|Note: This linter can be disabled with `set_option linter\.unusedVariables false`")
 ERROR = re.compile(r"^.+?:\d+:\d+: error\b(?!: (?:Variable name|unused variable) `).*$", re.M)
-# A line where Lean reports a panic, which it may print and still exit 0 (#236).
-PANIC = re.compile(r"^(?:PANIC at |INTERNAL PANIC).*$", re.M)
+# A line where Lean reports a panic (#236): `PANIC at …`, which Lean can print and still
+# exit 0, `PANIC: …`, as a dropped promise prints it, or `INTERNAL PANIC`, which ends Lean
+# with exit 1.
+PANIC = re.compile(r"^(?:PANIC(?: at |: )|INTERNAL PANIC).*$", re.M)
 # An anonymous `have`, which Lean names `this` without checking it.
 ANONYMOUS = re.compile(r"(?<![\w'.])have(?![\w'!?])(?=[ \t]*:)")
 # A binding whose name begins with `_`, which Lean's linter never checks.
@@ -1602,6 +1604,8 @@ PANIC_AT = ("PANIC at Lean.Elab.Term.elabTermEnsuringType Lean.Elab.Term:1712:14
 PANIC_TRACE = ("\nbacktrace:\n/home/lean/.elan/toolchains/lean4/bin/lean(lean_panic_fn+0x8f)"
                " [0x5581f2c3a1bf]\n")
 INTERNAL_PANIC = "INTERNAL PANIC: out of memory"
+DROPPED_PROMISE = ("PANIC: Promise.result!: promise has been dropped without ever being "
+                   "resolved")
 
 
 def self_test() -> int:
@@ -1660,6 +1664,7 @@ def self_test() -> int:
              killed + INTERNAL_PANIC + "\n", "", False),
             ("a warning, and a panic on standard error, then exit 0", 0, killed,
              PANIC_AT + "\n", False),
+            ("Lean's dropped promise, then exit 0", 0, DROPPED_PROMISE + "\n", "", False),
             ("a warning that quotes a panic within its line", 0,
              f"{plant}:3:2: warning: a note that says PANIC at Lean.Elab.Command\n", "", True),
         ]
@@ -1667,7 +1672,8 @@ def self_test() -> int:
         panics = {"a promoted warning, then a panic": "PANIC at Lean.Elab.Command",
                   "a panic and its backtrace, then exit 0": PANIC_AT,
                   "a warning, then an internal panic, then exit 0": INTERNAL_PANIC,
-                  "a warning, and a panic on standard error, then exit 0": PANIC_AT}
+                  "a warning, and a panic on standard error, then exit 0": PANIC_AT,
+                  "Lean's dropped promise, then exit 0": DROPPED_PROMISE}
         outcomes = {}
         for what, returncode, output, stderr, _ in runs:
             with unittest.mock.patch.object(
@@ -1710,7 +1716,8 @@ def self_test() -> int:
         elif not read and outcomes[what] is None:
             problems.append(f"a Lean run of {what} is accepted")
     for what, line in panics.items():
-        if outcomes[what] is not None and not outcomes[what].endswith("\n" + line):
+        said = outcomes[what]
+        if said is None or "Lean panicked" not in said or not said.endswith("\n" + line):
             problems.append(f"a Lean run of {what} is refused without naming its panic "
                             f"{line!r}: {outcomes[what]!r}")
     helpers = [h for h in hits if h.kind == "helper"]
