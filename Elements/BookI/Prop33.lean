@@ -42,23 +42,21 @@ theorem Prop33 {A B C D : Point} (hpar : AreParallel A B C D) (heq : ‖A B‖ =
   -- and BC is common,
   have hBC_CB : ‖B C‖ = ‖C B‖ := len_symm B C
   -- the two sides AB, BC are equal to the two sides DC, CB;
-  have : ‖A B‖ = ‖D C‖ ∧ ‖B C‖ = ‖C B‖ :=
-    ⟨hAB_CD_eq.trans (len_symm C D), hBC_CB⟩
+  have hBA_CD : ‖B A‖ = ‖C D‖ := (len_symm B A).trans hAB_CD_eq
   -- and the angle ABC is equal to the angle BCD;
   have hABC_DCB : ∠ A B C = ∠ D C B :=
     hABC_BCD.trans (angle_symm hBC hCDB.ne₁₂.symm)
   -- therefore the base AC is equal to the base BD,
   /- I.4 takes the corner of the given angle first: BAC and CDB pair B with C,
      A with D, and C with B. -/
-  obtain ⟨hAC_DB, hBAC_CDB, hBAC_CDB', hBCA_CBD⟩ :=
-    Prop4 hABC.bac hCDB ((len_symm B A).trans hAB_CD_eq) hBC_CB hABC_DCB
+  obtain ⟨hAC_DB, hBAC_CDB, -, hBCA_CBD⟩ :=
+    Prop4 hABC.bac hCDB hBA_CD hBC_CB hABC_DCB
   have hAC_BD : ‖A C‖ = ‖B D‖ := hAC_DB.trans (len_symm D B)
   -- and the triangle ABC is equal to the triangle DCB,
   have : △ A B C = △ D C B := by
     rw [area_bac A B C, hBAC_CDB, area_bac C D B]
   -- and the remaining angles will be equal to the remaining angles respectively, namely those
   -- which the equal sides subtend; [I. 4]
-  have : ∠ B A C = ∠ C D B ∧ ∠ B C A = ∠ C B D := ⟨hBAC_CDB', hBCA_CBD⟩
   -- therefore the angle ACB is equal to the angle CBD.
   have hACB_CBD : ∠ A C B = ∠ C B D := (angle_symm hAC hBC).trans hBCA_CBD
   -- And, since the straight line BC falling on the two straight lines AC, BD has made the
@@ -80,7 +78,6 @@ theorem Prop33 {A B C D : Point} (hpar : AreParallel A B C D) (heq : ‖A B‖ =
     AreParallel.of_parallel hAC hBD hA_L hC_L hB_M hD_M
       (h27.parallel hA_L hC₁_L hB₁_M hD_M)
   -- And it was also proved equal to it.
-  have : ‖A C‖ = ‖B D‖ := hAC_BD
   -- Therefore etc.
   exact ⟨hAC_BD, hAC_BD_par⟩
   -- Q. E. D.

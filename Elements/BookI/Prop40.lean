@@ -43,14 +43,14 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
     -- For, if not, let AF be drawn through A parallel to BE [I. 31], and let FE be joined.
     refine Classical.byContradiction fun hnot => ?_
     /- The parallel through A is the straight line K (`Prop31.line`), and F is where
-       it meets CD (`Prop30.meet`). -/
+       it meets CD (`Prop30.meet`). FE is named by its ends, as a side of the
+       triangle FCE, so nothing is drawn for the join. -/
     obtain ⟨K, hA_K, hKBE⟩ := Prop31.line hA_BE
     obtain ⟨CD, hC_CD, hD_CD⟩ := Postulate1 C D hCDE.ne₁₂
     obtain ⟨F, hF_CD, hF_K⟩ :=
       Prop30.meet hKBE hC hC_CD (fun e => hD_BE (e ▸ hD_CD))
     have hF_BE : ¬ OnLine F BE := hKBE.not_onLine hF_K
     have hFCE : Triangle F C E := (Triangle.of_line hC hE hCDE.ne₁₃ hF_BE).cab
-    obtain ⟨FE, hF_FE, hE_FE⟩ := Postulate1 F E hFCE.ne₁₃
     -- Therefore the triangle ABC is equal to the triangle FCE; for they are on equal bases BC,
     -- CE and in the same parallels BE, AF. [I. 38]
     have h38 : △ A B C = △ F C E :=
