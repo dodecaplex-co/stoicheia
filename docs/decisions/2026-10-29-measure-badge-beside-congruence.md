@@ -55,9 +55,23 @@
   dagger, nor will III.27 and III.29 keep theirs once it lands. The key's words do not
   change.
 
-  The change is to what `scripts/render.py` writes and to the comment at the head of
-  `review/terms.toml`: no tag, meaning or badge there changes, and no check, test,
-  expected value or lock is weakened. The pages of III.24, III.26 and III.28 change on
+  The meaning of `angle-measure` is made true on both sides of the swap. [The entry of 28
+  October](2026-10-28-angle-at-centre-tag.md) gave it a list of the statements that use
+  the measure, ending "and III.26–III.30"; once the swap lands, the main statements of
+  III.27 and III.29 no longer use it, and their companions `of_measure` do. The
+  coordinator's ruling of 29 October 2026 is "no false line on main, even for one
+  train", and "Describe the representation by what uses it, the statements or their
+  companions, rather than by a list that the swap changes." Its
+  parenthesis now reads "(III.20 and III.24–III.30, each in its main statement or in a
+  companion)". In facts.json today the measure's words are in the main statements of
+  III.26 to III.30 and in the companions of III.20, III.24, III.25 and III.30; on the
+  swap's branch they are in the main statements of III.26, III.28 and III.30 and in the
+  companions of III.20, III.24, III.25, III.27, III.29 and III.30. Both times the
+  propositions are III.20 and III.24 to III.30, and no other.
+
+  The change is to what `scripts/render.py` writes, to the comment at the head of
+  `review/terms.toml`, and to the meaning of `angle-measure` there: no other tag, meaning
+  or badge changes, and no check, test, expected value or lock is weakened. The pages of III.24, III.26 and III.28 change on
   their line under the enunciation, and `CERTIFICATE.md` does not change. P4 of
   `scripts/check_acceptance.py` still asks for the line `in_lean_line` gives; that
   function now finds a statement's companions in facts.json when it needs them, so the
@@ -69,7 +83,9 @@
   needs the measure in the statement.
 
   This entry approves the change to `review/terms.toml`, whose header comment now says how
-  the renderer words the badge and when the certificate's row is marked.
+  the renderer words the badge and when the certificate's row is marked, and whose
+  meaning of `angle-measure` now names the propositions that use the measure in a main
+  statement or a companion.
 
   This entry approves the change to `tests/test_check_style.py`, a new test,
   `MeasureBadge`, which builds facts held in memory and checks the line and the dagger in
