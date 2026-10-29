@@ -1985,6 +1985,36 @@ class Calibration(unittest.TestCase):
                     self.assertEqual(set(row['state']['bridges']), set(state['bridges']) - removed)
                     self.assertTrue(row['state']['bridges'])
 
+    def test_parallelograms_get_their_outline_and_the_area_plants_break_it_too(self):
+        # The rows that measure a parallelogram by `quadArea` supply the bridges that make its
+        # corners a convex outline and that outline's area `quadArea`. P13's plants at I.43 and
+        # I.36, which break the bridge that the other diameter gives the same area, break that
+        # outline's area too, so that no bridge left ties the measure to the figure.
+        rotate, outline = 'Elements.Parallelogram.quadArea_rotate', 'Elements.Parallelogram.outline_area'
+        both = {'Elements.Parallelogram.convexOutline', outline}
+        for n in range(1, 49):
+            with self.subTest(n=n):
+                self.assertEqual(both <= set(questions.bundle('I', n)[1]), 34 <= n <= 38 or 41 <= n <= 48)
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        for n in (*range(34, 39), *range(41, 49)):
+            if rows[f'I.{n}']['state']['bridges']:
+                with self.subTest(ref=f'I.{n}'):
+                    self.assertTrue(both <= set(rows[f'I.{n}']['state']['bridges']))
+        plants = {row['ref']: row for row in calibration_rows('P13') if row['calibration']['role'] == 'plant'}
+        for ref in ('I.43', 'I.36'):
+            with self.subTest(ref=ref):
+                changed = {c['field'][-1] for c in plants[ref]['mutation']['changes']
+                           if c.get('field', [])[:2] == ['state', 'bridges']}
+                self.assertEqual(changed, {rotate, outline})
+        self.assertIn('singleOutline', plants['I.43']['mutation']['base_state']['bridges'][outline])
+        self.assertNotIn('singleOutline', plants['I.43']['state']['bridges'][outline])
+        # The premise speaks of the bridge's own corners: `quadArea_rotate`'s are the file's
+        # variables, and `outline_area`'s are bound before it.
+        self.assertIn('(hAC : A = C)', plants['I.36']['state']['bridges'][rotate])
+        text = plants['I.36']['state']['bridges'][outline]
+        self.assertEqual(text.count('(hAC : A = C)'), 1)
+        self.assertLess(text.index('{A B C D : Point}'), text.index('(hAC : A = C)'))
+
     def test_the_manifest_the_bar_and_the_refusals_name_both_entries(self):
         manifest = shared()['calibration']
         for record in (manifest, manifest['bar'], questions.BAR):
