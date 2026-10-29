@@ -1128,8 +1128,9 @@ class Calls:
     collects every eligible geometric signature. Book III, the rule of superposition's
     soundness and Book Zero's area of an outline use some more of Lean's own names, each
     recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
-    List.mem_map, List.map_congr_left, List.Pairwise.sublist, and the Classical.epsilon and
-    True.intro of III.26's helpers, written so, with a first word that names no declaration
+    List.mem_map, List.map_congr_left, List.Pairwise.sublist, the Classical.epsilon and
+    True.intro of III.26's helpers, and the List.nodup_cons of the area of a convex outline
+    (Elements/Figure/Divisions.lean), written so, with a first word that names no declaration
     of the project; and the constructor of a structure or class the index holds, X.mk, with
     the equation Lean generates for it, X.mk.injEq, where X names that structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
     remaining field is unresolved.
@@ -1147,7 +1148,8 @@ class Calls:
     # Lean's own names, each exempt only when written whole, from a first word that names no
     # declaration of the project.
     CORE_NAMES = frozenset({'And.intro', 'Iff.rfl', 'List.mem_map', 'List.map_congr_left',
-                            'List.Pairwise.sublist', 'Classical.epsilon', 'True.intro'})
+                            'List.Pairwise.sublist', 'Classical.epsilon', 'True.intro',
+                            'List.nodup_cons'})
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')

@@ -1129,6 +1129,30 @@ class CoreNames(LeanFiles):
                 self.assertTrue(unresolved)
                 self.assertTrue(all(written in found for found in unresolved), unresolved)
 
+    def test_list_nodup_cons_resolves_as_the_area_of_a_convex_outline_writes_it(self):
+        # `Parallelogram.convexOutline`, in Elements/Figure/Divisions.lean, proves its corners
+        # different with `List.nodup_cons` whole, inside `simp [...]` (#674). Each is read alone.
+        for form, body in (
+                ('simp', '  have h : True ∧ True := ⟨trivial, trivial⟩\n'
+                         '  have n : True := by simp [List.nodup_cons, h.1, h.2]\n'),
+                ('@', '  have k := @List.nodup_cons\n')):
+            with self.subTest(form=form):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_neighbour_of_list_nodup_cons_is_still_unresolved(self):
+        # List's other nodup lemmas, and the whole name's last word after another first word or
+        # lengthened, are no part of the list.
+        for written in ('List.nodup_append', 'List.nodup_nil', 'Missing.nodup_cons',
+                        'Array.nodup_cons', 'List.nodup_cons_of'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):

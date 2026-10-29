@@ -1,4 +1,4 @@
-<!-- entry: id=jev-iii27-iii29-bridges cards=674 line="The Jev generator gives III.27's and III.29's rows the congruence and the earlier bridges their records name, and does not ask them for the two later theorems their notes name as context." -->
+<!-- entry: id=jev-iii27-iii29-bridges cards=674 line="The Jev generator gives III.27's and III.29's rows the congruence and the earlier bridges their records name, and does not ask them for the two later theorems their notes name as context; it reads List.nodup_cons, written whole, as Lean's own." -->
 - **The Jev generator follows III.27's and III.29's records to the earlier bridges they name, and not to the later theorems they name as context (#674).**
   Since III.27 and III.29 were swapped ([that entry](2026-10-28-iii27-iii29-swap.md)), their
   main statements read Euclid's equal circumferences as ones that coincide (`Arc.Congruent`)
@@ -45,6 +45,23 @@
   before, `MEASURE_BRIDGES` gives III.24 to III.30 `Arc.measure_eq_iff`, and
   `CONGRUENCE_BRIDGES` gives III.24, III.26,
   III.28 and III.30 `Arc.congruent_iff`, both declared in `Arcs.lean`, and `bridge_placement`
-  marks them in those rows as explanatory later declarations. This entry leaves them as they
-  are: whether they stay is the coordinator's question, not this card's. The generator sends
-  nothing: it reads no key and makes no request.
+  marks them in those rows as explanatory later declarations. They stay: the coordinator
+  ruled on 29 October 2026, in these words, that "a later theorem is never a bridge a proof
+  or statement rests on, but may be supplied as an explanatory later declaration, marked so
+  by `bridge_placement`, as these already are". That ruling, too, is the coordinator's, not
+  the owner's. The generator sends nothing: it reads no key and makes no request.
+
+  `Elements.Parallelogram.convexOutline`, in `Elements/Figure/Divisions.lean` (#622), shows
+  a parallelogram's outline convex, so that its area as an outline is `quadArea`, and writes
+  Lean's `List.nodup_cons` whole inside `simp [...]` to show its four corners different. The
+  generator's reader did not know the name and reported it unresolved, which stops a
+  generation. The coordinator ruled on 29 October 2026 that this change for #674, which
+  lands after that file's, "gains that one name in the generator's allowlist, with a planted
+  case (the name resolves, and an unlisted neighbour stays refused). Nothing wider". The
+  ruling is the coordinator's, not the owner's.
+  `Calls.CORE_NAMES` now holds `List.nodup_cons`, read as its other names are, only whole
+  and after a first word that names no declaration of the project; no other name or rule
+  changes. Two tests in `CoreNames` check it: the name read inside `simp [...]` and as
+  `@List.nodup_cons` leaves nothing unresolved, and each of `List.nodup_append`,
+  `List.nodup_nil`, `Missing.nodup_cons`, `Array.nodup_cons` and `List.nodup_cons_of`, read
+  alone, is still found unresolved.
