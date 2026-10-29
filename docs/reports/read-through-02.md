@@ -10,15 +10,17 @@ in the paths read between the two.*
 stands in the history at 4baf973fe, [as it was then](https://github.com/dodecaplex-co/stoicheia/blob/4baf973fe/docs/reports/read-through-02.md).
 [Read-through 03](read-through-03.md) is the read of 25 and 26 October. Neither one's
 verdicts were used here: the readers below were told not to open either report, and none
-did, save for one line noted under "The pilot editor". Five places still mean that earlier
+did, save for one line noted under "The pilot editor". Other places still mean that earlier
 read when they say "read-through 02": the decisions entry
 [2026-10-25-book-i-front-definitions](../decisions/2026-10-25-book-i-front-definitions.md)
 (its line 10, on I.17 and I.18), [STYLE](../STYLE.md) section 4 (its line 312),
 [read-through 03](read-through-03.md) (its count of "read-through 02's 19 pilot notes", line
-101), [figures against scans](figures-against-scans.md) (its status of 21 October, line 5),
-and the `run` lines of 55 review records, which record a re-reading made then and stay true
-as dated records. The first four should link the earlier read at 4baf973fe; each belongs to
-its own owner.*
+101), [figures against scans](figures-against-scans.md) (its opening paragraph, line 3, which
+names 2e8aecf8; its two status notes of 21 October, lines 5 and 33; and two rows' dated
+notes, lines 65 and 88), a comment in tests/test_jev_questions.py (line 1262), and the `run`
+lines of 55 review records. The dated notes, the comment and the `run` lines record what was
+true then and stand. The first four should link the earlier read at 4baf973fe; each belongs
+to its own owner.*
 
 ## Who read what
 
@@ -59,26 +61,29 @@ as closed, an unapproved change to the foundations, or a materially false certif
 Material is an unmarked alternative argument, a hidden omission of a clause, an unsupported
 claim about a representation, a misleading figure, or a wrong quotation or attribution.
 Editorial is what "does not change the meaning". A sentence that a reader sees and that is
-false is therefore graded material here when it is not blocking: it changes the meaning, so
-it cannot be editorial.
+false in what it tells of the mathematics, the source, the formal claim or a figure is
+therefore graded material here when it is not blocking: it changes the meaning, so it cannot
+be editorial.
 
-Two editorial grades need a word. I.26's figure note (item 40) says "Drawn for one case" of a
-figure that shows both of Euclid's suppositions on one triangle, as Heath's does, and names
-them both; the figure is Heath's and misleads no one, and only the kind of case it declares is
-wrong. II.4's sentence (item 49) has BD cut the square with the parallels, though BD bounds
-none of the four pieces; the figure beside it shows at once how the pieces lie, and what the
-sentence says of them, two squares and two equal complements, is true.
+Two grades need a word. I.26's figure note, which its reader graded editorial, is graded
+material here (M6): "Drawn for one case" is false of a figure that draws two of Euclid's
+suppositions, and the note does not say which cases the Lean covers that the figure leaves
+undrawn. II.4's sentence (item 49) stays editorial. It says the square on AB is cut "into four
+pieces with the diameter BD", though BD bounds none of the four pieces: the parallels through
+G cut them. The phrase is loose rather than false, since "with the diameter BD" names the line
+by which Euclid finds G, and what the sentence says of the pieces, two squares and two equal
+complements, is true.
 
 ## What they found
 
 | Book | Blocking | Material | Editorial | All |
 |---|---|---|---|---|
-| I | 0 | 2 | 41 | 43 |
+| I | 0 | 3 | 40 | 43 |
 | II | 0 | 3 | 16 | 19 |
-| Books I and II | 0 | 5 | 57 | 62 |
+| Books I and II | 0 | 6 | 56 | 62 |
 
 The counts are of distinct findings: a finding that several readers made counts once. The
-readers made 87 in all, 6 of them material; the pilot editor's 12 notes, all editorial, are
+readers made 87 in all, 7 of them material as graded here (6 as the readers graded them); the pilot editor's 12 notes, all editorial, are
 counted among these. A finding that spans both books (the line in the "Reviewed" row, the
 terms of I.45 and II.14) is counted with Book I. The editorial findings are listed under
 their card drafts, below.
@@ -92,14 +97,15 @@ their card drafts, below.
 | M3 | Book II's introduction | "Two enunciations are wider than the case Euclid's proof draws": II.5's and II.9's are wider too | RD-r5 1 | Open: card draft RD-C2 |
 | M4 | Book II's introduction | "We prove each once": II.5 and II.14 prove the right angle beside a right angle again, in their own Lean | RD-f2 1 | Open: card draft RD-C2 |
 | M5 | II.9, II.10 | The captions at a glance give a reason in areas that is not Euclid's, without the label II.8's caption gives | RD-f2 2 | Open: card draft RD-C3 |
+| M6 | I.26 | The figure note says "Drawn for one case" of a figure that draws two, and leaves undisclosed the cases the Lean covers that the figure does not draw | RD-r3 1 (graded editorial by its reader) | Open: card draft RD-C7, item 40 |
 
 **M1. I.8's commentary, on what the cited laws' proofs draw.** mishnah/I/08.md:5
 (book/I/08.md:363) says: "The same is true of two of the three other laws I.8 cites, that a
 straight line equal to one with distinct ends has distinct ends, and Savile's argument from
 I.4 that on a ray only one point lies at a given distance from its start: their proofs draw
 circles and straight lines too, and only Metric 3 is proved with no construction." facts.json
-gives, for I.8's `cited_laws`, `"construction_rules": ["Postulate3"]` for both `neOfLen` and
-`rayUnique`; only the law `prop7` has `Postulate1` and `Postulate2` beneath it. The page's own
+gives, for I.8's `cited_laws`, `"construction_rules": ["Postulate3"]` for both "neOfLen" and
+"rayUnique"; only the law "prop7" has `Postulate1` and `Postulate2` beneath it. The page's own
 table of the laws cited inside the placement says the same (book/I/08.md:351-352). So these
 proofs describe a circle and draw no straight line, and "and straight lines" is false. The
 sentence stands unchanged on main at 559237731. *What it should say:* "... from its start:
@@ -167,12 +173,26 @@ nine cells" (figures/II/08-idea.svg:3). *What it should say:* each caption ends 
 reading in areas, not Euclid's proof." (II.9's then has 45 words, within STYLE section 7's
 50.)
 
+**M6. I.26's figure note.** review/I/26.toml:79-81 (book/I/26.md:21 and :23): "Drawn for one
+case: AB supposed greater than DE, with G between B and A, and separately BC supposed greater
+than EF, with H between B and C; both suppositions appear on one triangle, as in Heath's
+figure." The note announces one case and names two: the figure draws both of Euclid's parts,
+the side adjoining the equal angles (G) and the side subtending one of them (H). It does not
+draw the exchanged suppositions, DE greater than AB and EF greater than BC, which the Lean
+also refutes, applying Euclid's argument again with the triangles exchanged (the `case`
+passages, review/I/26.toml:41-43 and :69-71). review/SCHEMA.md:214 gives such a figure
+"some_cases": its caption then reads "Drawn for some of its cases: ...", and its note says
+which cases the figure does not draw. The record is unchanged on main at 559237731 (only the
+page's moved anchors changed). *What it should say:* the record takes `some_cases = true`,
+keeping its `case`, and its note adds "It does not draw DE greater than AB or EF greater than
+BC, which the Lean rules out by exchanging the triangles."
+
 ## The pilot editor
 
 The pilot editor (RD-p), which wrote, prompted and edited none of the three pages, read
 book/II/01.md, book/I/45.md and book/II/14.md consecutively, each whole and top to bottom
 with its figures, at 3938eacc7. It read every part of the three pages save the bodies of the
-14 `Fitted.fan` helper lemmas in I.45's folded listing (about book/I/45.md:395-729), whose notes
+14 `Fitted.fan` helper lemmas in I.45's folded listing (book/I/45.md:395-711), whose notes
 and docstrings it read. It compared the figures with Heath's (leaves n365, n395 and n429)
 and checked every quotation on the three pages against the page images, italics included.
 III.24 joins the set when Book III's queued trains have landed.
@@ -185,7 +205,7 @@ reading, already mended; it read nothing else of it, and no note rests on it.
 |---|---|---|---|---|
 | P1 | I.45, II.14, II.1 | The statement notes split the scope three ways, in three orders and three vocabularies; "a triangle more" cannot be followed; "lists of triangles" makes checked divisions read as unchecked | An example for docs/examples.md: a statement note whose scope is full through a companion names first the declaration that carries the whole enunciation, then what the main theorem keeps, then each other companion by what it takes | RD-C6 |
 | P2 | I.45, II.14, Book I's introduction | "Independence", "content" and "outline" are never glossed; on II.14 the debt to Hilbert hangs on "constructs a square", as if the construction were his | STYLE section 4, "A figure given with its triangles": the debt to Hilbert said in one form (the proof that every division gives one sum; the construction is Euclid's), and "content" glossed where it first stands on a page | RD-C6 |
-| P3 | II.14 | "The content theorem (`area_eq`)" names a different declaration from the one the term names on I.45 and in Content.lean (`Apart.area_eq_of_same_region`) | None | RD-C6 |
+| P3 | II.14 | "The content theorem" is glossed area_eq, a different declaration from the one the term names on I.45 and in Content.lean, Apart.area_eq_of_same_region | None | RD-C6 |
 | P4 | II.14 | A dated change-log in a passage note ("until 26 October 2026 ...") | A second example under STYLE section 4, "Change-logs on the page"; a reported check for a dated phrase in a review note or the commentary, proposed as a card of its own | RD-C4 |
 | P5 | I.45, II.14 | "The older companions" and "stay beside" tell the order in which the declarations were written | STYLE section 4: these companions are named by what they take, never "older", and nothing says that they "stay" | RD-C4 |
 | P6 | II.14 | In the Representation row "It represents" reads as `Prop14.square`, though it means the main theorem; the cell runs to about 190 words | None: section 2's "a short table" covers it | RD-C6 |
@@ -229,14 +249,14 @@ The readers agree on where the second voice lives: not in the commentary, which 
 them found in one plain and warm voice, but in the "How the Lean follows the text" notes,
 with their change-log words ("now proved", "the retained axiom", "since the second axiom
 retirement", "Until 26 October 2026") and two sentences repeated across eight records. Every
-reader found the scope told truthfully, save M1 and M2, and the depth even, following the
-difficulty of each proposition.
+reader found the scope told truthfully, save M1, M2 and M6, and the depth even, following
+the difficulty of each proposition.
 
 Book I was read straight through by its four readers of ranges, who between them read every
 page whole and in order, with its commentary and every figure, each range ending where the
-next begins; the flow reader then read the whole book in order for what crosses pages, its
-captions, notes, commentary, further reading and figures at a glance, but not every Lean
-listing or every Euclid's figure, which the range readers read.
+next begins; the flow reader then read the whole book in order for what crosses pages: the
+top of each page, its notes, commentary and further reading, and its figure at a glance.
+Euclid's proof, his figure and the Lean listing it left to the range readers.
 
 ### Book II
 
@@ -266,8 +286,8 @@ To come: read once Book III's queued trains have landed, with III.24 for the pil
 
 ## The card drafts
 
-The editorial findings, grouped as the card drafts group them for the coordinator to
-file. Each gives the source to mend, the rendered line where a reader meets
+The editorial findings, and M6 among the figures, grouped as the card drafts group them
+for the coordinator to file. Each gives the source to mend, the rendered line where a reader meets
 it, and the readers who made it. The text quoted, the evidence and the wording proposed for
 each are in the readers' outputs, which the card drafts carry.
 
@@ -340,7 +360,7 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 22. The statement notes of I.45 and II.14 tell the same split in different orders and words;
     "sums or a triangle more" and "Euclid shows two triangles", review/I/45.toml:4 and :10,
     review/II/14.toml:3. RD-r4 7; RD-p P1.
-23. II.14: "the content theorem (`area_eq`)" names another declaration than on I.45,
+23. II.14 glosses "the content theorem" as area_eq, another declaration than on I.45,
     Elements/BookII/Prop14.lean:474-477. RD-p P3.
 24. II.14's Representation row: "area-sum theorem" and "the other side forms", and an "It"
     whose antecedent reads wrong, review/II/14.toml:60. RD-r6 5; RD-p P6.
@@ -380,9 +400,9 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 
 **RD-C7: figures** (STYLE section 7).
 
-40. I.26's figure note says "Drawn for one case" and names two, and leaves out the exchanged
-    suppositions the Lean also refutes; by review/SCHEMA.md:214 it is `some_cases`,
-    review/I/26.toml:79-81. RD-r3 1.
+40. Material, M6, above. I.26's figure note says "Drawn for one case" and names two, and
+    leaves out the exchanged suppositions the Lean also refutes; by review/SCHEMA.md:214 it is
+    "some_cases", review/I/26.toml:79-81. RD-r3 1.
 41. I.37's modern figure draws two heights the paragraph never speaks of,
     figures/I/37-modern.svg:12-13 and :21-22. RD-r4 5.
 42. I.43's caption at a glance names the yellow complements but not the blue and red
@@ -396,7 +416,7 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 
 **RD-C8: "Carried." where a helper does the step** (review/SCHEMA.md:158-163).
 
-45. Passages of kind `carried` with no `helper` and no `unused`, each naming the lemma or
+45. Passages of kind "carried" with no "helper" and no "unused", each naming the lemma or
     proposition that does the step: I.36 (review/I/36.toml:26-28), I.42 (42.toml:38-41), I.44
     (44.toml:40-53, three) and I.45 (45.toml:16-19). The page shows a bare "Carried." where
     every neighbouring note says "Done by". RD-r3 8; RD-r4 1.
@@ -480,15 +500,17 @@ None of these is a finding; each says what would settle it.
 Main moved from 3938eacc7 to 559237731 while this draft was written. `git log --first-parent
 --oneline 3938eacc7..559237731` gives two landings:
 
-- 511fb5fe5 (pull request #698), a test, a negative plant and a decisions entry on settling
-  the renderer's notes; it changes nothing in the paths read.
+- 511fb5fe5 (pull request #698): the render-notes test and the stale-page plant now render
+  once before they plant (#677), with its decisions entry; it changes nothing in the paths
+  read.
 - 559237731 (pull request #699), a batch of four trains. In the paths read it changes
   Elements/BookI/Prop47.lean, Elements/BookI/OutlineBound.lean and review/I/47.toml (I.47
   bounds its angle by I.13, not by Metric 5, #515), and regenerates 27 pages: book/I/02.md,
   06, 07, 09 to 13, 15, 16, 18, 20, 21, 26, 28, 30, 31, 40, 43, 47 and 48, and book/II/09.md
   to 14. Most of their changed lines are link anchors moved by a change to
-  Elements/Figure/RuleBase.lean (#561); the rest are #515's: II.9 to II.14 now count 38 tacit
-  rules beneath them, not 39, with Metric 5 gone from their lists. facts.json and
+  Elements/Figure/RuleBase.lean (#561); the rest are #515's: I.47's listing, its
+  `Prop47.within` note and its Reviewed commit change, and it counts 37 tacit rules, not 38;
+  I.48 and II.9 to II.14 count 38, not 39, with Metric 5 gone from their lists. facts.json and
   docs/reports/overlaps.md, which M1 and M2 cite, changed with them. It resolves M2.
 
 `git diff --name-only 3938eacc7 559237731 -- book/I book/II mishnah Elements/BookI
@@ -498,13 +520,15 @@ of these changes, and every later one to these paths, before the release.
 
 ## What #34 and B3 still need, for Books I and II
 
-1. The four open material findings, M1 and M3 to M5, mended on main (card drafts RD-C1 to
-   RD-C3), each naming here the commit that resolves it.
+1. The five open material findings, M1 and M3 to M6, mended on main (card drafts RD-C1 to
+   RD-C3, and item 40 of RD-C7), each naming here the commit that resolves it.
 2. The readers' conditions on B3. Every verdict but those of RD-r3 and RD-r4 passes "once
    the named findings are mended", all of its reader's findings; RD-r3 names its findings 2
-   and 3, and RD-r4 passes as it stands. As written, then, Book I's B3 waits on card drafts
-   RD-C1, RD-C4, RD-C5, RD-C6, RD-C9, RD-C10 and item 43 of RD-C7; Book II's on RD-C2 to
-   RD-C6, RD-C9 and RD-C10. Only RD-C8, and RD-C7 save item 43, hold neither. The verdicts
+   and 3, and RD-r4 passes as it stands. As written, then, Book I's B3 waits on RD-C1, on
+   the Book I items of RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10, and on items 43 and 44 of
+   RD-C7, besides M6 (item 40); Book II's on RD-C2 and RD-C3, and on the Book II items of
+   RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10. Only RD-C8, and items 41 and 42 of RD-C7, hold
+   neither. The verdicts
    single out the voice lapses of RD-C4 and RD-C5; whether the other editorial findings must
    be mended before B3 is recorded, or may go to the backlog, is for the coordinator to
    rule.
