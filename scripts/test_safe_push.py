@@ -5671,11 +5671,13 @@ class PreflightProof(Edge):
         return self.proof
 
     def assertFallsBack(self, sha: str, proof: dict, cases):
-        """Each case, a name, the proof's path as `plant` leaves it, and the reason, on a
-        fresh origin with the head `sha` checked out: the proof's line a note naming the
-        reason, the full pre-flight run here, never the proof, and the head merged, since
-        that pre-flight passes."""
-        for name, plant, why in cases:
+        """Each case, a name, the proof's path as `plant` leaves it, the reason and any
+        values of the proof that must reach neither the output nor the body, on a fresh
+        origin with the head `sha` checked out: the proof's line a note naming the reason,
+        the full pre-flight run here, never the proof, and the head merged, since that
+        pre-flight passes."""
+        for case in cases:
+            name, plant, why, *private = case
             with self.subTest(case=name):
                 self.setUp()
                 git(WORK, "checkout", "--quiet", "--detach", sha)
@@ -5688,6 +5690,10 @@ class PreflightProof(Edge):
                 self.assertIn(self.FALLBACK, push)
                 self.assertIn(self.FULL_PATH, push)
                 self.assertNotIn(self.FROM_PROOF, out)
+                for value in private:
+                    self.assertNotIn(value, out)
+                    for pr in self.gh_state()["prs"]:
+                        self.assertNotIn(value, pr["body"] or "")
                 self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
 
     def test_a_proof_stands_in_for_step_4_of_a_check_changing_head(self):
@@ -5791,9 +5797,9 @@ class PreflightProof(Edge):
             return lambda p: self.planted(p, lambda q: q.update(made=when))
         self.assertFallsBack(sha, proof, (
             ("an old proof", made(old),
-             f"it was made more than {safe_push.PROOF_HOURS} hours ago"),
+             f"it was made more than {safe_push.PROOF_HOURS} hours ago", old),
             ("a proof dated ahead", made(ahead), f"it is dated more than "
-             f"{safe_push.PROOF_SKEW} seconds ahead of this machine's clock")))
+             f"{safe_push.PROOF_SKEW} seconds ahead of this machine's clock", ahead)))
 
     def test_a_hand_edited_unreadable_or_missing_proof_falls_back(self):
         sha, proof = self.proved(self.guide_change)
@@ -5826,12 +5832,13 @@ class PreflightProof(Edge):
         def unused(value):
             return lambda q: q["record"].update(unused=value)
 
-        def nan(p):
-            # NaN in a field nothing reads, the digest null: never None compared with null.
+        def constant(p, token):
+            # A non-standard constant in a field nothing reads, the digest null: never
+            # None compared with null.
             q = copy.deepcopy(p)
-            unused(float("nan"))(q)
+            unused("a placeholder")(q)
             q["digest"] = None
-            return self.written(json.dumps(q))
+            return self.written(json.dumps(q).replace('"a placeholder"', token))
 
         def infinite(p):
             # 1e400, which JSON reads as infinity: the digest cannot be computed.
@@ -5855,7 +5862,12 @@ class PreflightProof(Edge):
             self.assertEqual(p["format"], 1)
             return self.written('{"format": 99, ' + json.dumps(p)[1:])
         self.assertFallsBack(sha, proof, (
-            ("NaN, the digest null", nan, "it holds NaN or Infinity, which is not standard JSON"),
+            ("NaN, the digest null", lambda p: constant(p, "NaN"),
+             "it holds a non-standard numeric constant", "NaN"),
+            ("Infinity, the digest null", lambda p: constant(p, "Infinity"),
+             "it holds a non-standard numeric constant", "Infinity"),
+            ("-Infinity, the digest null", lambda p: constant(p, "-Infinity"),
+             "it holds a non-standard numeric constant", "-Infinity"),
             ("a digest in capitals", capitals,
              "its digest is not of this format (64 of 0 to 9 and a to f)"),
             ("a number JSON reads as infinity", infinite,

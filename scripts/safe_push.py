@@ -5592,7 +5592,7 @@ def proof_pairs(pairs: list) -> dict:
 def proof_constant(name: str):
     """json.loads's parse_constant for a proof: NaN, Infinity or -Infinity, which Python's
     JSON reads and standard JSON does not hold, is a doubt."""
-    raise ProofDoubt("it holds NaN or Infinity, which is not standard JSON")
+    raise ProofDoubt("it holds a non-standard numeric constant")
 
 
 def proof_record(path: Path, ctx: Context, risk: Risk,
