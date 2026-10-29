@@ -3821,6 +3821,9 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
         with start_lock:
             begun[name] = threading.current_thread()
             if shut or caught:
+                # No end to give but this one, which receive(), if it already waits, takes
+                # in as one that goes no further.
+                finished.put((name, None))
                 return
         t = time.time()
         try:
@@ -3837,9 +3840,11 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
         """One check's end taken in, and its thread joined; whether the pass goes no further
         than it."""
         name, result = finished.get()
-        ended[name] = result
         running.discard(name)
         begun[name].join()
+        if result is None:          # begun once a signal was recorded: not run, not ended
+            return True
+        ended[name] = result
         return isinstance(result, BaseException) or (fail == "FAIL" and not result[1])
 
     def wait() -> None:

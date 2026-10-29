@@ -972,6 +972,40 @@ class Interrupted(Stand):
         self.assertEqual(len(starts), 2)
         self.assertFalse((marks / "after.start").exists())
 
+    def test_a_signal_recorded_while_the_harness_waits_does_not_hang_it(self):
+        # The only check's thread reads the signal recorded once the harness already waits
+        # for an end, and begins no check: it must still give one, or the wait never ends.
+        marks = self.marks()
+        steps = [self.stand_in(marks, "only")]
+        waiting, hung = threading.Event(), []
+        real_thread = threading.Thread
+
+        class Bounded(queue.SimpleQueue):
+            def get(self, *args, **kwargs):
+                waiting.set()
+                try:
+                    return super().get(timeout=HOLD)
+                except queue.Empty:     # the signal's exception would come in its place
+                    hung.append(True)
+                    raise
+
+        class Late(real_thread):
+            def run(self):
+                waiting.wait(HOLD)
+                signal.getsignal(signal.SIGINT)(signal.SIGINT, None)
+                super().run()
+
+        logs = self.tmp / "logs-signal-while-waiting"
+        logs.mkdir()
+        with mock.patch.object(safe_push.queue, "SimpleQueue", Bounded), \
+                mock.patch.object(safe_push.threading, "Thread", Late), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                self.assertRaises(KeyboardInterrupt):
+            safe_push.run_together(steps, self.root, safe_push.Report(), logs, 11, "", "FAIL",
+                                   types.MappingProxyType({}), 2)
+        self.assertEqual(hung, [], "the harness waited for an end no thread gives")
+        self.assertFalse((marks / "only.start").exists())
+
     def test_signalled_raises_what_the_handlers_raise(self):
         # Python's own for SIGINT, and _terminate, as main() sets it, for SIGTERM and
         # SIGHUP.
