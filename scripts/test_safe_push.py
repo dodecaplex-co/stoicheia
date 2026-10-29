@@ -490,7 +490,7 @@ SETUP_ACTIONS = {"actions/checkout@v5": {"persist-credentials": False},
 ELAN_INSTALL = ("bash scripts/install_lean.sh",)
 # The pinned YAML parser, which the check of #346 (Units' lane-condition test, a file of the
 # registry) needs: the last line of the setup, after elan, isolated (-I, which takes in -P)
-# and from the runner's temporary directory, as queue-integrity installs it, so that
+# and from the runner's temporary directory, as queue-tests installs it, so that
 # nothing at the checkout's root, a pip.py or a pip/ folder, can run in its place (the
 # coordinator's rulings of 24 October 02:35, 02:40 and 03:35, and that of 19:45, which
 # gives it the form tests/test_check_queue.py requires of every module run in CI). It
@@ -893,7 +893,7 @@ NEGATIVE_TESTS = {"run": ("python3 scripts/negative_tests.py",)}
 YAML_INSTALL = {"run": ("python3 -m pip install -r scripts/requirements-test_safe_push.txt",)}
 LANE = "steps.lane.outputs.full == 'true'"  # Units.LANE_CONDITION
 RISK = {"RESULT": "${{ needs.risk.result }}", "CLASS": "${{ needs.risk.outputs.class }}"}
-GROUP, NOT_GROUP = "github.event_name == 'merge_group'", "github.event_name != 'merge_group'"
+GROUP = "github.event_name == 'merge_group'"
 GROUP_ENV = {"GH_TOKEN": "${{ github.token }}", "REPOSITORY": "${{ github.repository }}",
              "GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
              "GROUP_BASE": "${{ github.event.merge_group.base_sha }}",
@@ -980,40 +980,14 @@ WORKFLOW_CONTRACTS = {
                                    ' "$RUNNER_TEMP/acceptance/verdicts.json"',)}),
                     {"if": "always()", "uses": "actions/upload-artifact@v5",
                      "with": {"name": "acceptance", "path": "${{ runner.temp }}/acceptance/"}})},
-            "queue-integrity": {
-                "runs-on": "ubuntu-latest", "timeout-minutes": 20, "permissions": READS,
-                "steps": (
-                    HISTORY, PYTHON,
-                    *when(NOT_GROUP, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
-                          {"run": ("python3 -I tests/test_check_queue.py",
-                                   "python3 -I tests/test_check_train.py",
-                                   "python3 -I tests/test_auto_revert.py")}),
-                    # The group judged by its base's check_queue.py, or red if it has none.
-                    {"if": GROUP, "env": GROUP_ENV,
-                     "run": Script("78503063a56c338cbe24f7705c7deb52")})},
-            "queue-gaps": {
-                "needs": ("acceptance",), "if": "always()", "runs-on": "ubuntu-latest",
-                "timeout-minutes": 75, "permissions": READS, "steps": (
-                    {"env": {"ACCEPTANCE_RESULT": "${{ needs.acceptance.result }}"},
-                     "run": ('test "$ACCEPTANCE_RESULT" = success',)},
-                    *when(GROUP, HISTORY, PYTHON, {
-                        "env": {"GH_TOKEN": "${{ github.token }}",
-                                "REPOSITORY": "${{ github.repository }}",
-                                "RUN_ID": "${{ github.run_id }}"},
-                        "run": ('gh run download "$RUN_ID" --repo "$REPOSITORY" --name'
-                                ' acceptance --dir "$RUNNER_TEMP/acceptance"',
-                                'test -s "$RUNNER_TEMP/acceptance/verdicts.json"')}, {
-                        # The gap tests' plan, by the base's check_queue.py, or red without it.
-                        "env": {**GROUP_ENV, "ACCEPTANCE_VERDICTS":
-                                "${{ runner.temp }}/acceptance/verdicts.json"},
-                        "run": Script("6f217d2f3f62f9455f4412866c0818ac")}, {
-                        "working-directory": PIP_DIRECTORY,
-                        "run": ('python3 -I -m pip install -r'
-                                ' "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"',)}, {
-                        "env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}"},
-                        "run": ('test "$(git rev-parse HEAD)" = "$GROUP_HEAD"',
-                                'python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan'
-                                ' "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"')}))}}},
+            # The queue's offline cases, on every event, a merge group's among them: once the
+            # queue is on, main's ruleset requires the check by its name there.
+            "queue-tests": {
+                "runs-on": "ubuntu-latest", "timeout-minutes": 30, "steps": (
+                    HISTORY, PYTHON, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
+                    {"run": ("python3 -I tests/test_check_queue.py",
+                             "python3 -I tests/test_check_train.py",
+                             "python3 -I tests/test_auto_revert.py")})}}},
     "post-merge.yml": {
         "name": "Post-merge", "on": {"push": {"branches": ["main"]}},
         "permissions": {"contents": "read"},
@@ -1065,6 +1039,49 @@ WORKFLOW_CONTRACTS = {
                 # it, while main's tip is this push; if main has moved on, nothing.
                 "steps": (AFTER, {"shell": "bash",
                                   "run": Script("14d2173eabf07dbf2c70ebda4e1c99c3")})}}},
+    # The queue's judge, which the organization's ruleset requires from main: neither job
+    # has an if, since a skipped required job counts as passed, and on a merge group every
+    # step runs; on a pull request each runs its first step alone.
+    "queue-judge.yml": {
+        "name": "Queue judge", "on": {"pull_request": None, "merge_group": None},
+        "permissions": {"contents": "read"},
+        "jobs": {
+            "queue-integrity": {
+                "runs-on": "ubuntu-latest", "timeout-minutes": 20, "permissions": READS,
+                "steps": (
+                    # Green on a pull request and a merge group, red on any other event.
+                    {"env": {"EVENT": "${{ github.event_name }}"},
+                     "run": Script("e73fe69ac2a8b90d3c6c9a002d4a0966")},
+                    *when(GROUP, HISTORY, PYTHON,
+                          # The group judged by its base's check_queue.py, or red if it has
+                          # none.
+                          {"env": GROUP_ENV, "run": Script("78503063a56c338cbe24f7705c7deb52")}))},
+            "queue-gaps": {
+                "runs-on": "ubuntu-latest", "timeout-minutes": 150, "permissions": READS,
+                "steps": (
+                    {"env": {"EVENT": "${{ github.event_name }}"},
+                     "run": Script("e73fe69ac2a8b90d3c6c9a002d4a0966")},
+                    *when(GROUP, HISTORY, PYTHON, {
+                        # The base's scripts/, once, for this step and those after it, and
+                        # acceptance's verdicts from the group's CI run, read by the base's
+                        # check_queue.py --acceptance-run; red without either, or without
+                        # the group's head and base.
+                        "env": {"GH_TOKEN": "${{ github.token }}",
+                                "GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
+                                "GROUP_BASE": "${{ github.event.merge_group.base_sha }}",
+                                "REPOSITORY": "${{ github.repository }}"},
+                        "run": Script("8124d59830269c1dcc78319392b290cb")}, {
+                        # The gap tests' plan, by the base's check_queue.py.
+                        "env": {**GROUP_ENV, "ACCEPTANCE_VERDICTS":
+                                "${{ runner.temp }}/acceptance/verdicts.json"},
+                        "run": Script("fd7578b75cc58cac34995a4c33cfd4ac")}, {
+                        "working-directory": PIP_DIRECTORY,
+                        "run": ('python3 -I -m pip install -r'
+                                ' "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"',)}, {
+                        "env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}"},
+                        "run": ('test "$(git rev-parse HEAD)" = "$GROUP_HEAD"',
+                                'python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan'
+                                ' "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"')}))}}},
     "release-gate.yml": {
         "name": "Release gate", "permissions": {},
         "on": {"pull_request": {"types": ["opened", "synchronize", "reopened", "labeled",
@@ -13759,9 +13776,10 @@ class Units(unittest.TestCase):
                          [RUN_CHECKS])
 
     def test_every_checkout_keeps_no_token(self):
-        # CI's jobs and the post-merge workflow's run with a read-only token; none leaves
-        # it in the checkout's git config, where the code checked could read it.
-        for name in ("ci.yml", "post-merge.yml"):
+        # CI's jobs, the post-merge workflow's and the queue judge's run with a read-only
+        # token; none leaves it in the checkout's git config, where the code checked could
+        # read it.
+        for name in ("ci.yml", "post-merge.yml", "queue-judge.yml"):
             workflow = yaml.safe_load((SOURCE / ".github/workflows" / name).read_text())
             checkouts = [(job, step) for job, spec in workflow["jobs"].items()
                          for step in spec.get("steps", [])
@@ -13818,6 +13836,49 @@ class Units(unittest.TestCase):
                 self.assertNotEqual(weakened, workflows)
                 with self.assertRaises(AssertionError):
                     hold_to_contracts(weakened)
+
+    def test_the_queue_judge_workflow_refuses_its_plants(self):
+        # The planted cases of the queue judge's design (MQ3-reqwf, 27 October 2026,
+        # section 7) that the contracts guard: hold_to_contracts, with the contract of
+        # queue-judge.yml and ci.yml's queue-tests. A skipped required job counts as
+        # passed, so each of the first five would let a group pass unjudged: a job made
+        # conditional, a merge-group step skipped, the judge step removed, and
+        # cancel-in-progress, of the workflow (a setting the model does not read) or of a
+        # job. The sixth, merge_group dropped from `on:`, would hold every group unjudged:
+        # the rule runs a required file only on the events its `on:` names, and in the
+        # coordinator's trial a group waited on a file without it. The last would leave
+        # unrun a check main's ruleset requires by its name.
+        workflows = read_workflows(SOURCE)
+        hold_to_contracts(workflows)
+        stopping = {"group": "queue-judge", "cancel-in-progress": True}
+
+        def judge(workflows, job=None):
+            found = workflows["queue-judge.yml"]
+            return found if job is None else found["jobs"][job]
+
+        plants = (
+            ("a job made conditional", "queue-judge.yml jobs queue-integrity if: not in",
+             lambda w: judge(w, "queue-integrity").update(
+                 {"if": "github.event_name == 'merge_group'"})),
+            ("a merge-group step skipped", "queue-judge.yml jobs queue-gaps steps 4 if",
+             lambda w: judge(w, "queue-gaps")["steps"][3].update(
+                 {"if": "github.event_name == 'pull_request'"})),
+            ("the judge step removed", "queue-judge.yml jobs queue-integrity steps: 3 items",
+             lambda w: judge(w, "queue-integrity")["steps"].pop()),
+            ("cancel-in-progress, of the workflow", "the model does not read: concurrency",
+             lambda w: judge(w).update(concurrency=stopping)),
+            ("cancel-in-progress, of a job", "queue-judge.yml jobs queue-gaps concurrency: not in",
+             lambda w: judge(w, "queue-gaps").update(concurrency=stopping)),
+            ("merge_group dropped from on:", "queue-judge.yml on merge_group: missing",
+             lambda w: judge(w)["on"].pop("merge_group")),
+            ("CI's queue-tests dropped", "ci.yml jobs queue-tests: missing",
+             lambda w: w["ci.yml"]["jobs"].pop("queue-tests")))
+        for label, refusal, plant in plants:
+            with self.subTest(label):
+                planted = copy.deepcopy(workflows)
+                plant(planted)
+                with self.assertRaisesRegex(AssertionError, re.escape(refusal)):
+                    hold_to_contracts(planted)
 
     def test_a_step_of_logic_is_held_by_what_it_does(self):
         # The lane steps of CI's negative and formal-model jobs and the cadence's verdict
