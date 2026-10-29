@@ -3,7 +3,7 @@ message: "If you use Stoicheia, we'd be glad if you cited it like this."
 title: "Stoicheia: Euclid's Elements in Lean, sentence by sentence"
 authors:
   - name: "Stoicheia Team"
-repository-code: "https://github.com/jackChallis/stoicheia"
+repository-code: "https://github.com/dodecaplex-co/stoicheia"
 license: [Apache-2.0, CC-BY-4.0]
 version: book-III
 date-released: 2026-10-17
