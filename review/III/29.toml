@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "Equal circumferences of any size, less than a semicircle, a semicircle or greater, by the angle measure; `Prop29.of_congruent` takes them to be congruent."
+note = "Equal circumferences that coincide in `Prop29.of_congruent`, equal in measure in `Prop29`; of any size, less than a semicircle, a semicircle or greater."
 companions = ["III.29 of_congruent"]
 fingerprint = "sha256:b15027ff1b86720a"
 
@@ -10,7 +10,7 @@ note = "Euclid's I.4 argument uses the ordinary central angles standing on lesse
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]
-note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; in `Prop29` the equal circles do real work, giving I.4 its equal radii. In `Prop29.of_congruent` the circumferences are congruent, and the map that lays one on the other keeps the distance between their ends, so the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles with them (`Prop24.equalCircles`): in that companion alone the hypothesis is redundant, kept as Euclid's setting and used along the same route, for the radii of I.4."
+note = "Euclid's equal circumferences are read through Common Notion 4 as circumferences that coincide when one is placed on the other (`Arc.Congruent`), as III.28 concludes them, and `Prop29.of_congruent` states III.29 with them. `Prop29` states it with circumferences equal in measure: the form in which the proof carries Euclid's argument, and in which `Arc.measure_eq_iff`, after III.29, cites it. In equal circles the two readings agree: drawn circumferences coincide exactly when they are equal in measure (`Arc.congruent_iff`). In `Prop29` the equal circles do real work: in unequal circles, circumferences equal in measure are cut off by unequal straight lines, and the equal circles give I.4 its equal radii. In `Prop29.of_congruent` the map that lays one circumference on the other keeps the distance between their ends, so the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles with them (`Prop24.equalCircles`): in that companion alone the hypothesis is redundant, kept as Euclid's setting and used along the same route, for the radii of I.4."
 
 [[passage]]
 at = "and let the straight lines BC, EF be joined"

@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "Angles at the circumferences of any size, and at the centres where they stand on BC; `Prop27.of_congruent` takes the circumferences to be congruent."
+note = "Equal circumferences that coincide in `Prop27.of_congruent`, equal in measure in `Prop27`; angles at A and D of any size, at G and H where they stand on BC."
 companions = ["III.27 of_congruent"]
 fingerprint = "sha256:9195621c03fb5343"
 
@@ -10,7 +10,7 @@ note = "Euclid's reductio for the angles at the centres, and his halving by III.
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis"]
-note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. In `Prop27.of_congruent` the circumferences are congruent, and congruent circumferences already lie in equal circles (`Prop24.image`, `Prop24.equalCircles`): the hypothesis is redundant there too, kept as Euclid's setting and used through III.26. The centres G and H are given, as the enunciation speaks of angles at the centres."
+note = "Euclid's equal circumferences are read through Common Notion 4 as circumferences that coincide when one is placed on the other (`Arc.Congruent`), as III.26 concludes them, and `Prop27.of_congruent` states III.27 with them. `Prop27` states it with circumferences equal in measure, twice the angle standing on them: the form in which the proof carries Euclid's argument, in which III.29 cites it, and through which the companion is proved. In equal circles the two readings agree: drawn circumferences coincide exactly when they are equal in measure (`Arc.congruent_iff`, proved after III.29). \"In equal circles\" is kept from Euclid in both statements and is redundant in both: the measure carries no radius, so `Prop27` would hold in any two circles, and congruent circumferences already lie in equal circles (`Prop24.image`, `Prop24.equalCircles`). Both proofs use it through III.26, as Euclid does. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [[passage]]
 at = "and on the straight line BG, and at the point G on it"
