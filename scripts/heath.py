@@ -376,8 +376,8 @@ FIELDS = {
     "figure": {"case": (_STR, False), "every_case": (_BOOL, False),
                "some_cases": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
-               "text": (_STR, "stamp"), "reviewer": (_STR, True), "run": (_STR, False),
-               "items": (_TABLE, False)},
+               "text": (_STR, "stamp"), "page": (_STR, False), "reviewer": (_STR, True),
+               "run": (_STR, False), "items": (_TABLE, False)},
 }
 REQUIRED = ("statement", "route", "review")
 
@@ -679,6 +679,8 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         bad("[review]: `lean` is 'sha256:' and 16 hex digits")
     if "text" in rv and not HASH.fullmatch(rv["text"]):
         bad("[review]: `text` is 'sha256:' and 16 hex digits")
+    if "page" in rv and not HASH.fullmatch(rv["page"]):
+        bad("[review]: `page` is 'sha256:' and 16 hex digits")
     if rv["stage"] == "full" and ("run" not in rv or "," not in rv["reviewer"]):
         bad("[review]: a full review names its `run`, and its `reviewer` with a role, as "
             "'Claude Opus 5.5, records crew', so the reviewer can be told from the authors")

@@ -103,13 +103,13 @@ stand-aside off.
 **Declared hits.** There is one rule. A hit is declared when the review record of its
 proposition, `review/<book>/NN.toml`, has a `[[passage]]` whose `at` begins a sentence
 of the run of `--` lines (Euclid's words) over the hit's line, and whose `unused` lists
-the binding by the name the proof gives it (`FC`, `hCHG_EHC`, or `this` for an
+the binding by the name the proof gives it (`hAB_FC`, `hDC_AB`, or `this` for an
 anonymous `have`; every name, where the hit keeps several):
 
     [[passage]]
-    at = "and let the straight lines FC, GB be joined"
+    at = "Therefore the base AB is equal to the base FC"
     kind = "carried"
-    unused = ["FC", "GB"]
+    unused = ["hAB_FC"]
 
 Nothing else declares a hit: not a passage's note, whose words a reader meets and which
 says a hypothesis in words (STYLE, section 1, "Hypotheses in words"), nor a `#` comment
