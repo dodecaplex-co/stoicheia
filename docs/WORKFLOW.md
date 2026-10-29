@@ -273,8 +273,9 @@ refuses any address of a repository named `stoicheia` on GitHub under an owner o
 `dodecaplex-co`: in a web address (with or without `www.` and a port), Git's `git@` form,
 a Pages, raw, `codeload.` or `api.github.com/repos/` address, the wiki's
 (`stoicheia.wiki`), or the bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` (as
-`gh api` writes it), unless a path runs into it (`~/.cache/stoicheia`), in any Markdown
-file, and in `CITATION.cff`, `LICENSE` and `NOTICE`, outside those three folders. A local
+`gh api` writes it), unless a path runs into it (`~/.cache/stoicheia`), an `@` stands just
+before it (an npm scope) or it stands in another site's address after its `?` or `#`, in
+any Markdown file, and in `CITATION.cff`, `LICENSE` and `NOTICE`, outside those three folders. A local
 path that the check would read as bare is written from `./` or `~/` (`./dev/stoicheia`).
 The check does not judge the exempt folders, so it does not refuse an old address added
 there; it counts the addresses they hold. Code and configuration files (`.py`, `.yml`,

@@ -11,7 +11,9 @@ as the bare `<owner>/stoicheia` that `gh` and the citation read and the bare
 written so. Every other owner is refused, the old address among them, so that the check
 never needs to name it. A bare `<owner>/stoicheia` is read as a local path, and passed
 over, when a letter, digit, `.`, `/`, `~`, `_` or `-` stands just before it
-(`.git/stoicheia`, `~/.cache/stoicheia`); so a path is written from `./` or `~/`. The name
+(`.git/stoicheia`, `~/.cache/stoicheia`); so a path is written from `./` or `~/`. It is
+passed over too when an `@` stands just before it (an npm scope, `@<owner>/stoicheia`),
+or when it stands in another site's address after that address's `?` or `#`. The name
 must end there: `stoicheia.git`, `stoicheia.wiki` and `stoicheia.wiki.git` are this
 repository, and `stoicheia-tools` or `stoicheia.notes` another; and the host must be
 GitHub's own (`not-github.com` is not).
@@ -66,11 +68,12 @@ ROOT_DOCUMENTS = ("CITATION.cff", "LICENSE", "NOTICE")
 # after it makes another name (`stoicheia.notes`, `stoicheia-tools`), but a full stop
 # ending a sentence does not. A host must stand alone (`not-github.com` is not GitHub), and
 # a bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` must not continue a path
-# (`.git/stoicheia`, `~/.cache/stoicheia`, `~/repos/<owner>/stoicheia`). The groups a and b
+# (`.git/stoicheia`, `~/.cache/stoicheia`, `~/repos/<owner>/stoicheia`), follow an `@` (an
+# npm scope) or stand in another site's address after its `?` or `#` (URL, read by
+# in_url_query_or_fragment). The groups a and b
 # are addresses with a host, c and d bare ones.
 OWNER = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
 NAME_END = r"(?:\.wiki)?(?:\.git)?(?![A-Za-z0-9_-])(?!\.[A-Za-z0-9_-])"
-BARE_END = rf"{NAME_END}(?!@)"
 HOST = r"(?<![A-Za-z0-9._-])"
 BARE = r"(?<![A-Za-z0-9@._/~-])"
 PORT = r"(?::\d+)?"
@@ -79,8 +82,8 @@ ADDRESS = re.compile(
     rf"|codeload\.github\.com{PORT}/|raw\.githubusercontent\.com{PORT}/)"
     rf"(?P<a>{OWNER})/stoicheia{NAME_END}"
     rf"|{HOST}(?P<b>{OWNER})\.github\.io{PORT}/stoicheia{NAME_END}"
-    rf"|{BARE}repos/(?P<d>{OWNER})/stoicheia{BARE_END}"
-    rf"|{BARE}(?P<c>{OWNER})/stoicheia{BARE_END}",
+    rf"|{BARE}repos/(?P<d>{OWNER})/stoicheia{NAME_END}"
+    rf"|{BARE}(?P<c>{OWNER})/stoicheia{NAME_END}",
     re.I)
 URL = re.compile(
     r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*:|"
@@ -240,11 +243,13 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"//example.com/?repo={other}/stoicheia and "
                           f"https://github.com/{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"//github.com/{other}/stoicheia", [1]),
-        ("docs/STYLE.md", f"mailto:{other}/stoicheia@example.com", []),
-        ("docs/STYLE.md", f"mailto:{other}/stoicheia.git@example.com", []),
-        ("docs/STYLE.md", f"mailto:{other}/stoicheia.wiki.git@example.com", []),
+        ("docs/STYLE.md", f"mailto:{other}/stoicheia@example.com", [1]),
+        ("docs/STYLE.md", f"mailto:{other}/stoicheia.git@example.com", [1]),
+        ("docs/STYLE.md", f"mailto:{other}/stoicheia.wiki.git@example.com", [1]),
         ("docs/STYLE.md", f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"{other}/stoicheia.wiki.git", [1]),
+        ("docs/STYLE.md", f"{other}/stoicheia@abc1234", [1]),
+        ("docs/STYLE.md", f"uses: {other}/stoicheia@main", [1]),
         ("docs/STYLE.md", f"https://github.com/{other}/stoicheia@example.com", [1]),
     ]
     faults = []

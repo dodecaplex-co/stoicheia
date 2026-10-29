@@ -10,9 +10,10 @@
   next revised. The check does not judge the exempt folders, so it does not refuse an old
   address added there; it says how many addresses they hold, so that a run shows the
   exemption at work. It refuses any address of a repository named `stoicheia` on GitHub
-  whose owner is not `dodecaplex-co`, in each form GitHub serves (the API's
+  whose owner is not `dodecaplex-co`, in each form WORKFLOW section 4 lists (the API's
   `api.github.com/repos/`, `codeload.` and the wiki's `stoicheia.wiki` among them), as a
-  bare `<owner>/stoicheia` that no path runs into and as the bare `repos/<owner>/stoicheia`
+  bare `<owner>/stoicheia` that no path runs into, no `@` stands just before and no other
+  site's address holds after its `?` or `#`, and as the bare `repos/<owner>/stoicheia`
   of `gh api`, rather than the old address alone, so that the check need not name the
   old one; each refusal says what to write for the form found. It reads
   every Markdown file and the root's `CITATION.cff`, `LICENSE` and `NOTICE`, code inside
@@ -21,9 +22,10 @@
   refused, and an argument beginning `--` other than `--self-test` stops the run with a
   usage line. Its self-test's cases include addresses it must pass over (another host,
   another repository's name, a local path), the advice for each form, the options and
-  files that cannot be read; and a plant puts a stand-in owner's address in a generated page, in `CITATION.cff` and, bare, in
-  `NOTICE`, and then a byte that is not UTF-8 in `NOTICE`, each refused. WORKFLOW,
-  section 4, "The repository's address", says why the exempt folders keep their words.
+  files that cannot be read; and a plant puts a stand-in owner's address in a generated
+  page, in `CITATION.cff` and, bare, in `NOTICE`, and then a byte that is not UTF-8 in
+  `NOTICE`, each refused. WORKFLOW, section 4, "The repository's address", says why the
+  exempt folders keep their words.
 
   This entry approves the new file [`scripts/check_address.py`](../../scripts/check_address.py),
   the check.
