@@ -115,11 +115,11 @@ def as_named(names: list[str]) -> dict[str, tuple[str, str]]:
 
 def exactly(case: unittest.TestCase, old, new) -> None:
     """A case that #416's screen moves, while it lands in three trains (these cases, then
-    the screen, then the old outcomes retired), names its two outcomes: `old`, what the
-    screen without a background gives, and `new`, what the screen with its background and
-    planted canary gives, each a whole case. The screen must give exactly the one its
-    generation names (PLANTED, which only the new screen has), and not the other: never
-    a mixture, and never whichever happens to pass."""
+    the screen, then the old outcomes retired), names its two outcomes: `old`, main's case
+    as it was, for the screen without a background, and `new`, the case as the screen with
+    its background and planted canary has it, each whole and as written there. The screen
+    must give exactly the one its generation names (PLANTED, which only the new screen
+    has), and not the other: never a mixture, and never whichever happens to pass."""
     planted = hasattr(screen, "PLANTED")
     mine, other = (new, old) if planted else (old, new)
     try:
@@ -150,37 +150,50 @@ class Attempts(unittest.TestCase):
                                  {"name": "BookIII.Prop2", "ref": "III.2"}],
                 "axiom_modules": modules}
 
-    def test_each_statement_has_every_attempt_once(self):
+    def old_each_statement_has_every_attempt_once(self):
         facts = self.facts({"Postulate1": "Elements.Foundations.Postulates",
                             "Tacit.len_symm": "Elements.Foundations.Tacit.Metric"})
         jobs = screen.attempts(facts)
         axioms, families = 2 + len(screen.CIRCLE), 3
         each = (1 + axioms + families + len(list(itertools.combinations(screen.CIRCLE, 2)))
                 + 3)
-
-        def old():
-            self.assertEqual(len(jobs), 2 * each)
-            self.assertEqual(sum(1 for _, _, rules in jobs if not rules), 2)
-
-        def new():
-            # The two statements of facts.json, then each planted one, with the same attempts.
-            self.assertEqual(len(jobs), (2 + len(screen.PLANTED)) * each)
-            for k, planted in enumerate(screen.PLANTED):
-                self.assertEqual(jobs[(2 + k) * each],
-                                 (f"bare__{screen.ident(planted)}", planted, []))
-            self.assertEqual(sum(1 for _, _, rules in jobs if not rules),
-                             2 + len(screen.PLANTED))
-
-        exactly(self, old, new)
+        self.assertEqual(len(jobs), 2 * each)
         self.assertEqual(len({name for name, _, _ in jobs}), len(jobs))
         self.assertEqual(jobs[0], ("bare__BookI_Prop1", "BookI.Prop1", []))
         self.assertEqual(jobs[each], ("bare__BookIII_Prop2", "BookIII.Prop2", []))
+        self.assertEqual(sum(1 for _, _, rules in jobs if not rules), 2)
         self.assertIn(("family__BookI_Prop1__Postulates", "BookI.Prop1", ["Postulate1"]),
                       jobs)
         self.assertIn(("fampair__BookI_Prop1__Metric__Postulates", "BookI.Prop1",
                        ["Postulate1", "Tacit.len_symm"]), jobs)
         for name, _, _ in jobs:
             self.assertIn(name.split("__")[0], screen.KINDS)
+
+    def new_each_statement_has_every_attempt_once(self):
+        facts = self.facts({"Postulate1": "Elements.Foundations.Postulates",
+                            "Tacit.len_symm": "Elements.Foundations.Tacit.Metric"})
+        jobs = screen.attempts(facts)
+        axioms, families = 2 + len(screen.CIRCLE), 3
+        each = (1 + axioms + families + len(list(itertools.combinations(screen.CIRCLE, 2)))
+                + 3)
+        # The two statements of facts.json, then each planted one, with the same attempts.
+        self.assertEqual(len(jobs), (2 + len(screen.PLANTED)) * each)
+        for k, planted in enumerate(screen.PLANTED):
+            self.assertEqual(jobs[(2 + k) * each],
+                             (f"bare__{screen.ident(planted)}", planted, []))
+        self.assertEqual(len({name for name, _, _ in jobs}), len(jobs))
+        self.assertEqual(jobs[0], ("bare__BookI_Prop1", "BookI.Prop1", []))
+        self.assertEqual(jobs[each], ("bare__BookIII_Prop2", "BookIII.Prop2", []))
+        self.assertEqual(sum(1 for _, _, rules in jobs if not rules), 2 + len(screen.PLANTED))
+        self.assertIn(("family__BookI_Prop1__Postulates", "BookI.Prop1", ["Postulate1"]),
+                      jobs)
+        self.assertIn(("fampair__BookI_Prop1__Metric__Postulates", "BookI.Prop1",
+                       ["Postulate1", "Tacit.len_symm"]), jobs)
+        for name, _, _ in jobs:
+            self.assertIn(name.split("__")[0], screen.KINDS)
+
+    def test_each_statement_has_every_attempt_once(self):
+        exactly(self, self.old_each_statement_has_every_attempt_once, self.new_each_statement_has_every_attempt_once)
 
     def test_a_missing_rule_about_circles_stops_the_screen(self):
         facts = self.facts({})
@@ -192,22 +205,36 @@ class Attempts(unittest.TestCase):
 class Tries(unittest.TestCase):
     REFUSE = {"": {"Postulate1"}, "__forward": {"Postulate1", "Tacit.len_symm"}}
 
-    def test_refused_rules_are_left_out_in_their_way(self):
+    def old_refused_rules_are_left_out_in_their_way(self):
         jobs = [("bare__X", "X", []),
                 ("single__X__Postulate1", "X", ["Postulate1"]),
                 ("single__X__Tacit_len_symm", "X", ["Tacit.len_symm"]),
                 ("pair__X__Postulate1__Tacit_circle_eq", "X",
                  ["Postulate1", "Tacit.circle_eq"])]
-        expected = {
+        self.assertEqual(screen.tries(jobs, self.REFUSE), {
             "bare__X": ("X", ""),
             "single__X__Tacit_len_symm": ("X", "Elements.Tacit.len_symm"),
             "pair__X__Postulate1__Tacit_circle_eq": ("X", "Elements.Tacit.circle_eq"),
             "pair__X__Postulate1__Tacit_circle_eq__forward":
                 ("X", "→ Elements.Tacit.circle_eq"),
-        }
-        # The new screen takes each try's background too: here none.
-        exactly(self, lambda: self.assertEqual(screen.tries(jobs, self.REFUSE), expected),
-                lambda: self.assertEqual(screen.tries(jobs, self.REFUSE, {}), expected))
+        })
+
+    def new_refused_rules_are_left_out_in_their_way(self):
+        jobs = [("bare__X", "X", []),
+                ("single__X__Postulate1", "X", ["Postulate1"]),
+                ("single__X__Tacit_len_symm", "X", ["Tacit.len_symm"]),
+                ("pair__X__Postulate1__Tacit_circle_eq", "X",
+                 ["Postulate1", "Tacit.circle_eq"])]
+        self.assertEqual(screen.tries(jobs, self.REFUSE, {}), {
+            "bare__X": ("X", ""),
+            "single__X__Tacit_len_symm": ("X", "Elements.Tacit.len_symm"),
+            "pair__X__Postulate1__Tacit_circle_eq": ("X", "Elements.Tacit.circle_eq"),
+            "pair__X__Postulate1__Tacit_circle_eq__forward":
+                ("X", "→ Elements.Tacit.circle_eq"),
+        })
+
+    def test_refused_rules_are_left_out_in_their_way(self):
+        exactly(self, self.old_refused_rules_are_left_out_in_their_way, self.new_refused_rules_are_left_out_in_their_way)
 
     def test_the_bare_try_gives_grind_only_the_definitions(self):
         bare = screen.theorem("bare__X", "BookI.Prop1", "", 100)
@@ -352,31 +379,32 @@ class Definitions(unittest.TestCase):
             with self.subTest(log=log, ok=ok), self.assertRaises(SystemExit):
                 screen.definitions(log, ok)
 
-    def test_the_pass_names_every_root_and_every_listed_word(self):
+    def old_the_pass_names_every_root_and_every_listed_word(self):
         facts = {"propositions": [{"name": "BookI.Prop1"}],
                  "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"}}
+        text = screen.reach_file(facts)
+        for n in ["BookI.Prop1", "Postulate1"] + screen.DEFS + list(screen.CHOSEN):
+            self.assertIn(f"`Elements.{n}", text)
+        self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
 
-        def old():
-            text = screen.reach_file(facts)
-            for n in ["BookI.Prop1", "Postulate1"] + screen.DEFS + list(screen.CHOSEN):
-                self.assertIn(f"`Elements.{n}", text)
-            self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
+    def new_the_pass_names_every_root_and_every_listed_word(self):
+        facts = {"propositions": [{"name": "BookI.Prop1"}],
+                 "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"}}
+        text = screen.reach_file(facts, {"Tacit.ne_of_between": {"Postulate1"}})
+        for n in (["BookI.Prop1", "Postulate1", "Tacit.ne_of_between"] + screen.DEFS
+                  + list(screen.CHOSEN)):
+            self.assertIn(f"`Elements.{n}", text)
+        roots = next(line for line in text.splitlines()
+                     if line.startswith("  let roots : Array Name := #["))
+        self.assertIn("`Elements.Tacit.ne_of_between", roots)
+        # Each planted statement is declared, and its body followed.
+        for k, statement in enumerate(screen.PLANTED.values()):
+            self.assertIn(f"def Screen.planted{k} : Prop :=\n  {statement}\n", text)
+            self.assertIn(f"`Screen.planted{k}", text)
+        self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
 
-        def new():
-            text = screen.reach_file(facts, {"Tacit.ne_of_between": {"Postulate1"}})
-            for n in (["BookI.Prop1", "Postulate1", "Tacit.ne_of_between"] + screen.DEFS
-                      + list(screen.CHOSEN)):
-                self.assertIn(f"`Elements.{n}", text)
-            roots = next(line for line in text.splitlines()
-                         if line.startswith("  let roots : Array Name := #["))
-            self.assertIn("`Elements.Tacit.ne_of_between", roots)
-            # Each planted statement is declared, and its body followed.
-            for k, statement in enumerate(screen.PLANTED.values()):
-                self.assertIn(f"def Screen.planted{k} : Prop :=\n  {statement}\n", text)
-                self.assertIn(f"`Screen.planted{k}", text)
-            self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
-
-        exactly(self, old, new)
+    def test_the_pass_names_every_root_and_every_listed_word(self):
+        exactly(self, self.old_the_pass_names_every_root_and_every_listed_word, self.new_the_pass_names_every_root_and_every_listed_word)
 
     # The words train C6a brought in, which the pass reached and no list named until #416
     # (its eighteenth, `MixedAngle.casesOn`, is Lean's own, and followed), and the words of
@@ -437,35 +465,48 @@ class KnownRows(unittest.TestCase):
              "single__Canary_III5_before_0008__Tacit_circle_eq__forward",
              "pair__BookIII_Prop6__Tacit_centre_inside__Tacit_circle_eq"]
 
+    def old_the_known_rows_closed_by_rules(self):
+        self.assertEqual(screen.lost(self.RULED_OLD), [])
+
+    def new_the_known_rows_closed_by_rules(self):
+        self.assertEqual(screen.lost(self.RULED, as_named(self.RULED)), [])
+
     def test_the_known_rows_closed_by_rules(self):
-        # The new screen's `lost` reads what each try gave `grind` as well.
-        exactly(self, lambda: self.assertEqual(screen.lost(self.RULED_OLD), []),
-                lambda: self.assertEqual(screen.lost(self.RULED, as_named(self.RULED)), []))
+        exactly(self, self.old_the_known_rows_closed_by_rules, self.new_the_known_rows_closed_by_rules)
 
     # The two cases below take the first row of KNOWN, whichever it is, so that they hold
     # while KNOWN moves with the axioms the screen can try.
-    def test_a_row_closed_only_by_its_bare_try_is_lost(self):
+    def old_a_row_closed_only_by_its_bare_try_is_lost(self):
         row = screen.KNOWN[0]
+        closed = self.RULED_OLD + [f"bare__{screen.ident(row)}"]
+        others = {screen.statement_of(n) for n in self.RULED_OLD} - {screen.ident(row)}
+        self.assertEqual(screen.by_rule(closed), ({screen.ident(row)}, others))
+        self.assertEqual(screen.lost(closed), [row])
 
-        def outcome(ruled: list[str], lost) -> None:
-            closed = ruled + [f"bare__{screen.ident(row)}"]
-            others = {screen.statement_of(n) for n in ruled} - {screen.ident(row)}
-            self.assertEqual(screen.by_rule(closed), ({screen.ident(row)}, others))
-            self.assertEqual(lost(closed), [row])
+    def new_a_row_closed_only_by_its_bare_try_is_lost(self):
+        row = screen.KNOWN[0]
+        closed = self.RULED + [f"bare__{screen.ident(row)}"]
+        others = {screen.statement_of(n) for n in self.RULED} - {screen.ident(row)}
+        self.assertEqual(screen.by_rule(closed), ({screen.ident(row)}, others))
+        self.assertEqual(screen.lost(closed, as_named(closed)), [row])
 
-        exactly(self, lambda: outcome(self.RULED_OLD, screen.lost),
-                lambda: outcome(self.RULED, lambda c: screen.lost(c, as_named(c))))
+    def test_a_row_closed_only_by_its_bare_try_is_lost(self):
+        exactly(self, self.old_a_row_closed_only_by_its_bare_try_is_lost, self.new_a_row_closed_only_by_its_bare_try_is_lost)
+
+    def old_a_row_not_closed_is_lost(self):
+        row = screen.KNOWN[0]
+        closed = [n for n in self.RULED_OLD if screen.statement_of(n) != screen.ident(row)]
+        self.assertEqual(len(closed), len(self.RULED_OLD) - 1)
+        self.assertEqual(screen.lost(closed), [row])
+
+    def new_a_row_not_closed_is_lost(self):
+        row = screen.KNOWN[0]
+        closed = [n for n in self.RULED if screen.statement_of(n) != screen.ident(row)]
+        self.assertEqual(len(closed), len(self.RULED) - 1)
+        self.assertEqual(screen.lost(closed, as_named(closed)), [row])
 
     def test_a_row_not_closed_is_lost(self):
-        row = screen.KNOWN[0]
-
-        def outcome(ruled: list[str], lost) -> None:
-            closed = [n for n in ruled if screen.statement_of(n) != screen.ident(row)]
-            self.assertEqual(len(closed), len(ruled) - 1)
-            self.assertEqual(lost(closed), [row])
-
-        exactly(self, lambda: outcome(self.RULED_OLD, screen.lost),
-                lambda: outcome(self.RULED, lambda c: screen.lost(c, as_named(c))))
+        exactly(self, self.old_a_row_not_closed_is_lost, self.new_a_row_not_closed_is_lost)
 
     def test_tries_name_their_statements(self):
         facts = {"propositions": [{"name": "BookI.Prop40.general", "ref": "I.40 general"},
@@ -939,16 +980,7 @@ class Record(unittest.TestCase):
                 lean.assert_not_called()
                 self.assertEqual(self.path.read_text(encoding="utf-8"), before)
 
-    def background(self, given: bool) -> contextlib.ExitStack:
-        """The stand-ins for a run's background: none for the old screen, and for the new
-        one, which reads it from the proved rules, an empty one (`given`)."""
-        stack = contextlib.ExitStack()
-        if given:
-            stack.enter_context(mock.patch.object(screen, "book_zero", return_value={}))
-        return stack
-
-    def run_with_build_change(self, during_retry: bool,
-                              given: bool) -> tuple[list[list[str]], str]:
+    def run_with_build_change_old(self, during_retry: bool) -> tuple[list[list[str]], str]:
         self.path.write_text("existing record\n", encoding="utf-8")
         before = self.path.read_text(encoding="utf-8")
         stale = {"build": False}
@@ -968,7 +1000,6 @@ class Record(unittest.TestCase):
         with tempfile.TemporaryDirectory() as out, \
                 mock.patch.object(screen, "ROOT", self.root), \
                 mock.patch.object(screen, "RECORD", self.path), \
-                self.background(given), \
                 mock.patch.object(screen, "reached"), \
                 mock.patch.object(screen, "attempts", return_value=jobs), \
                 mock.patch.object(screen, "refused", return_value={}), \
@@ -984,20 +1015,69 @@ class Record(unittest.TestCase):
         self.assertEqual(self.path.read_text(encoding="utf-8"), before)
         return launched, str(stop.exception.code)
 
-    def build_change(self, during_retry: bool, given: bool) -> None:
-        launched, stopped = self.run_with_build_change(during_retry, given)
+    def run_with_build_change(self, during_retry: bool) -> tuple[list[list[str]], str]:
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        stale = {"build": False}
+        launched = []
+
+        def lake(argv, **kw):
+            launched.append(argv)
+            return subprocess.CompletedProcess(argv, 3 if stale["build"] else 0)
+
+        def lean(todo, beats, out, prefix, jobs):
+            if during_retry and prefix == "Screen":
+                return 1, [], list(todo), []
+            stale["build"] = True
+            return len(todo), list(todo), [], []
+
+        jobs = [("bare__BookI_Prop1", "BookI.Prop1", [])]
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen, "book_zero", return_value={}), \
+                mock.patch.object(screen, "reached"), \
+                mock.patch.object(screen, "attempts", return_value=jobs), \
+                mock.patch.object(screen, "refused", return_value={}), \
+                mock.patch.object(screen, "tries", return_value={
+                    "bare__BookI_Prop1": ("BookI.Prop1", "")}), \
+                mock.patch.object(screen, "run", side_effect=lean), \
+                mock.patch.object(screen, "lost", return_value=[]), \
+                mock.patch.object(screen.subprocess, "run", side_effect=lake), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                self.assertRaises(SystemExit) as stop:
+            screen.main()
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+        return launched, str(stop.exception.code)
+
+    def old_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change_old(False)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def new_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change(False)
         self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
         self.assertIn("build of Elements changed while the screen ran", stopped)
 
     def test_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
-        exactly(self, lambda: self.build_change(False, False),
-                lambda: self.build_change(False, True))
+        exactly(self, self.old_a_build_left_stale_during_the_main_pass_is_not_recorded, self.new_a_build_left_stale_during_the_main_pass_is_not_recorded)
+
+    def old_a_build_left_stale_during_the_retry_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change_old(True)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def new_a_build_left_stale_during_the_retry_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change(True)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
 
     def test_a_build_left_stale_during_the_retry_pass_is_not_recorded(self):
-        exactly(self, lambda: self.build_change(True, False),
-                lambda: self.build_change(True, True))
+        exactly(self, self.old_a_build_left_stale_during_the_retry_pass_is_not_recorded, self.new_a_build_left_stale_during_the_retry_pass_is_not_recorded)
 
-    def unchanged_build(self, given: bool) -> None:
+    def old_an_unchanged_build_is_checked_again_and_recorded(self):
         self.path.write_text("existing record\n", encoding="utf-8")
         launched = []
 
@@ -1009,7 +1089,33 @@ class Record(unittest.TestCase):
         with tempfile.TemporaryDirectory() as out, \
                 mock.patch.object(screen, "ROOT", self.root), \
                 mock.patch.object(screen, "RECORD", self.path), \
-                self.background(given), \
+                mock.patch.object(screen, "reached"), \
+                mock.patch.object(screen, "attempts", return_value=jobs), \
+                mock.patch.object(screen, "refused", return_value={}), \
+                mock.patch.object(screen, "tries", return_value={
+                    "bare__BookI_Prop1": ("BookI.Prop1", "")}), \
+                mock.patch.object(screen, "run", return_value=(1, [jobs[0][0]], [], [])), \
+                mock.patch.object(screen, "lost", return_value=[]), \
+                mock.patch.object(screen.subprocess, "run", side_effect=lake), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(screen.main(), 0)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+
+    def new_an_unchanged_build_is_checked_again_and_recorded(self):
+        self.path.write_text("existing record\n", encoding="utf-8")
+        launched = []
+
+        def lake(argv, **kw):
+            launched.append(argv)
+            return subprocess.CompletedProcess(argv, 0)
+
+        jobs = [("bare__BookI_Prop1", "BookI.Prop1", [])]
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen, "book_zero", return_value={}), \
                 mock.patch.object(screen, "reached"), \
                 mock.patch.object(screen, "attempts", return_value=jobs), \
                 mock.patch.object(screen, "refused", return_value={}), \
@@ -1025,7 +1131,7 @@ class Record(unittest.TestCase):
         self.assertEqual(screen.check_current(self.root, self.path)[0], [])
 
     def test_an_unchanged_build_is_checked_again_and_recorded(self):
-        exactly(self, lambda: self.unchanged_build(False), lambda: self.unchanged_build(True))
+        exactly(self, self.old_an_unchanged_build_is_checked_again_and_recorded, self.new_an_unchanged_build_is_checked_again_and_recorded)
 
     def test_the_repository_inputs_read(self):
         """The real inputs compute, and every part is present."""
