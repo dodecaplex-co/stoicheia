@@ -35,10 +35,10 @@ elsewhere, so a run shows that the exemption is what lets them pass.
     python3 scripts/check_address.py --self-test  the cases below, then every file
 
 Exits 1 if any address is refused, printing each as `file:line: what is wrong`, with what
-to write for the form found; the owner it names is not printed. A file named, or a file in
-scope, that cannot be read or decoded as UTF-8 is refused too, as `file: cannot be read
-(why)`. Exits 2, with a usage line, on an argument beginning `--` other than
-`--self-test`. Standard library only.
+to write for the form found; the owner it names is not printed. A file in scope, or a
+named file outside the exempt folders, that cannot be read or decoded as UTF-8 is refused
+too, as `file: cannot be read (why)`. Exits 2, with a usage line, on an argument beginning
+`--` other than `--self-test`. Standard library only.
 """
 
 from __future__ import annotations
@@ -47,6 +47,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -69,16 +70,19 @@ ROOT_DOCUMENTS = ("CITATION.cff", "LICENSE", "NOTICE")
 # are addresses with a host, c and d bare ones.
 OWNER = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
 NAME_END = r"(?:\.wiki)?(?:\.git)?(?![A-Za-z0-9_-])(?!\.[A-Za-z0-9_-])"
-HOST = r"(?<![A-Za-z0-9.-])"
-BARE = r"(?<![A-Za-z0-9._/~-])"
+HOST = r"(?<![A-Za-z0-9._-])"
+BARE = r"(?<![A-Za-z0-9@._/~-])"
+PORT = r"(?::\d+)?"
 ADDRESS = re.compile(
-    rf"{HOST}(?:(?:www\.)?github\.com(?::\d+)?[/:]|api\.github\.com/repos/"
-    rf"|codeload\.github\.com/|raw\.githubusercontent\.com/)"
+    rf"{HOST}(?:(?:www\.)?github\.com{PORT}[/:]|api\.github\.com{PORT}/repos/"
+    rf"|codeload\.github\.com{PORT}/|raw\.githubusercontent\.com{PORT}/)"
     rf"(?P<a>{OWNER})/stoicheia{NAME_END}"
-    rf"|{HOST}(?P<b>{OWNER})\.github\.io/stoicheia{NAME_END}"
+    rf"|{HOST}(?P<b>{OWNER})\.github\.io{PORT}/stoicheia{NAME_END}"
     rf"|{BARE}repos/(?P<d>{OWNER})/stoicheia{NAME_END}"
     rf"|{BARE}(?P<c>{OWNER})/stoicheia{NAME_END}",
     re.I)
+URL = re.compile(
+    r"(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*://[^\s<>()\[\]{}\"']+", re.I)
 # What to write instead, by the form found: with a host, or bare (where a local path the
 # check reads as bare is written from `./` or `~/`).
 WRITE_HOSTED = f"write github.com/{HOME}/stoicheia"
@@ -100,6 +104,8 @@ def problems(text: str) -> list[tuple[int, str]]:
     found = []
     for number, line in enumerate(text.split("\n"), 1):
         for m in ADDRESS.finditer(line):
+            if (m.group("c") or m.group("d")) and in_url_query_or_fragment(line, m.start()):
+                continue
             owner = m.group("a") or m.group("b") or m.group("c") or m.group("d")
             if owner == HOME:
                 continue
@@ -109,6 +115,15 @@ def problems(text: str) -> list[tuple[int, str]]:
             found.append((number,
                           f"an address of this repository on GitHub {what}; {write}"))
     return found
+
+
+def in_url_query_or_fragment(line: str, offset: int) -> bool:
+    for match in URL.finditer(line):
+        if not match.start() <= offset < match.end():
+            continue
+        starts = [i for mark in "?#" if (i := match.group().find(mark)) >= 0]
+        return bool(starts) and offset > match.start() + min(starts)
+    return False
 
 
 def options(argv: list[str]) -> tuple[bool, list[str], list[str]]:
@@ -179,6 +194,10 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", "https://github.com/leanprover/lean4", []),
         ("docs/STYLE.md", f"https://example.com/{other}/stoicheia", []),
         ("docs/STYLE.md", f"https://github.com:443/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://api.github.com:443/repos/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://codeload.github.com:443/{other}/stoicheia/zip/main", [1]),
+        ("docs/STYLE.md", f"https://raw.githubusercontent.com:443/{other}/stoicheia/main/x", [1]),
+        ("docs/STYLE.md", f"https://{other}.github.io:443/stoicheia/", [1]),
         ("docs/STYLE.md", f"https://user@github.com/{other}/stoicheia.git", [1]),
         ("docs/STYLE.md", f"See github.com/{other}/stoicheia.", [1]),
         ("docs/STYLE.md", f"`gh repo clone {other}/stoicheia`", [1]),
@@ -187,6 +206,7 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", "`gh repo clone dodecaplex-co/stoicheia`", []),
         ("docs/STYLE.md", f"https://github.com/{other}/stoicheia.notes", []),
         ("docs/STYLE.md", f"https://not-github.com/{other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://not_github.com/{other}/stoicheia", []),
         ("docs/STYLE.md", f"https://gist.github.com/{other}/stoicheia", []),
         ("docs/STYLE.md", "copied to `.git/stoicheia/safe-push`", []),
         ("docs/STYLE.md", "`~/.cache/stoicheia/harness/` and `~/.venvs/stoicheia/bin`", []),
@@ -204,6 +224,15 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"https://github.com/{other}/stoicheia.wikis", []),
         ("docs/STYLE.md", f"`~/repos/{other}/stoicheia`, `./repos/{other}/stoicheia`", []),
         ("docs/STYLE.md", f"https://api.github.com/{other}/stoicheia", []),
+        ("docs/STYLE.md", f"@{other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://example.com/?repo={other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://example.com/#repo={other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://example.com/?repo=repos/{other}/stoicheia", []),
+        ("docs/STYLE.md", f"https://example.com/?repo={other}/stoicheia and "
+                          f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"https://example.com/?repo=https://github.com/{other}/stoicheia", [1]),
+        ("docs/STYLE.md", "https://api.github.com:443/repos/dodecaplex-co/stoicheia", []),
+        ("docs/STYLE.md", "https://dodecaplex-co.github.io:443/stoicheia", []),
     ]
     faults = []
     for name, text, lines in cases:
@@ -214,7 +243,9 @@ def self_test() -> list[str]:
     advice = [(f"https://github.com/{other}/stoicheia", hosted),
               (f"git@github.com:{other}/stoicheia.git", hosted),
               (f"https://{other}.github.io/stoicheia/", hosted),
+              (f"https://{other}.github.io:443/stoicheia/", hosted),
               (f"https://api.github.com/repos/{other}/stoicheia", hosted),
+              (f"https://raw.githubusercontent.com:443/{other}/stoicheia/main/x", hosted),
               (f"`gh repo clone {other}/stoicheia`", bare),
               (f"`gh api repos/{other}/stoicheia`", bare),
               ("`dev/stoicheia`, a local path read as bare", bare)]
@@ -250,7 +281,38 @@ def self_test() -> list[str]:
         if (text is not None) != wanted or bool(why) == wanted:
             faults.append(f"self-test: reading case {number}: read {text is not None} "
                           f"({why}), expected {wanted}")
-    count = len(cases) + len(advice) + len(scope) + len(argued) + len(reading)
+    made = []
+    commands = []
+    try:
+        for folder, data in [(ROOT / "docs/briefs", b"\x80"),
+                             (ROOT, b"\x80"),
+                             (ROOT / "docs/briefs",
+                              f"https://github.com/{other}/stoicheia\n".encode())]:
+            with tempfile.NamedTemporaryFile(dir=folder, suffix=".md", delete=False) as file:
+                file.write(data)
+                made.append(Path(file.name))
+        missing_exempt = made[0].with_name(made[0].stem + "-missing.md")
+        missing_scoped = made[1].with_name(made[1].stem + "-missing.md")
+        commands = [
+            ([missing_exempt], 0, "✓ address", "cannot be read"),
+            ([made[0]], 0, "✓ address", "cannot be read"),
+            ([made[2]], 0, "hold 1 other addresses in 1 files", "cannot be read"),
+            ([missing_scoped], 1, "cannot be read", "✓ address"),
+            ([made[1]], 1, "cannot be read (not UTF-8", "✓ address"),
+        ]
+        for arguments, wanted_status, wanted, unwanted in commands:
+            result = subprocess.run([sys.executable, str(Path(__file__).resolve()),
+                                     *(str(path) for path in arguments)],
+                                    cwd=ROOT, capture_output=True, text=True)
+            if (result.returncode != wanted_status or wanted not in result.stdout
+                    or unwanted in result.stdout):
+                faults.append(f"self-test: command {arguments}: status {result.returncode}, "
+                              f"output {result.stdout!r}; expected {wanted_status}, {wanted!r}")
+    finally:
+        for path in made:
+            path.unlink(missing_ok=True)
+    count = (len(cases) + len(advice) + len(scope) + len(argued) + len(reading)
+             + len(commands))
     print(f"self-test: {count} cases" + (f", {len(faults)} wrong" if faults else " read rightly"))
     return faults
 
@@ -268,13 +330,14 @@ def main(argv: list[str]) -> int:
     for name in names:
         # A file named is read whatever its scope; of the rest, only the files in scope and
         # the exempt folders' Markdown, which is counted.
-        scoped, counted = in_scope(name), name.startswith(DATED) and name.endswith(".md")
+        exempt = name.startswith(DATED)
+        scoped, counted = in_scope(name), exempt and name.endswith(".md")
         if not (files or scoped or counted):
             continue
         checked += 1 if scoped else 0
         text, why = read(ROOT / name)
         if text is None:
-            if files or scoped:
+            if scoped or (files and not exempt):
                 refused += 1
                 print(f"{name}: cannot be read ({why})")
             continue
