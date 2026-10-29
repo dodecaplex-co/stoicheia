@@ -1803,15 +1803,31 @@ class AutoRevert(unittest.TestCase):
                 self.assertEqual(output, "")
 
     def test_queue_does_not_pass_when_acceptance_failed_or_was_skipped(self):
-        script = workflow_step("ci.yml", "Require a completed acceptance check")
-        for status in ("success", "failure", "cancelled", "skipped", "", "unknown"):
-            with self.subTest(status=status):
-                env = ar.git_env()
-                env["ACCEPTANCE_RESULT"] = status
-                result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
-                                        cwd=self.repo, env=env, capture_output=True, check=False)
-                self.assertEqual(result.returncode == 0, status == "success",
-                                 result.stderr.decode())
+        # The queue's judge reads the group's acceptance job from GitHub (check_queue.py
+        # --acceptance-run, in queue-judge.yml's queue-gaps) and takes verdicts only from
+        # one that passed; tests/test_check_queue.py holds its other cases.
+        head = "a" * 40
+        run = {"id": 7, "run_attempt": 1, "status": "completed", "head_sha": head,
+               "event": "merge_group", "path": ".github/workflows/ci.yml",
+               "head_repository": {"full_name": SLUG}}
+        for conclusion in ("failure", "skipped"):
+            with self.subTest(conclusion=conclusion):
+                job = {"id": 9, "run_id": 7, "run_attempt": 1, "name": "acceptance",
+                       "status": "completed", "conclusion": conclusion}
+                fixture = self.directory / f"{conclusion}.json"
+                fixture.write_text(json.dumps({
+                    "ci_runs": {"total_count": 1, "workflow_runs": [run]},
+                    "jobs": {"7": {"total_count": 1, "jobs": [job]}}}), encoding="utf-8")
+                out = self.directory / conclusion
+                result = subprocess.run(
+                    [sys.executable, "-I", str(ROOT / "scripts/check_queue.py"),
+                     "--acceptance-run", "--head", head, "--repo", SLUG, "--ci-workflow",
+                     "ci.yml", "--out", str(out), "--github-json", str(fixture)],
+                    cwd=self.directory, env=ar.git_env(), capture_output=True, text=True,
+                    check=False)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn(f"ended {conclusion}, not success", result.stdout)
+                self.assertFalse(out.exists())
 
     @staticmethod
     def successful_run(before, **changes):
