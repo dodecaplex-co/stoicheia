@@ -37,11 +37,13 @@
   `Generator.bridges` now calls too. III.29's note names `Arc.measure_eq_iff` "after III.29"
   as well; the row has it from `MEASURE_BRIDGES`, so it is not in `RECORD_LATER`.
   `tests/test_jev_questions.py` adds `CongruentCircumferences`, which generates III.27 and
-  III.29 alone at HEAD: it pins both bundles, with the congruence's words and without
-  `Arc.congruent_iff`, reads the notes' words that the comments quote, and shows that a row
-  leaving out any one of the new bridges is refused, as is a `RECORD_LATER` entry that the
-  note does not name or that is available before the main theorem. `MEASURE_BRIDGES` already
-  gives III.24 to III.30 `Arc.measure_eq_iff`, and `CONGRUENCE_BRIDGES` gives III.24, III.26,
+  III.29 alone at HEAD against their real records. It pins both bundles, with the congruence's
+  words and without `Arc.congruent_iff`, and checks `Generator.checked` against copied records
+  whose notes contain controlled declaration names. A row leaving out any one of the new
+  bridges is refused, as are a `RECORD_LATER` entry that the note does not name, removal of a
+  previously named later declaration, and an earlier declaration listed as later context. As
+  before, `MEASURE_BRIDGES` gives III.24 to III.30 `Arc.measure_eq_iff`, and
+  `CONGRUENCE_BRIDGES` gives III.24, III.26,
   III.28 and III.30 `Arc.congruent_iff`, both declared in `Arcs.lean`, and `bridge_placement`
   marks them in those rows as explanatory later declarations. This entry leaves them as they
   are: whether they stay is the coordinator's question, not this card's. The generator sends
