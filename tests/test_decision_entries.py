@@ -7,8 +7,8 @@ without a header into another page and leaves the decisions record as it was. Th
 header line an entry may begin with, each of its refusals, and the notes regions of the
 briefs and of PROGRAM.md that render.py fills from the headers: their lines, their markers'
 refusals and the refusal of a region holding a line render.py does not write, which come
-before any write, and a whole run on a copy that changes no file, then, with markers
-planted, one brief, between its markers, and nothing else.
+before any write, and a whole run on a copy, once rendered, that a headed entry changes in
+no file, then, with markers planted, one brief, between its markers, and nothing else.
 
     python3 -I tests/test_decision_entries.py
 
@@ -1281,9 +1281,9 @@ class HeathReadsTheNotes(EntryFolder):
 
 
 class RenderFillsTheNotes(unittest.TestCase):
-    """render.py, run whole on a copy of the sources with a headed entry, changes no file;
-    with a pair of notes markers planted in one brief besides, it changes that brief,
-    between its markers, and nothing else."""
+    """render.py, run whole on a copy of the sources it has rendered once, with a headed
+    entry, changes no file; with a pair of notes markers planted in one brief besides, it
+    changes that brief, between its markers, and nothing else."""
 
     def test_one_brief_changes_between_its_markers_alone(self):
         from negative_tests import count_source_copy
@@ -1292,13 +1292,6 @@ class RenderFillsTheNotes(unittest.TestCase):
         name = f"2026-10-27-render-notes-{word}.md"
         line = f"A note for the test ({word})."
         with count_source_copy() as (root, env):
-            entry = root / "docs" / "decisions" / name
-            self.assertFalse(entry.exists())
-            entry.write_text(header(f"id=render-notes-{word}", "cards=577",
-                                    "briefs=0008-centre", line=line)
-                             + "\n- **A decision for the test.** It names a brief.\n",
-                             encoding="utf-8")
-
             def run(expected):
                 result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root,
                                         env=env, capture_output=True, text=True)
@@ -1310,8 +1303,20 @@ class RenderFillsTheNotes(unittest.TestCase):
                 return {path: path.read_bytes() for path in root.rglob("*")
                         if path.is_file() and "__pycache__" not in path.parts}
 
-            # First as the sources stand, the entry beside them: no page has markers, so
-            # the header renders nothing, and every file is byte for byte as it was.
+            # Rendered once before the entry is written, so that what follows is compared
+            # with the renderer's own output, not with the pages as committed: in the
+            # pre-flight's pass with origin/main's checks, a renderer change finds its
+            # regenerated pages stale, and that is freshness, not this test's verdict (#677).
+            run("0 filled in 0 pages")
+            entry = root / "docs" / "decisions" / name
+            self.assertFalse(entry.exists())
+            entry.write_text(header(f"id=render-notes-{word}", "cards=577",
+                                    "briefs=0008-centre", line=line)
+                             + "\n- **A decision for the test.** It names a brief.\n",
+                             encoding="utf-8")
+
+            # Then the entry beside the sources: no page has markers, so the header renders
+            # nothing, and every file is byte for byte as the first run left it.
             before = files()
             run("0 filled in 0 pages")
             after = files()
