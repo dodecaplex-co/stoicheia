@@ -1066,9 +1066,10 @@ class CallReconciler(LeanFiles):
 
 
 class CoreNames(LeanFiles):
-    """Lean's own names the reader exempts, each read whole (`Calls.CORE_NAMES`, and a
-    structure's or a class's `mk` and `mk.injEq`), and names ending in their words that it
-    reports unresolved; Lean would refuse the second kind too, as names of nothing."""
+    """Lean's own names the reader exempts: words of `Calls.CORE_FIELDS`, names of
+    `Calls.CORE_NAMES` read whole, and a structure's or a class's `mk` and `mk.injEq`; and
+    names it reports unresolved. Most of these Lean would refuse too, as names of nothing;
+    some, as `Classical.choice`, are Lean's own but outside the lists."""
 
     CORE = ('namespace Elements\n\nstructure Pair where\n  a : Nat\n  b : Nat\n\n'
             'class Named (α : Type) where\n  name : α → Nat\n\ndef count : Nat := 0\n\n'
