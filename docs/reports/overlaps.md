@@ -67,11 +67,19 @@ through their own proofs and the proved rules beneath them 48 do, 28 proposition
 companions, III.11 and III.14 joining, for Generalities 4, beneath the new proof, takes its
 centre from the rule.
 
+28 October 2026 (#515): I.47 rests on Metric 5 (`angle_le_two_right`) no longer.
+`Prop47.within` rules out AD crossing BC beyond B by I.13's bound for an angle of a
+triangle, `BookI.Prop13.angle_lt_two_right`, proved after I.13 from I.13 and Common Notion
+5; OutlineBound's own copy of that bound, in `Elements/BookI/OutlineBound.lean` and the
+rule's only other user, has given way to the same theorem. No entry rests on Metric 5 now;
+24 did, from I.47 on: 13 propositions, no porism and 11 companions. I.47's row has left the
+current table for the former overlaps. The rule is still in the lock, used by no proof,
+until its deletion is decided.
+
 ## Current axiom overlaps
 
 | Proposition | Assumption | Kind | First enters | Audit lemma |
 |---|---|---|---|---|
-| I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
 | [III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step, in two places: inside the construction, a centre for the proof that D is within the circle, by III.2's argument; and, in the reductio, the supposed centre G | III.1 | None |
 | [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`), a former assumption now proved (below) | Gives it at once: circles about one centre through one point coincide, and the point of one within the other would be within that circle and on it | III.10, through `CirclesCut.of_meet` | `Audit.III_5` |
 | [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`), former assumptions now proved (below) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | III.10, through `CirclesCut.of_meet` | `Audit.III_6` |
@@ -199,6 +207,7 @@ prove, for any two circles (`Prop13.circlesTouch_iff`, 25 October 2026, #126).
 | III.5 and Diagram-segment 4 (`len_lt_of_inside`), with Definition I.15 and a magnitude law (`lt_irrefl`) | A proof in `Elements/Figure/Incidence.lean` (19 October 2026): the straight line from the centre through the point within, produced to the circumference, makes the point's distance a part of the radius. Until 26 October 2026 that proof rested on Diagram-segment 2 through the proved rules beneath it, and so did `Audit.III_5_crossing`; they rest now on our radius rule instead, so the audit lemma gives III.5 without Diagram-segment 2, by a proved rule, not an assumption. The remaining axiom overlap is the Diagram-segment 2 row above. |
 | III.5 and Diagram-segment 3's second half (`on_circle_of_len_eq`), with Definition I.15 and Generalities 4 (`inside_not_on`) | Proofs in `Elements/Figure/RuleBase.lean` (19 October 2026). Until 26 October 2026 the circle drawn about the centre through the point was the given circle by Diagram-segment 2, which put the point on it; since then Diagram-segment 3's half compares lengths along the straight line from the centre through the point, produced to the circle beyond a point within (Intersections 5) or meeting it before a point without (Intersections 4), with our radius rule. Generalities 4 takes the circle's centre (`exists_centre`): a point within, were it on the circle, would not be the centre, by our radius rule, and the straight line from the centre through it, produced beyond it to the circle, would make the radius there the radius to the point and something more. Until 26 October 2026 Circle 1 gave that step instead, putting the point between itself and a crossing (#477). So `Audit.III_5_radius` rests on neither Circle 1 nor Diagram-segment 2, and on `exists_centre`; the remaining axiom overlap is the Diagram-segment 2 row above. |
 | I.2, I.3 and I.23 and existential superposition | The restricted rule exports only an equality about the given figure. The three former audit lemmas returned placed corners, which no exported formula can name, and have been removed. |
+| I.13's bound in I.47 and Metric 5 (`angle_le_two_right`) | I.13 and Common Notion 5, after I.13 in `Elements/BookI/Prop13.lean` (28 October 2026): `Prop13.angle_lt_two_right` produces BA beyond A, and the angle beside the triangle's angle at A, which with it makes two right angles by I.13, is greater than nothing. `Prop47.within` and `Elements/BookI/OutlineBound.lean` use that theorem, and no entry rests on Metric 5. |
 
 `Audit.inside_of_between` and `Audit.outside_of_between`, which derive each of Circle 2
 and Circle 3 from the other, now reach III.2 through the other rule, so neither is
@@ -728,8 +737,9 @@ Postulate 4, alone or with Postulate 5 and at most one more family. III.34 asks 
 points on its circle, and the rules among those that put a point on a circle that has none
 need a straight line, which III.34 does not give and none of those rules draws. No try
 stopped on any other error. What the revised screen does not give `grind` is that every
-point of a circle measures a circumference alike: that is III.21, a proposition, so the near
-misses of the measure (below) are not found by it, and are not overlaps with a rule. Nor
+point of a circle on the other side of the straight line joining a circumference's ends
+gives it the same measure: that is III.21, a proposition, so the near misses of the measure (below) are not found by it, and
+are not overlaps with a rule. Nor
 does it give `grind` that a magnitude Lean chooses is one magnitude under two descriptions
 that hold of the same points, as `standing_eq_circumference` and `standing_congr` show, so a
 statement that needs that step is not searched either. Nor does `grind` reason by induction,
@@ -898,8 +908,9 @@ rule.
   him from the equal angles to equal halves without either. What the measure saves is
   III.26's work at the circumference, which it reduces to its definition and III.21.
   `Audit.III_30_measure` proves III.30 so, with its own statement and its axioms pinned; it
-  cites III.21, through which every point of the circle measures a circumference alike, so
-  it is a near miss of the measure, not of a rule. Our III.30 follows Euclid, by III.28, as
+  cites III.21, which shows that every point of the circle on the other side of the
+  straight line joining a circumference's ends gives it the same measure, so it is a near miss of the measure, not of a
+  rule. Our III.30 follows Euclid, by III.28, as
   [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement kept the
   measure when arcs got a meaning of their own ([brief 0006](../briefs/0006-statements.md),
   stage 3), so this near miss stays.
