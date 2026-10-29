@@ -7,9 +7,18 @@ at main 559237731, the head when this draft was written; "Since the read" lists 
 in the paths read between the two.*
 
 *This file held an earlier read of Books I and II, made at 2e8aecf8 on 21 and 22 October; it
-stands in the history at 4baf973fe. [Read-through 03](read-through-03.md) is the read of 25
-and 26 October. Neither one's verdicts were used here: the readers below were told not to
-open either report, and none did, save for one line noted under "The pilot editor".*
+stands in the history at 4baf973fe, [as it was then](https://github.com/dodecaplex-co/stoicheia/blob/4baf973fe/docs/reports/read-through-02.md).
+[Read-through 03](read-through-03.md) is the read of 25 and 26 October. Neither one's
+verdicts were used here: the readers below were told not to open either report, and none
+did, save for one line noted under "The pilot editor". Five places still mean that earlier
+read when they say "read-through 02": the decisions entry
+[2026-10-25-book-i-front-definitions](../decisions/2026-10-25-book-i-front-definitions.md)
+(its line 10, on I.17 and I.18), [STYLE](../STYLE.md) section 4 (its line 312),
+[read-through 03](read-through-03.md) (its count of "read-through 02's 19 pilot notes", line
+101), [figures against scans](figures-against-scans.md) (its status of 21 October, line 5),
+and the `run` lines of 55 review records, which record a re-reading made then and stay true
+as dated records. The first four should link the earlier read at 4baf973fe; each belongs to
+its own owner.*
 
 ## Who read what
 
@@ -28,7 +37,7 @@ commit itself, and changed nothing in it.
 | Book I's flow reader (RD-f1) | Book I's index, introduction and front matter, then for I.1 to I.48 in order the top of each page, its notes, its commentary, its further reading and its figure at a glance | 3938eacc7 |
 | Book II's flow reader (RD-f2) | Book II's index, introduction and front matter, then II.1 to II.14 whole, in order, with every figure; and, as a reader arriving from Book I meets them, Book I's introduction and the commentary of I.46 to I.48 | 3938eacc7 |
 | Pilot editor (RD-p) | book/II/01.md, book/I/45.md and book/II/14.md, one after another | 3938eacc7 |
-| Director of the read and writer of this report (RD) | An AI reading ship, Claude Opus 5.5, with no part in writing these pages. It wrote the readers' orders, checked each material finding against the sources named below, and wrote this report and the card drafts; it read no page as a reader and mended nothing | 3938eacc7 and 559237731 |
+| Director of the read and writer of this report (RD) | Claude Opus 5.5, the instance that directs this read, an AI reading ship with no part in writing these pages. It wrote the readers' orders, checked each material finding against the sources named below, and wrote this report and the card drafts; it read no page as a reader and mended nothing | 3938eacc7 and 559237731 |
 
 **How they read.** The six readers of ranges read every rendered page of their range top
 to bottom, as a visitor meets it on GitHub, each against its sources: Heath's text in
@@ -52,6 +61,13 @@ claim about a representation, a misleading figure, or a wrong quotation or attri
 Editorial is what "does not change the meaning". A sentence that a reader sees and that is
 false is therefore graded material here when it is not blocking: it changes the meaning, so
 it cannot be editorial.
+
+Two editorial grades need a word. I.26's figure note (item 40) says "Drawn for one case" of a
+figure that shows both of Euclid's suppositions on one triangle, as Heath's does, and names
+them both; the figure is Heath's and misleads no one, and only the kind of case it declares is
+wrong. II.4's sentence (item 49) has BD cut the square with the parallels, though BD bounds
+none of the four pieces; the figure beside it shows at once how the pieces lie, and what the
+sentence says of them, two squares and two equal complements, is true.
 
 ## What they found
 
@@ -100,8 +116,11 @@ review/SCHEMA.md:120-125 gives this very overlap as its example of the kind `ste
 I.13's status line read only "proved, as Euclid states it · Euclid's argument"; I.47's page
 told it in a passage note alone. Pull request #699, merged as 559237731, makes I.47 rule out
 AD beyond B by I.13's bound (`Prop13.angle_lt_two_right`), so no entry rests on Metric 5 and
-the row has moved to the catalogue's former overlaps. Nothing is left to mend. One sentence of
-[ACCEPTANCE](../ACCEPTANCE.md), item B2, still names "I.13's upper bound on an angle, used in
+the row has moved to the catalogue's former overlaps. Nothing is left to mend. The grade rests on
+SCHEMA and STYLE section 2, which put an overlap of this kind in the status line, against
+ACCEPTANCE's item B2, which named this row as one "read by no record, and not counted"; the
+disclosure in I.47's passage note did not reach I.13's page, where a reader looks for it.
+That sentence of [ACCEPTANCE](../ACCEPTANCE.md), item B2, still names "I.13's upper bound on an angle, used in
 I.47" as a row "read by no record"; that is for the owner of ACCEPTANCE.md to bring up to
 date, and is on card draft RD-C10.
 
@@ -153,7 +172,7 @@ reading in areas, not Euclid's proof." (II.9's then has 45 words, within STYLE s
 The pilot editor (RD-p), which wrote, prompted and edited none of the three pages, read
 book/II/01.md, book/I/45.md and book/II/14.md consecutively, each whole and top to bottom
 with its figures, at 3938eacc7. It read every part of the three pages save the bodies of the
-14 `Fitted.fan` helper lemmas in I.45's folded listing (book/I/45.md:360-860), whose notes
+14 `Fitted.fan` helper lemmas in I.45's folded listing (about book/I/45.md:395-729), whose notes
 and docstrings it read. It compared the figures with Heath's (leaves n365, n395 and n429)
 and checked every quotation on the three pages against the page images, italics included.
 III.24 joins the set when Book III's queued trains have landed.
@@ -185,7 +204,9 @@ be named here as #34 asks; none is made yet.
 
 ## The books read straight through
 
-Each verdict is quoted from the reader's output.
+Each verdict is quoted from the reader's output. The readers' outputs, and the card drafts
+made from them, are kept outside the repository, with the coordinator, who files the
+cards.
 
 ### Book I
 
@@ -211,6 +232,12 @@ retirement", "Until 26 October 2026") and two sentences repeated across eight re
 reader found the scope told truthfully, save M1 and M2, and the depth even, following the
 difficulty of each proposition.
 
+Book I was read straight through by its four readers of ranges, who between them read every
+page whole and in order, with its commentary and every figure, each range ending where the
+next begins; the flow reader then read the whole book in order for what crosses pages, its
+captions, notes, commentary, further reading and figures at a glance, but not every Lean
+listing or every Euclid's figure, which the range readers read.
+
 ### Book II
 
 - **Flow reader (RD-f2):** "pass once the named findings are mended. Read straight through,
@@ -224,14 +251,23 @@ difficulty of each proposition.
   B3 asks about": II.14's change-log (RD-C4), II.10's notes copied from II.9 and II.8's
   commentary retelling its notes (RD-C5).
 
+On scope, the three readers found every status line true to its record, scope `full` and
+route `euclid` on all fourteen pages, with each qualification visible in the table where the
+reader meets it (II.1's and II.14's companions, the cases of II.5, II.6 and II.9, II.13's
+dropped hypothesis), save M3 to M5: two false sentences of the introduction and two
+captions. On depth, they found it even: the longer commentaries are those that carry Heath's
+history (II.5, II.10, II.14), II.2 is short with reason, and each hard step (G where CF
+crosses BD, the square CF counted twice in II.7, the two roots of II.5 and II.6) is explained
+where it arises.
+
 ### Book III
 
 To come: read once Book III's queued trains have landed, with III.24 for the pilot editor.
 
 ## The card drafts
 
-The editorial findings, grouped as the drafts in captains/RD-cards.md group them for the
-coordinator to file. Each gives the source to mend, the rendered line where a reader meets
+The editorial findings, grouped as the card drafts group them for the coordinator to
+file. Each gives the source to mend, the rendered line where a reader meets
 it, and the readers who made it. The text quoted, the evidence and the wording proposed for
 each are in the readers' outputs, which the card drafts carry.
 
@@ -250,8 +286,9 @@ the mathematics"; section 4, "Change-logs on the page").
    RD-r6 1; RD-p P4; RD-f2 3.
 4. I.45 and II.14: "The older companions" and "stay beside", review/I/45.toml:14,
    mishnah/I/45.md:5, review/II/14.toml:60. RD-p P5.
-5. II.14: "written out again so as not to cite II.14", review/II/14.toml:9 and the docstring
-   at Elements/BookII/Prop14.lean:209. RD-p P12.
+5. II.14: "written out again so as not to cite II.14", review/II/14.toml:9, and "written out
+   again so that it need not cite II.14", the docstring at Elements/BookII/Prop14.lean:209.
+   RD-p P12.
 6. Book I's introduction: "Intersection 2, though proved, has no user in the published
    proofs", with the sentence on I.12 after it, which answers no part of the paragraph's
    question, mishnah/intro/I.md:13 (book/I/index.md:21). RD-f1 10.
@@ -296,7 +333,7 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 
 **RD-C6: terms, glosses and one name for one thing** (STYLE section 4).
 
-21. "Division existence", "division independence", "theory of content", "independence" and
+21. "division existence", "division independence", "theory of content", "independence" and
     "content proof", unglossed in Book I's introduction (mishnah/intro/I.md:11) and on I.45
     (mishnah/I/45.md:3); on II.14 "outline" unglossed and the Hilbert clause hung on the
     construction (mishnah/II/14.md:1). RD-r1 7; RD-r4 8; RD-r6 4; RD-f1 9; RD-p P2.
@@ -312,7 +349,7 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 26. Book II's introduction uses "unchecked" before saying what it means, mishnah/intro/II.md:5
     and :13. RD-f2 8.
 27. Book II's introduction defines the gnomon by "the parallelograms about the diameter" and
-    "the complements", I.43's terms, unglossed and unlinked, mishnah/intro/II.md:3. RD-r5 5.
+    "the two complements", I.43's terms, unglossed and unlinked, mishnah/intro/II.md:3. RD-r5 5.
 28. The front matter's "III.25 kind" in double quotes, which mark Heath's words, and
     unexplained, scripts/render.py:2224-2229 (book/I/front.md:31). RD-r1 8.
 29. The front matter's `Apart` "triangles that lie apart" and "the triangles it is cut into",
@@ -394,7 +431,7 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
     list is on vol. 1, p. 372, mishnah/II/03.md:5. RD-f2 7.
 54. I.36's reading line gives 1963 beside a link to Dover's volume of 2007, where STYLE section
     6 asks for the year of the edition linked, reading/I/36.md:2. RD-r3 9.
-55. 18 of Book I's 48 reading lines hang on "the modern way", in a few repeated frames ("the
+55. The reading lines of 18 of Book I's 48 propositions hang on "the modern way", in a few repeated frames ("the
     modern way leans on", "the cosine of the modern way"), reading/I/18.md:1, 20.md:1,
     24.md:1, 25.md:1, 37.md:1, 40.md:2. RD-f1 14.
 56. Book I's introduction gives "Forty-two remain axioms; forty-one are now proved" as
@@ -414,10 +451,10 @@ None of these is a finding; each says what would settle it.
   I.19, I.21, I.24, II.10, II.12 and II.13. The pilot editor and the readers of I.25 to
   I.48 and II.1 to II.7 checked theirs on the page images. The leaves named in the readers'
   outputs settle the rest; this is the italics audit #34's comment asks after.
-- **I.7's "in order to make it intelligible" (p. 259)**, where the OCR is garbled: leaf n279.
+- **I.7's "in order to make it intelligible" (vol. 1, p. 259)**, where the OCR is garbled: leaf n279.
 - **I.14's "I. 28" in Todhunter's remark**, which the OCR reads "i. 38": leaf n297.
 - **I.35, whose words "the height of the parallels, which remains the same" are**: Heath's
-  pp. 330-331 set them inside Proclus' report of Geminus citing Chrysippus. Proclus, in
+  vol. 1, pp. 330–331, sets them inside Proclus' report of Geminus citing Chrysippus. Proclus, in
   Friedlein p. 395, settles it.
 - **I.33, "still following Proclus"**: whether the explanation after "as Proclus says (p. 385,
   5)" is Proclus' or Heath's. Proclus p. 385 settles it.
@@ -443,13 +480,16 @@ None of these is a finding; each says what would settle it.
 Main moved from 3938eacc7 to 559237731 while this draft was written. `git log --first-parent
 --oneline 3938eacc7..559237731` gives two landings:
 
-- 511fb5fe5 (pull request #698), a change to the renderer's notes; it changes nothing in the
-  paths read.
+- 511fb5fe5 (pull request #698), a test, a negative plant and a decisions entry on settling
+  the renderer's notes; it changes nothing in the paths read.
 - 559237731 (pull request #699), a batch of four trains. In the paths read it changes
   Elements/BookI/Prop47.lean, Elements/BookI/OutlineBound.lean and review/I/47.toml (I.47
   bounds its angle by I.13, not by Metric 5, #515), and regenerates 27 pages: book/I/02.md,
   06, 07, 09 to 13, 15, 16, 18, 20, 21, 26, 28, 30, 31, 40, 43, 47 and 48, and book/II/09.md
-  to 14. It resolves M2.
+  to 14. Most of their changed lines are link anchors moved by a change to
+  Elements/Figure/RuleBase.lean (#561); the rest are #515's: II.9 to II.14 now count 38 tacit
+  rules beneath them, not 39, with Metric 5 gone from their lists. facts.json and
+  docs/reports/overlaps.md, which M1 and M2 cite, changed with them. It resolves M2.
 
 `git diff --name-only 3938eacc7 559237731 -- book/I book/II mishnah Elements/BookI
 Elements/BookII figures review/I review/II reading` lists those 30 files. No commentary,
@@ -460,10 +500,14 @@ of these changes, and every later one to these paths, before the release.
 
 1. The four open material findings, M1 and M3 to M5, mended on main (card drafts RD-C1 to
    RD-C3), each naming here the commit that resolves it.
-2. The readers' conditions on B3: every verdict passes once its named findings are mended,
-   and the voice lapses they name are card drafts RD-C4 and RD-C5. These two are steps of the
-   release gate; the others (RD-C6 to RD-C10) are editorial, and the readers did not make B3
-   wait on them.
+2. The readers' conditions on B3. Every verdict but those of RD-r3 and RD-r4 passes "once
+   the named findings are mended", all of its reader's findings; RD-r3 names its findings 2
+   and 3, and RD-r4 passes as it stands. As written, then, Book I's B3 waits on card drafts
+   RD-C1, RD-C4, RD-C5, RD-C6, RD-C9, RD-C10 and item 43 of RD-C7; Book II's on RD-C2 to
+   RD-C6, RD-C9 and RD-C10. Only RD-C8, and RD-C7 save item 43, hold neither. The verdicts
+   single out the voice lapses of RD-C4 and RD-C5; whether the other editorial findings must
+   be mended before B3 is recorded, or may go to the backlog, is for the coordinator to
+   rule.
 3. The pilot editor's notes, each with the commit that fixed it or the change it made to
    docs/STYLE.md or docs/examples.md, and III.24 read with the three pages once Book III's
    trains have landed.
