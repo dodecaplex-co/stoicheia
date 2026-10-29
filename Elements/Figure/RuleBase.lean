@@ -104,17 +104,6 @@ theorem Tacit.on_circle_of_len_eq (hA : Centre A α) (hB : OnCircle B α) (h : �
     rw [len_add_of_between hAPC, h, Definition15 hA hP hB] at hlt
     exact lt_irrefl _ hlt
 
-namespace RuleProofs.Circle
-
-/-- A point other than the centre, as far from it as a point of the circle, is on the circle:
-Diagram-segment 3's proved half gives the result from the radius rule and Intersections 4
-and 5. -/
-theorem on_circle_of_len_eq_of_ne (hA : Centre A α) (hB : OnCircle B α) (hAC : A ≠ C)
-    (h : ‖A C‖ = ‖A B‖) : OnCircle C α := by
-  exact Tacit.on_circle_of_len_eq hA hB h
-
-end RuleProofs.Circle
-
 /-- If A is on the same side of a straight line as B, then B is on the same side as A.
 (Same side 2) Two circles about points of the line cut on A's side, by Intersection 5,
 Generalities 3 and Intersections 8; Same side 4 then makes B's relation to A follow from A's to B. -/
