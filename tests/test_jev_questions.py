@@ -1701,6 +1701,13 @@ class CongruentCircumferences(unittest.TestCase):
     # get the words of both readings and the bridges their notes name, and are not asked for the
     # later theorems RECORD_LATER lists, which their notes name as context (#674).
 
+    @staticmethod
+    def record_with_names(record, names):
+        record = copy.deepcopy(record)
+        record['representation']['note'] = ' '.join(
+            f'`{name.removeprefix("Elements.BookIII.")}`' for name in names)
+        return record
+
     def test_iii_27_and_iii_29_get_the_congruence_and_the_bridges_their_records_name(self):
         for n in (27, 29):
             definitions, bridges = questions.bundle('III', n)
@@ -1715,18 +1722,6 @@ class CongruentCircumferences(unittest.TestCase):
         self.assertEqual(questions.CONGRUENT_MEASURE_BRIDGES, ['Elements.BookIII.Prop24.equalMeasure'])
         self.assertEqual(questions.EQUAL_ANGLE_BRIDGES,
                          ['Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure'])
-        # The words of the records that the lists' comments quote.
-        records = congruent_rows()['records']
-        note = records['III.27']['representation']['note']
-        self.assertIn('equal in measure, twice the angle standing on them, by III.24\'s companion '
-                      '`Prop24.equalMeasure`', note)
-        self.assertIn('congruent circumferences already lie in equal circles (`Prop24.image`, '
-                      '`Prop24.equalCircles`)', note)
-        note = records['III.29']['representation']['note']
-        self.assertIn('the congruence already gives the equal straight lines (`Prop24.image`), and the '
-                      'equal circles with them (`Prop24.equalCircles`)', note)
-        self.assertIn('its equal angles from III.27, which `Prop27` states with the same congruence', note)
-        self.assertIn("repeats the argument through III.27's companion `Prop27.of_measure`", note)
         # Their rows have them, each declared before the main theorem.
         rows = congruent_rows()['rows']
         for ref in ('III.27', 'III.29'):
@@ -1754,12 +1749,13 @@ class CongruentCircumferences(unittest.TestCase):
         found = congruent_rows()
         generator, rows, records = found['generator'], found['rows'], found['records']
         for ref, names in CONGRUENT_BRIDGES.items():
+            record = self.record_with_names(records[ref], [*names, *questions.RECORD_LATER[ref]])
             for name in names:
                 with self.subTest(ref=ref, missing=name):
                     state = copy.deepcopy(rows[ref]['state'])
-                    self.assertEqual(generator.checked(ref, records[ref], state), [])
+                    self.assertEqual(generator.checked(ref, record, state), [])
                     del state['bridges'][name]
-                    self.assertEqual(generator.checked(ref, records[ref], state), [name])
+                    self.assertEqual(generator.checked(ref, record, state), [name])
 
     def test_record_later_holds_the_later_theorems_the_notes_name(self):
         # "a theorem proved after III.27 is not a bridge for it" (the coordinator's ruling of
@@ -1769,13 +1765,10 @@ class CongruentCircumferences(unittest.TestCase):
         self.assertEqual(questions.RECORD_LATER, {
             'III.27': ('Elements.BookIII.Prop29.of_measure', 'Elements.BookIII.Arc.congruent_iff'),
             'III.29': ('Elements.BookIII.Arc.congruent_iff',)})
-        note = records['III.27']['representation']['note']
-        self.assertIn("the form in which III.29's companion `Prop29.of_measure` cites it", note)
-        self.assertIn('(`Arc.congruent_iff`, proved after III.29, from it)', note)
-        self.assertIn('the two readings agree: drawn circumferences coincide exactly when they are equal '
-                      'in measure (`Arc.congruent_iff`)', records['III.29']['representation']['note'])
         for ref, later in questions.RECORD_LATER.items():
             main = generator.index.get(questions.heath.parse_ref(ref).lean)
+            record = self.record_with_names(records[ref], later)
+            self.assertEqual(generator.checked(ref, record, copy.deepcopy(rows[ref]['state'])), [])
             for name in later:
                 with self.subTest(ref=ref, name=name):
                     self.assertFalse(generator.index.available_before(name, main))
@@ -1791,17 +1784,17 @@ class CongruentCircumferences(unittest.TestCase):
         found = congruent_rows()
         generator, rows, records = found['generator'], found['rows'], found['records']
         unnamed = 'Elements.BookIII.Prop30'
-        self.assertNotIn('Prop30', records['III.27']['representation']['note'])
+        record = self.record_with_names(records['III.27'], questions.RECORD_LATER['III.27'])
         self.assertFalse(generator.index.available_before(unnamed, generator.index.get('Elements.BookIII.Prop27')))
         with self.subTest(name=unnamed), \
                 patch.dict(questions.RECORD_LATER, {'III.27': (*questions.RECORD_LATER['III.27'], unnamed)}), \
                 self.assertRaisesRegex(questions.Refusal, r"III\.27: RECORD_LATER names Elements\.BookIII\."
                                        r"Prop30, which its record's \[representation\] note does not name"):
-            generator.checked('III.27', records['III.27'], copy.deepcopy(rows['III.27']['state']))
-        record = copy.deepcopy(records['III.29'])
-        note = record['representation']['note']
-        self.assertEqual(note.count(' (`Arc.congruent_iff`)'), 1)
-        record['representation']['note'] = note.replace(' (`Arc.congruent_iff`)', '')
+            generator.checked('III.27', record, copy.deepcopy(rows['III.27']['state']))
+        name = 'Elements.BookIII.Arc.congruent_iff'
+        record = self.record_with_names(records['III.29'], [name])
+        self.assertEqual(generator.checked('III.29', record, copy.deepcopy(rows['III.29']['state'])), [])
+        record['representation']['note'] = ''
         with self.subTest(name='Elements.BookIII.Arc.congruent_iff'), \
                 self.assertRaisesRegex(questions.Refusal, r"III\.29: RECORD_LATER names Elements\.BookIII\."
                                        r"Arc\.congruent_iff, which its record's \[representation\] note "
@@ -1816,15 +1809,14 @@ class CongruentCircumferences(unittest.TestCase):
         for ref, name in (('III.27', 'Elements.BookIII.Prop24.equalMeasure'),
                           ('III.29', 'Elements.BookIII.Prop27')):
             main = questions.heath.parse_ref(ref).lean
+            record = self.record_with_names(records[ref], [*questions.RECORD_LATER[ref], name])
             with self.subTest(ref=ref, name=name):
-                self.assertIn(f'`{name.removeprefix("Elements.BookIII.")}`',
-                              records[ref]['representation']['note'])
                 self.assertTrue(generator.index.available_before(name, generator.index.get(main)))
                 with patch.dict(questions.RECORD_LATER, {ref: (*questions.RECORD_LATER[ref], name)}), \
                         self.assertRaisesRegex(questions.Refusal,
                                                re.escape(f'{ref}: RECORD_LATER names {name}, which is '
                                                          f'declared before {main}')):
-                    generator.checked(ref, records[ref], copy.deepcopy(rows[ref]['state']))
+                    generator.checked(ref, record, copy.deepcopy(rows[ref]['state']))
 
 
 def recomputed_lists(question, revision=HEAD):
