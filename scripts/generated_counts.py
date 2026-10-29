@@ -12,9 +12,12 @@ through a symlink and paths resolving outside the root are refused; a symlink is
 never absent. Whole renderer outputs are scanned but may not contain markers. The
 decisions log and reports are history, except the living gap and overlap catalogues;
 markers there are refused. Markers are also refused when they overlap README scope
-regions or PROGRAM's status region, which the renderer replaces. Counts use files
-alone, never a Lean run or build outputs. Run this module to print every available
-count and its current value.
+regions, PROGRAM's status region or the notes regions of a brief or of PROGRAM, which
+the renderer replaces. Counts use files alone, never a Lean run or build outputs. Run
+this module to print every available count and its current value.
+
+The regions are read as heath.py reads them, the notes regions among them (heath.notes,
+#577), so that every tool that reads a region reads it the same way.
 """
 
 import ast
@@ -679,14 +682,20 @@ PROGRAM_STATUS_MARKERS = heath.REGIONS["docs/PROGRAM.md"]
 
 
 def partial_output_region(path, text, span):
-    """Name a renderer-owned region containing a count marker, if there is one."""
+    """Name a renderer-owned region containing a count marker, if there is one: a region
+    of heath.REGIONS, or a notes region of a brief or of PROGRAM.md, which heath.notes
+    reads, beside the others (#577), raising heath.RegionError, a ValueError, for a fault
+    in a page's notes markers."""
+    regions = []
     pattern = heath.REGIONS.get(path.as_posix())
-    if pattern is None:
-        return None
-    if any(span.start < region.end() and region.start() < span.end
-           for region in pattern.finditer(text)):
-        return f"{path.as_posix()} {heath.MARKER_WORDS[path.as_posix()]} region"
-    return None
+    if pattern is not None:
+        regions = [(region.start(), region.end(),
+                    f"{path.as_posix()} {heath.MARKER_WORDS[path.as_posix()]} region")
+                   for region in pattern.finditer(text)]
+    regions += [(region.start(), region.end(), f"{path.as_posix()} {region['name']} region")
+                for region in heath.notes(path.as_posix(), text)]
+    return next((name for start, end, name in regions
+                 if span.start < end and start < span.end), None)
 
 
 def tracked_markdown(root):
@@ -736,7 +745,11 @@ def updates(root, *, check=False):
             if historical(path):
                 errors.append(f"{where}: count marker {span.name!r} is forbidden in dated history")
                 continue
-            region = partial_output_region(path, text, span)
+            try:
+                region = partial_output_region(path, text, span)
+            except ValueError as error:
+                errors.append(str(error))
+                break
             if region:
                 errors.append(f"{where}: count marker {span.name!r} is forbidden in {region}")
                 continue
