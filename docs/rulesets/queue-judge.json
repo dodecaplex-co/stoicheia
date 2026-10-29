@@ -1,0 +1,32 @@
+{
+  "name": "stoicheia main: the queue judge from main",
+  "target": "branch",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": {
+    "repository_name": {
+      "include": ["stoicheia"],
+      "exclude": [],
+      "protected": true
+    },
+    "ref_name": {
+      "include": ["refs/heads/main"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "workflows",
+      "parameters": {
+        "do_not_enforce_on_create": false,
+        "workflows": [
+          {
+            "path": ".github/workflows/queue-judge.yml",
+            "repository_id": 1421047853,
+            "ref": "refs/heads/main"
+          }
+        ]
+      }
+    }
+  ]
+}

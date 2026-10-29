@@ -12,7 +12,7 @@ Our own prose and figures are licensed under the
 - the pages under [`book/`](book), apart from Heath's text and the Lean.
 
 You may share and adapt them for any purpose, including commercially, as long as
-you give appropriate credit ("Stoicheia, by Stoicheia Team, https://github.com/jackChallis/stoicheia").
+you give appropriate credit ("Stoicheia, by Stoicheia Team, https://github.com/dodecaplex-co/stoicheia").
 The full legal code is at <https://creativecommons.org/licenses/by/4.0/legalcode>.
 
 Euclid's text in [`heath/`](heath) is T. L. Heath's 1908 translation, which is in
