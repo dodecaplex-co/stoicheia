@@ -1263,6 +1263,7 @@ class TheRegistry(unittest.TestCase):
     }
     ALONE = {
         "python3 -I tests/test_concurrent_checks.py",
+        "python3 -I tests/test_concurrent_passes.py",
         "lake build", "lake build Audit", "lake build Staging",
         "lake env lean Certificate/Facts.lean",
         "python3 scripts/sweep_citations.py",

@@ -877,6 +877,22 @@ class Report:
         return [s for s in self.steps if s.outcome == "FAIL"]
 
 
+class Deferred(Report):
+    """A pass's rows, held while it runs beside the other (at_once): each step recorded,
+    nothing printed, until into() puts them into the run's report, in order, printed
+    there as the pass run alone would have printed them."""
+
+    def add(self, stage, name, outcome, detail="", seconds=None):
+        self.steps.append(Step(stage, name, outcome, seconds, detail))
+
+    def heading(self, text):
+        raise RuntimeError(f"a pass has no heading, and none is held for it: {text!r}")
+
+    def into(self, rep: Report) -> None:
+        for s in self.steps:
+            rep.add(s.stage, s.name, s.outcome, s.detail, s.seconds)
+
+
 # --------------------------------------------------------------------------------------
 # The diff, read once and parsed exactly
 
@@ -2627,37 +2643,85 @@ def slug_of(label: str) -> str:
     return f"-{s}" if s else ""
 
 
+class Between:
+    """The work step 4 does between its rows, which no row times (#609): each piece's
+    seconds, summed, and how many times it ran, by the piece's name, added from any thread
+    under a lock. full_checks prints them in one line once step 4 ends, however it ends."""
+
+    # The order line() names them in; a piece of another name comes after, as first timed.
+    ORDER = ("worktree add", "copy_build", "at_commit", "base_copies", "reset and clean",
+             "keep_apart", "worktree remove")
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.seconds: dict[str, float] = {}
+        self.counts: dict[str, int] = {}
+
+    @contextlib.contextmanager
+    def piece(self, name: str):
+        """The piece `name`, timed: its time added on every way out, an exception's too."""
+        t = time.time()
+        try:
+            yield
+        finally:
+            took = time.time() - t
+            with self.lock:
+                self.seconds[name] = self.seconds.get(name, 0.0) + took
+                self.counts[name] = self.counts.get(name, 0) + 1
+
+    def line(self) -> str:
+        """Each piece's seconds, and how many times when more than once, then their sum:
+        "worktree add 0.3 s, at_commit 2.0 s (4 times), ...: 4.5 s in all"."""
+        with self.lock:
+            order = {name: at for at, name in enumerate(self.ORDER)}
+            names = sorted(self.seconds, key=lambda name: order.get(name, len(order)))
+            parts = [f"{name} {self.seconds[name]:.1f} s"
+                     + (f" ({self.counts[name]} times)" if self.counts[name] > 1 else "")
+                     for name in names]
+            total = sum(self.seconds.values())
+        return f"{', '.join(parts) or 'nothing'}: {total:.1f} s in all"
+
+
+def piece(between: Between | None, name: str):
+    """between's piece `name` (Between.piece), or, with no `between`, nothing timed."""
+    return contextlib.nullcontext() if between is None else between.piece(name)
+
+
 @contextlib.contextmanager
-def base_copies(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
+def base_copies(repo, base, sha, wt: Path, changes: list[tuple[str, str]], between=None):
     """origin/main's copies of the check inputs the commit changes, put in place in the
     worktree (and the files the commit adds to them taken out); the worktree is reset
     to the commit, `sha`, afterwards, never to HEAD, which the checks run could move.
-    Yields the pathspecs that keep them out of `git status`."""
-    for status, path in changes:
-        target = wt / path
-        if target.is_symlink() or target.is_file():
-            target.unlink()
-        if status == "A":
-            continue
-        entry = git(repo, "ls-tree", "-z", base, "--", path).split("\0")[0]
-        if not entry:
-            continue
-        mode, _, oid = entry.split("\t", 1)[0].split()
-        data = git(repo, "cat-file", "blob", oid, binary=True)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if mode == "120000":
-            os.symlink(data.decode(errors="replace"), target)
-        else:
-            target.write_bytes(data)
-            os.chmod(target, 0o755 if mode == "100755" else 0o644)
+    Yields the pathspecs that keep them out of `git status`. `between`, if given, times
+    the copies as "base_copies" and the reset as "reset and clean" (Between)."""
+    with piece(between, "base_copies"):
+        for status, path in changes:
+            target = wt / path
+            if target.is_symlink() or target.is_file():
+                target.unlink()
+            if status == "A":
+                continue
+            entry = git(repo, "ls-tree", "-z", base, "--", path).split("\0")[0]
+            if not entry:
+                continue
+            mode, _, oid = entry.split("\t", 1)[0].split()
+            data = git(repo, "cat-file", "blob", oid, binary=True)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if mode == "120000":
+                os.symlink(data.decode(errors="replace"), target)
+            else:
+                target.write_bytes(data)
+                os.chmod(target, 0o755 if mode == "100755" else 0o644)
     try:
         yield [f":(exclude,literal){p}" for _, p in changes]
     finally:
-        run(["git", *DISK_AS_IS, "reset", "-q", "--hard", sha], wt)
-        run(["git", *DISK_AS_IS, "clean", "-fdq"], wt)
+        with piece(between, "reset and clean"):
+            run(["git", *DISK_AS_IS, "reset", "-q", "--hard", sha], wt)
+            run(["git", *DISK_AS_IS, "clean", "-fdq"], wt)
 
 
 BASE_PASS = " (origin/main's checks)"
+OWN_PASS = " (the commit's checks)"
 # Steps whose failure with origin/main's copies shows only that the pages' generator
 # changed (render.py's output, or the certificate that writes facts.json), not a check's
 # verdict. render.py failing outright (step 3's "render.py", step 4's "python3
@@ -2764,20 +2828,43 @@ def at_commit(wt: Path, sha: str) -> None:
                   "pass changed them")
 
 
-def passes(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
+def passes(repo, base, sha, wt: Path, changes: list[tuple[str, str]], between=None):
     """(label, the outcome of a failure, status excludes) for each pass of the checks:
     with origin/main's copies of the check inputs; and, when the commit changes any,
     with the commit's own, which must pass, while a failure with origin/main's is noted
     for the security review (and refuses the commit, if it changes what the checks
-    judge as well: keep_apart). Each begins at the commit, `sha` (at_commit)."""
-    at_commit(wt, sha)
+    judge as well: keep_apart). Each begins at the commit, `sha` (at_commit). `between`,
+    if given, times the work between them (Between)."""
+    with piece(between, "at_commit"):
+        at_commit(wt, sha)
     if not changes:
         yield "", "FAIL", []
         return
-    with base_copies(repo, base, sha, wt, changes) as excludes:
+    with base_copies(repo, base, sha, wt, changes, between) as excludes:
         yield BASE_PASS, "note", excludes
-    at_commit(wt, sha)
-    yield " (the commit's checks)", "FAIL", []
+    with piece(between, "at_commit"):
+        at_commit(wt, sha)
+    yield OWN_PASS, "FAIL", []
+
+
+@contextlib.contextmanager
+def one_pass(repo, base, sha, wt: Path, changes: list[tuple[str, str]], label: str,
+             between=None):
+    """One of the two passes passes() gives when the commit changes a check input, alone,
+    in the worktree `wt`, for the two passes at once (at_once): it begins at the commit
+    (at_commit), and yields what passes() yields for it, `label` naming it: for the
+    commit's own (OWN_PASS), a failure refusing; for origin/main's (BASE_PASS), with its
+    copies put in, a failure noted, and the worktree reset to the commit afterwards
+    (base_copies). `between`, if given, times the work around it (Between)."""
+    if label not in (BASE_PASS, OWN_PASS):
+        raise ValueError(f"no pass is labelled {label!r}")
+    with piece(between, "at_commit"):
+        at_commit(wt, sha)
+    if label == OWN_PASS:
+        yield OWN_PASS, "FAIL", []
+        return
+    with base_copies(repo, base, sha, wt, changes, between) as excludes:
+        yield BASE_PASS, "note", excludes
 
 
 # The guides: the rules' text, which changes with the checks it describes; the decisions
@@ -3568,18 +3655,21 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
 
 
 @contextlib.contextmanager
-def worktree(repo, sha, parent: Path, name: str):
-    """A fresh detached worktree of the commit, removed afterwards, on a failure too."""
+def worktree(repo, sha, parent: Path, name: str, between=None):
+    """A fresh detached worktree of the commit, removed afterwards, on a failure too.
+    `between`, if given, times the two as "worktree add" and "worktree remove" (Between)."""
     path = parent / name
     # No hooksPath: the tests' checkout_marker needs post-checkout; hooks left over: #218.
-    git(repo, *AS_COMMITTED, "worktree", "add", "--detach", "--quiet", str(path), sha)
+    with piece(between, "worktree add"):
+        git(repo, *AS_COMMITTED, "worktree", "add", "--detach", "--quiet", str(path), sha)
     try:
         yield path
     finally:
-        r = run(["git", "worktree", "remove", "--force", str(path)], repo)
-        if r.returncode != 0:
-            shutil.rmtree(path, ignore_errors=True)
-            run(["git", "worktree", "prune"], repo)
+        with piece(between, "worktree remove"):
+            r = run(["git", "worktree", "remove", "--force", str(path)], repo)
+            if r.returncode != 0:
+                shutil.rmtree(path, ignore_errors=True)
+                run(["git", "worktree", "prune"], repo)
 
 
 def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
@@ -3647,6 +3737,57 @@ def check_workers() -> tuple[int, str]:
     return workers, (f"; the concurrent checks run up to {workers} at once ({CHECK_WORKERS}="
                      f"{shown}, {'capped at' if capped else 'the cap'} {cap}, half this "
                      f"machine's {cores} cores)")
+
+
+# Step 4's two passes at once (#609), when the commit changes a check input: origin/main's
+# and the commit's own, each in a worktree of its own (at_once). The variable is keyed in
+# the main-checks cache, as every STOICHEIA_ variable is (KEYED_VARIABLES), though no check
+# reads it: a record made at one number is never used at another. NEGATIVE_WORKERS is
+# negative_tests.py's, read here only for the cap.
+PASS_WORKERS = "STOICHEIA_PASS_WORKERS"
+NEGATIVE_WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
+
+
+def pass_workers(check_workers: int) -> tuple[int, str]:
+    """How many of step 4's two passes run at once when the commit changes a check input,
+    and what the check list line says of it. STOICHEIA_PASS_WORKERS unset or empty is one,
+    the run before #609, and the line says nothing; a whole number from 1 is taken up to
+    two, as there are two passes. Two run at once only when twice the larger of
+    `check_workers`, the concurrent checks each pass runs at once (1 for a sequence that
+    declares none), and the negative tests' workers, STOICHEIA_NEGATIVE_WORKERS read as
+    negative_tests.py reads it (a whole number from 1; any other value counts as one here,
+    and negative_tests.py refuses it itself), is no more than half this machine's cores (at
+    least one), check_workers' cap, so that yards, ships and other work still get their
+    share; else one, and the line says why, with the numbers. Any other value is a Refusal
+    naming it."""
+    text = os.environ.get(PASS_WORKERS, "")
+    if not text:
+        return 1, ""
+    digits = text.lstrip("0")
+    if not (text.isascii() and text.isdigit() and digits):
+        raise Refusal(f"{PASS_WORKERS} must be a whole number from 1, not {text[:40]!r}")
+    # Compared by length first: int() refuses a string of more than 4,300 digits.
+    taken = len(digits) > 1 or int(digits) > 2
+    asked = 2 if taken else int(digits)
+    shown = text if len(text) <= 20 else text[:20] + "…"
+    said = f"{PASS_WORKERS}={shown}" + (", taken as 2, as there are two passes" if taken else "")
+    head = "; the two passes, when the commit changes a check input, run"
+    if asked == 1:
+        return 1, f"{head} one after another ({said})"
+    cores = os.cpu_count() or 1
+    cap = max(1, cores // 2)
+    negative = os.environ.get(NEGATIVE_WORKERS, "")
+    if not (negative.isascii() and negative.isdigit() and negative.lstrip("0")):
+        negative = "1"
+    negative = negative.lstrip("0")
+    over = len(negative) > len(str(cap)) or 2 * max(check_workers, int(negative)) > cap
+    numbers = (f"twice the larger of the check workers, {check_workers}, and the negative "
+               f"tests' workers, {negative if len(negative) <= 20 else negative[:20] + '…'}, "
+               f"is {'more than' if over else 'within'} half this machine's {cores} cores, "
+               f"{cap}")
+    if over:
+        return 1, f"{head} one after another: {said}, but {numbers}"
+    return 2, f"{head} at once ({said}: {numbers})"
 
 
 def on_disk(path: Path, hashed: bool = True) -> tuple:
@@ -3926,18 +4067,27 @@ def guard_group(group, before: TreeState, where: Path, rep: Report, label: str,
         cache.spoiled = cache.spoiled or f"the step {TREE_GUARD} failed in origin/main's pass"
 
 
+class Stopped(Exception):
+    """A pass told to go no further, whose rows are discarded."""
+
+
 def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: str,
-                 excludes, first: int, plan: CheckList | None = None, cache=None) -> None:
+                 excludes, first: int, plan: CheckList | None = None, cache=None,
+                 stop: threading.Event | None = None) -> None:
     """A pass's steps, each logged as `first` and its place, `cache`, if given, collecting
     each as it is reported. A check `plan` declares concurrent runs in a group with those
     next to it in order, and the worktree's state is taken around the group at every
     number of workers (guard_group), so that no verdict depends on the number; every other
     check runs alone, as do the steps of a list with no plan. At one worker, a group's
     checks run as every check runs, one after another on this thread (run_step), so the
-    run is the one before #608 but for the guard; at more, together (run_together)."""
+    run is the one before #608 but for the guard; at more, together (run_together). With
+    `stop` set, no further step or group starts: Stopped is raised in its place, and a
+    group already started runs to its end (at_once)."""
     concurrent = plan.concurrent if plan is not None else frozenset()
     at = 0
     while at < len(steps):
+        if stop is not None and stop.is_set():
+            raise Stopped
         end = at
         while end < len(steps) and steps[end][0] in concurrent:
             end += 1
@@ -3975,6 +4125,7 @@ class CheckList(NamedTuple):
     # Each such step's earlier ones to wait for, a mapping no caller can change.
     after: types.MappingProxyType = types.MappingProxyType({})
     workers: int = 1                             # at most this many at once (check_list)
+    passes: int = 1                              # step 4's passes at once (pass_workers)
 
 
 def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
@@ -4143,30 +4294,251 @@ def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
 
 
 def check_list(ctx, rep: Report) -> CheckList:
-    """check_sequence for the commit, with the workers check_workers gives, as a step
-    line: ok with how many and from where, and the workers when STOICHEIA_CHECK_WORKERS
-    is set and not empty, or FAIL and a Refusal. A sequence that declares no concurrent
-    check runs every check alone, so the variable is not read for it, and the line is as
-    before #608."""
+    """check_sequence for the commit, with the workers check_workers gives and the passes
+    pass_workers gives, as a step line: ok with how many and from where, the workers when
+    STOICHEIA_CHECK_WORKERS is set and not empty, and the passes when
+    STOICHEIA_PASS_WORKERS is; or FAIL and a Refusal. A sequence that declares no
+    concurrent check runs every check alone, so STOICHEIA_CHECK_WORKERS is not read for
+    it, and the line says nothing of it, as before #608; STOICHEIA_PASS_WORKERS, which is
+    about the passes and not the groups, is read whatever the sequence declares."""
     t = time.time()
     try:
         checks = check_sequence(ctx.repo, ctx.base)
         workers, said = check_workers() if checks.concurrent else (1, "")
+        together, told = pass_workers(workers)
     except Refusal as e:
         rep.add("4", "check list", "FAIL", str(e), time.time() - t)
         raise
-    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}{said}",
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}{said}{told}",
             time.time() - t)
-    return checks._replace(workers=workers)
+    return checks._replace(workers=workers, passes=together)
+
+
+# How long the main thread waits on a pass's thread, while the two passes run at once,
+# before it looks again for a signal recorded (at_once).
+JOIN_SECONDS = 0.2
+
+
+class Halt(threading.Event):
+    """The `stop` of the two passes at once (side_by_side): set, or a signal recorded in
+    `caught`, so that neither pass starts a further step or group once a signal's handler
+    has run, not only once the main thread next looks, as run_together's checks read its
+    record. The handler only appends to the list, and never sets the event, whose lock
+    the main thread may hold as the handler runs."""
+
+    def __init__(self):
+        super().__init__()
+        self.caught: list[int] = []     # the signals recorded, the first first (awaited)
+
+    def is_set(self) -> bool:
+        return bool(self.caught) or super().is_set()
+
+
+@contextlib.contextmanager
+def awaited(threads: list[threading.Thread], stop: Halt):
+    """The two passes' threads, `threads`, awaited (at_once). On the main thread, while
+    the body runs, a SIGINT, SIGTERM or SIGHUP (GROUP_SIGNALS) raises nothing: its handler
+    only records it (recorder) in stop.caught, which this yields, which `stop` then reads
+    as set, and which the body looks at between its waits, since an exception a handler
+    raises can land just after a lock is taken and leave it held, as in run_together. On
+    every way out of the body: `stop` set, so that neither pass starts a further step or
+    group; every thread of `threads` that was
+    started joined, JOIN_SECONDS at a time, so that no check of either pass still runs
+    when a worktree is cleaned (base_copies, at_commit) or removed (worktree), a thread
+    whose start() failed passed over; then the previous handlers put back with the
+    signals held on this thread, so that no handler runs half-way through, and any of
+    them the system still holds for the harness taken (sigwait) and recorded; and, if a
+    signal was recorded, what the first would have raised outside (signalled) raised, in
+    place of any exception on its way out, unless another comes in the moment the mask is
+    lifted, when its own handler raises first. Off the main thread (a test's), Python runs
+    no handler on this thread, and none is installed."""
+    caught = stop.caught
+    previous = ({signum: signal.getsignal(signum) for signum in GROUP_SIGNALS}
+                if threading.current_thread() is threading.main_thread() else {})
+    try:
+        record = recorder(caught)
+        for signum in previous:
+            signal.signal(signum, record)
+        yield caught
+    finally:
+        try:
+            stop.set()
+            for thread in threads:
+                try:
+                    thread.join(JOIN_SECONDS)
+                    while thread.is_alive():
+                        thread.join(JOIN_SECONDS)
+                except RuntimeError:        # its start() failed: it never ran
+                    pass
+        finally:
+            if previous:
+                held = signal.pthread_sigmask(signal.SIG_BLOCK, GROUP_SIGNALS)
+                try:
+                    for signum in sorted(signal.sigpending() & (set(GROUP_SIGNALS) - held)):
+                        caught.append(signal.sigwait({signum}))
+                    for signum, handler in previous.items():
+                        signal.signal(signum, handler)
+                finally:
+                    signal.pthread_sigmask(signal.SIG_SETMASK, held)
+        if caught:
+            signalled(caught[0])
+
+
+def ended(thread: threading.Thread, caught: list[int], stop: Halt) -> bool:
+    """Whether `thread` has ended with no signal recorded: the main thread joins it
+    JOIN_SECONDS at a time, never without a bound, and looks at `caught` between the
+    joins; once a signal is recorded it sets `stop`, here and never in the handler, and
+    waits no longer."""
+    while thread.is_alive() and not caught:
+        thread.join(JOIN_SECONDS)
+    if caught:
+        stop.set()
+    return not caught
+
+
+def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, steps,
+                 first: int, declared: CheckList | None, checks, kept_apart,
+                 between: Between) -> None:
+    """One loop of step 4, `steps` logged from `first`, for both passes at once, each on a
+    thread of its own in its worktree, where[label] (at_once). Each pass begins at the
+    commit and runs as passes() runs it (one_pass), through `checks`, full_checks' own,
+    into a report of its own (Deferred), with a `stop` (Halt) that run_sequence looks at
+    before each step or group; origin/main's pass then, its worktree reset to the commit,
+    asks of it what the commit's pass would begin with, one after another, in the same
+    worktree (at_commit), and keeps what that raised apart. A pass's outcome is nothing,
+    or the exception it raised, whatever it is.
+
+    This thread reports them in the order of one after another. It waits for origin/main's
+    pass and puts its rows into `rep` (Deferred.into); if the pass raised, it raises that;
+    else `kept_apart` judges, on `rep`, and may refuse; else what origin/main's next
+    at_commit raised, if anything, is raised; else it waits for the commit's pass, puts
+    its rows into `rep`, and raises what that pass raised, a failure's Refusal among
+    them. On every way out but the last, the commit's rows are discarded: never put in,
+    and each log of its steps in this loop unlinked, since one after another it would not
+    have run; awaited() has first set `stop` and joined both threads, so a refusal of
+    keep_apart, or an exception of origin/main's pass, waits for the commit's current
+    step, or group, to end before it goes on. Once a signal is recorded, no further row
+    is put in, `stop` is set, and awaited() raises what the first signal would have
+    raised once both passes' current steps, or groups, have ended."""
+    stop = Halt()
+    held = {label: Deferred() for label in where}
+    outcome: dict[str, BaseException | None] = {}
+    then: list[BaseException] = []      # what origin/main's next at_commit raised
+
+    def one(label: str) -> None:
+        try:
+            with one_pass(ctx.repo, ctx.base, ctx.sha, where[label], inputs, label,
+                          between) as (_, fail, excludes):
+                checks(steps, where[label], label, fail, excludes, first, declared,
+                       held[label], stop)
+            if label == BASE_PASS:
+                try:
+                    with piece(between, "at_commit"):
+                        at_commit(where[label], ctx.sha)
+                except BaseException as e:
+                    then.append(e)
+        except BaseException as e:
+            outcome[label] = e
+        else:
+            outcome[label] = None
+
+    threads: list[threading.Thread] = []
+    put_in = False
+    try:
+        with awaited(threads, stop) as caught:
+            for label in (BASE_PASS, OWN_PASS):
+                thread = threading.Thread(target=one, args=(label,), daemon=True)
+                threads.append(thread)      # before start(): awaited() joins it if it ran
+                thread.start()
+            base, own = threads
+            if not ended(base, caught, stop):
+                return          # awaited() raises the signal's exception
+            held[BASE_PASS].into(rep)
+            if outcome[BASE_PASS] is not None:
+                raise outcome[BASE_PASS]
+            kept_apart(BASE_PASS)
+            if then:
+                raise then[0]
+            if not ended(own, caught, stop):
+                return
+            held[OWN_PASS].into(rep)
+            put_in = True
+            if outcome[OWN_PASS] is not None:
+                raise outcome[OWN_PASS]
+    finally:
+        if not put_in:
+            for i, (name, _) in enumerate(steps, 1):
+                (logs / f"{first + i:02d}{slug_of(name + OWN_PASS)}.log").unlink(
+                    missing_ok=True)
+
+
+def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: CheckList,
+            checks, kept_apart, between: Between) -> None:
+    """Step 4's two passes at once (#609), for full_checks, with the verdicts, the logs
+    and the rows of one after another: origin/main's pass in a worktree of its own,
+    `main`, given `wt`'s build (copy_build), and the commit's in `wt`, each on a thread of
+    its own; the checks, `plan`'s, then the negative tests, NEGATIVE, each loop with both
+    passes (side_by_side), the second begun once the first is reported.
+
+    One after another, both passes run in `wt`, then both in a second worktree, given
+    `wt`'s build, for the negative tests. Here each pass runs both loops in its own
+    worktree, and no negative worktree is made. That is the same because every pass
+    begins at the commit (at_commit, which refuses a worktree whose HEAD, index or files
+    on disk are not the commit's, and removes every ignored file but the build's caches,
+    .lake/ and model/.lake/), so each check reads the same tree, caches aside; and lake,
+    run by the checks, builds whatever it finds out of date in the caches, as in the second
+    worktree. copy_build gives `main` whatever build `wt` holds: at the start of step 4,
+    after step 3, which builds nothing, none, so each pass builds its own, the two builds
+    at once. To refuse where one after another refuses, and at the same row, the first
+    at_commit of one after another, in `wt`, is asked here before either pass starts; and
+    origin/main's pass, its worktree reset, asks the at_commit the commit's pass would
+    begin with in that worktree, which side_by_side raises after keep_apart, before the
+    commit's rows (a flag such as skip-worktree, or a repository nested in an untracked
+    folder, outlasts the reset); such a refusal names the worktree it looked at, `main`
+    where one after another names `wt` or the second worktree. The one difference: the
+    commit's negative tests begin with at_commit in `wt`, after its checks, where one
+    after another they begin in a fresh worktree, so a tree the commit's checks leave
+    changed, and that no check of theirs refuses, is refused here, and not there:
+    stricter, never looser.
+
+    On the main thread, from the start of each loop's two passes until both have ended, a
+    SIGINT, SIGTERM or SIGHUP is recorded and raises nothing (awaited): no further step
+    or group of either pass starts, each pass's current step, or group, runs to its end,
+    no further row is put in, and what the first signal would have raised is raised once
+    both have ended. A terminal's Ctrl-C reaches the checks too, through the run's process
+    group, and they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to
+    end of themselves. A refusal of keep_apart, or an exception of origin/main's pass,
+    waits so for the commit's current step, or group, before it is reported. So no check
+    of either pass still runs when a worktree is cleaned or removed."""
+    with piece(between, "at_commit"):
+        at_commit(wt, ctx.sha)
+    with worktree(ctx.repo, ctx.sha, parent, "main", between) as main:
+        with piece(between, "copy_build"):
+            copy_build(wt, main)
+        where = {BASE_PASS: main, OWN_PASS: wt}
+        for steps, first, declared in ((plan.steps, 10, plan), (NEGATIVE, 30, None)):
+            side_by_side(ctx, where, inputs, rep, logs, steps, first, declared, checks,
+                         kept_apart, between)
 
 
 def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
                 sequence: CheckList | list[tuple[str, list[str] | None]]) -> None:
     """Step 4's two loops on the commit: `sequence`, check_list's (a bare list of steps
-    runs each alone), in each pass in the worktree, then NEGATIVE in a second one."""
+    runs each alone), in each pass in the worktree, then NEGATIVE in a second one. At
+    two passes (STOICHEIA_PASS_WORKERS, pass_workers), for a commit that changes a check
+    input and an origin/main's pass that is run, not taken from the cache, the two passes
+    run at once instead (at_once), with the same verdicts, logs and rows. However step 4
+    ends, one plain line then says what the work between its rows took (Between), a
+    line and not a row, so that the summary, the record and the pull request's body are
+    as before #609."""
+    between = Between()
+
     def kept_apart(label):
-        if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
-            raise Refusal("a check changed together with what it checks")
+        if label == BASE_PASS:
+            with between.piece("keep_apart"):
+                refused = keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4")
+            if refused:
+                raise Refusal("a check changed together with what it checks")
 
     plan = sequence if isinstance(sequence, CheckList) else CheckList(list(sequence), "")
     # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
@@ -4174,29 +4546,41 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
     cache = main_checks(ctx, wt, inputs, rep, plan.steps) if CACHE is not None else None
 
     def checks(steps, where: Path, label, fail, excludes, first: int,
-               declared: CheckList | None = None) -> None:
+               declared: CheckList | None = None, report: Report = rep,
+               stop: threading.Event | None = None) -> None:
         if label == BASE_PASS and cache is not None and cache.hit:
-            cache.replay(steps, first, rep, logs)
+            cache.replay(steps, first, report, logs)
             return
         kept = cache if label == BASE_PASS else None
-        run_sequence(steps, where, rep, logs, label, fail, excludes, first, declared, kept)
+        run_sequence(steps, where, report, logs, label, fail, excludes, first, declared, kept,
+                     stop)
         if kept is not None:
-            kept.save(rep)
+            kept.save(report)
 
-    # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
-    # the worktree back before the worktree is removed. A group of concurrent checks waits
-    # for every check it started before it lets such a refusal, or any exception, go
-    # (run_together), so none is still reading the worktree when it is put back.
-    with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
-        for label, fail, excludes in each:
-            checks(plan.steps, wt, label, fail, excludes, 10, plan)
-            kept_apart(label)
-    with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
-        copy_build(wt, neg)
-        with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, neg, inputs)) as each:
+    try:
+        if plan.passes > 1 and inputs and not (cache is not None and cache.hit):
+            at_once(ctx, wt, parent, inputs, rep, logs, plan, checks, kept_apart, between)
+            return
+        # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
+        # the worktree back before the worktree is removed. A group of concurrent checks
+        # waits for every check it started before it lets such a refusal, or any
+        # exception, go (run_together), so none is still reading the worktree when it is
+        # put back.
+        with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs,
+                                       between)) as each:
             for label, fail, excludes in each:
-                checks(NEGATIVE, neg, label, fail, excludes, 30)
+                checks(plan.steps, wt, label, fail, excludes, 10, plan)
                 kept_apart(label)
+        with worktree(ctx.repo, ctx.sha, parent, "negative", between) as neg:
+            with between.piece("copy_build"):
+                copy_build(wt, neg)
+            with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, neg, inputs,
+                                           between)) as each:
+                for label, fail, excludes in each:
+                    checks(NEGATIVE, neg, label, fail, excludes, 30)
+                    kept_apart(label)
+    finally:
+        print(f"  between the rows of step 4: {between.line()}", flush=True)
 
 
 # --------------------------------------------------------------------------------------

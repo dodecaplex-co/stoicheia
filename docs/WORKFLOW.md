@@ -421,6 +421,7 @@ export PATH=$HOME/.elan/bin:$PATH
 python3 -I tests/test_check_paths.py
 python3 scripts/check_paths.py --self-test
 python3 -I tests/test_concurrent_checks.py
+python3 -I tests/test_concurrent_passes.py
 lake build
 lake build Audit
 lake build Staging
