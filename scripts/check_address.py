@@ -89,7 +89,7 @@ ADDRESS = re.compile(
 URL = re.compile(
     r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*:|"
     r"(?<![A-Za-z0-9_+./:-]))//", re.I)
-URL_STOP = frozenset("<>[]{}\"'`")
+URL_STOP = frozenset("<>[]{}\"'`|")
 GITHUB_URL = re.compile(
     rf"^(?:[A-Za-z][A-Za-z0-9+.-]*:)?//(?:[^/?#@]*@)?"
     rf"(?:(?:www\.)?github\.com|api\.github\.com|codeload\.github\.com"
@@ -268,6 +268,8 @@ def self_test() -> list[str]:
         ("docs/STYLE.md", f"https://example.com/?repo=({other}/stoicheia)", []),
         ("docs/STYLE.md", f"`https://example.com/?repo=({other}/stoicheia)`"
                           f"({other}/stoicheia)", [1]),
+        ("docs/STYLE.md", f"|https://example.com/?repo=({other}/stoicheia)|"
+                          f"{other}/stoicheia|", [1]),
         ("docs/STYLE.md", f"[x](https://example.com/?repo=({other}/stoicheia)) and "
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", "https://api.github.com:443/repos/dodecaplex-co/stoicheia", []),
