@@ -668,6 +668,26 @@ step changed is a `different` passage of the record:
   changed, the centre F, from `exists_centre` (#131); and III.11, III.12 and III.13, tag
   `touching-whole-circles`.
 
+**28 October 2026, the table and the records (#523).** The note of 25 October gives the
+records' state at main bedbba23e; this list gives it at main 20d14b0a3, and the records in
+`review/III/` remain the authority. These rows now differ from that note, or, where it is
+silent, from the table; a step changed is still a `different` passage of the record:
+
+- III.4: `euclid`, the centre F found by III.1's construction (#547).
+- III.8: one step changed, its last step; the centre M is found by III.1's construction
+  (#547).
+- III.10: `euclid`, its last step by III.5, through `CirclesCut.of_meet` (#475).
+- III.16: `euclid`, the angle clauses by Euclid's reductio from the second part (#547).
+- III.17: `euclid`, the centre E found by III.1's construction (#547).
+- III.18: tag `mixed-angles-local`, for its companions on the angle of contact (#130).
+- III.20: tag `angle-measure`, for its companion `Prop20.circumference` (#129).
+- III.21: `euclid`, Euclid's two steps for a segment of any size (#129).
+- III.24: `euclid`, Euclid's application and his reductio (#547).
+- III.26: one step changed, the congruence of the remainders (#129).
+
+Book III's routes are still being worked on (#546, #547, #474), so this list too is of its
+date.
+
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,
 and the mixed-angle comparisons have the scope described above.
