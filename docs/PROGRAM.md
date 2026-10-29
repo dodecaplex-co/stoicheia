@@ -108,6 +108,51 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `full` ([#29]) |
 | 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
+### Release forecast
+
+*As of 29 October 2026, 13:00 Pacific.* A Monte Carlo model of the release puts its date
+at:
+
+| Ship times | Median | 80% by |
+|---|---|---|
+| **As measured over the last 7 days** | Monday 2 November | Tuesday 3 November |
+| If today's process changes make ships 30% faster | Sunday 1 November | Monday 2 November |
+
+This is a dated record. The forecast is recomputed as work lands, and this section is
+updated when it moves materially.
+
+**What the model includes.**
+- **The work:** the 53 open release-blocking cards and the 42 trains in flight that serve
+  them, with their dependencies.
+- **Who does it:** 12 writing agents, one serial landing lane that batches trains on one
+  chain, and checks on a cloud VM.
+- **How long each stage takes,** from the last 7 days, with the skew kept:
+  - writing a heavy train: median 4.6 hours, 80th percentile 10.6, 95th 45;
+  - a heavy landing: median 77 minutes;
+  - a heavy check run: median 54 minutes.
+- **Coupled risks, at their measured rates:** a loaded build machine; a lost VM; GitHub
+  outages; a broken main; restarts; model usage limits; one defect found across many
+  Book III propositions; conflicts on shared files; a landing-tool regression.
+- **The release's own tasks** (read-through, audit, verification, acceptance,
+  measurement) start early and finish on the release candidate. Each may find new work,
+  at assumed odds.
+
+**What it leaves out.** Each would make the date later:
+- the owner's release-day steps can happen at any hour;
+- the score gate (each book at least 95 with each reviewer) is treated as a few found
+  cards, not a pass or fail;
+- the coordinator's own time.
+
+**The most critical chains now,** by the share of simulated releases in which each sets
+the date:
+1. **The release gate:** [#35], the acceptance checklist (0.34); [#34], the read-through
+   (0.20); [#155], acceptance in CI (0.18); [#273], release verification (0.15); [#47], the
+   score (0.16); [#216], the wiki (0.15); [#217], this page (0.12).
+2. **Book III content with nothing yet in flight,** and the spine: [#624] (0.10), [#302]
+   (0.10), [#476], [#510], [#480], [#704], and the Book III spine ([#474], [#547], [#381]),
+   landing as one batch.
+3. **Book III's score with one reviewer** (92.7 against 95): [#704], [#476] and [#672].
+
 ### Landed on 18 October
 
 Stages 1 and 1b are done, and the book-III release is made; the owner's decision that the
@@ -325,3 +370,20 @@ in the voyage logs).
 [#134]: https://github.com/dodecaplex-co/stoicheia/pull/134
 [#148]: https://github.com/dodecaplex-co/stoicheia/pull/148
 [#153]: https://github.com/dodecaplex-co/stoicheia/issues/153
+[#34]: https://github.com/dodecaplex-co/stoicheia/issues/34
+[#35]: https://github.com/dodecaplex-co/stoicheia/issues/35
+[#47]: https://github.com/dodecaplex-co/stoicheia/issues/47
+[#155]: https://github.com/dodecaplex-co/stoicheia/issues/155
+[#216]: https://github.com/dodecaplex-co/stoicheia/issues/216
+[#217]: https://github.com/dodecaplex-co/stoicheia/issues/217
+[#273]: https://github.com/dodecaplex-co/stoicheia/issues/273
+[#302]: https://github.com/dodecaplex-co/stoicheia/issues/302
+[#381]: https://github.com/dodecaplex-co/stoicheia/issues/381
+[#474]: https://github.com/dodecaplex-co/stoicheia/issues/474
+[#476]: https://github.com/dodecaplex-co/stoicheia/issues/476
+[#480]: https://github.com/dodecaplex-co/stoicheia/issues/480
+[#510]: https://github.com/dodecaplex-co/stoicheia/issues/510
+[#547]: https://github.com/dodecaplex-co/stoicheia/issues/547
+[#624]: https://github.com/dodecaplex-co/stoicheia/issues/624
+[#672]: https://github.com/dodecaplex-co/stoicheia/issues/672
+[#704]: https://github.com/dodecaplex-co/stoicheia/issues/704
