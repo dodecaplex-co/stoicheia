@@ -11,8 +11,10 @@ their bytes, the rows keep_apart judges on, and the exception are the same, the 
 temporary paths masked, the worktree a pass runs in among them, which differs by design:
 when both passes pass; when origin/main's fails, noted; when the commit's fails, in the
 checks and, separately, in the negative tests; when both fail; when keep_apart refuses
-after origin/main's checks, the commit's rows and logs discarded and no negative test run;
-when either pass's run() raises; and when a pass leaves its tree changed, the clean-tree
+after origin/main's checks, the commit's rows and logs discarded and no negative test run,
+and when it refuses only after origin/main's negative tests, the commit's negative rows
+and logs discarded; when the main-checks cache misses, the same entry kept; when either
+pass's run() raises; and when a pass leaves its tree changed, the clean-tree
 check refusing, or the at_commit that one after another begins the next pass with: after
 step 3, after origin/main's checks, after its negative tests. The one difference, which is
 stricter, is pinned: a tree the commit's checks leave changed, and that none of them
@@ -20,10 +22,14 @@ refuses, is refused before its negative tests at two passes and not at one. One 
 stays for a commit that changes no check input and for origin/main's pass taken from the
 cache. At two the passes are shown to overlap, and at one never to. SIGINT and SIGTERM sent
 while both passes run raise KeyboardInterrupt only once both passes' checks have ended,
-no further step started, the handlers put back and the second worktree removed.
+no further step started, the handlers put back and the second worktree removed; a pass a
+SIGINT stopped keeps no cache entry; and with stop set no further check of a group starts
+at one worker, while at two a group begun runs to its end.
 STOICHEIA_PASS_WORKERS is read, taken up to two, capped against the check and negative
 workers by half the cores, said on the check list line, and refused unless a whole number
-from 1. The work between the rows is timed piece by piece and said in one line, not a row.
+from 1. The work between the rows is timed piece by piece, the guard of each group and
+the cache's lookup and save among them, and said in one line, not a row, its sum said to
+be over both passes at two.
 Every order a case asserts is forced by marks the checks wait for, never by how long they
 sleep: a check gives up waiting only after HOLD seconds, which a right run never comes
 near. It runs alone in the sequence, since it starts processes of its own and runs two
@@ -210,15 +216,18 @@ class Stand(unittest.TestCase):
                 [step(n, overlap[1] and n == negatives[0]) for n in negatives])
 
     def full(self, steps, negative, passes: int, marks: Path, keep=None, before=None,
-             inputs=None, on_raise: threading.Event | None = None) -> Outcome:
-        """full_checks with `passes` passes at once, keep_apart standing in as `keep` when
-        given, and `before` called on the worktree first: what came of it, masked, and the
-        marks made as it raised, after which `on_raise`, if given, is set."""
+             inputs=None, on_raise: threading.Event | None = None,
+             concurrent=frozenset()) -> Outcome:
+        """full_checks with `passes` passes at once, the checks `concurrent` names declared
+        so, keep_apart standing in as `keep` when given, and `before` called on the
+        worktree first: what came of it, masked, and the marks made as it raised, after
+        which `on_raise`, if given, is set."""
         parent = self.tmp / f"run-{self.runs}-{passes}-{len(os.listdir(self.tmp))}"
         logs = parent / "logs"
         logs.mkdir(parents=True)
         ctx = types.SimpleNamespace(repo=ROOT, base=BASE, sha=SHA)
-        plan = safe_push.CheckList(list(steps), "", passes=passes)
+        plan = safe_push.CheckList(list(steps), "", concurrent=frozenset(concurrent),
+                                   passes=passes)
         rep, out, judged, raised, at_raise = safe_push.Report(), io.StringIO(), [], None, []
         judge = keep or safe_push.keep_apart
 
@@ -255,6 +264,21 @@ class Stand(unittest.TestCase):
             {p.name: p.read_bytes() for p in sorted(logs.iterdir())},
             judged, [line for line in lines if line.startswith(BETWEEN)], marks, parent,
             at_raise)
+
+    @contextlib.contextmanager
+    def missed(self, steps, negative):
+        """--main-checks-cache on a miss for `steps` and `negative`, the entry writable:
+        yields the list of entries written, as write_entry would write them."""
+        fields = {"checks": [[n, c] for n, c in steps],
+                  "negative": [[n, c] for n, c in negative]}
+        written: list[dict] = []
+        with mock.patch.object(safe_push, "CACHE", self.tmp), \
+                mock.patch.object(safe_push, "main_checks",
+                                  return_value=safe_push.MainChecks("f" * 64, fields, None)), \
+                mock.patch.object(safe_push.MainChecks, "unwritable", lambda self: ""), \
+                mock.patch.object(safe_push, "write_entry",
+                                  lambda cache, key, entry: written.append(entry)):
+            yield written
 
     @contextlib.contextmanager
     def released_once_awaited(self, marks: Path):
@@ -416,6 +440,36 @@ class Verdicts(Stand):
                         "the commit's loop had not run: nothing was discarded")
         for outcome in (one, two):
             self.assertFalse(list(outcome.marks.glob("*negative*")), "a negative test ran")
+
+    def test_e_keep_apart_refuses_after_origin_mains_negative_tests_only(self):
+        def refusing(repo, base, sha, rep, stage):
+            if not any(s.name.startswith("negative: ") for s in rep.steps):
+                return False
+            rep.add(stage, "check change kept apart", "FAIL", "planted, after the negative tests")
+            return True
+
+        def build(marks, passes):
+            # At two, origin/main's last negative test holds until the commit's last has
+            # ended, so that the commit's whole negative loop has run, its logs written,
+            # when it is discarded.
+            last = ({"hold": key("commit", "negative: second") + ".end"} if passes == 2
+                    else {}, {})
+            return self.sequence(marks, passes, {"negative: second": last})
+        one, two = self.both(build, keep=refusing)
+        self.assertEqual(one.raised, ("Refusal", "a check changed together with what it checks"))
+        self.assertEqual([(name, outcome) for _, name, outcome, _ in one.steps][-3:],
+                         [("negative: first" + BASE_PASS, "ok"),
+                          ("negative: second" + BASE_PASS, "ok"),
+                          ("check change kept apart", "FAIL")])
+        # The commit's checks kept, and none of its negative tests' rows or logs.
+        self.assertEqual(self.names(one, OWN_PASS),
+                         [n + OWN_PASS for n in ("first", "second", "third")])
+        self.assertEqual(sorted(n for n in one.logs if n.startswith("3")),
+                         ["31-negative-first-origin-main-s-checks.log",
+                          "32-negative-second-origin-main-s-checks.log"])
+        self.assertTrue((two.marks / f"{key('commit', 'negative: second')}.end").exists(),
+                        "the commit's negative loop had not run: nothing was discarded")
+        self.assertEqual(len(one.judged), 2)
 
     def test_f_a_pass_crashes(self):
         # tests/only-commit.sh is the commit's: origin/main's copies take it out, and run()
@@ -598,15 +652,46 @@ class Overlap(Stand):
         self.assertIn("reused from the cache", outcomes[0].steps[0][3])
 
 
+class Cache(Stand):
+    """--main-checks-cache on a miss: origin/main's pass, run at two passes on a thread of
+    its own into a report held, is kept as the same entry as at one pass."""
+
+    def test_a_miss_saves_the_same_entry_at_one_pass_and_at_two(self):
+        outcomes, entries = [], []
+        for passes in (1, 2):
+            marks = self.marks()
+            steps, negative = self.sequence(marks, passes, {"second": ({"code": 3}, {})})
+            with self.missed(steps, negative) as written:
+                outcomes.append(self.full(steps, negative, passes, marks))
+            self.assertEqual(len(written), 1, f"{len(written)} entries at {passes} passes")
+            parent = outcomes[-1].parent
+            entries.append([(s["name"], s["outcome"], s["log"],
+                             s["detail"].replace(str(parent), "PARENT")
+                             .replace(os.path.realpath(parent), "PARENT"))
+                            for s in written[0]["steps"]])
+        one, two = outcomes
+        for field in COMPARED:
+            self.assertEqual(getattr(two, field), getattr(one, field), field)
+        self.assertEqual(entries[1], entries[0])
+        self.assertEqual([(name, outcome) for name, outcome, _, _ in entries[0]],
+                         [("first" + BASE_PASS, "ok"), ("second" + BASE_PASS, "note"),
+                          ("third" + BASE_PASS, "ok"), ("negative: first" + BASE_PASS, "ok"),
+                          ("negative: second" + BASE_PASS, "ok")])
+        self.assertEqual(entries[0][1][2], "second in main says this on stdout\n"
+                                           "second in main says this on stderr\n")
+
+
 class Between(Stand):
     """The work between the rows: each piece named, timed and counted, in one line printed
     once however step 4 ends, never a row."""
 
     PIECE = re.compile(r"([a-z_ ]+?) [0-9]+\.[0-9] s(?: \(([0-9]+) times\))?")
 
-    def pieces(self, line: str) -> dict[str, int]:
+    def pieces(self, line: str, passes: int) -> dict[str, int]:
+        """The pieces `line` names, and how many times each, its sum said as at `passes`."""
         body, _, total = line.removeprefix(BETWEEN).rpartition(": ")
-        self.assertRegex(total, r"^[0-9]+\.[0-9] s in all$")
+        self.assertRegex(total, r"^[0-9]+\.[0-9] s in all"
+                         + (", summed over both passes$" if passes == 2 else "$"))
         return {m[1]: int(m[2] or 1) for m in map(self.PIECE.fullmatch, body.split(", "))}
 
     def test_the_line_names_each_piece(self):
@@ -620,9 +705,26 @@ class Between(Stand):
                 steps, negative = self.sequence(marks, passes)
                 outcome = self.full(steps, negative, passes, marks)
                 [line] = outcome.between
-                self.assertEqual(self.pieces(line), expected[passes])
-                self.assertEqual(list(self.pieces(line)), list(expected[passes]))
+                self.assertEqual(self.pieces(line, passes), expected[passes])
+                self.assertEqual(list(self.pieces(line, passes)), list(expected[passes]))
                 self.assertNotIn("between", " ".join(name for _, name, _, _ in outcome.steps))
+        # With a group, and the cache on a miss: the guard of each group, and the cache's
+        # lookup and its save, asked after each loop of origin/main's pass, timed too.
+        for passes in (1, 2):
+            with self.subTest(passes=passes, group=True, cache="miss"):
+                marks = self.marks()
+                steps, negative = self.sequence(marks, passes)
+                with self.missed(steps, negative) as written:
+                    outcome = self.full(steps, negative, passes, marks,
+                                        concurrent={"first", "second"})
+                self.assertIsNone(outcome.raised)
+                self.assertEqual(len(written), 1)
+                [line] = outcome.between
+                self.assertEqual(list(self.pieces(line, passes).items()), [
+                    ("cache lookup", 1), ("worktree add", 1), ("copy_build", 1),
+                    ("at_commit", 7 if passes == 2 else 4), ("base_copies", 2),
+                    ("tree_state", 4), ("reset and clean", 2), ("cache save", 2),
+                    ("keep_apart", 2), ("worktree remove", 1)])
         # On a refusal too.
         marks = self.marks()
         steps, negative = self.sequence(marks, 2, {"first": ({}, {"code": 1})})
@@ -643,6 +745,7 @@ class Between(Stand):
             pass
         self.assertRegex(between.line(), r"^at_commit 0\.0 s \(2 times\), worktree remove "
                                          r"0\.0 s, something else 0\.0 s: 0\.0 s in all$")
+        self.assertEqual(between.line(True), between.line() + ", summed over both passes")
         with safe_push.piece(None, "at_commit"):
             pass        # nothing timed, and nothing to time it with
 
@@ -675,8 +778,9 @@ class Deferred(unittest.TestCase):
 
 
 class Stop(Stand):
-    """run_sequence with `stop` set starts no further step or group, and a group already
-    started runs to its end; with it unset, or none, it runs as before."""
+    """run_sequence with `stop` set starts no further step or group, nor, at one worker, a
+    further check of a group, while at more a group already started runs to its end; with
+    it unset, or none, it runs as before."""
 
     def test_no_step_starts_once_it_is_set(self):
         logs = self.tmp / "logs"
@@ -696,8 +800,9 @@ class Stop(Stand):
             safe_push.run_sequence(steps, self.tmp, safe_push.Report(), logs, "", "FAIL", [], 10,
                                    None, None, stop)
         self.assertEqual(sorted(p.name for p in marks.iterdir()), ["first"])
-        # A group of two, at one worker and at two: set by the first, the second still runs.
-        for workers in (1, 2):
+        # A group of two, set by the first: at one worker the second never starts; at two it
+        # began beside the first, and runs to its end.
+        for workers, ran in ((1, ["one"]), (2, ["one", "two"])):
             with self.subTest(workers=workers):
                 stop.clear()
                 marks = self.marks()
@@ -721,7 +826,7 @@ class Stop(Stand):
                         self.assertRaises(safe_push.Stopped):
                     safe_push.run_sequence(group, root, safe_push.Report(), logs, "", "FAIL",
                                            [], 20 + 10 * workers, plan, None, stop)
-                self.assertEqual(sorted(p.name for p in marks.iterdir()), ["one", "two"])
+                self.assertEqual(sorted(p.name for p in marks.iterdir()), ran)
 
 
 class Interrupted(Stand):
@@ -731,7 +836,7 @@ class Interrupted(Stand):
     removed. The checks end either the moment both signals are recorded, before the main
     thread has looked, so that the passes must read the record themselves; or only once
     the harness joins the passes' threads, so that a harness that did not wait would
-    raise first."""
+    raise first. And no main-checks cache entry is kept from a pass a signal stopped."""
 
     def test_i_signals_wait_for_both_passes(self):
         if threading.current_thread() is not threading.main_thread():
@@ -827,6 +932,67 @@ class Interrupted(Stand):
         sender.join(HOLD)
         return sent, at_raise, parent, logs
 
+    def test_no_entry_from_a_pass_a_signal_stopped(self):
+        # --main-checks-cache on a miss, and a SIGINT sent while origin/main's last step, its
+        # last negative test, runs; once the harness's handler has run, that step ends,
+        # failing, as a terminal's Ctrl-C reaching it would make it. At one pass the handler
+        # raises there, and nothing is kept. At two it only records the signal, and the
+        # step ends a note, the last of the pass, which must not be kept as its outcome.
+        if threading.current_thread() is not threading.main_thread():
+            self.skipTest("a signal's handler runs on the main thread alone")
+        real = safe_push.recorder
+        for passes in (1, 2):
+            with self.subTest(passes=passes):
+                marks = self.marks()
+                last = "negative: last"
+                steps = [self.stand_in(marks, "first")]
+                negative = [self.stand_in(marks, last, {"hold": "release", "code": 130})]
+
+                def interrupt(signum, frame):
+                    (marks / "release").touch()
+                    raise KeyboardInterrupt
+                before = signal.signal(signal.SIGINT, interrupt)
+                self.addCleanup(signal.signal, signal.SIGINT, before)
+
+                def recorder(caught):
+                    record = real(caught)
+
+                    def releasing(signum, frame):
+                        record(signum, frame)
+                        (marks / "release").touch()
+                    return releasing
+
+                def send():
+                    given_up = time.monotonic() + HOLD
+                    started = marks / f"{key('main', last)}.start"
+                    while not started.exists() and time.monotonic() < given_up:
+                        time.sleep(0.01)
+                    # To the main thread, whose wait for the check it then interrupts.
+                    signal.pthread_kill(threading.main_thread().ident, signal.SIGINT)
+                sender = threading.Thread(target=send, daemon=True)
+                parent = self.tmp / f"run-stopped-{passes}"
+                logs = parent / "logs"
+                logs.mkdir(parents=True)
+                ctx = types.SimpleNamespace(repo=ROOT, base=BASE, sha=SHA)
+                raised = None
+                with self.missed(steps, negative) as written, \
+                        mock.patch.object(safe_push, "NEGATIVE", negative), \
+                        mock.patch.object(safe_push, "recorder", recorder), \
+                        contextlib.redirect_stdout(io.StringIO()), \
+                        safe_push.worktree(ROOT, SHA, parent, "check") as wt:
+                    sender.start()
+                    try:
+                        safe_push.full_checks(ctx, wt, parent, INPUTS, safe_push.Report(), logs,
+                                              safe_push.CheckList(steps, "", passes=passes))
+                    except KeyboardInterrupt as e:
+                        raised = e
+                sender.join(HOLD)
+                self.assertIsInstance(raised, KeyboardInterrupt)
+                if passes == 2:     # at one, the check may be killed as the harness raises
+                    self.assertTrue((marks / f"{key('main', last)}.end").exists(),
+                                    "origin/main's last step did not end as planted")
+                self.assertEqual(written, [], "an entry was kept from a pass a signal stopped")
+
 
 def folder(files: dict) -> Path:
     """A root of the test's own, committed: scripts/registry.py as this checkout holds it,
@@ -871,7 +1037,8 @@ class Workers(unittest.TestCase):
     def within(self, said, checks, negative, cores):
         return (f"{self.HEAD} at once ({said}: twice the larger of the check workers, "
                 f"{checks}, and the negative tests' workers, {negative}, is within half this "
-                f"machine's {cores} cores, {max(1, cores // 2)})")
+                f"machine's {cores} cores, {max(1, cores // 2)}; a check run alone is alone "
+                "only within its pass, and a build or the sweep may itself use every core)")
 
     def test_j_the_variable_is_read_taken_capped_and_said(self):
         self.assertEqual(self.passes(None), (1, ""))

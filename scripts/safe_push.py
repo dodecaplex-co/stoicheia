@@ -2646,11 +2646,22 @@ def slug_of(label: str) -> str:
 class Between:
     """The work step 4 does between its rows, which no row times (#609): each piece's
     seconds, summed, and how many times it ran, by the piece's name, added from any thread
-    under a lock. full_checks prints them in one line once step 4 ends, however it ends."""
+    under a lock. full_checks prints them in one line once step 4 ends, however it ends.
+
+    Each piece stays for a reason of its own. at_commit is what lets a pass trust its tree,
+    asking only Git. base_copies puts in origin/main's copies, which make its pass; reset
+    and clean take them out before the tree is checked again or removed. worktree add,
+    copy_build and worktree remove make the second tree, which two passes at once need, as
+    the negative tests one after another do, and the build copied saves that tree a full
+    one. keep_apart is the rule itself. tree_state is #608's guard of each group. The
+    cache's lookup and save are the cache itself. Of the seven at_commits at two passes,
+    two recheck a tree nothing in the harness has touched since the last (the commit's
+    first, and origin/main's at the start of its second loop): they stay because they are
+    cheap, run while the other pass runs, and catch a process left running (#218)."""
 
     # The order line() names them in; a piece of another name comes after, as first timed.
-    ORDER = ("worktree add", "copy_build", "at_commit", "base_copies", "reset and clean",
-             "keep_apart", "worktree remove")
+    ORDER = ("cache lookup", "worktree add", "copy_build", "at_commit", "base_copies",
+             "tree_state", "reset and clean", "cache save", "keep_apart", "worktree remove")
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -2669,9 +2680,12 @@ class Between:
                 self.seconds[name] = self.seconds.get(name, 0.0) + took
                 self.counts[name] = self.counts.get(name, 0) + 1
 
-    def line(self) -> str:
-        """Each piece's seconds, and how many times when more than once, then their sum:
-        "worktree add 0.3 s, at_commit 2.0 s (4 times), ...: 4.5 s in all"."""
+    def line(self, summed: bool = False) -> str:
+        """Each piece's seconds, and how many times when more than once, then their sum,
+        of the pieces named and no other work: "worktree add 0.3 s, at_commit 2.0 s (4
+        times), ...: 4.5 s in all". `summed`, at two passes, says ", summed over both
+        passes" after it: the sum then adds pieces that ran at the same time, so it is no
+        wall time."""
         with self.lock:
             order = {name: at for at, name in enumerate(self.ORDER)}
             names = sorted(self.seconds, key=lambda name: order.get(name, len(order)))
@@ -2679,7 +2693,8 @@ class Between:
                      + (f" ({self.counts[name]} times)" if self.counts[name] > 1 else "")
                      for name in names]
             total = sum(self.seconds.values())
-        return f"{', '.join(parts) or 'nothing'}: {total:.1f} s in all"
+        return (f"{', '.join(parts) or 'nothing'}: {total:.1f} s in all"
+                + (", summed over both passes" if summed else ""))
 
 
 def piece(between: Between | None, name: str):
@@ -2856,8 +2871,6 @@ def one_pass(repo, base, sha, wt: Path, changes: list[tuple[str, str]], label: s
     commit's own (OWN_PASS), a failure refusing; for origin/main's (BASE_PASS), with its
     copies put in, a failure noted, and the worktree reset to the commit afterwards
     (base_copies). `between`, if given, times the work around it (Between)."""
-    if label not in (BASE_PASS, OWN_PASS):
-        raise ValueError(f"no pass is labelled {label!r}")
     with piece(between, "at_commit"):
         at_commit(wt, sha)
     if label == OWN_PASS:
@@ -3741,9 +3754,10 @@ def check_workers() -> tuple[int, str]:
 
 # Step 4's two passes at once (#609), when the commit changes a check input: origin/main's
 # and the commit's own, each in a worktree of its own (at_once). The variable is keyed in
-# the main-checks cache, as every STOICHEIA_ variable is (KEYED_VARIABLES), though no check
-# reads it: a record made at one number is never used at another. NEGATIVE_WORKERS is
-# negative_tests.py's, read here only for the cap.
+# the main-checks cache, as every STOICHEIA_ variable is but the harness's own three
+# (KEYED_VARIABLES, UNKEYED_VARIABLES), though no check reads it: a record made at one
+# number is never used at another. NEGATIVE_WORKERS is negative_tests.py's, read here only
+# for the cap.
 PASS_WORKERS = "STOICHEIA_PASS_WORKERS"
 NEGATIVE_WORKERS = "STOICHEIA_NEGATIVE_WORKERS"
 
@@ -3757,9 +3771,11 @@ def pass_workers(check_workers: int) -> tuple[int, str]:
     declares none), and the negative tests' workers, STOICHEIA_NEGATIVE_WORKERS read as
     negative_tests.py reads it (a whole number from 1; any other value counts as one here,
     and negative_tests.py refuses it itself), is no more than half this machine's cores (at
-    least one), check_workers' cap, so that yards, ships and other work still get their
-    share; else one, and the line says why, with the numbers. Any other value is a Refusal
-    naming it."""
+    least one), check_workers' cap; else one, and the line says why, with the numbers. The
+    cap bounds the checks the harness starts at once and the negative tests' workers, not
+    the cores one check uses: a single check (a build, the sweep) may itself use every
+    core, at one pass or two. At two, the line says so, and that a check run alone is alone
+    only within its pass (at_once). Any other value is a Refusal naming it."""
     text = os.environ.get(PASS_WORKERS, "")
     if not text:
         return 1, ""
@@ -3787,7 +3803,8 @@ def pass_workers(check_workers: int) -> tuple[int, str]:
                f"{cap}")
     if over:
         return 1, f"{head} one after another: {said}, but {numbers}"
-    return 2, f"{head} at once ({said}: {numbers})"
+    return 2, (f"{head} at once ({said}: {numbers}; a check run alone is alone only within "
+               "its pass, and a build or the sweep may itself use every core)")
 
 
 def on_disk(path: Path, hashed: bool = True) -> tuple:
@@ -4049,12 +4066,14 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
 
 
 def guard_group(group, before: TreeState, where: Path, rep: Report, label: str,
-                fail: str, cache=None) -> None:
+                fail: str, cache=None, between=None) -> None:
     """The worktree's state (tree_state) after a group of concurrent checks, against
     `before`, taken before it: if the group changed it, the step TREE_GUARD fails, naming
     the checks and what changed (tree_changes), as a note in a noting pass, which then
-    keeps the pass out of the main-checks cache."""
-    now = tree_state(where)
+    keeps the pass out of the main-checks cache. `between`, if given, times the state's
+    taking as "tree_state" (Between)."""
+    with piece(between, "tree_state"):
+        now = tree_state(where)
     if now == before:
         return
     rep.add("4", TREE_GUARD + label, fail, f"the worktree differs after "
@@ -4073,7 +4092,7 @@ class Stopped(Exception):
 
 def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: str,
                  excludes, first: int, plan: CheckList | None = None, cache=None,
-                 stop: threading.Event | None = None) -> None:
+                 stop: threading.Event | None = None, between=None) -> None:
     """A pass's steps, each logged as `first` and its place, `cache`, if given, collecting
     each as it is reported. A check `plan` declares concurrent runs in a group with those
     next to it in order, and the worktree's state is taken around the group at every
@@ -4081,8 +4100,10 @@ def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: 
     check runs alone, as do the steps of a list with no plan. At one worker, a group's
     checks run as every check runs, one after another on this thread (run_step), so the
     run is the one before #608 but for the guard; at more, together (run_together). With
-    `stop` set, no further step or group starts: Stopped is raised in its place, and a
-    group already started runs to its end (at_once)."""
+    `stop` set, no further step or group starts, nor, at one worker, a further check of a
+    group: Stopped is raised in its place (at_once). At more than one worker, a group
+    already started runs to its end, since run_together does not look at `stop`.
+    `between`, if given, times the two tree_states around each group (Between)."""
     concurrent = plan.concurrent if plan is not None else frozenset()
     at = 0
     while at < len(steps):
@@ -4093,17 +4114,22 @@ def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: 
             end += 1
         alone = end == at
         group = steps[at:at + 1] if alone else steps[at:end]
-        before = None if alone else tree_state(where)
+        before = None
+        if not alone:
+            with piece(between, "tree_state"):
+                before = tree_state(where)
         if not alone and plan.workers > 1:
             run_together(group, where, rep, logs, first + at + 1, label, fail, plan.after,
                          plan.workers, cache)
         else:
             for index, (name, cmd) in enumerate(group, first + at + 1):
+                if stop is not None and stop.is_set():
+                    raise Stopped
                 out = run_step("4", name + label, cmd, where, rep, logs, index, fail, excludes)
                 if cache is not None:
                     cache.collect(rep, out)
         if not alone:
-            guard_group(group, before, where, rep, label, fail, cache)
+            guard_group(group, before, where, rep, label, fail, cache, between)
         at += len(group)
 
 
@@ -4342,16 +4368,16 @@ def awaited(threads: list[threading.Thread], stop: Halt):
     as set, and which the body looks at between its waits, since an exception a handler
     raises can land just after a lock is taken and leave it held, as in run_together. On
     every way out of the body: `stop` set, so that neither pass starts a further step or
-    group; every thread of `threads` that was
-    started joined, JOIN_SECONDS at a time, so that no check of either pass still runs
-    when a worktree is cleaned (base_copies, at_commit) or removed (worktree), a thread
-    whose start() failed passed over; then the previous handlers put back with the
-    signals held on this thread, so that no handler runs half-way through, and any of
-    them the system still holds for the harness taken (sigwait) and recorded; and, if a
-    signal was recorded, what the first would have raised outside (signalled) raised, in
-    place of any exception on its way out, unless another comes in the moment the mask is
-    lifted, when its own handler raises first. Off the main thread (a test's), Python runs
-    no handler on this thread, and none is installed."""
+    group; every thread of `threads` that was started joined, JOIN_SECONDS at a time, so
+    that no check of either pass still runs when a worktree is cleaned (base_copies,
+    at_commit) or removed (worktree), a thread whose start() failed passed over; then the
+    previous handlers put back with the signals held on this thread, so that no handler
+    runs half-way through, and any of them the system still holds for the harness taken
+    (sigwait) and recorded; and, if a signal was recorded, what the first would have
+    raised outside (signalled) raised, in place of any exception on its way out, unless
+    another comes in the moment the mask is lifted, when its own handler raises first. Off
+    the main thread (a test's), Python runs no handler on this thread, and none is
+    installed."""
     caught = stop.caught
     previous = ({signum: signal.getsignal(signum) for signum in GROUP_SIGNALS}
                 if threading.current_thread() is threading.main_thread() else {})
@@ -4414,12 +4440,15 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
     at_commit raised, if anything, is raised; else it waits for the commit's pass, puts
     its rows into `rep`, and raises what that pass raised, a failure's Refusal among
     them. On every way out but the last, the commit's rows are discarded: never put in,
-    and each log of its steps in this loop unlinked, since one after another it would not
-    have run; awaited() has first set `stop` and joined both threads, so a refusal of
-    keep_apart, or an exception of origin/main's pass, waits for the commit's current
-    step, or group, to end before it goes on. Once a signal is recorded, no further row
-    is put in, `stop` is set, and awaited() raises what the first signal would have
-    raised once both passes' current steps, or groups, have ended."""
+    and each log of its steps in this loop unlinked. On a refusal or an exception, one
+    after another would not have run them. On a signal, one after another would have kept
+    the rows and logs of the commit's steps run before it; here they are dropped, and the
+    run ends interrupted, with no verdict, as there. awaited() has first set `stop` and
+    joined both threads, so a refusal of keep_apart, or an exception of origin/main's
+    pass, waits for the commit's current step (at more than one worker, its current group)
+    to end before it goes on. Once a signal is recorded, no further row is put in, `stop`
+    is set, and awaited() raises what the first signal would have raised once both passes'
+    current steps (or groups) have ended."""
     stop = Halt()
     held = {label: Deferred() for label in where}
     outcome: dict[str, BaseException | None] = {}
@@ -4475,10 +4504,13 @@ def side_by_side(ctx, where: dict[str, Path], inputs, rep: Report, logs: Path, s
 def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: CheckList,
             checks, kept_apart, between: Between) -> None:
     """Step 4's two passes at once (#609), for full_checks, with the verdicts, the logs
-    and the rows of one after another: origin/main's pass in a worktree of its own,
-    `main`, given `wt`'s build (copy_build), and the commit's in `wt`, each on a thread of
-    its own; the checks, `plan`'s, then the negative tests, NEGATIVE, each loop with both
-    passes (side_by_side), the second begun once the first is reported.
+    and the rows of one after another, but for the paths in them, which name the worktree
+    each pass ran in: `main` for origin/main's pass, and `wt` (`check`), not the second
+    worktree (`negative`), for the commit's negative tests; tests/test_concurrent_passes.py
+    masks them on purpose. origin/main's pass runs in a worktree of its own, `main`, given
+    `wt`'s build (copy_build), and the commit's in `wt`, each on a thread of its own; the
+    checks, `plan`'s, then the negative tests, NEGATIVE, each loop with both passes
+    (side_by_side), the second begun once the first is reported.
 
     One after another, both passes run in `wt`, then both in a second worktree, given
     `wt`'s build, for the negative tests. Here each pass runs both loops in its own
@@ -4501,15 +4533,26 @@ def at_once(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path, plan: 
     changed, and that no check of theirs refuses, is refused here, and not there:
     stricter, never looser.
 
+    What runs beside each check is not the same. A check that runs alone, as the registry
+    keeps one for the clock or for load (checks/README.md), does so within its pass, and
+    may run beside a check of the other pass, as beside another yard's pre-flight on the
+    machine; the cap (pass_workers) bounds the checks the harness starts at once and the
+    negative tests' workers, not the cores one check (a build, the sweep) uses. And the
+    commit's checks run while origin/main's pass runs in the sibling worktree, `main`, so
+    code of the commit run in its checks could reach that worktree while it runs: the
+    class of #197 and #218 (code of a commit that runs at elaboration), now without
+    needing a process left running.
+
     On the main thread, from the start of each loop's two passes until both have ended, a
     SIGINT, SIGTERM or SIGHUP is recorded and raises nothing (awaited): no further step
-    or group of either pass starts, each pass's current step, or group, runs to its end,
-    no further row is put in, and what the first signal would have raised is raised once
-    both have ended. A terminal's Ctrl-C reaches the checks too, through the run's process
-    group, and they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to
-    end of themselves. A refusal of keep_apart, or an exception of origin/main's pass,
-    waits so for the commit's current step, or group, before it is reported. So no check
-    of either pass still runs when a worktree is cleaned or removed."""
+    or group of either pass starts, each pass's current step (at more than one worker, its
+    current group) runs to its end, no further row is put in, and what the first signal
+    would have raised is raised once both have ended. A terminal's Ctrl-C reaches the
+    checks too, through the run's process group, and they end; a SIGTERM or SIGHUP sent
+    to the harness alone waits for them to end of themselves. A refusal of keep_apart, or
+    an exception of origin/main's pass, waits so for the commit's current step (or group)
+    before it is reported. So no check of either pass still runs when a worktree is
+    cleaned or removed."""
     with piece(between, "at_commit"):
         at_commit(wt, ctx.sha)
     with worktree(ctx.repo, ctx.sha, parent, "main", between) as main:
@@ -4527,11 +4570,14 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
     runs each alone), in each pass in the worktree, then NEGATIVE in a second one. At
     two passes (STOICHEIA_PASS_WORKERS, pass_workers), for a commit that changes a check
     input and an origin/main's pass that is run, not taken from the cache, the two passes
-    run at once instead (at_once), with the same verdicts, logs and rows. However step 4
-    ends, one plain line then says what the work between its rows took (Between), a
-    line and not a row, so that the summary, the record and the pull request's body are
-    as before #609."""
+    run at once instead (at_once), with the same verdicts, logs and rows, but for the
+    paths in them, which name the worktree each pass ran in (`main`, and `wt` for the
+    commit's negative tests; tests/test_concurrent_passes.py masks them on purpose).
+    However step 4 ends, one plain line then says what the work between its rows took
+    (Between), a line and not a row, so that the summary, the record and the pull
+    request's body are as before #609."""
     between = Between()
+    together = False
 
     def kept_apart(label):
         if label == BASE_PASS:
@@ -4541,9 +4587,7 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
                 raise Refusal("a check changed together with what it checks")
 
     plan = sequence if isinstance(sequence, CheckList) else CheckList(list(sequence), "")
-    # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
-    # kept for it on a miss; keep_apart then reads its steps as it reads them run.
-    cache = main_checks(ctx, wt, inputs, rep, plan.steps) if CACHE is not None else None
+    cache = None
 
     def checks(steps, where: Path, label, fail, excludes, first: int,
                declared: CheckList | None = None, report: Report = rep,
@@ -4553,12 +4597,21 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
             return
         kept = cache if label == BASE_PASS else None
         run_sequence(steps, where, report, logs, label, fail, excludes, first, declared, kept,
-                     stop)
-        if kept is not None:
-            kept.save(report)
+                     stop, between)
+        # Never from a pass told to stop: a step a signal ended (a terminal's Ctrl-C reaches
+        # the checks too) would be kept as its outcome, and replayed by every later run.
+        if kept is not None and (stop is None or not stop.is_set()):
+            with between.piece("cache save"):
+                kept.save(report)
 
     try:
-        if plan.passes > 1 and inputs and not (cache is not None and cache.hit):
+        # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
+        # kept for it on a miss; keep_apart then reads its steps as it reads them run.
+        if CACHE is not None:
+            with between.piece("cache lookup"):
+                cache = main_checks(ctx, wt, inputs, rep, plan.steps)
+        together = plan.passes > 1 and bool(inputs) and not (cache is not None and cache.hit)
+        if together:
             at_once(ctx, wt, parent, inputs, rep, logs, plan, checks, kept_apart, between)
             return
         # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
@@ -4580,7 +4633,7 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
                     checks(NEGATIVE, neg, label, fail, excludes, 30)
                     kept_apart(label)
     finally:
-        print(f"  between the rows of step 4: {between.line()}", flush=True)
+        print(f"  between the rows of step 4: {between.line(together)}", flush=True)
 
 
 # --------------------------------------------------------------------------------------
