@@ -128,14 +128,44 @@ def problems(text: str) -> list[tuple[int, str]]:
     return found
 
 
+def emphasis_flanking(line: str, index: int) -> tuple[bool, bool]:
+    marker = line[index]
+    start = index
+    while start and line[start - 1] == marker:
+        start -= 1
+    stop = index + 1
+    while stop < len(line) and line[stop] == marker:
+        stop += 1
+    before = line[start - 1] if start else " "
+    after = line[stop] if stop < len(line) else " "
+    before_punctuation = not before.isspace() and not before.isalnum()
+    after_punctuation = not after.isspace() and not after.isalnum()
+    left = (not after.isspace()
+            and (not after_punctuation or before.isspace() or before_punctuation))
+    right = (not before.isspace()
+             and (not before_punctuation or after.isspace() or after_punctuation))
+    if marker == "_":
+        return (left and (not right or before_punctuation),
+                right and (not left or after_punctuation))
+    return left, right
+
+
 def in_url_query_or_fragment(line: str, offset: int) -> bool:
     enclosing = None
     for match in URL.finditer(line):
+        emphasis = None
+        if match.start() and line[match.start() - 1] in "*_":
+            marker = line[match.start() - 1]
+            if emphasis_flanking(line, match.start() - 1)[0]:
+                emphasis = marker
         depth = 0
         end = len(line)
         for index in range(match.end(), len(line)):
             char = line[index]
-            if char.isspace() or char in URL_STOP or char == ")" and depth == 0:
+            closes_emphasis = (char == emphasis
+                               and emphasis_flanking(line, index)[1])
+            if (char.isspace() or char in URL_STOP or closes_emphasis
+                    or char == ")" and depth == 0):
                 end = index
                 break
             if char == "(":
@@ -270,6 +300,10 @@ def self_test() -> list[str]:
                           f"({other}/stoicheia)", [1]),
         ("docs/STYLE.md", f"|https://example.com/?repo=({other}/stoicheia)|"
                           f"{other}/stoicheia|", [1]),
+        ("docs/STYLE.md", f"*https://example.com/?repo={other}/stoicheia&ok=1*:"
+                          f"{other}/stoicheia", [1]),
+        ("docs/STYLE.md", f"*https://example.com/?repo=({other}/stoicheia)&ok=1*:"
+                          f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", f"[x](https://example.com/?repo=({other}/stoicheia)) and "
                           f"{other}/stoicheia", [1]),
         ("docs/STYLE.md", "https://api.github.com:443/repos/dodecaplex-co/stoicheia", []),
