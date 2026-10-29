@@ -1279,6 +1279,11 @@ class TheRegistry(unittest.TestCase):
         self.assertEqual({e.name: e.after for e in entries if e.after}, self.AFTER)
         self.assertEqual(safe_push.MODEL_JOB_CONCURRENT,
                          {"python3 -I tests/model/run.py --fast"})
+        # Each says why, in a comment line of its own whose word is its declaration's.
+        for entry in entries:
+            word = "Concurrent" if entry.concurrent else "Alone"
+            self.assertIn(f"\n# {word} (#608)", "\n" + (REPO / entry.path).read_text(),
+                          entry.path)
 
 
 if __name__ == "__main__":

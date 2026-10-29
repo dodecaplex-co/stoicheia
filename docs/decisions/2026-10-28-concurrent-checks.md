@@ -39,10 +39,11 @@
   added around each group; so nothing runs concurrently until the lane sets it. The report
   and the logs are written in the registry's order, by the harness's own thread, each with
   its own time and output, as when the checks ran one at a time. Where a failure refuses,
-  no check starts after one fails, every running check is waited for, and the refusal
-  names the first failing check in the registry's order, nothing after it reported or
-  logged; where a failure is noted, every check runs and is noted in order, and the
-  main-checks cache records each in order.
+  no check's thread is started once one has failed (a check whose thread had started may
+  still run, and is waited for), every running check is waited for, and the refusal names
+  the first failing check in the registry's order, nothing after it reported or logged;
+  where a failure is noted, every check runs and is noted in order, and the main-checks
+  cache records each in order.
 
   The change lands as groundwork, with one worker the default. On 28 October the
   coordinator decided that the lane keeps one worker until card #648 has moved the sweep

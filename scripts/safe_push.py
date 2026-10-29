@@ -3775,7 +3775,8 @@ def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, l
     order, each once the checks its `after` names have ended. This thread alone reports
     and logs them, in registry order, each once every check before it has ended, with its
     own time and output, so the lines and logs are those of the checks run one at a time.
-    Where a failure fails the pass (FAIL), none starts after one fails, and the steps are
+    Where a failure fails the pass (FAIL), no thread is started once one has failed (one
+    started before it may still run its check, and is waited for), and the steps are
     reported up to the first failure in registry order, which refuses, as run_step does;
     where a failure is a note, every check runs and is reported in order, `cache`
     collecting it. An exception a check's run() raised is raised here at its place in
