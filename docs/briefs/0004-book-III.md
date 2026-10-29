@@ -293,18 +293,9 @@ import `Squares.lean`, so a step that uses it must stand after III.2. The paragr
 unchanged; the rest of `Squares.lean` stands as it says.
 
 **28 October 2026, `Arc.eq_of_aligned` (#561).** `Arc.eq_of_aligned` has been deleted from
-`Squares.lean`, with the two lemmas beneath it, `Aligned.centre_between` and
-`Aligned.eq_on_base`: no proof used them. So nothing in `Squares.lean` now cites I.7.
-The two paragraphs above are unchanged; the rest of the file stands as they say.
-
-**28 October 2026, correction.** `Arc.eq_of_aligned` had no consumers. Its two supporting
-lemmas, `Aligned.centre_between` and `Aligned.eq_on_base`, preceded it and were used only
-by its proof, which called `Aligned.centre_between` twice and `Aligned.eq_on_base` once.
-This supersedes the earlier wording "beneath" and "no proof used them."
-
-**28 October 2026, supplement.** #561 also removed the unused
-`RuleProofs.Circle.on_circle_of_len_eq_of_ne` declaration and its docstring from
-`Elements/Figure/RuleBase.lean`.
+`Squares.lean`, with `Aligned.centre_between` and `Aligned.eq_on_base`, the two lemmas its
+proof called: no other proof used any of the three. So nothing in `Squares.lean` now cites
+I.7. The two paragraphs above are unchanged; the rest of the file stands as they say.
 
 **Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
 stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
