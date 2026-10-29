@@ -3254,12 +3254,29 @@ def merge_preconditions(*args, **kwargs):
         raise KeyboardInterrupt("a test interruption")
     return real_preconditions(*args, **kwargs)
 def summary(rep, mode, *args):
-    # "summary-interrupt:<mode>": an interruption as that run's summary ("push" or
-    # "merge") is written, outside the merge's own try.
+    # "summary-interrupt:<mode>": an interruption as that run's summary ("push", "merge"
+    # or "dry run") is written, outside the merge's own try.
     if action == f"summary-interrupt:{mode}" or \
             (action == "change-origin-summary-interrupt" and mode == "merge"):
         raise KeyboardInterrupt("a test interruption")
     return real_summary(rep, mode, *args)
+real_write_proof = safe_push.write_proof
+def write_proof(*args, **kwargs):
+    # "proof-then:<kind>": a crash, a refusal or an interruption just after the pre-flight
+    # proof is renamed into place.
+    real_write_proof(*args, **kwargs)
+    if action == "proof-then:error":
+        raise RuntimeError("a test crash")
+    if action == "proof-then:refusal":
+        raise safe_push.Refusal("a test refusal")
+    if action == "proof-then:interrupt":
+        raise KeyboardInterrupt("a test interruption")
+real_judged_proof = safe_push.judged_proof
+def judged_proof(*args, **kwargs):
+    # "judge-interrupt": an interruption while a pre-flight proof is judged.
+    if action == "judge-interrupt":
+        raise KeyboardInterrupt("a test interruption")
+    return real_judged_proof(*args, **kwargs)
 def refreshed(body, parts):
     result = real_refreshed(body, parts)
     if action == "edit-after-unfinished-comparison":
@@ -3302,6 +3319,8 @@ safe_push.gh_run = gh_run
 safe_push.check_commit = check_commit
 safe_push.merge_preconditions = merge_preconditions
 safe_push.summary = summary
+safe_push.write_proof = write_proof
+safe_push.judged_proof = judged_proof
 sys.exit(safe_push.main(sys.argv[5:]))
 """
 
@@ -5587,9 +5606,14 @@ class PreflightProof(Edge):
     commit, against a moved main, by another harness or with another check input, with a
     step failed or a note for the security review, too old or dated ahead (each planted
     with its digest made again, so that only its own guard can catch it), edited by hand,
-    not JSON, or missing, falls back to the full pre-flight here, never silently accepted,
-    and the head still lands. A dry run writes a proof only once it has passed with step 4
-    in full, and removes one left at the path first. Land's helpers are borrowed, not
+    not JSON, missing, malformed in any way a hostile file could be (a key twice, NaN, a
+    digest of another form, a number too large, nesting too deep), or holding a step's
+    name or a note that is not short printable text, falls back to the full pre-flight
+    here, never silently accepted and never a crash (an interruption while it is judged
+    stays one), and the head still lands; the notes
+    of a proof that stands in reach neither the body nor the merge. A dry run writes a
+    proof only once it has passed with step 4 in full, removes one left at the path first,
+    and removes its own should it then not end in exit 0. Land's helpers are borrowed, not
     inherited, so that Land's tests run once."""
 
     CHECK = Land.CHECK
@@ -5608,6 +5632,18 @@ class PreflightProof(Edge):
 
     def emit(self) -> subprocess.CompletedProcess:
         return self.safe_push("--dry-run", "--emit-proof", str(self.proof))
+
+    def driven_emit(self, action: str) -> subprocess.CompletedProcess:
+        """emit's dry run, with DRIVER's `action` playing what happens at a chosen moment."""
+        args = with_branch(("--dry-run", "--emit-proof", str(self.proof)))
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action,
+                               str(ORIGIN), "", "--_test-skip-checks", *args], cwd=WORK,
+                              env=clean_env(), capture_output=True, text=True)
+
+    def written(self, text: str) -> Path:
+        """The proof as `text`, written as it stands, where --land reads it."""
+        self.proof.write_text(text)
+        return self.proof
 
     def proved(self, head) -> tuple[str, dict]:
         """The commit `head` makes, and the proof its dry run writes."""
@@ -5780,6 +5816,142 @@ class PreflightProof(Edge):
             ("not JSON", text, "it is not UTF-8 JSON (JSONDecodeError)"),
             ("a missing file", lambda p: missing,
              "it cannot be opened (No such file or directory)")))
+
+    def test_a_malformed_proof_falls_back_and_never_crashes(self):
+        # What a hostile file could hold, run for real through --land: each is a reason,
+        # never a crash, and never the last of two keys silently kept.
+        sha, proof = self.proved(self.guide_change)
+
+        def unused(value):
+            return lambda q: q["record"].update(unused=value)
+
+        def nan(p):
+            # NaN in a field nothing reads, the digest null: never None compared with null.
+            q = copy.deepcopy(p)
+            unused(float("nan"))(q)
+            q["digest"] = None
+            return self.written(json.dumps(q))
+
+        def infinite(p):
+            # 1e400, which JSON reads as infinity: the digest cannot be computed.
+            q = copy.deepcopy(p)
+            unused("a placeholder")(q)
+            return self.written(json.dumps(q).replace('"a placeholder"', "1e400"))
+
+        def capitals(p):
+            q = copy.deepcopy(p)
+            q["digest"] = q["digest"].upper()
+            return self.written(json.dumps(q))
+
+        def huge(q):
+            next(s for s in q["record"]["steps"] if s[0] == "4")[3] = 10 ** 1000
+        deep: list = []
+        for _ in range(600):
+            deep = [deep]
+
+        def twice(p):
+            # "format" given twice, 99 and then 1, with the digest of the canonical form.
+            self.assertEqual(p["format"], 1)
+            return self.written('{"format": 99, ' + json.dumps(p)[1:])
+        self.assertFallsBack(sha, proof, (
+            ("NaN, the digest null", nan, "it holds NaN, which is not standard JSON"),
+            ("a digest in capitals", capitals,
+             "its digest is not of this format (64 of 0 to 9 and a to f)"),
+            ("a number JSON reads as infinity", infinite,
+             "its digest could not be computed (ValueError)"),
+            ("a step's time of 10 ** 1000", lambda p: self.planted(p, huge),
+             "it could not be judged (OverflowError)"),
+            ("600 nested arrays", lambda p: self.planted(p, unused(deep)),
+             "it could not be judged (RecursionError)"),
+            ("a key given twice", twice,
+             "it gives the key 'format' twice in one object, which JSON leaves ambiguous")))
+
+    def test_an_interruption_while_the_proof_is_judged_is_no_reason(self):
+        # Only what a hostile value raises is a reason: an interruption while the proof is
+        # judged interrupts the run, as anywhere else before the push, never a fallback.
+        self.proved(self.guide_change)
+        args = with_branch(("--body-file", str(self.body()), "--ready", "--land",
+                            "--preflight-proof", str(self.proof)))
+        r = subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), "judge-interrupt",
+                            str(ORIGIN), "", "--_test-skip-checks", *args], cwd=WORK,
+                           env=clean_env(), capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("Interrupted: interrupted (a test interruption).", out)
+        self.assertIsNone(self.guard(out, "pre-flight proof"), out)
+        self.assertNotIn("could not be judged", out)
+        self.assertIsNone(self.origin_branch(), out)
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_a_proof_holding_a_control_or_a_line_of_its_own_falls_back(self):
+        # Nothing of a proof may reach a terminal or the pull request's body as a control or
+        # a line of its own: a step's name, a note, its harness and its time are printable
+        # text of at most PROOF_TEXT characters, else the proof falls back.
+        sha, proof = self.proved(self.guide_change)
+
+        def step(name):
+            def change(q):
+                next(s for s in q["record"]["steps"] if s[0] == "4")[1] = name
+            return lambda p: self.planted(p, change)
+        why = ("its record holds a step's name, a note, a harness or a time that is not "
+               f"printable text of at most {safe_push.PROOF_TEXT} characters (no newline, "
+               "control or escape)")
+        self.assertFallsBack(sha, proof, (
+            ("an escape and a newline in a step's name",
+             step("full local checks\x1b]0;a title\x07\n  ok    secrets: none"), why),
+            ("a Markdown line in a note", lambda p: self.planted(
+                p, lambda q: q["record"]["notes"].append(
+                    ["a note", "of the test\n- [x] **Required**: every review done"])), why),
+            ("a step's name too long", step("x" * (safe_push.PROOF_TEXT + 1)), why),
+            ("a bell in its harness", lambda p: self.planted(
+                p, lambda q: q["record"].update(harness=q["record"]["harness"] + "\x07")),
+             why)))
+
+    def test_a_proofs_notes_reach_neither_the_body_nor_the_merge(self):
+        # A harmless note planted in the proof, its digest made again: the proof stands in,
+        # and the note is carried into no record, so neither the pull request's body nor
+        # anything the run prints, the merge's output included, holds it.
+        sha, proof = self.proved(self.check_change)
+        note = "a harmless note, planted in the proof by the test"
+        self.planted(proof, lambda q: q["record"]["notes"].append(["a planted note", note]))
+        r = self.land(self.proof)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(self.push_part(out), "pre-flight proof"), "ok", out)
+        merged = self.merge_part(out)
+        self.assertIn(self.FROM_PROOF, merged)
+        self.assertNotIn(note, merged)
+        self.assertNotIn(note, out)
+        bodies = [pr["body"] or "" for pr in self.gh_state()["prs"]]
+        self.assertTrue(bodies)
+        for body in bodies:
+            self.assertIn("Noted by the pre-flight:", body)
+            self.assertNotIn(note, body)
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+
+    def test_a_dry_run_that_does_not_end_in_exit_0_leaves_no_proof(self):
+        # Once the proof is renamed into place: a crash, a refusal or an interruption just
+        # after it, or an interruption of the summary, written once the run's code is 0
+        # already. Each removes the proof, and the exit is not 0; with nothing played, the
+        # same run under DRIVER keeps it.
+        self.check_change()
+        removed = (f"The pre-flight proof at {self.proof} is removed: only a run that passes "
+                   "leaves one.")
+        for action in ("proof-then:error", "proof-then:refusal", "proof-then:interrupt",
+                       "summary-interrupt:dry run", "none"):
+            with self.subTest(action=action):
+                self.proof.unlink(missing_ok=True)
+                r = self.driven_emit(action)
+                out = r.stdout + r.stderr
+                self.assertEqual(self.guard(out, "pre-flight proof"), "ok", out)
+                if action == "none":
+                    self.assertEqual(r.returncode, 0, out)
+                    self.assertTrue(self.proof.exists(), out)
+                    self.assertNotIn(removed, out)
+                    continue
+                self.assertNotEqual(r.returncode, 0, out)
+                self.assertFalse(self.proof.exists(), out)
+                self.assertIn(removed, out)
 
     def test_a_passing_dry_run_writes_the_proof(self):
         sha = self.check_change()
@@ -11151,7 +11323,8 @@ class MainChecksCache(Edge):
             return safe_push.Preflight([], [])
 
         args = mock.Mock(dry_run=True, commit=sha, branch=None, test_mode=True, title=None,
-                         main_checks_cache=True, body_file=None)
+                         main_checks_cache=True, body_file=None, emit_proof=None,
+                         preflight_proof=None)
         with mock.patch.object(safe_push, "CACHE", None), \
                 mock.patch.object(safe_push, "SANDBOX", None), \
                 mock.patch.object(safe_push, "SANDBOX_EXEC", str(self.fake)), \

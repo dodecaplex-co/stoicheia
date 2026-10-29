@@ -36,13 +36,17 @@
   `--land` goes on to runs the scan and the guards again, and takes its step 4 from the
   record the push made, as it does without a proof. Its step 3 says when that record's
   step 4 came from a proof, and from which machine. The machine is named on the terminal
-  and in the record and logs kept on the Mac, never in a line the pull request's body
-  holds: that line gives the time the proof was made and not the machine, since a
+  and in the record saved on the Mac, never in a line the pull request's body holds: that line gives the time the proof was made and not the machine, since a
   machine's name can be a person's. Nor does the record made from a proof take the
   proof's notes: the ones that matter, for the security review, make it fall back, and
   the rest are another machine's, written of steps the Mac runs again itself. Each step's
-  name and note in a proof must be printable text, or the proof falls back, so nothing
-  from it can move the terminal or add a line to the body.
+  name and note in a proof, and its harness and time, must be printable text of at most
+  300 characters, or the proof falls back, so nothing from it can move the terminal or
+  add a line to the body. So too a proof that is not standard JSON (a key given twice in
+  one object, NaN or Infinity), whose digest is not 64 hexadecimal characters, or that
+  cannot be judged at all: a reason, and the full pre-flight, never a crash. A dry run
+  that does not end in exit 0, refused, failed or interrupted once the proof is written,
+  removes it again.
 
   The trust, stated plainly. The proof is a file, and the run that made it ran the head's
   own code. The entry for `--land`, of 26 October, gives that as the reason a separate
@@ -66,11 +70,18 @@
   `--emit-proof` and `--preflight-proof` with their rules in the parser; the constants
   that set the proof's format, its age limit, the clock's allowance and the largest file
   read; the functions that list the check inputs' blobs, make and write the proof, and
-  judge it; the step lines that report it, in the pre-flight's first and fourth steps, in
-  the fifth step of the dry run that writes it, and in the merge's third; the record's field that names the proof; and the docstring and
-  help that describe them.
+  judge it, with the exception that carries a doubt found as the JSON is read and the two
+  hooks that raise it; the bound on the length of a proof's text; the step lines that
+  report it, in the pre-flight's first and fourth steps, in the fifth step of the dry run
+  that writes it, and in the merge's third; the record's field that names the proof, and
+  the record's leaving a proof's notes behind; the removal, in `main()`, of a proof whose
+  run does not end in exit 0; and the docstring and help that describe them.
 
   The landing tool's tests move with it: `scripts/test_safe_push.py` gains a class,
   `PreflightProof`, whose tests show a proof accepted for a head that changes the checks,
   read before that head's code runs, and every planted case of the card falling back to
-  the full pre-flight on the Mac; this entry approves that change too.
+  the full pre-flight on the Mac, malformed and hostile proofs among them; its driver
+  gains actions that fail, refuse or interrupt a dry run once its proof is written, and
+  interrupt the judging of a proof; and one test of `MainChecksCache`, whose stand-in for
+  the parsed arguments must now say that neither option is given, gains those two
+  values. This entry approves that change too.
