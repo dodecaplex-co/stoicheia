@@ -356,10 +356,52 @@
     },
     {
       "ref": "I.4",
-      "field": "cited_laws",
-      "includes": ["lenSymm", "angleSymm", "neOfLen", "rayUnique", "rayOfAngle", "rayOfAngleSide"],
-      "count": {"prefix": "", "is": 7},
-      "why": "I.4's derivation cites these six laws, each read from the Cited constants its own Lean names, not through Derives.map (#150, question 4). While Metric 9 is an axiom, I.4 cites its law, areaCongruent, as well, seven in all: the count holds the list to these six and one law more, which is not named, since #517 is to replace Metric 9 in I.4's area clause with Common Notion 4 for figures."
+      "one_of": [
+        {
+          "state": "Metric 9",
+          "expectations": [
+            {
+              "ref": "I.4",
+              "field": "cited_laws",
+              "includes": ["lenSymm", "angleSymm", "areaCongruent", "neOfLen", "rayUnique", "rayOfAngle", "rayOfAngleSide"],
+              "count": {"prefix": "", "is": 7},
+              "why": "I.4's derivation cites exactly these seven laws, read from the Cited constants its own Lean names, not through Derives.map (#150, question 4)."
+            },
+            {
+              "ref": "I.4",
+              "field": "cited_laws",
+              "law": "areaCongruent",
+              "equals": [],
+              "why": "Metric 9's law is proved from Tacit.area_congruent alone, with no construction rule, and stays so after the second retirement wave (#150, question 4)."
+            },
+            {
+              "ref": "I.4",
+              "field": "own_axioms",
+              "excludes": ["Tacit.figures_coincide"],
+              "why": "While I.4's area clause rests on Metric 9, through its law, I.4's own Lean does not name Common Notion 4 for figures (Tacit.figures_coincide): a tree with Metric 9's law and that axiom both is between the two states, and is refused (#517)."
+            }
+          ]
+        },
+        {
+          "state": "Common Notion 4 for figures",
+          "expectations": [
+            {
+              "ref": "I.4",
+              "field": "cited_laws",
+              "includes": ["lenSymm", "angleSymm", "neOfLen", "rayUnique", "rayOfAngle", "rayOfAngleSide"],
+              "count": {"prefix": "", "is": 6},
+              "why": "I.4's derivation cites exactly these six laws, read from the Cited constants its own Lean names, not through Derives.map (#150, question 4): Metric 9's law, areaCongruent, is not among them, since I.4's area clause no longer passes through a cited law (#517)."
+            },
+            {
+              "ref": "I.4",
+              "field": "own_axioms",
+              "includes": ["Tacit.figures_coincide"],
+              "why": "I.4's area clause rests on Common Notion 4 for figures (Tacit.figures_coincide), which I.4's own Lean names, in the place of Metric 9 (#517)."
+            }
+          ]
+        }
+      ],
+      "why": "I.4's area clause, that \"the triangle will be equal to the triangle\" (heath/I/04.md), rests on Metric 9 (Tacit.area_congruent) through its law, as before #517, or on Common Notion 4 for figures (Tacit.figures_coincide), which #517 puts in Metric 9's place: exactly one state holds, and a tree between them, as one with Metric 9's law and the new axiom together or with neither, fails (#517)."
     },
     {
       "ref": "I.8",
