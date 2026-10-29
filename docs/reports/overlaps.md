@@ -518,8 +518,9 @@ through III.15 and `Prop30.halves` through III.28. Walking Lean's proof terms on
 October 2026, as for I.13's rule above, finds the theorem in these twelve entries and in
 no other, none of them before III.14. Searching `Elements/` for the rule's name confirms
 the two calls, and finds three lemmas that call it: Book Zero's `EqualCircles.radii` and
-`Centre.every`, and `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean`. No certificate
-entry uses either of the last two. [Former axiom overlaps](#former-axiom-overlaps) gives
+`Centre.every`, and Arc.eq_of_aligned in `Elements/BookIII/Squares.lean` (removed on 28
+October 2026 under #561, since nothing used it). No certificate entry uses either of
+the last two. [Former axiom overlaps](#former-axiom-overlaps) gives
 the rule as it is now.
 
 22 October 2026 update (#131): III.14 no longer calls III.1 or the rule, for its
