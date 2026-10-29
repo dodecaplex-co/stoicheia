@@ -351,6 +351,7 @@ OVERLAPS = ("states", "gives", "step")  # [overlap] kind, the catalogue's three 
 STAGES = ("exceptions", "full")
 VERDICTS = ("pass", "fail", "n/a")
 TAG_KINDS = ("scope", "representation")
+PAGE_HASH = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{7,40}")
 WORD = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 # A name as a proof binds it, for a passage's `unused`: one Lean identifier, with no dots,
@@ -679,8 +680,8 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         bad("[review]: `lean` is 'sha256:' and 16 hex digits")
     if "text" in rv and not HASH.fullmatch(rv["text"]):
         bad("[review]: `text` is 'sha256:' and 16 hex digits")
-    if "page" in rv and not HASH.fullmatch(rv["page"]):
-        bad("[review]: `page` is 'sha256:' and 16 hex digits")
+    if "page" in rv and not PAGE_HASH.fullmatch(rv["page"]):
+        bad("[review]: `page` is 64 lowercase hex digits")
     if rv["stage"] == "full" and ("run" not in rv or "," not in rv["reviewer"]):
         bad("[review]: a full review names its `run`, and its `reviewer` with a role, as "
             "'Claude Opus 5.5, records crew', so the reviewer can be told from the authors")

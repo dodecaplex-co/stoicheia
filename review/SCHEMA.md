@@ -222,7 +222,7 @@ The section needs a `case` or a `note`, or both, and is left out when it has nei
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
 | `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. |
-| `page` | `"sha256:"` and 16 hex digits | no | Reserved for the stamp of the page's commentary and figures ([#621](https://github.com/jackChallis/stoicheia/issues/621)): read, and checked for its form alone, until the train that writes it lands. |
+| `page` | 64 lowercase hex digits | no | Reserved for the stamp of the page's commentary and figures ([#621](https://github.com/jackChallis/stoicheia/issues/621)): read, and checked for its form alone, until the train that writes it lands. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
