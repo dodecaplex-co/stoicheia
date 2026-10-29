@@ -1743,10 +1743,12 @@ statement and proof unchanged; the staged step is not kept, `angleAtCentre.refle
 `angleAtCentre.size` cite it, and the docstring of `angleAtCentre.reflex_gt` gains a clause
 naming it. I.13's review record is read again for the removal of `private` and the rename to
 `Prop13.angle_lt_two_right`. `Elements/` also has the
-fact in public, in Book I after I.29, as `Figures.OutlineBound.angle_lt_two_right`, which
+fact in public, in Book I after I.29, as Figures.OutlineBound.angle_lt_two_right, which
 `exact?` found for the staged statement; it rests on Metric 5
 (`Tacit.angle_le_two_right`, no angle exceeds two right angles), and citing it would have
 added that axiom to III.26 and to the propositions that cite III.26, so it is not cited.
+(28 October 2026, #515: that duplicate is gone, and its two uses in
+`Elements/BookI/OutlineBound.lean` now cite `Prop13.angle_lt_two_right`.)
 No other staged step is a fact of `Elements/`: a scan of every
 declaration of `Elements/` found none with the type of any of the 21 staged declarations,
 but for the three staged proofs of statements in `Elements/`, and `circumference` and
@@ -1839,7 +1841,7 @@ and III.28's P2 and P11 to P16, until their records are read again and stamped.
 
 **Completion on the delivered revision.** After that snapshot, I.13's lemma became the one
 home of the fact that an angle of a triangle is less than two right angles, in place of
-Book I's `Figures.OutlineBound.angle_lt_two_right`, as said above, so I.13's record was
+Book I's Figures.OutlineBound.angle_lt_two_right, as said above, so I.13's record was
 stale too; III.26 to III.30 then rest on the axioms they rested on before, and III.20
 alone gains one, `Tacit.exists_centre`. The gap catalogue's entry for III.27 was made true
 as well. An independent reader who wrote none of them read the records of III.20, III.21,

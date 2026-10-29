@@ -80,11 +80,12 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (III.8, whose last step compares the angles at the centre by I.24).
+  way (III.27, whose reductio, where the angles at the circumference are obtuse, runs on
+  the angles standing on the circumferences that remain).
 - **alternative**: a different proof altogether, labelled as one on the page. No route of
   Books I to III may be one ([ACCEPTANCE](../docs/ACCEPTANCE.md), P3): an alternative proof
   is kept there as a companion beside Euclid's route, as III.24's proof by the radii is
-  (`Prop24.equalCircles`, beside its `modified` route).
+  (`Prop24.equalCircles`, beside its `euclid` route).
 
 ### `[representation]`: how Euclid's objects are put into Lean
 
@@ -152,7 +153,7 @@ One table for each passage declared, in the order of the proof.
 | `kind` | see below | yes | How the Lean carries the passage. |
 | `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`. In a carried passage, the proposition's porism or one of its companions, proved on its own, written in one of three ways: `"Prop16.porism"`, `"BookIII.Prop16.porism"` or `"Elements.BookIII.Prop16.porism"`. |
 | `note` | string | unless carried | One or two plain sentences, shown on the page under "How the Lean follows the text". |
-| `unused` | list of names | no | The bindings this passage declares as standing for Euclid's words and not used again, each as the proof writes it: `"FC"`, `"hCHG_EHC"`, or `"this"` for a `have` that gives no name. For the citation sweep and reviewers; the page does not show it. |
+| `unused` | list of names | no | The bindings this passage declares as standing for Euclid's words and not used again, each as the proof writes it: `"hAB_FC"`, `"hDC_AB"`, or `"this"` for a `have` that gives no name. For the citation sweep and reviewers; the page does not show it. |
 
 - **carried**: the Lean beneath carries out the inference or construction. Declared only
   where that needs saying, as for a step proved as its own theorem, which the passage
@@ -163,7 +164,8 @@ One table for each passage declared, in the order of the proof.
 - **grouped**: several sentences carried by one argument, or a "similarly" by one lemma.
 - **case**: a case Euclid's figure leaves aside, or leaves to the reader, which the Lean
   takes as well, in the same argument or in a step of its own (II.14's ED the greater,
-  III.2's AB through the centre); the note says how.
+  III.11's A on GF produced beyond F, which Heath says Euclid would have left to the
+  reader); the note says how.
 - **given**: what the passage does is already given, by the statement or by how our
   objects are put into Lean, so no Lean is needed beneath it (I.5's D and E, which come
   with the statement); the note says what gives it.
@@ -184,9 +186,9 @@ companion.
 
 `unused` is for `scripts/sweep_citations.py`, which lists every binding of a proof that
 nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sentence of
-Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
-of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
-`#` comment. `unused` is a key, which the records' `text` stamp covers
+Euclid's stands over one, as over I.16's equal bases, the passage whose `at` begins a
+sentence of that run of `--` lines declares it by name, and nothing else does: not a note,
+nor a `#` comment. `unused` is a key, which the records' `text` stamp covers
 ([#77](https://github.com/jackChallis/stoicheia/issues/77)); TOML does not read a
 comment, so that stamp never sees one change. `heath.load_review` checks that
 `unused` lists distinct names, each one Lean identifier; `scripts/check_fidelity.py`,
@@ -197,10 +199,10 @@ passage is.
 
 ```toml
 [[passage]]
-at = "and let the straight lines FC, GB be joined"
+at = "Therefore the base AB is equal to the base FC"
 kind = "carried"
-note = "The Lean joins FC and GB by Postulate 1, as Euclid asks; no later step uses them."
-unused = ["FC", "GB"]
+note = "The Lean proves that the base AB equals FC here, as Euclid states it; no later step uses it."
+unused = ["hAB_FC"]
 ```
 
 ### `[figure]`
@@ -222,6 +224,7 @@ The section needs a `case` or a `note`, or both, and is left out when it has nei
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
 | `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. |
+| `page` | `"sha256:"` and 16 hex digits | no | Reserved for the stamp of the page's commentary and figures ([#621](https://github.com/dodecaplex-co/stoicheia/issues/621)): read, and checked for its form alone, until the train that writes it lands. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
