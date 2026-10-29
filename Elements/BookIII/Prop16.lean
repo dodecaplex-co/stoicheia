@@ -87,7 +87,7 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
       have hDAC : ∠ D A C = ∟ := hright hC_L hCA
       -- therefore the angle ACD is also right:
       have hACD' : ∠ A C D = ∟ := h5 ▸ hDAC
-      -- thus, in the triangle ACD, the two angles DAC, ACD are equal to two right angles; which is
+      -- thus, in the triangle ACD, the two angles DAC, ACD are equal to two right angles: which is
       -- impossible. [I. 17]
       have h17 := (BookI.Prop17 hACD).2.2
       rw [hDAC, hACD'] at h17
