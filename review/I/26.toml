@@ -12,7 +12,7 @@ kind = "euclid"
 at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it."
+note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it. The join of GC is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base GC is equal to the base DF"
@@ -46,7 +46,7 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it."
+note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it. The join of AH is drawn in the text and is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base AH is equal to the base DF"
@@ -82,11 +82,11 @@ note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is 
 
 [review]
 stage = "full"
-commit = "071dc41c5"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "a6253fb01"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1eb8be02f0e30805"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5"
-text = "sha256:5b03153ed7df71bd"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01"
+text = "sha256:954699162a69c70d"
 
 [review.items]
 statement = "pass"
