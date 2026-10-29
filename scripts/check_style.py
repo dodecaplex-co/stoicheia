@@ -1041,11 +1041,9 @@ def docstring_span(src: str, line: int, doc: str) -> tuple[int, int] | None:
     stands on line `line` of a Lean source, read as render.py reads it
     (`render.axiom_docstrings`, so none inside a remark: #349), if it reads as `doc` once
     its white space is made one space, as render.py reads it; else None."""
-    for d in heath.documented(src, render.AXIOM_NAME):
-        text = src[d.start + 3:d.close - 2]
-        name = re.compile(render.AXIOM_NAME).match(src, d.keyword).start("name")
+    for text, _, name, span in render.axiom_docstrings(src):
         if src.count("\n", 0, name) + 1 == line and " ".join(text.split()) == doc:
-            return d.start + 3, d.close - 2
+            return span
     return None
 
 

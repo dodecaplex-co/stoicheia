@@ -3,7 +3,8 @@ the small contracts the other scripts share:
 
 * references: `parse_ref`, `prop_key` ("I.40", "III.1 Por.", "I.40 general");
 * Heath's porisms: `heath_porisms`, `heath_porism`;
-* the main theorem of a Lean file: `theorem_span`;
+* the main theorem of a Lean file, and any declaration with its docstring: `theorem_span`,
+  `documented` (#349);
 * fingerprints of statements, files and records: `fingerprint`, `review_fingerprint`,
   `file_hash`, `text_hash`;
 * the review records, review/<book>/NN.toml: `load_review`, `validate_review`,
@@ -27,7 +28,9 @@ every review record present; and that the reader of Lean reads deep and long run
 string holes in under half a second each (`READER_PLANTS`, #390), and refuses as quickly
 strings nested past their budget (`READER_REFUSED`); and that it reads a name on through a
 `.` after its «…» part as Lean does, and marks a raw string after `℃.` as one it cannot
-read for certain (`READER_NAMES`, #430); and that today's README.md, docs/PROGRAM.md and
+read for certain (`READER_NAMES`, #430); and that a docstring or a declaration in a
+remark, a string or a nested block is read as Lean reads it (`DOCUMENTED_PLANTS`, #349);
+and that today's README.md, docs/PROGRAM.md and
 docs/WORKFLOW.md hold their regions as `regions` requires, that a hand deletion inside a
 region leaves the part written by hand as it was, that one outside every region's body is
 refused or seen, and that `fill` refuses a write that reaches outside a body
@@ -282,21 +285,25 @@ class Documented(NamedTuple):
 
 def documented(src: str, after: str) -> list[Documented]:
     """Each declaration of the Lean `src` that a docstring documents, as Lean reads the
-    text: a `/-- … -/` comment of `lean_comments`, followed in code, past white space alone
-    (comments blanked as `read_lean` blanks them), by text that the pattern `after`
-    matches, such as `theorem Prop5\\s` or `axiom\\s+(?P<name>[^\\s({]+)`. So a docstring
+    text: a `/-- … -/` comment of `lean_comments`, followed in code, past white space and
+    remarks alone (comments blanked as `read_lean` blanks them), by text that the pattern
+    `after` matches, such as `theorem Prop5\\s` or `axiom\\s+(?P<name>[^\\s({]+)`. So a docstring
     and declaration written inside a remark or a string are none, and a docstring's text
-    runs to the `-/` that closes it, past any block nested in it (#349). Render.py's
-    axioms, check_style's copy of them and `theorem_span` read the docstrings so."""
+    runs to the `-/` that closes it, past any block nested in it (#349). A docstring or a
+    module comment between the two is not passed over: the declaration is the later
+    docstring's. `render.axiom_docstrings`, `render.law_docs`, `check_style.docstring_span`
+    and `theorem_span` read the docstrings so."""
     code = read_lean(src)[0]
     pattern = re.compile(r"\s*(?P<keyword>" + after + ")")
+    comments = lean_comments(src)
     found = []
-    for start, close in lean_comments(src):
+    for start, close in comments:
         if not src.startswith("/--", start) or not src.startswith("-/", close - 2) \
                 or close - start < 5:
             continue
         m = pattern.match(code, close)
-        if m:
+        if m and not any(close <= i < m.start("keyword") and src.startswith(("/--", "/-!"), i)
+                         for i, _ in comments):
             found.append(Documented(start, close, m.start("keyword"), m.end()))
     return found
 
@@ -1540,6 +1547,11 @@ DOCUMENTED_PLANTS = [
     ("a docstring with a block nested in it",
      "/-- Outer /- inner -/ text. -/\ntheorem Prop5 : True := trivial\n", 5,
      (" Outer /- inner -/ text. ", "")),
+    ("a remark whose line begins `/--` within the proof",
+     "/-- The real one. -/\ntheorem Prop5 : True := by\n  /- Not this:\n/-- x -/\n  -/\n"
+     "  trivial\n/-- The next. -/\ndef y := 1\n", 5, (" The real one. ", "/-- The next. -/")),
+    ("two docstrings before the theorem",
+     "/-- A. -/ /-- B. -/\ntheorem Prop5 : True := trivial\n", 5, (" B. ", "")),
     ("a remark holding a fake documented axiom",
      "/- Once: /-- A fake. -/ axiom gone : False -/\n/-- The real one. -/\naxiom kept : True\n",
      None, [(" The real one. ", "kept")]),

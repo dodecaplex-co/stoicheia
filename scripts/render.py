@@ -330,7 +330,7 @@ def load_axiom_docs():
         ns = re.search(r"^namespace Elements\.(\S+)", src, re.M)
         prefix = ns.group(1) + "." if ns else ""
         # Each docstring as Lean reads it, so none inside a remark (#349).
-        for doc, name, at in axiom_docstrings(src):
+        for doc, name, at, _ in axiom_docstrings(src):
             line = src[:at].count("\n") + 1
             docs[prefix + name] = (" ".join(doc.split()), path.relative_to(ROOT).as_posix(),
                                    line)
@@ -342,11 +342,14 @@ AXIOM_NAME = r"axiom\s+(?P<name>[^\s({]+)"
 
 def axiom_docstrings(src):
     """Each documented axiom of the Lean `src`, as `heath.documented` reads it: its
-    docstring's text, its name and the name's offset. check_style reads them so too."""
+    docstring's text, its name, the name's offset and the text's span in `src`, the name
+    read in code. check_style reads them so too (`docstring_span`)."""
+    code = heath.without_comments(src)
     found = []
     for d in heath.documented(src, AXIOM_NAME):
-        m = re.compile(AXIOM_NAME).match(src, d.keyword)
-        found.append((src[d.start + 3:d.close - 2], m.group("name"), m.start("name")))
+        m = re.compile(AXIOM_NAME).match(code, d.keyword)
+        found.append((src[d.start + 3:d.close - 2], m.group("name"), m.start("name"),
+                      (d.start + 3, d.close - 2)))
     return found
 
 
@@ -901,13 +904,23 @@ def rests_on(p, docs, depth, book, refs, attached=()):
 @functools.lru_cache(maxsize=None)
 def law_docs():
     """law -> what it says: the docstring of each constructor of the `Cited` type, the laws
-    a derivation inside a hypothetical placement may cite."""
-    src = read_text(ROOT / "Elements" / "Foundations" / "Superposition" / "Syntax.lean")
-    body = re.search(r"^inductive Cited where\n(.*?)^\s*deriving\b", src, re.M | re.S)
+    a derivation inside a hypothetical placement may cite, each docstring as Lean reads it
+    (`heath.documented`), so none inside a remark, and its text past any block nested in
+    it (#349)."""
+    return cited_law_docs(
+        read_text(ROOT / "Elements" / "Foundations" / "Superposition" / "Syntax.lean"))
+
+
+def cited_law_docs(src):
+    """law -> what it says, for the `Cited` type of the Lean `src` (`law_docs`)."""
+    code = heath.without_comments(src)
+    body = re.search(r"^inductive Cited where\n(.*?)^\s*deriving\b", code, re.M | re.S)
     if body is None:
         return {}
-    return {m.group(2): " ".join(m.group(1).split())
-            for m in re.finditer(r"/--((?:(?!-/).)*?)-/\s*\|\s*(\w+)", body.group(1), re.S)}
+    law = re.compile(r"\|\s*(?P<name>\w+)")
+    return {law.match(code, d.keyword)["name"]: " ".join(src[d.start + 3:d.close - 2].split())
+            for d in heath.documented(src, law.pattern)
+            if body.start(1) <= d.start < body.end(1)}
 
 
 def cited_laws_table(p, docs, up):

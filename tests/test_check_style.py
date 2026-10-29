@@ -1072,6 +1072,14 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      " Now. "),
     ("S7", lambda src: spans_of(src, 2, "Outer /- inner -/ text."), "namespace Elements.Tacit\n"
      "/-- Outer /- inner -/ text. -/ axiom one : True\n", " Outer /- inner -/ text. "),
+    # The axioms render.py shows, and the laws of `Cited` on the pages of I.4 and I.8, read
+    # by the same reader (#349).
+    ("S7", lambda src: [(doc, name) for doc, name, _, _ in style.render.axiom_docstrings(src)],
+     "/- Was: /-- Gone. -/ axiom gone : True -/\n/-- Outer /- inner -/ text. -/ axiom one : True\n",
+     [(" Outer /- inner -/ text. ", "one")]),
+    ("S7", style.render.cited_law_docs, "inductive Cited where\n"
+     "  /- Was: /-- Gone. -/ | gone -/\n  /-- Outer /- inner -/ text. -/\n  | kept\n"
+     "  deriving DecidableEq\n", {"kept": "Outer /- inner -/ text."}),
     ("S7", lambda src: spans_of(src, 2, "The transfer rules: Definition 15 here is in no "
                                 "page."), SAMPLE_TACIT, None),
     ("S22", s22, "the straight line `PQ` and the circle `ABCD`", ["PQ", "ABCD"]),
