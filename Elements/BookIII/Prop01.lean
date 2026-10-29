@@ -257,12 +257,13 @@ theorem Prop1.porism {A B C D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA 
   have hDAC : Triangle D A C := Triangle.of_line hD_L hA_L hDA hC_L
   exact Prop1.perpendicular hDAC.bac hDAG.bac hADC hADG
 
-/-- **III.1 for a circle alone.** Given only a circle, Euclid's construction finds its
-centre: two points A, B of the circle are taken (Points 7), and III.1 runs on the straight
-line AB, drawn "through it at random". It returns A and B with III.1's points; that A and B
-differ follows from `Between A D B`. A lemma beside III.1, after its porism, with no
-certificate entry: it rests on what III.1 rests on and on Points 7, which III.1 does not
-use. For the bare existence of a centre, cite the rule itself. -/
+/-- **III.1 for a circle alone** (companion of III.1, "III.1 of_circle"). Given only a
+circle, Euclid's construction finds its centre: two points A, B of the circle are taken
+(Points 7), and III.1 runs on the straight line AB, drawn "through it at random". It returns
+A and B with III.1's points; that A and B differ follows from `Between A D B`. It stands
+after III.1's porism, and rests on what III.1 rests on and on Points 7, which III.1 does
+not use. Where Heath's "[III. 1]" stands, a proof that takes the centre takes it by
+this companion; where Euclid takes a centre with no reference, cite the rule itself. -/
 theorem Prop1.of_circle (ABC : Circle) :
     ∃ A B F C D E : Point, OnCircle A ABC ∧ OnCircle B ABC ∧ Centre F ABC ∧
       Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧

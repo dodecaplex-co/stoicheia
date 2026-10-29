@@ -1,15 +1,16 @@
 [statement]
 scope = "full"
-note = "Covers equal circumferences of any size, less than a semicircle, a semicircle or greater, compared by the angle measure."
-fingerprint = "sha256:88bb35fd9003b0a0"
+note = "Equal circumferences of any size, less than a semicircle, a semicircle or greater, by the angle measure; `Prop29.of_congruent` takes them to be congruent."
+companions = ["III.29 of_congruent"]
+fingerprint = "sha256:b15027ff1b86720a"
 
 [route]
 kind = "modified"
-note = "Euclid's argument where the circumferences are less than semicircles; when they are semicircles, BC and EF are diameters, and when greater, his argument runs on the circumferences that remain."
+note = "Euclid's argument where the circumferences are less than semicircles; when they are semicircles, BC and EF are diameters, and when greater, his argument runs on the circumferences that remain. The route stays so for this release, a deliberate limitation. Semicircles give diameters, which make no triangles for I.4, so the proof adds the equal radii instead; for greater circumferences the rectilineal angles at the centres stand on the less circumferences that remain, so III.27 is applied to those before I.4. A theory of arc magnitudes of their own is left for a later release, and would not by itself remove the case of semicircles. The companion `Prop29.of_congruent` passes from congruent circumferences to equal measures by III.24's companion `Prop24.equalMeasure`, and then applies `Prop29`, so its route is the one above."
 
 [representation]
-tags = ["angle-measure"]
-note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; the equal circles do real work here, giving I.4 its equal radii."
+tags = ["angle-measure", "redundant-hypothesis"]
+note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; in `Prop29` the equal circles do real work, giving I.4 its equal radii. In `Prop29.of_congruent` the circumferences are congruent, and the map that lays one on the other keeps the distance between their ends, so the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles with them (`Prop24.equalCircles`): in that companion alone the hypothesis is redundant, kept as Euclid's setting and used along the same route, for the radii of I.4."
 
 [[passage]]
 at = "and let the straight lines BC, EF be joined"
@@ -32,11 +33,11 @@ case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC
 
 [review]
 stage = "full"
-commit = "7b71d1782"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:c6ea841e06026dc5"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
-text = "sha256:1f804b9f70dfcc9a"
+commit = "d6f91f1b2"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:5433ac49f676cacb"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:576820a2dcfacc51"
 
 [review.items]
 statement = "pass"
