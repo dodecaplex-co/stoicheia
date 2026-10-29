@@ -1024,15 +1024,16 @@ class Calls:
     right, ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append,
     mem_cons, mem_cons_of_mem, mem_cons_self, mem_singleton, mem_singleton_self, not_mem_nil,
     mem_nil_iff, forall_mem_cons, cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc,
-    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton, byContradiction
-    and epsilon_spec. These names exempt only fields with no project candidate; symm, for
-    example, still collects every eligible geometric signature. Book III, the rule of
-    superposition's soundness and Book Zero's area of an outline use some more of Lean's own
-    names, each recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
-    List.mem_map, List.map_congr_left and List.Pairwise.sublist, written so, with a first word
-    that names no declaration of the project; and the constructor of a structure or class the
-    index holds, X.mk, with the equation Lean generates for it, X.mk.injEq, where X names that
-    structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
+    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton, byContradiction,
+    epsilon_spec, and choose and choose_spec, which III.26's helpers take of an existence.
+    These names exempt only fields with no project candidate; symm, for example, still
+    collects every eligible geometric signature. Book III, the rule of superposition's
+    soundness and Book Zero's area of an outline use some more of Lean's own names, each
+    recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
+    List.mem_map, List.map_congr_left, List.Pairwise.sublist, and the Classical.epsilon and
+    True.intro of III.26's helpers, written so, with a first word that names no declaration
+    of the project; and the constructor of a structure or class the index holds, X.mk, with
+    the equation Lean generates for it, X.mk.injEq, where X names that structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
     remaining field is unresolved.
     """
 
@@ -1043,11 +1044,12 @@ class Calls:
         'not_mem_nil', 'mem_nil_iff', 'forall_mem_cons', 'cons_ne_nil',
         'append_ne_nil_of_right_ne_nil', 'append_assoc', 'append_nil', 'nil_append',
         'cons_append', 'pairwise_append', 'pairwise_singleton', 'byContradiction', 'epsilon_spec',
+        'choose', 'choose_spec',
     })
     # Lean's own names, each exempt only when written whole, from a first word that names no
     # declaration of the project.
     CORE_NAMES = frozenset({'And.intro', 'Iff.rfl', 'List.mem_map', 'List.map_congr_left',
-                            'List.Pairwise.sublist'})
+                            'List.Pairwise.sublist', 'Classical.epsilon', 'True.intro'})
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')

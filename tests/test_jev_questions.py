@@ -1066,9 +1066,10 @@ class CallReconciler(LeanFiles):
 
 
 class CoreNames(LeanFiles):
-    """Lean's own names the reader exempts, each read whole (`Calls.CORE_NAMES`, and a
-    structure's or a class's `mk` and `mk.injEq`), and names ending in their words that it
-    reports unresolved; Lean would refuse the second kind too, as names of nothing."""
+    """Lean's own names the reader exempts: words of `Calls.CORE_FIELDS`, names of
+    `Calls.CORE_NAMES` read whole, and a structure's or a class's `mk` and `mk.injEq`; and
+    names it reports unresolved. Most of these Lean would refuse too, as names of nothing;
+    some, as `Classical.choice`, are Lean's own but outside the lists."""
 
     CORE = ('namespace Elements\n\nstructure Pair where\n  a : Nat\n  b : Nat\n\n'
             'class Named (α : Type) where\n  name : α → Nat\n\ndef count : Nat := 0\n\n'
@@ -1092,6 +1093,33 @@ class CoreNames(LeanFiles):
                         'Missing.injEq', 'Missing.mk.injEq', 'And.rfl', 'Iff.intro', 'Array.mem_map',
                         'h.rfl', 'count.mk', 'count.mk.injEq', 'Pair.intro', 'Pair.injEq',
                         'Pair.mk.rfl', 'Named.rfl'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
+    def test_each_of_lean_s_four_choice_names_resolves_as_iii_26_writes_it(self):
+        # III.26's helpers build a function on points from a proof that each image exists:
+        # `choose` and `choose_spec` as fields of that proof, `Classical.epsilon` and
+        # `True.intro` whole (#656). Each is read alone.
+        exists = '  have e : ∃ n : Nat, n = 0 := ⟨0, rfl⟩\n'
+        for name, body in (
+                ('choose', exists + '  have c := e.choose\n'),
+                ('choose_spec', exists + '  have d := e.choose_spec\n'),
+                ('Classical.epsilon', '  have k := Classical.epsilon (fun n : Nat => n = 0)\n'),
+                ('True.intro', '  have t := True.intro\n')):
+            with self.subTest(name=name):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_choice_name_outside_the_four_is_still_unresolved(self):
+        # Lean's other names for choice, and the two whole names' last words after another
+        # first word, are no part of the list.
+        for written in ('Classical.choice', 'Classical.indefiniteDescription', 'Missing.epsilon',
+                        'True.epsilon', 'Classical.intro', 'Missing.True.intro'):
             with self.subTest(written=written):
                 calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
                 calls.direct('Elements.uses')
