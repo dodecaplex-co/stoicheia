@@ -475,7 +475,7 @@ class RenderLeavesTheRecord(unittest.TestCase):
             self.assertEqual(holding, [])
 
 
-ISSUE = "https://github.com/jackChallis/stoicheia/issues/"
+ISSUE = "https://github.com/dodecaplex-co/stoicheia/issues/"
 
 
 def header(*keys, line="News."):
