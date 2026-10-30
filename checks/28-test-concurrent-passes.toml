@@ -1,0 +1,11 @@
+# Check the pre-flight's two passes at once, on stand-in checks: the same verdicts, rows,
+# lines and logs with one pass at a time and two at once, when either pass or both fail,
+# when keep_apart refuses, when a pass crashes or leaves its tree changed; the passes seen
+# to overlap; a signal waiting for both; and STOICHEIA_PASS_WORKERS read, capped and said.
+# It needs no Lean, and runs before the build.
+# Alone (#608): it starts processes of its own and runs two passes at once.
+order = 9
+name = "python3 -I tests/test_concurrent_passes.py"
+job = "check"
+command = ["python3", "-I", "tests/test_concurrent_passes.py"]
+section8 = "python3 -I tests/test_concurrent_passes.py"
