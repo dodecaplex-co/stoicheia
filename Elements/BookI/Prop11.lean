@@ -63,8 +63,8 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
     (hFQ (Triangle.of_line hD_AB hE_AB hDE hQ_AB)).sameSide hD_AB hE_AB
   have hF_AB : ¬ OnLine F AB := not_on_line_of_same_side hF_Q
   -- and let FC be joined;
-  have hFC : F ≠ C := fun h => hF_AB (h ▸ hC_AB)
-  obtain ⟨FC, -, -⟩ := Postulate1 F C hFC
+  /- FC is named by its ends, as a side of the triangles CDF and CEF, so nothing
+     is drawn for the join. -/
   -- I say that the straight line FC has been drawn at right angles to the given straight line
   -- AB from C the given point on it.
   -- For, since DC is equal to CE,
@@ -81,6 +81,7 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
   have hDCF_ECF : ∠ D C F = ∠ E C F := Prop8 hCDF hCEF hCD_CE hCF hDF_EF
   -- and they are adjacent angles.
   /- Adjacent: C lies between D and E, and F is off the straight line DE. -/
+  have hFC : F ≠ C := fun h => hF_AB (h ▸ hC_AB)
   have hDCF_FCE : ∠ D C F = ∠ F C E := hDCF_ECF.trans (angle_symm hEC hFC)
   -- But, when a straight line set up on a straight line makes the adjacent angles equal to one
   -- another, each of the equal angles is right; [Def. 10]

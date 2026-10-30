@@ -45,14 +45,13 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     -- let DA be made equal to CA, and let DC be joined.
     /- Heath gives no bracket here, but "let DA be made equal" is I.3's work, as in
        I.11 and I.16: cut off AD from AX. Then D lies between A and X, and so A lies
-       between B and D (`between_cut`): BA drawn through reaches D. -/
+       between B and D (`between_cut`): BA drawn through reaches D. DC is named by
+       its ends, as a side of the triangle ADC, so nothing is drawn for the join. -/
     obtain ⟨D, hADX, hAD_CA⟩ := Prop3 (A := A) (B := X) hA_C.symm
       (by rw [len_symm C A]; exact hAC_AX)
     have hBAD : Between B A D := between_cut hBAX hADX
     have hD_BA : OnLine D BA := on_line_of_between hBAD hB_BA hA_BA
     have hA_D : A ≠ D := ne_of_between hADX
-    have hD_C : D ≠ C := fun e => hC_BA (e ▸ hD_BA)
-    obtain ⟨DC, hD_DC, hC_DC⟩ := Postulate1 D C hD_C
     -- Then, since DA is equal to AC,
     have hDA_AC : ‖D A‖ = ‖A C‖ := by rw [len_symm D A, hAD_CA, len_symm C A]
     -- the angle ADC is also equal to the angle ACD; [I. 5]
@@ -74,6 +73,7 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     /- The angle BDC is the angle ADC, since A lies on the ray from D through B
        (`angle_onRay_left`). -/
     have hDCB : Triangle D C B := hBDC.bca
+    have hD_C : D ≠ C := fun e => hC_BA (e ▸ hD_BA)
     have hBDC_BCD : ∠ B D C < ∠ B C D := by
       rw [← angle_onRay_left (OnRay.of_between (between_symm hBAD)) hD_C.symm]
       exact hADC_BCD

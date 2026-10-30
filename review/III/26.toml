@@ -5,7 +5,7 @@ fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
-note = "Euclid's one argument for angles of every size: equal angles at the circumferences give equal angles at the centres, their doubles (III.20), the bases are equal by I.4, the segments by III.24, and the remainders are equal in measure by his subtraction. The angles at the centres may be two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's; III.20 cites I.13 and III.2 for it, which Heath's references for III.20 do not give. One division into cases stays, at I.4: where the angles at the centres are two right angles, BC and EF are diameters, and where they are greater, I.4 takes the angles BGC, EHF that remain of four right angles. The congruence of the remainders comes from III.22 and III.24 in place of Euclid's subtraction, since a congruence cannot be subtracted. The route stays so for this release, a deliberate limitation: the measures follow Euclid's subtraction, while the remainders' congruence is proved separately, by III.22 and III.24; a theory of arc magnitudes of their own, which might let congruence follow his subtraction too, is left for a later release."
+note = "For obtuse angles at the circumferences, III.20 gives reflex central angles and I.4 takes the ordinary angles remaining from four right angles, an additional argument for a case within the statement (Heath, vol. 2, pp. 56–57, discussion on p. 57). For right inscribed angles the bases are diameters, each the sum of two radii. The subtraction of the remaining circumferences follows Euclid: Common Notion 3 gives equal measures, and `Prop26.extend` extends the given segment congruence to one application of the whole circles, which `Prop26.remainder` restricts to the remaining segments and arcs."
 
 [representation]
 tags = ["angle-measure"]
@@ -19,8 +19,8 @@ note = "Euclid's figure has the centres on A's and D's sides, where the angles a
 
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
-kind = "case"
-note = "In Euclid's figure I.4 gives the bases from the angles BGC, EHF (`angleAtCentre.within`). Two cases his figure leaves aside are taken as well: where the angles at the centres are two right angles, G is on BC and H on EF, there are no triangles for I.4, and BC and EF are diameters, each two radii (`Tacit.len_add_of_between`, System E, Diagram-segment 1, a rule we assume); where they are greater, the angles BGC, EHF are what remains of four right angles (`angleAtCentre.reflex`), equal by Common Notion 3, and I.4 applies to them."
+kind = "different"
+note = "In Euclid's figure I.4 applies to the angles BGC, EHF. For obtuse inscribed angles, the central angles are reflex: Common Notion 3 removes them from four right angles before I.4 applies, a different argument within the statement (Heath, vol. 2, p. 57). When the inscribed angles are right, the bases are diameters, each the sum of two equal radii."
 
 [[passage]]
 at = "therefore the segment BAC is equal to EDF"
@@ -36,8 +36,9 @@ note = "Euclid subtracts the equal segment circumferences from the equal whole c
 
 [[passage]]
 at = "therefore the circumference BKC which remains is equal to the circumference ELF"
-kind = "different"
-note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.N. 3]. Their congruence cannot come by subtraction: `Prop2.sameSide` (III.2) supplies points of the remaining segments, III.22 makes their angles supplementary to the equal angles at A and D, and III.24 makes the similar segments congruent, with `Arc.Congruent.congr_side` transferring the result to K and L; Heath prints no references here."
+kind = "helper"
+helper = "Prop26.remainder"
+note = "Common Notion 3 gives the equal measures. For congruence, `Prop26.extend` extends the given map radially from a small circle inside the segment, using I.2, I.4, I.8 and I.20; the reverse construction makes it onto, and III.9 identifies the image of the centre. Definition I.15 and the radius rules carry the disks and circumferences across, while collinearity and betweenness preserve the sides of the chord. Restricting that same map to the complementary closed sides gives both remaining figures, including their bases, as Euclid's subtraction requires (Heath, vol. 2, pp. 56–57)."
 
 [[passage]]
 at = "Therefore etc."
@@ -50,11 +51,11 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "full"
-commit = "1c21c147b"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:67e7ae1bfa109a7f"
-run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the release limitation distinguishes subtraction and congruence, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:a345c8b1d386fac2"
+commit = "50db90038"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:3fd865e5038f4121"
+run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the release limitation distinguishes subtraction and congruence, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the remainders' congruence by Euclid's subtraction under one map (Prop26.extend, Prop26.remainder), and the step at I.4 marked as argued another way, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5"
+text = "sha256:c12c57a9addc82bd"
 
 [review.items]
 statement = "pass"

@@ -184,13 +184,10 @@ theorem Prop22 {A₁ A₂ B₁ B₂ C₁ C₂ E F P : Point}
   obtain ⟨K, hK_KLH, hK_DKL, hKP⟩ :=
     circles_meet_same_side hmeet hG_KLH hF_DKL hG_DE hF_DE hP_DE
   -- and let KF, KG be joined;
-  obtain ⟨KF, -, -⟩ := Postulate1 K F (ne_of_centre_of_on hF_DKL hK_DKL)
-  obtain ⟨KG, -, -⟩ := Postulate1 K G (ne_of_centre_of_on hG_KLH hK_KLH)
+  /- KF and KG are named by their ends, as sides of the triangle KFG, so nothing is
+     drawn for the joins. -/
   -- I say that the triangle KFG has been constructed out of three straight lines equal to A,
   -- B, C.
-  /- A triangle indeed: K is off DE, on P's side of it, and F and G are on it. -/
-  have : Triangle K F G :=
-    (Triangle.of_line hF_DE hG_DE (ne_of_between hFGY) (not_on_line_of_same_side hKP)).cab
   -- For, since the point F is the centre of the circle DKL,
   -- FD is equal to FK.
   have hFD_FK : ‖F D‖ = ‖F K‖ := Definition15 hF_DKL hD_DKL hK_DKL
