@@ -65,9 +65,10 @@ in one of three ways.
     `Classical.epsilon` alone, a chosen magnitude gives `grind` nothing to reason with. What
     the lemma leaves out stays unsearched: that two descriptions choose the same magnitude
     when they hold of the same things; for `circumference` and `standing`, that every point
-    of the circle gives the same angle, which is III.21 (so a statement whose proof needs
-    it, as the catalogue's near misses of the measure do, is not found here, and is not a
-    rule's overlap); and for `Outline.area`, that every division of the figure gives it
+    of the circle on the other side of the straight line joining the circumference's ends
+    gives the same angle, which is III.21 (so a statement whose proof needs it, as the
+    catalogue's near misses of the measure do, is not found here, and is not a rule's
+    overlap); and for `Outline.area`, that every division of the figure gives it
     (`area_eq`), which its lemma does not say: it says only that some division does.
   - CARRIERS, the kinds of magnitude and their sum, order and zero: the words the axioms
     are stated in, left as they are.

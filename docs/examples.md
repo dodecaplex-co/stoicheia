@@ -1,16 +1,16 @@
 # Reviewed examples
 
-Four pages to learn from, each chosen for a reason and tied to the commit at which it was
-read. They show the standards of [STYLE.md](STYLE.md) and
+Five examples to learn from, each chosen for a reason and tied to the commit at which it
+was read. They show the standards of [STYLE.md](STYLE.md) and
 [FORMALIZATION.md](FORMALIZATION.md) at work. They guide judgment; they are not templates.
 Copying their leads, their rhythm or their sentences onto another page would make the drift
 the voice passes were run to remove. Take from them how a decision was made, and make your
 own for your proposition.
 
-Each was read again at commit `6b3c462`, after the voice and records passes of brief 0005.
-I.1, I.7 and II.4 have revised commentary and records at the `full` stage; III.31 now uses
-III.2's helpers for its circle facts, with its record read again. When one of them changes,
-it is read again and its commit here brought up to date, or it is replaced.
+The first four were read again at commit `6b3c462`, after the voice and records passes of
+brief 0005. I.1, I.7 and II.4 have revised commentary and records at the `full` stage; III.31
+now uses III.2's helpers for its circle facts, with its record read again. When one of them
+changes, it is read again and its commit here brought up to date, or it is replaced.
 
 ## A short construction: I.1
 
@@ -152,3 +152,91 @@ route note say so.
 **Do not copy.** Full coverage does not make the representation's limits disappear, and a
 proof after the main theorem still needs a clear connection to the sentences it carries.
 The record and the page must describe the declarations that actually do the work.
+
+## A construction completed by companions: I.45 and II.14
+
+I.45: [Page](../book/I/45.md) · [Lean](../Elements/BookI/Prop45.lean) ·
+[mishnah](../mishnah/I/45.md) · [figure](../figures/I/45.svg)
+
+II.14: [Page](../book/II/14.md) · [Lean](../Elements/BookII/Prop14.lean) ·
+[mishnah](../mishnah/II/14.md) · [figure](../figures/II/14.svg)
+
+Read against the Lean, the records and the pages at commit `1d6b44d48`, on 30 October 2026.
+
+**Why this one.** Both enunciations ask for "a given rectilineal figure", any figure with
+straight sides. Euclid's proof of I.45 divides one four-sided figure into two triangles, and
+II.14's proof first makes a rectangle equal to the figure by I.45. The main theorems keep his
+proofs on his two triangles, and companions after them reach every such figure. The pair
+shows how to say which declaration takes which input, and whether a construction returns the
+square or only its side; and how a second page leans on the first instead of telling its
+story again.
+
+- **The main theorems take two triangles, unchecked.** `Prop45` takes ABD and DBC, and
+  `Prop14` the same two lettered A₁A₂A₄ and A₄A₂A₃. Each asks only that they be triangles, so
+  they may overlap, and makes a parallelogram, or the square on a straight line, equal to
+  their sum. They are the division Euclid pictures in I.45 when A and C lie on opposite sides
+  of DB, and that checked case is `Prop45.fan` for the corners D, A, B, C, and `Prop14.fan`
+  for the same corners, II.14's A₄, A₁, A₂, A₃. The Statement and Representation rows and
+  both commentaries say "unchecked" where they describe the main theorem, as STYLE section 4
+  asks.
+- **The outline companions give the whole enunciation.** `Prop45.outline` and
+  `Prop14.outline` take the figure by its boundary alone: an `Outline`
+  ([`Elements/Foundations/Figures.lean`](../Elements/Foundations/Figures.lean)), finitely
+  many closed lines of straight sides, which holds no division, triangle list or area, so
+  that the figure may have a hole, separate pieces or a corner pointing inwards.
+  `Prop45.outline` constructs, in the given angle, a parallelogram equal to the figure's area
+  (`Outline.area`). `Prop14.outline` constructs the square with its four corners, a `Square`
+  that is also a `Parallelogram`, equal to the same area; `Prop14.outline_side` returns only
+  its side, a straight line whose square is that area. Of II.14's main theorem and
+  companions, only `Prop14.outline` and `Prop14.square` draw the square: the rest return a
+  side, as Euclid ends with "the square which can be described on EH". II.14's mishnah says
+  that the main theorem finds the side EH and `Prop14.outline` a square with its four
+  corners, and its Representation row says which form returns which.
+- **Book Zero gives the division and the one area.** Neither proposition's file proves them.
+  `Figures.division_exists`, in
+  [`Elements/Figure/Divisions.lean`](../Elements/Figure/Divisions.lean), divides every
+  outline into triangles that do not overlap, no point inside two of them, covering exactly
+  its region. The content theorem, `Figures.Apart.area_eq_of_same_region` in
+  [`Elements/Figure/Content.lean`](../Elements/Figure/Content.lean), after David Hilbert's
+  theory of content, proves that two such divisions of the same points have the same sum; and
+  `Figures.area_eq`, in `Divisions.lean` again, makes every division's sum the outline's
+  area. Each outline companion's proof has three steps: a division, Euclid's
+  construction for its triangles (`Prop45.apart`; `Prop14.square`, or `Prop14.apart` for the
+  side), and `Figures.area_eq`. I.45's commentary names the two facts as what Euclid takes
+  for granted when he calls the sum of ABD and DBC the figure (**"The whole rectilineal
+  figure ABCD."**), and II.14's points to it in a clause.
+- **The older companions keep a figure given with a checked division.** `Prop45.apart`,
+  `Prop14.apart` and `Prop14.square` take triangles that lie apart (`Apart`); `Prop45.figure`
+  and `Prop14.figure`, triangles glued edge to edge in a suitable order, for a figure with
+  one boundary (`Rectilineal`); and `Prop45.fan` and `Prop14.fan`, Euclid's and Oliver
+  Byrne's division from one corner, with its two conditions (neighbours on opposite sides of
+  the straight line they share, and the angles at that corner together less than four right
+  angles), which `Fitted.fan` shows make the triangles fit together. Each makes its
+  parallelogram, or the square on a straight line, equal to the triangles it is given, taken
+  together (`Prop14.square` draws that square with its four corners), and that sum is the
+  figure's area, the same for every division. They stay beside the outline companions for a
+  figure that comes with its division, and `Prop45.fan_boundary` joins the checked fan to the
+  outline through its corners. Their detailed hypotheses are in their docstrings, which the
+  Proof row links.
+- **"Full" is said of the page's declarations together.** Each record's `scope = "full"`
+  counts its companions ([review/SCHEMA.md](../review/SCHEMA.md)), and its statement note,
+  the Statement row, says which declaration covers what: the main theorem takes two
+  triangles unchecked, and the outline companions a figure by its boundary. So the status
+  line's "as Euclid states it" is true of the page, and the main theorem's statement is no
+  larger for it.
+- **Each row tells its part once.** The records, [review/I/45.toml](../review/I/45.toml) and
+  [review/II/14.toml](../review/II/14.toml), follow STYLE section 2, "Each thing in one
+  place". The Argument rows tell the constructions, the division by `Figures.division_exists`
+  among them, and point to Representation for the area; the Representation rows tell the
+  inputs, the outline and the checked divisions, and the one area. I.45's Representation row
+  keeps the fan's two conditions, and its commentary the argument of `Fitted.fan`, which
+  follows the triangles round the corner one at a time. II.14's rows name the division and
+  the area in a clause each, point to I.45 for the outline, and add what is II.14's own: the
+  square, or its side.
+
+**Do not copy.** I.45's long Representation row and commentary are earned by its inputs and
+its fan argument; a page whose figure is given more simply needs neither. Full coverage
+through companions does not let a sentence describe the main theorem as covering every
+figure, and a companion that returns a side is not "the square". A page that uses Book Zero's
+division and area names them where its rows need them and leaves their story to I.45, as
+II.14's commentary does, rather than telling it again.
