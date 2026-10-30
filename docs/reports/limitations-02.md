@@ -178,8 +178,8 @@ III.20's centre on A's side of BC, which limitations-01 listed, is now only in t
 - `book/III/24.md:13` and `book/III/25.md:13` now read "✅ proved, as Euclid states it · Euclid's argument". `CERTIFICATE.md:179` and `:182` mark III.24 and III.25 "whole", with no †.
 - III.26–III.30 keep the badge (each page at `:13`) and the † (`CERTIFICATE.md:186`–`190`).
 - How it was done:
-  - `BADGE_WORDS` (`scripts/render.py:1022`–`1023`) and `representation_badge` (`:1067`–`1078`), which now takes the statement's facts.json entry, give the `angle-measure` badge only to a statement that names `Elements.circumference`, `Elements.standing` or `Elements.Arc.measure`.
-  - `in_lean_line` passes that entry (`:1095`).
+  - BADGE_WORDS (`scripts/render.py:1022`–`1023`) and representation_badge (`:1067`–`1078`), which now takes the statement's facts.json entry, give the `angle-measure` badge only to a statement that names `Elements.circumference`, `Elements.standing` or `Elements.Arc.measure`.
+  - in_lean_line passes that entry (`:1095`).
   - [The decision entry of 26 October 2026](../decisions/2026-10-26-generated-phrases-read-through-03.md) records the change (`:35`–`44`).
 - facts.json bears it out:
   - III.24's and III.25's statements name none of the three.
@@ -239,9 +239,9 @@ Each finding is graded by [WORKFLOW](../WORKFLOW.md), section 9.
 **The rule.** SCHEMA (`review/SCHEMA.md:77`–`84`) separates two kinds of case:
 
 - a case "that is trivial, or lies beyond his statement" leaves the route Euclid's;
-- "a real case within his statement, argued another way" makes the route `modified`.
+- "a real case within his statement, argued another way" makes the route modified.
 
-The coordinator's ruling of 28 October 2026 applies this. III.20's right and obtuse angles lie beyond Euclid's statement, so they are a `case`. III.21's semicircle and less segment lie within it, and there "the Lean's first step, the doubling by III.20, rests on our angle at the centre and not on Euclid's", so it is `different` (`docs/decisions/2026-10-28-route-labels-iii20-iii21.md:6`–`9`, `:18`–`22`).
+The coordinator's ruling of 28 October 2026 applies this. III.20's right and obtuse angles lie beyond Euclid's statement, so they are a case. III.21's semicircle and less segment lie within it, and there "the Lean's first step, the doubling by III.20, rests on our angle at the centre and not on Euclid's", so it is different (`docs/decisions/2026-10-28-route-labels-iii20-iii21.md:6`–`9`, `:18`–`22`).
 
 **III.26.** The gap catalogue quotes Heath (vol. 2, p. 57; `gaps-book-III.md:233`): "As in III. 21, if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles. Otherwise we must deal separately with the cases where the angle at the circumference is equal to or greater than a right angle." Right and obtuse angles at the circumferences are within III.26's statement, as the semicircle is within III.21's.
 
