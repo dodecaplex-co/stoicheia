@@ -706,6 +706,12 @@ class Index:
         return name in self.decls and (name not in self.private
                                        or self.decls[name].path == consumer.path)
 
+    def available_before(self, name: str, main: Declaration) -> bool:
+        """Whether `name` is declared before `main`: in a file that `main`'s file imports, or
+        above it in its own file. Anything else is a later declaration, never a premise."""
+        d = self.get(name)
+        return d.path in self.visible(main.path) and (d.path != main.path or d.keyword < main.keyword)
+
     def resolve(self, token: str, consumer: Declaration, *, required: bool = False,
                 commentary: bool = False) -> str | None:
         # A dotted declaration opens its parent namespaces for its own type and body.
@@ -885,6 +891,19 @@ RECORD_CHECKED = {
     # measure of a circumference is its angle at the centre (`Prop20.circumference`).
     'III.26': ('Elements.BookIII.Prop20.circumference',),
 }
+# What a record's [representation] note names in backticks as context, a theorem proved after
+# the proposition, which its row is not asked to supply: "a theorem proved after III.27 is not a
+# bridge for it" (the coordinator's ruling of 29 October 2026, #674). III.27's note says its
+# companion is stated in "the form in which III.29's companion `Prop29.of_measure` cites it", and
+# that the two readings agree by `Arc.congruent_iff`, "proved after III.29, from it"; III.29's
+# note names `Arc.congruent_iff` where "the two readings agree" too, and `Arc.measure_eq_iff`,
+# "after III.29", which MEASURE_BRIDGES supplies, so it is not here. `Generator.checked` refuses
+# an entry the note does not name in backticks, or one declared before the main theorem, as a
+# bridge's placement is read (`Index.available_before`).
+RECORD_LATER = {
+    'III.27': ('Elements.BookIII.Prop29.of_measure', 'Elements.BookIII.Arc.congruent_iff'),
+    'III.29': ('Elements.BookIII.Arc.congruent_iff',),
+}
 OUTLINE_CHECKED = {
     'I.45': ('Elements.Figures.Outline', 'Elements.Figures.Outline.Region',
              'Elements.Figures.Outline.area', *OUTLINE_BRIDGES, 'Elements.BookI.Prop45.fan_boundary',
@@ -902,9 +921,24 @@ MEASURE_DEFINITIONS = ['circumference', 'standing', 'Arc', 'Arc.Drawn', 'Arc.mea
                        'Arc.Semicircle', 'Arc.Greater', 'Arc.SameKind', 'EqualCircles']
 MEASURE_BRIDGES = ['Elements.BookIII.Circumference.eq', 'Elements.BookIII.Circumference.standing',
                    'Elements.BookIII.Circumference.centre', 'Elements.BookIII.Arc.measure_eq_iff']
-# Equal segments and circumferences are read as ones that coincide (Common Notion 4).
+# Equal segments and circumferences are read as ones that coincide (Common Notion 4). III.27's
+# and III.29's main statements read them so too, but `Arc.congruent_iff`, which makes them, in
+# equal circles, the circumferences equal in measure, is proved after both (`Arcs.lean` imports
+# Prop29), so their rows get the words without it (RECORD_LATER).
 CONGRUENCE_DEFINITIONS = ['Arc.Congruent', 'Places', 'OnArc', 'InSegment', 'OnSideOrLine']
 CONGRUENCE_BRIDGES = ['Elements.BookIII.Arc.congruent_iff']
+# Congruent circumferences "already lie in equal circles (`Prop24.image`,
+# `Prop24.equalCircles`)", III.27's note says of its redundant hypothesis, and III.29's that
+# "the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles
+# with them (`Prop24.equalCircles`)".
+CONGRUENT_CIRCLE_BRIDGES = ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles']
+# `Prop27`'s proof makes its circumferences "equal in measure, twice the angle standing on them,
+# by III.24's companion `Prop24.equalMeasure`", III.27's note says.
+CONGRUENT_MEASURE_BRIDGES = ['Elements.BookIII.Prop24.equalMeasure']
+# III.29's proof takes "its equal angles from III.27, which `Prop27` states with the same
+# congruence", and its companion "repeats the argument through III.27's companion
+# `Prop27.of_measure`", as III.29's note says.
+EQUAL_ANGLE_BRIDGES = ['Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure']
 # The kind of a segment, decided by where the centre lies, against two right angles.
 KIND_BRIDGES = ['Elements.BookIII.Circumference.semicircle',
                 'Elements.BookIII.Circumference.lt_semicircle',
@@ -1002,9 +1036,16 @@ def bundle(book: str, n: int, outline: bool = False,
         if n in (24, 25, 26, 27, 28, 29, 30):
             definitions += MEASURE_DEFINITIONS
             bridges += MEASURE_BRIDGES
-        if n in (24, 26, 28, 30):
+        if n in (24, 26, 27, 28, 29, 30):
             definitions += CONGRUENCE_DEFINITIONS
+        if n in (24, 26, 28, 30):
             bridges += CONGRUENCE_BRIDGES
+        if n in (27, 29):
+            bridges += CONGRUENT_CIRCLE_BRIDGES
+        if n == 27:
+            bridges += CONGRUENT_MEASURE_BRIDGES
+        if n == 29:
+            bridges += EQUAL_ANGLE_BRIDGES
         if n == 25:
             bridges += KIND_BRIDGES
         if n == 30:
@@ -1087,8 +1128,9 @@ class Calls:
     collects every eligible geometric signature. Book III, the rule of superposition's
     soundness and Book Zero's area of an outline use some more of Lean's own names, each
     recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
-    List.mem_map, List.map_congr_left, List.Pairwise.sublist, and the Classical.epsilon and
-    True.intro of III.26's helpers, written so, with a first word that names no declaration
+    List.mem_map, List.map_congr_left, List.Pairwise.sublist, the Classical.epsilon and
+    True.intro of III.26's helpers, and the List.nodup_cons of the area of a convex outline
+    (Elements/Figure/Divisions.lean), written so, with a first word that names no declaration
     of the project; and the constructor of a structure or class the index holds, X.mk, with
     the equation Lean generates for it, X.mk.injEq, where X names that structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
     remaining field is unresolved.
@@ -1106,7 +1148,8 @@ class Calls:
     # Lean's own names, each exempt only when written whole, from a first word that names no
     # declaration of the project.
     CORE_NAMES = frozenset({'And.intro', 'Iff.rfl', 'List.mem_map', 'List.map_congr_left',
-                            'List.Pairwise.sublist', 'Classical.epsilon', 'True.intro'})
+                            'List.Pairwise.sublist', 'Classical.epsilon', 'True.intro',
+                            'List.nodup_cons'})
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
@@ -1664,7 +1707,10 @@ class Generator:
         supply, as a bridge, a definition or one of the statements it judges: each name its
         [representation] note gives in backticks, and its names of RECORD_CHECKED, the laws
         it cites among them (record_checked), and, where the row's statements take a figure by
-        its outline, OUTLINE_CHECKED."""
+        its outline, OUTLINE_CHECKED. A name of RECORD_LATER, which the note names as a theorem
+        proved after the proposition, is not asked of the row for the note's naming it; an entry
+        there that the note does not name, or that is declared before the main theorem, is
+        refused."""
         consumer = self.index.get(heath.parse_ref(ref).lean)
         names = []
         for token in re.findall(r'`([^`]+)`', record.get('representation', {}).get('note', '')):
@@ -1672,6 +1718,13 @@ class Generator:
                 name = self.index.resolve(token, consumer, commentary=True)
                 require(name, f'{ref}: its record names {token}, which is no declaration')
                 names.append(name)
+        later = RECORD_LATER.get(ref, ())
+        for name in later:
+            require(name in names, f'{ref}: RECORD_LATER names {name}, which its record\'s '
+                                   '[representation] note does not name')
+            require(not self.index.available_before(name, consumer),
+                    f'{ref}: RECORD_LATER names {name}, which is declared before {consumer.name}')
+        names = [name for name in names if name not in later]
         names += self.record_checked(ref)
         if f'{ref} outline' in self.facts[ref]['attached']:
             names += OUTLINE_CHECKED.get(ref, ())
@@ -1720,8 +1773,7 @@ class Generator:
             d = self.index.get(name)
             calls = self.calls.direct(name, supplied)
             prop_calls = [c for c in calls if re.search(r'\.Book[IVX]+\.Prop\d+', c['name'])]
-            available = (d.path in self.index.visible(main.path) and
-                         (d.path != main.path or d.keyword < main.keyword))
+            available = self.index.available_before(name, main)
             # These signatures explain a representation, and may be corollaries of
             # the consumer. They must never be misreported as available premises.
             placement[name] = {'path': d.path, 'line': self.index.clean[d.path].count('\n', 0, d.keyword) + 1,

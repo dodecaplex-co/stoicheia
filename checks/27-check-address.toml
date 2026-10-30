@@ -1,0 +1,13 @@
+# Check that the pages and the documents in scope (Markdown, CITATION.cff, LICENSE, NOTICE)
+# give the repository's address on GitHub as its home, dodecaplex-co/stoicheia. The dated
+# records and the briefs, the current book briefs among them, are exempt and not judged, so
+# an old address added there is not refused (docs/WORKFLOW.md, section 4, "The
+# repository's address"); --self-test first reads a case of each form of address, of each
+# kind of file, of the options and of a file that cannot be read. It needs no Lean.
+# Alone (#608): its self-test writes three files in the tree, in docs/briefs/ and at the
+# root, and removes them before it ends, so a check beside it could read them.
+order = 185
+name = "python3 scripts/check_address.py --self-test"
+job = "check"
+command = ["python3", "scripts/check_address.py", "--self-test"]
+section8 = "python3 scripts/check_address.py --self-test"

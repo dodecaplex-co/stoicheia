@@ -12,9 +12,14 @@
 # `meaning` is one plain line. A tag that changes how a whole statement is read may
 # also have `badge`, a few words eligible to stand beside the green check on the page
 # ("as Euclid states it, in our measure of circumferences"). The renderer may keep that
-# badge to statements that use the representation; when shown, it also marks the row of
-# the certificate with a †. A new tag is added here, with its meaning, before any record
-# uses it. Python reads this file with tomllib; heath.load_terms() checks it.
+# badge to statements that use the representation, and words it by what each states: it
+# puts "and" before the badge where the statement also states the reading the
+# representation stands beside ("and in our measure of circumferences"), and gives "with
+# a companion" and the badge where the statement states only that reading and a
+# companion uses the representation. The badge marks the row of the certificate with a
+# † only where the statement itself uses the representation. A new tag is added here,
+# with its meaning, before any record uses it. Python reads this file with tomllib;
+# heath.load_terms() checks it.
 
 [tag.adjacent-bases]
 kind = "scope"
@@ -46,7 +51,7 @@ meaning = "A segment is given as its whole circle, a straight line in it and one
 
 [tag.angle-measure]
 kind = "representation"
-meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.20's `Prop20.circumference`, both companions of III.24, III.25's `Prop25.kind`, and III.26–III.30)."
+meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.20 and III.24–III.30, each in its main statement or in a companion)."
 badge = "in our measure of circumferences"
 
 [tag.angle-at-centre]
