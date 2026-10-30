@@ -10,7 +10,9 @@ there that leave a marker if they ever run, and run a copy of the generator besi
 One full generation against the real HEAD, the audit of Books I to III and then its
 calibration set, is made in memory once and shared by the control, Book III, calibration,
 figure restoring and tally cases, which report its duration; the controls are generated
-again, at the evidence commit of the audit of Books I and II, in a clone. Figures are restored
+again, at the evidence commit of the audit of Books I and II, in a clone. The cases on III.27's
+and III.29's congruent circumferences generate those two propositions alone, at HEAD, so that
+they run in seconds without the shared generation. Figures are restored
 from that generation's manifest into a temporary repository. The tally reads result lines built
 here as `jev.py run` builds them for the generated file, with jev.py's own request builder and
 answer reader, and, in one case, the output of jev.py's own run, its key and replies stood in
@@ -1066,9 +1068,10 @@ class CallReconciler(LeanFiles):
 
 
 class CoreNames(LeanFiles):
-    """Lean's own names the reader exempts, each read whole (`Calls.CORE_NAMES`, and a
-    structure's or a class's `mk` and `mk.injEq`), and names ending in their words that it
-    reports unresolved; Lean would refuse the second kind too, as names of nothing."""
+    """Lean's own names the reader exempts: words of `Calls.CORE_FIELDS`, names of
+    `Calls.CORE_NAMES` read whole, and a structure's or a class's `mk` and `mk.injEq`; and
+    names it reports unresolved. Most of these Lean would refuse too, as names of nothing;
+    some, as `Classical.choice`, are Lean's own but outside the lists."""
 
     CORE = ('namespace Elements\n\nstructure Pair where\n  a : Nat\n  b : Nat\n\n'
             'class Named (α : Type) where\n  name : α → Nat\n\ndef count : Nat := 0\n\n'
@@ -1092,6 +1095,57 @@ class CoreNames(LeanFiles):
                         'Missing.injEq', 'Missing.mk.injEq', 'And.rfl', 'Iff.intro', 'Array.mem_map',
                         'h.rfl', 'count.mk', 'count.mk.injEq', 'Pair.intro', 'Pair.injEq',
                         'Pair.mk.rfl', 'Named.rfl'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
+    def test_each_of_lean_s_four_choice_names_resolves_as_iii_26_writes_it(self):
+        # III.26's helpers build a function on points from a proof that each image exists:
+        # `choose` and `choose_spec` as fields of that proof, `Classical.epsilon` and
+        # `True.intro` whole (#656). Each is read alone.
+        exists = '  have e : ∃ n : Nat, n = 0 := ⟨0, rfl⟩\n'
+        for name, body in (
+                ('choose', exists + '  have c := e.choose\n'),
+                ('choose_spec', exists + '  have d := e.choose_spec\n'),
+                ('Classical.epsilon', '  have k := Classical.epsilon (fun n : Nat => n = 0)\n'),
+                ('True.intro', '  have t := True.intro\n')):
+            with self.subTest(name=name):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_choice_name_outside_the_four_is_still_unresolved(self):
+        # Lean's other names for choice, and the two whole names' last words after another
+        # first word, are no part of the list.
+        for written in ('Classical.choice', 'Classical.indefiniteDescription', 'Missing.epsilon',
+                        'True.epsilon', 'Classical.intro', 'Missing.True.intro'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
+    def test_list_nodup_cons_resolves_as_the_area_of_a_convex_outline_writes_it(self):
+        # `Parallelogram.convexOutline`, in Elements/Figure/Divisions.lean, proves its corners
+        # different with `List.nodup_cons` whole, inside `simp [...]` (#674). Each is read alone.
+        for form, body in (
+                ('simp', '  have h : True ∧ True := ⟨trivial, trivial⟩\n'
+                         '  have n : True := by simp [List.nodup_cons, h.1, h.2]\n'),
+                ('@', '  have k := @List.nodup_cons\n')):
+            with self.subTest(form=form):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_neighbour_of_list_nodup_cons_is_still_unresolved(self):
+        # List's other nodup lemmas, and the whole name's last word after another first word or
+        # lengthened, are no part of the list.
+        for written in ('List.nodup_append', 'List.nodup_nil', 'Missing.nodup_cons',
+                        'Array.nodup_cons', 'List.nodup_cons_of'):
             with self.subTest(written=written):
                 calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
                 calls.direct('Elements.uses')
@@ -1338,7 +1392,7 @@ class BookThree(unittest.TestCase):
                 for name in row['state']['represented_objects']:
                     self.assertIn('Elements.' + name, generator.index.decls)
                 self.assertEqual(sorted(bridges), sorted(set(verdict[1])))
-        for n in (13, 14, 16, 18, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
+        for n in (13, 14, 16, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37):
             self.assertTrue(rows[f'III.{n}']['state']['bridges'], n)
         state = rows['III.35']['state']
         self.assertTrue({'sq', 'Square'} <= set(state['definitions']))
@@ -1405,6 +1459,116 @@ class BookThree(unittest.TestCase):
             with self.subTest(n=n):
                 self.assertEqual(bool(set(questions.TOUCHING_BRIDGES) & set(bridges)), n == 13)
                 self.assertEqual('TouchesInternallyAt' in definitions, n == 13)
+
+    def test_iii_20_and_iii_21_get_the_angle_at_the_centre_and_its_bridges(self):
+        # III.20's and III.21's records pass their representations on the angle at the centre of
+        # any size (#129). III.20's note names the word, the bridge that makes it the angle BEC
+        # where Euclid's angles at the centre are, and its companion on the measure of a
+        # circumference, and says in words that the reading depends on neither the diameter, nor
+        # the centre (`angleAtCentre.diameter`), nor the point naming the side
+        # (`angleAtCentre.congr`); III.21's record has no representation note, and its route
+        # covers the semicircle and the less segment (`angleAtCentre.diameter`) and its passages
+        # name the word, `angleAtCentre.congr` and its three sizes (`angleAtCentre.size`), which
+        # its row has besides. III.26's note names the word, which our
+        # measure of a circumference is (`Prop20.circumference`).
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        records = {n: questions.tomllib.loads(generator.evidence.read(f'review/III/{n}.toml'))
+                   for n in (20, 21, 26)}
+        for n, record in records.items():
+            self.assertEqual(record['review']['items']['representations'], 'pass', n)
+        self.assertNotIn('representation', records[21])
+        self.assertIn('It depends on neither the diameter, nor the centre, nor the point naming the side',
+                      records[20]['representation']['note'])
+        self.assertEqual(questions.CENTRE_DEFINITIONS, ['angleAtCentre'])
+        self.assertEqual(questions.CENTRE_BRIDGES, ['Elements.BookIII.angleAtCentre.within',
+                                                    'Elements.BookIII.angleAtCentre.congr',
+                                                    'Elements.BookIII.angleAtCentre.diameter'])
+        self.assertEqual(questions.CENTRE_MEASURE_BRIDGES, ['Elements.BookIII.Prop20.circumference'])
+        self.assertEqual(questions.CENTRE_SIZE_BRIDGES, ['Elements.BookIII.angleAtCentre.size'])
+        for n, extra in ((20, questions.CENTRE_MEASURE_BRIDGES), (21, questions.CENTRE_SIZE_BRIDGES)):
+            with self.subTest(ref=f'III.{n}'):
+                state = rows[f'III.{n}']['state']
+                self.assertEqual(rows[f'III.{n}']['expected'], 'bridge stated')
+                self.assertEqual(sorted(state['bridges']), sorted(questions.CENTRE_BRIDGES + extra))
+                self.assertEqual(state['represented_objects'], questions.CENTRE_DEFINITIONS)
+                self.assertIn('angleAtCentre', state['definitions'])
+        # III.26 takes the word after its circumferences' words, and of the angle at the centre's
+        # bridges only the measure's.
+        state = rows['III.26']['state']
+        self.assertEqual(rows['III.26']['expected'], 'bridge stated')
+        self.assertEqual(state['represented_objects'],
+                         list(dict.fromkeys(questions.MEASURE_DEFINITIONS + questions.CONGRUENCE_DEFINITIONS
+                                            + questions.CENTRE_DEFINITIONS)))
+        self.assertEqual(sorted(state['bridges']),
+                         sorted(questions.MEASURE_BRIDGES + questions.CONGRUENCE_BRIDGES
+                                + questions.CENTRE_MEASURE_BRIDGES))
+        self.assertFalse(set(questions.CENTRE_BRIDGES) & set(state['bridges']))
+        self.assertEqual(state['attached_statements'], {})
+        # III.20's note names its companion Prop20.circumference, which its row supplies both as
+        # a bridge and as an attached statement: it is missing only without either.
+        name = 'Elements.BookIII.Prop20.circumference'
+        state = copy.deepcopy(rows['III.20']['state'])
+        self.assertIn('III.20 circumference', state['attached_statements'])
+        del state['bridges'][name]
+        self.assertEqual(generator.checked('III.20', records[20], state), [])
+        del state['attached_statements']['III.20 circumference']
+        self.assertEqual(generator.checked('III.20', records[20], state), [name])
+        # No other proposition of Book III gets the word or its bridges.
+        for n in range(1, 38):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(n=n):
+                self.assertEqual('angleAtCentre' in definitions, n in (20, 21, 26))
+                self.assertEqual(bool(set(questions.CENTRE_BRIDGES) & set(bridges)), n in (20, 21))
+                self.assertEqual('Elements.BookIII.angleAtCentre.congr' in bridges, n in (20, 21))
+                self.assertEqual('Elements.BookIII.angleAtCentre.diameter' in bridges, n in (20, 21))
+                self.assertEqual('Elements.BookIII.Prop20.circumference' in bridges, n in (20, 26))
+
+    def test_iii_20_iii_21_and_iii_26_refuse_a_row_leaving_out_what_their_records_say(self):
+        # What III.20's, III.21's and III.26's records say of the angle at the centre in words,
+        # not in backticks of a representation note, which the guard reads from RECORD_CHECKED.
+        generator = shared()['generator']
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        records = {n: questions.tomllib.loads(generator.evidence.read(f'review/III/{n}.toml'))
+                   for n in (20, 21, 26)}
+        # The words of the records that RECORD_CHECKED's comments quote.
+        self.assertIn('It depends on neither the diameter, nor the centre, nor the point naming the side',
+                      records[20]['representation']['note'])
+        self.assertIn('two right angles or more (`angleAtCentre`)', records[21]['route']['note'])
+        self.assertIn('III.20 doubles BAD and BED in every segment', records[21]['route']['note'])
+        self.assertIn("with F on A's and E's side of BD", records[21]['figure']['case'])
+        passages = {p['at']: p['note'] for p in records[21]['passage']}
+        self.assertIn('both are halves of BFD', passages['therefore the angle BAD is equal to the angle BED'])
+        self.assertIn('the angle at the centre reads only the side (`angleAtCentre.congr`)',
+                      passages['Let ABCD be a circle'])
+        self.assertIn('III.20 makes it up from angles at the centre itself', passages['let BF, FD be joined'])
+        self.assertIn('two right angles in a semicircle and more in a less segment (`angleAtCentre.size`)',
+                      passages['Now, since the angle BFD is at the centre'])
+        self.assertIn('"Equal circumferences" is read as equal in measure', records[26]['representation']['note'])
+        self.assertIn('within the proof the angles at the centres standing on BKC and ELF are of any size '
+                      '(`angleAtCentre`)', records[26]['representation']['note'])
+        self.assertEqual(questions.RECORD_CHECKED['III.20'],
+                         ('Elements.BookIII.angleAtCentre.diameter', 'Elements.BookIII.angleAtCentre.congr'))
+        self.assertEqual(questions.RECORD_CHECKED['III.21'],
+                         ('Elements.angleAtCentre', *questions.CENTRE_BRIDGES,
+                          *questions.CENTRE_SIZE_BRIDGES))
+        self.assertEqual(questions.RECORD_CHECKED['III.26'], tuple(questions.CENTRE_MEASURE_BRIDGES))
+        # Each of them left out of its row is refused, and nothing else is.
+        for ref, table, name in (('III.20', 'bridges', 'Elements.BookIII.angleAtCentre.diameter'),
+                                 ('III.20', 'bridges', 'Elements.BookIII.angleAtCentre.congr'),
+                                 ('III.21', 'definitions', 'angleAtCentre'),
+                                 ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.within'),
+                                 ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.congr'),
+                                 ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.diameter'),
+                                 ('III.21', 'bridges', 'Elements.BookIII.angleAtCentre.size'),
+                                 ('III.26', 'bridges', 'Elements.BookIII.Prop20.circumference')):
+            n = int(ref.split('.')[1])
+            with self.subTest(ref=ref, missing=name):
+                state = copy.deepcopy(rows[ref]['state'])
+                self.assertEqual(generator.checked(ref, records[n], state), [])
+                del state[table][name]
+                full = name if name.startswith('Elements.') else 'Elements.' + name
+                self.assertEqual(generator.checked(ref, records[n], state), [full])
 
     def test_superposition_records_get_the_bridges_they_checked(self):
         # Records I.4 and I.8 check Atom/Lit/Metric.Holds, their holds_map bridges,
@@ -1479,9 +1643,9 @@ class BookThree(unittest.TestCase):
             f'review/{ref.split(".")[0]}/{int(ref.split(".")[1]):02d}.toml')) for ref in rows}
         passed = [ref for ref, record in records.items()
                   if record['review'].get('items', {}).get('representations') == 'pass']
-        self.assertEqual(len(passed), 47)
-        self.assertIn('III.13', passed)
-        self.assertIn('III.18', passed)
+        self.assertEqual(len(passed), 49)
+        for ref in ('III.13', 'III.18', 'III.20', 'III.21', 'III.26'):
+            self.assertIn(ref, passed)
         for ref in passed:
             with self.subTest(ref=ref):
                 self.assertEqual(generator.checked(ref, records[ref], rows[ref]['state']), [])
@@ -1510,7 +1674,10 @@ class BookThree(unittest.TestCase):
                                  ('III.13', 'definitions', 'CirclesTouchAt'),
                                  ('III.18', 'definitions', 'MixedAngle'),
                                  ('III.18', 'definitions', 'MixedAngle.WellFormed'),
-                                 ('III.18', 'bridges', 'Elements.BookIII.Prop18.branch')):
+                                 ('III.18', 'bridges', 'Elements.BookIII.Prop18.branch'),
+                                 ('III.20', 'definitions', 'angleAtCentre'),
+                                 ('III.20', 'bridges', 'Elements.BookIII.angleAtCentre.within'),
+                                 ('III.26', 'definitions', 'angleAtCentre')):
             with self.subTest(ref=ref, missing=name):
                 state = copy.deepcopy(rows[ref]['state'])
                 del state[table][name]
@@ -1525,6 +1692,155 @@ class BookThree(unittest.TestCase):
         self.assertEqual(generator.checked('III.18', records['III.18'], state), [])
         del state['attached_statements']['III.18 contact_locallyEqual']
         self.assertEqual(generator.checked('III.18', records['III.18'], state), [name])
+
+
+_CONGRUENT = {}
+# What III.27's and III.29's notes name as bridges, beside the measure's.
+CONGRUENT_BRIDGES = {
+    'III.27': ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles',
+               'Elements.BookIII.Prop24.equalMeasure'],
+    'III.29': ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles',
+               'Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure'],
+}
+
+
+def congruent_rows():
+    """III.27's and III.29's representation rows and records, from a generator at HEAD of their
+    own, so that the cases on them run alone, in seconds, without the shared generation."""
+    if not _CONGRUENT:
+        generator = questions.Generator(HEAD)
+        for n in (27, 29):
+            generator.proposition('III', n)
+        _CONGRUENT.update(
+            generator=generator,
+            rows={row['ref']: row for row in generator.rows if row['item'] == 11 and not row['seeded']},
+            records={f'III.{n}': questions.tomllib.loads(generator.evidence.read(f'review/III/{n:02d}.toml'))
+                     for n in (27, 29)})
+    return _CONGRUENT
+
+
+class CongruentCircumferences(unittest.TestCase):
+    # III.27's and III.29's main statements take Euclid's equal circumferences as ones that
+    # coincide (`Arc.Congruent`), their companions as ones equal in measure (#474). Their rows
+    # get the words of both readings and the bridges their notes name, and are not asked for the
+    # later theorems RECORD_LATER lists, which their notes name as context (#674).
+
+    @staticmethod
+    def record_with_names(record, names):
+        record = copy.deepcopy(record)
+        record['representation']['note'] = ' '.join(
+            f'`{name.removeprefix("Elements.BookIII.")}`' for name in names)
+        return record
+
+    def test_iii_27_and_iii_29_get_the_congruence_and_the_bridges_their_records_name(self):
+        for n in (27, 29):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(ref=f'III.{n}'):
+                self.assertEqual(definitions, list(dict.fromkeys(questions.MEASURE_DEFINITIONS
+                                                                 + questions.CONGRUENCE_DEFINITIONS)))
+                self.assertEqual(bridges, questions.MEASURE_BRIDGES + CONGRUENT_BRIDGES[f'III.{n}'])
+                # `Arc.congruent_iff` is proved after III.29, in `Arcs.lean`.
+                self.assertNotIn('Elements.BookIII.Arc.congruent_iff', bridges)
+        self.assertEqual(questions.CONGRUENT_CIRCLE_BRIDGES,
+                         ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles'])
+        self.assertEqual(questions.CONGRUENT_MEASURE_BRIDGES, ['Elements.BookIII.Prop24.equalMeasure'])
+        self.assertEqual(questions.EQUAL_ANGLE_BRIDGES,
+                         ['Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure'])
+        # Their rows have them, each declared before the main theorem.
+        rows = congruent_rows()['rows']
+        for ref in ('III.27', 'III.29'):
+            with self.subTest(ref=ref):
+                state = rows[ref]['state']
+                self.assertEqual(rows[ref]['expected'], 'bridge stated')
+                self.assertEqual(sorted(state['bridges']),
+                                 sorted(questions.MEASURE_BRIDGES + CONGRUENT_BRIDGES[ref]))
+                self.assertTrue(set(questions.CONGRUENCE_DEFINITIONS) <= set(state['represented_objects']))
+                self.assertIn('Arc.Congruent', state['definitions'])
+                for name in CONGRUENT_BRIDGES[ref]:
+                    self.assertEqual(state['bridge_placement'][name]['role'], 'available declaration')
+        # No other proposition of Book III gets them; III.24, III.26, III.28 and III.30 keep
+        # `Arc.congruent_iff`.
+        for n in range(1, 38):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(n=n):
+                self.assertEqual('Arc.Congruent' in definitions, n in (24, 26, 27, 28, 29, 30))
+                self.assertEqual('Elements.BookIII.Arc.congruent_iff' in bridges, n in (24, 26, 28, 30))
+                self.assertEqual(bool(set(questions.CONGRUENT_CIRCLE_BRIDGES) & set(bridges)), n in (27, 29))
+                self.assertEqual('Elements.BookIII.Prop24.equalMeasure' in bridges, n == 27)
+                self.assertEqual(bool(set(questions.EQUAL_ANGLE_BRIDGES) & set(bridges)), n == 29)
+
+    def test_iii_27_and_iii_29_refuse_a_row_leaving_out_a_bridge_their_records_name(self):
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        for ref, names in CONGRUENT_BRIDGES.items():
+            record = self.record_with_names(records[ref], [*names, *questions.RECORD_LATER[ref]])
+            for name in names:
+                with self.subTest(ref=ref, missing=name):
+                    state = copy.deepcopy(rows[ref]['state'])
+                    self.assertEqual(generator.checked(ref, record, state), [])
+                    del state['bridges'][name]
+                    self.assertEqual(generator.checked(ref, record, state), [name])
+
+    def test_record_later_holds_the_later_theorems_the_notes_name(self):
+        # "a theorem proved after III.27 is not a bridge for it" (the coordinator's ruling of
+        # 29 October 2026, #674): the notes name these as context, and the rows do not supply them.
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        self.assertEqual(questions.RECORD_LATER, {
+            'III.27': ('Elements.BookIII.Prop29.of_measure', 'Elements.BookIII.Arc.congruent_iff'),
+            'III.29': ('Elements.BookIII.Arc.congruent_iff',)})
+        for ref, later in questions.RECORD_LATER.items():
+            main = generator.index.get(questions.heath.parse_ref(ref).lean)
+            record = self.record_with_names(records[ref], later)
+            self.assertEqual(generator.checked(ref, record, copy.deepcopy(rows[ref]['state'])), [])
+            for name in later:
+                with self.subTest(ref=ref, name=name):
+                    self.assertFalse(generator.index.available_before(name, main))
+                    self.assertNotIn(name, rows[ref]['state']['bridges'])
+            # The measure's `Arc.measure_eq_iff`, proved after III.29 too, stays a bridge of both,
+            # placed as an explanatory later declaration.
+            placement = rows[ref]['state']['bridge_placement']['Elements.BookIII.Arc.measure_eq_iff']
+            self.assertEqual(placement['role'], 'explanatory later declaration')
+
+    def test_a_record_later_entry_its_note_does_not_name_is_refused(self):
+        # A stale entry: a theorem proved after the main theorem that the note does not give in
+        # backticks, or one the note has ceased to name.
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        unnamed = 'Elements.BookIII.Prop30'
+        record = self.record_with_names(records['III.27'], questions.RECORD_LATER['III.27'])
+        self.assertFalse(generator.index.available_before(unnamed, generator.index.get('Elements.BookIII.Prop27')))
+        with self.subTest(name=unnamed), \
+                patch.dict(questions.RECORD_LATER, {'III.27': (*questions.RECORD_LATER['III.27'], unnamed)}), \
+                self.assertRaisesRegex(questions.Refusal, r"III\.27: RECORD_LATER names Elements\.BookIII\."
+                                       r"Prop30, which its record's \[representation\] note does not name"):
+            generator.checked('III.27', record, copy.deepcopy(rows['III.27']['state']))
+        name = 'Elements.BookIII.Arc.congruent_iff'
+        record = self.record_with_names(records['III.29'], [name])
+        self.assertEqual(generator.checked('III.29', record, copy.deepcopy(rows['III.29']['state'])), [])
+        record['representation']['note'] = ''
+        with self.subTest(name='Elements.BookIII.Arc.congruent_iff'), \
+                self.assertRaisesRegex(questions.Refusal, r"III\.29: RECORD_LATER names Elements\.BookIII\."
+                                       r"Arc\.congruent_iff, which its record's \[representation\] note "
+                                       r"does not name"):
+            generator.checked('III.29', record, copy.deepcopy(rows['III.29']['state']))
+
+    def test_a_record_later_entry_declared_before_the_main_theorem_is_refused(self):
+        # A theorem the note names that is declared before the main theorem is a bridge, which
+        # the row must supply, never context it may leave out.
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        for ref, name in (('III.27', 'Elements.BookIII.Prop24.equalMeasure'),
+                          ('III.29', 'Elements.BookIII.Prop27')):
+            main = questions.heath.parse_ref(ref).lean
+            record = self.record_with_names(records[ref], [*questions.RECORD_LATER[ref], name])
+            with self.subTest(ref=ref, name=name):
+                self.assertTrue(generator.index.available_before(name, generator.index.get(main)))
+                with patch.dict(questions.RECORD_LATER, {ref: (*questions.RECORD_LATER[ref], name)}), \
+                        self.assertRaisesRegex(questions.Refusal,
+                                               re.escape(f'{ref}: RECORD_LATER names {name}, which is '
+                                                         f'declared before {main}')):
+                    generator.checked(ref, record, copy.deepcopy(rows[ref]['state']))
 
 
 def recomputed_lists(question, revision=HEAD):
@@ -1843,6 +2159,36 @@ class Calibration(unittest.TestCase):
                     self.assertEqual(len(removed), 1)
                     self.assertEqual(set(row['state']['bridges']), set(state['bridges']) - removed)
                     self.assertTrue(row['state']['bridges'])
+
+    def test_parallelograms_get_their_outline_and_the_area_plants_break_it_too(self):
+        # The rows that measure a parallelogram by `quadArea` supply the bridges that make its
+        # corners a convex outline and that outline's area `quadArea`. P13's plants at I.43 and
+        # I.36, which break the bridge that the other diameter gives the same area, break that
+        # outline's area too, so that no bridge left ties the measure to the figure.
+        rotate, outline = 'Elements.Parallelogram.quadArea_rotate', 'Elements.Parallelogram.outline_area'
+        both = {'Elements.Parallelogram.convexOutline', outline}
+        for n in range(1, 49):
+            with self.subTest(n=n):
+                self.assertEqual(both <= set(questions.bundle('I', n)[1]), 34 <= n <= 38 or 41 <= n <= 48)
+        rows = {row['ref']: row for row in shared()['rows'] if row['item'] == 11 and not row['seeded']}
+        for n in (*range(34, 39), *range(41, 49)):
+            if rows[f'I.{n}']['state']['bridges']:
+                with self.subTest(ref=f'I.{n}'):
+                    self.assertTrue(both <= set(rows[f'I.{n}']['state']['bridges']))
+        plants = {row['ref']: row for row in calibration_rows('P13') if row['calibration']['role'] == 'plant'}
+        for ref in ('I.43', 'I.36'):
+            with self.subTest(ref=ref):
+                changed = {c['field'][-1] for c in plants[ref]['mutation']['changes']
+                           if c.get('field', [])[:2] == ['state', 'bridges']}
+                self.assertEqual(changed, {rotate, outline})
+        self.assertIn('singleOutline', plants['I.43']['mutation']['base_state']['bridges'][outline])
+        self.assertNotIn('singleOutline', plants['I.43']['state']['bridges'][outline])
+        # The premise speaks of the bridge's own corners: `quadArea_rotate`'s are the file's
+        # variables, and `outline_area`'s are bound before it.
+        self.assertIn('(hAC : A = C)', plants['I.36']['state']['bridges'][rotate])
+        text = plants['I.36']['state']['bridges'][outline]
+        self.assertEqual(text.count('(hAC : A = C)'), 1)
+        self.assertLess(text.index('{A B C D : Point}'), text.index('(hAC : A = C)'))
 
     def test_the_manifest_the_bar_and_the_refusals_name_both_entries(self):
         manifest = shared()['calibration']

@@ -1,8 +1,10 @@
 # Check the superposition pin check's own reading, case by case, of pins Lean runs and pins
 # it never runs. tests/test_check_superposition_pins.py needs no Lean; it runs first, so
 # that a reading found wrong stops the job before the check's verdict.
+# Concurrent (#608): its cases run in a temporary folder, and it writes only bytecode here.
 order = 143
 name = "python3 -I tests/test_check_superposition_pins.py"
 job = "check"
 command = ["python3", "-I", "tests/test_check_superposition_pins.py"]
 section8 = "python3 -I tests/test_check_superposition_pins.py"
+concurrent = true
