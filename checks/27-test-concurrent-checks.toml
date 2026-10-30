@@ -1,0 +1,11 @@
+# Check the pre-flight's runs of concurrent checks, on stand-in checks: the same steps,
+# outcomes and logs at one worker and at three, the first failure in order refusing, `after`
+# and the cap kept, a concurrent check that writes in the tree refused, and no check left
+# running when the run is interrupted; and the registry's rules for the two fields. It needs
+# no Lean, and runs before the build.
+# Alone (#608): it starts processes of its own and measures how many run at once.
+order = 8
+name = "python3 -I tests/test_concurrent_checks.py"
+job = "check"
+command = ["python3", "-I", "tests/test_concurrent_checks.py"]
+section8 = "python3 -I tests/test_concurrent_checks.py"

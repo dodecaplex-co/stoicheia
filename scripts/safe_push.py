@@ -2,7 +2,8 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--land] [--commit <sha>] [--dry-run] [--main-checks-cache]
+                  [--land [--preflight-proof F]] [--commit <sha>] [--dry-run [--emit-proof F]]
+                  [--main-checks-cache]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>] [--main-checks-cache]  # the checks alone
 
@@ -276,6 +277,41 @@ a pre-flight that left it to CI); else step 4 runs by the class, as for a separa
 --merge. The disk is never read on that path: the record saved there is not loaded,
 whatever it holds. A separate --merge keeps the rule above unchanged.
 
+--preflight-proof FILE, with --land, takes step 4 from a proof that a dry run wrote on
+another machine with --emit-proof FILE, as the owner decided on 29 October 2026: the yard
+VM, which holds no credentials, runs the pre-flight, and the machine that pushes signs off,
+pushes and merges. The proof is the dry run's record (the commit, origin/main's tip, the
+harness's blob, each step's verdict and time), the mode and blob of each check input at
+origin/main (check_input_blobs), the machine's name and the time it was made, with a digest
+of them. A dry run writes one only once it has passed with step 4 in full, and never with
+--main-checks-cache: a proof may not rest on a cache entry. The parser's own refusals (an
+unknown option, a combination it refuses) and the checks of the repository it is run in
+come before anything runs and touch nothing at FILE; a dry run past them removes FILE as
+it starts, and again unless it returns 0 (a refusal, an error or an interruption, in its
+summary or before it), so that only a run that passes leaves one.
+--land reads it after the preconditions and the class, before any of the commit's code
+runs here, and takes step 4 from it only when it is of this commit against this
+origin/main, by this harness with origin/main's check inputs, made no more than
+PROOF_HOURS ago nor PROOF_SKEW seconds ahead of this clock, with no note for the security
+review, with each step's name, note, harness and time printable text of at most
+PROOF_TEXT characters, each step's name of PROOF_STEP's characters alone and nothing
+GitHub would link, and of step 4 in full, every step passed (proof_record); else a note says why, quoting nothing of the
+proof, since the note goes into the pull request's body, and the full pre-flight runs
+here, as without it. So too for a proof that is not standard JSON (a key given twice
+in one object, NaN or Infinity), whose digest is not 64 lower-case hexadecimal
+characters, or that cannot be judged at all: a reason, never a crash.
+Only its step 4 is taken, its line naming the harness running here and the time the proof
+was made, nothing else of the proof's: its notes, which are the VM run's, are not carried
+into the record (the preconditions, the secret scan and the guards run here again), and
+the machine is named on the terminal and in the record saved here, never in a line the
+pull request's body holds. The proof is a file made by a run that ran the head's own
+code, so its digest catches an edit or damage, not a forgery: anyone who can write the
+proof file can make one for any commit and origin/main they know, with failures and notes
+left out and the digest computed afresh, and CI, which runs a check-changing head's own
+checks and not origin/main's, would not catch that. The proof is believed, as far as its binding
+reaches, on the owner's decision. The secret scan and the guards run on this machine
+every time, and CI and main's rules gate every merge.
+
 When main's rules require a merge queue, --merge keeps these gates, checks the head
 against the newest commit of origin/main's first-parent chain that it contains, as the
 queue's judge does, and enqueues it with expectedHeadOid pinned.
@@ -325,6 +361,7 @@ import platform
 # sandbox is set (run), not even when the run crashes there.
 import plistlib  # noqa: F401
 import posixpath
+import queue
 import re
 import secrets
 import shutil
@@ -333,6 +370,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import tomllib
 import traceback  # noqa: F401
@@ -441,7 +479,8 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
 # checks/ is the registry of CI's `check` job, one file per check (#229): a check added,
-# removed, or with its command, job or order changed, is named in a decisions entry.
+# removed, or with its command, job, order, `concurrent` or `after` changed, is named in a
+# decisions entry.
 # docs/ACCEPTANCE.md's table of the limitations allowed is what tests/test_acceptance_limits.py
 # ties to check_acceptance.py's ALLOWED_LIMITS, so it is a check input, protected as one
 # (#249). PROTECTED_JUDGED, below, joins them. scripts/auto_revert.py keeps its own copy of the
@@ -611,6 +650,12 @@ CHECKS = [
 MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
+# The model job may run beside the registry's concurrent checks (#608): its harnesses write
+# nothing in the worktree but Python's ignored bytecode, read nothing that a check which
+# may run beside them writes, and run one after another. Declared only beside a registry
+# that declares a concurrent check of its own (check_sequence), so that a registry without
+# the field runs as before.
+MODEL_JOB_CONCURRENT = frozenset(name for name, _ in MODEL_JOB)
 # CI's `negative` job, in a second disposable worktree: negative_tests.py plants breaks
 # in the tree it runs in.
 NEGATIVE = [
@@ -635,6 +680,26 @@ ENTRY_BYTES = 16 * 2 ** 20      # the largest entry read: 16 MiB (one measured 1
 CACHE: Path | None = None
 SANDBOX: str | None = None
 CACHE_HIT = False       # origin/main's pass was taken from the cache in this run (main_checks)
+
+# The pre-flight proof: a dry run's record, written on one machine (--emit-proof,
+# write_proof), that stands in for step 4 of --land on another (--preflight-proof,
+# proof_record).
+PROOF_FORMAT = 1
+PROOF_HOURS = 12        # the oldest proof --land takes
+PROOF_SKEW = 300        # seconds a proof may be dated ahead of this clock, as clocks differ
+PROOF_BYTES = 2 ** 20   # the largest proof read: 1 MiB
+PROOF_TEXT = 300        # the longest step's name, note, harness or time a proof may hold
+# The characters of a proof's step names: those of every step's name in the records saved
+# so far, with no markup, table bar or backtick, since a name goes into the body as it is;
+# an underscore only within a word, where Markdown makes no emphasis of it, and no web
+# address, word of 7 or more hexadecimal digits or GH- and a digit, which GitHub would make
+# a link (to a page, a commit or an issue).
+PROOF_STEP = re.compile(r"(?!.*(?i:://|www\.|(?<![a-z0-9])[0-9a-f]{7,}(?![a-z0-9])|gh-[0-9]))"
+                        rf"(?:[A-Za-z0-9 '().:/-]|(?<=[A-Za-z0-9])_(?=[A-Za-z0-9])){{1,{PROOF_TEXT}}}")
+PROOF_FIELDS = frozenset({"format", "record", "check_inputs", "machine", "made", "digest"})
+PROOF_MACHINE = re.compile(r"[A-Za-z0-9._-]{1,64}")
+PROOF_MADE = "%Y-%m-%dT%H:%M:%SZ"
+PROOF_TIME = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 
 class Refusal(Exception):
@@ -3586,7 +3651,13 @@ def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
         r = run(cmd, cwd, env=tool_env())
         out, ok = (r.stdout or "") + (r.stderr or ""), r.returncode == 0
     log.write_text(out)
-    seconds = time.time() - t
+    return step_done(stage, name, out, ok, time.time() - t, log, rep, fail)
+
+
+def step_done(stage, name, out: str, ok: bool, seconds: float, log: Path, rep: Report,
+              fail: str) -> str:
+    """A step of the full checks reported, its log written: ok, or `fail` with the log
+    named and its tail, a Refusal when `fail` is FAIL; its output."""
     if ok:
         rep.add(stage, name, "ok", "", seconds)
         return out
@@ -3594,6 +3665,352 @@ def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
     if fail == "FAIL":
         raise Refusal(f"`{name}` failed on the commit")
     return out
+
+
+# Step 4's concurrent checks (#608). The registry declares a check `concurrent` when it
+# writes nothing in the worktree but ignored bytecode, reads nothing that a check which may
+# run beside it writes, has no limit timed by the clock that a busy machine could fail, and
+# does not itself fill the machine (checks/README.md); MODEL_JOB_CONCURRENT declares the
+# model job so. A group is a run of such checks next to each other in order. Every other
+# check runs alone, after every earlier check has ended and before any later one starts,
+# as before #608. Every check, in a group or alone, is started by run(), as every command
+# of step 4 is. The number of workers is keyed in the main-checks cache on purpose, though
+# no check reads it (UNKEYED_VARIABLES): a record made at one number is never used at
+# another.
+CHECK_WORKERS = "STOICHEIA_CHECK_WORKERS"
+# The step that fails when a group's worktree differs after it: a concurrent check wrote it.
+TREE_GUARD = "concurrent checks left the tree as they found it"
+
+
+def check_workers() -> tuple[int, str]:
+    """How many of a group's checks may run at once, and what the check list line says of
+    it. STOICHEIA_CHECK_WORKERS unset or empty is one, the run before #608, and the line
+    says nothing; a whole number from 1 is taken up to the cap, half this machine's cores
+    (at least one), so that yards, ships and other work still get their share, and the
+    line says the cap. Any other value is a Refusal naming it."""
+    text = os.environ.get(CHECK_WORKERS, "")
+    if not text:
+        return 1, ""
+    digits = text.lstrip("0")
+    if not (text.isascii() and text.isdigit() and digits):
+        raise Refusal(f"{CHECK_WORKERS} must be a whole number from 1, not {text[:40]!r}")
+    cores = os.cpu_count() or 1
+    cap = max(1, cores // 2)
+    # Compared by length first: int() refuses a string of more than 4,300 digits.
+    capped = len(digits) > len(str(cap)) or int(digits) > cap
+    workers = cap if capped else int(digits)
+    shown = text if len(text) <= 20 else text[:20] + "…"
+    return workers, (f"; the concurrent checks run up to {workers} at once ({CHECK_WORKERS}="
+                     f"{shown}, {'capped at' if capped else 'the cap'} {cap}, half this "
+                     f"machine's {cores} cores)")
+
+
+def on_disk(path: Path, hashed: bool = True) -> tuple:
+    """What is at `path`: nothing, a link and its target, a file with its executable bit
+    and the SHA-256 of its bytes, another kind of file, or, when it cannot be looked at or
+    read, the error's number. Not `hashed`, whatever is there is its lstat: size,
+    modification time, change time, inode and mode."""
+    try:
+        st = os.lstat(path)
+        if not hashed:
+            return ("stat", st.st_size, st.st_mtime_ns, st.st_ctime_ns, st.st_ino,
+                    st.st_mode)
+        if stat.S_ISLNK(st.st_mode):
+            return ("link", os.readlink(path))
+        if not stat.S_ISREG(st.st_mode):
+            return ("kind", stat.S_IFMT(st.st_mode))
+        digest = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(2 ** 20), b""):
+                digest.update(chunk)
+        return ("file", bool(st.st_mode & 0o111), digest.hexdigest())
+    except FileNotFoundError:
+        return ("absent",)
+    except OSError as e:
+        return ("unreadable", e.errno)
+
+
+# Where tree_state compares each file's lstat, not its bytes: the build's caches (CACHES),
+# whose thousands of files a pass would otherwise read whole around every group.
+CACHED = tuple(cache.lstrip("/") + "/" for cache in CACHES)
+
+
+class TreeState(NamedTuple):
+    head: str                   # git rev-parse HEAD
+    index: str                  # the SHA-256 of git ls-files --stage -v -z
+    paths: dict[str, tuple]     # each path listed: git's two letters, and on_disk's
+
+
+def tree_state(wt: Path) -> TreeState:
+    """The worktree's state: HEAD; the SHA-256 of the index's entries as `git ls-files
+    --stage -v` lists them, each with its skip-worktree or assume-unchanged tag; each path
+    git status lists, with git's two letters for it; and every other file `git ls-files
+    -o` lists, with no exclude rules, so ignored ones among them, lettered `!!`, but
+    Python's bytecode (__pycache__/, *.pyc). Each path is given with what is on disk there
+    (on_disk), hashed but under the build's caches (CACHED), where its lstat is compared:
+    so a file changed again, or put back as the index holds it, shows too, and so do a
+    commit, a checkout, a file the shared info/exclude comes to ignore, and an entry newly
+    flagged so that git status passes over its file. A write under the caches shows even
+    when it puts back the file's size and modification time, since it moves the change
+    time, which only the system sets. git runs with its settings as at_commit asks
+    (DISK_AS_IS) and no optional lock, so it writes neither the worktree's index nor an
+    object; nothing is written. Not a tree id from a temporary copy
+    of the index, `git add -A` into it and `git write-tree`: that writes a blob of every
+    changed and untracked file, and the tree, into the repository's objects, which the
+    worktree shares with the main checkout, and needs GIT_INDEX_FILE kept through run(),
+    which base_tree alone may keep (#357)."""
+    def listed(*args: str) -> bytes:
+        r = run(["git", "--no-optional-locks", *DISK_AS_IS, *args], wt, binary=True)
+        if r.returncode != 0:
+            raise Refusal(f"`git {args[0]}` failed in the worktree {wt}, taking its state "
+                          f"around concurrent checks: "
+                          f"{r.stderr.decode(errors='replace').strip()}")
+        return r.stdout
+
+    def seen(path: str) -> tuple:
+        return on_disk(wt / path, hashed=not path.startswith(CACHED))
+
+    head = listed("rev-parse", "--verify", "HEAD").decode(errors="replace").strip()
+    index = hashlib.sha256(listed("ls-files", "--stage", "-v", "-z")).hexdigest()
+    paths = {}
+    for record in listed("status", "--porcelain", "-z", "--untracked-files=all",
+                         "--no-renames").split(b"\0"):
+        if record:
+            path = os.fsdecode(record[3:])
+            paths[path] = (record[:2].decode(errors="replace"), seen(path))
+    for record in listed("ls-files", "-o", "-z").split(b"\0"):
+        path = os.fsdecode(record)
+        bytecode = path.endswith(".pyc") or "__pycache__" in path.split("/")[:-1]
+        if record and path not in paths and not bytecode:
+            paths[path] = ("!!", seen(path))
+    return TreeState(head, index, paths)
+
+
+def tree_changes(before: TreeState, after: TreeState) -> str:
+    """What differs between two of tree_state's: HEAD, the index, and each path whose state
+    differs, with git's letters for it after, their spaces dropped (` M` shows as `M`), or
+    said to be no longer listed; at most eight named, and how many more."""
+    changes = []
+    if before.head != after.head:
+        changes.append(f"HEAD moved from {before.head[:12]} to {after.head[:12]}")
+    if before.index != after.index:
+        changes.append("the index changed (git ls-files --stage -v)")
+    was, now = before.paths, after.paths
+    changes += [f"{now[p][0].strip()} {p}" if p in now else f"{p} (no longer listed by git)"
+                for p in sorted(p for p in was.keys() | now.keys() if was.get(p) != now.get(p))]
+    shown = ", ".join(printable_text(c) for c in changes[:8])
+    return shown + (f" and {len(changes) - 8} more" if len(changes) > 8 else "")
+
+
+# The signals a group of concurrent checks records, not raises, while it runs at more than
+# one worker (run_together).
+GROUP_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+
+
+def recorder(caught: list[int]):
+    """A signal's handler that only puts each signal it is given at the end of `caught`."""
+    def record(signum, frame):
+        caught.append(signum)
+    return record
+
+
+def signalled(signum: int):
+    """Raise what one of GROUP_SIGNALS raises outside a group: Python's KeyboardInterrupt
+    for Ctrl-C's SIGINT, and _terminate's for SIGTERM and SIGHUP, as main() sets them."""
+    if signum == signal.SIGINT:
+        raise KeyboardInterrupt
+    _terminate(signum, None)
+
+
+def run_together(group: list[tuple[str, list[str]]], where: Path, rep: Report, logs: Path,
+                 first: int, label: str, fail: str, after: types.MappingProxyType,
+                 workers: int, cache=None) -> None:
+    """One group of concurrent checks at more than one worker, the first logged as `first`:
+    each run by run(), as run_step runs it, with tool_env()'s environment built on this
+    thread, but on a thread of its own; at most `workers` at once, started in registry
+    order, each once the checks its `after` names have ended. This thread alone reports
+    and logs them, in registry order, each once every check before it has ended, with its
+    own time and output, so the lines and logs are those of the checks run one at a time.
+    Where a failure fails the pass (FAIL), no thread is started once one has failed (one
+    started before it may still run its check, and is waited for), and the steps are
+    reported up to the first failure in registry order, which refuses, as run_step does;
+    where a failure is a note, every check runs and is reported in order, `cache`
+    collecting it. An exception a check's run() raised is raised here at its place in
+    registry order, as run_step's run() would raise it.
+
+    On the main thread, while the group runs, a SIGINT, SIGTERM or SIGHUP (GROUP_SIGNALS)
+    raises nothing: its handler only records it (recorder), since an exception a handler
+    raises can land just after a lock is taken, in this thread or in a queue, and leave it
+    held. Once one is recorded, no further check starts or is reported, the checks running
+    (at most `workers`) run to their end, the previous handlers are put back, and what the
+    first signal would have raised is raised (signalled), unless another comes in the
+    moment the handlers are put back, when its own handler raises first. A
+    terminal's Ctrl-C reaches the checks too, since they share the run's process group,
+    and they end; a SIGTERM or SIGHUP sent to the harness alone waits for them to end of
+    themselves. A refusal, an exception a check's run() raised, or any other, waits for
+    them so too before it goes on, unless a signal was recorded, whose exception then goes
+    on instead. So no check still reads the worktree while the pass cleans it
+    (base_copies, at_commit) or removes it (worktree). Each check is waited for by joining
+    its thread, whether or not its end was taken in. Python runs a handler only between
+    its own steps, so a signal stops the starts once its handler has run, not the instant
+    it comes."""
+    names = {name for name, _ in group}
+    waiting = list(group)           # not started, in registry order
+    running: set[str] = set()       # started, their ends not yet taken in
+    ended: dict[str, tuple[str, bool, float] | BaseException] = {}
+    finished: queue.SimpleQueue = queue.SimpleQueue()     # its put never blocks
+    # A check's thread puts itself in `begun` before it reads `shut`, and wait() sets `shut`
+    # before it lists `begun`. Python, with its GIL, runs one thread's step at a time, so a
+    # thread that wait() does not list reads `shut` set, and begins no check: the checks in
+    # the list are all that run, even if an exception came between a thread's start and
+    # the line after it.
+    begun: dict[str, threading.Thread] = {}
+    shut, stopping, reported = False, False, 0
+    caught: list[int] = []          # the signals recorded, the first first
+    start_lock = threading.Lock()
+    # The handlers to put back, read before any is changed. Off the main thread (a test's),
+    # Python runs no handler on this thread, and none is installed.
+    previous = ({signum: signal.getsignal(signum) for signum in GROUP_SIGNALS}
+                if threading.current_thread() is threading.main_thread() else {})
+
+    def check(name: str, cmd: list[str], env: dict) -> None:
+        nonlocal stopping
+        with start_lock:
+            begun[name] = threading.current_thread()
+            if shut or caught:
+                # No end to give but this one, which receive(), if it already waits, takes
+                # in as one that goes no further.
+                finished.put((name, None))
+                return
+        t = time.time()
+        try:
+            r = run(cmd, where, env=env)
+            result = ((r.stdout or "") + (r.stderr or ""), r.returncode == 0, time.time() - t)
+        except BaseException as e:      # raised in registry order, as run_step's would be
+            result = e
+        with start_lock:
+            if isinstance(result, BaseException) or (fail == "FAIL" and not result[1]):
+                stopping = True
+            finished.put((name, result))    # the thread's last act
+
+    def receive() -> bool:
+        """One check's end taken in, and its thread joined; whether the pass goes no further
+        than it."""
+        name, result = finished.get()
+        running.discard(name)
+        begun[name].join()
+        if result is None:          # begun once a signal was recorded: not run, not ended
+            return True
+        ended[name] = result
+        return isinstance(result, BaseException) or (fail == "FAIL" and not result[1])
+
+    def wait() -> None:
+        """No check begun after this, and every check begun ended: its thread joined,
+        whether or not its end was taken in."""
+        nonlocal shut
+        shut = True
+        for thread in list(begun.values()):
+            thread.join()
+
+    try:
+        record = recorder(caught)
+        for signum in previous:
+            signal.signal(signum, record)
+        while True:
+            while (waiting and len(running) < workers
+                   and all(e in ended for e in after.get(waiting[0][0], ()) if e in names)):
+                with start_lock:
+                    if stopping or caught:
+                        break
+                    name, cmd = waiting.pop(0)
+                    running.add(name)
+                    threading.Thread(target=check, args=(name, cmd, tool_env()),
+                                     daemon=True).start()
+            while not caught and reported < len(group) and group[reported][0] in ended:
+                name = group[reported][0]
+                result = ended[name]
+                if isinstance(result, BaseException):
+                    raise result
+                out, ok, seconds = result
+                log = logs / f"{first + reported:02d}{slug_of(name + label)}.log"
+                log.write_text(out)
+                reported += 1
+                out = step_done("4", name + label, out, ok, seconds, log, rep, fail)
+                if cache is not None:
+                    cache.collect(rep, out)
+            if reported == len(group) or caught:
+                return          # a signal recorded is raised below
+            if receive():
+                stopping = True
+    finally:
+        try:
+            wait()
+        finally:
+            # Put back with the signals held on this thread, the checks' threads ended, so
+            # that no handler runs half-way through: one whose handler Python has yet to run
+            # is recorded before the first is put back, and one the system still holds for
+            # the harness is taken (sigwait) and recorded too; one that comes once they are
+            # back, even in the moment before the mask is lifted, is handled by its own
+            # handler, which then raises in place of the first's.
+            if previous:
+                held = signal.pthread_sigmask(signal.SIG_BLOCK, GROUP_SIGNALS)
+                for signum in sorted(signal.sigpending() & (set(GROUP_SIGNALS) - held)):
+                    caught.append(signal.sigwait({signum}))
+                for signum, handler in previous.items():
+                    signal.signal(signum, handler)
+                signal.pthread_sigmask(signal.SIG_SETMASK, held)
+        if caught:
+            signalled(caught[0])
+
+
+def guard_group(group, before: TreeState, where: Path, rep: Report, label: str,
+                fail: str, cache=None) -> None:
+    """The worktree's state (tree_state) after a group of concurrent checks, against
+    `before`, taken before it: if the group changed it, the step TREE_GUARD fails, naming
+    the checks and what changed (tree_changes), as a note in a noting pass, which then
+    keeps the pass out of the main-checks cache."""
+    now = tree_state(where)
+    if now == before:
+        return
+    rep.add("4", TREE_GUARD + label, fail, f"the worktree differs after "
+            f"{', '.join(name for name, _ in group)}, each declared concurrent, which "
+            f"promises it writes nothing there but ignored bytecode (checks/README.md): "
+            f"{tree_changes(before, now)}")
+    if fail == "FAIL":
+        raise Refusal(f"`{TREE_GUARD}` failed on the commit")
+    if cache is not None:
+        cache.spoiled = cache.spoiled or f"the step {TREE_GUARD} failed in origin/main's pass"
+
+
+def run_sequence(steps, where: Path, rep: Report, logs: Path, label: str, fail: str,
+                 excludes, first: int, plan: CheckList | None = None, cache=None) -> None:
+    """A pass's steps, each logged as `first` and its place, `cache`, if given, collecting
+    each as it is reported. A check `plan` declares concurrent runs in a group with those
+    next to it in order, and the worktree's state is taken around the group at every
+    number of workers (guard_group), so that no verdict depends on the number; every other
+    check runs alone, as do the steps of a list with no plan. At one worker, a group's
+    checks run as every check runs, one after another on this thread (run_step), so the
+    run is the one before #608 but for the guard; at more, together (run_together)."""
+    concurrent = plan.concurrent if plan is not None else frozenset()
+    at = 0
+    while at < len(steps):
+        end = at
+        while end < len(steps) and steps[end][0] in concurrent:
+            end += 1
+        alone = end == at
+        group = steps[at:at + 1] if alone else steps[at:end]
+        before = None if alone else tree_state(where)
+        if not alone and plan.workers > 1:
+            run_together(group, where, rep, logs, first + at + 1, label, fail, plan.after,
+                         plan.workers, cache)
+        else:
+            for index, (name, cmd) in enumerate(group, first + at + 1):
+                out = run_step("4", name + label, cmd, where, rep, logs, index, fail, excludes)
+                if cache is not None:
+                    cache.collect(rep, out)
+        if not alone:
+            guard_group(group, before, where, rep, label, fail, cache)
+        at += len(group)
 
 
 def copy_build(src: Path, dst: Path) -> None:
@@ -3610,6 +4027,10 @@ class CheckList(NamedTuple):
     steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
     why: str                                     # where they came from, for the step line
     built_in: bool = False                       # CHECKS: the revision holds no registry
+    concurrent: frozenset[str] = frozenset()     # the steps that may run in groups (#608)
+    # Each such step's earlier ones to wait for, a mapping no caller can change.
+    after: types.MappingProxyType = types.MappingProxyType({})
+    workers: int = 1                             # at most this many at once (check_list)
 
 
 def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
@@ -3628,7 +4049,14 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
     `empty` entry, and only it, is named EMPTY_CHECK, and every other entry's name is its
     command's words joined by spaces, so that no command is ever named as a step whose
     failure FRESHNESS passes over. Step 3 reads the commit's own registry so too, `whose`
-    naming it (guard_registry)."""
+    naming it (guard_registry).
+
+    An entry's `concurrent` and `after` (#608), which a reader before them does not print,
+    are read as absent: concurrent false, after empty. Present, concurrent must be true or
+    false, and never the `empty` check's; after a list of names of earlier checks, and
+    only for a concurrent one. The model job is concurrent (MODEL_JOB_CONCURRENT) beside a
+    registry that declares a check concurrent, and runs alone beside one that declares
+    none, as every check did before #608."""
     def refuse(why: str):
         raise Refusal(f"{whose}'s registry of checks could not be read: {why}")
 
@@ -3679,6 +4107,8 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
     if not isinstance(entries, list):
         refuse(f"its {REGISTRY_READER} printed no list of checks")
     steps: list[tuple[str, list[str] | None]] = []
+    concurrent: set[str] = set()
+    after: dict[str, tuple[str, ...]] = {}
     for item in entries:
         name = item.get("name") if isinstance(item, dict) else None
         command, empty = (item.get("command"), item.get("empty")) if name else (None, None)
@@ -3701,6 +4131,18 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
             refuse(f"its {REGISTRY_READER} gives a command the name {name!r}, which only "
                    "the `empty` check may bear: a failure of a step of that name is "
                    "passed over when a check change is kept apart (FRESHNESS)")
+        alongside, waits = item.get("concurrent", False), item.get("after", [])
+        earlier = {before for before, _ in steps}
+        if (not isinstance(alongside, bool) or (empty and alongside)
+                or not isinstance(waits, list) or (waits and not alongside)
+                or not all(isinstance(w, str) and w in earlier for w in waits)):
+            refuse(f"its {REGISTRY_READER} gives {printable_text(name)[:200]} concurrent "
+                   f"{printable_text(str(alongside))[:20]} and after "
+                   f"{printable_text(str(waits))[:200]}: concurrent is true or false, never "
+                   "for the `empty` check, and after lists earlier checks of a concurrent one")
+        if alongside:
+            concurrent.add(name)
+            after[name] = tuple(waits)
         steps.append((name, None if empty else
                        [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
     if not steps:
@@ -3709,7 +4151,10 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
         refuse(f"its {REGISTRY_READER} gives two checks of one name")
     return CheckList(steps + MODEL_JOB, f"the {len(steps)} of {whose}'s registry, "
                      f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
-                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's",
+                     concurrent=frozenset(concurrent | (MODEL_JOB_CONCURRENT if concurrent
+                                                        else set())),
+                     after=types.MappingProxyType(after))
 
 
 def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
@@ -3753,46 +4198,54 @@ def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
                 "a later pre-flight will", time.time() - t)
 
 
-def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
-    """check_sequence for the commit, as a step line: ok with how many and from where, or
-    FAIL and a Refusal."""
+def check_list(ctx, rep: Report) -> CheckList:
+    """check_sequence for the commit, with the workers check_workers gives, as a step
+    line: ok with how many and from where, and the workers when STOICHEIA_CHECK_WORKERS
+    is set and not empty, or FAIL and a Refusal. A sequence that declares no concurrent
+    check runs every check alone, so the variable is not read for it, and the line is as
+    before #608."""
     t = time.time()
     try:
         checks = check_sequence(ctx.repo, ctx.base)
+        workers, said = check_workers() if checks.concurrent else (1, "")
     except Refusal as e:
         rep.add("4", "check list", "FAIL", str(e), time.time() - t)
         raise
-    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}",
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}{said}",
             time.time() - t)
-    return checks.steps
+    return checks._replace(workers=workers)
 
 
 def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
-                sequence: list[tuple[str, list[str] | None]]) -> None:
+                sequence: CheckList | list[tuple[str, list[str] | None]]) -> None:
+    """Step 4's two loops on the commit: `sequence`, check_list's (a bare list of steps
+    runs each alone), in each pass in the worktree, then NEGATIVE in a second one."""
     def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
 
+    plan = sequence if isinstance(sequence, CheckList) else CheckList(list(sequence), "")
     # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
     # kept for it on a miss; keep_apart then reads its steps as it reads them run.
-    cache = main_checks(ctx, wt, inputs, rep, sequence) if CACHE is not None else None
+    cache = main_checks(ctx, wt, inputs, rep, plan.steps) if CACHE is not None else None
 
-    def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
+    def checks(steps, where: Path, label, fail, excludes, first: int,
+               declared: CheckList | None = None) -> None:
         if label == BASE_PASS and cache is not None and cache.hit:
             cache.replay(steps, first, rep, logs)
             return
-        for i, (name, cmd) in enumerate(steps, 1):
-            out = run_step("4", name + label, cmd, where, rep, logs, first + i, fail, excludes)
-            if label == BASE_PASS and cache is not None:
-                cache.collect(rep, out)
-        if label == BASE_PASS and cache is not None:
-            cache.save(rep)
+        kept = cache if label == BASE_PASS else None
+        run_sequence(steps, where, rep, logs, label, fail, excludes, first, declared, kept)
+        if kept is not None:
+            kept.save(rep)
 
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
-    # the worktree back before the worktree is removed.
+    # the worktree back before the worktree is removed. A group of concurrent checks waits
+    # for every check it started before it lets such a refusal, or any exception, go
+    # (run_together), so none is still reading the worktree when it is put back.
     with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
         for label, fail, excludes in each:
-            checks(sequence, wt, label, fail, excludes, 10)
+            checks(plan.steps, wt, label, fail, excludes, 10, plan)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
@@ -4378,8 +4831,9 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
     checks are skipped (short_path), CI running the rest of section 8's sequence before the
     merge and the negative tests running on main after it and on the cadence; for R3 to R5
     they run. `checked`, a record of this commit against this origin/main by origin/main's
-    harness, stands in for step 4 alone (--merge; checks_record); steps 2 and 3,
-    including the train check when given, always run."""
+    harness, stands in for step 4 alone (--merge, --land; checks_record), its step line
+    naming the pre-flight proof it came from when it did (--preflight-proof); steps 2 and
+    3, including the train check when given, always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     rep.heading("3. Invariant guards against origin/main")
     # Before the commit is checked out (#186): on a case-insensitive disk a twin is written
@@ -4401,9 +4855,17 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
             short = short_path(ctx, risk, g, rep)
             if checked is not None and not checked.get("short"):
                 short = False
+                proof = checked.get("proof")
+                # This line goes into the record's notes, and so into the pull request's
+                # body. Of a proof it takes only the time made, held to PROOF_TIME: the
+                # harness named is the one running here, whose blob the proof's matches,
+                # and the machine is not named.
+                by = (f"{HARNESS}: from the pre-flight proof made at "
+                      f"{printable_text(proof['made'])}" if proof else
+                      f"{printable_text(str(checked.get('harness')))}, "
+                      f"{printable_text(str(checked.get('time')))}")
                 rep.add("4", "full local checks", "skip", f"run on {ctx.sha[:12]} against "
-                        f"origin/main {ctx.base[:12]} by {checked.get('harness')}, "
-                        f"{checked.get('time')}")
+                        f"origin/main {ctx.base[:12]} by {by}")
             elif short:
                 rep.add("4", "full local checks", "skip", f"class {risk.cls}: left to CI, "
                         "whose check and model jobs run the builds, Facts.lean, the kernel "
@@ -5321,7 +5783,10 @@ def record_path(sha: str, base: str) -> Path:
 def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Risk,
                 checked: dict | None = None) -> dict:
     """The pre-flight's record. `checked`, the earlier record that stood in for step 4
-    (--merge), gives its step 4 and its notes. "class" is the change's class, by
+    (--merge), gives its step 4 and its notes; one from a pre-flight proof
+    (--preflight-proof) gives its step 4 and its "proof", never its notes, which are the
+    VM run's, not this run's, a freshness note of stage 4 about the checks taken from the
+    proof included. "class" is the change's class, by
     origin/main's risk.py when this record was made, and "short" says that step 4 was left
     to CI for it; "full", that step 4 ran in full (here or in `checked`)."""
     steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
@@ -5333,9 +5798,15 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
             [list(s) for s in checked.get("steps", []) if s and s[0] == "4"]
         notes += [[s.name, f"{s.outcome}, {s.detail}"] for s in rep.steps
                   if s.stage == "4" and s.outcome == "skip"]
-        notes += [list(n) for n in checked.get("notes", [])
-                  if n[0] != "full local checks" and list(n) not in notes]
-    return {
+        # A proof's notes stay behind because they are the VM run's (its paths, its home
+        # directory), not this run's, even a freshness note of stage 4 about the checks
+        # taken from the proof. Apart from that, the preconditions, the secret scan and
+        # the guards run here again, and one for the security review made the proof fall
+        # back (proof_record).
+        if not checked.get("proof"):
+            notes += [list(n) for n in checked.get("notes", [])
+                      if n[0] != "full local checks" and list(n) not in notes]
+    record = {
         "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
         "full": (full and not pre.short) or bool(checked and checked.get("full")),
         "class": risk.cls, "class_why": risk.why, "short": pre.short,
@@ -5345,6 +5816,9 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Ris
         "steps": steps, "notes": notes,
         "protected": pre.protected, "statements": pre.statements,
     }
+    if checked is not None and checked.get("proof"):
+        record["proof"] = checked["proof"]
+    return record
 
 
 def checks_record(record: dict | None, test_mode: bool, risk: Risk) -> dict | None:
@@ -5436,6 +5910,216 @@ def held_record(held: Held, ctx: Context, risk: Risk) -> tuple[dict | None, str]
         return None, (f"the record kept in memory is not of {ctx.sha[:12]} against "
                       f"origin/main {ctx.base[:12]}, so it stands in for nothing: {again}")
     return held.record, ""
+
+
+def check_input_blobs(repo, base) -> dict[str, str]:
+    """Each check input at `base` (CHECK_INPUTS, the harness's own modules among them), as
+    {path: "<mode> <blob id>"}, read by git() with replacement objects off: what a
+    pre-flight against that origin/main ran with origin/main's copies."""
+    blobs = {}
+    for entry in git(repo, "ls-tree", "-r", "-z", base, "--", *CHECK_INPUTS).split("\0"):
+        if entry:
+            info, _, path = entry.partition("\t")
+            mode, _, oid = info.split(" ")
+            blobs[path] = f"{mode} {oid}"
+    return blobs
+
+
+def write_proof(path: Path, ctx: Context, record: dict, rep: Report, test_mode: bool) -> None:
+    """--emit-proof, once the dry run has passed: its record, origin/main's check inputs
+    (check_input_blobs), this machine's name and the time, with a digest of them, written
+    to `path` through a temporary file beside it and renamed into place, for
+    --preflight-proof on another machine (proof_record). Only a record of step 4 in full
+    (full_record) is written; else a note says why none is. Should the run then not end in
+    exit 0, main removes the proof."""
+    machine = platform.node()
+    why = ""
+    if not full_record(record, test_mode):
+        why = (f"step 4 was left to CI for the class {record.get('class')}, and a proof "
+               "stands in only for step 4 run in full")
+    elif not PROOF_MACHINE.fullmatch(machine):
+        why = (f"this machine's name, {printable_text(machine)[:80]!r}, is not one a proof "
+               "may hold (1 to 64 of A to Z, a to z, 0 to 9, '.', '_' and '-')")
+    if why:
+        rep.add("5", "pre-flight proof", "note", f"none written to {path}: {why}")
+        return
+    proof = {"format": PROOF_FORMAT, "record": record,
+             "check_inputs": check_input_blobs(ctx.repo, ctx.base), "machine": machine,
+             "made": datetime.datetime.now(datetime.timezone.utc).strftime(PROOF_MADE)}
+    proof["digest"] = sha256_of(proof)
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp",
+                                   dir=path.parent)
+        with os.fdopen(fd, "wb") as f:
+            f.write(canonical(proof))
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+        tmp = None
+    except (OSError, ValueError) as e:
+        said = f"{getattr(e, 'strerror', None) or e}"
+        rep.add("5", "pre-flight proof", "FAIL", f"not written to {path}: {said}")
+        raise Refusal(f"the pre-flight proof could not be written to {path}: {said}") from e
+    finally:
+        if tmp is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp)
+    rep.add("5", "pre-flight proof", "ok", f"written to {path}: made on {machine} at "
+            f"{proof['made']}, digest {proof['digest'][:12]}, for --preflight-proof")
+
+
+class ProofDoubt(Exception):
+    """A reason not to believe a pre-flight proof, found as json.loads reads it
+    (proof_pairs, proof_constant)."""
+
+
+def proof_pairs(pairs: list) -> dict:
+    """json.loads's object_pairs_hook for a proof: a key given twice in one object is a
+    doubt, never the last of them silently kept."""
+    seen = {}
+    for key, value in pairs:
+        if key in seen:
+            raise ProofDoubt("it gives a key twice in one object, which JSON leaves "
+                             "ambiguous")
+        seen[key] = value
+    return seen
+
+
+def proof_constant(name: str):
+    """json.loads's parse_constant for a proof: NaN, Infinity or -Infinity, which Python's
+    JSON reads and standard JSON does not hold, is a doubt."""
+    raise ProofDoubt("it holds a non-standard numeric constant")
+
+
+def proof_record(path: Path, ctx: Context, risk: Risk,
+                 test_mode: bool) -> tuple[dict | None, str]:
+    """--preflight-proof: the record of a proof that a dry run wrote on another machine
+    (--emit-proof, write_proof), to stand in for step 4 here; else None, and why. It is
+    read after the preconditions and the class and before any of the commit's code runs
+    here, and stands in only when it is a regular file of no more than PROOF_BYTES, of
+    this format (standard JSON, with no key given twice in one object, and a digest of 64
+    of 0 to 9 and a to f), its digest matching the rest of it (an edit by hand, or damage;
+    not a forgery, which the digest cannot catch), and judged_proof finds it of this
+    commit against this origin/main, and the rest. Any error in reading it or judging it,
+    whatever it holds, is a reason, never a crash; an interruption is not caught."""
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+    except OSError as e:
+        return None, f"it cannot be opened ({e.strerror or e})"
+    try:
+        with os.fdopen(fd, "rb") as f:
+            st = os.fstat(f.fileno())
+            if not stat.S_ISREG(st.st_mode):
+                return None, "it is not a regular file"
+            # Its size by fstat, and the read itself bounded, should it grow meanwhile.
+            data = f.read(PROOF_BYTES + 1) if st.st_size <= PROOF_BYTES else None
+        if data is None or len(data) > PROOF_BYTES:
+            return None, f"it is larger than {PROOF_BYTES} bytes (1 MiB)"
+        proof = json.loads(data.decode("utf-8"), object_pairs_hook=proof_pairs,
+                           parse_constant=proof_constant)
+    except ProofDoubt as e:
+        return None, str(e)
+    except Exception as e:      # whatever the file holds: a doubt, never a crash
+        return None, f"it is not UTF-8 JSON ({type(e).__name__})"
+    if not isinstance(proof, dict) or set(proof) != PROOF_FIELDS:
+        return None, (f"it is not a proof, which holds {', '.join(sorted(PROOF_FIELDS))} "
+                      "and nothing more")
+    record, inputs, machine, made = (proof[k] for k in ("record", "check_inputs", "machine",
+                                                        "made"))
+    if type(proof["format"]) is not int or proof["format"] != PROOF_FORMAT:
+        return None, f"it is not of format {PROOF_FORMAT}"
+    if not isinstance(record, dict) or not isinstance(inputs, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) for k, v in inputs.items()):
+        return None, "its record or its check inputs are not of this format"
+    if not isinstance(machine, str) or not PROOF_MACHINE.fullmatch(machine):
+        return None, "its machine's name is not of this format"
+    try:
+        made = datetime.datetime.strptime(made, PROOF_MADE).replace(
+            tzinfo=datetime.timezone.utc) if PROOF_TIME.fullmatch(made) else None
+    except (TypeError, ValueError):
+        made = None
+    if made is None:
+        return None, "its time made is not of this format (YYYY-MM-DDTHH:MM:SSZ, in UTC)"
+    if not isinstance(proof["digest"], str) or not SHA256.fullmatch(proof["digest"]):
+        return None, "its digest is not of this format (64 of 0 to 9 and a to f)"
+    try:
+        digest = sha256_of({k: v for k, v in proof.items() if k != "digest"})
+    except Exception as e:      # 1e400, which JSON reads as infinity and canonical refuses
+        return None, f"its digest could not be computed ({type(e).__name__})"
+    if proof["digest"] != digest:
+        return None, ("its digest does not match the rest of it: it was edited by hand, or "
+                      "damaged")
+    # Whatever a hostile value raises in judging it (OverflowError, RecursionError and the
+    # rest) is a doubt, never a crash; KeyboardInterrupt and SystemExit are not caught.
+    try:
+        return judged_proof(proof, made, ctx, risk, test_mode)
+    except Exception as e:
+        return None, f"it could not be judged ({type(e).__name__})"
+
+
+def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
+                 test_mode: bool) -> tuple[dict | None, str]:
+    """The rest of proof_record, for a proof of this format whose digest matches, made at
+    `made`: the record that stands in for step 4 when the proof is of this commit against
+    this origin/main, by this harness with origin/main's check inputs, made no more than
+    PROOF_HOURS ago nor more than PROOF_SKEW seconds ahead of this clock, with no note for
+    the security review (as review_notes reads them: with one, the full pre-flight runs
+    here, so that the note holds the merge), each step's name, each note, its harness and
+    its time printable text of at most PROOF_TEXT characters, each step's name of
+    PROOF_STEP's characters alone and nothing GitHub would link, and of step 4 in full with every step passed
+    (checks_record); else None, and why."""
+    record, inputs, machine = proof["record"], proof["check_inputs"], proof["machine"]
+    if record.get("sha") != ctx.sha:
+        return None, f"it is of another commit than {ctx.sha[:12]}"
+    if record.get("base") != ctx.base:
+        return None, f"origin/main moved since it was made: it is {ctx.base[:12]} now"
+    if HARNESS_BLOB is None:
+        return None, "the harness running here is not origin/main's, so no proof is bound to it"
+    if record.get("harness_blob") != HARNESS_BLOB:
+        return None, (f"it was made by another harness than this one, origin/main's (blob "
+                      f"{HARNESS_BLOB[:12]})")
+    blobs = check_input_blobs(ctx.repo, ctx.base)
+    differ = sorted(p for p in {*blobs, *inputs} if blobs.get(p) != inputs.get(p))
+    if differ:
+        return None, (f"its check inputs are not origin/main's ({len(differ)} of them "
+                      "differ)")
+    age = datetime.datetime.now(datetime.timezone.utc) - made
+    if age > datetime.timedelta(hours=PROOF_HOURS):
+        return None, f"it was made more than {PROOF_HOURS} hours ago"
+    if -age > datetime.timedelta(seconds=PROOF_SKEW):
+        return None, (f"it is dated more than {PROOF_SKEW} seconds ahead of this machine's "
+                      "clock")
+    notes = record.get("notes") if isinstance(record.get("notes"), list) else []
+    names = [n[0] for n in notes if isinstance(n, list) and n and isinstance(n[0], str)]
+    held = [name for name in names if name == "pinned values" or (
+        name.endswith(BASE_PASS) and name.removesuffix(BASE_PASS) not in FRESHNESS)]
+    if held:
+        return None, (f"it notes origin/main's checks failing on the commit ({len(held)} "
+                      "of them), for the security review")
+    # Its step names, its notes, its harness and its time may hold no newline, no control
+    # and no escape, nor run long, though of these only the step names leave the proof:
+    # they are carried into the record, and so into the table of the pull request's body,
+    # as they are, so they are held to PROOF_STEP as well.
+    steps = record.get("steps") if isinstance(record.get("steps"), list) else []
+    named = [s[1] for s in steps if isinstance(s, list) and len(s) > 1]
+    texts = named + [x for n in notes if isinstance(n, list) for x in n] + \
+        [record.get("harness"), record.get("time")]
+    if any(isinstance(t, str) and not (t.isprintable() and len(t) <= PROOF_TEXT)
+           for t in texts):
+        return None, (f"its record holds a step's name, a note, a harness or a time that is "
+                      f"not printable text of at most {PROOF_TEXT} characters (no newline, "
+                      "control or escape)")
+    if any(isinstance(name, str) and not PROOF_STEP.fullmatch(name) for name in named):
+        return None, ("its record holds a step's name with a character other than a letter, "
+                      "a digit, a space or one of ' ( ) - . / : _ (an underscore only within "
+                      "a word), or a web address, commit or issue GitHub would link")
+    if checks_record(record, test_mode, risk) is None or record.get("short"):
+        return None, ("it is not of step 4 in full with every step passed, by this harness "
+                      "(checks_record)")
+    checked = copy.deepcopy(record)
+    checked["proof"] = {"machine": machine, "made": proof["made"], "digest": proof["digest"]}
+    return checked, ""
 
 
 # --------------------------------------------------------------------------------------
@@ -6845,11 +7529,32 @@ def preflight_main(repo: Path, args) -> int:
     held = None         # --land: what the merge takes from this run, once CI is green
     noted: list[str] = []   # --land: notes for the security review, which hold the merge
     try:
+        if args.emit_proof:
+            # So that a run that does not pass leaves no proof behind, an earlier one included.
+            try:
+                Path(args.emit_proof).unlink(missing_ok=True)
+            except OSError as e:
+                raise Refusal(f"could not remove {args.emit_proof}, where --emit-proof writes "
+                              f"the proof: {e.strerror or e}") from e
         ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
                             title=args.title)
         sha, base = ctx.sha, ctx.base
         labels = check_kind_label(ctx, args, rep) if ctx.branch else set()
         risk = risk_class(ctx.repo, ctx.base, ctx.sha, labels)
+        # The proof is read before any of the commit's code runs here: what that code does
+        # afterwards cannot change what this run believes.
+        checked = None
+        if args.preflight_proof:
+            checked, why = proof_record(Path(args.preflight_proof), ctx, risk, args.test_mode)
+            if checked is None:
+                rep.add("1", "pre-flight proof", "note", f"not used: {why}; the full "
+                        "pre-flight runs here, as without --preflight-proof")
+            else:
+                proof = checked["proof"]
+                rep.add("1", "pre-flight proof", "ok", f"made on "
+                        f"{printable_text(proof['machine'])} at "
+                        f"{printable_text(proof['made'])}, digest {proof['digest'][:12]}: "
+                        "step 4 is taken from it; the secret scan and the guards run here")
         # After the class, which serves the cache (R3 to R5 alone), and after risk_class
         # runs origin/main's risk.py, outside run(); before any of the commit's code runs.
         if args.main_checks_cache:
@@ -6858,9 +7563,10 @@ def preflight_main(repo: Path, args) -> int:
             open_cache(rep, risk, train=(ctx.branch or "").startswith("train/"))
         logs = logs_dir(sha)
         body_text = body_input(args)
-        pre = check_commit(ctx, rep, logs, args.test_mode, risk,
+        pre = check_commit(ctx, rep, logs, args.test_mode, risk, checked=checked,
                            train_body=train_input(ctx, body_text))
-        record = make_record(ctx, pre, rep, full=not args.test_mode, risk=risk)
+        record = make_record(ctx, pre, rep, full=not args.test_mode and checked is None,
+                             risk=risk, checked=checked)
         # For --land, the record as made, before it is saved: nothing done to the saved
         # one, or to its file, reaches this copy.
         kept = copy.deepcopy(record) if args.land else None
@@ -6876,6 +7582,8 @@ def preflight_main(repo: Path, args) -> int:
                 (logs / "pr-body.md").write_text(body)
                 print(f"  the body it would post: {logs / 'pr-body.md'}")
             rep.add("5", "git push", "skip", f"dry run: would push {sha[:12]} to {where}")
+            if args.emit_proof:
+                write_proof(Path(args.emit_proof), ctx, record, rep, args.test_mode)
             result, code = "passed every check (dry run, not pushed)", 0
         else:
             # The pull request is settled, its body scanned, before anything is public.
@@ -6927,6 +7635,9 @@ def preflight_main(repo: Path, args) -> int:
             raise
         result, code = f"pushed; CI not followed ({type(e).__name__}: {e})", 3
         print(f"\nPushed; CI not followed: {type(e).__name__}: {e}")
+    if args.emit_proof and not any(s.name == "pre-flight proof" for s in rep.steps):
+        rep.add("5", "pre-flight proof", "note", f"none written to {args.emit_proof}: "
+                + ("the dry run did not pass" if code else "origin/main is already the commit"))
     if held is None and not noted:
         summary(rep, mode, sha, base, result, ci)
         return code
@@ -7011,7 +7722,9 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
         # So too for a head that changes any protected path: CI runs the head's own
         # workflow (.github/) as well as its own checks.
         # A record kept in memory by this same run (--land) was never a file, so nothing
-        # the head's code ran could have written it: the reason does not hold for it.
+        # the head's code ran could have written it: the reason does not hold for it. One
+        # whose step 4 came from a pre-flight proof, a file, is believed as far as the
+        # proof's binding reaches, on the owner's decision (the module's docstring).
         if checked is not None and checked is not kept \
                 and any(under(p, CHECK_INPUTS) or is_protected(p)
                         for _, p in changed_files(repo, ctx.base, ctx.sha)):
@@ -7034,6 +7747,16 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
                     f"never read from a file, its class {checked.get('class')} then and "
                     f"{risk.cls} now: the secret scan and the guards run again; the full "
                     "checks stay with CI, as for any change of R0 to R2")
+        elif checked is not None and checked is kept and checked.get("proof"):
+            # Its step 4 came from a file, the pre-flight proof, which that pre-flight read
+            # and checked (proof_record) before any of the commit's code ran.
+            proof = checked["proof"]
+            rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
+                    f"{ctx.base[:12]} in this run's pre-flight, its record kept in memory, "
+                    f"its step 4 from the pre-flight proof made on "
+                    f"{printable_text(proof['machine'])} at {printable_text(proof['made'])}, "
+                    "which that pre-flight checked before any of the commit's code ran: the "
+                    "secret scan and the guards run again; the full checks are not repeated")
         elif checked is not None and checked is kept:
             rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
                     f"{ctx.base[:12]} in this run's pre-flight, its record kept in memory, "
@@ -7295,6 +8018,20 @@ def main(argv=None) -> int:
                         "load before its sandbox starts. Only the runs that land a train pass "
                         "it (the coordinator ruled): the coordinator's dry run of the "
                         "train and its push")
+    parser.add_argument("--emit-proof", metavar="FILE", help="with --dry-run, and neither "
+                        "--merge, --land nor --main-checks-cache (a proof may not rest on a "
+                        "cache entry): once the dry run has passed with step 4 in full, write "
+                        "a proof of it to FILE, for --preflight-proof on the machine that "
+                        "pushes. FILE is removed first, so a run that does not pass leaves "
+                        "none")
+    parser.add_argument("--preflight-proof", metavar="FILE", help="with --land: take step 4 "
+                        "from FILE, a proof written by --emit-proof on another machine, read "
+                        "before any of the commit's code runs here, when it is of this "
+                        "commit against this origin/main, by this harness with origin/main's "
+                        f"check inputs, no more than {PROOF_HOURS} hours old, with no note "
+                        "for the security review, and of step 4 in full, every step passed; "
+                        "else the full pre-flight runs here. The preconditions, the secret "
+                        "scan and the guards run here every time")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
@@ -7303,6 +8040,12 @@ def main(argv=None) -> int:
     parser.add_argument("--_test-skip-checks", dest="test_mode", action="store_true",
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
+    if args.emit_proof and (not args.dry_run or args.merge is not None or args.land
+                            or args.main_checks_cache):
+        parser.error("--emit-proof goes with --dry-run, and with none of --merge, --land and "
+                     "--main-checks-cache: a proof may not rest on a cache entry")
+    if args.preflight_proof and not args.land:
+        parser.error("--preflight-proof goes with --land")
     if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
                                    or args.label or args.commit != "HEAD"
                                    or args.main_checks_cache):
@@ -7383,7 +8126,23 @@ def main(argv=None) -> int:
     if not args.branch and not args.dry_run:
         print(REFUSE_DIRECT)
         return 1
-    return preflight_main(repo, args)
+    # --emit-proof: only a run that returns 0 leaves a proof. Keyed on what preflight_main
+    # returns, not on its `code`, which is 0 already while the summary of a dry run that
+    # passed is written: a refusal, an error or an interruption once the proof is in
+    # place, in that summary or before it, removes the proof.
+    code = None
+    try:
+        code = preflight_main(repo, args)
+        return code
+    finally:
+        if args.emit_proof and code != 0 and os.path.lexists(args.emit_proof):
+            try:
+                os.unlink(args.emit_proof)
+                print(f"\nThe pre-flight proof at {args.emit_proof} is removed: only a run "
+                      "that passes leaves one.")
+            except OSError as e:
+                print(f"\nThe pre-flight proof at {args.emit_proof} could not be removed "
+                      f"({e.strerror or e}), though the run did not pass: remove it.")
 
 
 if __name__ == "__main__":
