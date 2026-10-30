@@ -10,7 +10,7 @@ B4 is in [ACCEPTANCE](../ACCEPTANCE.md), under "For each book" (`ACCEPTANCE.md:1
 
 The table of the limitations allowed names none (`ACCEPTANCE.md:190`–`199`). An overlap is not a limitation of scope. It is a disclosure, declared in the record and in [the overlap catalogue](overlaps.md) (`ACCEPTANCE.md:207`). So the only limitations B4 can admit in Book III are its overlaps.
 
-[Limitations review 01](limitations-01.md) held Book III: "fail, held by finding 1" (`limitations-01.md:289`). This review reads Book III again at the revision above, by that review's method. As there, every other departure a record declares is held to the same test: a changed route, `hypothesis-dropped`, or a representation tag. Is it recorded as a choice? Does the page say it plainly, without contradicting the record, facts.json or the catalogues?
+[Limitations review 01](limitations-01.md) held Book III: "fail, held by finding 1" (`limitations-01.md:289`). This review reads Book III again at the revision above, by that review's method. As there, every other departure a record declares is held to the same test: a changed route, hypothesis-dropped, or a representation tag. Is it recorded as a choice? Does the page say it plainly, without contradicting the record, facts.json or the catalogues?
 
 Findings are graded by [WORKFLOW](../WORKFLOW.md), section 9 (`WORKFLOW.md:1005`–`1014`). Book III passes only if no blocking or material finding stands.
 
@@ -70,7 +70,7 @@ Every record was then read by hand beside its page.
 3. **The earlier findings.** Each file limitations-01 named was read at the lines it named, and where those lines now stand. Two further sources were read beside them:
    - the renderer's badge code (`scripts/render.py:1017`–`1078`);
    - the names that facts.json's statements use for III.20–III.30 and their companions.
-4. **Routes.** Every `case` and `different` passage of the 37 records was listed. Each was read against SCHEMA's rule for routes, as the coordinator's ruling of 28 October 2026 applies it.
+4. **Routes.** Every case and different passage of the 37 records was listed. Each was read against SCHEMA's rule for routes, as the coordinator's ruling of 28 October 2026 applies it.
 
 `python3 scripts/check_fidelity.py` and `python3 scripts/heath.py` both passed at this commit. `python3 scripts/check_acceptance.py --help` was read, and no check was run with it.
 
@@ -95,7 +95,7 @@ facts.json holds 66 entries for Book III, and all are "proved":
 
 Each is attached to its proposition, and each companion is listed in its record's `companions`.
 
-Every record is at the stage `full`, with scope `full`. None is restricted or partial, no route is `alternative`, and no record has an `unformalized` passage or a `[coverage]` clause map. `Staging/` holds only `.gitkeep`.
+Every record is at the stage full, with scope full. None is restricted or partial, no route is alternative, and no record has an unformalized passage or a `[coverage]` clause map. `Staging/` holds only `.gitkeep`.
 
 ### The departures of the kinds B4 names
 
@@ -106,11 +106,11 @@ Every record is at the stage `full`, with scope `full`. None is restricted or pa
 | III.5 | Overlap, gives it at once: `circle_eq` (Diagram-segment 2), with Generalities 4 | `book/III/05.md:13`, `:56` | Brief 0008, section 7; `overlaps.md:84` | Deliberate, plain. The line under the enunciation now says that the proof does not use the rule, which facts.json bears out. |
 | III.6 | Overlap, gives it at once: `circle_eq`, with Generalities 3 and 4 | `book/III/06.md:13`, `:57` | Brief 0008, section 7; `overlaps.md:85` | Deliberate. Plain in the line under the enunciation. The row still names two rules without saying what they say (finding 3, still open). |
 | III.8 | Route modified, one step: the last step compares the angles at M by I.24 only where a point of contact is involved. | `book/III/08.md:13`, `:121`, `:147` | The decision of 26 October 2026 (`centre-by-iii1.md:31`–`33`): M now comes by III.1's construction, and only the last step stays changed. Brief 0004, note of 28 October (`:661`–`662`). | Deliberate, plain. |
-| III.9 | `hypothesis-dropped`: Euclid's "within" is left out. | `book/III/09.md:66`, `:68`; mishnah `:341` | Gap catalogue, III.9 (`gaps-book-III.md:130`); brief 0004 (`:402`–`405`) | Deliberate, plain. It claims more, so it limits nothing. |
-| III.10 | `hypothesis-dropped`, for circles that only meet. The route is now Euclid's. | `book/III/10.md:56`, `:58` | Brief 0004 (`:406`–`407`); the [decision of 26 October 2026](../decisions/2026-10-26-crossing-bridge.md) that ends III.10 by III.5, through `CirclesCut.of_meet` | Deliberate, plain. |
+| III.9 | hypothesis-dropped: Euclid's "within" is left out. | `book/III/09.md:66`, `:68`; mishnah `:341` | Gap catalogue, III.9 (`gaps-book-III.md:130`); brief 0004 (`:402`–`405`) | Deliberate, plain. It claims more, so it limits nothing. |
+| III.10 | hypothesis-dropped, for circles that only meet. The route is now Euclid's. | `book/III/10.md:56`, `:58` | Brief 0004 (`:406`–`407`); the [decision of 26 October 2026](../decisions/2026-10-26-crossing-bridge.md) that ends III.10 by III.5, through `CirclesCut.of_meet` | Deliberate, plain. |
 | III.21 | Route modified, one step: in the semicircle and the less segment, the doubling by III.20 rests on our angle at the centre. | `book/III/21.md:13`, `:55`, `:65`; `mishnah/III/21.md:7` | The coordinator's ruling of 28 October 2026 (`route-labels-iii20-iii21.md:18`–`22`); Heath, vol. 2, p. 49, quoted in the mishnah | Deliberate, plain. Simson's completion is no longer used. |
-| III.26 | Route modified, one step: the congruence of the remainders, by III.22 and III.24 | `book/III/26.md:13`, `:65`, `:77` | Brief 0006, stage 3; brief 0004 (`:491`–`497`) | Deliberate, plain. But the I.4 passage, argued another way for two cases within Euclid's statement, is declared a `case` (new finding 1). |
-| III.27 | Route modified, one step: in the obtuse case, the reductio runs on the angles that stand on the circumferences that remain. | `book/III/27.md:13`, `:65`, `:78` | Routes report, III.27; SCHEMA's example of a `modified` route (`review/SCHEMA.md:81`–`84`) | Deliberate, plain. But the right case is declared a `case` (new finding 1). |
+| III.26 | Route modified, one step: the congruence of the remainders, by III.22 and III.24 | `book/III/26.md:13`, `:65`, `:77` | Brief 0006, stage 3; brief 0004 (`:491`–`497`) | Deliberate, plain. But the I.4 passage, argued another way for two cases within Euclid's statement, is declared a case (new finding 1). |
+| III.27 | Route modified, one step: in the obtuse case, the reductio runs on the angles that stand on the circumferences that remain. | `book/III/27.md:13`, `:65`, `:78` | Routes report, III.27; SCHEMA's example of a modified route (`review/SCHEMA.md:81`–`84`) | Deliberate, plain. But the right case is declared a case (new finding 1). |
 | III.28 | Route modified, two steps: the case of diameters; the greater circumferences' congruence by III.24 | `book/III/28.md:13`, `:59`, `:68`, `:71` | Gap catalogue, III.28 (Heath, vol. 2, p. 60); brief 0006, stage 3 | Deliberate, plain. |
 | III.29 | Route modified, two steps: the case of semicircles; the greater circumferences by the remainders | `book/III/29.md:13`, `:53`, `:62`, `:63` | Gap catalogue, III.29 (Heath, vol. 2, p. 61) | Deliberate, plain. |
 
@@ -123,7 +123,7 @@ The representation readings, by tag:
 | `angle-at-centre` | III.20 | `book/III/20.md:64`, `:66` | [Decision of 28 October 2026](../decisions/2026-10-28-angle-at-centre-tag.md); brief 0004, notes of 26 October (`:328`–`344`, `:442`–`447`) | Deliberate, plain. It has no badge, by that decision: on Euclid's figures the angle it names is his angle BEC (`angleAtCentre.within`), and `Prop20.special` states that form. |
 | `angle-measure` | III.20, III.24–III.30 | The badge in the line under the enunciation of III.26–III.30 (`:13`). The Representation rows: `book/III/20.md:66`, `24.md:58`, `25.md:88`, `26.md:66`, `27.md:66`, `28.md:60`, `29.md:54`, `30.md:58` | Brief 0004, "Circumferences" (`:109`–`168`); `terms.toml:49` | Deliberate, plain. The badge now stands only beside statements that name the measure (finding 1 mended). |
 | `segment-with-circle` | III.23–III.25, III.30, III.33, III.34 | `book/III/23.md:46`, `24.md:58`, `25.md:88`, `30.md:58`, `33.md:130`, `34.md:52` | Brief 0006, stage 3; `terms.toml:45` | Deliberate, plain. |
-| `redundant-hypothesis` | III.24, III.27 | `book/III/24.md:58`; `27.md:64`, `:66` | FORMALIZATION, section 5 (`:322`–`331`); `terms.toml:58` | Deliberate, plain. |
+| redundant-hypothesis | III.24, III.27 | `book/III/24.md:58`; `27.md:64`, `:66` | FORMALIZATION, section 5 (`:322`–`331`); `terms.toml:58` | Deliberate, plain. |
 
 **Counts for Book III.**
 
@@ -136,7 +136,7 @@ The representation readings, by tag:
   - III.8 is down to one step.
   - III.21's changed step is now its doubling, not Simson's completion.
   - One step only takes a centre from the rule where Heath's reference is III.1: III.2's.
-- Two `hypothesis-dropped`: III.9 and III.10.
+- Two hypothesis-dropped: III.9 and III.10.
 - 24 representation tags, spread over 18 records (limitations-01 counted 21 over 16). New since then:
   - `angle-at-centre` on III.20;
   - `angle-measure` on III.20, for its companion `Prop20.circumference`;
@@ -250,12 +250,12 @@ The passage at "therefore the base BC is equal to the base EF" (`review/III/26.t
 - where the angles at the centres are two right angles, "there are no triangles for I.4, and BC and EF are diameters, each two radii (`Tacit.len_add_of_between` …)";
 - where they are greater, I.4 is applied to the angles that remain of four right angles.
 
-Other records call the same kind of step `different`:
+Other records call the same kind of step different:
 
 - III.29's (`review/III/29.toml:21`–`22`; `book/III/29.md:62`: "BC and EF are diameters, each twice the equal radius, so the Lean adds the radii by `Tacit.len_add_of_between` instead of applying III.27 and I.4");
 - III.28's, for its case of diameters (`review/III/28.toml:20`–`21`).
 
-**III.27.** Right angles at A and D are within III.27's statement, which takes angles "of any size" (`book/III/27.md:64`). Heath: "the remarks about the method of treating the different cases apply here also" (vol. 2, p. 59; `gaps-book-III.md:241`). The passage at "And the angle at A is half of the angle BGC" (`review/III/27.toml:38`–`39`; `book/III/27.md:77`, "A further case") takes the right case another way: the angles at the centres "are each two right angles (`angleAtCentre.semicircle`), and so equal with no reductio". The obtuse case beside it is `different` (`:43`–`44`).
+**III.27.** Right angles at A and D are within III.27's statement, which takes angles "of any size" (`book/III/27.md:64`). Heath: "the remarks about the method of treating the different cases apply here also" (vol. 2, p. 59; `gaps-book-III.md:241`). The passage at "And the angle at A is half of the angle BGC" (`review/III/27.toml:38`–`39`; `book/III/27.md:77`, "A further case") takes the right case another way: the angles at the centres "are each two right angles (`angleAtCentre.semicircle`), and so equal with no reductio". The obtuse case beside it is different (`:43`–`44`).
 
 **What follows.** The lines under III.26's and III.27's enunciations say "with one step changed" (`book/III/26.md:13`, `book/III/27.md:13`; `CERTIFICATE.md:186`–`187`), where the rule gives two.
 
@@ -265,22 +265,22 @@ Three sentences say that Euclid's one argument serves every case:
 - `gaps-book-III.md:233`: "so Euclid's one argument covers every case";
 - Book III's introduction, `mishnah/intro/III.md:17` (`book/III/index.md:25`): "so that III.20, III.21 and III.26 take Euclid's one argument for every case".
 
-III.21's own mishnah says of the same doubling "there that step is ours" (`mishnah/III/21.md:7`), and its record calls that step `different`.
+III.21's own mishnah says of the same doubling "there that step is ours" (`mishnah/III/21.md:7`), and its record calls that step different.
 
 **Why editorial, not material.** Each page says, at the step, what the Lean does there and that the angle at the centre there is ours:
 
 - `book/III/26.md:65`, "a reading that is ours, made after Heath's notes, and not Euclid's", and `:74`;
 - `book/III/27.md:65` and `:77`.
 
-No argument is unmarked, and both routes are already `modified`. What disagrees with the rule, and with III.21, III.28 and III.29, is three things: the kind of one passage in each record, the count the line under the enunciation draws from it, and the three sentences.
+No argument is unmarked, and both routes are already modified. What disagrees with the rule, and with III.21, III.28 and III.29, is three things: the kind of one passage in each record, the count the line under the enunciation draws from it, and the three sentences.
 
 **Fix.** These steps are for a reader of the other family:
 
 1. `review/III/26.toml:22`: `kind = "different"`, with the note led by what is argued another way. For example: "Euclid's I.4 gives the bases from the angles BGC, EHF, as in his figure (`angleAtCentre.within`). Where the angles at the centres are two right angles, a case of his statement that his proof does not reach (Heath, vol. 2, p. 57), there are no triangles for I.4: BC and EF are diameters, each two radii (`Tacit.len_add_of_between`, System E, Diagram-segment 1, a rule we assume); where they are greater, I.4 applies to the angles BGC, EHF that remain of four right angles (`angleAtCentre.reflex`), equal by Common Notion 3." That reader should also say whether the doubling under "Therefore etc." (`review/III/26.toml:43`) is a third such step, as the same doubling is in III.21.
 2. `review/III/27.toml:39`: `kind = "different"`, with the note unchanged in substance.
 3. The three sentences then say what III.21's mishnah says. For example, at `mishnah/intro/III.md:17`, replace "take Euclid's one argument for every case" with "carry Euclid's steps into every case, the step that needs our angle at the centre being ours where Euclid's does not reach". Make the like change at `mishnah/III/26.md:5` and `gaps-book-III.md:233`.
-4. The same rule should be applied, on a second reading, to two more `case` passages:
-   - III.2's AB through the centre (`review/III/02.toml:29`–`30`; `book/III/02.md:81`). SCHEMA used it as its example of a `case` passage until the ruling of 28 October replaced it with III.11's case left to the reader, "to one that fits the wording of the ruling" (`docs/decisions/2026-10-28-schema-route-examples.md:12`–`16`).
+4. The same rule should be applied, on a second reading, to two more case passages:
+   - III.2's AB through the centre (`review/III/02.toml:29`–`30`; `book/III/02.md:81`). SCHEMA used it as its example of a case passage until the ruling of 28 October replaced it with III.11's case left to the reader, "to one that fits the wording of the ruling" (`docs/decisions/2026-10-28-schema-route-examples.md:12`–`16`).
    - III.32's D at A (`review/III/32.toml:38`–`39`), where the Lean uses III.31 in place of the triangle ABD.
 
 If the coordinator reads III.26's and III.27's cases as of III.20's kind instead, a ruling should say why, and III.21's record should be reconciled with it. This review recommends the first course.
