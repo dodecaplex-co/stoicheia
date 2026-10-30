@@ -1,8 +1,10 @@
 # Check the overlap screen's tries and its reading of Lean's logs, case by case.
 # tests/test_screen.py needs no Lean: it puts Audit/screen.py's own functions to small
 # inputs. The screen itself needs Lean, takes minutes, and is not run here.
+# Concurrent (#608): its fixtures are in temporary folders, lake mocked; only bytecode.
 order = 130
 name = "python3 -I tests/test_screen.py"
 job = "check"
 command = ["python3", "-I", "tests/test_screen.py"]
 section8 = "python3 -I tests/test_screen.py"
+concurrent = true

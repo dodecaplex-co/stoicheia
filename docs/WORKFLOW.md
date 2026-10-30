@@ -457,6 +457,7 @@ ahead. On the integrated revision, run exactly what CI's `check` job runs, in it
 export PATH=$HOME/.elan/bin:$PATH
 python3 -I tests/test_check_paths.py
 python3 scripts/check_paths.py --self-test
+python3 -I tests/test_concurrent_checks.py
 lake build
 lake build Audit
 lake build Staging
@@ -501,9 +502,10 @@ protected: each registry file it adds, removes or changes is named in a decision
 and the pull request carries `security-review`. And the change judges later trains only
 once it has merged. To add a check, add one file to `checks/`
 ([its README](../checks/README.md) says what a file holds), run `render.py`, and commit
-the file with the regenerated block; to remove one, or change its command, job or order,
-change its file. `checks/` is a protected path and a check input (section 10), of class
-R3, and neither `scripts/safe_push.py` nor the CI workflow changes with it. The registry's
+the file with the regenerated block; to remove one, or change its command, job, order,
+`concurrent` or `after`, change its file. `checks/` is a protected path and a check input
+(section 10), of class R3, and neither `scripts/safe_push.py` nor the CI workflow changes
+with it. The registry's
 reader, `scripts/registry.py`, and its runner, `scripts/run_checks.py`, are R5, with the
 landing tool and CI: main's reader decides the pre-flight's sequence, and the runner is
 CI's `check` job. The reader stays one self-contained file of the standard library, since
@@ -1349,9 +1351,10 @@ one carries that file, section 8's command block as `render.py` regenerates it, 
 decision entry naming the file in a sentence of its own; it is R3, and touches neither
 `scripts/safe_push.py` nor the CI workflow, so trains that each add a check no longer edit
 those two files, and a conflict in the block they both regenerate is settled by rendering
-it again. Removing a check, or changing its command, job or order, is a change to
-its one file, named the same way. The train's CI runs the train's own registry, the new
-check with it, while its pre-flight runs origin/main's whole registry, without it, in both
+it again. Removing a check, or changing its command, job, order, `concurrent` or
+`after`, is a change to its one file, named the same way. The train's CI runs the train's
+own registry, the new check with it, while its pre-flight runs origin/main's whole
+registry, without it, in both
 passes: the check joins the pre-flight at its merge, and judges the trains after it
 there. A command of another
 job (`model`, `negative`, `formal-model`, `acceptance`) is still a step of the CI workflow
@@ -1391,12 +1394,20 @@ judges the groups after it lands. GitHub runs a required file only on the events
 on a group, and the group waited, so main's copy must name `merge_group`. A skipped
 required job counts as passed, so neither job may skip on a group. The two jobs' names
 are never among the required status checks, which GitHub matches by name alone. **The
-second, the authenticity of the pre-flight's evidence**, is not held yet: the judge reads
-the body's block, which is a declaration (rule (b), below), and a block typed to be
-consistent with the repository passes it. Main's judge cannot tell it from a real one. It
-waits for evidence CI signs (#574) or for a dated decision of the owner on what
-authenticates the block until then. The queue must not be turned on before both are held.
-Its four rules are:
+second, the authenticity of the pre-flight's evidence**, is held by write access to the
+pull request, until evidence CI signs (#574) replaces it
+([28 October 2026](decisions/2026-10-28-queue-write-access.md)). The judge reads the
+body's block, which is a declaration (rule (b), below), and a block typed to be
+consistent with the repository passes it: main's judge cannot tell it from a real one.
+So whoever can edit the body is trusted not to type a block for a pre-flight that did
+not run: anyone with write access to the repository, and the pull request's own author,
+whom GitHub lets edit its body, even after a writer has queued it. Only an account with
+write access can queue an entry. The judge refuses one whose head is not in this
+repository, the automatic revert included, and, but for that revert, one that a bot
+wrote, queued, last edited or last renamed; the revert's author must be the App, and its
+body is read only for its `Reverts:` and `Failed run:` lines, each checked against
+GitHub's record of the failed push (below). The queue must not be turned on before both
+are held. Its four rules are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
@@ -1428,8 +1439,8 @@ Its four rules are:
   request's merge commit. The group's own CI run is classed R5, so every check runs on
   the group before it merges. The block is a declaration: anyone who can edit the pull
   request's body can type one, and the judge checks it for consistency with the
-  repository, not as proof that a pre-flight ran. Its authenticity must be held by
-  something a group cannot change, as above, before the queue is turned on. A `train/`
+  repository, not as proof that a pre-flight ran. Its authenticity is held by write
+  access to the pull request, as above, until #574's signatures replace it. A `train/`
   entry's Members table is matched again to its actual member merges with
   `check_train.py`, against the pull request's current body. The queue does not repeat
   member review. An automatic revert has the narrowly checked exception below.
@@ -1724,10 +1735,12 @@ things "The merge queue" names are held. The first: the organization ruleset req
 shows that main's copy runs on a group; that a group whose own copy of
 `queue-judge.yml` passes while main's fails is held; and that a group whose other
 workflow, `ci.yml` included, has a passing job named `queue-integrity` or `queue-gaps`
-while main's fails is held. The second: an authenticated source for the pre-flight's
-evidence, which rule (b) asks for and the owner chooses. The coordinator holds these
-steps: add the merge queue rule for main, keep merge commits and enable "only merge
-non-failing pull requests"; require `check`, `model`, `negative`, `formal-model`,
+while main's fails is held. The second: the pre-flight's evidence authenticated, which
+rule (b) asks for, and which write access to the pull request does by the owner's
+decision until #574's signatures replace it. So the queue may be turned on once the
+ruleset is imported and that trial (#606) passes. The coordinator holds these steps: add
+the merge queue rule for main, keep merge commits and enable "only merge non-failing
+pull requests"; require `check`, `model`, `negative`, `formal-model`,
 `acceptance` and `queue-tests`, and never `queue-integrity` or `queue-gaps`, which the
 organization ruleset requires by their file; set the queue's status check timeout to 150
 minutes: `acceptance`'s limit of 60 minutes, then a budget of 75 for `queue-gaps`'
@@ -2199,7 +2212,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       variables whose names begin `STOICHEIA_`, `LEAN`, `LAKE`, `PYTHON` or `LC_`, but
       the harness's own, which no check reads (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`,
       `STOICHEIA_PYTHON`), and the terminal's (`LC_TERMINAL`, `LC_TERMINAL_VERSION`); and
-      the lists of checks. An entry is used only when it is a
+      the lists of checks. `STOICHEIA_CHECK_WORKERS`, how many concurrent checks run at
+      once (#608), is keyed on purpose, though no check reads it: a record made at one
+      number is never used at another, so that a check whose outcome turns on the number,
+      against its declaration, is judged at the number the run uses. An entry is used only
+      when it is a
       regular file of the user's, mode 0600, its key is this run's and hashes to its
       name, its digest matches it, its harness is the one running, its written time is a
       valid `YYYY-MM-DD HH:MM UTC`, and its steps are that pass's, each once and in order,
@@ -2398,10 +2415,10 @@ the lock the model was last checked against). Since 19 October, `model/Model/Aud
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
 build. Since 22 October (#229), `checks/`, the registry of CI's `check` job, joins them,
-so that a check added or removed, or with its command, job or order changed, is named
-file by file; it is a check input too (step 4, above). Since 22 October (#249),
-`docs/ACCEPTANCE.md` joins them, a check input as well: its table of the limitations
-allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
+so that a check added or removed, or with its command, job, order, `concurrent` or
+`after` changed, is named file by file; it is a check input too (step 4, above). Since
+22 October (#249), `docs/ACCEPTANCE.md` joins them, a check input as well: its table of
+the limitations allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
 `tests/test_acceptance_limits.py` ties together, change in one pull request, a check
 change. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a

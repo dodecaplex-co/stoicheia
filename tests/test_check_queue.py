@@ -2752,13 +2752,14 @@ class QueueTests(unittest.TestCase):
 
     def test_a_consistent_forgery_passes(self):
         # Rule (b)'s second requirement, the authenticity of the pre-flight's evidence, is
-        # not held (WORKFLOW, section 10): the judge checks the block for consistency with
-        # the repository, not that a pre-flight ran. Each block here is typed, as anyone
-        # who can edit the body could type it, for a head no pre-flight ever ran on, with
-        # its head, base, harness and blob right and every check "ok", and main's judge
-        # passes it. No guard holds this: the test says so, so that what is still open
-        # stays in sight, and it is to refuse once the judge verifies evidence CI signs
-        # (#574), or as the owner's dated decision on what authenticates the block says.
+        # held by write access to the pull request until #574, not by the judge (WORKFLOW,
+        # section 10; the owner's decision of 28 October 2026): the judge checks the block
+        # for consistency with the repository, not that a pre-flight ran. Each block here
+        # is typed, as anyone who can edit the body could type it, for a head no pre-flight
+        # ever ran on, with its head, base, harness and blob right and every check "ok",
+        # and main's judge passes it. No guard of the judge holds this: the test says so,
+        # so that what the judge does not check stays in sight, and it is to refuse once
+        # the judge verifies evidence CI signs (#574).
         blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
         rows = "".join(f"| 4. {name} | ok | 1.0 |\n"
                        for name, _ in (*queue.safe_push.CHECKS, *queue.safe_push.NEGATIVE))

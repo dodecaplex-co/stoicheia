@@ -4,6 +4,8 @@
 # an old address added there is not refused (docs/WORKFLOW.md, section 4, "The
 # repository's address"); --self-test first reads a case of each form of address, of each
 # kind of file, of the options and of a file that cannot be read. It needs no Lean.
+# Alone (#608): its self-test writes three files in the tree, in docs/briefs/ and at the
+# root, and removes them before it ends, so a check beside it could read them.
 order = 185
 name = "python3 scripts/check_address.py --self-test"
 job = "check"
