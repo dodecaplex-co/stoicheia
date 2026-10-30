@@ -3,8 +3,10 @@
 # the tree, built against the library above. It reads the proofs' citations and the
 # bindings records declare in `unused`, which a proof or a records change can move, so it
 # runs in this job, for every class (docs/WORKFLOW.md, section 8).
+# Concurrent (#608): its plants are Lean in a temporary folder, two at most; only bytecode.
 order = 53
 name = "python3 scripts/sweep_citations.py --self-test"
 job = "check"
 command = ["python3", "scripts/sweep_citations.py", "--self-test"]
 section8 = "python3 scripts/sweep_citations.py --self-test"
+concurrent = true

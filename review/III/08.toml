@@ -6,8 +6,8 @@ companions = ["III.8 general"]
 fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where N or the point it is compared with is a point of contact, which neither the convex order nor the concave reaches; two points on different circumferences, like two on one, are compared by the orders. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
+kind = "euclid"
+note = "Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"
@@ -116,12 +116,13 @@ note = "Euclid uses the equality of MK and MB without giving a reason. The Lean 
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "helper"
 helper = "onRay_of_angle_eq"
-note = "Euclid takes for granted that DN, a straight line other than DB, makes a different angle with DA, so that one of the two is the nearer. Where each ends on a circumference, the Lean compares the angles at D by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5): equal angles put N and B, or N and K when N is on K's side, on one ray from D by `onRay_of_angle_eq`, and `OnRay.eq_of_len_eq` makes them one point."
+note = "Euclid takes for granted that DN, a straight line other than DB, makes a different angle with DA, so that one of the two is the nearer. The Lean compares the angles at D by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5): equal angles put N and B, or N and K when N is on K's side, on one ray from D by `onRay_of_angle_eq`, and `OnRay.eq_of_len_eq` makes them one point."
 
 [[passage]]
 at = "which was proved impossible"
-kind = "different"
-note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact. The Lean takes his step where N and the point it is compared with both end on the convex circumference, and his orders for two cases his figure leaves aside: the concave order where both end on the concave circumference; and where one ends on each, the two orders together, through the second point where the straight line making the greater angle with DA meets the circle, on the other circumference, with `len_lt_of_between` for the part less than the whole. Only where one of the two is a point of contact, which neither order reaches, is the step argued another way: the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference, and for equal angles `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide. For N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
+kind = "case"
+helper = "Prop8.contact_last"
+note = "Euclid appeals to the convex order, which compares points of the convex circumference, where his figure has K and B; his figure leaves aside K and B on the concave circumference, DK touching the circle, and DN ending on the concave circumference or at a point of contact. The Lean takes his step by his orders in every case. Of N and the point it is compared with, the one making the less angle with DA is the nearer: if it ends on the convex circumference it is the less, by the convex order (I.21), and if on the concave, the greater, by the concave order (I.24 at M). Neither argument asks where the more remote ends, so it may end on the other circumference, or at a point of contact, which is on neither and ends both orders: `Prop8.contact_last` shows that no point of the circle on its side makes a greater angle with DA, for the straight line touching would cross that point's radius (`crossbar`) at a point within the circle, and so meet the circle again, by `Tacit.line_circle_between` or `Tacit.line_circle_beyond` (System E, Intersections 4 and 5), rules we assume. For N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
 
 [figure]
 case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"
@@ -129,11 +130,11 @@ note = "N marks the supposed third point of Euclid's reductio, with DN equal to 
 
 [review]
 stage = "full"
-commit = "d202933d0"
+commit = "1c21c147b"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:141a2d8dc5114983"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex); cards #547 and #381, ship ER: the centre by III.1's construction (Prop1.of_circle), written by Claude, read in full by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main and with the Circle 1 retirement, by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main, with the Circle 1 retirement and with the trains beneath it, by GPT-6 Astra (Codex)"
-text = "sha256:cc74777e3ade4dc8"
+lean = "sha256:ac178de3a6fc2c61"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex); cards #547 and #381, ship ER: the centre by III.1's construction (Prop1.of_circle), written by Claude, read in full by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main and with the Circle 1 retirement, by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main, with the Circle 1 retirement and with the trains beneath it, by GPT-6 Astra (Codex); card #547, ship ER: the last step by both orders with contact, and the partner note, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:52c6a56af35a6a19"
 
 [review.items]
 statement = "pass"

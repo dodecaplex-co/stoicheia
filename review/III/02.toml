@@ -5,8 +5,7 @@ note = "Every point strictly between two points of the circle is within it, AB t
 fingerprint = "sha256:a05b6db601f15015"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but for the centre D: Euclid takes it by III.1 (Heath's reference), and the Lean from `Tacit.exists_centre`, a rule we assume, for the proof needs the centre alone."
+kind = "euclid"
 
 [[passage]]
 at = "For suppose it does not, but, if possible, let it fall outside"
@@ -15,9 +14,9 @@ note = "That DE is less than DB does not need the supposition, so the Lean prove
 
 [[passage]]
 at = "let the centre of the circle ABC be taken"
-kind = "different"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre D by III.1 (Heath's reference). The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes D from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E."
+kind = "helper"
+helper = "Prop1.of_circle"
+note = "Euclid takes the centre D by III.1 (Heath's reference), and so does the Lean: `Prop1.of_circle` takes two points of the circle, the ends of a straight line drawn through it at random, and runs III.1 on them, its construction and its proof that the point found is the centre; the proof keeps the centre alone, as Euclid does."
 
 [[passage]]
 at = "and let DFE be drawn through"
@@ -54,11 +53,11 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "full"
-commit = "689ab169f"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:da608135436ecd03"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex); card 478, ship XS, from git and record evidence, added without a restamp: main Prop2 proof by OpenAI Codex (014570748); the last full reading by Claude Opus 5.5 is ER-s131c3's at eed076538 (23a2805f2, 23 October 2026); since then lines 178 to 257 of Prop02.lean (962c8c890, by crew writer C7-c294b-w, and dfb0fe775, which names no writer), the removal of [overlap] (962c8c890) and the notes at 'and let DFE be drawn through' and 'Then, since DA is equal to DB' in the words of the cross-family reader C7-c294b-iii2 (81424ad0a) have been read only by GPT-6 Astra (Codex), reader C7-c294b-iii2b, at 81424ad0a (2f4a6412a, 24 October 2026); a reading by Claude of the whole record is still to come; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f"
-text = "sha256:6e776d12f07c072e"
+commit = "3b0757e4a"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:98d330480854656b"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; card #294, ship C7: re-read after Circle 3 was proved after III.2 and the [overlap] removed; the new rules after III.2, written by Claude, read by GPT-6 Astra (Codex); card 478, ship XS, from git and record evidence, added without a restamp: main Prop2 proof by OpenAI Codex (014570748); the last full reading by Claude Opus 5.5 is ER-s131c3's at eed076538 (23a2805f2, 23 October 2026); since then lines 178 to 257 of Prop02.lean (962c8c890, by crew writer C7-c294b-w, and dfb0fe775, which names no writer), the removal of [overlap] (962c8c890) and the notes at 'and let DFE be drawn through' and 'Then, since DA is equal to DB' in the words of the cross-family reader C7-c294b-iii2 (81424ad0a) have been read only by GPT-6 Astra (Codex), reader C7-c294b-iii2b, at 81424ad0a (2f4a6412a, 24 October 2026); a reading by Claude of the whole record is still to come; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after P3 merged T2 and main 640c9395a, its run line restored to carry both sides, by GPT-6 Astra (Codex), reader C7-t477p3-read2, at 1870c96d1; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the centre by III.1's construction, written by Claude, read in full by GPT-6 Astra (Codex); card #624, ship ER: P13 judged afresh, n/a, read in full by Claude Opus 5.5"
+text = "sha256:dfc6780433d2f9ff"
 
 [review.items]
 statement = "pass"
