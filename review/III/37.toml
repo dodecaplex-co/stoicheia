@@ -40,7 +40,7 @@ note = "Euclid uses the equality of the radii FE and FB without giving a reason.
 at = "and FD is the common base of the triangles"
 kind = "helper"
 helper = "Prop37.triangle"
-note = "`Touches.not_inside` makes DEF a triangle: its centre F is within the circle and cannot lie on DE. `Prop37.triangle` then makes DBF a triangle. If D, B and F were on one straight line, either D would be within the circle, or the equal lengths DB and DE and equal radii would make two sides of DEF equal to the third, contrary to I.20. Heath gives no reference to I.20 here."
+note = "`Touches.not_inside` makes DEF a triangle, for the centre F is within the circle and cannot lie on DE. `Prop37.triangle` then makes DBF one, by I.20 (for which Heath gives no reference here) and since D is outside the circle."
 
 [[passage]]
 at = "And FB produced is a diameter"
@@ -58,11 +58,11 @@ case = "the centre F off AC, with distinct contacts B and E on opposite sides of
 
 [review]
 stage = "full"
-commit = "7b71d1782"
+commit = "dab0daa75"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:27dfde68b2204913"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
-text = "sha256:ca0d1519c83db7b7"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); #525, read-through 03's editorial leftovers: re-read whole by Claude Opus 5.5, of the family that did not write the original proof where one family wrote it (III.34, III.37: OpenAI Codex), and for II.6, II.7, III.5, III.6 and III.31, whose proofs both families wrote (II.6's and II.7's keep Claude's scratch steps; III.31's companions are Claude's), an independent reader who wrote none of this (#478), independent reader RD-s5, at 5bbb773a7; #525, fix round 1: re-read whole by Claude Opus 5.5, independent reader RD-s9, who wrote none of it (#478), at dab0daa75"
+text = "sha256:5ea742b6febb7e70"
 
 [review.items]
 statement = "pass"
