@@ -34,14 +34,14 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
        calls AE once E has been found. -/
     obtain ⟨K, hA_K, hKBC⟩ := Prop31.line (hABC.bca.off_line hB hC)
     -- and let EC be joined.
-    /- E is where the parallel meets BD (`Prop30.meet`). -/
+    /- E is where the parallel meets BD (`Prop30.meet`). EC is named by its ends,
+       as a side of the triangle EBC, so nothing is drawn for the join. -/
     obtain ⟨BD, hB_BD, hD_BD⟩ := Postulate1 B D hDBC.ne₁₂.symm
     have hD_BC : ¬ OnLine D BC := hDBC.bca.off_line hB hC
     have hBD_BC : BD ≠ BC := fun e => hD_BC (e ▸ hD_BD)
     obtain ⟨E, hE_BD, hE_K⟩ := Prop30.meet hKBC hB hB_BD hBD_BC
     have hE_BC : ¬ OnLine E BC := hKBC.not_onLine hE_K
     have hEBC : Triangle E B C := (Triangle.of_line hB hC hABC.ne₂₃ hE_BC).cab
-    obtain ⟨EC, hE_EC, hC_EC⟩ := Postulate1 E C hEBC.ne₁₃
     -- Therefore the triangle ABC is equal to the triangle EBC; for it is on the same base BC
     -- with it and in the same parallels. [I. 37]
     have h37 : △ A B C = △ E B C :=

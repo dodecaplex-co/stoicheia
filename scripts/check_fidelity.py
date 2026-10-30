@@ -83,15 +83,18 @@
      Heath's porisms (`heath.heath_porisms`) and nothing else, and companions of
      those propositions, each tied to its proposition by `of` and `attached`;
    - for every entry, propositions, porisms and companions alike: none cites one that
-     does not come before it; only I.4 and I.8 use superposition directly; none
-     before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); none rests on Circle 2 or Circle 3, and each of those rules
+     does not come before it; only I.4 and I.8 use superposition directly, and only I.4
+     Common Notion 4 for figures (`Tacit.figures_coincide`, #517); none before I.29
+     rests on Postulate 5 or any Euclidean-only rule (a later book comes after I.29, and
+     may); none rests on Circle 2 or Circle 3, and each of those rules
      follows one of the allowed routes in docs/FORMALIZATION.md, section 7, "Circle 2 and
      Circle 3"; only III.24 has placement, or a lemma of the `Placement` namespace or of
      placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
-   - the facts pinned in `tests/certificate_expectations.json` still hold;
+   - the facts pinned in `tests/certificate_expectations.json` still hold, and where an
+     expectation gives an entry states (`one_of`), told apart by a field of it, exactly
+     one of them holds;
    - each name a review record's passage lists as `unused` is bound by the Lean beneath
      the run of `--` lines its `at` begins in (`unbound_unused`, read from the text by
      `bound_names`), so a declaration for the citation sweep cannot outlive its binding;
@@ -145,6 +148,12 @@ EXPECTATIONS = ROOT / "tests" / "certificate_expectations.json"
 # Books whose every proposition is proved: they must stay that way.
 COMPLETE = {"I", "II", "III"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
+# Common Notion 4 for figures (`Tacit.figures_coincide`), which takes Metric 9's place in
+# I.4's area clause (#517): only I.4 may have it among its direct axioms, so any other
+# entry reaches it only through what it cites, as I.5 through I.4, or a Common Notion,
+# which direct_axioms leaves out too. While it is no axiom, no entry names it and the rule
+# holds of every entry.
+FIGURES_COINCIDE_ALLOWED = {"I.4"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # The first proposition of each book allowed to rest on Postulate 5. Euclid holds it
 # back until I.29; Books II and III come after the whole of Book I, so they may use the
@@ -1036,6 +1045,9 @@ def check_entries(facts, by_ref) -> None:
                 fail(f"{ref}: cites {c}, which does not come before it")
         if "Tacit.superposition" in p.get("direct_axioms", []) and ref not in SUPERPOSITION_ALLOWED:
             fail(f"{ref}: uses superposition directly (only I.4 and I.8 may)")
+        if "Tacit.figures_coincide" in p.get("direct_axioms", []) \
+                and ref not in FIGURES_COINCIDE_ALLOWED:
+            fail(f"{ref}: uses Common Notion 4 for figures directly (only I.4 may)")
         first = FIRST_EUCLIDEAN.get(r.book, 1)
         if r.n < first:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
@@ -1070,8 +1082,8 @@ def check_entries(facts, by_ref) -> None:
 # Facts pinned by tests/certificate_expectations.json.
 
 def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = None) -> None:
-    """Each expectation names a `field`, and usually an entry (`ref`), and asks that a
-    supported field of names `includes` some names, `excludes` others, or holds exactly
+    """Each ordinary expectation names a `field`, and usually an entry (`ref`), and asks
+    that a supported field of names `includes` some names, `excludes` others, or holds exactly
     `count` names beginning with `prefix`; `equals` compares any field with a value. A
     field that is an object, as `inherited` is, is read by its keys: the axioms it names.
     `cited_laws` is a list of objects, read by each object's `law`, and fails unless every
@@ -1085,7 +1097,19 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
     is, is read by each object's `name`, and fails unless every object has one, so that no
     entry's `shared_steps` can name Circle 3, say. An expectation that asks nothing fails:
     `includes` and `excludes` are effective only when nonempty lists of names, while
-    `equals` and `count`, an object with an integer `is`, are effective whenever present."""
+    `equals` and `count`, an object with an integer `is`, are effective whenever present.
+
+    An expectation with `one_of` gives an entry (`ref`) two states or more, of which
+    exactly one must hold, and names as its `field` the field of the entry that tells them
+    apart, as I.4 is held to Metric 9 or to Common Notion 4 for figures, told apart by its
+    `own_axioms`, and to nothing between them (#517). Each state is an object with a
+    `state`, its name, one of its own, and `expectations`, a nonempty list of that entry's
+    ordinary expectations, one of them at least reading that field: each with the same
+    `ref` and a `why` of its own, read as any other is (`malformed`, `unmet`), and none
+    with `one_of` or `every`. A state holds when each of
+    its expectations does. When none holds, the expectation fails once, naming each state
+    with what sank it; when more than one holds, it fails too, for the states were not
+    exclusive. A malformed one fails with its own message (`malformed_states`)."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -1095,121 +1119,232 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         fail(f"{rel(path)}: expected a JSON object with a list `expectations` ({e})")
         return
-    known = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why", "every"}
     for i, x in enumerate(expectations, 1):
         label = f"{rel(path)}, expectation {i}"
-        reads_names = isinstance(x, dict) and (
-            bool(x.get("includes")) or bool(x.get("excludes")) or "count" in x)
-        effective = reads_names or (isinstance(x, dict) and "equals" in x)
-        if (not isinstance(x, dict) or not {"field", "why"} <= set(x) or set(x) - known
-                or not effective or ("law" in x and "ref" not in x)):
-            fail(f"{label}: needs `field` and `why`, a `ref` unless it reads the top level "
-                 "of facts.json (and always with a `law`), and an effective predicate: "
-                 "nonempty `includes` or `excludes`, or present `equals` or `count`")
+        if isinstance(x, dict) and "one_of" in x:
+            check_states(x, label, by_ref, facts)
             continue
-        count = x.get("count", {"is": 0})
-        if not (all(isinstance(x.get(k, []), list)
-                    and all(isinstance(n, str) for n in x.get(k, []))
-                    for k in ("includes", "excludes"))
-                and isinstance(count, dict) and set(count) <= {"prefix", "is"}
-                and isinstance(count.get("is"), int)
-                and isinstance(count.get("prefix", ""), str)):
-            fail(f"{label}: `includes` and `excludes` must be lists of names, and `count` "
-                 "an object with an integer `is` and, if it has one, a string `prefix`")
+        problem = malformed(x, label)
+        if problem:
+            fail(problem)
             continue
-        if "every" in x and (x["every"] != "entry"
-                             or set(x) - {"every", "field", "excludes", "why"}):
-            fail(f"{label}: an expectation over every entry is `\"every\": \"entry\"`, with "
-                 "a `field` and a nonempty `excludes`, and no `ref`, `law`, `includes`, "
-                 "`equals` or `count`")
-            continue
-        field, why = x["field"], x["why"]
-        if "every" in x:
-            # With no entry to read, every `excludes` would pass.
-            if not by_ref:
-                fail(f"{label}: reads every entry, but facts.json has none")
-            for ref, (_, p) in by_ref.items():
-                if field not in p:
-                    fail(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
-                    continue
-                value = p[field]
-                if isinstance(value, dict):
-                    listed = list(value)
-                elif isinstance(value, list) and all(isinstance(v, str) for v in value):
-                    listed = value
-                elif isinstance(value, list) and all(
-                        isinstance(v, dict) and isinstance(v.get("name"), str) for v in value):
-                    listed = [v["name"] for v in value]
-                else:
-                    fail(f"{ref}: its {field} is not a list of names, an object or a list of "
-                         f"objects each with a `name`, so `excludes` cannot read it ({label}: "
-                         f"{why})")
-                    continue
-                for name in x["excludes"]:
-                    if name in listed:
-                        fail(f"{ref}: its {field} should not include {name} ({label}: {why})")
-            continue
-        if "ref" in x:
-            ref = x["ref"]
-            if ref not in by_ref:
-                fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
+        for problem in unmet(x, label, by_ref, facts):
+            fail(problem)
+
+
+EXPECTATION_KEYS = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why",
+                    "every"}
+
+
+def reads_names(x: dict) -> bool:
+    """Does the expectation `x` read its field by name, with `includes`, `excludes` or
+    `count`?"""
+    return bool(x.get("includes")) or bool(x.get("excludes")) or "count" in x
+
+
+def malformed(x, label: str) -> str | None:
+    """Why the ordinary expectation `x` (no `one_of`), `label` in the messages, is
+    malformed, or None when it is well formed (check_expectations)."""
+    effective = isinstance(x, dict) and (reads_names(x) or "equals" in x)
+    if (not isinstance(x, dict) or not {"field", "why"} <= set(x)
+            or set(x) - EXPECTATION_KEYS or not effective or ("law" in x and "ref" not in x)):
+        return (f"{label}: needs `field` and `why`, a `ref` unless it reads the top level "
+                "of facts.json (and always with a `law`), and an effective predicate: "
+                "nonempty `includes` or `excludes`, or present `equals` or `count`")
+    count = x.get("count", {"is": 0})
+    if not (all(isinstance(x.get(k, []), list)
+                and all(isinstance(n, str) for n in x.get(k, []))
+                for k in ("includes", "excludes"))
+            and isinstance(count, dict) and set(count) <= {"prefix", "is"}
+            and isinstance(count.get("is"), int)
+            and isinstance(count.get("prefix", ""), str)):
+        return (f"{label}: `includes` and `excludes` must be lists of names, and `count` "
+                "an object with an integer `is` and, if it has one, a string `prefix`")
+    if "every" in x and (x["every"] != "entry"
+                         or set(x) - {"every", "field", "excludes", "why"}):
+        return (f"{label}: an expectation over every entry is `\"every\": \"entry\"`, with "
+                "a `field` and a nonempty `excludes`, and no `ref`, `law`, `includes`, "
+                "`equals` or `count`")
+    return None
+
+
+def unmet(x: dict, label: str, by_ref, facts: dict | None) -> list[str]:
+    """What fails of the well-formed ordinary expectation `x` (malformed), against the
+    entries `by_ref` and the top level `facts`: one message for each thing it asks that
+    does not hold, or that cannot be read; none when it holds (check_expectations)."""
+    found = []
+    field, why = x["field"], x["why"]
+    if "every" in x:
+        # With no entry to read, every `excludes` would pass.
+        if not by_ref:
+            found.append(f"{label}: reads every entry, but facts.json has none")
+        for ref, (_, p) in by_ref.items():
+            if field not in p:
+                found.append(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
                 continue
-            holder = by_ref[ref][1]
-        else:
-            ref = "facts.json"
-            if facts is None:
-                fail(f"{label}: reads the top level of facts.json, which was not given")
+            value = p[field]
+            if isinstance(value, dict):
+                listed = list(value)
+            elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+                listed = value
+            elif isinstance(value, list) and all(
+                    isinstance(v, dict) and isinstance(v.get("name"), str) for v in value):
+                listed = [v["name"] for v in value]
+            else:
+                found.append(f"{ref}: its {field} is not a list of names, an object or a list "
+                             f"of objects each with a `name`, so `excludes` cannot read it "
+                             f"({label}: {why})")
                 continue
-            holder = facts
-        if field not in holder:
-            # Read as empty, a missing field would let every `excludes` pass.
-            where = "its entry" if "ref" in x else "its top level"
-            fail(f"{ref}: pinned by {label}, but {where} has no field `{field}`")
+            for name in x["excludes"]:
+                if name in listed:
+                    found.append(f"{ref}: its {field} should not include {name} ({label}: "
+                                 f"{why})")
+        return found
+    if "ref" in x:
+        ref = x["ref"]
+        if ref not in by_ref:
+            return [f"{ref}: pinned by {label}, but facts.json has no such entry"]
+        holder = by_ref[ref][1]
+    else:
+        ref = "facts.json"
+        if facts is None:
+            return [f"{label}: reads the top level of facts.json, which was not given"]
+        holder = facts
+    if field not in holder:
+        # Read as empty, a missing field would let every `excludes` pass.
+        where = "its entry" if "ref" in x else "its top level"
+        return [f"{ref}: pinned by {label}, but {where} has no field `{field}`"]
+    value, what = holder.get(field), field
+    if field == "cited_laws" and ("law" in x or reads_names(x)):
+        laws = [v.get("law") if isinstance(v, dict) else None for v in value] \
+            if isinstance(value, list) else [None]
+        if not all(isinstance(n, str) and n for n in laws):
+            return [f"{ref}: pinned by {label}, but its cited_laws is not a list of objects "
+                    "each with a `law` name"]
+    if "law" in x:
+        law = x["law"]
+        cited = [v for v in value if isinstance(v, dict) and v.get("law") == law] \
+            if isinstance(value, list) else []
+        if len(cited) != 1 or "construction_rules" not in cited[0]:
+            return [f"{ref}: pinned by {label}, but its {field} has no law {law} with "
+                    "construction_rules"]
+        value, what = cited[0]["construction_rules"], \
+            f"construction_rules for the cited law {law}"
+    if "equals" in x and value != x["equals"]:
+        found.append(f"{ref}: its {what} is {value!r}, not {x['equals']!r} ({label}: {why})")
+    if not reads_names(x):
+        return found
+    if isinstance(value, dict):
+        listed = list(value)
+    elif field == "cited_laws" and "law" not in x:
+        listed = [v["law"] for v in value]
+    elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+        listed = value
+    else:
+        found.append(f"{ref}: its {what} is not a list of names, an object or cited_laws, so "
+                     f"`includes`, `excludes` and `count` cannot read it ({label}: {why})")
+        return found
+    for name in x.get("includes", []):
+        if name not in listed:
+            found.append(f"{ref}: its {what} should include {name} ({label}: {why})")
+    for name in x.get("excludes", []):
+        if name in listed:
+            found.append(f"{ref}: its {what} should not include {name} ({label}: {why})")
+    if "count" in x:
+        prefix, want = x["count"].get("prefix", ""), x["count"].get("is")
+        got = sum(1 for v in listed if isinstance(v, str) and v.startswith(prefix))
+        if got != want:
+            found.append(f"{ref}: its {what} has {got} names beginning {prefix!r}, not {want} "
+                         f"({label}: {why})")
+    return found
+
+
+def malformed_states(x: dict, label: str) -> list[str]:
+    """Why the expectation with `one_of`, `x`, is malformed: one message for each fault,
+    none when it is well formed (check_expectations). It has a `ref`, a `field`, `one_of`
+    and a `why` and nothing else; its `field` is a nonempty string; `one_of` is a list of
+    two states or more, each an object with a `state`, a name no other state has, and
+    `expectations`, a nonempty list of ordinary expectations, each with the same `ref`,
+    none with `one_of` or `every`, each well formed as an ordinary one is (malformed), and
+    one of them at least reading the `field`."""
+    if set(x) != {"ref", "field", "one_of", "why"} or not isinstance(x["ref"], str):
+        return [f"{label}: an expectation with `one_of` has a `ref`, the name of an entry, "
+                "a `field`, the field of it that tells its states apart, `one_of`, its "
+                "states, and a `why`, and nothing else"]
+    ref, field, states = x["ref"], x["field"], x["one_of"]
+    found = []
+    if not isinstance(field, str) or not field.strip():
+        found.append(f"{label}: its `field` must name the field that tells its states apart, "
+                     "with a nonempty string")
+        field = None
+    if not isinstance(states, list) or len(states) < 2:
+        return found + [f"{label}: its `one_of` must be a list of two states or more: with "
+                        "one, it would be no choice, but an ordinary expectation"]
+    names = []
+    for k, state in enumerate(states, 1):
+        if not isinstance(state, dict) or set(state) != {"state", "expectations"}:
+            found.append(f"{label}, state {k}: a state is an object with a `state`, its "
+                         "name, and `expectations`, and nothing else")
             continue
-        value, what = holder.get(field), field
-        if field == "cited_laws" and ("law" in x or reads_names):
-            laws = [v.get("law") if isinstance(v, dict) else None for v in value] \
-                if isinstance(value, list) else [None]
-            if not all(isinstance(n, str) and n for n in laws):
-                fail(f"{ref}: pinned by {label}, but its cited_laws is not a list of objects "
-                     "each with a `law` name")
-                continue
-        if "law" in x:
-            law = x["law"]
-            found = [v for v in value if isinstance(v, dict) and v.get("law") == law] \
-                if isinstance(value, list) else []
-            if len(found) != 1 or "construction_rules" not in found[0]:
-                fail(f"{ref}: pinned by {label}, but its {field} has no law {law} with "
-                     "construction_rules")
-                continue
-            value, what = found[0]["construction_rules"], \
-                f"construction_rules for the cited law {law}"
-        if "equals" in x and value != x["equals"]:
-            fail(f"{ref}: its {what} is {value!r}, not {x['equals']!r} ({label}: {why})")
-        if not reads_names:
+        name = state["state"]
+        if not isinstance(name, str) or not name.strip():
+            found.append(f"{label}, state {k}: its `state` must name it, with a nonempty "
+                         "string")
             continue
-        if isinstance(value, dict):
-            listed = list(value)
-        elif field == "cited_laws" and "law" not in x:
-            listed = [v["law"] for v in value]
-        elif isinstance(value, list) and all(isinstance(v, str) for v in value):
-            listed = value
-        else:
-            fail(f"{ref}: its {what} is not a list of names, an object or cited_laws, so "
-                 f"`includes`, `excludes` and `count` cannot read it ({label}: {why})")
+        if name in names:
+            found.append(f"{label}: two of its states are named \"{name}\": each state needs "
+                         "a name of its own, so that a failure can say which it is")
+        names.append(name)
+        inner = state["expectations"]
+        if not isinstance(inner, list) or not inner:
+            found.append(f"{label}, state \"{name}\": its `expectations` must be a nonempty "
+                         "list, or the state would hold whatever the tree")
             continue
-        for name in x.get("includes", []):
-            if name not in listed:
-                fail(f"{ref}: its {what} should include {name} ({label}: {why})")
-        for name in x.get("excludes", []):
-            if name in listed:
-                fail(f"{ref}: its {what} should not include {name} ({label}: {why})")
-        if "count" in x:
-            prefix, want = x["count"].get("prefix", ""), x["count"].get("is")
-            got = sum(1 for v in listed if isinstance(v, str) and v.startswith(prefix))
-            if got != want:
-                fail(f"{ref}: its {what} has {got} names beginning {prefix!r}, not {want} "
-                     f"({label}: {why})")
+        for j, y in enumerate(inner, 1):
+            where = f"{label}, state \"{name}\", expectation {j}"
+            if isinstance(y, dict) and ("one_of" in y or "every" in y):
+                found.append(f"{where}: a state's expectations are ordinary ones of its "
+                             "entry, with no `one_of` or `every`")
+            elif isinstance(y, dict) and y.get("ref") != ref:
+                found.append(f"{where}: its `ref` must be {ref}, the `ref` of the expectation "
+                             "with `one_of`, so that each state reads the same entry")
+            else:
+                problem = malformed(y, where)
+                if problem:
+                    found.append(problem)
+        if field is not None and not any(isinstance(y, dict) and y.get("field") == field
+                                         for y in inner):
+            found.append(f"{label}, state \"{name}\": one of its expectations must read "
+                         f"{field}, the `field` of the expectation with `one_of`, so that "
+                         "each state reads the field said to tell them apart")
+    return found
+
+
+def check_states(x: dict, label: str, by_ref, facts: dict | None) -> None:
+    """The expectation with `one_of`, `x`: exactly one of its states must hold, each read
+    as its ordinary expectations are (unmet), each failure of a state's expectation named
+    with the state (check_expectations)."""
+    problems = malformed_states(x, label)
+    for problem in problems:
+        fail(problem)
+    if problems:
+        return
+    ref, why = x["ref"], x["why"]
+    sunk = {}
+    for state in x["one_of"]:
+        name = state["state"]
+        sunk[name] = [problem for j, y in enumerate(state["expectations"], 1)
+                      for problem in unmet(y, f"{label}, state \"{name}\", expectation {j}",
+                                           by_ref, facts)]
+    held = [name for name, problems in sunk.items() if not problems]
+    if not held:
+        fail(f"{ref}: {label} asks that exactly one of its states hold, and none does "
+             f"({why}) " + " ".join(f"The state \"{name}\" fails: {'; '.join(problems)}."
+                                    for name, problems in sunk.items()))
+    elif len(held) > 1:
+        fail(f"{ref}: {label} asks that exactly one of its states hold, but "
+             + " and ".join(f"\"{name}\"" for name in held)
+             + f" hold at once, so the states are not exclusive ({why})")
 
 
 # How the `--` lines sit in the Lean, for the review records.

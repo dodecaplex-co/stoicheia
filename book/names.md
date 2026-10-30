@@ -6,7 +6,7 @@ Every proposition, porism and companion of Books I to III, by Euclid's number: i
 
 `import Elements.BookI.Prop20` brings in I.20 with everything it rests on, and `import Elements` the whole edition. The [README](../README.md) introduces the library, and [FORMALIZATION](../docs/FORMALIZATION.md), section 2, describes its statements. The definitions, postulates and common notions, with their Lean, are on each book's front page: [Book I](I/front.md), [Book II](II/front.md) and [Book III](III/front.md).
 
-Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. A porism or a companion stands under its proposition, in the same module.
+Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Of I.40 and III.12, which Heath prints in brackets, the three are said of the text's enunciation, which may not be Euclid's. A porism or a companion stands under its proposition, in the same module.
 
 ## Book I
 
@@ -113,6 +113,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 |---|---|---|---|---|---|
 | ✅ | [III.1](III/01.md) The centre of a given circle | `Elements.BookIII.Prop1` | [`Elements.BookIII.Prop01`](../Elements/BookIII/Prop01.lean) | whole | [what it rests on](III/01.md#what-it-rests-on) |
 | ✅ | &emsp;[III.1 Por.](III/01.md#porism) | `Elements.BookIII.Prop1.porism` | [`Elements.BookIII.Prop01`](../Elements/BookIII/Prop01.lean) |  | [what it rests on](III/01.md#what-it-rests-on) |
+| ✅ | &emsp;[III.1 of_circle](III/01.md#of_circle) | `Elements.BookIII.Prop1.of_circle` | [`Elements.BookIII.Prop01`](../Elements/BookIII/Prop01.lean) |  | [what it rests on](III/01.md#what-it-rests-on) |
 | ✅ | [III.2](III/02.md) The straight line joining two points falls within the circle | `Elements.BookIII.Prop2` | [`Elements.BookIII.Prop02`](../Elements/BookIII/Prop02.lean) | whole | [what it rests on](III/02.md#what-it-rests-on) |
 | ✅ | [III.3](III/03.md) Through the centre, to bisect is to cut at right angles | `Elements.BookIII.Prop3` | [`Elements.BookIII.Prop03`](../Elements/BookIII/Prop03.lean) | whole | [what it rests on](III/03.md#what-it-rests-on) |
 | ✅ | [III.4](III/04.md) Straight lines not through the centre do not bisect one another | `Elements.BookIII.Prop4` | [`Elements.BookIII.Prop04`](../Elements/BookIII/Prop04.lean) | whole | [what it rests on](III/04.md#what-it-rests-on) |
@@ -164,8 +165,10 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | &emsp;[III.25 of_circle](III/25.md#of_circle) | `Elements.BookIII.Prop25.of_circle` | [`Elements.BookIII.Prop25`](../Elements/BookIII/Prop25.lean) |  | [what it rests on](III/25.md#what-it-rests-on) |
 | ✅ | [III.26](III/26.md) Equal angles stand on equal circumferences | `Elements.BookIII.Prop26` | [`Elements.BookIII.Prop26`](../Elements/BookIII/Prop26.lean) | whole | [what it rests on](III/26.md#what-it-rests-on) |
 | ✅ | [III.27](III/27.md) Angles standing on equal circumferences are equal | `Elements.BookIII.Prop27` | [`Elements.BookIII.Prop27`](../Elements/BookIII/Prop27.lean) | whole | [what it rests on](III/27.md#what-it-rests-on) |
+| ✅ | &emsp;[III.27 of_measure](III/27.md#of_measure) | `Elements.BookIII.Prop27.of_measure` | [`Elements.BookIII.Prop27`](../Elements/BookIII/Prop27.lean) |  | [what it rests on](III/27.md#what-it-rests-on) |
 | ✅ | [III.28](III/28.md) Equal straight lines cut off equal circumferences | `Elements.BookIII.Prop28` | [`Elements.BookIII.Prop28`](../Elements/BookIII/Prop28.lean) | whole | [what it rests on](III/28.md#what-it-rests-on) |
 | ✅ | [III.29](III/29.md) Equal circumferences are subtended by equal straight lines | `Elements.BookIII.Prop29` | [`Elements.BookIII.Prop29`](../Elements/BookIII/Prop29.lean) | whole | [what it rests on](III/29.md#what-it-rests-on) |
+| ✅ | &emsp;[III.29 of_measure](III/29.md#of_measure) | `Elements.BookIII.Prop29.of_measure` | [`Elements.BookIII.Prop29`](../Elements/BookIII/Prop29.lean) |  | [what it rests on](III/29.md#what-it-rests-on) |
 | ✅ | [III.30](III/30.md) A given circumference, bisected | `Elements.BookIII.Prop30` | [`Elements.BookIII.Prop30`](../Elements/BookIII/Prop30.lean) | whole | [what it rests on](III/30.md#what-it-rests-on) |
 | ✅ | &emsp;[III.30 halves](III/30.md#halves) | `Elements.BookIII.Prop30.halves` | [`Elements.BookIII.Prop30`](../Elements/BookIII/Prop30.lean) |  | [what it rests on](III/30.md#what-it-rests-on) |
 | ✅ | [III.31](III/31.md) The angle in the semicircle is right | `Elements.BookIII.Prop31` | [`Elements.BookIII.Prop31`](../Elements/BookIII/Prop31.lean) | whole | [what it rests on](III/31.md#what-it-rests-on) |

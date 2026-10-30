@@ -29,7 +29,7 @@ proposition (III.2, and III.5 and III.6 with rules together). I.45 and II.14, re
 from 20 October 2026 to a figure given with a checked division into triangles, take
 any rectilineal figure, given by its outline, from 22 October: that the outline has a
 division, and that every division gives the same area, are proved
-([#116](https://github.com/jackChallis/stoicheia/issues/116)).
+([#116](https://github.com/dodecaplex-co/stoicheia/issues/116)).
 
 ## 2. How a book is made, in parallel
 
@@ -71,7 +71,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 27 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 30 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -101,8 +101,8 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 0 | The review, this page, the brief | done |
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
-| — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, and full again from 22 Oct, for a figure given by its outline, with the division and the independence of area proved ([#116]) |
+| — | Release of Book III | [done, 17 Oct](https://github.com/dodecaplex-co/stoicheia/releases/tag/book-III); Book I and II notes corrected |
+| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/dodecaplex-co/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, and full again from 22 Oct, for a figure given by its outline, with the division and the independence of area proved ([#116]) |
 | 3 | Arcs and segments; III.24 | done: proved in Staging ([#89]), and in the edition ([#25]); its meeting fact for an arc is `Prop25.meets` in `Elements/BookIII/Prop25.lean` |
 | 4 | III.14, III.15, III.25 | done: proved in Staging ([#90]), then moved into `Elements/` with their records in train C6b ([#28]); III.25's construction core and companions under [#153] |
 | 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `full` ([#29]) |
@@ -138,18 +138,18 @@ own, the figure letters as three:
 - **Brief 0006's statements staged in `Staging`, [#11]:** challenge, approval and freezing
   of the statements are next.
 
-[#1]: https://github.com/jackChallis/stoicheia/pull/1
-[#2]: https://github.com/jackChallis/stoicheia/pull/2
-[#3]: https://github.com/jackChallis/stoicheia/pull/3
-[#4]: https://github.com/jackChallis/stoicheia/pull/4
-[#5]: https://github.com/jackChallis/stoicheia/pull/5
-[#6]: https://github.com/jackChallis/stoicheia/pull/6
-[#7]: https://github.com/jackChallis/stoicheia/pull/7
-[#8]: https://github.com/jackChallis/stoicheia/pull/8
-[#9]: https://github.com/jackChallis/stoicheia/pull/9
-[#10]: https://github.com/jackChallis/stoicheia/pull/10
-[#11]: https://github.com/jackChallis/stoicheia/pull/11
-[#13]: https://github.com/jackChallis/stoicheia/issues/13
+[#1]: https://github.com/dodecaplex-co/stoicheia/pull/1
+[#2]: https://github.com/dodecaplex-co/stoicheia/pull/2
+[#3]: https://github.com/dodecaplex-co/stoicheia/pull/3
+[#4]: https://github.com/dodecaplex-co/stoicheia/pull/4
+[#5]: https://github.com/dodecaplex-co/stoicheia/pull/5
+[#6]: https://github.com/dodecaplex-co/stoicheia/pull/6
+[#7]: https://github.com/dodecaplex-co/stoicheia/pull/7
+[#8]: https://github.com/dodecaplex-co/stoicheia/pull/8
+[#9]: https://github.com/dodecaplex-co/stoicheia/pull/9
+[#10]: https://github.com/dodecaplex-co/stoicheia/pull/10
+[#11]: https://github.com/dodecaplex-co/stoicheia/pull/11
+[#13]: https://github.com/dodecaplex-co/stoicheia/issues/13
 
 ### Open items
 
@@ -310,18 +310,18 @@ in the voyage logs).
 | Precision pass and standards (brief 0005, stages 1 and 1b): the build | 23 (3 stopped at an account-terms prompt and were run again) | 5.9M | 95 min |
 | Precision pass and standards: the finish (integration, readers, fixes) | 7 | 2.0M | 104 min |
 | The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
-[#88]: https://github.com/jackChallis/stoicheia/pull/88
-[#89]: https://github.com/jackChallis/stoicheia/pull/89
-[#90]: https://github.com/jackChallis/stoicheia/pull/90
-[#19]: https://github.com/jackChallis/stoicheia/issues/19
-[#25]: https://github.com/jackChallis/stoicheia/issues/25
-[#28]: https://github.com/jackChallis/stoicheia/issues/28
-[#29]: https://github.com/jackChallis/stoicheia/issues/29
-[#57]: https://github.com/jackChallis/stoicheia/issues/57
-[#59]: https://github.com/jackChallis/stoicheia/issues/59
-[#67]: https://github.com/jackChallis/stoicheia/issues/67
-[#115]: https://github.com/jackChallis/stoicheia/pull/115
-[#116]: https://github.com/jackChallis/stoicheia/issues/116
-[#134]: https://github.com/jackChallis/stoicheia/pull/134
-[#148]: https://github.com/jackChallis/stoicheia/pull/148
-[#153]: https://github.com/jackChallis/stoicheia/issues/153
+[#88]: https://github.com/dodecaplex-co/stoicheia/pull/88
+[#89]: https://github.com/dodecaplex-co/stoicheia/pull/89
+[#90]: https://github.com/dodecaplex-co/stoicheia/pull/90
+[#19]: https://github.com/dodecaplex-co/stoicheia/issues/19
+[#25]: https://github.com/dodecaplex-co/stoicheia/issues/25
+[#28]: https://github.com/dodecaplex-co/stoicheia/issues/28
+[#29]: https://github.com/dodecaplex-co/stoicheia/issues/29
+[#57]: https://github.com/dodecaplex-co/stoicheia/issues/57
+[#59]: https://github.com/dodecaplex-co/stoicheia/issues/59
+[#67]: https://github.com/dodecaplex-co/stoicheia/issues/67
+[#115]: https://github.com/dodecaplex-co/stoicheia/pull/115
+[#116]: https://github.com/dodecaplex-co/stoicheia/issues/116
+[#134]: https://github.com/dodecaplex-co/stoicheia/pull/134
+[#148]: https://github.com/dodecaplex-co/stoicheia/pull/148
+[#153]: https://github.com/dodecaplex-co/stoicheia/issues/153
