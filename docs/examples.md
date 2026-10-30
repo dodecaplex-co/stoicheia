@@ -161,8 +161,7 @@ I.45: [Page](../book/I/45.md) · [Lean](../Elements/BookI/Prop45.lean) ·
 II.14: [Page](../book/II/14.md) · [Lean](../Elements/BookII/Prop14.lean) ·
 [mishnah](../mishnah/II/14.md) · [figure](../figures/II/14.svg)
 
-Read against the Lean and the pages at commit `747903c52`, on 30 October 2026, with the
-table notes of the two records as the change that adds this example wrote them.
+Read against the Lean, the records and the pages at commit `1d6b44d48`, on 30 October 2026.
 
 **Why this one.** Both enunciations ask for "a given rectilineal figure", any figure with
 straight sides. Euclid's proof of I.45 divides one four-sided figure into two triangles, and
@@ -207,18 +206,18 @@ story again.
   for granted when he calls the sum of ABD and DBC the figure (**"The whole rectilineal
   figure ABCD."**), and II.14's points to it in a clause.
 - **The older companions keep a figure given with a checked division.** `Prop45.apart`,
-  `Prop14.apart` and `Prop14.square` take triangles that lie apart (`Apart`); `Prop45.figure` and
-  `Prop14.figure`, triangles glued edge to edge in a suitable order, for a figure with one
-  boundary (`Rectilineal`); and `Prop45.fan` and `Prop14.fan`, Euclid's and Oliver Byrne's
-  division from one corner, with its two conditions (neighbours on opposite sides of the
-  straight line they share, and the angles at that corner together less than four right
+  `Prop14.apart` and `Prop14.square` take triangles that lie apart (`Apart`); `Prop45.figure`
+  and `Prop14.figure`, triangles glued edge to edge in a suitable order, for a figure with
+  one boundary (`Rectilineal`); and `Prop45.fan` and `Prop14.fan`, Euclid's and Oliver
+  Byrne's division from one corner, with its two conditions (neighbours on opposite sides of
+  the straight line they share, and the angles at that corner together less than four right
   angles), which `Fitted.fan` shows make the triangles fit together. Each makes its
   parallelogram, or the square on a straight line, equal to the triangles it is given, taken
   together (`Prop14.square` draws that square with its four corners), and that sum is the
-  figure's area, the same for every division. They stay beside the outline companions for
-  a figure that comes with its division, and `Prop45.fan_boundary` joins the checked fan to
-  the outline through its corners. Their detailed hypotheses are in their docstrings, which
-  the Proof row links.
+  figure's area, the same for every division. They stay beside the outline companions for a
+  figure that comes with its division, and `Prop45.fan_boundary` joins the checked fan to the
+  outline through its corners. Their detailed hypotheses are in their docstrings, which the
+  Proof row links.
 - **"Full" is said of the page's declarations together.** Each record's `scope = "full"`
   counts its companions ([review/SCHEMA.md](../review/SCHEMA.md)), and its statement note,
   the Statement row, says which declaration covers what: the main theorem takes two
@@ -231,9 +230,9 @@ story again.
   among them, and point to Representation for the area; the Representation rows tell the
   inputs, the outline and the checked divisions, and the one area. I.45's Representation row
   keeps the fan's two conditions, and its commentary the argument of `Fitted.fan`, which
-  follows the triangles round the corner one at a time. II.14's rows name the division and the area
-  in a clause each, point to I.45 for the outline, and add what is II.14's own: the square,
-  or its side.
+  follows the triangles round the corner one at a time. II.14's rows name the division and
+  the area in a clause each, point to I.45 for the outline, and add what is II.14's own: the
+  square, or its side.
 
 **Do not copy.** I.45's long Representation row and commentary are earned by its inputs and
 its fan argument; a page whose figure is given more simply needs neither. Full coverage

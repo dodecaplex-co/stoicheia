@@ -146,8 +146,9 @@ where to look:
    rows say what the companions prove. The words come from the proposition's review record
    ([review/SCHEMA.md](../review/SCHEMA.md): its `short`, for a restricted or partial
    statement), and a qualification from its representation tags' `badge` in
-   [review/terms.toml](../review/terms.toml), which `scripts/render.py` gives by the Lean
-   words the declarations use; what they mean is in [FORMALIZATION.md](FORMALIZATION.md).
+   [review/terms.toml](../review/terms.toml), which `scripts/render.py` gives the line by the
+   Lean words the main theorem's statement uses (`BADGE_WORDS`); what they mean is in
+   [FORMALIZATION.md](FORMALIZATION.md).
 4. **The figure at a glance,** with its caption.
 5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where the
    figure shows one case of several, draws every case, or our drawing departs from Heath's
