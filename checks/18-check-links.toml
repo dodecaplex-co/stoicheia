@@ -1,6 +1,8 @@
 # Check every relative link and anchor.
+# Concurrent (#608): it reads the pages render.py has written, and writes nothing.
 order = 180
 name = "python3 scripts/check_links.py"
 job = "check"
 command = ["python3", "scripts/check_links.py"]
 section8 = "python3 scripts/check_links.py"
+concurrent = true

@@ -425,6 +425,7 @@ ahead. On the integrated revision, run exactly what CI's `check` job runs, in it
 export PATH=$HOME/.elan/bin:$PATH
 python3 -I tests/test_check_paths.py
 python3 scripts/check_paths.py --self-test
+python3 -I tests/test_concurrent_checks.py
 lake build
 lake build Audit
 lake build Staging
@@ -468,9 +469,10 @@ protected: each registry file it adds, removes or changes is named in a decision
 and the pull request carries `security-review`. And the change judges later trains only
 once it has merged. To add a check, add one file to `checks/`
 ([its README](../checks/README.md) says what a file holds), run `render.py`, and commit
-the file with the regenerated block; to remove one, or change its command, job or order,
-change its file. `checks/` is a protected path and a check input (section 10), of class
-R3, and neither `scripts/safe_push.py` nor the CI workflow changes with it. The registry's
+the file with the regenerated block; to remove one, or change its command, job, order,
+`concurrent` or `after`, change its file. `checks/` is a protected path and a check input
+(section 10), of class R3, and neither `scripts/safe_push.py` nor the CI workflow changes
+with it. The registry's
 reader, `scripts/registry.py`, and its runner, `scripts/run_checks.py`, are R5, with the
 landing tool and CI: main's reader decides the pre-flight's sequence, and the runner is
 CI's `check` job. The reader stays one self-contained file of the standard library, since
@@ -1316,9 +1318,10 @@ one carries that file, section 8's command block as `render.py` regenerates it, 
 decision entry naming the file in a sentence of its own; it is R3, and touches neither
 `scripts/safe_push.py` nor the CI workflow, so trains that each add a check no longer edit
 those two files, and a conflict in the block they both regenerate is settled by rendering
-it again. Removing a check, or changing its command, job or order, is a change to
-its one file, named the same way. The train's CI runs the train's own registry, the new
-check with it, while its pre-flight runs origin/main's whole registry, without it, in both
+it again. Removing a check, or changing its command, job, order, `concurrent` or
+`after`, is a change to its one file, named the same way. The train's CI runs the train's
+own registry, the new check with it, while its pre-flight runs origin/main's whole
+registry, without it, in both
 passes: the check joins the pre-flight at its merge, and judges the trains after it
 there. A command of another
 job (`model`, `negative`, `formal-model`, `acceptance`) is still a step of the CI workflow
@@ -2176,7 +2179,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       variables whose names begin `STOICHEIA_`, `LEAN`, `LAKE`, `PYTHON` or `LC_`, but
       the harness's own, which no check reads (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`,
       `STOICHEIA_PYTHON`), and the terminal's (`LC_TERMINAL`, `LC_TERMINAL_VERSION`); and
-      the lists of checks. An entry is used only when it is a
+      the lists of checks. `STOICHEIA_CHECK_WORKERS`, how many concurrent checks run at
+      once (#608), is keyed on purpose, though no check reads it: a record made at one
+      number is never used at another, so that a check whose outcome turns on the number,
+      against its declaration, is judged at the number the run uses. An entry is used only
+      when it is a
       regular file of the user's, mode 0600, its key is this run's and hashes to its
       name, its digest matches it, its harness is the one running, its written time is a
       valid `YYYY-MM-DD HH:MM UTC`, and its steps are that pass's, each once and in order,
@@ -2375,10 +2382,10 @@ the lock the model was last checked against). Since 19 October, `model/Model/Aud
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
 build. Since 22 October (#229), `checks/`, the registry of CI's `check` job, joins them,
-so that a check added or removed, or with its command, job or order changed, is named
-file by file; it is a check input too (step 4, above). Since 22 October (#249),
-`docs/ACCEPTANCE.md` joins them, a check input as well: its table of the limitations
-allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
+so that a check added or removed, or with its command, job, order, `concurrent` or
+`after` changed, is named file by file; it is a check input too (step 4, above). Since
+22 October (#249), `docs/ACCEPTANCE.md` joins them, a check input as well: its table of
+the limitations allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
 `tests/test_acceptance_limits.py` ties together, change in one pull request, a check
 change. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a

@@ -3,6 +3,7 @@
 # section 8's first command block of docs/WORKFLOW.md, written from this registry, and the
 # count markers in other pages. A failure of render.py itself, its check of
 # docs/program.toml or of docs/decisions/ among them, is a verdict.
+# Alone (#608): it writes the pages, which the next entry judges.
 order = 160
 name = "python3 scripts/render.py"
 job = "check"
