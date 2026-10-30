@@ -196,7 +196,7 @@ files working in parallel, the renderers, and an integrator followed by blind re
 
 Trains collide in hand-written files that tell the same news twice: a dated status paragraph
 added to a brief, a count typed again in a report, the same news in PROGRAM.md's prose
-([#572](https://github.com/jackChallis/stoicheia/issues/572)). So each piece of news is
+([#572](https://github.com/dodecaplex-co/stoicheia/issues/572)). So each piece of news is
 written once. A train records its progress in its own decisions entry, whose header names the
 briefs and PROGRAM sections it is news for (section 10, "Decision entries"); `render.py`
 compiles their notes. A count a file states exactly goes between count markers. Everything
@@ -274,6 +274,38 @@ worktree sets it, each with instructions for running the check without the overr
 module planted beside it, such as `scripts/unicodedata.py`, is never read in place of the
 standard library's.
 
+### The repository's address
+
+The repository moved from a personal account to the organization dodecaplex-co on 27
+October 2026 ([#626](https://github.com/dodecaplex-co/stoicheia/issues/626)), and its
+address is `https://github.com/dodecaplex-co/stoicheia`. The pages, which `render.py`
+writes from its constant `REPO`, and the documents outside three exempt folders give that
+address. The decision entries and the decisions page (`docs/decisions/`,
+`docs/briefs/0002-decisions.md`) and the reports (`docs/reports/`) are dated records, and
+keep the old address as they were written. Each was true on its day; GitHub's redirect
+still serves its links; an entry is never edited
+([the folder's README](decisions/README.md)); and rewriting a record's words, however
+small the change, would make it say what it never said when it was written. The briefs
+(`docs/briefs/`) are exempt as a whole, the current book briefs among them (`book-I.md`,
+`book-II.md`, `0004-book-III.md`, `0012-book-IV.md`): these are current guidance, and keep
+their links to the old address until their briefs are next revised
+([section 2](#correcting-a-frozen-brief)).
+[`scripts/check_address.py`](../scripts/check_address.py), in section 8's sequence,
+refuses any address of a repository named `stoicheia` on GitHub under an owner other than
+`dodecaplex-co`: in a web address (with or without `www.` and a port), Git's `git@` form,
+a Pages, raw, `codeload.` or `api.github.com/repos/` address, the wiki's
+(`stoicheia.wiki`), or the bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` (as
+`gh api` writes it), unless a path runs into it (`~/.cache/stoicheia`), an `@` stands just
+before it (an npm scope) or it stands in another site's address after its `?` or `#`, in
+any Markdown file, and in `CITATION.cff`, `LICENSE` and `NOTICE`, outside those three folders. A local
+path that the check would read as bare is written from `./` or `~/` (`./dev/stoicheia`).
+The check does not judge the exempt folders, so it does not refuse an old address added
+there; it counts the addresses they hold. Code and configuration files (`.py`, `.yml`,
+`.toml`, `.json`, `.lean`) are outside its scope; code inside Markdown is read. A file in
+scope, or a file named outside the exempt folders, that cannot be read or decoded as UTF-8
+is refused. It refuses
+every other owner rather than the old one, so it never needs to name it.
+
 ## 5. Proving in parallel: a voyage
 
 A voyage is one stretch of a book, run as a workflow:
@@ -317,7 +349,8 @@ the record was last confirmed against. When any of the three no longer matches,
 since it was reviewed, and the record is read again. At the stage `exceptions` a record
 declares every departure; at the stage `full` it classifies every substantive passage. The
 record's `reviewer` names who read it; from the stage `full` it names the model or person
-and the role, and `run` names the brief, stage and workflow, so that a reader can tell the
+and the role, and `run` names the work the record was read for, the brief and stage or
+else the card or a ship's orders (review/SCHEMA.md), so that a reader can tell the
 reviewer from the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
@@ -366,7 +399,7 @@ artificial hypothesis uses and the concealing helpers, and marks those the recor
 declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each. A
 join under a sentence of Euclid's is written in the Lean only where the formal proof uses
 the line it draws (the coordinator's ruling of 28 October 2026,
-[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted,
+[#482](https://github.com/dodecaplex-co/stoicheia/issues/482)): an idle join is deleted,
 not declared; Heath's sentence stays as its `--` line, and the record says the join is
 drawn in the text and not needed by the formal proof. Another step a sentence of Euclid's
 stands over may stay, and is declared by naming its binding in the `unused` of the
@@ -451,6 +484,7 @@ python3 scripts/render.py
 git status --porcelain                 # prints nothing
 python3 scripts/check_queue.py --tree .
 python3 scripts/check_links.py
+python3 scripts/check_address.py --self-test
 ```
 <!-- /checks -->
 
@@ -483,7 +517,7 @@ broken reader can merge.
 
 **One check needs the YAML parser.** The test that every step after a job's lane step
 carries the lane's condition
-([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
+([#346](https://github.com/dodecaplex-co/stoicheia/issues/346)) is a test of
 `scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned by version and
 hash in `scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after
 elan and before the run of the checks; to run the sequence yourself, or the pre-flight,
@@ -692,7 +726,7 @@ The proof is built from what the shards ran, not from the dealing. Each shard wr
 tests it ran, each with its outcome, to the file `--ran` names, and keeps it as an
 artifact, a test having failed or not, for 35 days; and it keeps its log, from which the
 report takes the tests that failed. A run re-run either way is judged on every shard's
-list ([#411](https://github.com/jackChallis/stoicheia/issues/411),
+list ([#411](https://github.com/dodecaplex-co/stoicheia/issues/411),
 [the decision](decisions/2026-10-25-rerun-failed-jobs.md)). A run re-run with "re-run all
 jobs" is judged afresh. A run re-run in part, as with "re-run failed jobs", is judged on
 the lists of the shards it runs again and on those the others kept in an earlier attempt,

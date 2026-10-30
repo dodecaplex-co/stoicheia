@@ -130,7 +130,7 @@ BASE_URL = "https://api.typesafe.ai"
 DEFAULT_MODEL = "jev-1.13.0"
 VERSIONED = re.compile(r"^jev-\d+\.\d+\.\d+$")
 IMAGES_HEADER = "TypeSafe-Danger-Zone-Images"
-USER_AGENT = "stoicheia-jev-audit/1 (+https://github.com/jackChallis/stoicheia)"
+USER_AGENT = "stoicheia-jev-audit/1 (+https://github.com/dodecaplex-co/stoicheia)"
 # Labels carried from a row to its output line; nothing else of the row is written.
 LABELS = ("id", "item", "ref", "seeded", "expected")
 # Statuses after which no later request can succeed: a refused key, a rate limit, an overload.
