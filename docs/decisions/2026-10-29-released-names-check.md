@@ -24,8 +24,9 @@
   main passes; a renamed name passes only with its deprecated alias under the old name;
   and a namespace renamed fails once for each name in it. The check exits 1 on a finding,
   and 2 when it cannot judge: with no `lake`, when the build of `Elements` is not current,
-  when Lean fails, when the probe prints anything but its rows, a Lean message among them,
-  and when the list is malformed. None of these is a pass.
+  when Lean fails, when the temporary probe cannot be created, resolved, written or
+  removed, when the probe prints anything but its rows, a Lean message among them, and
+  when the list is malformed. None of these is a pass.
 
   How it reads names. The probe is a Lean file, `import Elements` and one `#eval`, written
   to a temporary folder outside the repository and run as `lake env lean` from its root.
@@ -56,10 +57,12 @@
 
   The list, and each release. `tests/released_names.txt` holds comment lines saying what
   it is and how it is made, a tag line with the tag's name and its full commit, then the
-  probe's rows at the tag, sorted by code point, each name once; the reader refuses
-  anything else, naming the line. The script's `--list TAG` prints the file, and refuses
-  unless the repository holds the tag, HEAD is the tag's commit and the build is current.
-  Any tracked file save the list itself that is marked `assume-unchanged` or
+  probe's rows at the tag, sorted by code point, each name once. The tag begins with an
+  ASCII letter or digit, continues with ASCII letters, digits, `.`, `_`, `/` or `-`, and
+  must make a valid `refs/tags/<tag>` Git ref; the reader refuses any other form, naming
+  the line. The script's `--list TAG` prints the file, and refuses if the tag is outside
+  that form, the repository does not hold it, HEAD is not the tag's commit or the build is
+  not current. Any tracked file save the list itself that is marked `assume-unchanged` or
   `skip-worktree` causes refusal with exit 2, even when its contents match HEAD; clear the
   flags before listing. No file that could change what the build declares may differ from
   the commit: no tracked file is modified, save the list itself, which the recipe's

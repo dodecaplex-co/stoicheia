@@ -56,12 +56,15 @@ before this check, so there the refusal costs a check of Lake's traces and nothi
 
 The list. tests/released_names.txt holds `#` comment lines, saying what it is and how it
 is made; then one line `tag <tag> <commit>`, with the tag's full 40-hex commit; then the
-probe's rows at the tag, sorted by code point, each name once. Anything else is refused
-with its line (exit 2): a blank line, a comment after the tag line, a row before it, a
-second tag line, a commit that is not 40 lower-case hex digits, an unknown marker, a name
-listed twice, a row out of order, or no rows at all. `--list TAG` prints the whole file, in
-a built checkout whose HEAD is TAG's commit, and refuses otherwise (exit 2). Every tracked
-file except the list must be free of the `assume-unchanged` and `skip-worktree` index flags:
+probe's rows at the tag, sorted by code point, each name once. The tag begins with an ASCII
+letter or digit, continues with ASCII letters, digits, `.`, `_`, `/` or `-`, and must make
+a valid `refs/tags/<tag>` Git ref. Anything else is refused with its line (exit 2): a blank
+line, a comment after the tag line, a row before it, a second tag line, a tag outside that
+form, a commit that is not 40 lower-case hex digits, an unknown marker, a name listed
+twice, a row out of order, or no rows at all. `--list TAG` prints the whole file, in a
+built checkout whose HEAD is TAG's commit, and refuses a tag outside that form or any
+other unmet condition (exit 2). Every tracked file except the list must be free of the
+`assume-unchanged` and `skip-worktree` index flags:
 either flag causes refusal even when the file's contents match HEAD, and must be cleared
 before listing. No file that could change what the build declares may differ from the
 commit: no tracked file may be modified, the list itself excepted, and there may be no
@@ -105,8 +108,9 @@ it, points to the list's commit; 1 on any finding, printing each, then a summary
 names released, those present on main, those of them deprecated there and those missing;
 2 when it cannot judge: no `lake` on PATH, a build of `Elements` that is not current, the
 probe fails or prints anything but rows, or the list is malformed; and 2 when `--list` is
-refused. Standard library only; Python 3.11 or later. A module planted beside the script
-is never read in its place.
+refused. A temporary probe that cannot be created, resolved, written or removed also exits
+2 without a traceback. Standard library only; Python 3.11 or later. A module planted
+beside the script is never read in its place.
 """
 
 import os
@@ -270,8 +274,8 @@ BUILD_LINES = 12
 
 
 class Unreadable(Exception):
-    """The list, the probe's output or the repository cannot be read, the build is not
-    current, or `--list` is refused: the check cannot judge."""
+    """The list, probe or repository cannot be read or prepared, the build is not current,
+    or `--list` is refused: the check cannot judge."""
 
 
 class Listed(NamedTuple):
@@ -434,9 +438,10 @@ def require_current_build() -> None:
 def run_lean(text: str) -> str:
     """Run the Lean file `text` as `lake env lean` from the repository's root, from a file
     in a temporary folder outside it, once the build is found current; what it printed.
-    Unreadable when it fails, writes to its standard error or prints what is not UTF-8.
-    Another script that reads names the same way, as the release notes' generator does
-    (#702), should call this and read_probe rather than copy them."""
+    Unreadable when the temporary probe cannot be created, resolved, written or removed,
+    or when Lean fails, writes to its standard error or prints what is not UTF-8. Another
+    script that reads names the same way, as the release notes' generator does (#702),
+    should call this and read_probe rather than copy them."""
     if shutil.which("lake") is None:
         raise Unreadable("lake is not on PATH: export PATH=$HOME/.elan/bin:$PATH, and run "
                          "`lake build` first")
@@ -776,9 +781,9 @@ def run_self_test() -> int:
 
 def make_list(tag: str) -> str:
     """The list file for `tag`, from the built checkout of the tag's commit; Unreadable
-    when the tag is not in the repository, HEAD is another commit, any tracked file but the
-    list has assume-unchanged or skip-worktree set, a file that could change the build
-    differs from it (modified()), or the build is not current."""
+    when the tag's name is invalid, the tag is not in the repository, HEAD is another
+    commit, any tracked file but the list has assume-unchanged or skip-worktree set, a file
+    that could change the build differs from it (modified()), or the build is not current."""
     if not is_tag_name(tag):
         raise Unreadable(f"--list: `{shorten(tag)}` is not a tag's name")
     commit = tag_commit(tag)
