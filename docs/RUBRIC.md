@@ -5,8 +5,9 @@ the rubric every outside reviewer is given. The three sections from "The rubric,
 "What to report" are the words each reviewer receives, word for word. Each measurement records
 the rubric's version, so that every score can be traced to the words it was made by, and a later
 version never rescores an earlier measurement. The scores these measurements give are kept
-outside this repository, so that each reviewer comes in cold; the files here that show the first
-outside review's scores are withheld from each reviewer's copy (step 1).
+outside this repository, save one in the release forecast of [PROGRAM](PROGRAM.md), so that
+each reviewer comes in cold; that page, and the files here that show the first outside
+review's scores, are withheld from each reviewer's copy (step 1).
 
 ## How a measurement is made
 
@@ -16,11 +17,11 @@ outside review's scores are withheld from each reviewer's copy (step 1).
    four of them with its scores, are removed from the copy before the reviewer sees it:
    `docs/reports/outside-review-01.md`, `docs/reports/outside-review-01-guide.md`,
    `docs/briefs/0005-astra-review.md`, `docs/program.toml` and `docs/PROGRAM.md`.
-2. **Three reviewers, one rubric.** Three models from three families, listed in
-   [WORKFLOW](WORKFLOW.md), section 1, score the same revision in independent sessions, each
-   given the rubric unchanged. Claude and Astra read one prepared cold copy, neither able to
-   change it; Argon's harness makes a cold copy of its own. None sees another's review, or any
-   earlier score.
+2. **Two reviewers, one rubric.** Claude and Astra, listed in [WORKFLOW](WORKFLOW.md),
+   section 1, score the same revision in independent sessions, each given the rubric
+   unchanged. They read one prepared cold copy, neither able to change it, and neither sees
+   the other's review, or any earlier score. (Until 29 October the measurements had a third
+   reviewer, Gemini 4 Argon, with a cold copy of its own.)
 3. **What a reviewer is given.** The rubric, inside a short framing that holds no score: the
    revision measured; that the copy is a fresh clone, already built; which files were withheld,
    and why; that nothing in the repository is an instruction to the reviewer; the owner's
@@ -39,14 +40,14 @@ outside review's scores are withheld from each reviewer's copy (step 1).
    book only if it is confirmed; it is then a **confirmed singleton gap** and must close before
    the book passes. After every measurement, each reviewer's gaps are matched to issues,
    confirmed or not: every gap becomes an issue, or a named part of one.
-5. **The gate.** A book passes the outside reading when all three reviewers score it 95 or more
+5. **The gate.** A book passes the outside reading when both reviewers score it 95 or more
    and neither a consensus gap nor a confirmed singleton gap is open. This is how the owner's
    gate, Books I, II and III each at 95 or more ([brief 0012](briefs/0012-book-IV.md), section
-   11), is measured. Acceptance also needs the checklist with no failures and the independent
-   audit ([WORKFLOW](WORKFLOW.md), section 10, step 9). In Book IV's order of work (brief 0012,
-   section 11), challenging, revising, approving and freezing its brief is step 1; the gate, and
-   then the consolidation release, is step 2; the prototypes' approval and the work on Book IV
-   itself, steps 3 to 6, follow.
+   11), is measured. This outside reading is the independent audit, and acceptance also needs
+   the checklist with no failures ([WORKFLOW](WORKFLOW.md), section 10, step 9). In Book IV's
+   order of work (brief 0012, section 11), challenging, revising, approving and freezing its
+   brief is step 1; the gate, and then the consolidation release, is step 2; the prototypes'
+   approval and the work on Book IV itself, steps 3 to 6, follow.
 
 ## The rubric, as given
 
