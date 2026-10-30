@@ -50,8 +50,8 @@ circle has points of the circle on either side of it (`Prop2.oppositeSide`,
 `Prop2.sameSide`); Book Zero's [`OnCircles.lean`](../../Elements/Figure/OnCircles.lean),
 that no point of a straight line touching a circle is within it (`Touches.not_inside`).
 
-Book III's proofs cite the earlier books by their Lean names, `BookI.Prop1` to
-`BookI.Prop48` and `BookII.Prop1` to `BookII.Prop14`. The steps
+Book III's proofs cite the propositions of Books I and II by their Lean names,
+`BookI.Prop1` to `BookI.Prop48` and `BookII.Prop1` to `BookII.Prop14`. The steps
 they share that cite Books I and II live in
 [`Squares.lean`](../../Elements/BookIII/Squares.lean): equal squares are on equal
 straight lines (`BookI.Prop46.sq`). The perpendicular from the centre to a straight line
