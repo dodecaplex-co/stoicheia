@@ -80,11 +80,12 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (III.8, whose last step compares the angles at the centre by I.24).
+  way (III.27, whose reductio, where the angles at the circumference are obtuse, runs on
+  the angles standing on the circumferences that remain).
 - **alternative**: a different proof altogether, labelled as one on the page. No route of
   Books I to III may be one ([ACCEPTANCE](../docs/ACCEPTANCE.md), P3): an alternative proof
   is kept there as a companion beside Euclid's route, as III.24's proof by the radii is
-  (`Prop24.equalCircles`, beside its `modified` route).
+  (`Prop24.equalCircles`, beside its `euclid` route).
 
 ### `[representation]`: how Euclid's objects are put into Lean
 
@@ -163,7 +164,8 @@ One table for each passage declared, in the order of the proof.
 - **grouped**: several sentences carried by one argument, or a "similarly" by one lemma.
 - **case**: a case Euclid's figure leaves aside, or leaves to the reader, which the Lean
   takes as well, in the same argument or in a step of its own (II.14's ED the greater,
-  III.2's AB through the centre); the note says how.
+  III.11's A on GF produced beyond F, which Heath says Euclid would have left to the
+  reader); the note says how.
 - **given**: what the passage does is already given, by the statement or by how our
   objects are put into Lean, so no Lean is needed beneath it (I.5's D and E, which come
   with the statement); the note says what gives it.
@@ -222,6 +224,7 @@ The section needs a `case` or a `note`, or both, and is left out when it has nei
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
 | `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. |
+| `page` | `"sha256:"` and 16 hex digits | no | Reserved for the stamp of the page's commentary and figures ([#621](https://github.com/dodecaplex-co/stoicheia/issues/621)): read, and checked for its form alone, until the train that writes it lands. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
