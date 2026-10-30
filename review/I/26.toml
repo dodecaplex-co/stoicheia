@@ -12,7 +12,7 @@ kind = "euclid"
 at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it. The join of GC is drawn in the text and is not needed by the formal proof."
+note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. The formal proof does not need Euclid's join of GC: GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for it and Postulate 1 is not called."
 
 [[passage]]
 at = "therefore the base GC is equal to the base DF"
@@ -23,7 +23,7 @@ unused = ["hGC"]
 [[passage]]
 at = "and the triangle GBC is equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at C."
+note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it; like the base GC, it is not used again."
 unused = ["this"]
 
 [[passage]]
@@ -46,18 +46,18 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it. The join of AH is drawn in the text and is not needed by the formal proof."
+note = "Euclid cuts BH equal to EF, as he cut BG, and the Lean again uses I.3, which also puts H between B and C. Like GC above, AH is named by its ends, as a side of the triangle ABH, and Euclid's join of AH is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base AH is equal to the base DF"
 kind = "carried"
-note = "The Lean proves that the base AH equals DF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at H."
+note = "The Lean proves that the base AH equals DF here, as Euclid states it; as with GC above, neither proof uses it again, and both go on by the angles at H."
 unused = ["hAH"]
 
 [[passage]]
 at = "and the triangle ABH is equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at H."
+note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it; like the triangle GBC, it is not used again."
 unused = ["this"]
 
 [[passage]]
@@ -73,7 +73,7 @@ note = "Euclid supposes BC greater than EF; the Lean proves his argument once ov
 [[passage]]
 at = "the triangle ABC equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: the enunciation asks only for the remaining sides and angle."
+note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it, and it too is not used again: the enunciation asks only for the remaining sides and angle."
 unused = ["this"]
 
 [figure]
@@ -83,11 +83,11 @@ note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is 
 
 [review]
 stage = "full"
-commit = "ce832300d"
+commit = "71bbe678a"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1eb8be02f0e30805"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01; card #34, ship AC: the figure drawn for some of its cases (read-through 02, M6), written by Claude, read in full by GPT-6 Astra (Codex), reader AC-b3text-r1, at 88b85c36c; card #220's rule kept, ship AC: read in full by Claude Opus 5.5, reader AC-b3text-r2, of the family that did not write the proof, at ce832300d."
-text = "sha256:47d78ce7b8896af3"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01; card #34, ship AC: the figure drawn for some of its cases (read-through 02, M6), written by Claude, read in full by GPT-6 Astra (Codex), reader AC-b3text-r1, at 88b85c36c; card #220's rule kept, ship AC: read in full by Claude Opus 5.5, reader AC-b3text-r2, of the family that did not write the proof, at ce832300d; cards #763 to #769, ship AC: read-through 02's items mended, written by Claude, read in full by Claude Opus 5.5, an independent reader who wrote none of it, reader AC-rdI-r1, at 6552a1440; fix round 1, ship AC: read by Claude Opus 5.5, an independent reader who wrote none of it, reader AC-rdI-r2, at 71bbe678a."
+text = "sha256:22480bf587fbf3ef"
 
 [review.items]
 statement = "pass"
