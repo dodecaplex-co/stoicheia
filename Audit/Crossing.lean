@@ -526,8 +526,8 @@ show again that the proofs avoid Circle 4, a theorem whose proof uses `circle_eq
 check the names of these two declarations' axioms, and the build fails if an admitted proof
 (`sorry`) enters. Circle 2 and Circle 3, theorems since 19 and 24 October 2026, and
 Circle 1, a theorem since 26 October 2026, all three proved after III.2, cannot appear
-here; the certificate shows that neither proof uses them, for neither cites III.2, as a use of any of
-them would make it.
+here; the certificate shows that neither proof uses them, for neither cites III.2, as a
+use of any of them would make it.
 -/
 
 /--
