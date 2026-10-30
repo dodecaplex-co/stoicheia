@@ -180,7 +180,7 @@ graph TD
 
 ### From the Lean
 
-143 arrows: 107 also among Heath's references (solid) and 36 only in the Lean (dashed).
+144 arrows: 107 also among Heath's references (solid) and 37 only in the Lean (dashed).
 
 ```mermaid
 graph TD
@@ -279,8 +279,9 @@ graph TD
   I22 --> I23
   I4 --> I24
   I5 --> I24
+  I16 -.-> I24
+  I18 -.-> I24
   I19 --> I24
-  I21 -.-> I24
   I23 --> I24
   I4 --> I25
   I24 --> I25
