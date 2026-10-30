@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if not, AB, CD when produced will meet"
 kind = "helper"
 helper = "Tacit.same_side_or"
-note = "Euclid places a supposed meeting on one side of EF or the other. The Lean rules out a meeting on EF using the retained axiom `Tacit.line_unique` (System E, Generalities 1), then uses `Tacit.same_side_or` (System E, Same side 5), now proved in `Elements/Figure/Incidence.lean` from Intersection 1, Pasch 3 and 4 and the three collinear orders."
+note = "Euclid places a supposed meeting on one side of EF or the other. The Lean rules out a meeting on EF using `Tacit.line_unique` (System E, Generalities 1), a rule we assume, then uses `Tacit.same_side_or` (System E, Same side 5), which Book Zero proves from Intersection 1, Pasch 3 and 4 and the three collinear orders."
 
 [[passage]]
 at = "Then, in the triangle GEF"

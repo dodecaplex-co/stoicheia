@@ -35,7 +35,7 @@ note = "The preceding strict-area contradiction rules out the proposed parallel 
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "grouped"
-note = "The same contradiction excludes any proposed parallel through A meeting BD away from D, discharging the supposition that AD is not parallel to BC. The final step returns this conclusion."
+note = "The same contradiction excludes any proposed parallel through A meeting BD away from D, discharging the supposition that AD is not parallel to BC, so that AD is parallel to BC."
 
 [figure]
 case = "E on BD between B and D, as in Heath's figure"

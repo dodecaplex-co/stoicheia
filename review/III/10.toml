@@ -9,7 +9,7 @@ kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names. C and O are points of the perpendiculars besides K and L, not their meetings with the circle: the straight lines AC and NO they name are Euclid's."
+note = "`Tacit.exists_centre`, the rule that every circle has a centre, supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names. C and O are points of the perpendiculars besides K and L, not their meetings with the circle: the straight lines AC and NO they name are Euclid's."
 
 [[passage]]
 at = "For, if possible, let the circle ABC cut the circle DEF"

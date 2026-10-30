@@ -53,7 +53,7 @@ note = "Euclid reads from the figure that BL and CL make up the square BDEC. The
 [[passage]]
 at = "And the square BDEC is described on BC"
 kind = "given"
-note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II separately restates I.47 using its areas of squares on straight lines for later citations."
+note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II states I.47 again of the squares on straight lines, as `BookI.Prop47.sq`, the form in which II.9 to II.14, III.14, III.35 and III.36 cite it."
 
 [figure]
 case = "the three squares standing outward from the right-angled triangle, as in the main theorem; its companion also covers squares on either side of each base"
