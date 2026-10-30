@@ -256,7 +256,7 @@ If O is within the second, the straight line from O to B leaves the second circl
 them; if outside, the straight line from A to O does. Either crossing lies between the centre
 and a point on or within the first circle, so within it, and Intersection 5 applies. This
 proof uses no proposition, and neither Circle 1 nor our rule that every circle has a centre. -/
-theorem circles_meet_of_centre {O : Point} (hO : Centre O α) (hAα : OnCircle A α)
+theorem circlesMeet_of_centre {O : Point} (hO : Centre O α) (hAα : OnCircle A α)
     (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :
     CirclesMeet α β := by
   have hOα := centre_inside hO
@@ -284,7 +284,7 @@ theorem Tacit.circles_meet_of_on_inside_outside (hAα : OnCircle A α)
     (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :
     CirclesMeet α β := by
   obtain ⟨O, hO⟩ := exists_centre α
-  exact circles_meet_of_centre hO hAα hBα hAβ hBβ
+  exact circlesMeet_of_centre hO hAα hBα hAβ hBβ
 
 /-- Let a point be taken on the other side of L from B. (Points 6) Produce the line from B
 through a point of L; Pasch 3 separates its endpoints. -/
