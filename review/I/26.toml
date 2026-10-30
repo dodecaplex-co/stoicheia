@@ -77,8 +77,9 @@ note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states 
 unused = ["this"]
 
 [figure]
+some_cases = true
 case = "AB supposed greater than DE, with G between B and A, and separately BC supposed greater than EF, with H between B and C; both suppositions appear on one triangle, as in Heath's figure"
-note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is drawn shorter than DE and BH shorter than EF, although Euclid cuts off BG equal to DE and BH equal to EF."
+note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is drawn shorter than DE and BH shorter than EF, although Euclid cuts off BG equal to DE and BH equal to EF. It does not draw DE greater than AB or EF greater than BC, which the Lean rules out by exchanging the triangles."
 
 [review]
 stage = "full"
