@@ -135,9 +135,9 @@ and III.8 uses III.2 (`Prop2.within`) to order the points on the straight line t
 centres, which `CirclesCut.cut_point` takes from the rule. Two of the lists pin the
 theorems `Elements.CirclesCut.cut_point` and `Elements.CirclesCut.of_meet`, which this file
 proved until 26 October 2026; moving them into `Elements` changed no list. Circle 2 and
-Circle 3 are theorems since 19 and 24 October 2026, and Circle 1 since 26 October 2026,
-all three proved after III.2, so no list can show them; no bridge uses Circle 2 or Circle 3,
-and five of the seven lists showed Circle 1 while it was an axiom. All seven bridge lists
+Circle 3 are theorems since 19 and 24 October, and Circle 1 since 26 October 2026, all three
+proved after III.2, so no list can show them; no bridge uses Circle 2 or Circle 3, and five
+of the seven lists showed Circle 1 while it was an axiom. All seven bridge lists
 include `exists_centre`, and each bridge reaches III.1 through III.8, which takes its centre
 by III.1's construction (`Prop1.of_circle`) since 26 October 2026 (#547); every axiom
 `Prop1.of_circle` rests on was in the lists already, so none changed. `centre_unique` is a
