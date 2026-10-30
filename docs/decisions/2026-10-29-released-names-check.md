@@ -127,4 +127,10 @@
   This entry approves the new `checks/29-check-released-names.toml`, which runs the
   self-test and the check at order 148.
 
+  Both run alone, as the registry's rule of #608 has every new check run until a reviewed
+  change declares it concurrent: neither declares `concurrent`, and each file says why in
+  its line "Alone (#608)". This entry approves the change to
+  `tests/test_concurrent_checks.py`: the two commands join the set its registry case
+  expects to run alone.
+
   This entry claims no approval of the owner's.
