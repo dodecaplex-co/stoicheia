@@ -46,7 +46,7 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF, as he cut BG, and the Lean again uses I.3, which also puts H between B and C. Like GC above, AH is named by its ends, as a side of the triangle ABH, and its join is not needed by the formal proof."
+note = "Euclid cuts BH equal to EF, as he cut BG, and the Lean again uses I.3, which also puts H between B and C. Like GC above, AH is named by its ends, as a side of the triangle ABH, and Euclid's join of AH is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base AH is equal to the base DF"

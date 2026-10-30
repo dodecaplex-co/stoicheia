@@ -1,7 +1,7 @@
 # review/I/11.toml
 [statement]
 scope = "full"
-note = "For any C on AB, PCF is ∟ for each other P on AB; F stands on the side of AB where a given point Q lies: a little more than Euclid asks, used in I.13 and I.46."
+note = "F stands on the side of AB where a given point Q lies: a little more than Euclid asks, used in I.13, I.46, I.48 and Books II and III."
 fingerprint = "sha256:5d52ae3586be5880"
 
 [route]

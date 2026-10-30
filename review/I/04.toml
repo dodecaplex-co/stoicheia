@@ -22,7 +22,7 @@ note = "Inside the hypothetical placement, `Superposition.Derives.ray_unique` ma
 at = "the straight line AC will also coincide with DF"
 kind = "helper"
 helper = "Superposition.Derives.ray_of_angle"
-note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law names all three straight lines; the placement supplies the third, the side through D and C', so the step draws no line. `Superposition.Derives.ray_of_angle_side` puts C' on F's side of D without that third straight line, the side laid down: its law is Pasch 3, which Book Zero proves with a construction, joining C' to a point of DE. Neither step draws a line inside the placement: citing a proved law draws nothing there, whatever its proof draws."
+note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law names all three straight lines; the placement supplies the third, the side through D and C', so the step draws no line. `Superposition.Derives.ray_of_angle_side` puts C' on F's side of D; its law takes the same three straight lines, but its proof uses DE alone, for it is Pasch 3, which Book Zero proves with a construction, joining C' to a point of DE. Neither step draws a line inside the placement: citing a proved law draws nothing there, whatever its proof draws."
 
 [[passage]]
 at = "hence the point C will also coincide with the point F"
