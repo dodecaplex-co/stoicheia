@@ -45,11 +45,11 @@ case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC
 
 [review]
 stage = "full"
-commit = "8cc098277"
+commit = "57cc8fdaa"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:718246bcf01f9234"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: III.27 before I.4 in every case, the reflex angles at the centres taken from four right angles, the companion through Prop27.of_congruent, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5; card #474, ship ER: III.27 and III.29 swapped on the owner's decision of 28 October 2026, the congruence reading the main statement and the measure form the companion, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:2ea1b60e3bd95c1a"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 1f8fa897; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); card #547, ship ER: the release limitation explains semicircles and greater circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #474, ship ER: the companion from congruent circumferences, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: III.27 before I.4 in every case, the reflex angles at the centres taken from four right angles, the companion through Prop27.of_congruent, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5; card #474, ship ER: III.27 and III.29 swapped on the owner's decision of 28 October 2026, the congruence reading the main statement and the measure form the companion, written by Claude, read in full by GPT-6 Astra (Codex); card #704, ship BT: the greater case's departure and its bridge stated, the semicircle case as Heath completes III.28's, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r29read2, at 57cc8fdaa."
+text = "sha256:c81f6f79d923a030"
 
 [review.items]
 statement = "pass"
