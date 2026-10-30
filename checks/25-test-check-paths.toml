@@ -1,8 +1,10 @@
 # Check the path check's own reading, case by case, of names, types and modes in the index.
 # tests/test_check_paths.py needs no Lean; it runs first of all, so that a rule read wrongly
 # stops the sequence before the path check's verdict.
+# Concurrent (#608): its plants go in repositories of its own, in temporary folders.
 order = 4
 name = "python3 -I tests/test_check_paths.py"
 job = "check"
 command = ["python3", "-I", "tests/test_check_paths.py"]
 section8 = "python3 -I tests/test_check_paths.py"
+concurrent = true
