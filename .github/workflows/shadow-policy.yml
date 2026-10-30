@@ -1,0 +1,367 @@
+# The shadow run of main's checking policy (#574, train 1). On each push to main, the job
+# `policy` runs main's own pre-flight, unchanged, on the push: the base's
+# scripts/safe_push.py --dry-run, taken out of Git at the push's `before`, judging its
+# `after` against an origin pinned to `before` (scripts/shadow_policy.py, `judge`). So CI
+# runs main's checking policy, the secret scan, the guards of step 3, both passes of the
+# checks, keep_apart at steps 3 and 4 and the negative tests, with nothing of it written
+# again, and keeps what it found, verdict.json, as an artifact, with the pre-flight's report
+# and logs. What needs a branch is not run, as the dry run is given none: the kind label,
+# the public names, a train/ branch's check and its body; the class is found without
+# labels. When the push is a merge whose first parent is `before`, its second parent, the
+# pull request's head, is recorded beside it with its tree: where the two trees agree, the
+# coordinator compares the verdict with the local pre-flight's record of that head. A
+# verdict is read from its run, a push to main by this workflow at the tested commit, never
+# by an artifact's name, which any run of a copy of this file can give. The workflow removes
+# no local check, is required by no ruleset, and signs nothing; and it must not be required
+# while its jobs skip by event, since a required workflow whose jobs all skip counts as
+# passed (the coordinator's trial, 27 October 2026).
+#
+# A workflow of its own, on push to main. A failing or pending check on a pull request
+# holds its landing, since judge_checks (scripts/safe_push.py) counts every check, required
+# or not: an hour's run on every pull request would lengthen every landing and could block
+# one. So `policy` runs on a push alone; `self-test` and `plants` run on a pull request only
+# when it changes this workflow or the driver, and hold that one's landing, as they should.
+# And not a job of post-merge.yml: a failure there starts the bounded revert, while
+# main_health reads post-merge.yml's runs only, so this workflow's result never makes main
+# red.
+#
+# The job `plants` builds each planted case of the driver (shadow_policy.py, PLANTS) on main and
+# passes only when each gives its expected verdict: on a pull request that changes this
+# workflow or the driver, on that pull request's main, the first parent of GitHub's merge
+# commit, checked as CI's risk job checks it; and on demand (workflow_dispatch) on main's
+# tip. Ordinary pull requests run nothing here.
+#
+# Trust. The policy's code is always main's, the base's scripts/ taken out of Git. In
+# `policy` the driver is the base's scripts/shadow_policy.py once main holds one, the
+# checkout's until then (a base that holds this workflow but no driver is refused);
+# verdict.json says whose. `plants` always runs the checkout's driver, which is what it
+# tests. GitHub runs the copy of this file that the pushed commit holds, so, as with
+# queue-integrity in ci.yml, the verdict counts only while the workflow GitHub runs still
+# calls main's driver. And the pre-flight runs the pushed commit's own code in the same job,
+# so that code could rewrite verdict.json, the record and the report, or steer the later
+# steps through GITHUB_ENV and GITHUB_PATH: a verdict is evidence of agreement on honest
+# work, not a defence against a hostile commit. The next train of the plan protects the
+# verdict, and a later one signs it.
+name: Shadow policy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - .github/workflows/shadow-policy.yml
+      - scripts/shadow_policy.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    # The driver's offline cases: its reading of the pre-flight's report, in the format of
+    # safe_push.py's Report and summary() and as the checkout's own copies print it, its
+    # planted misreadings, each an error, and its plants against this file's matrix. No
+    # Lean, no network, seconds.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: The driver's offline cases
+        run: python3 -I scripts/shadow_policy.py self-test
+
+  policy:
+    # Main's pre-flight on the push to main: about the local step 4 and a cold build, on
+    # GitHub's runners, holding no landing. It fails unless the verdict is passed.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          # The base and the pushed commit, with what lies between them.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Identify the push, its base the commit before it and its tested commit the checkout
+        id: push
+        env:
+          REF: ${{ github.ref }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          DELETED: ${{ github.event.deleted }}
+        run: |
+          set -euo pipefail
+          test "$REF" = refs/heads/main
+          if [ "$DELETED" != false ]; then
+            echo "the push deleted main: there is nothing to judge"
+            exit 1
+          fi
+          for sha in "$BEFORE" "$AFTER"; do
+            if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || [ "$sha" = 0000000000000000000000000000000000000000 ]; then
+              echo "the push names no full commit before and after it: '$BEFORE', '$AFTER'"
+              exit 1
+            fi
+          done
+          test "$(git rev-parse HEAD)" = "$AFTER"
+          git cat-file -e "$BEFORE^{commit}"
+          # A merge whose first parent is the base: its second parent is the pull
+          # request's head, recorded beside the verdict with its tree.
+          parents=$(git rev-list --parents -n 1 "$AFTER")
+          head=""
+          if [ "$(echo "$parents" | wc -w)" -eq 3 ] && [ "$(git rev-parse "$AFTER^1")" = "$BEFORE" ]; then
+            head=$(git rev-parse "$AFTER^2")
+          fi
+          echo "base $BEFORE, tested $AFTER, pull request head ${head:-none}"
+          { echo "base=$BEFORE"; echo "tested=$AFTER"; echo "head=$head"; } >> "$GITHUB_OUTPUT"
+
+      - name: Take the driver, the base's scripts/shadow_policy.py when the base holds one, else the checkout's
+        env:
+          BASE: ${{ steps.push.outputs.base }}
+        run: |
+          set -euo pipefail
+          listed=$(git ls-tree "$BASE" -- scripts/shadow_policy.py)
+          if [ -n "$listed" ]; then
+            case "$listed" in
+              "100644 blob "*|"100755 blob "*) ;;
+              *)
+                echo "the base's scripts/shadow_policy.py is not a regular file: $listed"
+                exit 1 ;;
+            esac
+            git cat-file blob "$BASE:scripts/shadow_policy.py" > "$RUNNER_TEMP/policy.py"
+            echo "the driver is the base's scripts/shadow_policy.py, at $BASE"
+          elif [ -n "$(git ls-tree "$BASE" -- .github/workflows/shadow-policy.yml)" ]; then
+            echo "the base, $BASE, holds this workflow but no scripts/shadow_policy.py: the driver cannot be main's"
+            exit 1
+          else
+            cp scripts/shadow_policy.py "$RUNNER_TEMP/policy.py"
+            echo "the base, $BASE, holds no scripts/shadow_policy.py: the driver is the checkout's, until main holds one"
+          fi
+
+      - name: Install the pinned YAML parser, by the base's pin, which step 4's lane-condition check reads the workflows with
+        # Isolated, from the runner's temporary directory, as CI's check job installs it:
+        # nothing in the checkout (a pip/ folder, say) can run in pip's place.
+        working-directory: ${{ runner.temp }}
+        env:
+          BASE: ${{ steps.push.outputs.base }}
+        run: |
+          set -euo pipefail
+          git -C "$GITHUB_WORKSPACE" show "$BASE:scripts/requirements-test_safe_push.txt" > requirements-test_safe_push.txt
+          python3 -I -m pip install --only-binary :all: -r requirements-test_safe_push.txt
+
+      - name: Install elan 4.2.4 from its release, checked against its pinned SHA-256 before it runs
+        # The Lean toolchain elan then fetches is the one lean-toolchain names, unchecked by
+        # any digest here (a card); verdict.json records it, and its version once Lean has run.
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          curl -sSfL -o elan.tar.gz https://github.com/leanprover/elan/releases/download/v4.2.4/elan-x86_64-unknown-linux-gnu.tar.gz
+          echo "42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63  elan.tar.gz" | sha256sum -c -
+          mkdir elan
+          tar -xzf elan.tar.gz -C elan
+          ./elan/elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Judge the push by main's own pre-flight
+        env:
+          BASE: ${{ steps.push.outputs.base }}
+          TESTED: ${{ steps.push.outputs.tested }}
+          PR_HEAD: ${{ steps.push.outputs.head }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+        run: python3 -I "$RUNNER_TEMP/policy.py" judge --base "$BASE" --tested "$TESTED" --out "$RUNNER_TEMP/shadow" --repository "$REPOSITORY" --event "$EVENT" ${PR_HEAD:+--pr-head "$PR_HEAD"}
+
+      - name: Pass only on a passed verdict
+        run: |
+          python3 -I - "$RUNNER_TEMP/shadow/verdict.json" <<'PY'
+          import json
+          import sys
+          with open(sys.argv[1], encoding="ascii") as source:
+              verdict = json.load(source)["verdict"]
+          print(f"verdict: {verdict}")
+          sys.exit(verdict != "passed")
+          PY
+
+      - name: Write the verdict to the job's summary
+        if: always()
+        run: |
+          python3 -I - "$RUNNER_TEMP/shadow" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          out = Path(sys.argv[1])
+          print("## Shadow policy: main's pre-flight on the push\n")
+          try:
+              v = json.loads((out / "verdict.json").read_text(encoding="ascii"))
+          except (OSError, ValueError) as e:
+              print(f"No verdict.json: {e}")
+              raise SystemExit(0)
+          print(f"- verdict: **{v['verdict']}**; exit {v['exit']}; class {v['class']}")
+          print(f"- tested `{v['tested']}` against base `{v['base']}`")
+          print(f"- kept apart at step: {v['kept_apart']}; pinned values: {v['pinned_values']}")
+          for note in v["base_pass_notes"]:
+              print(f"- noted at step {note['stage']}: {note['name']}")
+          driver = v["policy"]["driver"]
+          print(f"- driver: blob `{driver['blob']}`, whose copy: {driver['from']}")
+          if (out / "why.txt").is_file():
+              print(f"- why it is an error: {(out / 'why.txt').read_text().strip()}")
+          PY
+
+      - name: Keep the verdict, the pre-flight's report and its logs
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: shadow-policy-${{ github.event.after }}
+          path: |
+            ${{ runner.temp }}/shadow/
+            !${{ runner.temp }}/shadow/origin.git/
+            !${{ runner.temp }}/shadow/repo/
+            !${{ runner.temp }}/shadow/harness/
+
+  plants:
+    # Each planted case, on main: on a pull request that changes this workflow or the
+    # driver, so that the shadow's own pull request proves its plants before it lands, and
+    # on demand on main. Four of the six run Lean; at most three run at once, since the
+    # account's limit of concurrent jobs is shared with CI; a new push to the pull request
+    # cancels the plants still running for the one before, and a new dispatch on main those
+    # of the dispatch before.
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 180
+    concurrency:
+      group: shadow-plants-${{ github.ref }}-${{ matrix.plant }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        plant: [control, weakened-fidelity, loosened-renderer, dropped-check, weakened-links, renderer-freshness]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Identify main, for a pull request the first parent of GitHub's merge commit, checked as CI's risk job checks it, and for a dispatch main's tip
+        id: main
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request)
+              if [ "$BASE_REF" != main ]; then
+                echo "a pull request into $BASE_REF, not main: there is no main to plant on"
+                exit 1
+              fi
+              # The checkout is GitHub's merge of the pull request into main: its first
+              # parent is main only when it has two parents and the second is the head.
+              if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -ne 3 ] ||
+                 [ "$(git rev-parse HEAD^2)" != "$HEAD_SHA" ]; then
+                echo "the checkout is not GitHub's merge of the head, $HEAD_SHA, into main"
+                exit 1
+              fi
+              base=$(git rev-parse HEAD^1) ;;
+            workflow_dispatch)
+              test "$REF" = refs/heads/main
+              test "$(git rev-parse HEAD)" = "$SHA"
+              base=$SHA ;;
+            *)
+              echo "no main is defined for a $EVENT event"
+              exit 1 ;;
+          esac
+          echo "the plants are built on main, $base"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Install the pinned YAML parser, by main's pin, which step 4's lane-condition check reads the workflows with
+        # Isolated, from the runner's temporary directory, as CI's check job installs it.
+        working-directory: ${{ runner.temp }}
+        env:
+          BASE: ${{ steps.main.outputs.base }}
+        run: |
+          set -euo pipefail
+          git -C "$GITHUB_WORKSPACE" show "$BASE:scripts/requirements-test_safe_push.txt" > requirements-test_safe_push.txt
+          python3 -I -m pip install --only-binary :all: -r requirements-test_safe_push.txt
+
+      - name: Install elan 4.2.4 from its release, checked against its pinned SHA-256 before it runs
+        # The Lean toolchain elan then fetches is the one lean-toolchain names, unchecked by
+        # any digest here (a card).
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          curl -sSfL -o elan.tar.gz https://github.com/leanprover/elan/releases/download/v4.2.4/elan-x86_64-unknown-linux-gnu.tar.gz
+          echo "42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63  elan.tar.gz" | sha256sum -c -
+          mkdir elan
+          tar -xzf elan.tar.gz -C elan
+          ./elan/elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Plant ${{ matrix.plant }} on main, judge it by main's own pre-flight, and compare the verdict with its expectation
+        # The checkout's driver: the plants test the driver itself, on its own pull request.
+        env:
+          PLANT: ${{ matrix.plant }}
+          BASE: ${{ steps.main.outputs.base }}
+          REPOSITORY: ${{ github.repository }}
+        run: python3 -I scripts/shadow_policy.py plant "$PLANT" --base "$BASE" --out "$RUNNER_TEMP/plant" --repository "$REPOSITORY"
+
+      - name: Write the plant's outcome to the job's summary
+        if: always()
+        env:
+          PLANT: ${{ matrix.plant }}
+        run: |
+          python3 -I - "$RUNNER_TEMP/plant" "$PLANT" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          out, name = Path(sys.argv[1]), sys.argv[2]
+          print(f"## Shadow policy: the plant {name}\n")
+          try:
+              p = json.loads((out / "plant.json").read_text(encoding="ascii"))
+          except (OSError, ValueError) as e:
+              print(f"No plant.json: {e}")
+              raise SystemExit(0)
+          got = p["got"] or {}
+          print(f"- {'gave' if p['ok'] else 'did not give'} its expected verdict, "
+                f"{p['expected']['verdict']}, kept apart at {p['expected']['kept_apart']}")
+          print(f"- verdict: **{got.get('verdict')}**; kept apart at step: {got.get('kept_apart')}")
+          for note in got.get("base_pass_notes") or []:
+              print(f"- noted at step {note['stage']}: {note['name']}")
+          for miss in p["mismatches"]:
+              print(f"- mismatch: {miss}")
+          PY
+
+      - name: Keep the plant's outcome, its verdict, the pre-flight's report and its logs
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: shadow-plants-${{ matrix.plant }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/plant/
+            !${{ runner.temp }}/plant/judge/origin.git/
+            !${{ runner.temp }}/plant/judge/repo/
+            !${{ runner.temp }}/plant/judge/harness/

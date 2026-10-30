@@ -914,6 +914,14 @@ FORMAL_MODEL = (
     {"working-directory": "model", "run": ("lake build",)},
     {"run": ("python3 scripts/check_model_kernel.py --self-test",
              "python3 scripts/check_model_kernel.py")})
+# The shadow's actions, pinned by commit (shadow-policy.yml).
+SHADOW_HISTORY = {"uses": "actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+                  "with": {"fetch-depth": 0, "persist-credentials": False}}
+SHADOW_PYTHON = {"uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                 "with": {"python-version": "3.12"}}
+# elan 4.2.4, run only if its release has its pinned SHA-256.
+SHADOW_ELAN = {"working-directory": "${{ runner.temp }}",
+               "run": Script("582b5d677f6b9f6a5c5101b18a3495ff")}
 WORKFLOW_CONTRACTS = {
     "ci.yml": {
         "name": "CI", "on": {"pull_request": None, "merge_group": None, "workflow_call": None},
@@ -1151,7 +1159,107 @@ WORKFLOW_CONTRACTS = {
             "report": ("it opens or updates an issue on the others' results, checking "
                        "nothing; CadenceReport runs its step",
                        {"permissions": {"issues": "write"}, "concurrency": {
-                           "group": "safe-push-tests-report", "cancel-in-progress": False}})}}}
+                           "group": "safe-push-tests-report", "cancel-in-progress": False}})}},
+    # The shadow of main's checking policy (#574, train 1). No ruleset requires it, but
+    # `self-test` and `plants` hold a pull request that changes the shadow, whose landing
+    # counts them as it counts every check, and `policy` runs the pushed commit's code for up
+    # to three hours: so each is held whole, its pinned actions, elan's checksum and its
+    # token among them. A ruleset that required one of these jobs would need it to have no
+    # `if` as well: a skipped required job counts as passed.
+    "shadow-policy.yml": {
+        "name": "Shadow policy", "permissions": {"contents": "read"},
+        "on": {"push": {"branches": ["main"]},
+               "pull_request": {"paths": [".github/workflows/shadow-policy.yml",
+                                          "scripts/shadow_policy.py"]},
+               "workflow_dispatch": None},
+        "jobs": {
+            "self-test": {"runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                          "timeout-minutes": 10, "steps": (
+                              SHADOW_HISTORY, SHADOW_PYTHON,
+                              {"run": ("python3 -I scripts/shadow_policy.py self-test",)})},
+            "policy": {
+                "if": "github.event_name == 'push'", "runs-on": "ubuntu-latest",
+                "permissions": {"contents": "read"}, "timeout-minutes": 180, "steps": (
+                    SHADOW_HISTORY, SHADOW_PYTHON, {
+                        # The push to main: its base, before; its tested commit, after, the
+                        # checkout; and, for a merge whose first parent is the base, its
+                        # second parent, the pull request's head; else red.
+                        "id": "push",
+                        "env": {"REF": "${{ github.ref }}", "BEFORE": "${{ github.event.before }}",
+                                "AFTER": "${{ github.event.after }}",
+                                "DELETED": "${{ github.event.deleted }}"},
+                        "run": Script("1cc9802faf0e531817448d93d9fa5bbc")}, {
+                        # The driver: the base's, a regular file, when the base holds one;
+                        # the checkout's when the base holds neither it nor this workflow;
+                        # else red.
+                        "env": {"BASE": "${{ steps.push.outputs.base }}"},
+                        "run": Script("42c9fec46e6efdfa186192098125760e")}, {
+                        # The base's pinned YAML parser, from the runner's temporary directory.
+                        "working-directory": "${{ runner.temp }}",
+                        "env": {"BASE": "${{ steps.push.outputs.base }}"},
+                        "run": Script("40cc6e649b74a8583a57a87e5f883863")},
+                    SHADOW_ELAN, {
+                        "env": {"BASE": "${{ steps.push.outputs.base }}",
+                                "TESTED": "${{ steps.push.outputs.tested }}",
+                                "PR_HEAD": "${{ steps.push.outputs.head }}",
+                                "REPOSITORY": "${{ github.repository }}",
+                                "EVENT": "${{ github.event_name }}"},
+                        "run": ('python3 -I "$RUNNER_TEMP/policy.py" judge --base "$BASE"'
+                                ' --tested "$TESTED" --out "$RUNNER_TEMP/shadow" --repository'
+                                ' "$REPOSITORY" --event "$EVENT" ${PR_HEAD:+--pr-head'
+                                ' "$PR_HEAD"}',)},
+                    # Red unless verdict.json's verdict is passed.
+                    {"run": Script("da349219c105bbf183c95f5e862d00d2")},
+                    # The verdict, written to the job's summary.
+                    {"if": "always()", "run": Script("5e8fb35d344c2de6dea167c46e2e114a")}, {
+                        "if": "always()",
+                        "uses": "actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4",
+                        "with": {"name": "shadow-policy-${{ github.event.after }}",
+                                 "path": "${{ runner.temp }}/shadow/\n"
+                                         "!${{ runner.temp }}/shadow/origin.git/\n"
+                                         "!${{ runner.temp }}/shadow/repo/\n"
+                                         "!${{ runner.temp }}/shadow/harness/\n"}})},
+            "plants": {
+                "if": "github.event_name == 'pull_request' || (github.event_name == "
+                      "'workflow_dispatch' && github.ref == 'refs/heads/main')",
+                "runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                "timeout-minutes": 180,
+                "concurrency": {"group": "shadow-plants-${{ github.ref }}-${{ matrix.plant }}",
+                                "cancel-in-progress": True},
+                "strategy": {"fail-fast": False, "max-parallel": 3, "matrix": {"plant": [
+                    "control", "weakened-fidelity", "loosened-renderer", "dropped-check",
+                    "weakened-links", "renderer-freshness"]}},
+                "steps": (
+                    SHADOW_HISTORY, SHADOW_PYTHON, {
+                        # Main: a pull request's, the first parent of GitHub's merge of its
+                        # head into main; a dispatch's, main's tip; else red.
+                        "id": "main",
+                        "env": {"EVENT": "${{ github.event_name }}", "REF": "${{ github.ref }}",
+                                "BASE_REF": "${{ github.base_ref }}",
+                                "HEAD_SHA": "${{ github.event.pull_request.head.sha }}",
+                                "SHA": "${{ github.sha }}"},
+                        "run": Script("30a9de51ddf264e08b6d85fa80d047fe")}, {
+                        # Main's pinned YAML parser, from the runner's temporary directory.
+                        "working-directory": "${{ runner.temp }}",
+                        "env": {"BASE": "${{ steps.main.outputs.base }}"},
+                        "run": Script("40cc6e649b74a8583a57a87e5f883863")},
+                    SHADOW_ELAN, {
+                        "env": {"PLANT": "${{ matrix.plant }}",
+                                "BASE": "${{ steps.main.outputs.base }}",
+                                "REPOSITORY": "${{ github.repository }}"},
+                        "run": ('python3 -I scripts/shadow_policy.py plant "$PLANT" --base'
+                                ' "$BASE" --out "$RUNNER_TEMP/plant" --repository'
+                                ' "$REPOSITORY"',)}, {
+                        # The plant's outcome, written to the job's summary.
+                        "if": "always()", "env": {"PLANT": "${{ matrix.plant }}"},
+                        "run": Script("654887fb2a2b2566dd3640dfca8f0bf4")}, {
+                        "if": "always()",
+                        "uses": "actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4",
+                        "with": {"name": "shadow-plants-${{ matrix.plant }}-${{ github.sha }}",
+                                 "path": "${{ runner.temp }}/plant/\n"
+                                         "!${{ runner.temp }}/plant/judge/origin.git/\n"
+                                         "!${{ runner.temp }}/plant/judge/repo/\n"
+                                         "!${{ runner.temp }}/plant/judge/harness/\n"}})}}}}
 
 
 def weakenings(workflows: dict[str, object]) -> list[tuple[str, object]]:
