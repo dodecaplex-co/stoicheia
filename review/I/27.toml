@@ -28,11 +28,11 @@ note = "This draws the impossible supposition, that AB and CD, produced, meet at
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
+commit = "bfc4faab3"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:4cf303fe995ab67d"
-run = "brief 0005 stage 5, ship F2 wave-two re-read; card 478, ship XS, from git and record evidence, added without a restamp: Claude's proof (a5cbf0efa; docs/reports/crew/voyage-03.md gives I.27 to Crew A, Claude); cross-family reading: Aw2-reader-f, an independent Codex reader, read the record in full at 251129b (2341e5835, 19 October 2026), with the Lean and record as they now stand; ship T's Codex readers also read it in full, R2 at 0e133256 (b62518e5d) and R4, GPT-6 Astra (Codex), at b62518e5 (84a106830), both on 19 October 2026, before the note at 'For, if not' took the wording of 812af95a5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
-text = "sha256:ee5d23b20485c79e"
+run = "brief 0005 stage 5, ship F2 wave-two re-read; card 478, ship XS, from git and record evidence, added without a restamp: Claude's proof (a5cbf0efa; docs/reports/crew/voyage-03.md gives I.27 to Crew A, Claude); cross-family reading: Aw2-reader-f, an independent Codex reader, read the record in full at 251129b (2341e5835, 19 October 2026), with the Lean and record as they now stand; ship T's Codex readers also read it in full, R2 at 0e133256 (b62518e5d) and R4, GPT-6 Astra (Codex), at b62518e5 (84a106830), both on 19 October 2026, before the note at 'For, if not' took the wording of 812af95a5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); #525, read-through 03's named editorial findings mended at main: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s4, at bfc4faab3"
+text = "sha256:550683022e395706"
 
 [review.items]
 statement = "pass"
