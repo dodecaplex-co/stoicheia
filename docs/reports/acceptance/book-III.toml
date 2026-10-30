@@ -1,9 +1,0 @@
-# Book III's acceptance record: the review items B3 and B4 of docs/ACCEPTANCE.md.
-# B3, the read-through, is recorded once Book III's read-through is done and the
-# conditions its readers set are met (#34).
-
-[limitations]
-verdict = "pass"
-reviewer = "Claude Opus 5.5, limitations reviewer of Book III"
-commit = "5592377317aeca29ce685831bbbd192fd2c6025e"
-evidence = "docs/reports/limitations-02.md"
