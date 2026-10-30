@@ -69,7 +69,7 @@ stage = "full"
 commit = "4a4da57a2"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:1b58ca0173e357fb"
-run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; card #251's [figure] (some_cases), staging, read in full, by GPT-6 Astra (Codex), reader G2-s251read, at 4a4da57a2"
+run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean (as at e87416e78; 97 on main), written by Codex in 1038fe0ef, its bullet joined by 908ad2065, which names no writer (card 503, traced from git), read also by GPT-6 Astra (Codex); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readIII, at 71146bf3f; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; card #251's [figure] (some_cases), staging, read in full, by GPT-6 Astra (Codex), reader G2-s251read, at 4a4da57a2"
 text = "sha256:b33c140b1676b699"
 
 [review.items]
