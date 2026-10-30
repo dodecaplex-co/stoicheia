@@ -136,7 +136,14 @@ where to look:
    an axiom already contains the proposition, or supplies a step of a proof of it, as the
    record's `[overlap]` names the kind. An exception shows here, in a few words,
    before the reader meets the green check, and never only in the mishnah; the detail is
-   in the table under "In Lean". The words come from the proposition's review record
+   in the table under "In Lean". A qualification names the declaration or the conclusion
+   it qualifies, and one that belongs only to companions does not make the main theorem
+   read weaker. Where the main theorem proves one thing and its companions another, the
+   line says both, or says the main theorem's alone and leaves the companions to the
+   table. III.24's main theorem proves that the segments coincide (`Arc.Congruent`), and
+   only its companions compare circumferences in our measure, so its line never puts the
+   whole proposition "in our measure of circumferences"; its Statement and Representation
+   rows say what the companions prove. The words come from the proposition's review record
    ([review/SCHEMA.md](../review/SCHEMA.md), its `short`); what they mean is in
    [FORMALIZATION.md](FORMALIZATION.md).
 4. **The figure at a glance,** with its caption.
@@ -176,8 +183,17 @@ and the proof by the same names (section 7).
 the table. Citations, postulates and rules go in the certificate and the line under it.
 The book's shared machinery goes in its introduction, the finer gaps in its gap catalogue,
 and a departure of our drawing in the figure note. The mishnah tells the story behind any
-of these only when it is this proposition's story. A normal page stays uncluttered; an
-exceptional page carries enough to prevent a false impression.
+of these only when it is this proposition's story. On a page with several companions, each
+row of the "In Lean" table tells its own part once: the Proof row names the companions;
+Statement, from the record's statement note, says which declarations give the coverage;
+Argument, from the route note, tells each construction; and Representation, from the
+representation note, tells the objects and the inputs the declarations take. A companion's
+detailed hypotheses go beside its declaration, in the docstring the Proof row links to.
+Another row that needs a construction or an input points to it in a phrase ("see
+Representation"). A condition is repeated only where leaving it out would misstate the
+scope: wherever a row describes the triangles a main theorem takes unchecked, it says
+"unchecked" (section 4). I.45 and II.14 show it ([examples.md](examples.md)). A normal page
+stays uncluttered; an exceptional page carries enough to prevent a false impression.
 
 **Each book's index page** opens with the book's introduction, `mishnah/intro/<book>.md`,
 in the same voice. It tells the book's shared machinery once (section 3) and links the
