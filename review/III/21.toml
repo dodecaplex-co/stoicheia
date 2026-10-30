@@ -15,10 +15,8 @@ note = "In Euclid's figure C only names the circle and its circumference BCD. Th
 
 [[passage]]
 at = "For let the centre of the circle ABCD be taken"
-kind = "helper"
-helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F without a reference from Heath here. The Lean obtains F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. III.20 takes the centre itself, so nothing below names F; it is that centre, for a circle has one centre (`centre_unique`)."
-unused = ["F", "hF"]
+kind = "given"
+note = "Euclid takes the centre F without a reference from Heath here. III.20 (`Prop20`) takes the centre itself, and the angle at the centre is made up of angles there (`angleAtCentre.diameter`), so the Lean takes no centre beneath this sentence; Euclid's F is that centre, for a circle has one centre (`centre_unique`)."
 
 [[passage]]
 at = "let BF, FD be joined"
@@ -41,11 +39,11 @@ case = "the segment BAED greater than a semicircle, with F on A's and E's side o
 
 [review]
 stage = "full"
-commit = "6c1cdc8f3"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:ed5885e26b1de640"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex); card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:40c6c6ca0608a5f3"
+commit = "e0357d5bf"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:c41989374805fea3"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex); card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex); card #482, ship BT: the unused centre F dropped and the passage marked as given, written by Claude, read in full by Claude Opus 5.5, reader BT-r21read, at e0357d5bf"
+text = "sha256:33c15077d426340f"
 
 [review.items]
 statement = "pass"
