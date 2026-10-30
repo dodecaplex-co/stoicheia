@@ -15,6 +15,10 @@
   on main. It says too that `heath.load_review` requires a string that is not blank, and
   reads nothing of its form.
 
-  One row of the schema changes, and no record: no rule of the schema changes, and none is
-  loosened, since no check reads a run line's form. This entry approves the change to
-  `review/SCHEMA.md`, a protected path, in its `run` row alone.
+  `docs/WORKFLOW.md`, section 6, said the same of `run` in one clause, which now names
+  both forms and points to the schema.
+
+  One row of the schema and one clause of WORKFLOW change, and no record: no rule of the
+  schema changes, and none is loosened, since no check reads a run line's form. This
+  entry approves the change to `review/SCHEMA.md`, a protected path, in its `run` row
+  alone.
