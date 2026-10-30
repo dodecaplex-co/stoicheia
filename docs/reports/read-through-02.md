@@ -159,7 +159,7 @@ Book III's, at d4d65c48:
 | M8 | III.22 | "As in III.21, we prove that AC and BD cut one another": III.21 proves no such thing; the step is III.20's | RD-r8 1; RD-f3 1 | Open: card draft RD-C12 |
 | M9 | III.22 | "The first half is Heron's proof, which Heath gives under III.20": Heath credits Heron with the extension of III.20, and gives no proof of III.22 as his | RD-f3 2 | Open: card draft RD-C12 |
 | M10 | III.29 | Our own step, taking reflex angles from four right angles, is referenced to Heath's page 60, which says nothing of it | RD-r9 1 | Open: card draft RD-C13 |
-| M11 | Book III's introduction, by its link to DefinitionsIII.lean | The linked note says III.29 needs equal circles and speaks of III.27 in equal measures: both statements take circumferences that coincide, and their records call the equal circles redundant | RD-r7 8 (graded editorial by its reader) | Mended on main since the read, by pull request #720 (41d3980aa, #474), which d4d65c48 did not hold; the addendum confirms it (card draft RD-C20, a check) |
+| M11 | Book III's introduction, by its link to DefinitionsIII.lean | The linked note says III.29 needs equal circles and speaks of III.27 in equal measures: both statements take circumferences that coincide, and their records call the equal circles redundant | RD-r7 8 (graded editorial by its reader) | Mended on main since the read, by pull request #720 (89118233a8a9cc2c90569c10220e64170f248f2b, #474), which d4d65c48 did not hold; the addendum confirms it (card draft RD-C20, a check) |
 | M12 | III.13 | The caption at a glance gives, for contact without, a reason that is not Euclid's, unmarked | RD-r8 20 (graded editorial by its reader) | Open: card draft RD-C21, item 82 |
 
 **M1. I.8's commentary, on what the cited laws' proofs draw.** mishnah/I/08.md:5
@@ -323,7 +323,7 @@ stated, since circumferences that coincide lie in equal circles already, and the
 the equal circles along Euclid's route; of their companions, which take circumferences equal
 in measure, III.29's needs them, for there the measures are tied to straight lines. III.26 and
 III.28 need them: ...". Main already says so: pull request #720 (b17478e5f, 29 October),
-which d4d65c48 did not hold, brought commit 41d3980aa (#474), and DefinitionsIII.lean:96-104
+which d4d65c48 did not hold, brought commit 89118233a8a9cc2c90569c10220e64170f248f2b (#474), and DefinitionsIII.lean:96-104
 on main now reads "III.27 and III.29 take circumferences that coincide (`Arc.Congruent`,
 below), and those lie in equal circles already, so their statements do not need the equal
 circles". The addendum confirms the page a reader meets.
