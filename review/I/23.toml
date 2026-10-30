@@ -31,10 +31,10 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "bfc4faab3"
+commit = "f800e27f1"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:76721a98bbc6660f"
-run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); #525, read-through 03's named editorial findings mended at main: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s4, at bfc4faab3"
+lean = "sha256:5e33e5dc08ba06b4"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); #525, read-through 03's named editorial findings mended at main: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s4, at bfc4faab3; #525, read-through 03's editorial leftovers: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s6, at f800e27f1"
 text = "sha256:2e250f174cdd7957"
 
 [review.items]
