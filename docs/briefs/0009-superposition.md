@@ -1,11 +1,12 @@
 # Brief 0009: a restricted rule of superposition
 
 *29 October 2026: #150 no longer holds the release.* On 27 October 2026 the owner chose,
-of the options put to them, "Defer (Recommended)" (decision 31 of that day): the rest of
-superposition's work waits until after the release, and #150 no longer carries the label
-`blocks-release`. #150, the coordinator's record of that choice, gives its condition: the
-work returns to the release if the release's measurement puts Book I under 95. On
-29 October 2026, as the release's cards were sorted, the owner kept that deferral (the
+of the options put to them, "Defer (Recommended)" (decision 31), so that the rest of
+superposition's work waits until after the release, and then "All five (Recommended)", by
+which #150 no longer carries the label `blocks-release`. #150, the coordinator's record of
+both choices, gives the deferral's condition: the work returns to the release if the
+release's measurement puts Book I under 95. On 29 October 2026, as the release's cards
+were sorted, the owner's decision was to "keep the 27 October deferral of #150" (the
 coordinator's orders of that day). The replacement's issue, #75, is closed on its landed
 work, and #150 stays open and carries the rest after the release
 ([the decision](../decisions/2026-10-29-superposition-deferred.md)). So round 4's words
@@ -16,7 +17,8 @@ proof: since 25 October 2026 it has been a theorem, `Rule.of_placement_of_join` 
 `Soundness.lean` ([its decision](../decisions/2026-10-25-superposition-side-cost.md)),
 whose pin in `Audit/Superposition.lean` #150 still tracks. The lines that said otherwise
 in the present tense, in round 4's correction, under "The placement's fresh symbols and
-retained facts" and in the answers to questions 5 and 7, are corrected in place; what
+retained facts" and "The model obligation, met", and in the answers to questions 5 and 7,
+are corrected in place; what
 they record of earlier revisions stands. No statement, definition, interface or lock
 changes.
 
@@ -127,8 +129,8 @@ a classification set by hand, whose values `Prop4.cites_drawNothing` evaluated b
 meaning was judged by eye from the audit's pinned axiom closures, until its retirement on
 21 October 2026 (above); and the cost of the kept side was checked by reading the model's
 proof, until it became the theorem `Rule.of_placement_of_join` on 25 October 2026 (the
-note of 29 October above). Non-derivability stays unclaimed. "Landing" gives the order: the first retirement
-wave, then this replacement, then the second wave, whose landing carries the review of the
+note of 29 October above). Non-derivability stays unclaimed. "Landing" gives the order:
+the first retirement wave, then this replacement, then the second wave, whose landing carries the review of the
 cited laws' construction rules (`cited_laws`) and the audit pins.
 
 **Round 3's correction.** Round 2 described a hypothesis in six prototype files; the branch
@@ -711,7 +713,9 @@ correspondence checks retained.
 AB along the ray DG, choosing the side of L on which C falls, and preserves all three
 lengths and all three angles. Since C′ is off L and D is on it, they are distinct.
 The model's proved Postulate 1 supplies their straight line. The theorem `superposition`
-then applies `Rule.of_placement` to that placement with its side. It uses no project axiom.
+then applies `Rule.of_placement_of_join` to that placement, to the model's Same side 3 and
+to its Postulate 1, and that theorem applies `Rule.of_placement` (the note of 29 October
+above). It uses no project axiom.
 The assembled `model_exists : ∃ S : Signature, Laws S` remains unconditional, with all
 79 locked laws proved; its pinned closure is `propext`, `Classical.choice` and
 `Quot.sound`. Regeneration and the model build must confirm the assembly on this merge.
@@ -1077,7 +1081,8 @@ from round 2. The other items record the delivered design or the continuing proc
    "Landing". #150 was to stay open after the landing and hold every release until it
    closed. The replacement has landed, and its issue, #75, is closed on its landed work.
    #150 stays open, but since 27 October 2026 it no longer holds the release: the owner
-   deferred it until after the release (the note of 29 October above).
+   deferred superposition's remaining work until after the release (the note of
+   29 October above).
 
 ## Checks
 
