@@ -9,7 +9,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that ABCD is equal to the parallelogram EBCF"
 kind = "case"
-note = "Euclid argues one arrangement, with AD and EF apart; the Lean also takes Proclus's two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`). When E is A, F is D; otherwise `AreParallel.sameSideOf_or` puts E on C's side of AB, towards D, or A on C's side of EB; the Lean applies the three cases directly in the first direction and exchanges the parallelograms in the second, covering Euclid's arrangement with EF before AD as well as Proclus's."
+note = "Euclid argues one arrangement, with AD and EF apart; the Lean also takes Proclus' two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`). When E is A, F is D; otherwise `AreParallel.sameSideOf_or` puts E on C's side of AB, towards D, or A on C's side of EB; the Lean applies the three cases directly in the first direction and exchanges the parallelograms in the second, covering Euclid's arrangement with EF before AD as well as Proclus'."
 
 [[passage]]
 at = "and DE is common"
@@ -27,7 +27,7 @@ note = "Euclid takes AE as AD and DE together, and DF as DE and EF together. The
 at = "and the angle FDC is equal to the angle EAB"
 kind = "helper"
 helper = "Tacit.between_of_between_right"
-note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right` (System E, Between 5), now proved from collinear orders, length addition and Postulate 2 in `Elements/Figure/Incidence.lean`, and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
+note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right` (System E, Between 5), which Book Zero proves from collinear orders, length addition and Postulate 2 in `Elements/Figure/Incidence.lean`, and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
 
 [[passage]]
 at = "therefore the base EB is equal to the base FC"
@@ -52,11 +52,11 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "cfa06ffaf"
+commit = "6552a1440"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:eee60b54fb026d66"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; #248: re-read whole after its Lean note's Proclus credit was narrowed, independent re-read at a9b2b80f (reader RT-r35b); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, the family that did not write the Codex proof, reader F2-w2m2cl at f2195c72; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, re-read by the other family: read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482cr, at cfa06ffaf"
-text = "sha256:cc486cd1c5540bd2"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; #248: re-read whole after its Lean note's Proclus credit was narrowed, independent re-read at a9b2b80f (reader RT-r35b); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, the family that did not write the Codex proof, reader F2-w2m2cl at f2195c72; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, re-read by the other family: read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482cr, at cfa06ffaf; cards #763 to #769, ship AC: read-through 02's items mended, written by Claude, read in full by Claude Opus 5.5, an independent reader who wrote none of it, reader AC-rdI-r1, at 6552a1440"
+text = "sha256:4dc529477c831b0b"
 
 [review.items]
 statement = "pass"

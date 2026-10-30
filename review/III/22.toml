@@ -25,10 +25,10 @@ note = "Euclid leaves the other pair of opposite angles to the same argument wit
 
 [review]
 stage = "full"
-commit = "689ab169f"
+commit = "bf9ec6517"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:6e648f85a153eb0a"
-run = "brief 0005 stage 5, ship R3 (#29); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
+lean = "sha256:a1342769d09ee488"
+run = "brief 0005 stage 5, ship R3 (#29); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; card #34, ship AC: the crossing step as in III.20, and the modern way's credit to Heath's note under III.20 (read-through 02, M8 and M9), written by Claude, read in full by GPT-6 Astra (Codex), reader AC-iii22-r1, at bf9ec6517."
 text = "sha256:c5f85c040facb9c1"
 
 [review.items]

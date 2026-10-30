@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.9 at a glance</title>
-  <desc>Cut AB in half at C, and unequally at D: the squares on AD, DB (left) are twice the squares on AC (yellow) and CD (blue), for the red and black pieces make a second yellow and blue.</desc>
+  <desc>Cut AB in half at C, and unequally at D: the squares on AD, DB (left) are twice the squares on AC (yellow) and CD (blue), for the red and black pieces make a second yellow and blue: a reading in areas, not Euclid's proof.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <g data-unlettered="the squares of the reading in areas, which Heath's figure does not draw">
     <polygon points="109.0,195.5 139.0,195.5 139.0,119.5 109.0,119.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.43 at a glance</title>
-  <desc>Cut the parallelogram ABCD, parallel to its sides, through any point K on its diameter AC: the two pieces the diameter misses, EBGK and HKFD (yellow), which Euclid calls the complements, always have equal area.</desc>
+  <desc>Through any point K on the diameter AC (black), cut the parallelogram ABCD parallel to its sides. AEKH (blue) and KGCF (red) are the parallelograms about the diameter; the two pieces it misses, EBGK and HKFD (yellow), which Euclid calls the complements, always have equal area.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="45.0,252.5 109.5,252.5 138.0,191.0 73.5,191.0" fill="#1f5aa6" fill-opacity="0.9"/>
   <polygon points="138.0,191.0 288.5,191.0 355.0,47.5 204.5,47.5" fill="#d0312d" fill-opacity="0.9"/>

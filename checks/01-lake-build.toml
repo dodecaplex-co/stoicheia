@@ -1,4 +1,5 @@
 # Check every proof.
+# Alone (#608): it writes the build in .lake/, which every later check reads.
 order = 10
 name = "lake build"
 job = "check"
