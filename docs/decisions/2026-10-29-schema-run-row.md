@@ -12,7 +12,8 @@
   the proof followed by a read-through; and 4 name a workflow. The row now says what a run
   line holds: the run the review was made in and each later reading, after a semicolon,
   each naming the work it was made for, with an example of each form taken from a record
-  on main. It says too that `heath.load_review` checks only that the value is a string.
+  on main. It says too that `heath.load_review` requires a string that is not blank, and
+  reads nothing of its form.
 
   One row of the schema changes, and no record: no rule of the schema changes, and none is
   loosened, since no check reads a run line's form. This entry approves the change to
