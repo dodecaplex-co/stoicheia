@@ -8,11 +8,11 @@ and why they are what they are.
 
 ## 1. The standard
 
-We aim at 95/100 or more for every book, as three cold outside reviewers score it by the
-[review rubric](RUBRIC.md). The first outside reading, [Astra's of 17
+We aim at 95/100 or more for every book, as two cold outside reviewers, Claude and Astra,
+score it by the [review rubric](RUBRIC.md). The first outside reading, [Astra's of 17
 October](reports/outside-review-01.md), scored the books against the README; the measurements
-by three reviewers on the rubric began on 19 October. A reader of any page should be able to
-answer four questions at once:
+by three reviewers on the rubric began on 19 October, and from 29 October two make them. A
+reader of any page should be able to answer four questions at once:
 
 1. What does Euclid claim?
 2. What does the formal theorem prove?
@@ -20,8 +20,8 @@ answer four questions at once:
 4. What has the formalization added, changed or left out?
 
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
-passes with no failures, an independent audit by a model family that wrote none of it
-agrees, and a cold outside reading passes the gate of the [review rubric](RUBRIC.md). A few
+passes with no failures and the cold outside reading, which is the independent audit,
+passes the gate of the [review rubric](RUBRIC.md). A few
 deliberate limitations are allowed when they are stated plainly where they occur. In Book
 III, every statement has full scope. Its records are all at review stage `full`, and
 the overlap catalogue names the places where System E's rules already contain a
@@ -51,8 +51,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
    gap and overlap catalogues; the book's introduction; further reading from the verified
    list only.
 6. **Acceptance.** The five required checks (`check`, `model`, `negative`, `formal-model`
-   and `acceptance`) pass in CI, the independent audit agrees, and a reader goes through
-   the book start to finish.
+   and `acceptance`) pass in CI, a reader goes through the book start to finish, and the
+   cold outside reading, which is the independent audit, passes the rubric's gate.
 7. **Release.** An independent reviewer reads the candidate for stale content and assigns
    every finding to one of four tiers: **Tier 0, defects,** never on main; **Tier 1,
    generated facts,** regenerated rather than written by hand; **Tier 2, reader prose,**
@@ -69,9 +69,9 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 30 companion theorems | released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| I | 48 of 48 proved, and I.15's porism and 11 companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/dodecaplex-co/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/dodecaplex-co/stoicheia/releases/tag/book-II) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 30 companion theorems | released (next: acceptance and the consolidation release of Books I–III) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/dodecaplex-co/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -79,7 +79,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 `render.py` writes this table, and CI checks that it is current. The propositions come
 from `facts.json`; the records from `review/`, current when their stamps match the
-statements and the Lean files, and, where a record carries a `text` stamp, its own text,
+statements and the Lean files, and their own text,
 at the stage `exceptions` or `full`
 ([review/SCHEMA.md](../review/SCHEMA.md)); and the stage, the outside score and the
 release from [program.toml](program.toml), which the coordinator keeps with this page.
@@ -107,6 +107,51 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 4 | III.14, III.15, III.25 | done: proved in Staging ([#90]), then moved into `Elements/` with their records in train C6b ([#28]); III.25's construction core and companions under [#153] |
 | 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `full` ([#29]) |
 | 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
+
+### Release forecast
+
+*As of 29 October 2026, 13:00 Pacific.* A Monte Carlo model of the release puts its date
+at:
+
+| Ship times | Median | 80% by |
+|---|---|---|
+| **As measured over the last 7 days** | Monday 2 November | Tuesday 3 November |
+| If today's process changes make ships 30% faster | Sunday 1 November | Monday 2 November |
+
+This is a dated record. The forecast is recomputed as work lands, and this section is
+updated when it moves materially.
+
+**What the model includes.**
+- **The work:** the 53 open release-blocking cards and the 42 trains in flight that serve
+  them, with their dependencies.
+- **Who does it:** 12 writing agents, one serial landing lane that batches trains on one
+  chain, and checks on a cloud VM.
+- **How long each stage takes,** from the last 7 days, with the skew kept:
+  - writing a heavy train: median 4.6 hours, 80th percentile 10.6, 95th 45;
+  - a heavy landing: median 77 minutes;
+  - a heavy check run: median 54 minutes.
+- **Coupled risks, at their measured rates:** a loaded build machine; a lost VM; GitHub
+  outages; a broken main; restarts; model usage limits; one defect found across many
+  Book III propositions; conflicts on shared files; a landing-tool regression.
+- **The release's own tasks** (read-through, audit, verification, acceptance,
+  measurement) start early and finish on the release candidate. Each may find new work,
+  at assumed odds.
+
+**What it leaves out.** Each would make the date later:
+- the owner's release-day steps can happen at any hour;
+- the score gate (each book at least 95 with each reviewer) is treated as a few found
+  cards, not a pass or fail;
+- the coordinator's own time.
+
+**The most critical chains now,** by the share of simulated releases in which each sets
+the date:
+1. **The release gate:** [#35], the acceptance checklist (0.34); [#34], the read-through
+   (0.20); [#155], acceptance in CI (0.18); [#273], release verification (0.15); [#47], the
+   score (0.16); [#216], the wiki (0.15); [#217], this page (0.12).
+2. **Book III content with nothing yet in flight,** and the spine: [#624] (0.10), [#302]
+   (0.10), [#476], [#510], [#480], [#704], and the Book III spine ([#474], [#547], [#381]),
+   landing as one batch.
+3. **Book III's score with one reviewer** (92.7 against 95): [#704], [#476] and [#672].
 
 ### Landed on 18 October
 
@@ -185,9 +230,9 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
 
 - **Arcs and segments** (stage 3) are what Book IV will inscribe and circumscribe with;
   their definitions are in `Elements/Foundations/DefinitionsIII.lean`, and
-  `Circumference.add` is in `Elements/BookIII/Circumferences.lean`. The arc's field order is
-  still open ([brief 0010](briefs/0010-notation.md), question 3), to be settled before the
-  consolidation release.
+  `Circumference.add` is in `Elements/BookIII/Circumferences.lean`. The arc keeps its fields
+  in the order `circle`, `B`, `C`, `K`: brief 0010's question 3, answered on 25 October 2026
+  ([the decisions entry](decisions/2026-10-25-arc-field-order.md)).
 - **Construction inputs.** A construction receives only what the problem gives; its
   correctness may quantify over more (stage 4, III.25). Book IV's brief adopts this.
 - **Proportion** (Book V): Eudoxus's definition taken literally, the Archimedean property
@@ -325,3 +370,20 @@ in the voyage logs).
 [#134]: https://github.com/dodecaplex-co/stoicheia/pull/134
 [#148]: https://github.com/dodecaplex-co/stoicheia/pull/148
 [#153]: https://github.com/dodecaplex-co/stoicheia/issues/153
+[#34]: https://github.com/dodecaplex-co/stoicheia/issues/34
+[#35]: https://github.com/dodecaplex-co/stoicheia/issues/35
+[#47]: https://github.com/dodecaplex-co/stoicheia/issues/47
+[#155]: https://github.com/dodecaplex-co/stoicheia/issues/155
+[#216]: https://github.com/dodecaplex-co/stoicheia/issues/216
+[#217]: https://github.com/dodecaplex-co/stoicheia/issues/217
+[#273]: https://github.com/dodecaplex-co/stoicheia/issues/273
+[#302]: https://github.com/dodecaplex-co/stoicheia/issues/302
+[#381]: https://github.com/dodecaplex-co/stoicheia/issues/381
+[#474]: https://github.com/dodecaplex-co/stoicheia/issues/474
+[#476]: https://github.com/dodecaplex-co/stoicheia/issues/476
+[#480]: https://github.com/dodecaplex-co/stoicheia/issues/480
+[#510]: https://github.com/dodecaplex-co/stoicheia/issues/510
+[#547]: https://github.com/dodecaplex-co/stoicheia/issues/547
+[#624]: https://github.com/dodecaplex-co/stoicheia/issues/624
+[#672]: https://github.com/dodecaplex-co/stoicheia/issues/672
+[#704]: https://github.com/dodecaplex-co/stoicheia/issues/704
