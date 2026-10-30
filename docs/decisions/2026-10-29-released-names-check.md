@@ -77,9 +77,9 @@
   requires that tag to point to the list's commit; a checkout that fetches no tags, as
   CI's `check` job does not, is told so in one line, and judged all the same. The list
   committed here is what `--list book-III` prints: on 29 October 2026, on the yard's
-  machine, the script, as an untracked copy, was run at book-III's commit after
-  `lake build`, and its output was byte for byte this file but for the header's wording,
-  since changed. Another script that reads names the same way, as the release notes'
+  machine, the script as at commit 022481000, as an untracked copy, was run at book-III's
+  commit, 792082f0c, after `lake build`, and its output was byte for byte this file.
+  Another script that reads names the same way, as the release notes'
   generator ([#702](https://github.com/dodecaplex-co/stoicheia/issues/702)) does, should
   call the script's `run_lean` and `read_probe` rather than copy them.
 
