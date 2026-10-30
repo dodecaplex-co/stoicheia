@@ -43,8 +43,8 @@ note = "Euclid supposes BGC greater than EHF; the Lean proves the reductio once 
 
 [[passage]]
 at = "And the angle at A is half of the angle BGC"
-kind = "case"
-note = "Euclid's figure has the angles at A and D acute and the centres on their sides, where III.20 halves the angles BGC, EHF, as its companion `Prop20.special` states it. Equal circumferences put the centres alike (`Prop27.sides`, which sorts them by `Prop24.angle_type`), and the Lean takes his halving in each case. Where the angles at A and D are right, the centres lie on BC and EF, the angles at the centres standing on BC and EF are each two right angles (`angleAtCentre.semicircle`), and so equal with no reductio, and III.20 (`Prop20`) halves them."
+kind = "different"
+note = "Where the angles at A and D are right, a case of Euclid's statement that his proof does not reach (Heath, vol. 2, pp. 57 and 59), the centres lie on BC and EF, and there are no angles BGC, EHF for I.23 or for the reductio. The angles at the centres standing on BC and EF are each two right angles (`angleAtCentre.semicircle`), so equal with no reductio, and III.20 (`Prop20`) halves them, on our angle at the centre and not Euclid's. In Euclid's figure the angles at A and D are acute and the centres on their sides, where III.20 halves the angles BGC, EHF, as its companion `Prop20.special` states it; equal circumferences put the centres alike (`Prop27.sides`, which sorts them by `Prop24.angle_type`), and there the Lean takes his halving."
 
 [[passage]]
 at = "therefore the angle at A is also equal to the angle at D"
