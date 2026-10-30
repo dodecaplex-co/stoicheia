@@ -10,13 +10,13 @@ kind = "euclid"
 at = "Let AC be bisected at E"
 kind = "helper"
 helper = "produce_longer"
-note = "Euclid bisects AC and produces BE; the Lean uses I.10 for E and `produce_longer` to extend BE beyond E far enough for I.3 to cut off EF. To reach so far, `produce_longer` describes the circle with centre E and distance EB by Postulate 3, which Heath's bracket at this step does not name: it names only I.10. The proof's own Lean draws no circle: Postulate 3 reaches it through this lemma, among others, and every proposition it cites rests on it too."
+note = "Euclid bisects AC and produces BE; the Lean uses I.10 for E and `produce_longer`, which describes a circle about E by Postulate 3, as in I.11, to extend BE beyond E far enough for I.3 to cut off EF."
 
 [[passage]]
 at = "let EF be made equal to BE"
 kind = "helper"
 helper = "between_cut"
-note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F, and Postulate 2 draws AC through to G. FC is named by its ends, as a side of the triangle ECF, so nothing is drawn for the join, and Postulate 1 is not called for it. The join is drawn in the text and is not needed by the formal proof."
+note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F, and Postulate 2 draws AC through to G. The formal proof does not need Euclid's join of FC: FC is named by its ends, as a side of the triangle ECF, so nothing is drawn for it, and Postulate 1, Heath's reference there, is not called."
 
 [[passage]]
 at = "Therefore the base AB is equal to the base FC"
@@ -27,13 +27,13 @@ unused = ["hAB_FC"]
 [[passage]]
 at = "and the triangle ABE is equal to the triangle CFE"
 kind = "carried"
-note = "The equal triangles ABE and CFE are proved here too, as Euclid states them. Neither his proof nor ours uses them again."
+note = "The equal triangles ABE and CFE are proved here too, as Euclid states them, and, like the base, they are not used again."
 unused = ["this"]
 
 [[passage]]
 at = "and the remaining angles are equal to the remaining angles respectively"
 kind = "carried"
-note = "The Lean states one pair here, the angles EBA and EFC; the next step takes the other pair, BAE and ECF, from I.4 directly. Neither Euclid's proof nor ours uses EBA and EFC again: both go on with BAE and ECF alone."
+note = "The Lean states one pair here, the angles EBA and EFC; the next step takes the other pair, BAE and ECF, from I.4 directly. Like the base, EBA and EFC are not used again: both proofs go on with BAE and ECF alone."
 unused = ["this"]
 
 [[passage]]
@@ -49,11 +49,11 @@ note = "Euclid leaves the argument for the other interior angle to the reader, w
 
 [review]
 stage = "full"
-commit = "a6253fb01"
+commit = "31afcd5a0"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:22387b9abfcf45f8"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14-I16b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba; card #482, the coordinator's ruling on joins (28 October 2026): read in full by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), reader G2-r482j, at a6253fb01"
-text = "sha256:eb61563b34efe516"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14-I16b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba; card #482, the coordinator's ruling on joins (28 October 2026): read in full by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), reader G2-r482j, at a6253fb01; cards #763 to #769, ship AC: read-through 02's items mended, written by Claude, read in full by Claude Opus 5.5, an independent reader who wrote none of it, reader AC-rdI-r1, at 6552a1440; #220, ship AC: read in full after read-through 02's mends by GPT-6 Astra (Codex), an independent reader of the family that did not write the proof, reader AC-rdI-cx1, at 31afcd5a0"
+text = "sha256:9192df8ae351ee90"
 
 [review.items]
 statement = "pass"
