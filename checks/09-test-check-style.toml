@@ -2,6 +2,7 @@
 # and of letters on angles' wedges. tests/test_check_style.py needs no Lean; it runs before
 # the style check, so that a rule found reading its cases wrongly stops the sequence before
 # the style check's verdict.
+# Alone (#608): test_long_malformed_lists has 2 s by the clock, which load could fail.
 order = 90
 name = "python3 -I tests/test_check_style.py"
 job = "check"

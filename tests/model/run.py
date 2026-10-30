@@ -325,7 +325,7 @@ def plan(full):
     if full:
         runs = [Run(f'search-seed{s}', 'search.py', [20000, s], seeds=str(s),
                     what='random search, 20,000 samples per axiom') for s in (1, 2, 3)]
-        runs += [Run('exhaustive', 'exhaustive.py', seeds='7 (for area_congruent\'s isometries)',
+        runs += [Run('exhaustive', 'exhaustive.py', seeds='7 (for derived.area_congruent\'s isometries)',
                      what='every configuration on small grids'),
                  Run('structured', 'structured.py', [100000, 11], seeds='11',
                      what='structured search, 100,000 samples per axiom or derived property')]

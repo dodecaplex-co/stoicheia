@@ -1,5 +1,6 @@
 # Compute the certificate, and check its dependency walk against Lean's. Facts.lean exits 1
 # if any entry's axioms differ from its own and its citations'.
+# Alone (#608): it writes facts.json, which render.py and the checks after it read.
 order = 40
 name = "lake env lean Certificate/Facts.lean"
 job = "check"

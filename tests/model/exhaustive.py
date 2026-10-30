@@ -255,8 +255,8 @@ def gen_cong():
         yield dict(A=A, B=B, C=C, D=D, E=E, F=F)
 
 
-# area_congruent's check sometimes swaps in an isometric image; also run the raw search on a 3x3 grid
-run('area_congruent', gen_cong())
+# derived.area_congruent's check sometimes swaps in an isometric image; also run the raw search on a 3x3 grid
+run('derived.area_congruent', gen_cong())
 
 # ---------------- Metric / segments ----------------
 run('derived.eq_of_len_eq_zero', P4('AB'))

@@ -1,8 +1,10 @@
 # Check the Lean still quotes Heath; the house rules, the policies for every entry, the lock
 # of the axioms and the statements' words, and the review records. The wording of the
 # reader-facing pages is check_style.py's (S5), later in the sequence.
+# Concurrent (#608): without --write-lock it only reads the tree, and writes only bytecode.
 order = 80
 name = "python3 scripts/check_fidelity.py"
 job = "check"
 command = ["python3", "scripts/check_fidelity.py"]
 section8 = "python3 scripts/check_fidelity.py"
+concurrent = true
