@@ -1,10 +1,10 @@
 <!-- entry: id=single-parts-with-cards cards=283 line="Work lands one part at a time, each with a record of the checks run on it, starting with dated reports and decision entries." -->
 - **Single parts, each with a record of its checks (landing,
-  [#283](https://github.com/dodecaplex-co/stoicheia/issues/283)).** The owner decided on 30
-  October 2026 that work lands one part at a time: the files of one sort of work, such as
-  a report, a commentary, a figure, a proof or a tool, never several sorts batched
-  together. A decision entry travels with the part it records; an entry that records no
-  other change, as this one does, is a part on its own.
+  [#283](https://github.com/dodecaplex-co/stoicheia/issues/283)).** This entry records
+  the change of 30 October 2026: work lands one part at a time: the files of one sort of
+  work, such as a report, a commentary, a figure, a proof or a tool, never several sorts
+  batched together. A decision entry travels with the part it records; an entry that
+  records no other change, as this one does, is a part on its own.
 
   Each part carries a record of what it is, the commit of main it was made on, and the
   checks run on it with their verdicts. In this first version that record is the pull
