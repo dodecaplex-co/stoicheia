@@ -314,6 +314,17 @@ def lines_of(text: str) -> list[str]:
     return lines
 
 
+def is_tag_name(tag: str) -> bool:
+    """Whether `tag` has the restricted form here and makes a valid `refs/tags/` ref."""
+    if not TAG.fullmatch(tag):
+        return False
+    ref = f"refs/tags/{tag}"
+    parts = ref.split("/")
+    return (".." not in ref and not ref.endswith(".")
+            and all(part and not part.startswith(".") and not part.endswith(".lock")
+                    for part in parts))
+
+
 def parse_list(text: str, shown: str = str(LIST)) -> Listed:
     """The list `text`, as Listed; Unreadable, naming the line, when it breaks the form."""
     tag = commit = ""
@@ -339,7 +350,7 @@ def parse_list(text: str, shown: str = str(LIST)) -> Listed:
             if not found:
                 raise Unreadable(f"{where}: `{shorten(line)}` is not a tag line, which is "
                                  "`tag <tag> <40-hex commit>`")
-            if not TAG.fullmatch(found["tag"]):
+            if not is_tag_name(found["tag"]):
                 raise Unreadable(f"{where}: `{shorten(found['tag'])}` is not a tag's name")
             if not COMMIT.fullmatch(found["commit"]):
                 raise Unreadable(f"{where}: `{shorten(found['commit'])}` is not a full "
@@ -430,18 +441,32 @@ def run_lean(text: str) -> str:
         raise Unreadable("lake is not on PATH: export PATH=$HOME/.elan/bin:$PATH, and run "
                          "`lake build` first")
     require_current_build()
-    with tempfile.TemporaryDirectory(prefix="released-names-") as tmp:
-        folder = Path(tmp).resolve()
-        if folder == ROOT or ROOT in folder.parents:
-            raise Unreadable(f"the temporary folder {folder} is inside the repository; set "
-                             "TMPDIR to a folder outside it")
-        path = folder / "Probe.lean"
-        path.write_text(text, encoding="utf-8")
-        try:
-            done = subprocess.run(["lake", "env", "lean", str(path)], cwd=ROOT,
-                                  capture_output=True)
-        except OSError as error:
-            raise Unreadable(f"lake cannot be run: {error}") from None
+    try:
+        temporary = tempfile.TemporaryDirectory(prefix="released-names-")
+    except OSError as error:
+        raise Unreadable(f"cannot create a temporary folder for the probe: {error}") from None
+    try:
+        with temporary as tmp:
+            try:
+                folder = Path(tmp).resolve()
+            except OSError as error:
+                raise Unreadable(f"cannot resolve the temporary probe folder: {error}") \
+                    from None
+            if folder == ROOT or ROOT in folder.parents:
+                raise Unreadable(f"the temporary folder {folder} is inside the repository; "
+                                 "set TMPDIR to a folder outside it")
+            path = folder / "Probe.lean"
+            try:
+                path.write_text(text, encoding="utf-8")
+            except OSError as error:
+                raise Unreadable(f"cannot write the temporary probe {path}: {error}") from None
+            try:
+                done = subprocess.run(["lake", "env", "lean", str(path)], cwd=ROOT,
+                                      capture_output=True)
+            except OSError as error:
+                raise Unreadable(f"lake cannot be run: {error}") from None
+    except OSError as error:
+        raise Unreadable(f"cannot remove the temporary probe folder: {error}") from None
     try:
         out, err = done.stdout.decode("utf-8"), done.stderr.decode("utf-8")
     except UnicodeDecodeError:
@@ -754,7 +779,7 @@ def make_list(tag: str) -> str:
     when the tag is not in the repository, HEAD is another commit, any tracked file but the
     list has assume-unchanged or skip-worktree set, a file that could change the build
     differs from it (modified()), or the build is not current."""
-    if not TAG.fullmatch(tag):
+    if not is_tag_name(tag):
         raise Unreadable(f"--list: `{shorten(tag)}` is not a tag's name")
     commit = tag_commit(tag)
     if commit is None:

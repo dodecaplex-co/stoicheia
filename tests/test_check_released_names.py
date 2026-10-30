@@ -265,8 +265,10 @@ class TheList(unittest.TestCase):
                              "is not a full commit, 40 lower-case hex digits")
 
     def test_a_bad_tag_name_is_refused(self):
-        self.refused(text("name Elements.a", head=f"tag -book {COMMIT}\n"), 1,
-                     "is not a tag's name")
+        for tag in ("-book", "book..IV", "book/", "book.lock"):
+            with self.subTest(tag):
+                self.refused(text("name Elements.a", head=f"tag {tag} {COMMIT}\n"), 1,
+                             "is not a tag's name")
 
     def test_an_unknown_marker_is_refused(self):
         for row in ("removed Elements.a", "Elements.a", "Name Elements.a"):
@@ -757,6 +759,46 @@ class TheModes(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("is out of order", err)
         probe.assert_not_called()
+
+    def test_malformed_tags_stop_before_tag_lookup_or_lean(self):
+        for tag in ("book..IV", "book/", "book.lock"):
+            with self.subTest(tag):
+                tag_commit = mock.Mock()
+                probe = mock.Mock()
+                out, err = io.StringIO(), io.StringIO()
+                with mock.patch.object(released, "tag_commit", tag_commit), \
+                        mock.patch.object(released, "run_probe", probe), \
+                        redirect_stdout(out), redirect_stderr(err):
+                    code = released.main(["--list", tag])
+                self.assertEqual(code, 2, err.getvalue())
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("is not a tag's name", err.getvalue())
+                self.assertNotIn("Traceback", err.getvalue())
+                tag_commit.assert_not_called()
+                probe.assert_not_called()
+
+    def test_temporary_probe_folder_creation_failure_exits_2(self):
+        self.write("name Elements.a")
+        with mock.patch.object(released.tempfile, "TemporaryDirectory",
+                               side_effect=OSError("no temporary space")):
+            code, out, err = self.run_lake([], 0)
+        self.assertEqual(code, 2, err)
+        self.assertEqual(out, "")
+        self.assertIn("cannot create a temporary folder for the probe: no temporary space",
+                      err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(self.ran, [BUILD_COMMAND])
+
+    def test_temporary_probe_write_failure_exits_2(self):
+        self.write("name Elements.a")
+        with mock.patch.object(Path, "write_text", side_effect=OSError("disk full")):
+            code, out, err = self.run_lake([], 0)
+        self.assertEqual(code, 2, err)
+        self.assertEqual(out, "")
+        self.assertIn("cannot write the temporary probe", err)
+        self.assertIn("Probe.lean: disk full", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(self.ran, [BUILD_COMMAND])
 
     def test_the_self_test_stops_on_a_surprise_and_leaves_the_plants_out(self):
         self.write("name Elements.BookI.Prop1")
