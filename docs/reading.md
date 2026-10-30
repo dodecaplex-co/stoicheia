@@ -233,8 +233,8 @@ equal in area. Cutting one into pieces that rebuild the other makes that equalit
 something you can see.
 
 - <a id="frederickson1997dissections"></a>Greg N. Frederickson, [*Dissections: Plane & Fancy*](https://www.cs.purdue.edu/homes/gnf/book.html)
-  (Cambridge University Press, 1997). A gorgeous picture book of cutting one figure into
-  pieces that rebuild another: Euclid's "equal" made visible.
+  (Cambridge University Press, 1997). A book of dissections, told in drawings: one figure
+  cut into pieces that rebuild another, Euclid's "equal" made visible.
 - <a id="boltyanskii1963equivalent"></a>V. G. Boltyanskii, [*Equivalent and Equidecomposable Figures*](https://store.doverpublications.com/collections/math-algebra/products/9780486170053),
   translated by Alfred K. Henn and Charles E. Watts (D. C. Heath, 1963; Dover, 2007, in
   one volume with *Hyperbolic Functions* and *Configuration Theorems*). A slim, gentle
@@ -515,8 +515,8 @@ rules, after System E, give one answer; these look at the question from other si
   a glance" figures take their palette from Byrne.
 - <a id="oechslin2010byrne"></a>Oliver Byrne, [*The First Six Books of the Elements of Euclid*](https://www.taschen.com/en/books/classics/47706/oliver-byrne-the-first-six-books-of-the-elements-of-euclid),
   facsimile of the 1847 edition, edited by Werner Oechslin (Taschen, 2010; new edition
-  2022). A gorgeous printed facsimile, with an essay by Werner Oechslin on why the book
-  looks the way it does: a lovely thing to have on the table while reading our figures.
+  2022). A printed facsimile of Byrne's coloured pages, with Oechslin's essay on why the
+  book looks the way it does: a lovely thing to have on the table while reading our figures.
 
 ## Lean and proof assistants
 

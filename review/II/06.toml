@@ -46,7 +46,7 @@ note = "Euclid takes LG to be the square on BC. `Square.about_diameter` proves L
 at = "But the gnomon NOP and LG are the whole square CEFD"
 kind = "helper"
 helper = "Parallelogram.about_diameter"
-note = "Euclid takes the gnomon NOP and LG together as the whole square CEFD. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order L, H and M, then joins the four pieces with `quadArea_add_of_parallelograms`."
+note = "Euclid takes the gnomon NOP and LG together as the whole square CEFD. `Parallelogram.about_diameter` proves that the four parallelograms make up the square CEFD, as in II.4."
 
 [review]
 stage = "full"

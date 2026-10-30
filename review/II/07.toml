@@ -39,7 +39,7 @@ note = "Euclid takes DG to be the square on AC. `Square.about_diameter` proves D
 at = "But the gnomon KLM and the squares BG, GD are the whole ADEB and CF"
 kind = "helper"
 helper = "Parallelogram.about_diameter"
-note = "Euclid takes the gnomon and GD as the whole square ADEB and counts CF a second time as BG, the same square named by its other two corners. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order H, G and F, then joins the four pieces with `quadArea_add_of_parallelograms`."
+note = "Euclid takes the gnomon and GD as the whole square ADEB and counts CF a second time as BG, the same square named by its other two corners. `Parallelogram.about_diameter` proves that the four parallelograms make up the square ADEB, as in II.4."
 
 [review]
 stage = "full"

@@ -40,7 +40,7 @@ note = "Euclid uses the equality of the radii FE and FB without giving a reason.
 at = "and FD is the common base of the triangles"
 kind = "helper"
 helper = "Prop37.triangle"
-note = "`Touches.not_inside` makes DEF a triangle: its centre F is within the circle and cannot lie on DE. `Prop37.triangle` then makes DBF a triangle. If D, B and F were on one straight line, either D would be within the circle, or the equal lengths DB and DE and equal radii would make two sides of DEF equal to the third, contrary to I.20. Heath gives no reference to I.20 here."
+note = "`Touches.not_inside` makes DEF a triangle, for the centre F is within the circle and cannot lie on DE. `Prop37.triangle` then makes DBF one, by I.20, for which Heath gives no reference here, and because D is outside the circle."
 
 [[passage]]
 at = "And FB produced is a diameter"
