@@ -706,6 +706,12 @@ class Index:
         return name in self.decls and (name not in self.private
                                        or self.decls[name].path == consumer.path)
 
+    def available_before(self, name: str, main: Declaration) -> bool:
+        """Whether `name` is declared before `main`: in a file that `main`'s file imports, or
+        above it in its own file. Anything else is a later declaration, never a premise."""
+        d = self.get(name)
+        return d.path in self.visible(main.path) and (d.path != main.path or d.keyword < main.keyword)
+
     def resolve(self, token: str, consumer: Declaration, *, required: bool = False,
                 commentary: bool = False) -> str | None:
         # A dotted declaration opens its parent namespaces for its own type and body.
@@ -772,8 +778,9 @@ REGISTRY = {
                       'WithinAngle MixedAngle MixedAngle.vertex MixedAngle.region '
                       'MixedAngle.WellFormed LocallyWithin NearVertex Surrounds NearVertexOpen '
                       'LocallyLess LocallyEqual MixedAngle.Exceeds MixedAngle.FallsShort CirclesCut '
-                      'circumference standing Arc Arc.Drawn OnSideOrLine OnArc InSegment Arc.Less '
-                      'Arc.Semicircle Arc.Greater Arc.SameKind Arc.measure Places Arc.Congruent Foot',
+                      'circumference angleAtCentre standing Arc Arc.Drawn OnSideOrLine OnArc '
+                      'InSegment Arc.Less Arc.Semicircle Arc.Greater Arc.SameKind Arc.measure '
+                      'Places Arc.Congruent Foot',
     'Magnitudes': 'Kind MagnitudeImpl Magnitude Length Angle Area len ang area rightAngle Magnitude.sum',
     # The restricted rule of superposition's meanings, which I.4's and I.8's records check: the
     # laws a derivation cites, as data, and what a law, and so a cited law, asserts.
@@ -807,8 +814,14 @@ def registry_for(books: tuple[tuple[str, int], ...], bundled: set[str]) -> dict[
 
 
 SYMBOLS = {'‖': 'len', '∠': 'ang', '△': 'area', '∟': 'rightAngle'}
+# A parallelogram's area, `quadArea`, is measured by the diameter AC: the other diameter gives
+# the same (`Parallelogram.quadArea_rotate`), a diameter bisects it (I.34), and it is the area
+# of the parallelogram given by its outline, whose corners are a convex outline
+# (`Parallelogram.convexOutline`, `Parallelogram.outline_area`).
+PARALLELOGRAM_OUTLINE_BRIDGES = ['Elements.Parallelogram.convexOutline',
+                                 'Elements.Parallelogram.outline_area']
 AREA_BRIDGES = ['Elements.Parallelogram.cross', 'Elements.Parallelogram.quadArea_rotate',
-                'Elements.BookI.Prop34', 'Elements.BookI.Prop34.bisect']
+                'Elements.BookI.Prop34', 'Elements.BookI.Prop34.bisect', *PARALLELOGRAM_OUTLINE_BRIDGES]
 RECT_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
                 'Elements.Rectangle.eq_rect', 'Elements.Square.eq_sq', 'Elements.Square.described']
 FIGURE_BRIDGES = ['Elements.Fitted.triangle', 'Elements.Fitted.inside_pairwise',
@@ -845,9 +858,10 @@ OUTLINE_BRIDGES = ['Elements.Figures.division_exists', 'Elements.Figures.Apart.a
 # name a [representation] note gives in backticks is read from the record itself. These are
 # the others: what the comment on I.4's and I.8's representations item says it checked, each
 # law cited with its meaning and its proof, the proofs with CITED_EXTRAS read from facts.json
-# (`Generator.record_checked`); and, where the row's statements take a figure by its outline,
-# the bridges I.45's and II.14's notes on the route and the passages give for it, with the
-# region and the area of an outline they speak of.
+# (`Generator.record_checked`); what III.20's, III.21's and III.26's records say of the angle
+# at the centre in words, not in backticks of a representation note; and, where the row's
+# statements take a figure by its outline, the bridges I.45's and II.14's notes on the route
+# and the passages give for it, with the region and the area of an outline they speak of.
 RECORD_CHECKED = {
     'I.4': ('Elements.Superposition.Atom.Holds', 'Elements.Superposition.Lit.Holds',
             'Elements.Superposition.Metric.Holds', *SUPERPOSITION_BRIDGES,
@@ -857,6 +871,38 @@ RECORD_CHECKED = {
             'Elements.Superposition.Metric.Holds', *SUPERPOSITION_BRIDGES,
             'Elements.Superposition.Cited.Holds', 'Elements.Superposition.Law.Holds',
             'Elements.Superposition.Cited.law'),
+    # III.20's note: the angle at the centre "depends on neither the diameter, nor the centre"
+    # (`angleAtCentre.diameter`), "nor the point naming the side" (`angleAtCentre.congr`).
+    'III.20': ('Elements.BookIII.angleAtCentre.diameter', 'Elements.BookIII.angleAtCentre.congr'),
+    # III.21's record has no representation note. Its route reads the angle at the centre as
+    # ours: in the semicircle and the less segment it is "two right angles or more"
+    # (`angleAtCentre`); where the centre F lies on A's side of BD, as in Euclid's figure, it is
+    # the angle BFD of which BAD and BED "are halves" (`angleAtCentre.within`); "III.20 makes it
+    # up from angles at the centre itself", the passage at "let BF, FD be joined" says, so that
+    # "III.20 doubles BAD and BED in every segment" (`angleAtCentre.diameter`); the passage at
+    # "Now, since the angle BFD is at the centre" gives its three sizes, the angle BFD, two right
+    # angles and more (`angleAtCentre.size`); and, the passage at "Let ABCD be a circle" says,
+    # it "reads only the side" (`angleAtCentre.congr`).
+    'III.21': ('Elements.angleAtCentre', 'Elements.BookIII.angleAtCentre.within',
+               'Elements.BookIII.angleAtCentre.congr', 'Elements.BookIII.angleAtCentre.diameter',
+               'Elements.BookIII.angleAtCentre.size'),
+    # III.26's note reads "Equal circumferences" as "equal in measure", and within the proof "the
+    # angles at the centres standing on BKC and ELF are of any size (`angleAtCentre`)": our
+    # measure of a circumference is its angle at the centre (`Prop20.circumference`).
+    'III.26': ('Elements.BookIII.Prop20.circumference',),
+}
+# What a record's [representation] note names in backticks as context, a theorem proved after
+# the proposition, which its row is not asked to supply: "a theorem proved after III.27 is not a
+# bridge for it" (the coordinator's ruling of 29 October 2026, #674). III.27's note says its
+# companion is stated in "the form in which III.29's companion `Prop29.of_measure` cites it", and
+# that the two readings agree by `Arc.congruent_iff`, "proved after III.29, from it"; III.29's
+# note names `Arc.congruent_iff` where "the two readings agree" too, and `Arc.measure_eq_iff`,
+# "after III.29", which MEASURE_BRIDGES supplies, so it is not here. `Generator.checked` refuses
+# an entry the note does not name in backticks, or one declared before the main theorem, as a
+# bridge's placement is read (`Index.available_before`).
+RECORD_LATER = {
+    'III.27': ('Elements.BookIII.Prop29.of_measure', 'Elements.BookIII.Arc.congruent_iff'),
+    'III.29': ('Elements.BookIII.Arc.congruent_iff',),
 }
 OUTLINE_CHECKED = {
     'I.45': ('Elements.Figures.Outline', 'Elements.Figures.Outline.Region',
@@ -875,9 +921,24 @@ MEASURE_DEFINITIONS = ['circumference', 'standing', 'Arc', 'Arc.Drawn', 'Arc.mea
                        'Arc.Semicircle', 'Arc.Greater', 'Arc.SameKind', 'EqualCircles']
 MEASURE_BRIDGES = ['Elements.BookIII.Circumference.eq', 'Elements.BookIII.Circumference.standing',
                    'Elements.BookIII.Circumference.centre', 'Elements.BookIII.Arc.measure_eq_iff']
-# Equal segments and circumferences are read as ones that coincide (Common Notion 4).
+# Equal segments and circumferences are read as ones that coincide (Common Notion 4). III.27's
+# and III.29's main statements read them so too, but `Arc.congruent_iff`, which makes them, in
+# equal circles, the circumferences equal in measure, is proved after both (`Arcs.lean` imports
+# Prop29), so their rows get the words without it (RECORD_LATER).
 CONGRUENCE_DEFINITIONS = ['Arc.Congruent', 'Places', 'OnArc', 'InSegment', 'OnSideOrLine']
 CONGRUENCE_BRIDGES = ['Elements.BookIII.Arc.congruent_iff']
+# Congruent circumferences "already lie in equal circles (`Prop24.image`,
+# `Prop24.equalCircles`)", III.27's note says of its redundant hypothesis, and III.29's that
+# "the congruence already gives the equal straight lines (`Prop24.image`), and the equal circles
+# with them (`Prop24.equalCircles`)".
+CONGRUENT_CIRCLE_BRIDGES = ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles']
+# `Prop27`'s proof makes its circumferences "equal in measure, twice the angle standing on them,
+# by III.24's companion `Prop24.equalMeasure`", III.27's note says.
+CONGRUENT_MEASURE_BRIDGES = ['Elements.BookIII.Prop24.equalMeasure']
+# III.29's proof takes "its equal angles from III.27, which `Prop27` states with the same
+# congruence", and its companion "repeats the argument through III.27's companion
+# `Prop27.of_measure`", as III.29's note says.
+EQUAL_ANGLE_BRIDGES = ['Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure']
 # The kind of a segment, decided by where the centre lies, against two right angles.
 KIND_BRIDGES = ['Elements.BookIII.Circumference.semicircle',
                 'Elements.BookIII.Circumference.lt_semicircle',
@@ -896,6 +957,28 @@ CONTACT_BRIDGES = ['Elements.BookIII.Prop18.branch', 'Elements.BookIII.Prop18.co
 TOUCHING_BRIDGES = ['Elements.BookIII.Prop13.touchesInternally_iff',
                     'Elements.BookIII.Prop13.touchesExternally_iff',
                     'Elements.BookIII.Prop13.circlesTouch_iff']
+# The angle at the centre standing on a circumference, of any size, our reading after Heath's
+# notes (`angleAtCentre`), which III.20's, III.21's and III.26's records name. For III.20 and
+# III.21 it is the angle BEC, E the centre, where E lies across the base from that
+# circumference, as Euclid's angles at the centre are (`angleAtCentre.within`); it is the angles
+# BEF and FEC together, for any diameter AEF with A and F on opposite sides of the base and F
+# on the circumference's side, wherever the centre lies, on the base or beyond it too, for a
+# semicircle or a less segment (`angleAtCentre.diameter`); and it reads only the side of the
+# base that the point naming the circumference lies on (`angleAtCentre.congr`). III.20's representation note names the first
+# and says the other two in words. III.21's record has no representation note: its route reads
+# Euclid's argument in a segment of any size, the semicircle and the less segment among them,
+# and its passages name `angleAtCentre.congr` and the three sizes of the angle at the centre,
+# less than, equal to and greater than two right angles as the centre lies across the base, on
+# it or beyond it (`angleAtCentre.size`). Our measure of a circumference is its angle at
+# the centre (`Prop20.circumference`), which III.20's note names; it ties III.26's reading of
+# equal circumferences as equal in measure to the angles at the centres its note names, and,
+# with `Circumference.centre`, makes the angle at the centre the angle BGC where G lies across
+# BC from K.
+CENTRE_DEFINITIONS = ['angleAtCentre']
+CENTRE_BRIDGES = ['Elements.BookIII.angleAtCentre.within', 'Elements.BookIII.angleAtCentre.congr',
+                  'Elements.BookIII.angleAtCentre.diameter']
+CENTRE_MEASURE_BRIDGES = ['Elements.BookIII.Prop20.circumference']
+CENTRE_SIZE_BRIDGES = ['Elements.BookIII.angleAtCentre.size']
 # A straight line's distance from the centre is the perpendicular to its foot (Definition III.4).
 FOOT_BRIDGES = ['Elements.Foot.exists', 'Elements.Foot.unique']
 RECTANGLE_BRIDGES = ['Elements.Rectangle.congr', 'Elements.Rectangle.contained',
@@ -953,13 +1036,28 @@ def bundle(book: str, n: int, outline: bool = False,
         if n in (24, 25, 26, 27, 28, 29, 30):
             definitions += MEASURE_DEFINITIONS
             bridges += MEASURE_BRIDGES
-        if n in (24, 26, 28, 30):
+        if n in (24, 26, 27, 28, 29, 30):
             definitions += CONGRUENCE_DEFINITIONS
+        if n in (24, 26, 28, 30):
             bridges += CONGRUENCE_BRIDGES
+        if n in (27, 29):
+            bridges += CONGRUENT_CIRCLE_BRIDGES
+        if n == 27:
+            bridges += CONGRUENT_MEASURE_BRIDGES
+        if n == 29:
+            bridges += EQUAL_ANGLE_BRIDGES
         if n == 25:
             bridges += KIND_BRIDGES
         if n == 30:
             bridges += ['Elements.BookIII.Circumference.add']
+        if n in (20, 21, 26):
+            definitions += CENTRE_DEFINITIONS
+        if n in (20, 21):
+            bridges += CENTRE_BRIDGES
+        if n in (20, 26):
+            bridges += CENTRE_MEASURE_BRIDGES
+        if n == 21:
+            bridges += CENTRE_SIZE_BRIDGES
         if 35 <= n <= 37:
             definitions += ['Rectangle', 'Contain', 'rect', 'Parallelogram', 'quadArea']
             bridges += RECTANGLE_BRIDGES
@@ -1024,15 +1122,17 @@ class Calls:
     right, ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append,
     mem_cons, mem_cons_of_mem, mem_cons_self, mem_singleton, mem_singleton_self, not_mem_nil,
     mem_nil_iff, forall_mem_cons, cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc,
-    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton, byContradiction
-    and epsilon_spec. These names exempt only fields with no project candidate; symm, for
-    example, still collects every eligible geometric signature. Book III, the rule of
-    superposition's soundness and Book Zero's area of an outline use some more of Lean's own
-    names, each recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
-    List.mem_map, List.map_congr_left and List.Pairwise.sublist, written so, with a first word
-    that names no declaration of the project; and the constructor of a structure or class the
-    index holds, X.mk, with the equation Lean generates for it, X.mk.injEq, where X names that
-    structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
+    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton, byContradiction,
+    epsilon_spec, and choose and choose_spec, which III.26's helpers take of an existence.
+    These names exempt only fields with no project candidate; symm, for example, still
+    collects every eligible geometric signature. Book III, the rule of superposition's
+    soundness and Book Zero's area of an outline use some more of Lean's own names, each
+    recognised whole and never by its last word (CORE_NAMES): And.intro, Iff.rfl,
+    List.mem_map, List.map_congr_left, List.Pairwise.sublist, the Classical.epsilon and
+    True.intro of III.26's helpers, and the List.nodup_cons of the area of a convex outline
+    (Elements/Figure/Divisions.lean), written so, with a first word that names no declaration
+    of the project; and the constructor of a structure or class the index holds, X.mk, with
+    the equation Lean generates for it, X.mk.injEq, where X names that structure or class. So Missing.mk, Missing.rfl and a def's d.mk stay unresolved. Any
     remaining field is unresolved.
     """
 
@@ -1043,11 +1143,13 @@ class Calls:
         'not_mem_nil', 'mem_nil_iff', 'forall_mem_cons', 'cons_ne_nil',
         'append_ne_nil_of_right_ne_nil', 'append_assoc', 'append_nil', 'nil_append',
         'cons_append', 'pairwise_append', 'pairwise_singleton', 'byContradiction', 'epsilon_spec',
+        'choose', 'choose_spec',
     })
     # Lean's own names, each exempt only when written whole, from a first word that names no
     # declaration of the project.
     CORE_NAMES = frozenset({'And.intro', 'Iff.rfl', 'List.mem_map', 'List.map_congr_left',
-                            'List.Pairwise.sublist'})
+                            'List.Pairwise.sublist', 'Classical.epsilon', 'True.intro',
+                            'List.nodup_cons'})
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
@@ -1605,7 +1707,10 @@ class Generator:
         supply, as a bridge, a definition or one of the statements it judges: each name its
         [representation] note gives in backticks, and its names of RECORD_CHECKED, the laws
         it cites among them (record_checked), and, where the row's statements take a figure by
-        its outline, OUTLINE_CHECKED."""
+        its outline, OUTLINE_CHECKED. A name of RECORD_LATER, which the note names as a theorem
+        proved after the proposition, is not asked of the row for the note's naming it; an entry
+        there that the note does not name, or that is declared before the main theorem, is
+        refused."""
         consumer = self.index.get(heath.parse_ref(ref).lean)
         names = []
         for token in re.findall(r'`([^`]+)`', record.get('representation', {}).get('note', '')):
@@ -1613,6 +1718,13 @@ class Generator:
                 name = self.index.resolve(token, consumer, commentary=True)
                 require(name, f'{ref}: its record names {token}, which is no declaration')
                 names.append(name)
+        later = RECORD_LATER.get(ref, ())
+        for name in later:
+            require(name in names, f'{ref}: RECORD_LATER names {name}, which its record\'s '
+                                   '[representation] note does not name')
+            require(not self.index.available_before(name, consumer),
+                    f'{ref}: RECORD_LATER names {name}, which is declared before {consumer.name}')
+        names = [name for name in names if name not in later]
         names += self.record_checked(ref)
         if f'{ref} outline' in self.facts[ref]['attached']:
             names += OUTLINE_CHECKED.get(ref, ())
@@ -1645,6 +1757,10 @@ class Generator:
 
     def bridges(self, source: dict, book: str, n: int) -> tuple[dict, list[str], dict]:
         objects, names = self.bundle(book, n)
+        # The evidence commit of the audit of Books I and II, of 19 October, holds no outline of
+        # a parallelogram: its two bridges are supplied where the evidence declares them.
+        names = [name for name in names if name not in PARALLELOGRAM_OUTLINE_BRIDGES
+                 or name in self.index.decls]
         quoted = {name: self.index.quote(source, 'bridges.' + name, name,
                                         full=self.index.get(name).kind in ('def', 'abbrev'))
                   for name in sorted(set(names))}
@@ -1657,8 +1773,7 @@ class Generator:
             d = self.index.get(name)
             calls = self.calls.direct(name, supplied)
             prop_calls = [c for c in calls if re.search(r'\.Book[IVX]+\.Prop\d+', c['name'])]
-            available = (d.path in self.index.visible(main.path) and
-                         (d.path != main.path or d.keyword < main.keyword))
+            available = self.index.available_before(name, main)
             # These signatures explain a representation, and may be corollaries of
             # the consumer. They must never be misreported as available premises.
             placement[name] = {'path': d.path, 'line': self.index.clean[d.path].count('\n', 0, d.keyword) + 1,
@@ -2463,18 +2578,29 @@ PLANTS = {
         'square: every connection is unavailable for the represented objects.',
         (('premise', None, f'({AREA_PREMISE_NAME} : False)'),)),
     ('P13', 'I.43'): Plant(
-        3, "`Parallelogram.quadArea_rotate`'s conclusion made `quadArea A B C D = quadArea A B C D`",
-        "`quadArea` measures a parallelogram by the diameter AC; the one bridge that said the other "
-        'diameter gives the same area now concludes a triviality, so nothing states that the '
+        3, "`Parallelogram.quadArea_rotate`'s and `Parallelogram.outline_area`'s conclusions made "
+        '`quadArea A B C D = quadArea A B C D`',
+        "`quadArea` measures a parallelogram by the diameter AC; the bridge that said the other "
+        'diameter gives the same area, and the one that said the measure is the area of the '
+        'parallelogram given by its outline, now conclude a triviality, so nothing states that the '
         "measure is the parallelogram's area whichever diameter is drawn.",
         (('replace', ['state', 'bridges', 'Elements.Parallelogram.quadArea_rotate'],
-          'quadArea B C D A = quadArea A B C D', 'quadArea A B C D = quadArea A B C D'),)),
+          'quadArea B C D A = quadArea A B C D', 'quadArea A B C D = quadArea A B C D'),
+         ('replace', ['state', 'bridges', 'Elements.Parallelogram.outline_area'],
+          '(singleOutline [A, B, C, D] (convex_loop_region h.convexOutline).1).area =',
+          'quadArea A B C D ='))),
     ('P13', 'I.36'): Plant(
-        4, '`Parallelogram.quadArea_rotate` given the premise (hAC : A = C)',
+        4, '`Parallelogram.quadArea_rotate` and `Parallelogram.outline_area` given the premise '
+        '(hAC : A = C)',
         "A parallelogram's opposite corners are distinct, so no parallelogram meets the premise; "
-        'the one bridge that the measure is the same whichever diameter is drawn is unavailable '
-        'for every parallelogram.',
-        (('premise', ['Elements.Parallelogram.quadArea_rotate'], '(hAC : A = C)'),)),
+        'the bridge that the measure is the same whichever diameter is drawn, and the one that it '
+        'is the area of the parallelogram given by its outline, are unavailable for every '
+        'parallelogram.',
+        # `quadArea_rotate` takes its corners from the file's variables; `outline_area` binds
+        # them itself, so its premise follows its binders, where A and C are its corners.
+        (('premise', ['Elements.Parallelogram.quadArea_rotate'], '(hAC : A = C)'),
+         ('replace', ['state', 'bridges', 'Elements.Parallelogram.outline_area'],
+          '(h : Parallelogram A B C D) :', '(h : Parallelogram A B C D) (hAC : A = C) :'))),
     ('P13', 'II.8'): Plant(
         1, 'every supplied bridge removed', 'With no bridge supplied, nothing connects '
         "`rect A B B C`, `sq A C` and `sq A D` with Euclid's rectangle contained by AB, BC, his "
@@ -2578,11 +2704,14 @@ PLANTS = {
         (('replace', ['state', 'commentary'], 'is less than a right angle (I.17)',
           'is less than a right angle (I.5)'),)),
     ('P14', 'III.20'): Plant(
-        3, '"So our statement keeps E on A\'s side of BC" made "takes E on either side of BC"',
-        "The statement assumes the centre E on A's side of BC (`SameSideOf E A B C`), as the "
-        'record says; the commentary now says it covers E on either side.',
-        (('replace', ['state', 'commentary'], "So our statement keeps E on A's side of BC.",
-          'So our statement takes E on either side of BC.'),)),
+        3, '"Our III.20 reaches Heron\'s case all the same." made "Our III.20 keeps E on A\'s side '
+        'of BC, as Euclid does."',
+        'The statement (`Prop20`) names no centre and no side for it: its angle at the centre, '
+        '`angleAtCentre`, stands on the circumference BC away from A wherever the centre lies, two '
+        'right angles or more when E is on BC or beyond it, as the record says; the commentary now '
+        "says the statement keeps E on A's side of BC.",
+        (('replace', ['state', 'commentary'], "Our III.20 reaches Heron's case all the same.",
+          "Our III.20 keeps E on A's side of BC, as Euclid does."),)),
     ('P14', 'III.4'): Plant(
         4, '`onRay_of_angle_eq` said to hold whether the other arms lie on one side of FE or on '
         'opposite sides of it',

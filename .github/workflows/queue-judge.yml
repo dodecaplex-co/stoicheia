@@ -37,8 +37,8 @@ jobs:
     # same group), and installs nothing, so the Python that runs it holds nothing a group
     # names. Run from main's copy of this file, it holds rule (b)'s first requirement, the
     # judge's code and its running; the second, the authenticity of the pre-flight's
-    # evidence, which the judge reads in the pull request's body, is not held yet, and the
-    # queue stays off until it is (WORKFLOW, section 10).
+    # evidence, which the judge reads in the pull request's body, is held by write access
+    # to the pull request until evidence CI signs (#574) replaces it (WORKFLOW, section 10).
     runs-on: ubuntu-latest
     # The judge's own reading, and its wait of up to 10 minutes for a revert's run to
     # complete (WORKFLOW, section 10): to be measured again on the queue's trial.

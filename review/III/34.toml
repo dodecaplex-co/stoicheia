@@ -27,24 +27,24 @@ note = "Heath gives I.23 for copying the angle, but no reference to III.16, whic
 at = "the angle FBC is equal to the angle constructed in the alternate segment BAC"
 kind = "helper"
 helper = "Prop2.oppositeSide"
-note = "Euclid takes an angle in the alternate segment BAC. The Lean first chooses A across BC from F by `Prop2.oppositeSide` (III.2, for which Heath prints no reference here), then applies III.32 as printed."
+note = "Euclid takes an angle in the alternate segment BAC. The Lean first chooses A across BC from F by `Prop2.oppositeSide` (III.2, for which Heath gives no reference here), then applies III.32 as printed."
 
 [[passage]]
 at = "But the angle FBC is equal to the angle at D"
 kind = "helper"
 helper = "OnRay.of_sameSideOf"
-note = "The Lean puts C on the centre's side of EF: otherwise `OppositeSides.exists_between` would give a crossing of OC with EF within the circle by `InsideCircle.of_between_centre`, contrary to `Touches.not_inside`. `OnRay.of_sameSideOf` then puts C on the ray where the angle was copied, so `angle_onRay_right` gives the copied angle."
+note = "Beneath the sentence that copies the angle, the Lean puts C on the centre's side of EF: otherwise `OppositeSides.exists_between` would give a crossing of OC with EF within the circle by `InsideCircle.of_between_centre`, contrary to `Touches.not_inside`. `OnRay.of_sameSideOf` then puts C on the ray where the angle was copied, so that here `angle_onRay_right` gives the copied angle."
 
 [figure]
 case = "an acute given angle, with BAC the greater segment"
 
 [review]
 stage = "full"
-commit = "7b71d1782"
+commit = "dab0daa75"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:be9733ec86b02a9d"
-run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y)"
-text = "sha256:542a52413e5a68b9"
+run = "brief 0005 stage 5, ship R3 (#29); axiom wave two sweep (card 337): read in full after the retired-rule rewording and the idea figure's description (#348), by Claude Opus 5.5, reader R3-337-r6, at e00da4b4; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 7b71d1782 (reader RT-s3y); #525, read-through 03's editorial leftovers: re-read whole by Claude Opus 5.5, of the family that did not write the original proof where one family wrote it (III.34, III.37: OpenAI Codex), and for II.6, II.7, III.5, III.6 and III.31, whose proofs both families wrote (II.6's and II.7's keep Claude's scratch steps; III.31's companions are Claude's), an independent reader who wrote none of this (#478), independent reader RD-s5, at 5bbb773a7; #525, fix round 1: re-read whole by Claude Opus 5.5, independent reader RD-s9, who wrote none of it (#478), at dab0daa75"
+text = "sha256:c7bc1de34c9fff7b"
 
 [review.items]
 statement = "pass"

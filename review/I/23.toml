@@ -6,7 +6,7 @@ fingerprint = "sha256:a0045621afc2f9d1"
 
 [route]
 kind = "euclid"
-note = "I.22 builds F and G, with I.20 for its condition on the three lengths, and I.8 gives the equal angle; through I.8 and I.20 the proof rests on superposition."
+note = "I.22 builds F and G, with I.20 for its condition on the three lengths, and I.8 gives the equal angle; the proof rests on superposition through I.8, and through I.20, which reaches I.4 by way of I.5 and I.19."
 
 [[passage]]
 at = "thus it is required to construct on the given straight line AB"
@@ -31,11 +31,11 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "ece9c2d71"
+commit = "f800e27f1"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:76721a98bbc6660f"
-run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x)"
-text = "sha256:99e9e408d4495acd"
+lean = "sha256:5e33e5dc08ba06b4"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); #525, read-through 03's named editorial findings mended at main: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s4, at bfc4faab3; #525, read-through 03's editorial leftovers: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s6, at f800e27f1"
+text = "sha256:2e250f174cdd7957"
 
 [review.items]
 statement = "pass"

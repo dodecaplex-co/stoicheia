@@ -256,7 +256,8 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     obtain ⟨AEB, hG, hA⟩ := Postulate3 G A hGA
     have hB : OnCircle B AEB := on_circle_of_len_eq hG hA (by
       rw [len_symm G B, ← hAG, len_symm A G])
-    obtain ⟨E, hE, hE_LX, hEGA⟩ := line_circle_beyond (centre_inside hG) hG_LX hA_LX hGA.symm
+    /- Euclid's E, the other end of the diameter AE, is not named: the right angle at A
+       below is read on the ray from A through the centre G, along AE. -/
     -- Now, since AD is drawn at right angles to the diameter AE from its extremity,
     have hGAD : ∠ G A D = ∟ := by
       rw [angle_onRay_left hGray hDA, angle_symm hXA hDA, hDAX]

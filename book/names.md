@@ -54,6 +54,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | [I.37](I/37.md) Triangles on the same base and in the same parallels are equal | `Elements.BookI.Prop37` | [`Elements.BookI.Prop37`](../Elements/BookI/Prop37.lean) | whole | [what it rests on](I/37.md#what-it-rests-on) |
 | ✅ | [I.38](I/38.md) Triangles on equal bases and in the same parallels are equal | `Elements.BookI.Prop38` | [`Elements.BookI.Prop38`](../Elements/BookI/Prop38.lean) | whole | [what it rests on](I/38.md#what-it-rests-on) |
 | ✅ | [I.39](I/39.md) Equal triangles on the same base are in the same parallels | `Elements.BookI.Prop39` | [`Elements.BookI.Prop39`](../Elements/BookI/Prop39.lean) | whole | [what it rests on](I/39.md#what-it-rests-on) |
+| ✅ | &emsp;[I.39 general](I/39.md#general) | `Elements.BookI.Prop39.general` | [`Elements.BookI.Prop39`](../Elements/BookI/Prop39.lean) |  | [what it rests on](I/39.md#what-it-rests-on) |
 | ✅ | [I.40](I/40.md) Equal triangles on equal bases are in the same parallels | `Elements.BookI.Prop40` | [`Elements.BookI.Prop40`](../Elements/BookI/Prop40.lean) | whole | [what it rests on](I/40.md#what-it-rests-on) |
 | ✅ | &emsp;[I.40 general](I/40.md#general) | `Elements.BookI.Prop40.general` | [`Elements.BookI.Prop40`](../Elements/BookI/Prop40.lean) |  | [what it rests on](I/40.md#what-it-rests-on) |
 | ✅ | &emsp;[I.40 join](I/40.md#join) | `Elements.BookI.Prop40.join` | [`Elements.BookI.Prop40`](../Elements/BookI/Prop40.lean) |  | [what it rests on](I/40.md#what-it-rests-on) |
