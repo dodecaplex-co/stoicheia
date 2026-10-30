@@ -34,3 +34,6 @@
   links.
   It approves the new file [`scripts/negative/stale_address.py`](../../scripts/negative/stale_address.py),
   the check's plant.
+  It approves the change to [`tests/test_concurrent_checks.py`](../../tests/test_concurrent_checks.py):
+  the check's self-test joins the commands that test's registry expects to run alone,
+  since it writes files in the tree while it runs (#608).
