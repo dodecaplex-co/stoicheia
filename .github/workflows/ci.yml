@@ -208,7 +208,11 @@ jobs:
           lake env lean Certificate/Facts.lean
 
       - name: An edited Heath word, wrong radii in I.1, a weakened axiom, a statements' word changed, a primitive no longer opaque, stale and incomplete review records, a native_decide, planted assumptions in I.15's porism and I.16, and a sorry in a complete book
+        # In four workers, one for each of the runner's cores: 434 seconds against 714 for
+        # one on an AMD EPYC 9V45 (docs/decisions/2026-10-29-ci-negative-workers.md).
         if: steps.lane.outputs.full == 'true'
+        env:
+          STOICHEIA_NEGATIVE_WORKERS: "4"
         run: python3 scripts/negative_tests.py
 
   model:
