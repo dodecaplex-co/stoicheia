@@ -201,20 +201,21 @@ story again.
   [`Elements/Figure/Content.lean`](../Elements/Figure/Content.lean), after David Hilbert's
   theory of content, proves that two such divisions of the same points have the same sum; and
   `Figures.area_eq`, in `Divisions.lean` again, makes every division's sum the outline's
-  area. Each outline companion's proof is those three steps: a division, Euclid's
+  area. Each outline companion's proof has three steps: a division, Euclid's
   construction for its triangles (`Prop45.apart`; `Prop14.square`, or `Prop14.apart` for the
   side), and `Figures.area_eq`. I.45's commentary names the two facts as what Euclid takes
   for granted when he calls the sum of ABD and DBC the figure (**"The whole rectilineal
   figure ABCD."**), and II.14's points to it in a clause.
-- **The older companions keep a figure given with a checked division.** `Prop45.apart` and
-  `Prop14.apart` take triangles that lie apart (`Apart`); `Prop45.figure` and
+- **The older companions keep a figure given with a checked division.** `Prop45.apart`,
+  `Prop14.apart` and `Prop14.square` take triangles that lie apart (`Apart`); `Prop45.figure` and
   `Prop14.figure`, triangles glued edge to edge in a suitable order, for a figure with one
   boundary (`Rectilineal`); and `Prop45.fan` and `Prop14.fan`, Euclid's and Oliver Byrne's
   division from one corner, with its two conditions (neighbours on opposite sides of the
   straight line they share, and the angles at that corner together less than four right
   angles), which `Fitted.fan` shows make the triangles fit together. Each makes its
-  parallelogram or square equal to the triangles it is given, taken together, and that sum is
-  the figure's area, the same for every division. They stay beside the outline companions for
+  parallelogram, or the square on a straight line, equal to the triangles it is given, taken
+  together (`Prop14.square` draws that square with its four corners), and that sum is the
+  figure's area, the same for every division. They stay beside the outline companions for
   a figure that comes with its division, and `Prop45.fan_boundary` joins the checked fan to
   the outline through its corners. Their detailed hypotheses are in their docstrings, which
   the Proof row links.
@@ -230,11 +231,13 @@ story again.
   among them, and point to Representation for the area; the Representation rows tell the
   inputs, the outline and the checked divisions, and the one area. I.45's Representation row
   keeps the fan's two conditions, and its commentary the argument of `Fitted.fan`, which
-  follows the triangles round the corner one at a time. II.14's rows point to I.45 for the
-  outline and add what is II.14's own: the square, or its side.
+  follows the triangles round the corner one at a time. II.14's rows name the division and the area
+  in a clause each, point to I.45 for the outline, and add what is II.14's own: the square,
+  or its side.
 
 **Do not copy.** I.45's long Representation row and commentary are earned by its inputs and
 its fan argument; a page whose figure is given more simply needs neither. Full coverage
 through companions does not let a sentence describe the main theorem as covering every
 figure, and a companion that returns a side is not "the square". A page that uses Book Zero's
-division and area points to I.45, as II.14 does, rather than telling them again.
+division and area names them where its rows need them and leaves their story to I.45, as
+II.14's commentary does, rather than telling it again.
