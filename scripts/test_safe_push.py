@@ -3,8 +3,8 @@
 
     python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 scripts/test_safe_push.py        # no Lean, no network; timing in WORKFLOW section 8
-    python3 scripts/test_safe_push.py --shard 3/8   # one of the cadence's eight shards (#233)
-    python3 scripts/test_safe_push.py --shard 3/8 --ran ran-3.json   # and the list of what it ran
+    python3 scripts/test_safe_push.py --shard 3/12   # one of the cadence's twelve shards (#233)
+    python3 scripts/test_safe_push.py --shard 3/12 --ran ran-3.json   # and the list of what it ran
     python3 scripts/test_safe_push.py --cover DIR   # every test ran once, by the lists in DIR
     python3 scripts/test_safe_push.py --times-from-log run.log   # the times, from a CI run's log
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
@@ -1105,8 +1105,9 @@ WORKFLOW_CONTRACTS = {
         "jobs": {
             "safe-push-shards": {
                 "runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
-                "timeout-minutes": 60,
-                "strategy": {"fail-fast": False, "matrix": {"shard": [1, 2, 3, 4, 5, 6, 7, 8]}},
+                "timeout-minutes": 90,
+                "strategy": {"fail-fast": False,
+                             "matrix": {"shard": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}},
                 "steps": (HISTORY, PYTHON, YAML_INSTALL, {"run": (
                     "set -o pipefail", "python3 scripts/test_safe_push.py --shard"
                     " ${{ matrix.shard }}/${{ strategy.job-total }}"
@@ -1275,7 +1276,7 @@ PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
 # names a matrix's jobs (#233).
 SUITE_JOBS = [{"name": n, "status": "completed", "conclusion": "success"}
               for n in ("safe-push-tests", "negative-tests", "formal-model-kernel",
-                        *(f"safe-push-shards ({k})" for k in range(1, 9)))] + \
+                        *(f"safe-push-shards ({k})" for k in range(1, 13)))] + \
     [{"name": "report", "status": "completed", "conclusion": "skipped"}]
 GREEN_SUITE = {"id": 501, "status": "completed", "conclusion": "success", "jobs": SUITE_JOBS}
 
@@ -11597,7 +11598,7 @@ class RiskPreflight(Edge):
     recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
     head, and with a green run of safe-push-tests there, the head's copy of that workflow
     being origin/main's: each of the three jobs the gate names there and passed, and every
-    other job but `report`, the eight shards among them, passed too."""
+    other job but `report`, the shards among them, passed too."""
 
     SHORT = "left to CI"
     FULL = "internal test flag, local origin"
@@ -12769,7 +12770,7 @@ class CadenceReport(unittest.TestCase):
         # #425: GitHub gives the matrix one result, so the report reads each shard's log:
         # three shards with a failure each; the fifth's log cut off before unittest's
         # summary, though a test's output in it says OK and names 99 shards; and
-        # the last shard, eight, with no log, which the other logs' "Shard K of 8" names.
+        # the last shard, N, with no log, which the other logs' "Shard K of N" names.
         # The other shards, whose logs end in OK, are not named.
         shards = ci_shard_count(ci_jobs())
         cut = (f"Shard 5 of {shards}: 2 of 11 tests, about 1 s by the times measured on a "
@@ -17207,7 +17208,7 @@ class Shards(unittest.TestCase):
         self.assertFalse({"name", "needs", "if", "continue-on-error"} & set(job))
         self.assertEqual(job["strategy"]["fail-fast"], False)
         self.assertEqual(job["permissions"], {"contents": "read"})
-        self.assertEqual(job["timeout-minutes"], 60)
+        self.assertEqual(job["timeout-minutes"], 90)
         # Each shard runs the commit the workflow runs, with the whole history; runs its
         # part, pipefail keeping the tests' status through tee, which keeps its output in a
         # log of its own; lists the tests it ran; and keeps the list and the log under names

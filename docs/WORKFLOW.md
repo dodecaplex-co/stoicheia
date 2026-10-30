@@ -579,7 +579,7 @@ python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the compari
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 python3 -m pip install -r scripts/requirements-test_safe_push.txt
 python3 scripts/test_safe_push.py      # every test the shards run, in one run: no Lean
-python3 scripts/test_safe_push.py --shard 3/8 --ran "${RUNNER_TEMP:-/tmp}/ran-3.json"   # the third shard of eight, as the cadence runs it
+python3 scripts/test_safe_push.py --shard 3/12 --ran "${RUNNER_TEMP:-/tmp}/ran-3.json"   # the third shard of twelve, as the cadence runs it
 ```
 
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
@@ -650,9 +650,9 @@ Main's run after each merge, the post-merge workflow's call, is R5, and runs eve
 full: `negative` and `formal-model` beside `check`, `model` and `acceptance`, which runs on
 every event CI runs on. The cadence, the
 `safe-push-tests` workflow, runs on main every six hours, whatever landed: the safe_push
-tests, in eight shards side by side (in one job they took 72 to 78 minutes, and 137 on the
-slow run cited below), the negative tests in full, and the formal model's build and kernel
-re-check. A release runs three
+tests, in twelve shards side by side (in one job, by 23 October, they took 72 to 78
+minutes, and 137 on the slow run cited below), the negative tests in full, and the formal
+model's build and kernel re-check. A release runs three
 things at its own head: the full
 pre-flight, since its label makes it R5; its pull request's CI, in full when its run
 starts with the label; and a run of the `safe-push-tests` workflow, whose jobs, the shards
@@ -709,12 +709,13 @@ with no other permission, and its checkout keeps no token.
 GitHub's runners, and 137 on a slow one; on as slow a runner it reached the job's limit,
 then 150 minutes, and was cancelled there
 ([the decision of 23 October](decisions/2026-10-23-cadence-timeout.md)). So the workflow
-runs it as eight shards side by side (#233,
+runs it in shards side by side (#233,
 [the decision](decisions/2026-10-24-safe-push-shards.md)): the `safe-push-shards` job's
 matrix runs `python3 scripts/test_safe_push.py --shard K/N --ran FILE` for each K from 1
 to N, N being written once in the workflow, in the matrix, whose `strategy.job-total`
-each shard is given as N; each shard may take 60 minutes, and none stops the others when
-it fails. Every test
+each shard is given as N. There are twelve shards, and each may take 90 minutes
+([the decision of 30 October](decisions/2026-10-30-shard-headroom.md)); none stops the
+others when it fails. Every test
 runs in exactly one shard: `--shard` lists the tests with unittest's own loader, so that a
 new test is never missed, and deals them out by the seconds each took on a GitHub runner,
 kept in `scripts/test_safe_push_times.json`, the heaviest first, each to the shard with the
@@ -750,7 +751,7 @@ Both are needed: a later attempt can see a list an earlier one kept, as #411 sho
 that list stays when, in a rerun of all the jobs, its shard is cancelled before it keeps a
 new one, so the proof alone could pass; and the matrix's result says nothing of which
 tests ran. To run one shard as the cadence does, give its number and the count, as in
-`python3 scripts/test_safe_push.py --shard 3/8`; without `--shard` the whole suite runs.
+`python3 scripts/test_safe_push.py --shard 3/12`; without `--shard` the whole suite runs.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
 head commit of every pull request of R3 to R5 (section 10): those of `check` as
@@ -2482,5 +2483,5 @@ cases include unfinished work left unwritten, closed or unlabelled issues, open 
 issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
 request merging without reading the blockers;
 `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all. The
-`safe-push-tests` workflow runs the tests, in eight shards and without that run, every six
+`safe-push-tests` workflow runs the tests, in twelve shards and without that run, every six
 hours on main and on demand (section 8).
