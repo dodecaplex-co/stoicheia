@@ -117,10 +117,10 @@ def screen_source(record="none yet", code="RULES = 1\n"):
 class ResultsCurrent(unittest.TestCase):
     """--results-current on a git repository of its own, built as results_check's self-test
     builds one, its git run for real with its environment cleared. Its commits: O, the
-    library, the model's page and results naming an older commit, the screen, the reports
-    and the README; C, a change to the library; R, the results and counts naming C; S, the
-    screen's record, catalogue and docstring; E, the release's decisions entry; P, the
-    acceptance report. No Lean, network or gh."""
+    library, the model's page and results naming an older commit, the screen and its
+    record of an older run, the reports and the README; C, a change to the library; R, the
+    results and counts naming C; S, the screen's record, catalogue and docstring; E, the
+    release's decisions entry; P, the acceptance report. No Lean, network or gh."""
 
     @classmethod
     def setUpClass(cls):
@@ -139,6 +139,7 @@ class ResultsCurrent(unittest.TestCase):
             "Elements/A.lean": "theorem a : True := trivial\n",
             "tests/model/MODEL.md": model_page(OLDER), **results_files(OLDER),
             "Audit/screen.py": screen_source(),
+            "Audit/screen-run.toml": f'commit = "{OLDER}"\n',
             "docs/reports/overlaps.md": "# Overlaps\n\nNone screened yet.\n",
             "docs/reports/acceptance-books-I-III.md": "Revision: none\n",
             "README.md": "# Edition\n\n<!-- scope:books -->\nBooks I and II\n"
@@ -184,16 +185,27 @@ class ResultsCurrent(unittest.TestCase):
         cls.git("commit", "-q", "--allow-empty", "-m", "a commit")
         return cls.git("rev-parse", "HEAD")
 
-    def judge(self, rev, **environ):
+    @classmethod
+    def by_git(cls, base, *commands):
+        """A commit on base made by these git commands, for what the helper above cannot
+        make: a rename by git mv, a merge, a gitlink."""
+        cls.git("checkout", "-q", "-f", "--detach", base)
+        cls.git("clean", "-q", "-f", "-d", "-x")
+        for command in commands:
+            cls.git(*command)
+        return cls.git("rev-parse", "HEAD")
+
+    def judge(self, rev, folder=None, **environ):
         out, err = io.StringIO(), io.StringIO()
         with mock.patch.dict(os.environ, {**self.home, **environ}), \
                 redirect_stdout(out), redirect_stderr(err):
-            code = gate.main(["--results-current", "--repo-dir", str(self.root), f"--rev={rev}"])
+            code = gate.main(["--results-current", "--repo-dir", str(folder or self.root),
+                              f"--rev={rev}"])
         return code, out.getvalue(), err.getvalue()
 
-    def refused(self, rev, paths, *said):
+    def refused(self, rev, paths, *said, folder=None):
         """Exit 1, naming exactly these paths, each reason with its words."""
-        code, out, err = self.judge(rev)
+        code, out, err = self.judge(rev, folder)
         self.assertEqual(code, 1, out + err)
         named = {line[2:].split(": ", 1)[0] for line in out.splitlines()
                  if line.startswith("  ")}
@@ -208,6 +220,14 @@ class ResultsCurrent(unittest.TestCase):
                 code, out, err = self.judge(rev)
                 self.assertEqual((code, err), (0, ""), out)
                 self.assertIn(f"they name {self.C[:12]}", out)
+        # O holds a record, so S modifies it; the screen's first run adds one, which passes.
+        first = self.commit(self.C, {"Audit/screen-run.toml": None})
+        fresh = self.commit(first, {**results_files(first),
+                                    "tests/model/MODEL.md": model_page(first)})
+        code, out, err = self.judge(self.commit(fresh, {
+            "Audit/screen-run.toml": f'commit = "{first}"\n'}))
+        self.assertEqual((code, err), (0, ""), out)
+        self.assertIn(f"they name {first[:12]}", out)
         # Run where it is, as the coordinator runs it: HEAD, with no option but the mode.
         self.git("checkout", "-q", "-f", "--detach", self.P)
         with mock.patch.dict(os.environ, self.home), redirect_stdout(io.StringIO()):
@@ -239,6 +259,11 @@ class ResultsCurrent(unittest.TestCase):
                                                                  "")},
              ["tests/model/MODEL.md"], "has no one counts block"),
             ({"tests/model/MODEL.md": None}, ["tests/model/MODEL.md"], "deleted since"),
+            ({"tests/model/MODEL.md": lambda p: p.symlink_to("../../README.md")},
+             ["tests/model/MODEL.md"], "has no one counts block", "changed in type"),
+            ({"tests/model/MODEL.md": model_page(self.C) * 2}, ["tests/model/MODEL.md"],
+             "has no one counts block", "changed outside its one counts block"),
+            ({"Audit/screen-run.toml": None}, ["Audit/screen-run.toml"], "deleted since"),
             ({"Audit/screen.py": screen_source(self.C[:12], code="RULES = 2\n")},
              ["Audit/screen.py"], "changed in the code the screen hashes"),
             # Code on the docstring's last line keeps the whole text, so the change is refused.
@@ -272,6 +297,25 @@ class ResultsCurrent(unittest.TestCase):
         for changes, paths, *said in cases:
             with self.subTest(changes=list(changes), said=said):
                 self.refused(self.commit(self.P, changes), paths, *said)
+        # A rename is refused as a deletion and an addition, and so is main's later work
+        # merged after the run.
+        main = self.commit(self.C, {"Elements/B.lean": "theorem b : True := trivial\n"})
+        for commands, paths, *said in (
+                ([("mv", "Elements/A.lean", "Elements/Z.lean"),
+                  ("commit", "-q", "-m", "a rename")],
+                 ["Elements/A.lean", "Elements/Z.lean"], "Elements/A.lean: deleted since",
+                 "Elements/Z.lean: added since"),
+                ([("merge", "-q", "--no-edit", main)], ["Elements/B.lean"],
+                 "Elements/B.lean: added since")):
+            with self.subTest(commands=commands[0][0]):
+                self.refused(self.by_git(self.P, *commands), paths, *said)
+        # An added results file that names C passes: which files the results hold is
+        # results_check's job, and this mode's is only whether they are the head's own.
+        with self.subTest(changes=["tests/model/results/extra.txt"]):
+            extra = results_files(self.C)["tests/model/results/exhaustive.txt"]
+            code, out, err = self.judge(self.commit(self.P, {
+                "tests/model/results/extra.txt": extra}))
+            self.assertEqual((code, err), (0, ""), out)
 
     def test_results_that_name_another_commit_or_state_are_refused(self):
         two = self.commit(self.P, results_files(self.O) | {
@@ -320,6 +364,9 @@ class ResultsCurrent(unittest.TestCase):
             (self.commit(self.P, {summary: f"{line}{line}\n"}),
              "summary.txt: its header names no commit, once"),
             (self.commit(self.P, {summary: f"{line.rstrip()} \n\n"}), "on line 1"),
+            (self.commit(self.P, {k: v.replace("\n", "\r\n")
+                                  for k, v in results_files(self.C).items()}),
+             "its header names no commit, once"),
             ("no-such-branch", "names no commit"),
             ("--output=/dev/null", "names no commit"),
         ]
@@ -353,6 +400,41 @@ class ResultsCurrent(unittest.TestCase):
             self.refused(stale, ["Elements/A.lean"])
         finally:
             self.git("replace", "-d", stale)
+        # Nor can a graft put results run on other history into the head's.
+        side = self.commit(self.O, {"Elements/A.lean": "theorem a : 5 = 5 := rfl\n"})
+        moved = self.commit(self.P, {**results_files(side),
+                                     "tests/model/MODEL.md": model_page(side)})
+        grafts = self.root / ".git" / "info" / "grafts"
+        grafts.parent.mkdir(exist_ok=True)
+        grafts.write_text(f"{moved} {self.P} {side}\n", encoding="ascii")
+        try:
+            self.git("merge-base", "--is-ancestor", side, moved)   # git, grafts read, agrees
+            self.refused(moved, [f"{side[:12]}, the results' commit, is not an ancestor of "
+                                 f"{moved[:12]}"])
+        finally:
+            grafts.unlink()
+
+    def test_a_subfolder_and_the_repositorys_own_config_hide_no_change(self):
+        # Run from a subfolder, with a config that would limit the diff to that folder and
+        # leave out every gitlink: the library's change, and a gitlink added, are named.
+        stale = self.commit(self.P, {"Elements/A.lean": "theorem a : 6 = 6 := rfl\n"})
+        linked = self.by_git(self.P, ("update-index", "--add", "--cacheinfo",
+                                      f"160000,{self.C},Elements/Sub"),
+                             ("commit", "-q", "-m", "a gitlink"))
+        config = {"diff.relative": "true", "diff.ignoreSubmodules": "all"}
+        for key, value in config.items():
+            self.git("config", "--local", key, value)
+        try:
+            for folder in (self.root, self.root / "docs"):
+                with self.subTest(folder=folder.name):
+                    code, out, err = self.judge(self.P, folder)
+                    self.assertEqual((code, err), (0, ""), out)
+                    self.refused(stale, ["Elements/A.lean"], folder=folder)
+                    self.refused(linked, ["Elements/Sub"], "Elements/Sub: added since",
+                                 folder=folder)
+        finally:
+            for key in config:
+                self.git("config", "--local", "--unset", key)
 
     def test_the_command_line(self):
         script = str(ROOT / "scripts/check_release_gate.py")
@@ -387,11 +469,20 @@ class ResultsCurrent(unittest.TestCase):
     def test_the_patterns_are_run_pys(self):
         # tests/model/run.py is imported as results_check imports it, but in a process of
         # its own, so that the harness modules its import brings stay out of this one; its
-        # header() is given a stand-in run, and its paths are taken from its root.
+        # header() is given a stand-in run, and its paths are taken from its root. So are
+        # Audit/screen.py and scripts/check_acceptance.py, for the screen's rule, its code
+        # without its docstring, and the paths of the screen, its record and the report.
         program = (
-            "import json, os, sys, types\n"
+            "import ast, inspect, json, os, sys, types\n"
             "sys.path.insert(0, os.path.join(sys.argv[1], 'tests', 'model'))\n"
             "import run\n"
+            "for folder in ('scripts', 'Audit'):\n"
+            "    sys.path.insert(0, os.path.join(sys.argv[1], folder))\n"
+            "import check_acceptance, check_release_gate, screen\n"
+            "def code(f):\n"
+            "    node = ast.parse(inspect.getsource(f)).body[0]\n"
+            "    node.body = node.body[1:]   # its docstring, which says whose it is\n"
+            "    return ast.dump(node)\n"
             "r = types.SimpleNamespace(key='k', what='w', command='c', seeds=None, seconds=0.0)\n"
             "prov = {'commit': 'a' * 40 + ' (' + run.COMMITTED + ')', 'harness': 'h',\n"
             "        'python': 'p', 'date': 'd'}\n"
@@ -399,7 +490,13 @@ class ResultsCurrent(unittest.TestCase):
             "    'counts': [run.COUNTS.pattern, run.COUNTS.flags], 'summary': run.SUMMARY,\n"
             "    'results': os.path.relpath(run.RESULTS, run.ROOT),\n"
             "    'model_md': os.path.relpath(run.MODEL_MD, run.ROOT),\n"
-            "    'header': run.header(r, prov), 'short': run.short_commit(prov['commit'])}))\n")
+            "    'header': run.header(r, prov), 'short': run.short_commit(prov['commit']),\n"
+            "    'rule': [code(screen.without_docstring),\n"
+            "             code(check_release_gate.without_docstring)],\n"
+            "    'screen': screen.SCREEN,\n"
+            "    'record': screen.RECORD.relative_to(screen.ROOT).as_posix(),\n"
+            "    'report': check_acceptance.REPORT.relative_to(check_acceptance.ROOT)\n"
+            "    .as_posix()}))\n")
         result = subprocess.run([sys.executable, "-I", "-c", program, str(ROOT)],
                                 capture_output=True, text=True, cwd=ROOT)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -412,6 +509,10 @@ class ResultsCurrent(unittest.TestCase):
         self.assertEqual(run["short"], "a" * 12)
         match = gate.COMMIT_LINE.fullmatch(run["header"].splitlines()[3])
         self.assertEqual(match.groups(), ("a" * 40, COMMITTED))
+        self.assertEqual(*run["rule"])
+        self.assertEqual(gate.SCREEN, run["screen"])
+        self.assertEqual(list(gate.OUTPUTS),
+                         [run["record"], "docs/reports/overlaps.md", run["report"]])
         # And each of this repository's own results names its commit where the gate reads.
         for path in sorted((ROOT / gate.RESULTS).glob("*.txt")):
             with self.subTest(path=path.name):

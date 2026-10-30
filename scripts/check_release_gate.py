@@ -24,8 +24,8 @@ code the screen hashes, docs/reports/overlaps.md, the acceptance report, and one
 decisions entry added. Any other change, a deletion included, is refused. Exit 0 when the
 results are current; 1 when they are not, naming each path and why; 2 when the head, its
 results, a header in the form run.py writes or C cannot be read. It reads git's objects
-alone, with replacements off and every GIT_ variable of the environment set aside, and
-never imports, runs or reads the working tree of the repository it judges.
+alone, with replacements and grafts off and every GIT_ variable of the environment set
+aside, and never imports, runs or reads the working tree of the repository it judges.
 """
 
 import argparse
@@ -136,7 +136,8 @@ def read_live(repo: str) -> list[dict]:
 # --------------------------------------------------------------------------------------
 # --results-current (#701). What tests/model/run.py writes is restated here, since the
 # judged repository's code is never imported; a test of tests/test_release_gate.py pins
-# each to run.py.
+# each to run.py, and the screen's rule and the paths of its file, its record and the
+# acceptance report to Audit/screen.py and scripts/check_acceptance.py.
 
 RESULTS = "tests/model/results"
 RESULT_FILE = re.compile(r"tests/model/results/[^/]+\.txt")
@@ -158,10 +159,12 @@ class Unreadable(Exception):
 
 
 def git_objects(repo: str, *args: str) -> subprocess.CompletedProcess:
-    """git in the judged repository, with no replacements and no GIT_ variable of ours,
-    any of which could point it at another repository, object store, index or config."""
+    """git in the judged repository, with no replacements, no grafts and no GIT_ variable
+    of ours, any of which could point it at another repository, object store, index,
+    config or history."""
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    env["GIT_GRAFT_FILE"] = os.devnull
     try:
         return subprocess.run(["git", *args], cwd=repo, env=env, capture_output=True,
                               stdin=subprocess.DEVNULL, timeout=300)
@@ -202,7 +205,12 @@ def screen_code(data: bytes | None) -> str | None:
 
 
 def counts_blocks(data: bytes | None) -> list[re.Match]:
-    return list(COUNTS.finditer(data.decode("utf-8", "surrogateescape"))) if data else []
+    """MODEL.md's counts blocks; none unless it opens one exactly once, so that the pattern,
+    slow on many openings, never runs on more than one."""
+    text = data.decode("utf-8", "surrogateescape") if data else ""
+    if text.count("<!-- counts:begin -->") != 1:
+        return []
+    return list(COUNTS.finditer(text))
 
 
 def outside_counts(data: bytes | None) -> str | None:
@@ -238,7 +246,7 @@ def judge_results(repo: str, rev: str) -> tuple[str, str | None, list[str]]:
         raise Unreadable(f"{printable_text(rev)} names no commit of the repository at "
                          f"{printable_text(repo)}")
     head = found.stdout.decode("ascii", "replace").strip()
-    listing = git_objects(repo, "ls-tree", "-z", f"{head}:{RESULTS}")
+    listing = git_objects(repo, "ls-tree", "-z", "--full-tree", f"{head}:{RESULTS}")
     if listing.returncode:
         raise Unreadable(f"{head[:12]} holds no {RESULTS}")
     refused, unread, commits = [], [], {}
@@ -266,8 +274,8 @@ def judge_results(repo: str, rev: str) -> tuple[str, str | None, list[str]]:
         commits.setdefault(match.group(1), []).append(shown)
         if match.group(2) != COMMITTED:
             refused.append(f"{shown}: names {match.group(1)[:12]} with "
-                           f"\"({printable_text(match.group(2))})\", not \"({COMMITTED})\": "
-                           "its run read other harness files")
+                           f"\"({printable_text(match.group(2))})\", "
+                           f"not \"({COMMITTED})\": its run read other harness files")
     if unread:
         raise Unreadable(*unread)
     if not commits and not refused:
@@ -304,7 +312,8 @@ def judge_results(repo: str, rev: str) -> tuple[str, str | None, list[str]]:
         raise Unreadable(f"git cannot compare {head[:12]} with {commit[:12]}")
     entries = []
     for status, path in zip(fields[::2], fields[1::2]):
-        status, path = status.decode("ascii", "replace"), path.decode("utf-8", "surrogateescape")
+        status = status.decode("ascii", "replace")
+        path = path.decode("utf-8", "surrogateescape")
         if DECISION_ENTRY.fullmatch(path) and status == "A":
             entries.append(printable_text(path))
         elif why := change_refused(repo, commit, head, status, path):
@@ -328,8 +337,8 @@ def results_current(repo: str, rev: str) -> int:
         for line in refused:
             print(f"  {line}")
         print("Run python3 -I tests/model/run.py --full --write at the release head, after "
-              "every other change, and commit what it writes (docs/WORKFLOW.md, section 10, "
-              "step 10).")
+              "every other change, and commit what it writes (docs/WORKFLOW.md, "
+              "section 10, step 10).")
         return 1
     print(f"the model's results are current: they name {commit[:12]}, and {head[:12]} "
           "differs from it in the release steps' own outputs alone")
@@ -343,8 +352,8 @@ def main(argv=None) -> int:
                         help="default: GITHUB_REPOSITORY, then origin")
     parser.add_argument("--results-current", action="store_true",
                         help="judge the model's committed results instead of the issues")
-    parser.add_argument("--repo-dir", metavar="DIR",
-                        help="with --results-current: the repository (default: this folder)")
+    parser.add_argument("--repo-dir", metavar="DIR", help="with --results-current: "
+                        "the repository (default: this folder)")
     parser.add_argument("--rev", metavar="REV",
                         help="with --results-current: the head judged (default: HEAD)")
     args = parser.parse_args(argv)
