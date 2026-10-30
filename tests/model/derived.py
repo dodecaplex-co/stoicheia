@@ -4,7 +4,8 @@ These predicates keep the guards and conclusions of their search.py checks: the 
 first, then the 31 prepared for retirement while all 79 axioms remain; and, kept beside
 Circle 2, Circle 3 (`outside_of_between`), prepared in the same way for its retirement after
 III.2; and Circle 1 (`between_of_inside_chord`), prepared in the same way for its retirement
-after III.2 (#477) while it is still an axiom.
+after III.2 (#477) while it is still an axiom; and Metric 9 (`area_congruent`), prepared in
+the same way for Common Notion 4 for figures to take its place among the axioms (#517).
 The exhaustive and structured harnesses report them with a derived. prefix, even
 while the corresponding declarations are still axioms. Their configurations and
 results therefore survive removal of those laws from search.py and hyperbolic.py.
@@ -64,6 +65,30 @@ def between_of_inside_chord(c):
             and on_circle(Cc, al) and B != Cc):
         return None
     return between(B, A, Cc)
+
+
+def area_congruent(c):
+    A, B, Cc, D, E, F = (c[k] for k in 'ABCDEF')
+    # make congruent copies likely: sometimes E,F are an isometric image of B,C about A->D
+    rng = c['_rng']
+    if rng.random() < 0.7:
+        # lattice isometry: rotate by multiple of 90 deg, maybe reflect, translate A to D
+        rot = rng.randint(0, 3)
+        refl = rng.random() < 0.5
+
+        def iso(X):
+            x, y = X[0] - A[0], X[1] - A[1]
+            if refl:
+                y = -y
+            for _ in range(rot):
+                x, y = -y, x
+            return (D[0] + x, D[1] + y)
+        E, F = iso(B), iso(Cc)
+    if not (d2(A, B) == d2(D, E) and d2(B, Cc) == d2(E, F) and d2(Cc, A) == d2(F, D)
+            and feq(ang(A, B, Cc), ang(D, E, F)) and feq(ang(B, Cc, A), ang(E, F, D))
+            and feq(ang(Cc, A, B), ang(F, D, E))):
+        return None
+    return area2(A, B, Cc) == area2(D, E, F)
 
 
 def exists_point_outside_circle(c):
@@ -400,6 +425,7 @@ PROPERTIES = {
     'derived.inside_of_between': inside_of_between,
     'derived.outside_of_between': outside_of_between,
     'derived.between_of_inside_chord': between_of_inside_chord,
+    'derived.area_congruent': area_congruent,
     'derived.exists_point_outside_circle': exists_point_outside_circle,
     'derived.line_meets_circle_of_opposite_sides': line_meets_circle_of_opposite_sides,
     'derived.triple_incidence3': triple_incidence3,

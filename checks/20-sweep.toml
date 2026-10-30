@@ -1,6 +1,7 @@
 # List the candidates for dummy citations, artificial hypothesis uses and concealing helpers
 # in Elements/. Report only, the list in the log: the release gate runs it with
 # --fail-on-undeclared (docs/WORKFLOW.md, section 10).
+# Alone (#608): it runs one Lean per core, and so fills the machine itself.
 order = 56
 name = "python3 scripts/sweep_citations.py"
 job = "check"

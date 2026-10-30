@@ -1,0 +1,184 @@
+- **Step 4's checks that may run beside each other run concurrently (checks,
+  [#608](https://github.com/dodecaplex-co/stoicheia/issues/608)).** Card #608 is the
+  coordinator's record of the second step in making the pre-flight faster, after the
+  negative tests' workers (#607). Once the build and `Certificate/Facts.lean` are done,
+  step 4 ran about twenty checks one after another, though most of them only read the
+  tree: on the Mac, `tests/test_certificate.py` alone takes about 78 seconds and the kernel
+  self-test about 70.
+
+  The registry gains two optional fields. `concurrent = true` declares that a check writes
+  nothing in the worktree but Python's ignored bytecode, reads nothing that a check which
+  may run beside it writes, has no limit timed by the clock tight enough to fail on a busy
+  machine, and does not itself fill the machine; the reader accepts `true` alone, and
+  never for the check with `empty`. `after`, with `concurrent` only, names earlier checks
+  that must have ended before the check starts, so that a check's own test still runs
+  before its verdict. A check without the field runs alone, after every earlier check has
+  ended and before any later one starts, so every new check runs alone until a reviewed
+  change declares it. The reader's JSON carries both fields; a copy of
+  `scripts/safe_push.py` from before this change reads only an entry's name, command,
+  empty and job, and so ignores them.
+
+  The declarations follow a read-only audit of every check at c592c1664: seventeen
+  checks of the registry are declared concurrent, with the model job beside them in
+  `scripts/safe_push.py`, and `check_paths.py --self-test` and
+  `check_superposition_pins.py` each wait for their own tests. The three builds,
+  `Facts.lean`, `render.py` and the clean-tree check write or judge the tree, and run alone.
+  So do `scripts/heath.py`, whose plants each have half a second by the clock, and
+  `tests/test_check_style.py`, one of whose cases has two seconds: raising either limit
+  would weaken a check, so they are scheduled alone instead. `sweep_citations.py` already
+  runs one Lean per core, and runs alone too. The negative job is unchanged. Each check's
+  file says in one comment line why it is concurrent or runs alone.
+
+  The pre-flight runs concurrent checks that come next to each other in order as a group,
+  up to `STOICHEIA_CHECK_WORKERS` at once, and never more than half the machine's cores;
+  the check list line says the number and the cap, and any other value than a whole number
+  from 1 fails it. Every check is still started by the harness's launcher, `run()`, as
+  every command of step 4 is: at more than one worker, each check of a group on a thread
+  of its own. Unset, empty or 1, the variable means one, and every check runs as before
+  this change, one after another on the harness's own thread, with only the guard below
+  added around each group; so nothing runs concurrently until the lane sets it. The report
+  and the logs are written in the registry's order, by the harness's own thread, each with
+  its own time and output, as when the checks ran one at a time. Where a failure refuses,
+  no check's thread is started once one has failed (a check whose thread had started may
+  still run, and is waited for), every running check is waited for, and the refusal names
+  the first failing check in the registry's order, nothing after it reported or logged;
+  where a failure is noted, every check runs and is noted in order, and the main-checks
+  cache records each in order.
+
+  The change lands as groundwork, with one worker the default. On 28 October the
+  coordinator decided that the lane keeps one worker until card #648 has moved the sweep
+  after the kernel self-test, so that the two long checks can run beside each other, and
+  runs at one and at more workers, taken in turn on the Mac, show a gain. In an
+  end-to-end run on a copy of origin/main with this change, four workers gave the same
+  reports as one, times aside, for a passing commit and a failing one; but step 4 was not
+  shorter, since the sweep, which runs alone, parts `tests/test_certificate.py` from the
+  kernel self-test, and the machine's load drifted more between the runs than the short
+  checks could gain.
+
+  At more than one worker, while a group runs, the harness's handlers for Ctrl-C's SIGINT,
+  SIGTERM and SIGHUP only record a signal and raise nothing, since an exception raised by
+  a handler can land just after a lock is taken and leave it held. Once a signal is
+  recorded, no further check starts; the checks already running, up to the number of
+  workers, run to their end; the previous handlers are put back; and what the first
+  signal would have raised goes on, unless another comes in the moment the handlers are
+  put back, when its own handler raises first. A terminal's Ctrl-C reaches the checks
+  too, in the run's process group, and they end; a SIGTERM or SIGHUP sent to the harness
+  alone waits for them to end of themselves, and stopping them by their process groups
+  is left to card #647. Any other exception, a refusal or one a check's `run()` raised,
+  waits for them in the same way before it goes on. So no check still reads the worktree
+  when the pass cleans it. The pass waits by joining each check's thread, whether or not
+  it has taken in the check's end. At one worker, nothing changes: a signal raises as
+  before, and a check in `run()` is stopped.
+
+  Around each group, at every number of workers, the pre-flight takes the worktree's
+  state: HEAD; the index's entries, with their skip-worktree and assume-unchanged flags;
+  each path `git status` lists; and every other file that `git ls-files -o` lists with no
+  exclude rules, ignored files with them, but Python's bytecode. Each file's bytes are
+  hashed, but under the build's caches, `.lake/` and `model/.lake/`, where its size,
+  modification and change times, inode and mode are compared, so that a write which puts
+  back the size and modification time still shows; nothing is written, neither the index
+  nor an object. A group that changes the state fails the step "concurrent checks left
+  the tree as they found it", naming the group's checks and what changed, and in
+  origin/main's pass that note keeps the pass out of the main-checks cache.
+  `STOICHEIA_CHECK_WORKERS` is keyed in that cache on purpose, though no check reads it: a
+  record made at one number of workers is never used at another, so that a check whose
+  outcome turns on the number, against its declaration, is judged at the number the run
+  uses. A registry with no concurrent check, as origin/main's before this change, gives no
+  group and no extra step; the variable is not read, and the check list line says nothing
+  of workers: the run is as before. The new check,
+  `tests/test_concurrent_checks.py`, runs early in the sequence and alone, since it starts
+  processes of its own and measures how many run at once.
+
+  This entry approves the change to `scripts/safe_push.py`, which reads the two fields,
+  runs the groups, guards the tree around each, records a signal while a group runs, and
+  waits for a group's checks before a signal or any other exception goes on.
+
+  This entry approves the change to `scripts/registry.py`, which reads and checks the two
+  fields and prints them in its JSON.
+
+  This entry approves the change to `checks/README.md`, which says what `concurrent`
+  promises and how the pre-flight runs a group.
+
+  This entry approves the new `tests/test_concurrent_checks.py`, which puts the runs and
+  the registry's rules to stand-in checks.
+
+  This entry approves the new `checks/27-test-concurrent-checks.toml`, which runs that
+  test before the build, alone.
+
+  This entry approves the change to `checks/05-test-certificate.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/06-check-kernel.toml`, which declares its check
+  concurrent.
+
+  This entry approves the change to `checks/08-check-fidelity.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/10-test-release-gate.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/11-test-jev-models.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/12-jev-self-test.toml`, which declares its check
+  concurrent.
+
+  This entry approves the change to `checks/13-test-screen.toml`, which declares its check
+  concurrent.
+
+  This entry approves the change to `checks/14-test-acceptance-limits.toml`, which declares
+  its check concurrent.
+
+  This entry approves the change to `checks/15-check-style.toml`, which declares its check
+  concurrent.
+
+  This entry approves the change to `checks/18-check-links.toml`, which declares its check
+  concurrent.
+
+  This entry approves the change to `checks/19-sweep-self-test.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/21-check-queue-tree.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/22-test-check-superposition-pins.toml`, which
+  declares its check concurrent.
+
+  This entry approves the change to `checks/23-check-superposition-pins.toml`, which
+  declares its check concurrent.
+
+  This entry approves the change to `checks/24-lane-condition.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/25-test-check-paths.toml`, which declares its
+  check concurrent.
+
+  This entry approves the change to `checks/26-check-paths.toml`, which declares its check
+  concurrent.
+
+  This entry approves the change to `checks/01-lake-build.toml`, whose check runs alone, and
+  which says why.
+
+  This entry approves the change to `checks/02-lake-build-audit.toml`, whose check runs
+  alone, and which says why.
+
+  This entry approves the change to `checks/03-lake-build-staging.toml`, whose check runs
+  alone, and which says why.
+
+  This entry approves the change to `checks/04-facts.toml`, whose check runs alone, and
+  which says why.
+
+  This entry approves the change to `checks/07-heath.toml`, whose check runs alone, and
+  which says why.
+
+  This entry approves the change to `checks/09-test-check-style.toml`, whose check runs
+  alone, and which says why.
+
+  This entry approves the change to `checks/16-render.toml`, whose check runs alone, and
+  which says why.
+
+  This entry approves the change to `checks/17-clean-worktree.toml`, whose check runs alone,
+  and which says why.
+
+  This entry approves the change to `checks/20-sweep.toml`, whose check runs alone, and
+  which says why.
