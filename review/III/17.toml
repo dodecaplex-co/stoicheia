@@ -1,7 +1,7 @@
 # review/III/17.toml
 [statement]
 scope = "full"
-note = "`Prop17` draws AB touching at B from A outside; `Prop17.general` takes any A not within, returning a touching line AX whose contact may be A."
+note = "A is outside the circle or on it: from a point within no straight line touches (`Prop17.inside`). `Prop17` takes A outside; `Prop17.general`, any A not within."
 companions = ["III.17 general"]
 fingerprint = "sha256:105a583195d3f19f"
 

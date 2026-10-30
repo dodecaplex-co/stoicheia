@@ -1,9 +1,7 @@
 # review/I/31.toml
-# `hA : ¬ Collinear B C A` says that the given point is off the given straight line,
-# which a parallel through it presupposes.
 [statement]
 scope = "full"
-note = "Draws a parallel through A, as asked; that there is no other, which Proclus remarks, is proved from I.29 as `Prop30.unique`."
+note = "A is off BC (`hA`): through a point on BC no parallel to BC can be drawn. That there is no other parallel through A, which Proclus remarks, is `Prop30.unique`."
 fingerprint = "sha256:07d1a4437d0abafd"
 
 [route]
