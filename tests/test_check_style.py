@@ -1063,6 +1063,23 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S7", lambda src: spans_of(src, 5, "Another docstring."), SAMPLE_TACIT, None),
     ("S7", lambda src: spans_of(src, 2, "On one line."), "namespace Elements.Tacit\n"
      "/-- On one line. -/ axiom one : True\n", " On one line. "),
+    # A docstring and axiom inside a remark are none; a block nested in a docstring is
+    # part of its text (#349).
+    ("S7", lambda src: spans_of(src, 2, "On one line."), "namespace Elements.Tacit\n"
+     "/- Was: /-- On one line. -/ axiom one : True -/\n/-- Now. -/ axiom one : True\n", None),
+    ("S7", lambda src: spans_of(src, 3, "Now."), "namespace Elements.Tacit\n"
+     "/- Was: /-- On one line. -/ axiom one : True -/\n/-- Now. -/ axiom one : True\n",
+     " Now. "),
+    ("S7", lambda src: spans_of(src, 2, "Outer /- inner -/ text."), "namespace Elements.Tacit\n"
+     "/-- Outer /- inner -/ text. -/ axiom one : True\n", " Outer /- inner -/ text. "),
+    # The axioms render.py shows, and the laws of `Cited` on the pages of I.4 and I.8, read
+    # by the same reader (#349).
+    ("S7", lambda src: [(doc, name) for doc, name, _, _ in style.render.axiom_docstrings(src)],
+     "/- Was: /-- Gone. -/ axiom gone : True -/\n/-- Outer /- inner -/ text. -/ axiom one : True\n",
+     [(" Outer /- inner -/ text. ", "one")]),
+    ("S7", style.render.cited_law_docs, "inductive Cited where\n"
+     "  /- Was: /-- Gone. -/ | gone -/\n  /-- Outer /- inner -/ text. -/\n  | kept\n"
+     "  deriving DecidableEq\n", {"kept": "Outer /- inner -/ text."}),
     ("S7", lambda src: spans_of(src, 2, "The transfer rules: Definition 15 here is in no "
                                 "page."), SAMPLE_TACIT, None),
     ("S22", s22, "the straight line `PQ` and the circle `ABCD`", ["PQ", "ABCD"]),
@@ -2500,6 +2517,89 @@ class RouteSteps(unittest.TestCase):
                               "argued another way, *Euclid's, two steps changed* with two, "
                               "and so on, each step named on the page", key)
                 self.assertEqual(uncounted in key, different == 0)
+
+
+class MeasureBadge(unittest.TestCase):
+    """The badge of `angle-measure` is chosen from what the statement and its companions
+    state (#662). III.26's and III.28's clauses conclude both the measure and
+    `Elements.Arc.Congruent`, and their pages said only "in our measure of
+    circumferences", as if the measure were the whole reading; III.24's main statement
+    concludes `Arc.Congruent` alone, and only its companions use the measure."""
+
+    MEASURE = "Eq (Elements.circumference ABC B K C) (Elements.circumference DEF E L F)"
+    CONGRUENT = "Elements.Arc.Congruent (Elements.Arc.mk ABC B K C) (Elements.Arc.mk DEF E L F)"
+    # III.24's `equalMeasure`, which names `Arc.Congruent` and `Arc.measure` both.
+    EQUAL_MEASURE = ("∀ {a b : Elements.Arc}, Elements.Arc.Drawn a → Elements.Arc.Drawn b → "
+                     "Elements.Arc.Congruent a b → Eq (Elements.Arc.measure a) "
+                     "(Elements.Arc.measure b)")
+
+    def line_and_dagger(self, statement, companions, porism=None):
+        """The line under the enunciation and the certificate's Statement cell of a whole
+        statement of III.2 tagged `angle-measure`, with `companions` attached, read from
+        a facts.json held in memory."""
+        attached = {f"III.2 c{i}": {"ref": f"III.2 c{i}", "statement": s}
+                    for i, s in enumerate(companions)}
+        if porism is not None:
+            attached["III.2 Por."] = {"ref": "III.2 Por.", "statement": porism}
+        p = {"ref": "III.2", "status": "proved", "statement": statement,
+             "attached": list(attached), "axioms": [], "common_notions": [], "cites": [],
+             "own_axioms": [], "inherited": []}
+        record = {"statement": {"scope": "full", "hypotheses": [], "companions": []},
+                  "route": {"kind": "euclid", "note": "The route's note."}, "passage": [],
+                  "representation": {"tags": ["angle-measure"]}, "review": {"stage": "full"}}
+        with patch.object(render, "load_facts", return_value={"III.2": p, **attached}):
+            line = render.in_lean_line(p, record, "III", 2)
+            row = render.certificate_row(p, "[III.2](book/III/02.md)", {"props": []}, record)
+        return line, row.split(" | ")[2]
+
+    def test_the_badge_follows_the_statement_and_its_companions(self):
+        """In the measure alone, "in our measure"; with `Arc.Congruent` too, "and in our
+        measure"; `Arc.Congruent` alone, "with a companion in our measure" where a
+        companion uses the measure, and nothing otherwise. The dagger stays with a
+        statement that itself uses the measure."""
+        m, c, eq = self.MEASURE, self.CONGRUENT, self.EQUAL_MEASURE
+        both = f"And ({m}) ({c})"
+        cases = [
+            # (what is tested, the main statement, its companions, the badge, a dagger?)
+            ("the measure alone", m, [], "in our measure of circumferences", True),
+            ("both, as III.26 and III.28", both, [], "and in our measure of circumferences",
+             True),
+            ("both, with III.24's companion", both, [eq],
+             "and in our measure of circumferences", True),
+            ("Arc.Congruent alone, as III.24", c, [eq],
+             "with a companion in our measure of circumferences", False),
+            ("Arc.Congruent alone, a companion in the measure", c, ["Elements.Arc.Drawn a", m],
+             "with a companion in our measure of circumferences", False),
+            ("Arc.Congruent alone, no companion", c, [], "", False),
+            ("Arc.Congruent alone, no companion in the measure", c,
+             ["Elements.Arc.Congruent a b", "Other.Arc.measure a"], "", False),
+            # A companion that names Arc.Congruent does not change the main statement's case.
+            ("the measure alone, with III.24's companion", m, [eq],
+             "in our measure of circumferences", True),
+            ("neither, with III.24's companion", "Elements.Arc.Drawn a", [eq], "", False),
+            # A look-alike is not the word.
+            ("the measure and Other.Arc.Congruent", f"And ({m}) (Other.Arc.Congruent a b)", [],
+             "in our measure of circumferences", True),
+            ("the measure and a quoted word", f'And ({m}) (P "Elements.Arc.Congruent")', [],
+             "in our measure of circumferences", True),
+            ("Other.Arc.Congruent alone", "Other.Arc.Congruent a b", [eq], "", False),
+            ("a quoted word alone", 'P "Elements.Arc.Congruent"', [eq], "", False),
+        ]
+        for what, statement, companions, badge, dagger in cases:
+            with self.subTest(what):
+                line, cell = self.line_and_dagger(statement, companions)
+                self.assertEqual(line, "**In Lean:** ✅ proved, as Euclid states it"
+                                 + (f", {badge}" if badge else "") + " · Euclid's argument")
+                self.assertEqual(cell, "whole†" if dagger else "whole")
+
+        line, cell = self.line_and_dagger(c, [], porism=m)
+        self.assertEqual(line, "**In Lean:** ✅ proved, as Euclid states it · Euclid's argument")
+        self.assertEqual(cell, "whole")
+
+        line, cell = self.line_and_dagger(c, [m], porism=m)
+        self.assertEqual(line, "**In Lean:** ✅ proved, as Euclid states it, with a companion "
+                         "in our measure of circumferences · Euclid's argument")
+        self.assertEqual(cell, "whole")
 
 
 class FigureCaption(unittest.TestCase):
