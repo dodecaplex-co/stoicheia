@@ -13,7 +13,8 @@ counts the names released, those present on main, those of them deprecated there
 missing, and those gone after the release that deprecated them. The list's tag: the
 repository's tag at another commit is a finding, naming the tag line; the tag absent, or
 git unable to say where it points, is a note of one line and no finding; the same commit
-is neither; and a later tag is a note naming it, beside a finding or alone, never a finding.
+is neither; a tag targeting a blob or tree is a finding; and a later tag is a note naming
+it, beside a finding or alone, never a finding.
 
 The list's reader refuses, naming the line: no tag line (a row before it, or no line at
 all but comments), two tag lines, a tag line of the wrong shape, a commit that is short, in
@@ -663,6 +664,49 @@ class WithGit(unittest.TestCase):
         self.assertNotIn("Traceback", err.getvalue())
         probe.assert_not_called()
 
+    def test_commit_tags_are_read_and_an_absent_tag_is_none(self):
+        commit = self.commit({"a": "x\n"})
+        for annotated in (False, True):
+            with self.subTest(annotated=annotated):
+                if annotated:
+                    self.git("tag", "-a", "book-III", commit, "-m", "release")
+                else:
+                    self.git("update-ref", "refs/tags/book-III", commit)
+                self.assertEqual(released.tag_target("book-III"),
+                                 released.TagTarget(commit, "commit"))
+                self.git("update-ref", "-d", "refs/tags/book-III")
+        self.assertIsNone(released.tag_target("book-III"))
+
+    def test_blob_and_tree_tag_targets_are_provenance_findings_and_refused_for_list(self):
+        commit = self.commit({"a": "x\n"})
+        objects = {"blob": self.git("rev-parse", "HEAD:a"),
+                   "tree": self.git("rev-parse", "HEAD^{tree}")}
+        for kind, oid in objects.items():
+            for annotated in (False, True):
+                with self.subTest(kind=kind, annotated=annotated):
+                    if annotated:
+                        self.git("tag", "-a", "book-III", oid, "-m", "object")
+                    else:
+                        self.git("update-ref", "refs/tags/book-III", oid)
+                    self.assertEqual(released.tag_target("book-III"),
+                                     released.TagTarget(oid, kind))
+                    out = io.StringIO()
+                    with redirect_stdout(out):
+                        code = released.check_with(
+                            released.Listed("book-III", commit, 9,
+                                            {"Elements.a": "name"}),
+                            {"Elements.a": "name"})
+                    self.assertEqual(code, 1, out.getvalue())
+                    self.assertIn(f"tag in this repository points to {oid}", out.getvalue())
+                    self.assertIn("and the list is not the tag's", out.getvalue())
+                    probe = mock.Mock(return_value={"Elements.a": "name"})
+                    with mock.patch.object(released, "run_probe", probe), \
+                            self.assertRaises(released.Unreadable) as raised:
+                        released.make_list("book-III")
+                    self.assertIn(f"points to a {kind}, not a commit", str(raised.exception))
+                    probe.assert_not_called()
+                    self.git("update-ref", "-d", "refs/tags/book-III")
+
     def test_the_later_tags_hold_the_lists_commit(self):
         first = self.commit({"a": "1\n"})
         self.git("tag", "book-III")
@@ -698,7 +742,8 @@ class TheModes(unittest.TestCase):
         for as at the tag and `lake` by `lake`, its build check exiting `build`."""
         lake(self, build, STALE_SAID.encode() if build else b"")
         out, err = io.StringIO(), io.StringIO()
-        with mock.patch.object(released, "tag_commit", return_value=COMMIT), \
+        with mock.patch.object(released, "tag_target",
+                               return_value=released.TagTarget(COMMIT, "commit")), \
                 mock.patch.object(released, "head_commit", return_value=COMMIT), \
                 mock.patch.object(released, "modified", return_value=[]), \
                 mock.patch.object(released, "later_tags", return_value=[]), \
@@ -713,7 +758,9 @@ class TheModes(unittest.TestCase):
             else mock.Mock(return_value=rows)
         out, err = io.StringIO(), io.StringIO()
         with mock.patch.object(released, "run_probe", probe), \
-                mock.patch.object(released, "tag_commit", return_value=tag), \
+                mock.patch.object(released, "tag_target",
+                                  return_value=(released.TagTarget(tag, "commit")
+                                                if tag is not None else None)), \
                 mock.patch.object(released, "head_commit", return_value=head), \
                 mock.patch.object(released, "modified", return_value=list(changed)), \
                 mock.patch.object(released, "later_tags", return_value=[]), \
@@ -763,10 +810,10 @@ class TheModes(unittest.TestCase):
     def test_malformed_tags_stop_before_tag_lookup_or_lean(self):
         for tag in ("book..IV", "book/", "book.lock"):
             with self.subTest(tag):
-                tag_commit = mock.Mock()
+                tag_target = mock.Mock()
                 probe = mock.Mock()
                 out, err = io.StringIO(), io.StringIO()
-                with mock.patch.object(released, "tag_commit", tag_commit), \
+                with mock.patch.object(released, "tag_target", tag_target), \
                         mock.patch.object(released, "run_probe", probe), \
                         redirect_stdout(out), redirect_stderr(err):
                     code = released.main(["--list", tag])
@@ -774,7 +821,7 @@ class TheModes(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("is not a tag's name", err.getvalue())
                 self.assertNotIn("Traceback", err.getvalue())
-                tag_commit.assert_not_called()
+                tag_target.assert_not_called()
                 probe.assert_not_called()
 
     def test_temporary_probe_folder_creation_failure_exits_2(self):

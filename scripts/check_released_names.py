@@ -287,6 +287,12 @@ class Listed(NamedTuple):
     names: dict[str, str]
 
 
+class TagTarget(NamedTuple):
+    """The object a tag names after annotated tags are peeled, and its Git type."""
+    oid: str
+    kind: str
+
+
 def printable(text: str) -> str:
     return text.encode("utf-8", "surrogateescape").decode("utf-8", "backslashreplace")
 
@@ -514,21 +520,34 @@ def git(*args: str) -> subprocess.CompletedProcess:
         raise Unreadable(f"git cannot be run: {error}") from None
 
 
-def commit_of(revision: str) -> str | None:
-    """The commit `revision` names in this repository, or None when it names none."""
-    done = git("rev-parse", "--verify", "--quiet", f"{revision}^{{commit}}")
+def object_of(revision: str) -> str | None:
+    """The object `revision` names in this repository, or None when it names none."""
+    done = git("rev-parse", "--verify", "--quiet", revision)
     if done.returncode == 1 and not done.stderr.strip():
         return None
-    commit = done.stdout.strip()
-    if done.returncode != 0 or not COMMIT.fullmatch(commit):
+    oid = done.stdout.strip()
+    if done.returncode != 0 or not COMMIT.fullmatch(oid):
         raise Unreadable(f"git cannot say what {revision} is: "
-                         f"{shorten(done.stderr.strip() or commit)}")
-    return commit
+                         f"{shorten(done.stderr.strip() or oid)}")
+    return oid
 
 
-def tag_commit(tag: str) -> str | None:
-    """The commit the repository's tag `tag` points to, or None when it holds no such tag."""
-    return commit_of(f"refs/tags/{tag}")
+def commit_of(revision: str) -> str | None:
+    """The commit `revision` names in this repository, or None when it names none."""
+    return object_of(f"{revision}^{{commit}}")
+
+
+def tag_target(tag: str) -> TagTarget | None:
+    """The peeled target of the repository's tag `tag`, or None when it holds no such tag."""
+    oid = object_of(f"refs/tags/{tag}^{{}}")
+    if oid is None:
+        return None
+    done = git("cat-file", "-t", oid)
+    kind = done.stdout.strip()
+    if done.returncode != 0 or kind not in {"blob", "commit", "tag", "tree"}:
+        raise Unreadable(f"git cannot say what kind of object tag {tag} points to: "
+                         f"{shorten(done.stderr.strip() or kind)}")
+    return TagTarget(oid, kind)
 
 
 def head_commit() -> str:
@@ -740,7 +759,8 @@ def self_test(rows: dict[str, str]) -> list[str]:
 def check_with(listed: Listed, rows: dict[str, str]) -> int:
     """Print the check's lines for the list and main's names; its exit code."""
     try:
-        local, error = tag_commit(listed.tag), None
+        target = tag_target(listed.tag)
+        local, error = target.oid if target is not None else None, None
     except Unreadable as e:
         local, error = None, str(e)
     try:
@@ -786,9 +806,12 @@ def make_list(tag: str) -> str:
     that could change the build differs from it (modified()), or the build is not current."""
     if not is_tag_name(tag):
         raise Unreadable(f"--list: `{shorten(tag)}` is not a tag's name")
-    commit = tag_commit(tag)
-    if commit is None:
+    target = tag_target(tag)
+    if target is None:
         raise Unreadable(f"--list {tag}: this repository holds no tag {tag}")
+    if target.kind != "commit":
+        raise Unreadable(f"--list {tag}: tag {tag} points to a {target.kind}, not a commit")
+    commit = target.oid
     head = head_commit()
     if head != commit:
         raise Unreadable(f"--list {tag}: HEAD is {head}, not the tag's commit {commit}; check "
