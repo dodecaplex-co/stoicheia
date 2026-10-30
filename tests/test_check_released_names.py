@@ -27,10 +27,14 @@ both markers.
 
 The self-test's judging is exercised with explicit rows: it finds no surprise for the
 expected plants, and finds one when a plant is read otherwise (the private `hidden`
-present, the parser of the notation or of the infix present, the alias `renamed` plain,
+present, under its own name or its private one, the parser of the notation or of the infix
+present, a name of the structure that a filter leaves out present, an internal detail of
+the planted namespace present, one of Lean's own names present, the alias `renamed` plain,
 `New.a` or the instance absent, the real `Elements.BookI.Prop1` absent or deprecated),
-naming it. The executable `scripts/check_released_names.py --self-test`, the next registered
-check, is the evidence that Lean itself interprets the plants and probe filters that way.
+naming it. The planted lists are the seven the script holds, and each judged as stated;
+every plant that must give no row is used by an `example` in the plants, so that a plant
+removed stops Lean rather than reading as absent. What Lean prints for the plants is not
+run here: the registered `scripts/check_released_names.py --self-test` runs it.
 
 The refusal of a stale build, with `lake` stood in for. The script runs exactly `lake build
 --no-build Elements` from the repository's root; when it exits 0 the probe runs after it,
@@ -114,6 +118,9 @@ def planted_output() -> dict[str, str]:
         f"{P}.renamed": "deprecated",
         f"{P}.retired": "deprecated",
         f"{P}.Old.a": "deprecated",
+        f"{P}.Shape": "name",
+        f"{P}.Shape.mk": "name",
+        f"{P}.Shape.side": "name",
         REAL: "name",
         "Elements.BookI.Prop2": "name",
     }
@@ -354,6 +361,19 @@ class TheSelfTest(unittest.TestCase):
                                                   "plain"),
             "the instance absent": ({}, (f"{P}.instPlant",), f"`{P}.instPlant` as absent, "
                                                              "where it must be plain"),
+            "the recursor present": ({f"{P}.Shape.rec": "name"}, (),
+                                     f"`{P}.Shape.rec` as plain, where it must be absent"),
+            "a name without a range present": ({f"{P}.Shape.mk.injEq": "name"}, (),
+                                               f"`{P}.Shape.mk.injEq` as plain, where it "
+                                               "must be absent"),
+            "an internal detail present": ({f"{P}._aux_Probe___unexpand_id_1": "name"}, (),
+                                           f"`{P}._aux_Probe___unexpand_id_1` as plain, "
+                                           "where it must be absent"),
+            "the private plant under its private name": (
+                {f"_private.Probe.0.{P}.hidden": "name"}, (),
+                f"1 name outside `Elements`: `_private.Probe.0.{P}.hidden`"),
+            "one of Lean's own names": ({"Nat.add": "name", "Lean.Name": "name"}, (),
+                                        "2 names outside `Elements`: `Lean.Name`, `Nat.add`"),
             "Prop1 absent": ({}, (REAL,), f"`{REAL}` as absent"),
             "Prop1 deprecated": ({REAL: "deprecated"}, (), f"`{REAL}` as deprecated"),
         }
@@ -380,9 +400,9 @@ class TheSelfTest(unittest.TestCase):
             ("a list that names nothing new on main passes",
              {"kept": "name", REAL: "name"}, []),
         )
+        self.assertEqual(released.PLANT_CASES, cases)
         rows = planted_output()
-        with mock.patch.object(released, "PLANT_CASES", cases):
-            self.assertEqual(released.self_test(rows), [])
+        self.assertEqual(released.self_test(rows), [])
         for what, names, failing in cases:
             with self.subTest(what):
                 full = {name if name.startswith("Elements.") else f"{P}.{name}": marker
@@ -392,6 +412,15 @@ class TheSelfTest(unittest.TestCase):
                             "deprecated alias (FORMALIZATION.md, section 2)"
                             for name in failing]
                 self.assertEqual(got, expected)
+
+
+    def test_every_plant_that_gives_no_row_is_used_by_an_example(self):
+        used = {line.split(":=", 1)[1].strip().lstrip("@")
+                for line in released.PLANTS.splitlines()
+                if line.startswith(("example ", "noncomputable example "))}
+        absent = {name for name, marker in released.PLANTED.items() if marker is None}
+        self.assertEqual(absent, used)
+        self.assertEqual(len(absent), 12)
 
 
 def lake(test: unittest.TestCase, build: int, said: bytes = b"",
@@ -468,6 +497,9 @@ class WithGit(unittest.TestCase):
     def setUp(self):
         self.repo = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
         self.enterContext(mock.patch.object(released, "ROOT", self.repo))
+        # The runner's own git configuration (signing, hooks, renames) stays out.
+        self.enterContext(mock.patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": os.devnull,
+                                                       "GIT_CONFIG_NOSYSTEM": "1"}))
         self.git("init", "-q")
 
     def git(self, *args: str) -> str:
@@ -525,6 +557,17 @@ class WithGit(unittest.TestCase):
         self.tag({".gitignore": "/lakefile.lean\n", "Elements/A.lean": "x\n"})
         (self.repo / "lakefile.lean").write_text("x\n", encoding="utf-8")
         self.assert_list_refused_before_probe("lakefile.lean")
+
+    def test_a_lakefile_in_other_letters_refuses_list_before_the_probe(self):
+        self.tag({"Elements/A.lean": "x\n"})
+        (self.repo / "lakefile.LEAN").write_text("x\n", encoding="utf-8")
+        self.assertEqual(released.modified(), ["lakefile.LEAN"])
+        self.assert_list_refused_before_probe("lakefile.LEAN")
+
+    def test_an_ignored_lakefile_in_other_letters_refuses_list(self):
+        self.tag({".gitignore": "/LAKEFILE.TOML\n", "Elements/A.lean": "x\n"})
+        (self.repo / "LAKEFILE.TOML").write_text("x\n", encoding="utf-8")
+        self.assertEqual(released.modified(), ["LAKEFILE.TOML"])
 
     def test_build_inputs_inside_an_ignored_directory_refuse_list_before_the_probe(self):
         self.tag({".gitignore": "ignored/\n", "Elements/A.lean": "x\n"})

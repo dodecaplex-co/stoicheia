@@ -66,41 +66,48 @@
   redirection empties before the script runs, and there is no untracked or ignored Lean
   file, Lake configuration, manifest or toolchain. [WORKFLOW.md](../WORKFLOW.md), section
   10, makes the tag after the release's pull request merges, so the list cannot be in that
-  pull request. At each
-  release, once the tag is made, the list is made with `--list <new tag>` at the tag's
-  commit, copied to a branch off main and committed in the next pull request, the first
-  after the release; until it lands, main is compared with the release before, which is
-  still correct for every name that release declared. WORKFLOW.md, section 10's release
-  step does not yet name this step, and this train does not change it; the change is the
-  coordinator's to file. Where the repository holds a tag after the list's, one whose
-  history holds the list's commit, the check names it in a note: the list may be out of
-  date. Where the repository holds the list's tag, the check requires that tag to point
-  to the list's commit; a checkout that fetches no tags, as CI's `check` job does not, is
-  told so in one line, and judged all the same. The list committed here is what
-  `--list book-III` prints: on 29 October 2026, on the yard's machine, the script, as an
-  untracked copy, was run at book-III's commit after `lake build`, and its output was
-  byte for byte this file but for the header's wording, since changed. Another script
-  that reads names the same way, as the release notes' generator
-  ([#702](https://github.com/dodecaplex-co/stoicheia/issues/702)) does, calls the
-  script's `run_lean` and `read_probe` rather than copying them.
+  pull request. At each release, once the tag is made, the list is made with
+  `--list <new tag>` at the tag's commit, copied to a branch off main and committed in the
+  next pull request, the first after the release; until it lands, main is compared with
+  the release before, which is still correct for every name that release declared.
+  WORKFLOW.md, section 10's release step does not yet name this step, and this train does
+  not change it; the change is the coordinator's to file. Where the repository holds a tag
+  after the list's, one whose history holds the list's commit, the check names it in a
+  note: the list may be out of date. Where the repository holds the list's tag, the check
+  requires that tag to point to the list's commit; a checkout that fetches no tags, as
+  CI's `check` job does not, is told so in one line, and judged all the same. The list
+  committed here is what `--list book-III` prints: on 29 October 2026, on the yard's
+  machine, the script, as an untracked copy, was run at book-III's commit after
+  `lake build`, and its output was byte for byte this file but for the header's wording,
+  since changed. Another script that reads names the same way, as the release notes'
+  generator ([#702](https://github.com/dodecaplex-co/stoicheia/issues/702)) does, should
+  call the script's `run_lean` and `read_probe` rather than copy them.
 
   The self-test. `--self-test`, which the registry runs, puts a namespace of declarations
   in the probe's own file and requires the probe to read each as planted: four theorems
-  and an instance plain, three deprecated, and no row for a private theorem, for a
-  notation's parser or for an infix's, one of each parser type; and the real
-  `Elements.BookI.Prop1` plain. On that output it then judges seven lists made in memory:
-  a name removed fails; a renamed name with its alias passes, and so does a name
-  deprecated with nothing to replace it; beside a name with its alias, a name aliased
-  nowhere fails alone; a namespace renamed fails once for each of its two names; a removed
-  name that the tag marked deprecated passes; and a list that names nothing new on main
-  passes. Any surprise fails it. Then it runs the check on the same output, the planted
-  namespace left out, so the whole is one Lean file. Lean 4.35 warns at
-  `@[deprecated (since := …)]` with neither a new name nor a message, and a warning is
-  output the probe refuses, so the plant deprecated with nothing to replace it carries a
-  message. `tests/test_check_released_names.py` holds the rule, the readers of the list
-  and of the probe's output, the refusal of a stale build in each mode with `lake` stood
-  in for, the modes with the probe and git stood in for, and the committed list, case by
-  case, without Lean.
+  and an instance plain, three deprecated, a structure with its constructor and field
+  plain; no row for a private theorem, for a notation's parser or for an infix's, one of
+  each parser type, for the nine names Lean 4.35 makes for the structure that one filter
+  each leaves out (its recursors, `noConfusion`, and the names with no declaration range),
+  or for any other name of the namespace, the internal details the notation makes among
+  them; no name outside `Elements`; and the real `Elements.BookI.Prop1` plain. Each name
+  that must give no row is used by an `example` among the plants, so a plant removed stops
+  Lean rather than reading as absent. On 29 October 2026, on the yard's machine, each of
+  the probe's filters was taken out in turn, and the self-test then failed (exit 1, or 2
+  when the module filter's absence filled the output with Lean's own names), save for
+  `isPrivateName`, which `isInternalDetail` makes redundant for a private name. On that
+  output it then judges seven lists made in memory: a name removed fails; a renamed name
+  with its alias passes, and so does a name deprecated with nothing to replace it; beside
+  a name with its alias, a name aliased nowhere fails alone; a namespace renamed fails
+  once for each of its two names; a removed name that the tag marked deprecated passes;
+  and a list that names nothing new on main passes. Any surprise fails it. Then it runs
+  the check on the same output, the planted namespace left out, so the whole is one Lean
+  file. Lean 4.35 warns at `@[deprecated (since := …)]` with neither a new name nor a
+  message, and a warning is output the probe refuses, so the plant deprecated with nothing
+  to replace it carries a message. `tests/test_check_released_names.py` holds the rule,
+  the readers of the list and of the probe's output, the refusal of a stale build in each
+  mode with `lake` stood in for, the modes with the probe and git stood in for, and the
+  committed list, case by case, without Lean.
 
   This entry approves the new `scripts/check_released_names.py`, the check with its probe
   and its self-test.

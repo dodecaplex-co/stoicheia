@@ -85,16 +85,20 @@ expected).
 The self-test writes the probe with a namespace of declarations, PLANTS, before its
 `#eval`, and runs it once. Lean must read `kept`, `New.a`, `New.b`, `Old.b2` and the
 instance `instPlant` as plain and `renamed`, `retired` and `Old.a` as deprecated, all in
-`Elements.ReleasedNamesPlant`; it must give no row for the private `hidden`, nor for the
-parsers of the notation `⟪a⟫` and the infix `a ⊞ b`, one of each type left out; and it
-must read the real `Elements.BookI.Prop1` plain. Then it judges, on that output, lists
-made in memory (PLANT_CASES): a name removed fails; one renamed with its alias passes,
-and so does one deprecated with nothing to replace it; of two names, one with its alias
-and one aliased nowhere, only the second fails; a namespace renamed fails once for each
-of its two names; a removed name that the tag marked deprecated passes; and a list that
-names nothing new on main passes, though `New.a` and `New.b` are there. Any surprise
-fails it (exit 1). Then the check runs on the same output, with the planted namespace
-left out: one Lean file in all.
+`Elements.ReleasedNamesPlant`, and the structure `Shape`, its constructor and its field
+plain; it must give no row for the private `hidden`, nor for the parsers of the notation
+`⟪a⟫` and the infix `a ⊞ b`, one of each type left out, nor for nine names Lean makes for
+`Shape` (its recursors, `noConfusion` and the names with no declaration range), nor for
+any other name of the namespace; it must print no name outside `Elements`; and it must
+read the real `Elements.BookI.Prop1` plain. Each name that must give no row is used by an
+`example` in PLANTS, so a plant removed stops Lean rather than reading as absent. Then it
+judges, on that output, lists made in memory (PLANT_CASES): a name removed fails; one
+renamed with its alias passes, and so does one deprecated with nothing to replace it; of
+two names, one with its alias and one aliased nowhere, only the second fails; a namespace
+renamed fails once for each of its two names; a removed name that the tag marked
+deprecated passes; and a list that names nothing new on main passes, though `New.a` and
+`New.b` are there. Any surprise fails it (exit 1). Then the check runs on the same output,
+with the planted namespace left out: one Lean file in all.
 
 Exits 0 when no released name is missing and the list's tag, where the repository holds
 it, points to the list's commit; 1 on any finding, printing each, then a summary of the
@@ -162,7 +166,18 @@ PROBE_EVAL = """\
 # `@[deprecated (since := …)]` with neither a new name nor a message ("`[deprecated]`
 # attribute should specify either a new name or a deprecation message"). The notation gives
 # a parser of type `Lean.ParserDescr`, `«term⟪_⟫»`, and the infix one of type
-# `Lean.TrailingParserDescr`, `«term_⊞_»`.
+# `Lean.TrailingParserDescr`, `«term_⊞_»`; each also gives definitions that are internal
+# details and have a range, which only `isInternalDetail` leaves out. The structure `Shape`
+# gives, in Lean 4.35, a name that only each of the other filters leaves out: `Shape.rec`
+# the recursor filter's `isRecCore`, `Shape.recOn` and `Shape.casesOn` its
+# `isAuxRecursor`, `Shape.mk.noConfusion` its `isNoConfusion`, and `Shape.ctorIdx`,
+# `Shape.noConfusionType`, `Shape.mk.inj`, `Shape.mk.injEq` and `Shape.mk.sizeOf_spec` the
+# range filter (each has no declaration range). The private `hidden` is an internal detail
+# too, so `isInternalDetail` alone leaves it out, and `isPrivateName` is a second guard;
+# with both gone, its private name, outside `Elements`, is a surprise. Every plant and
+# generated name that must give no row is used by an `example` after the declarations, so
+# that, were one gone, Lean would stop the self-test with an error, and not read it as
+# absent. The recursor's two are noncomputable: Lean makes no code for a recursor.
 PLANT_NAMESPACE = "Elements.ReleasedNamesPlant"
 PLANTS = """\
 namespace Elements.ReleasedNamesPlant
@@ -179,14 +194,33 @@ private theorem hidden : True := trivial
 notation "⟪" a "⟫" => id a
 infixl:65 " ⊞ " => Nat.add
 instance instPlant : Inhabited (Fin 1) := ⟨0⟩
+structure Shape where
+  side : Nat
+example : True := hidden
+example : Lean.ParserDescr := «term⟪_⟫»
+example : Lean.TrailingParserDescr := «term_⊞_»
+noncomputable example := @Shape.rec
+noncomputable example := @Shape.recOn
+example := @Shape.casesOn
+example := @Shape.mk.noConfusion
+example := @Shape.ctorIdx
+example := @Shape.noConfusionType
+example := @Shape.mk.inj
+example := @Shape.mk.injEq
+example := @Shape.mk.sizeOf_spec
 end Elements.ReleasedNamesPlant
 
 """
-# How Lean must read each plant; None for one that must give no row: `hidden`, private, and
-# the parsers of the notation and the infix.
+# How Lean must read each plant; None for one that must give no row: `hidden`, private, the
+# parsers of the notation and the infix, and the names `Shape` gives that a filter leaves
+# out. Any other row of the planted namespace, an internal detail among them, is a surprise.
 PLANTED = {"kept": "name", "New.a": "name", "New.b": "name", "Old.b2": "name",
            "instPlant": "name", "renamed": "deprecated", "retired": "deprecated",
-           "Old.a": "deprecated", "hidden": None, "«term⟪_⟫»": None, "«term_⊞_»": None}
+           "Old.a": "deprecated", "Shape": "name", "Shape.mk": "name", "Shape.side": "name",
+           "hidden": None, "«term⟪_⟫»": None, "«term_⊞_»": None, "Shape.rec": None,
+           "Shape.recOn": None, "Shape.casesOn": None, "Shape.mk.noConfusion": None,
+           "Shape.ctorIdx": None, "Shape.noConfusionType": None, "Shape.mk.inj": None,
+           "Shape.mk.injEq": None, "Shape.mk.sizeOf_spec": None}
 # A real declaration of the library, which the plants' run must read too, and plain.
 REAL = "Elements.BookI.Prop1"
 # The lists the self-test judges on the plants' output: what each shows, the released
@@ -391,7 +425,7 @@ def run_lean(text: str) -> str:
     in a temporary folder outside it, once the build is found current; what it printed.
     Unreadable when it fails, writes to its standard error or prints what is not UTF-8.
     Another script that reads names the same way, as the release notes' generator does
-    (#702), calls this and read_probe rather than copying them."""
+    (#702), should call this and read_probe rather than copy them."""
     if shutil.which("lake") is None:
         raise Unreadable("lake is not on PATH: export PATH=$HOME/.elan/bin:$PATH, and run "
                          "`lake build` first")
@@ -476,9 +510,10 @@ def head_commit() -> str:
 
 # Untracked files that could change what the build declares: a Lean file, Lake's
 # configuration (Lake prefers a `lakefile.lean` to `lakefile.toml`, and runs it), its
-# manifest and the toolchain.
+# manifest and the toolchain, in any case of letters, since a case-insensitive file system
+# opens `lakefile.LEAN` as `lakefile.lean`.
 BUILD_INPUT = re.compile(r"(.*\.lean|(.*/)?lakefile\.(lean|toml)|(.*/)?lake-manifest\.json"
-                         r"|(.*/)?lean-toolchain)", re.DOTALL)
+                         r"|(.*/)?lean-toolchain)", re.DOTALL | re.IGNORECASE)
 
 
 def hidden_index_paths() -> list[str]:
@@ -546,10 +581,10 @@ def modified() -> list[str]:
             add(f"{source} -> {path}" if source is not None else path)
 
     ignored = git("--no-optional-locks", "ls-files", "--others", "--ignored",
-                  "--exclude-standard", "-z", "--", "*.lean", "lakefile.*",
-                  ":(glob)**/lakefile.*", "lake-manifest.json",
-                  ":(glob)**/lake-manifest.json", "lean-toolchain",
-                  ":(glob)**/lean-toolchain")
+                  "--exclude-standard", "-z", "--", ":(icase)*.lean",
+                  ":(icase)lakefile.*", ":(glob,icase)**/lakefile.*",
+                  ":(icase)lake-manifest.json", ":(glob,icase)**/lake-manifest.json",
+                  ":(icase)lean-toolchain", ":(glob,icase)**/lean-toolchain")
     if ignored.returncode != 0:
         raise Unreadable(f"git cannot say what ignored build inputs exist: "
                          f"{shorten(ignored.stderr.strip())}")
@@ -634,9 +669,17 @@ def full_name(name: str) -> str:
 
 
 def self_test(rows: dict[str, str]) -> list[str]:
-    """The surprises in the plants' output `rows`: a plant read otherwise than planted,
-    the real declaration not read plain, and a planted list not judged as expected."""
+    """The surprises in the plants' output `rows`: a row that is not a name of `Elements`
+    (one of Lean's own, or the private plant under its private name), a plant read
+    otherwise than planted, the real declaration not read plain, and a planted list not
+    judged as expected."""
     problems = []
+    outside = sorted(name for name in rows if not name.startswith("Elements."))
+    if outside:
+        shown = ", ".join(f"`{shorten(name)}`" for name in outside[:3])
+        more = f" and {len(outside) - 3} more" if len(outside) > 3 else ""
+        names = "1 name" if len(outside) == 1 else f"{len(outside)} names"
+        problems.append(f"the probe printed {names} outside `Elements`: {shown}{more}")
     prefix = f"{PLANT_NAMESPACE}."
     got = {name: marker for name, marker in rows.items() if name.startswith(prefix)}
     # A plant that must give no row is not among `want`: read at all, it is among `got`.
@@ -698,7 +741,8 @@ def run_self_test() -> int:
         return 1
     absent = sum(marker is None for marker in PLANTED.values())
     print(f"✓ self-test: the probe read the {len(PLANTED)} plants as planted, {absent} of them "
-          f"absent (the private one and two parsers), and {REAL} plain, and the "
+          f"absent (the private one, two parsers and nine names of a structure), no name "
+          f"outside Elements, and {REAL} plain, and the "
           f"{len(PLANT_CASES)} planted lists were judged as expected")
     prefix = f"{PLANT_NAMESPACE}."
     return check_with(listed, {name: marker for name, marker in rows.items()
