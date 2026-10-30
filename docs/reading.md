@@ -74,7 +74,7 @@ here in their own words.
   American order.
 - <a id="wardhaugh2021encounters"></a>Benjamin Wardhaugh, [*Encounters with Euclid: How an Ancient Greek Geometry Text Shaped the World*](https://press.princeton.edu/books/hardcover/9780691211695/encounters-with-euclid)
   (Princeton University Press, 2021; published in Britain in 2020 as *The Book of
-  Wonders: The Many Lives of Euclid's Elements*). A charming history of the *Elements*
+  Wonders: The Many Lives of Euclid's Elements*). A history of the *Elements*
   told through the people who copied, translated, taught, drew and argued over it: the
   long line of readers Stoicheia joins.
 - <a id="casselman_papyrus"></a>Bill Casselman, ["The oldest diagram from Euclid"](https://personal.math.ubc.ca/~cass/Euclid/papyrus/)
@@ -122,7 +122,7 @@ of the parallel postulate.
   commentators through Saccheri to Bolyai and Lobachevsky, told with evident love; the
   Dover reprint adds George Bruce Halsted's translations of Bolyai and Lobachevsky.
 - <a id="vanbrummelen2013heavenly"></a>Glen Van Brummelen, [*Heavenly Mathematics: The Forgotten Art of Spherical Trigonometry*](https://doi.org/10.1515/9781400844807)
-  (Princeton University Press, 2013). A charming, hands-on introduction to geometry on a
+  (Princeton University Press, 2013). A hands-on introduction to geometry on a
   sphere, where the angles of a triangle make more than two right angles and I.16 can
   fail; it makes Heath's asides on spherical geometry concrete.
 
@@ -190,7 +190,7 @@ with Yaglom and Klein.
 
 Euclid moves one triangle onto another in I.4 and I.8, and one segment of a circle onto
 another in III.24. In 1872 Felix Klein proposed that a geometry is known by the transformations
-it allows, Euclid's by the rigid motions, and these books start from there.
+it allows, and these books start from there.
 
 - <a id="klein1893comparative"></a>Felix Klein, ["A comparative review of recent researches in geometry"](https://arxiv.org/abs/0807.3161),
   translated by M. W. Haskell, *Bulletin of the New York Mathematical Society* 2 (1893),
@@ -263,7 +263,7 @@ I.47 has been proved in hundreds of ways, and was known in some form long before
   probably doing.
 - <a id="loomis1968pythagorean"></a>Elisha Scott Loomis, [*The Pythagorean Proposition*](https://files.eric.ed.gov/fulltext/ED037335.pdf),
   2nd ed. (1940; reissued by the National Council of Teachers of Mathematics, 1968).
-  **Free.** A delightfully obsessive collection of 370 proofs; dip in anywhere and set
+  **Free.** A collection of 370 proofs; dip in anywhere and set
   them beside Euclid's in I.47.
 - <a id="bogomolny_pythagoras"></a>Alexander Bogomolny, ["Pythagorean Theorem and its many proofs"](https://www.cut-the-knot.org/pythagoras/),
   *Cut the Knot* (web page). **Free.** Over a hundred proofs on one page, starting with
