@@ -263,6 +263,9 @@ class ResultsCurrent(unittest.TestCase):
              ["tests/model/MODEL.md"], "has no one counts block", "changed in type"),
             ({"tests/model/MODEL.md": model_page(self.C) * 2}, ["tests/model/MODEL.md"],
              "has no one counts block", "changed outside its one counts block"),
+            ({"tests/model/MODEL.md": model_page(self.C).replace(
+                "<!-- counts:end -->", "<!-- counts:begin -->\n<!-- counts:end -->")},
+             ["tests/model/MODEL.md"], "has no one counts block"),
             ({"Audit/screen-run.toml": None}, ["Audit/screen-run.toml"], "deleted since"),
             ({"Audit/screen.py": screen_source(self.C[:12], code="RULES = 2\n")},
              ["Audit/screen.py"], "changed in the code the screen hashes"),
@@ -337,6 +340,16 @@ class ResultsCurrent(unittest.TestCase):
                                      "tests/model/MODEL.md": model_page(side)})
         self.refused(moved, [f"{side[:12]}, the results' commit, is not an ancestor of "
                              f"{moved[:12]}"])
+        # Results naming an annotated tag of C, which merge-base and diff would peel to C.
+        self.git("tag", "-a", "-m", "a tag", "results-tag", self.C)
+        try:
+            tag = self.git("rev-parse", "results-tag")
+            tagged = self.commit(self.P, {**results_files(tag),
+                                          "tests/model/MODEL.md": model_page(tag)})
+            self.refused(tagged, [f"the results name {tag}, which is no commit"],
+                         "which is no commit")
+        finally:
+            self.git("tag", "-d", "results-tag")
 
     def test_paths_are_printed_escaped(self):
         out = self.refused(self.commit(self.P, {"Elements/\x1b[2J.lean": "x\n"}),
@@ -408,7 +421,11 @@ class ResultsCurrent(unittest.TestCase):
         grafts.parent.mkdir(exist_ok=True)
         grafts.write_text(f"{moved} {self.P} {side}\n", encoding="ascii")
         try:
-            self.git("merge-base", "--is-ancestor", side, moved)   # git, grafts read, agrees
+            # git, grafts read, agrees; a git that reads none cannot be fooled by one.
+            agrees = subprocess.run(["git", "merge-base", "--is-ancestor", side, moved],
+                                    cwd=self.root, env=self.env, capture_output=True)
+            if agrees.returncode:
+                self.skipTest("this git reads no grafts")
             self.refused(moved, [f"{side[:12]}, the results' commit, is not an ancestor of "
                                  f"{moved[:12]}"])
         finally:
@@ -471,7 +488,8 @@ class ResultsCurrent(unittest.TestCase):
         # its own, so that the harness modules its import brings stay out of this one; its
         # header() is given a stand-in run, and its paths are taken from its root. So are
         # Audit/screen.py and scripts/check_acceptance.py, for the screen's rule, its code
-        # without its docstring, and the paths of the screen, its record and the report.
+        # without its docstring, and the paths of the screen, its record, the catalogue of
+        # overlaps and the report.
         program = (
             "import ast, inspect, json, os, sys, types\n"
             "sys.path.insert(0, os.path.join(sys.argv[1], 'tests', 'model'))\n"
@@ -495,6 +513,8 @@ class ResultsCurrent(unittest.TestCase):
             "             code(check_release_gate.without_docstring)],\n"
             "    'screen': screen.SCREEN,\n"
             "    'record': screen.RECORD.relative_to(screen.ROOT).as_posix(),\n"
+            "    'overlaps': check_acceptance.OVERLAPS\n"
+            "    .relative_to(check_acceptance.ROOT).as_posix(),\n"
             "    'report': check_acceptance.REPORT.relative_to(check_acceptance.ROOT)\n"
             "    .as_posix()}))\n")
         result = subprocess.run([sys.executable, "-I", "-c", program, str(ROOT)],
@@ -512,7 +532,7 @@ class ResultsCurrent(unittest.TestCase):
         self.assertEqual(*run["rule"])
         self.assertEqual(gate.SCREEN, run["screen"])
         self.assertEqual(list(gate.OUTPUTS),
-                         [run["record"], "docs/reports/overlaps.md", run["report"]])
+                         [run["record"], run["overlaps"], run["report"]])
         # And each of this repository's own results names its commit where the gate reads.
         for path in sorted((ROOT / gate.RESULTS).glob("*.txt")):
             with self.subTest(path=path.name):

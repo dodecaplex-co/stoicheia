@@ -45,46 +45,49 @@
   of the 312 changes since, 299 are no release step's output, the library's among them.
 
   Its tests. A new class of cases builds a git repository of its own in a temporary
-  folder, as the self-test of `results_check.py` builds one, with git's environment cleared
-  and no configuration of the person running read. Its commits hold the library, the
-  pages and the screen's record of an older run, then a change to the library, the
+  folder, as the self-test of `results_check.py` builds one, with git's environment
+  cleared and no configuration of the person running read. Its commits hold the library,
+  the pages and the screen's record of an older run, then a change to the library, the
   results naming that change, the screen's new record, the decisions entry and the
   acceptance report. The head's own fresh run passes, at each of the last four, as does a
   screen's first run, which adds its record; results naming an older commit fail and name
   the library's file, as does a change to the library made after the run. Each refusal
   above is planted and its path named, among them the record deleted, a rename by
   `git mv` (named as a deletion and an addition), a merge of main's later work, and
-  MODEL.md made a symlink or given two blocks of counts. So is each case of exit 2, headers with
-  CRLF line ends among them; a path holding an escape character; a `GIT_DIR` and its kin
-  pointing at another repository; a `git replace` of a stale head by the fresh one; a
-  graft that would put results run on other history into the head's; and a subfolder as
-  `--repo-dir`, under a repository-local `diff.relative` and `diff.ignoreSubmodules=all`
-  that would otherwise hide the library's change and a gitlink added under `Elements/`. A
-  results file added that names C passes, since which files the results hold is
-  `results_check.py`'s to judge. The command line's three exits and its usage errors run
-  as a subprocess. One case imports `run.py`, as `results_check.py` does but in a process
-  of its own, and pins to it the script's copies of `COMMITTED`, `COUNTS_FROM` and
-  `COUNTS`, and of the line where a header names its commit; it imports `Audit/screen.py`
-  and `scripts/check_acceptance.py` the same way, and pins to them the script's
-  `without_docstring`, compared as code, and the paths of the screen, its record and the
-  acceptance report.
+  MODEL.md made a symlink or given two blocks of counts. So is each case of exit 2,
+  headers with CRLF line ends among them; a path holding an escape character; a `GIT_DIR`
+  and its kin pointing at another repository; a `git replace` of a stale head by the
+  fresh one; a graft that would put results run on other history into the head's; and a
+  subfolder as `--repo-dir`, under a repository-local `diff.relative` and
+  `diff.ignoreSubmodules=all` that would otherwise hide the library's change and a
+  gitlink added under `Elements/`. A results file added that names C passes, since which
+  files the results hold is `results_check.py`'s to judge. The command line's three exits
+  and its usage errors run as a subprocess. One case imports `run.py`, as
+  `results_check.py` does but in a process of its own, and pins to it the script's copies
+  of `COMMITTED`, `COUNTS_FROM` and `COUNTS`, and of the line where a header names its
+  commit; it imports `Audit/screen.py` and `scripts/check_acceptance.py` the same way,
+  and pins to them the script's `without_docstring`, compared as code, and the paths of
+  the screen, its record, the catalogue of overlaps and the acceptance report.
 
   These rules were checked by mutation, each removed in turn on a scratch copy, and with
   each removed at least one case failed: each change the release steps make allowed, and
   no other, the record's addition and deletion among them; each results file regular,
   naming its commit once on its line, with its harness files as committed, and all naming
-  one; the counts naming C; C in the repository and an ancestor of H; one entry added,
-  named as one; the screen's rule; the paths escaped; `--no-renames`, `--no-relative`,
-  `--ignore-submodules=none` and `ls-tree --full-tree`; and the `GIT_` variables,
-  replacements and grafts set aside. `--no-ext-diff` and `--no-textconv` cannot change
-  what `--name-status` prints, so no case can pin them: they are kept as defence, not
-  pinned. Five guards fail no case when removed: without them a `--rev` that begins with
-  `-`, and results naming an object that is no commit, are still refused, at exit 2; the
-  rule that the counts block open once saves time, and the silenced warnings keep the
-  output clean, neither changing a verdict; and reading a screen's line ends as Python
-  does only spares a false refusal. Two are not planted: a diff git cannot finish, which
-  needs a broken repository, and a screen that is no readable Python at both C and H. The
-  existing cases pass unchanged.
+  one; the counts block opened once, and the counts naming C; C in the repository, a
+  commit rather than a tag that git would peel to one, and an ancestor of H; one entry
+  added, named as one; the screen's rule; the paths escaped; `--no-renames`,
+  `--no-relative`, `--ignore-submodules=none` and `ls-tree --full-tree`; and the `GIT_`
+  variables, replacements and grafts set aside. `--no-ext-diff` and `--no-textconv`
+  cannot change what `--name-status` prints, so no case can pin them: they are kept as
+  defence, not pinned. Three guards fail no case when removed. Without the first, a
+  `--rev` that begins with `-` is still refused, at exit 2, by `rev-parse --verify`
+  itself, which refused each such revision tried, `--all` and `--end-of-options` among
+  them; no case can tell the guard from git's own refusal, so it too is kept as defence.
+  The silenced warnings keep the output clean and change no verdict; and reading a
+  screen's line ends as Python does only spares a false refusal, so that without it the
+  mode refuses more, never less: neither need be pinned. Two are not planted: a diff git
+  cannot finish, which needs a broken repository, and a screen that is no readable Python
+  at both C and H. The existing cases pass unchanged.
 
   This entry approves the change to `scripts/check_release_gate.py`, which gains the mode
   `--results-current`, its two options and the code that judges it, beside the issue
