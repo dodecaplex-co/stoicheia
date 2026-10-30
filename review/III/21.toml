@@ -4,31 +4,25 @@ note = "The angles at any two points of one segment are equal, in a segment of a
 fingerprint = "sha256:60a9c816badb070c"
 
 [route]
-kind = "modified"
-note = "Euclid's two steps: the angles BAD and BED are each half of the one angle at the centre standing on the circumference BCD (III.20), and halves of one angle are equal. Heath says that with Euclid's angle at the centre, less than two right angles, his proof applies only to a segment greater than a semicircle (vol. 2, p. 49); the semicircle and the less segment are cases of his statement all the same. The Lean takes them in the same two steps, the first argued another way: there the angle at the centre standing on BCD is two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's, and III.20 doubles BAD and BED in every segment, so Simson's completion is not needed. III.20, cited as Heath cites it, itself cites I.13 and III.2, which Heath's references for III.20 do not give."
-
-[[passage]]
-at = "Let ABCD be a circle"
-kind = "helper"
-helper = "exists_oppositeSidesOf"
-note = "In Euclid's figure C only names the circle and its circumference BCD. The Lean takes a point C across BD from A and E by `exists_oppositeSidesOf` (System E, Points 6) to name that circumference for III.20; the angle at the centre reads only the side (`angleAtCentre.congr`)."
+kind = "euclid"
+note = "Euclid's two steps, on the angle BFD, carry the segment greater than a semicircle, the case his figure draws and the one his proof reaches (Heath, vol. 2, p. 49). The semicircle and the less segment are taken after his sentences by Robert Simson's completion, as Heath gives it (vol. 2, p. 50): AF is drawn through the centre to C, and Euclid's case, `Prop21.greater`, is taken twice. No sentence of Euclid's is argued another way."
 
 [[passage]]
 at = "For let the centre of the circle ABCD be taken"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F without a reference from Heath here. The Lean obtains F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. III.20 takes the centre itself, so nothing below names F; it is that centre, for a circle has one centre (`centre_unique`)."
-unused = ["F", "hF"]
+note = "Euclid takes the centre F without a reference from Heath here. The Lean takes F from `Tacit.exists_centre`, that every circle has a centre, which no rule of System E numbers."
 
 [[passage]]
 at = "let BF, FD be joined"
 kind = "given"
-note = "The angle at the centre is the circle's, standing on the circumference BCD (`angleAtCentre`), and III.20 makes it up from angles at the centre itself, so the joins BF, FD need no construction in the Lean."
+note = "The angle BFD is named by its three points, so joining BF and FD needs no further construction in the Lean."
 
 [[passage]]
 at = "Now, since the angle BFD is at the centre"
-kind = "different"
-note = "Heath says that with Euclid's angle BFD, less than two right angles, his proof applies only to a segment greater than a semicircle (vol. 2, p. 49). The Lean takes the angle at the centre standing on the circumference BCD (`angleAtCentre`): the angle BFD in the greater segment, two right angles in a semicircle and more in a less segment (`angleAtCentre.size`). III.20 (`Prop20`) makes it double of BAD in every segment, and, under \"For the same reason\", double of BED."
+kind = "helper"
+helper = "Prop20.special"
+note = "Heath's reference here is III.20. With F on A's side of BD, and so on E's, the Lean cites III.20's companion `Prop20.special`, where the angle at the centre is the angle BFD itself, less than two right angles, as Euclid's is; it doubles BAD here, and BED under \"For the same reason\"."
 
 [[passage]]
 at = "therefore the angle BAD is equal to the angle BED"
@@ -36,16 +30,22 @@ kind = "helper"
 helper = "Magnitude.eq_of_add_self_eq"
 note = "Euclid infers that BAD and BED are equal because both are halves of BFD. `Magnitude.eq_of_add_self_eq` proves that equal doubles have equal halves by ruling out either strict inequality."
 
+[[passage]]
+at = "Therefore etc."
+kind = "case"
+helper = "Prop21.greater"
+note = "Heath says Euclid's proof reaches only the segment greater than a semicircle (vol. 2, p. 49). For F on BD or across it from A, the Lean takes Simson's completion, which Heath gives (vol. 2, p. 50): AF is drawn through the centre to C, across BD from A and E. AC and EC cross BD within the circle, by III.2, for which Heath prints no reference, and so between B and D (`Tacit.between_of_inside_chord`, System E, Circle 1, proved after III.2). So A, E and F lie on D's side of BC and on B's side of CD (`SameSideOf.of_cross`), and Euclid's case, written for any base as `Prop21.greater`, makes BAC equal to BEC and CAD equal to CED, \"by the first case\"; C falls within the angles BAD and BED, which those pairs make up."
+
 [figure]
 case = "the segment BAED greater than a semicircle, with F on A's and E's side of BD"
 
 [review]
 stage = "full"
-commit = "6c1cdc8f3"
+commit = "ca581118d"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:ed5885e26b1de640"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex); card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex)"
-text = "sha256:40c6c6ca0608a5f3"
+lean = "sha256:fa6a26f3bd7d4068"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex); card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex); card #482, ship BT: the unused centre F dropped and the passage marked as given, written by Claude, read in full by Claude Opus 5.5, reader BT-r21read, at e0357d5bf; card #704, ship BT: Euclid's two steps for the greater segment and Simson's completion, as Heath gives it, for the semicircle and the less, under the owner's ruling of 29 October, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r21final, at ca581118d."
+text = "sha256:f89700b23bf2752f"
 
 [review.items]
 statement = "pass"

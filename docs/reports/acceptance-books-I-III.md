@@ -3,13 +3,13 @@
 
 What [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) finds against [the acceptance checklist](../ACCEPTANCE.md), item by item: for each of the 99 propositions, for each book and for the edition as a whole. A [machine] item is checked by the script; a [review] item is read from the records, and passes only when a reviewer has recorded it. The checklist says what each item asks. ✓ passes; ✗ fails, and every failure is listed at the end.
 
-- **Revision:** `b46efb938dd3`.
+- **Revision:** `68421863030e`.
 - **Lean:** facts.json as Lean 4.35.0 wrote it.
 - **Run:** every item.
 
 ## Summary
 
-**11 failing items**. 95 of the 99 propositions pass every item of their own.
+**4 failing items**. 99 of the 99 propositions pass every item of their own.
 
 Failing propositions, item by item:
 
@@ -24,7 +24,7 @@ Failing propositions, item by item:
 | P7 | text: Heath's text, quotations, letters, links and scans | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P8 | figures: both figures, by the figure rules; the case named | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P9 | style: the style rules; the page regenerated clean | machine | 0 of 48 | 0 of 14 | 0 of 37 |
-| P10 | staging: nothing of it left in Staging | machine | 0 of 48 | 0 of 14 | 4 of 37 |
+| P10 | staging: nothing of it left in Staging | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P11 | statement: the statement says what the enunciation says | review | 0 of 48 | 0 of 14 | 0 of 37 |
 | P12 | passages: every substantive passage carried or truly named | review | 0 of 48 | 0 of 14 | 0 of 37 |
 | P13 | representations: representations with their bridges | review | 0 of 48 | 0 of 14 | 0 of 37 |
@@ -41,7 +41,7 @@ Failing propositions, item by item:
 | E3 | contracts: the shared contracts (`heath.py`) | machine | ✓ |
 | E4 | model: the model tests | machine | ✓ |
 | E5 | edition: the edition's other pages, links and style | machine | ✓ |
-| E6 | staging: nothing else staged | machine | ✗ |
+| E6 | staging: nothing else staged | machine | ✓ |
 
 ## Book I
 
@@ -50,7 +50,7 @@ Failing propositions, item by item:
 | B1 | pages: the book's pages and completion summary generated and current | machine | ✓ |
 | B2 | catalogues: the gap and overlap catalogues current | machine | ✓ |
 | B3 | read-through: read straight through: it flows, in one voice | review | ✗ |
-| B4 | limitations: the limitations deliberate, few and plainly stated | review | ✗ |
+| B4 | limitations: the limitations deliberate, few and plainly stated | review | ✓ |
 
 | | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | P14 | P15 | P16 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -110,7 +110,7 @@ Failing propositions, item by item:
 | B1 | pages: the book's pages and completion summary generated and current | machine | ✓ |
 | B2 | catalogues: the gap and overlap catalogues current | machine | ✓ |
 | B3 | read-through: read straight through: it flows, in one voice | review | ✗ |
-| B4 | limitations: the limitations deliberate, few and plainly stated | review | ✗ |
+| B4 | limitations: the limitations deliberate, few and plainly stated | review | ✓ |
 
 | | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | P14 | P15 | P16 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -157,15 +157,15 @@ Failing propositions, item by item:
 | [III.15](../../book/III/15.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.16](../../book/III/16.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.17](../../book/III/17.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [III.18](../../book/III/18.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [III.18](../../book/III/18.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.19](../../book/III/19.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [III.20](../../book/III/20.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [III.21](../../book/III/21.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [III.20](../../book/III/20.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [III.21](../../book/III/21.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.22](../../book/III/22.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.23](../../book/III/23.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.24](../../book/III/24.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.25](../../book/III/25.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [III.26](../../book/III/26.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [III.26](../../book/III/26.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.27](../../book/III/27.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.28](../../book/III/28.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [III.29](../../book/III/29.md) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -180,37 +180,15 @@ Failing propositions, item by item:
 
 ## Every failure
 
-### The whole edition
-
-- **E6 staging:** Staging/Routes/Touching.lean still stages 18 declaration(s), for no one proposition: move them to Elements/ or retire them
-
 ### Book I
 
-- **B3 read-through:** not yet recorded: docs/reports/acceptance/book-I.toml does not exist
-- **B4 limitations:** not yet recorded: docs/reports/acceptance/book-I.toml does not exist
+- **B3 read-through:** not yet recorded: docs/reports/acceptance/book-I.toml has no [read-through]
 
 ### Book II
 
-- **B3 read-through:** not yet recorded: docs/reports/acceptance/book-II.toml does not exist
-- **B4 limitations:** not yet recorded: docs/reports/acceptance/book-II.toml does not exist
+- **B3 read-through:** not yet recorded: docs/reports/acceptance/book-II.toml has no [read-through]
 
 ### Book III
 
 - **B3 read-through:** not yet recorded: docs/reports/acceptance/book-III.toml does not exist
 - **B4 limitations:** not yet recorded: docs/reports/acceptance/book-III.toml does not exist
-
-### III.18
-
-- **P10 staging:** Staging/Routes/AngleOfContact.lean still stages declarations for III.18: once proved, a statement moves to Elements/ and its staged copy is deleted
-
-### III.20
-
-- **P10 staging:** Staging/Routes/Prop20.lean still stages declarations for III.20: once proved, a statement moves to Elements/ and its staged copy is deleted
-
-### III.21
-
-- **P10 staging:** Staging/Routes/Prop21.lean still stages declarations for III.21: once proved, a statement moves to Elements/ and its staged copy is deleted
-
-### III.26
-
-- **P10 staging:** Staging/Routes/Prop26.lean still stages declarations for III.26: once proved, a statement moves to Elements/ and its staged copy is deleted

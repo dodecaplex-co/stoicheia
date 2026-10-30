@@ -194,8 +194,9 @@ theorem Prop27 {A B C D E F G H Q R : Point} {ABC DEF : Circle}
       have h20D := Prop20.special hH hD hE hF hHD
       exact Magnitude.eq_of_add_self_eq (h20A.symm.trans (hGH.trans h20D))
     /- Elsewhere the angle at the centre standing on the circumference BC, on which the
-       angle at A stands, is two right angles or more, and no angle of ours, for our angles
-       are less than two right angles. "The angle BGC" of Euclid's halving is then that
+       angle at A stands, is two right angles or more: in the right case B, G and C lie on
+       one straight line, and in the obtuse case the angle at the centre is greater than the
+       ordinary angle BGC. "The angle BGC" of Euclid's halving is then that
        angle at the centre (`angleAtCentre`), and "the angle EHF" the one standing on EF.
        They are equal, case by case, and III.20 halves them. -/
     have hGH : angleAtCentre ABC B Q C = angleAtCentre DEF E R F := by

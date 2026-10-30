@@ -21,9 +21,10 @@ permissions: {}
 
 jobs:
   safe-push-shards:
-    # The whole of scripts/test_safe_push.py, in eight shards side by side. In one job, on
-    # the cadence, it took 72 to 78 minutes, 137 on a slow runner (run 39901919693), and on
-    # as slow a runner it reached 150 and was cancelled there (run 39946930069).
+    # The whole of scripts/test_safe_push.py, in twelve shards side by side. In one job, on
+    # the cadence, by 23 October, it took 72 to 78 minutes, 137 on a slow runner (run
+    # 39901919693), and on as slow a runner it reached 150 and was cancelled there (run
+    # 39946930069).
     # `--shard K/N` lists the tests with unittest's own loader and deals them out by the
     # seconds each took on a GitHub runner (scripts/test_safe_push_times.json), so that
     # each test runs in exactly one shard; a test missing from that file weighs their
@@ -33,16 +34,22 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # The slowest run in one job was still going at 150 minutes; shared among eight, with
-    # each shard's own setup, that leaves room to spare.
-    timeout-minutes: 60
+    # Each shard may take 90 minutes, half again the 60 at which shards 1, 2 and 6 of eight
+    # were cancelled in the run of 30 October 12:48 UTC (41058182573; #798). By then 83 of
+    # the suite's 552 tests had no time in the file and weighed its median, 3 seconds,
+    # though together they took 80 minutes; the tests it did time had grown slower; and
+    # the same test took up to about twice as long on one shard's runner as on another's
+    # in one run. Dealt in twelve by the times of the green run of 10:51 that day
+    # (41043816571), the heaviest shard would take about 50 minutes on the slowest runner
+    # measured.
+    timeout-minutes: 90
     strategy:
       # Every shard runs to its end, so that one failing hides none of the others'.
       fail-fast: false
       matrix:
         # 1 to N, each once, and N written here alone: strategy.job-total, which each
         # shard is given as N, is N too, and the proof reads N from this list.
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     steps:
       - uses: actions/checkout@v5
         with:
