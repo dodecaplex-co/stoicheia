@@ -356,6 +356,8 @@ The review records carry tags for these: `redundant-hypothesis`, `angle-measure`
 
 *Overtaken on 18 October by stage 3, as brief 0006 froze it: III.24 concludes that the segments are congruent, by placement, and its earlier statement, equal circles and equal measures, is its companion `Prop24.equalCircles`; III.26 and III.28 conclude that the circumferences are congruent too, so III.26 now needs its equal circles, and III.27 still holds for any two circles. The notes above are kept as they stood.*
 
+*Overtaken again on 28 October 2026 (#474), by [the decision of that day](../decisions/2026-10-28-iii27-iii29-swap.md): III.27 and III.29 state Euclid's congruence reading, their circumferences coinciding, and congruent circumferences lie in equal circles already, so neither needs its equal circles as stated. Their measure forms are now the companions `Prop27.of_measure`, which holds for any two circles, and `Prop29.of_measure`, which needs its equal circles.*
+
 What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), section 3, with the state of the work (added 18 October).
 
 ## Stages 2–4: representation and generality

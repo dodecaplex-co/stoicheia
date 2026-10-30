@@ -22,9 +22,9 @@ Diagram-segment 4 or Diagram-segment 3. Both rules have been theorems since the 
 axiom retirement; through them each proof rested on Diagram-segment 2 as well until 26
 October 2026, and rests now on our radius rule (`radius_ne_zero`) instead. A second
 section proves the measure clauses of
-III.24's companion `Prop24.equalCircles` and of III.26, and III.27 whole, without the
-hypotheses our measure of circumferences leaves idle, the catalogue's near misses of
-representation.
+III.24's companion `Prop24.equalCircles` and of III.26, and III.27's companion
+`Prop27.of_measure` whole, without the hypotheses our measure of circumferences leaves idle,
+the catalogue's near misses of representation.
 
 A third section proves III.30 by the same measure, without III.28 (`III_30_measure`),
 another near miss of representation.
@@ -81,8 +81,8 @@ every point is within it (`inside_of_between`, Circle 2). With both points on th
 that is III.2. This is Astra's proof from the outside review. Until 24 October 2026 it was
 an overlap proof, from Circle 2 proved from Circle 3, an assumption. Both rules are now
 proved from III.2, after it, so this derivation uses III.2 and establishes no independent
-overlap. Our III.2 follows Euclid, by I.5, I.16 and I.19, takes its centre from the rule,
-and uses neither Circle 2 nor Circle 3. -/
+overlap. Our III.2 follows Euclid, by I.5, I.16 and I.19, takes its centre by III.1's
+construction (`Prop1.of_circle`), and uses neither Circle 2 nor Circle 3. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
@@ -161,13 +161,16 @@ theorem III_5_radius : type_of% @Elements.BookIII.Prop5 := by
 
 Not overlaps with a rule, but with a definition: a circumference is measured by twice the
 angle standing on it (`circumference`, Definition III.9), a measure with no radius in it.
-So the equal measures of III.26, and III.27 whole, hold in any two circles, and the second
-clause of III.24's companion `Prop24.equalCircles` follows from its angle hypothesis alone
-(the catalogue's "Near misses"). Each theorem below states the measures without the
-hypothesis; an `example` beneath it gives back the statement of III.27, or of
-`Prop24.equalCircles`, so a change to either statement shows up here. III.26 is no longer
-among them: it concludes that the circumferences are congruent too, which in unequal circles
-equal angles do not give, so it is no longer provable for any two circles. -/
+So the equal measures of III.26, and III.27's companion `Prop27.of_measure` whole, hold in
+any two circles, and the second clause of III.24's companion `Prop24.equalCircles` follows
+from its angle hypothesis alone (the catalogue's "Near misses"). Each theorem below states
+the measures without the hypothesis; an `example` beneath it gives back the statement of
+`Prop27.of_measure`, or of `Prop24.equalCircles`, so a change to either statement shows up
+here. III.26 is no longer among them: it concludes that the circumferences are congruent
+too, which in unequal circles equal angles do not give, so it is no longer provable for any
+two circles. III.27 itself, `Prop27`, is not among them either: it takes its circumferences
+congruent, and its equal circles are idle for another reason than the measure, since
+congruent circumferences lie in equal circles already. -/
 
 /-- **III.26's equal measures in any two circles.** Equal angles at the centres, or at the
 circumferences, stand on circumferences of equal measure, whether or not the circles are
@@ -193,8 +196,9 @@ unequal circles equal angles give no congruence. So its example has gone; the me
 above are the first conjunct of each of its clauses, and the check after III.26, in
 `Elements/BookIII/Prop26.lean`, gives them back from it. -/
 
-/-- **III.27 in any two circles.** Angles standing on circumferences of equal measure are
-equal, at the circumferences and at the centres, whether or not the circles are equal:
+/-- **III.27's companion `Prop27.of_measure` in any two circles.** Angles standing on
+circumferences of equal measure are equal, at the circumferences and at the centres,
+whether or not the circles are equal:
 each measure is twice the angle at the circumference (`Circumference.standing`), and the
 angle at the centre is twice it again (III.20). -/
 theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
@@ -211,7 +215,7 @@ theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
   rw [BookIII.Prop20.special hG hA hB hC hGA, BookIII.Prop20.special hH hD hE hF hHD,
     hangle]
 
-example : type_of% @Elements.BookIII.Prop27 :=
+example : type_of% @Elements.BookIII.Prop27.of_measure :=
   fun _ hG hH hA hB hC hD hE hF hBAC hEDF heq => III_27_any hG hH hA hB hC hD hE hF hBAC hEDF heq
 
 /-- **The second clause of III.24's companion from its angles alone.** Segments with equal
@@ -246,7 +250,7 @@ those angles are, which I.4 gives. Euclid goes instead from the equal straight l
 DB, by III.28, with his step that each half is less than a semicircle; his own III.26
 would take him from the equal angles to equal halves without either. What the measure
 saves is III.26's step at the circumference, which it reduces to its definition and
-III.21. `III_30_measure` has III.30's own statement, which keeps the measure when arcs get
+III.21. `III_30_measure` has III.30's own statement, which kept the measure when arcs got
 a meaning of their own (brief 0006, stage 3), so it stays. Our III.30 follows Euclid, by
 III.28. -/
 
