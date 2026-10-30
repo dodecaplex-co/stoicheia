@@ -1,7 +1,7 @@
 # review/I/31.toml
 [statement]
 scope = "full"
-note = "A is off BC (`hA`): through a point on BC no parallel to BC can be drawn. That there is no other parallel through A, which Proclus remarks, is `Prop30.unique`."
+note = "A is off BC: through a point on BC no parallel to BC can be drawn. That there is no other parallel through A, which Proclus remarks, is `Prop30.unique`."
 fingerprint = "sha256:07d1a4437d0abafd"
 
 [route]
