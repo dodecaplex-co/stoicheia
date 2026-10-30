@@ -1,4 +1,5 @@
 # Check the contracts (references, porisms, review terms and records).
+# Alone (#608): each plant has 0.5 s by the clock, which a busy machine could fail.
 order = 70
 name = "python3 scripts/heath.py"
 job = "check"

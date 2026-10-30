@@ -69,8 +69,8 @@
     {
       "ref": "III.1",
       "field": "attached",
-      "equals": ["III.1 Por."],
-      "why": "A proposition lists its porism, so that it is not complete until the porism is proved."
+      "equals": ["III.1 Por.", "III.1 of_circle"],
+      "why": "A proposition lists its porism and its companions, so that it is not complete until each is proved. III.1's one companion, Prop1.of_circle, runs III.1's construction on two points of a circle it takes itself, and proofs take the centre by it where Heath's \"[III. 1]\" stands (#547, #381)."
     },
     {
       "ref": "III.2",

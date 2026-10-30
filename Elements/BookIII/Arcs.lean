@@ -31,7 +31,8 @@ open Tacit
 circles, the measures are equal exactly when the straight lines joining their ends are equal and
 the arcs are of the same kind (both less than semicircles, both semicircles, or both greater).
 
-Proved one way by III.29 (equal circumferences, equal chords), the kind read off from the
+Proved one way by III.29, in its companion for circumferences equal in measure
+(`Prop29.of_measure`: equal circumferences, equal straight lines), the kind read off from the
 measure (`Prop29.size`); and the other way by III.28 (equal chords, kind decided by the
 centre's side), with the comparison of each kind with a semicircle
 (`Circumference.lt_semicircle`, `.semicircle`, `.gt_semicircle`).
@@ -47,8 +48,8 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   constructor
   · intro heq
     /- Equal circumferences in equal circles are subtended by equal straight lines
-       [III. 29]. -/
-    refine ⟨Prop29 hcircles hB hC hD hE hK hL heq, ?_⟩
+       [III. 29], here by its companion for circumferences equal in measure. -/
+    refine ⟨Prop29.of_measure hcircles hB hC hD hE hK hL heq, ?_⟩
     /- Each measure is less than two right angles, equal to them, or greater, as its centre
        lies beyond the base, on it, or on the arc's side (`Prop29.size`). Equal measures fall
        in the same case, so the arcs are of one kind. -/
