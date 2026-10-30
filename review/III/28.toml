@@ -37,7 +37,7 @@ note = "Euclid subtracts the equal lesser circumferences from the equal whole ci
 at = "therefore the circumference ACB which remains"
 kind = "helper"
 helper = "Prop26.remainder"
-note = "Common Notion 3 gives the remaining measures. The congruence of the lesser segments supplied by III.26 extends to one application of the whole disks and circumferences (`Prop26.extend`); restricting it to the complementary closed sides gives the congruent greater segments and arcs. This is the same subtraction as in III.26, with the common bases retained. `Prop26.extend` uses I.2, I.4, I.12, I.17, I.19, I.20, III.2 and III.9, for which Heath prints no references here."
+note = "Common Notion 3 gives the remaining measures. The congruence of the lesser segments supplied by III.26 extends to one application of the whole disks and circumferences (`Prop26.extend`); restricting it to the complementary closed sides gives the congruent greater segments and arcs. This is the same subtraction as in III.26, with the common bases retained. `Prop26.extend` uses I.2, I.4, I.8, I.12, I.17, I.19, I.20, III.2 and III.9, for which Heath prints no references here."
 
 [figure]
 case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
