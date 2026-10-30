@@ -4,8 +4,11 @@
 # Elements.Superposition, in a file of only imports, comments and pins that Audit.lean
 # imports; that five definitions are pinned by #print, the two the section names opening
 # their prints as Lean's do today; and that none is cut short.
+# Concurrent (#608), once its own test has ended: it reads the tree and writes nothing.
 order = 146
 name = "python3 -I scripts/check_superposition_pins.py"
 job = "check"
 command = ["python3", "-I", "scripts/check_superposition_pins.py"]
 section8 = "python3 -I scripts/check_superposition_pins.py"
+concurrent = true
+after = ["python3 -I tests/test_check_superposition_pins.py"]
