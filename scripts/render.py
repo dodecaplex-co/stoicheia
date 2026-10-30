@@ -323,18 +323,34 @@ def attached_mark(entry):
 def load_axiom_docs():
     """name -> (first sentence of docstring, path, line) for every axiom."""
     docs = {}
-    pattern = re.compile(r"/--((?:(?!-/).)*?)-/\s*axiom\s+([^\s({]+)", re.S)
     for path in sorted((ROOT / "Elements" / "Foundations").rglob("*.lean")):
         src = read_text(path)
         # facts.json names an axiom by its namespace below `Elements`, e.g.
         # `Tacit.circles_meet` or, for a Euclidean-only rule, `Tacit.Euclidean.…`.
         ns = re.search(r"^namespace Elements\.(\S+)", src, re.M)
         prefix = ns.group(1) + "." if ns else ""
-        for m in pattern.finditer(src):
-            doc = " ".join(m.group(1).split())
-            line = src[: m.start(2)].count("\n") + 1
-            docs[prefix + m.group(2)] = (doc, path.relative_to(ROOT).as_posix(), line)
+        # Each docstring as Lean reads it, so none inside a remark (#349).
+        for doc, name, at, _ in axiom_docstrings(src):
+            line = src[:at].count("\n") + 1
+            docs[prefix + name] = (" ".join(doc.split()), path.relative_to(ROOT).as_posix(),
+                                   line)
     return docs
+
+
+AXIOM_NAME = r"axiom\s+(?P<name>[^\s({]+)"
+
+
+def axiom_docstrings(src):
+    """Each documented axiom of the Lean `src`, as `heath.documented` reads it: its
+    docstring's text, its name, the name's offset and the text's span in `src`, the name
+    read in code. check_style reads them so too (`docstring_span`)."""
+    code = heath.without_comments(src)
+    found = []
+    for d in heath.documented(src, AXIOM_NAME):
+        m = re.compile(AXIOM_NAME).match(code, d.keyword)
+        found.append((src[d.start + 3:d.close - 2], m.group("name"), m.start("name"),
+                      (d.start + 3, d.close - 2)))
+    return found
 
 
 def svg_desc(path):
@@ -888,13 +904,23 @@ def rests_on(p, docs, depth, book, refs, attached=()):
 @functools.lru_cache(maxsize=None)
 def law_docs():
     """law -> what it says: the docstring of each constructor of the `Cited` type, the laws
-    a derivation inside a hypothetical placement may cite."""
-    src = read_text(ROOT / "Elements" / "Foundations" / "Superposition" / "Syntax.lean")
-    body = re.search(r"^inductive Cited where\n(.*?)^\s*deriving\b", src, re.M | re.S)
+    a derivation inside a hypothetical placement may cite, each docstring as Lean reads it
+    (`heath.documented`), so none inside a remark, and its text past any block nested in
+    it (#349)."""
+    return cited_law_docs(
+        read_text(ROOT / "Elements" / "Foundations" / "Superposition" / "Syntax.lean"))
+
+
+def cited_law_docs(src):
+    """law -> what it says, for the `Cited` type of the Lean `src` (`law_docs`)."""
+    code = heath.without_comments(src)
+    body = re.search(r"^inductive Cited where\n(.*?)^\s*deriving\b", code, re.M | re.S)
     if body is None:
         return {}
-    return {m.group(2): " ".join(m.group(1).split())
-            for m in re.finditer(r"/--((?:(?!-/).)*?)-/\s*\|\s*(\w+)", body.group(1), re.S)}
+    law = re.compile(r"\|\s*(?P<name>\w+)")
+    return {law.match(code, d.keyword)["name"]: " ".join(src[d.start + 3:d.close - 2].split())
+            for d in heath.documented(src, law.pattern)
+            if body.start(1) <= d.start < body.end(1)}
 
 
 def cited_laws_table(p, docs, up):
@@ -1015,12 +1041,20 @@ def overlap_word(overlap):
 
 
 # The Lean words a badge's reading lives in. A record's tag may cover its companions
-# alone (III.24's and III.25's measure), so a tag named here gives its badge only to a
-# statement that uses one of its words, as the decisions page asked on 19 October 2026
-# ("if the badge is first kept to statements that use the measure"); a tag with a badge
-# and no words here gives it to every statement it is on.
+# alone (III.24's and III.25's measure), so a tag named here gives its badge, as it
+# stands, only to a statement that uses one of its words, as the decisions page asked on
+# 19 October 2026 ("if the badge is first kept to statements that use the measure"), and
+# names a companion's use only in the words `BADGE_BESIDE` allows, below; a tag with a
+# badge and no words here gives it to every statement it is on.
 BADGE_WORDS = {"angle-measure": {"Elements.circumference", "Elements.standing",
                                  "Elements.Arc.measure"}}
+# The Lean words of the reading a badge's representation stands beside. A statement that
+# uses one of them states Euclid's equal circumferences as circumferences that coincide,
+# so the measure is not the whole reading: where it uses the measure too (III.26's and
+# III.28's clauses conclude both), its badge says "and in our measure of circumferences";
+# where only a companion uses the measure (III.24's), "with a companion in our measure of
+# circumferences".
+BADGE_BESIDE = {"angle-measure": {"Elements.Arc.Congruent"}}
 
 
 def statement_names(statement):
@@ -1064,17 +1098,37 @@ def bracketed_key(books):
             "the text's enunciation, which may not be Euclid's.")
 
 
-def representation_badge(record, entry=None):
+def representation_badge(record, entry=None, companions=None):
     """A few words beside the badge for a representation that changes how the whole
     statement is read (review/terms.toml `badge`): "in our measure of circumferences".
     `entry` is the statement's facts.json entry, whose words decide a badge that
     `BADGE_WORDS` keeps to the statements using them; with none, such a badge is not
-    given."""
+    given. A statement that uses them and a word of `BADGE_BESIDE` is read both ways:
+    "and in our measure of circumferences". One that uses a word of `BADGE_BESIDE` and
+    none of `BADGE_WORDS` has "with a companion in our measure of circumferences" if one
+    of `companions` uses them, and no badge otherwise. `companions` supplies the entries
+    facts.json attaches to `entry`, read from it when not given; only entries whose refs
+    are companions are considered."""
     terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
     used = statement_names((entry or {}).get("statement", ""))
-    badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})
-              and (t not in BADGE_WORDS or BADGE_WORDS[t] & used)]
+    badges = []
+    for t in tags:
+        if "badge" not in terms.get(t, {}):
+            continue
+        badge = terms[t]["badge"]
+        beside = BADGE_BESIDE.get(t, set()) & used
+        if t not in BADGE_WORDS:
+            badges.append(badge)
+        elif BADGE_WORDS[t] & used:
+            badges.append(f"and {badge}" if beside else badge)
+        elif beside:
+            if companions is None:
+                companions = attached_entries(entry, load_facts())
+            if any(heath.parse_ref(c["ref"]).kind == "companion"
+                   and BADGE_WORDS[t] & statement_names(c.get("statement", ""))
+                   for c in companions):
+                badges.append(f"with a companion {badge}")
     return and_list(badges) if badges else ""
 
 
@@ -2466,7 +2520,9 @@ def certificate_row(entry, link, refs, record=None):
     Argument) or, indented under it, its porism or a companion."""
     status = STATUS_SHORT[entry["status"]] if entry else "🚧"
     statement = SCOPE_WORD[record["statement"]["scope"]] if record else ""
-    if record and representation_badge(record, entry):
+    # The dagger marks a statement that itself uses the representation, so no companion
+    # is given: III.24's, whose companions alone use the measure, has none.
+    if record and representation_badge(record, entry, companions=()):
         statement += "†"
     r = heath.parse_ref(entry["ref"]) if entry else None
     argument = route_word(record, r.book, r.n) if record and r else ""

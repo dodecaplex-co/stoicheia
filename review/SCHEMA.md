@@ -226,7 +226,7 @@ The section needs a `case` or a `note`, or both, and is left out when it has nei
 | `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. |
 | `page` | `"sha256:"` and 16 hex digits | no | Reserved for the stamp of the page's commentary and figures ([#621](https://github.com/dodecaplex-co/stoicheia/issues/621)): read, and checked for its form alone, until the train that writes it lands. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
-| `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
+| `run` | string | from stage `full` | The run the review was made in, in words, and each later reading of the record after a semicolon. Each names the work it was made for: the brief and stage when the work was done under a brief, as `"brief 0005 stage 5, ship R3 (#29); …"`, and otherwise the card, as `"card 220, cross-family sign-off: …"`, or a ship's orders, as `"ship Q orders, item (a): …"`. A line may open with who wrote the proof, as `"proof by Claude; read-through 02 (#34): …"`, and a reading may name its reader, its commit and its workflow, as `"workflow wf_…"`. `heath.load_review` requires a string that is not blank, and reads nothing of its form. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
 
 `items` may be omitted or empty at either stage. `heath.load_review` checks each key's
