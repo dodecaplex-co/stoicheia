@@ -43,3 +43,9 @@
 
   This entry approves the change to `scripts/test_safe_push.py`, whose contract for the
   `negative` job holds the four workers.
+
+  This entry approves the change to `tests/test_concurrent_checks.py`, whose signal
+  test's stand-in pass records each signal before it marks it, so that the burst follows
+  the first signal's record (#707). Under load the test failed this train's yard on
+  29 October without it: a signal's handler run inside the first one's, between the mark
+  and the record, was recorded first. The same change rides in #609's train.
