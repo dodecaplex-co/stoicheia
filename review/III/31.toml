@@ -16,7 +16,7 @@ note = "An angle contained by a straight line and a circumference is a mixed ang
 at = "Let ABCD be a circle"
 kind = "helper"
 helper = "Prop2.triangle"
-note = "Euclid joins the points of the circle and uses triangle ABC. The Lean excludes collinearity by `Prop2.triangle`, from III.2, for which Heath prints no reference here."
+note = "Euclid joins the points of the circle and uses triangle ABC. The Lean excludes collinearity by `Prop2.triangle`, from III.2, for which Heath gives no reference here."
 
 [[passage]]
 at = "Then, since BE is equal to EA"
@@ -39,7 +39,7 @@ note = "Euclid adds the two angles at A to make the whole BAC. Since E lies betw
 [[passage]]
 at = "and it is the angle in the segment ADC less than the semicircle"
 kind = "case"
-note = "Euclid's figure supplies D; for the further case described above, `Prop2.oppositeSide` supplies a point of the circle across AC from B by III.2, for which Heath prints no reference here."
+note = "Euclid's figure supplies D; for the further case described above, `Prop2.oppositeSide` supplies a point of the circle across AC from B by III.2, for which Heath gives no reference here."
 
 [[passage]]
 at = "I say further that the angle of the greater segment"
@@ -63,7 +63,7 @@ note = "Likewise, that the less segment lies wholly within the right angle CAF i
 at = "the angle contained by the straight line CA and the circumference ADC is less"
 kind = "carried"
 helper = "Prop31.less"
-note = "Euclid reads the strict shortfall from his figure. `Prop31.less_lt_right` finds the angle CAF right, as its adjacent angle BAC is, by `Tacit.adjacent_eq_of_right` from I.13, with the right angle BAC and the diameter supplied as for the greater segment. To contain the less segment within CAF, it shows that a point within the circle on the straight line AB lies between A and B (`Tacit.between_of_inside_chord`), and so on B's side of AC: a point of the less segment on AB would be such a point on D's side, and one across AB from C would give one, for the straight line from it to C would cross AB within the circle (III.2). `Prop31.less_nearVertex` and `near_across` find whole small circles within the less segment near A, and within CAF outside the circle, using I.12, I.17, I.19, I.20 and III.2, none referenced by Heath here."
+note = "Euclid reads the strict shortfall from his figure. `Prop31.less_lt_right` finds the angle CAF right, as its adjacent angle BAC is, by `Tacit.adjacent_eq_of_right` from I.13, with the right angle BAC and the diameter supplied as for the greater segment. To contain the less segment within CAF, it shows that a point within the circle on the straight line AB lies between A and B (`Tacit.between_of_inside_chord`), and so on B's side of AC: a point of the less segment on AB would be such a point on D's side, and a point across AB from C would give one there too, for the straight line from it to C would cross AB within the circle (III.2), on D's side of AC. `Prop31.less_nearVertex` and `near_across` find whole small circles within the less segment near A, and within CAF outside the circle, using I.12, I.17, I.19, I.20 and III.2, none referenced by Heath here."
 
 [figure]
 case = "BC a diameter, with B in the greater segment ABC and D in the less segment ADC, as in Heath's figure"
@@ -74,7 +74,7 @@ stage = "full"
 commit = "5bbb773a7"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:9bc76ab4d216634c"
-run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; #525, read-through 03's editorial leftovers: re-read whole by Claude Opus 5.5, of the family that did not write the original proof where one family wrote it (II.6, II.7, III.31, III.34, III.37: OpenAI Codex), and for III.5 and III.6, whose proofs both families wrote, an independent reader who wrote none of this (#478), independent reader RD-s5, at 5bbb773a7"
+run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; #525, read-through 03's editorial leftovers: re-read whole by Claude Opus 5.5, of the family that did not write the original proof where one family wrote it (II.6, II.7, III.34, III.37: OpenAI Codex), and for III.5, III.6 and III.31, whose proofs both families wrote (III.31's companions are Claude's), an independent reader who wrote none of this (#478), independent reader RD-s5, at 5bbb773a7"
 text = "sha256:4428720dbb7901d5"
 
 [review.items]

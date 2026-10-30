@@ -152,7 +152,7 @@ with Yaglom and Klein.
   coordinates (chapter 8), and on complex numbers and the golden section if you keep
   reading.
 - <a id="sanderson_linalg"></a>Grant Sanderson (3Blue1Brown), [*Essence of linear algebra*](https://www.3blue1brown.com/topics/linear-algebra)
-  (video lessons, 2016). **Free.** Short, beautifully animated lessons that make vectors,
+  (video lessons, 2016). **Free.** Short animated lessons that make vectors,
   the dot product and the determinant, which is signed area, as easy to see as one of
   Byrne's coloured figures.
 - <a id="steele2004cauchy"></a>J. Michael Steele, [*The Cauchy-Schwarz Master Class: An Introduction to the Art of Mathematical Inequalities*](https://doi.org/10.1017/CBO9780511817106)
@@ -189,8 +189,8 @@ with Yaglom and Klein.
 ## Transformations
 
 Euclid moves one triangle onto another in I.4 and I.8, and one segment of a circle onto
-another in III.24. In 1872 Felix Klein proposed that a geometry is known by the motions it
-allows, and these books start from there.
+another in III.24. In 1872 Felix Klein proposed that a geometry is known by the transformations
+it allows, Euclid's by the rigid motions, and these books start from there.
 
 - <a id="klein1893comparative"></a>Felix Klein, ["A comparative review of recent researches in geometry"](https://arxiv.org/abs/0807.3161),
   translated by M. W. Haskell, *Bulletin of the New York Mathematical Society* 2 (1893),
@@ -233,7 +233,7 @@ equal in area. Cutting one into pieces that rebuild the other makes that equalit
 something you can see.
 
 - <a id="frederickson1997dissections"></a>Greg N. Frederickson, [*Dissections: Plane & Fancy*](https://www.cs.purdue.edu/homes/gnf/book.html)
-  (Cambridge University Press, 1997). A book of dissections, told in drawings: one figure
+  (Cambridge University Press, 1997). A richly illustrated book of dissections: one figure
   cut into pieces that rebuild another, Euclid's "equal" made visible.
 - <a id="boltyanskii1963equivalent"></a>V. G. Boltyanskii, [*Equivalent and Equidecomposable Figures*](https://store.doverpublications.com/collections/math-algebra/products/9780486170053),
   translated by Alfred K. Henn and Charles E. Watts (D. C. Heath, 1963; Dover, 2007, in
@@ -241,7 +241,7 @@ something you can see.
   book, for readers with only school geometry, on when two figures of equal area or volume
   can be cut into matching pieces.
 - <a id="aigner2018proofs"></a>Martin Aigner and Günter M. Ziegler, [*Proofs from THE BOOK*](https://link.springer.com/book/10.1007/978-3-662-57265-8),
-  6th ed. (Springer, 2018). Its short, beautiful chapter "Hilbert's third problem:
+  6th ed. (Springer, 2018). Its short chapter "Hilbert's third problem:
   decomposing polyhedra" shows why cutting and rearranging always works for polygons of
   equal area and fails for solids.
 - <a id="braden1986surveyor"></a>Bart Braden, ["The Surveyor's Area Formula"](https://web.archive.org/web/20140629065751/https://www.maa.org/sites/default/files/pdf/pubs/Calc_Articles/ma063.pdf),
@@ -310,7 +310,7 @@ Jens Høyrup's survey below is a gentle way in.
   Weil's letter and Unguru's later reflections side by side, each part with an
   introduction that sets the scene.
 - <a id="fowler1999mathematics"></a>David Fowler, [*The Mathematics of Plato's Academy: A New Reconstruction*](https://academic.oup.com/book/52809),
-  2nd ed. (Clarendon Press, 1999; first edition 1987). A bold, beautifully argued book
+  2nd ed. (Clarendon Press, 1999; first edition 1987). A bold book
   that reads Book II without algebra, as being about squares and rectangles (chapter 3,
   "Elements II: The Dimension of Squares"), and links it to the "take the smaller from the
   larger" process behind continued fractions.
@@ -510,13 +510,13 @@ rules, after System E, give one answer; these look at the question from other si
   pictures that prove at a glance, (a + b)² and the AM–GM inequality among them: a
   natural companion to Book II, read the algebraic way.
 - <a id="rougeux2018byrne"></a>Nicholas Rougeux, [*Byrne's Euclid*](https://www.c82.net/euclid/)
-  (2018). **Free.** Oliver Byrne's Euclid of 1847, in red, yellow and blue, lovingly
+  (2018). **Free.** Oliver Byrne's Euclid of 1847, in red, yellow and blue,
   rebuilt for the web: click a coloured shape and watch it light up in the proof. Our "at
   a glance" figures take their palette from Byrne.
 - <a id="oechslin2010byrne"></a>Oliver Byrne, [*The First Six Books of the Elements of Euclid*](https://www.taschen.com/en/books/classics/47706/oliver-byrne-the-first-six-books-of-the-elements-of-euclid),
   facsimile of the 1847 edition, edited by Werner Oechslin (Taschen, 2010; new edition
   2022). A printed facsimile of Byrne's coloured pages, with Oechslin's essay on why the
-  book looks the way it does: a lovely thing to have on the table while reading our figures.
+  book looks the way it does: a companion to have on the table while reading our figures.
 
 ## Lean and proof assistants
 
