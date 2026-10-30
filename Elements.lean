@@ -182,3 +182,4 @@ import Elements.BookIII.Prop35
 import Elements.BookIII.Prop36
 import Elements.BookIII.Prop37
 import Elements.Companions
+import Elements.Deprecated

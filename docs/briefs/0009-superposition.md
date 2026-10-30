@@ -1,5 +1,27 @@
 # Brief 0009: a restricted rule of superposition
 
+*29 October 2026: #150 no longer holds the release.* On 27 October 2026 the owner chose,
+of the options put to them, "Defer (Recommended)" (decision 31), so that the rest of
+superposition's work waits until after the release, and then "All five (Recommended)", by
+which #150 no longer carries the label `blocks-release`. #150, the coordinator's record of
+both choices, gives the deferral's condition: the work returns to the release if the
+release's measurement puts Book I under 95. On 29 October 2026, as the release's cards
+were sorted, the owner's decision was to "keep the 27 October deferral of #150" (the
+coordinator's orders of that day). The replacement's issue, #75, is closed on its landed
+work, and #150 stays open and carries the rest after the release
+([the decision](../decisions/2026-10-29-superposition-deferred.md)). So round 4's words
+below, that #150 "holds every release until it closes", record the plan of 20 October and
+no longer hold; the decisions page's entry of 20 October that says the same stays as
+written, as a dated record. The kept side's cost is no longer only read off the model's
+proof: since 25 October 2026 it has been a theorem, `Rule.of_placement_of_join` in
+`Soundness.lean` ([its decision](../decisions/2026-10-25-superposition-side-cost.md)),
+whose pin in `Audit/Superposition.lean` #150 still tracks. The lines that said otherwise
+in the present tense, in round 4's correction, under "The placement's fresh symbols and
+retained facts" and "The model obligation, met", and in the answers to questions 5 and 7,
+are corrected in place; what
+they record of earlier revisions stands. No statement, definition, interface or lock
+changes.
+
 *22 October 2026, #312: I.4 and I.8 write no number. Where "A finite symbolic context"
 below says that a proof names its symbols with an inductive type of its own "and numbers
 them once", the numbering is now done for it: `Symbols.ofList`, in `Soundness.lean`, takes
@@ -105,9 +127,10 @@ computed check or a true record. Part 4 of the restriction was an inspection of
 21 October 2026 (above); `Cited.drawsNothing` was
 a classification set by hand, whose values `Prop4.cites_drawNothing` evaluated but whose
 meaning was judged by eye from the audit's pinned axiom closures, until its retirement on
-21 October 2026 (above); and the cost of the kept side is checked by reading the model's
-proof. Non-derivability stays unclaimed. "Landing" gives the order: the first retirement
-wave, then this replacement, then the second wave, whose landing carries the review of the
+21 October 2026 (above); and the cost of the kept side was checked by reading the model's
+proof, until it became the theorem `Rule.of_placement_of_join` on 25 October 2026 (the
+note of 29 October above). Non-derivability stays unclaimed. "Landing" gives the order:
+the first retirement wave, then this replacement, then the second wave, whose landing carries the review of the
 cited laws' construction rules (`cited_laws`) and the audit pins.
 
 **Round 3's correction.** Round 2 described a hypothesis in six prototype files; the branch
@@ -359,7 +382,9 @@ which in I.4 is C′ (the note of 21 October on the second retirement wave above
 the law still draws nothing in the placement. Its model obligation is now proved: wherever the triangle can be laid
 down, the straight line through D and C′ must exist too, which Postulate 1 gives, since D is
 not C′. The owner approved this kept side, as prototyped, under question 5 on 20 October
-2026. That cost is checked by reading the model's proof; #150 tracks a theorem for it.
+2026. That cost was checked by reading the model's proof until 25 October 2026; it is now
+the theorem `Rule.of_placement_of_join`, in `Soundness.lean`, which the model's proof
+applies (the note of 29 October above).
 
 Astra asked that the incidence and nondegeneracy facts the arguments need be retained
 explicitly. They are, as steps rather than as assumptions: that B′, C′ and D are three
@@ -688,7 +713,9 @@ correspondence checks retained.
 AB along the ray DG, choosing the side of L on which C falls, and preserves all three
 lengths and all three angles. Since C′ is off L and D is on it, they are distinct.
 The model's proved Postulate 1 supplies their straight line. The theorem `superposition`
-then applies `Rule.of_placement` to that placement with its side. It uses no project axiom.
+then applies `Rule.of_placement_of_join` to that placement, to the model's Same side 3 and
+to its Postulate 1, and that theorem applies `Rule.of_placement` (the note of 29 October
+above). It uses no project axiom.
 The assembled `model_exists : ∃ S : Signature, Laws S` remains unconditional, with all
 79 locked laws proved; its pinned closure is `propext`, `Classical.choice` and
 `Quot.sound`. Regeneration and the model build must confirm the assembly on this merge.
@@ -1042,15 +1069,20 @@ from round 2. The other items record the delivered design or the continuing proc
    line inside the placement. The model proves
    that this side exists. The alternative draws the line inside the placement, which
    would require a construction step there, or changes the argument and its calculus to
-   avoid that line. The approved design keeps it; #150 tracks pinning its cost by a
-   theorem rather than by reading the model's proof.
+   avoid that line. The approved design keeps it, and since 25 October 2026 its cost has
+   been a theorem, `Rule.of_placement_of_join`, rather than a reading of the model's
+   proof; #150 tracks its pin in the audit (the note of 29 October above).
 6. **More citable propositions.** `Cited` holds I.7 alone among the propositions. Another
    joins only by a revision of this brief, with its reason.
-7. **Timing.** The replacement is approved and unlanded. A1 has landed. The tooling pull
-   requests must land before the replacement, and A2 lands after it. Landing the
-   replacement also requires /no-mistakes and the independent Codex read of the model
-   lane, with evidence tied to the revision delivered as described under "Landing". #150
-   stays open after the landing and holds every release until it closes.
+7. **Timing.** On 20 October 2026 the replacement was approved and unlanded, and A1 had
+   landed. The tooling pull requests were to land before the replacement, and A2 after it.
+   Landing the replacement also required /no-mistakes and the independent Codex read of
+   the model lane, with evidence tied to the revision delivered as described under
+   "Landing". #150 was to stay open after the landing and hold every release until it
+   closed. The replacement has landed, and its issue, #75, is closed on its landed work.
+   #150 stays open, but since 27 October 2026 it no longer holds the release: the owner
+   deferred superposition's remaining work until after the release (the note of
+   29 October above).
 
 ## Checks
 
