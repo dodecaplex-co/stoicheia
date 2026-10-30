@@ -180,7 +180,7 @@ graph TD
 
 ### From the Lean
 
-143 arrows: 107 also among Heath's references (solid) and 36 only in the Lean (dashed).
+144 arrows: 107 also among Heath's references (solid) and 37 only in the Lean (dashed).
 
 ```mermaid
 graph TD
@@ -279,8 +279,9 @@ graph TD
   I22 --> I23
   I4 --> I24
   I5 --> I24
+  I16 -.-> I24
+  I18 -.-> I24
   I19 --> I24
-  I21 -.-> I24
   I23 --> I24
   I4 --> I25
   I24 --> I25
@@ -756,7 +757,7 @@ graph TD
 
 ### From the Lean
 
-261 arrows: 85 also among Heath's references and 176 only in the Lean. The graph draws the 95 arrows between propositions of Book III, 38 solid and 57 dashed; the table under it lists the other 166, to propositions of earlier books.
+262 arrows: 85 also among Heath's references and 177 only in the Lean. The graph draws the 96 arrows between propositions of Book III, 38 solid and 58 dashed; the table under it lists the other 166, to propositions of earlier books.
 
 ```mermaid
 graph TD
@@ -826,6 +827,7 @@ graph TD
   III16 -.-> III18
   III18 --> III19
   III2 -.-> III20
+  III2 -.-> III21
   III20 --> III21
   III2 -.-> III22
   III21 --> III22

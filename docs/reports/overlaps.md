@@ -43,7 +43,7 @@ on Circle 1 and 37 then did, the first III.7: 23 propositions, no porism and 14 
 Through their own proofs and the proved rules beneath them, without the entries they cite,
 59 had rested on it and 23 then did. Intersection 4 takes the first circle's centre from
 `exists_centre`, but I.22, which used it, has that centre already and now gives it to the
-lemma that carries the proof (`circles_meet_of_centre`), so I.22 rests on neither Circle 1
+lemma that carries the proof (`circlesMeet_of_centre`), so I.22 rests on neither Circle 1
 nor our rule, and no entry came to rest on `exists_centre` that had not: 53 did, as before,
 the first III.1: 28 propositions, no porism and 25 companions. Through their own proofs and
 the proved rules beneath them 46 did, where 31 had, since Generalities 4 now takes its

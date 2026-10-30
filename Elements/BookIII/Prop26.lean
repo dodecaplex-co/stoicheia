@@ -299,10 +299,11 @@ theorem Prop26.remaining_side {A B C K P : Point} (hAK : OppositeSidesOf A K B C
 
 /-- **The whole circles placed together with the equal parts.** Euclid subtracts BAC
 and EDF from their equal circles (Heath, vol. 2, pp. 56–57). Extend their given congruence
-radially from an interior neighbourhood, using I.2, I.4, I.8 and I.20. The reverse
-construction makes the extension onto. Three points of the given arc then identify the
-image of its centre by III.9; Definition I.15 and the radius rules carry the whole circle
-and disk across. Collinearity and betweenness keep the sides of the chord.
+radially from an interior neighbourhood. The reverse construction makes the extension
+onto. Three points of the given arc then identify the image of its centre by III.9;
+Definition I.15 and the radius rules carry the whole circle and disk across. Collinearity
+and betweenness keep the sides of the chord. In all it uses I.2, I.4, I.8, I.12, I.17,
+I.19, I.20, III.2 and III.9.
 
 The given congruence controls its witness only on the segment and arc. This constructs a
 new map agreeing there, and proves the whole-circle application that the subtraction takes

@@ -26,7 +26,7 @@ outside = { score = 85, by = "Astra", commit = "676244a" }
 tag = "book-II"
 
 [III]
-stage = "released (next: the arc's field order, #165, and the centre-given tag's removal, #59; then acceptance and the consolidation release of Books I–III)"
+stage = "released (next: acceptance and the consolidation release of Books I–III)"
 outside = { score = 80, by = "Astra", commit = "676244a" }
 tag = "book-III"
 
