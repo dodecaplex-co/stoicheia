@@ -49,11 +49,11 @@ note = "Euclid leaves the argument for the other interior angle to the reader, w
 
 [review]
 stage = "full"
-commit = "a6253fb01"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "6552a1440"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:22387b9abfcf45f8"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14-I16b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba; card #482, the coordinator's ruling on joins (28 October 2026): read in full by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), reader G2-r482j, at a6253fb01"
-text = "sha256:eb61563b34efe516"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14-I16b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482a, at 2e30aceba; card #482, the coordinator's ruling on joins (28 October 2026): read in full by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), reader G2-r482j, at a6253fb01; cards #763 to #769, ship AC: read-through 02's items mended, written by Claude, read in full by Claude Opus 5.5, an independent reader who wrote none of it, reader AC-rdI-r1, at 6552a1440"
+text = "sha256:9192df8ae351ee90"
 
 [review.items]
 statement = "pass"
