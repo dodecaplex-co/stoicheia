@@ -2,8 +2,11 @@
 # section 4, "File names"). It reads the index, so it judges exactly what is committed;
 # --self-test first plants a fault of each kind and expects each caught. It needs no Lean,
 # and runs before the build.
+# Concurrent (#608), once its own test has ended: it reads the index and writes nothing.
 order = 6
 name = "python3 scripts/check_paths.py --self-test"
 job = "check"
 command = ["python3", "scripts/check_paths.py", "--self-test"]
 section8 = "python3 scripts/check_paths.py --self-test"
+concurrent = true
+after = ["python3 -I tests/test_check_paths.py"]
