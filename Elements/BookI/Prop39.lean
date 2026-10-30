@@ -10,6 +10,10 @@ import Elements.BookI.HelpersParallels
 Euclid's text, in Heath's translation: [`heath/I/39.md`](../../heath/I/39.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+`Prop39` takes the vertices A and D apart, as Euclid's "let AD be joined" needs. The
+companion after it, `Prop39.general`, lets them be one point, and then the parallel is the
+one through it (I.31).
 -/
 
 namespace Elements.BookI
@@ -77,5 +81,25 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
      and discharges the supposition that AD is not parallel to BC. -/
   -- Therefore etc.
   exact hpar
+
+/-- **I.39, general** (companion of I.39). Equal triangles ABC, DBC on the same base BC of
+the straight line L, and on the same side of it, are in the same parallels: A and D lie on
+one straight line parallel to L. The vertices may be one point, and then the parallel is the
+one through it (I.31). -/
+theorem Prop39.general {A B C D : Point} {L : Line} (hABC : Triangle A B C)
+    (hDBC : Triangle D B C) (hB : OnLine B L) (hC : OnLine C L)
+    (heq : △ A B C = △ D B C) (hside : SameSide A D L) :
+    ∃ M : Line, Parallel M L ∧ OnLine A M ∧ OnLine D M := by
+  by_cases hAD : A = D
+  · /- One vertex: ABC and DBC are one triangle, and the parallel to L through
+       its vertex is the straight line I.31 draws (`Prop31.line`). -/
+    obtain ⟨M, hA_M, hML⟩ := Prop31.line (hABC.bca.off_line hB hC)
+    exact ⟨M, hML, hA_M, hAD ▸ hA_M⟩
+  · /- Two vertices: L is the straight line BC, so D is on A's side of BC, and
+       I.39 makes AD, which "let AD be joined" draws, parallel to BC. -/
+    have hpar : AreParallel A D B C :=
+      Prop39 hABC hDBC heq (SameSideOf.of_line hABC.ne₂₃ hB hC hside) hAD
+    obtain ⟨M, hA_M, hD_M⟩ := Postulate1 A D hAD
+    exact ⟨M, hpar.parallel hA_M hD_M hB hC, hA_M, hD_M⟩
 
 end Elements.BookI

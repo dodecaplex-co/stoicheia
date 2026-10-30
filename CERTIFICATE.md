@@ -65,6 +65,7 @@ What the proofs show:
 | ✅ | [I.37](book/I/37.md) | whole | Euclid's | I.31, I.34, I.35 | I.30, I.31, I.34, I.35 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 0 | 37 |
 | ✅ | [I.38](book/I/38.md) | whole | Euclid's | I.31, I.34, I.36 | I.30, I.31, I.34, I.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 0 | 37 |
 | ✅ | [I.39](book/I/39.md) | whole | Euclid's | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 2 | 36 |
+| ✅ | &emsp;[I.39 general](book/I/39.md#general) |  |  |  | I.31, I.39 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 1 | 23 |
 | ✅ | [I.40](book/I/40.md) | whole | the text's | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 2 | 36 |
 | ✅ | &emsp;[I.40 general](book/I/40.md#general) |  |  |  | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 35 |
 | ✅ | &emsp;[I.40 join](book/I/40.md#join) |  |  |  | I.40 general | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 3 |
