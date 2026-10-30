@@ -12,10 +12,10 @@ This is step 4 of brief 0008, guarding the construction before the centre restat
 At each renewal, read the whole list and check that `sorryAx` is absent. Circle 2
 (`Tacit.inside_of_between`) and Circle 3 (`Tacit.outside_of_between`) are theorems, both
 proved after III.2 in `Elements/BookIII/Prop02.lean` from its corollary `Prop2.within`, so
-no axiom list can show them; the certificate's walk
-from III.1 passes through the steps this construction also calls (`Prop1.midpoint_inside`,
-`Prop1.perpendicular_chord`, I.10) and through the Tacit theorems, so a use of
-either would make III.1 cite III.2, a later proposition, which the certificate refuses.
+no axiom list can show them; the certificate's walk from III.1 passes through the steps
+this construction also calls (`Prop1.midpoint_inside`, `Prop1.perpendicular_chord`, I.10)
+and through the Tacit theorems, so a use of either would make III.1 cite III.2, a later
+proposition, which the certificate refuses.
 `Tacit.centre_unique` is a theorem since axiom wave one, and no axiom list shows a call
 to it either.
 `Tacit.exists_centre` is admitted by the owner's decision of 18 October 2026 on issue
