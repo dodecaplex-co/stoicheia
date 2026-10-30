@@ -22,7 +22,7 @@ note = "Inside the hypothetical placement, `Superposition.Derives.ray_unique` ma
 at = "the straight line AC will also coincide with DF"
 kind = "helper"
 helper = "Superposition.Derives.ray_of_angle"
-note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law names all three straight lines; the placement supplies the third, the side through D and C', so the step draws no line. `Superposition.Derives.ray_of_angle_side` puts C' on F's side of D and uses no side: its law is Pasch 3, which since the second axiom retirement is proved with a construction, joining C' to a point of DE. Neither step draws a line inside the placement: citing a law draws nothing there, whatever its proof draws (brief 0009, question 4)."
+note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law names all three straight lines; the placement supplies the third, the side through D and C', so the step draws no line. `Superposition.Derives.ray_of_angle_side` puts C' on F's side of D; its law takes the same three straight lines, but its proof uses DE alone, for it is Pasch 3, which Book Zero proves with a construction, joining C' and F to a point of DE. Neither step draws a line inside the placement: citing a proved law draws nothing there, whatever its proof draws."
 
 [[passage]]
 at = "hence the point C will also coincide with the point F"
@@ -44,7 +44,7 @@ note = "Heiberg brackets this as an early scholium. A finite straight line enter
 at = "Thus the whole triangle ABC will coincide with the whole triangle DEF"
 kind = "helper"
 helper = "Superposition.Derives.area_of_congruent"
-note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Euclid's coincidence takes the triangle laid down to be ABC itself; beneath the next sentence the Lean makes it ABC's equal by Metric 9 (`Tacit.area_congruent`), which `Superposition.Derives.area_of_congruent` cites with the kept sides and angles: triangles equal in all their sides and angles are equal in area. So Euclid's step from coincidence to equality rests here in part on a rule that would give I.4's area clause at once, applied to ABC and DEF once their remaining sides and angles were proved; the overlap catalogue records it among its near misses."
+note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Euclid's coincidence takes the triangle laid down to be ABC itself; beneath the next sentence the Lean makes it ABC's equal by Metric 9 (`Tacit.area_congruent`), which `Superposition.Derives.area_of_congruent` cites with the kept sides and angles: triangles equal in all their sides and angles are equal in area. So Euclid's step from coincidence to equality rests here in part on a rule that would give I.4's area clause at once, applied to ABC and DEF once their remaining sides and angles were proved; [the overlap catalogue](../../docs/reports/overlaps.md#near-misses) records it among its near misses."
 
 [[passage]]
 at = "And the remaining angles will also coincide with the remaining angles"
@@ -56,11 +56,11 @@ note = "Heath's figure also draws the base bent below EF, the impossible case of
 
 [review]
 stage = "full"
-commit = "7103f442a"
+commit = "31afcd5a0"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:ef9d655927fc2bb3"
-run = "brief 0009 stage full, ship F2 question-4 re-read; card 312, the symbols given by Symbols.ofList (no numeral in the proof), written by Claude Opus 5.5 at f31cf9cf, read with the whole record by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220); ship F2, reader F2-312cx, independent re-read at f31cf9cf; axiom wave two (card 119) merged with main at 34ac8d88, which brought #406 (card 312): the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2i48cx at 0328bcb6; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a"
-text = "sha256:2ad6f29f2f80db19"
+run = "brief 0009 stage full, ship F2 question-4 re-read; card 312, the symbols given by Symbols.ofList (no numeral in the proof), written by Claude Opus 5.5 at f31cf9cf, read with the whole record by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220); ship F2, reader F2-312cx, independent re-read at f31cf9cf; axiom wave two (card 119) merged with main at 34ac8d88, which brought #406 (card 312): the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2i48cx at 0328bcb6; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; cards #763 to #769, ship AC: read-through 02's items mended, written by Claude, read in full by Claude Opus 5.5, an independent reader who wrote none of it, reader AC-rdI-r1, at 6552a1440; #220, ship AC: read in full after read-through 02's mends by GPT-6 Astra (Codex), an independent reader of the family that did not write the proof, reader AC-rdI-cx1, at 31afcd5a0"
+text = "sha256:a6e6cda1b866de5b"
 
 [review.items]
 statement = "pass"
