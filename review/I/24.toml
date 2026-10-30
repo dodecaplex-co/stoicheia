@@ -21,7 +21,7 @@ note = "Euclid places G on the new arm with DG equal to DF; the Lean sets this l
 at = "the angle DGF is also equal to the angle DFG"
 kind = "helper"
 helper = "Prop24.below"
-note = "Euclid's figure has F below EG, and his next two comparisons need it there. With DE not greater than DF, which is DG, `Prop24.below` proves it by the lemma Heath gives, by the method of Pfleiderer, Dionysius Lardner and Isaac Todhunter (vol. 1, p. 298): DF meets EG at H, and I.16, I.18 (I.5 when DE equals DG) and I.19 make DH less than DG, which is DF, so H lies between D and F."
+note = "Euclid's figure has F below EG, and his next two comparisons need it there. With DE not greater than DF, which is DG, `Prop24.below` proves it by the lemma Heath gives, by the method of Christoph Friedrich Pfleiderer, Dionysius Lardner and Isaac Todhunter (vol. 1, p. 298): DF meets EG at H, and I.16, I.18 (I.5 when DE equals DG) and I.19 make DH less than DG, which is DF, so H lies between D and F."
 
 [[passage]]
 at = "therefore the angle DFG is greater than the angle EGF"
