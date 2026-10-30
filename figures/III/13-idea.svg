@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.13 at a glance</title>
-  <desc>Let a circle touch the blue one from inside (red) or from outside (yellow): the straight line through the two centres (black) runs to the point of contact, so there is only one.</desc>
+  <desc>Let a circle touch the blue one from inside (red) or from outside (yellow): they meet at the point of contact and nowhere else, and the straight line through the centres (black) runs to it.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="168.00" cy="160.00" r="104.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="125.70" cy="147.87" r="60.00" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>

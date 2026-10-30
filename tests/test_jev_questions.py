@@ -10,7 +10,9 @@ there that leave a marker if they ever run, and run a copy of the generator besi
 One full generation against the real HEAD, the audit of Books I to III and then its
 calibration set, is made in memory once and shared by the control, Book III, calibration,
 figure restoring and tally cases, which report its duration; the controls are generated
-again, at the evidence commit of the audit of Books I and II, in a clone. Figures are restored
+again, at the evidence commit of the audit of Books I and II, in a clone. The cases on III.27's
+and III.29's congruent circumferences generate those two propositions alone, at HEAD, so that
+they run in seconds without the shared generation. Figures are restored
 from that generation's manifest into a temporary repository. The tally reads result lines built
 here as `jev.py run` builds them for the generated file, with jev.py's own request builder and
 answer reader, and, in one case, the output of jev.py's own run, its key and replies stood in
@@ -1127,6 +1129,30 @@ class CoreNames(LeanFiles):
                 self.assertTrue(unresolved)
                 self.assertTrue(all(written in found for found in unresolved), unresolved)
 
+    def test_list_nodup_cons_resolves_as_the_area_of_a_convex_outline_writes_it(self):
+        # `Parallelogram.convexOutline`, in Elements/Figure/Divisions.lean, proves its corners
+        # different with `List.nodup_cons` whole, inside `simp [...]` (#674). Each is read alone.
+        for form, body in (
+                ('simp', '  have h : True ∧ True := ⟨trivial, trivial⟩\n'
+                         '  have n : True := by simp [List.nodup_cons, h.1, h.2]\n'),
+                ('@', '  have k := @List.nodup_cons\n')):
+            with self.subTest(form=form):
+                calls = self.calls(self.CORE.format(body))
+                calls.direct('Elements.uses')
+                self.assertEqual(calls.unresolved['Elements.uses'], set())
+
+    def test_a_neighbour_of_list_nodup_cons_is_still_unresolved(self):
+        # List's other nodup lemmas, and the whole name's last word after another first word or
+        # lengthened, are no part of the list.
+        for written in ('List.nodup_append', 'List.nodup_nil', 'Missing.nodup_cons',
+                        'Array.nodup_cons', 'List.nodup_cons_of'):
+            with self.subTest(written=written):
+                calls = self.calls(self.CORE.format(f'  have h := trivial\n  have x := @{written}\n'))
+                calls.direct('Elements.uses')
+                unresolved = calls.unresolved['Elements.uses']
+                self.assertTrue(unresolved)
+                self.assertTrue(all(written in found for found in unresolved), unresolved)
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):
@@ -1666,6 +1692,155 @@ class BookThree(unittest.TestCase):
         self.assertEqual(generator.checked('III.18', records['III.18'], state), [])
         del state['attached_statements']['III.18 contact_locallyEqual']
         self.assertEqual(generator.checked('III.18', records['III.18'], state), [name])
+
+
+_CONGRUENT = {}
+# What III.27's and III.29's notes name as bridges, beside the measure's.
+CONGRUENT_BRIDGES = {
+    'III.27': ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles',
+               'Elements.BookIII.Prop24.equalMeasure'],
+    'III.29': ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles',
+               'Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure'],
+}
+
+
+def congruent_rows():
+    """III.27's and III.29's representation rows and records, from a generator at HEAD of their
+    own, so that the cases on them run alone, in seconds, without the shared generation."""
+    if not _CONGRUENT:
+        generator = questions.Generator(HEAD)
+        for n in (27, 29):
+            generator.proposition('III', n)
+        _CONGRUENT.update(
+            generator=generator,
+            rows={row['ref']: row for row in generator.rows if row['item'] == 11 and not row['seeded']},
+            records={f'III.{n}': questions.tomllib.loads(generator.evidence.read(f'review/III/{n:02d}.toml'))
+                     for n in (27, 29)})
+    return _CONGRUENT
+
+
+class CongruentCircumferences(unittest.TestCase):
+    # III.27's and III.29's main statements take Euclid's equal circumferences as ones that
+    # coincide (`Arc.Congruent`), their companions as ones equal in measure (#474). Their rows
+    # get the words of both readings and the bridges their notes name, and are not asked for the
+    # later theorems RECORD_LATER lists, which their notes name as context (#674).
+
+    @staticmethod
+    def record_with_names(record, names):
+        record = copy.deepcopy(record)
+        record['representation']['note'] = ' '.join(
+            f'`{name.removeprefix("Elements.BookIII.")}`' for name in names)
+        return record
+
+    def test_iii_27_and_iii_29_get_the_congruence_and_the_bridges_their_records_name(self):
+        for n in (27, 29):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(ref=f'III.{n}'):
+                self.assertEqual(definitions, list(dict.fromkeys(questions.MEASURE_DEFINITIONS
+                                                                 + questions.CONGRUENCE_DEFINITIONS)))
+                self.assertEqual(bridges, questions.MEASURE_BRIDGES + CONGRUENT_BRIDGES[f'III.{n}'])
+                # `Arc.congruent_iff` is proved after III.29, in `Arcs.lean`.
+                self.assertNotIn('Elements.BookIII.Arc.congruent_iff', bridges)
+        self.assertEqual(questions.CONGRUENT_CIRCLE_BRIDGES,
+                         ['Elements.BookIII.Prop24.image', 'Elements.BookIII.Prop24.equalCircles'])
+        self.assertEqual(questions.CONGRUENT_MEASURE_BRIDGES, ['Elements.BookIII.Prop24.equalMeasure'])
+        self.assertEqual(questions.EQUAL_ANGLE_BRIDGES,
+                         ['Elements.BookIII.Prop27', 'Elements.BookIII.Prop27.of_measure'])
+        # Their rows have them, each declared before the main theorem.
+        rows = congruent_rows()['rows']
+        for ref in ('III.27', 'III.29'):
+            with self.subTest(ref=ref):
+                state = rows[ref]['state']
+                self.assertEqual(rows[ref]['expected'], 'bridge stated')
+                self.assertEqual(sorted(state['bridges']),
+                                 sorted(questions.MEASURE_BRIDGES + CONGRUENT_BRIDGES[ref]))
+                self.assertTrue(set(questions.CONGRUENCE_DEFINITIONS) <= set(state['represented_objects']))
+                self.assertIn('Arc.Congruent', state['definitions'])
+                for name in CONGRUENT_BRIDGES[ref]:
+                    self.assertEqual(state['bridge_placement'][name]['role'], 'available declaration')
+        # No other proposition of Book III gets them; III.24, III.26, III.28 and III.30 keep
+        # `Arc.congruent_iff`.
+        for n in range(1, 38):
+            definitions, bridges = questions.bundle('III', n)
+            with self.subTest(n=n):
+                self.assertEqual('Arc.Congruent' in definitions, n in (24, 26, 27, 28, 29, 30))
+                self.assertEqual('Elements.BookIII.Arc.congruent_iff' in bridges, n in (24, 26, 28, 30))
+                self.assertEqual(bool(set(questions.CONGRUENT_CIRCLE_BRIDGES) & set(bridges)), n in (27, 29))
+                self.assertEqual('Elements.BookIII.Prop24.equalMeasure' in bridges, n == 27)
+                self.assertEqual(bool(set(questions.EQUAL_ANGLE_BRIDGES) & set(bridges)), n == 29)
+
+    def test_iii_27_and_iii_29_refuse_a_row_leaving_out_a_bridge_their_records_name(self):
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        for ref, names in CONGRUENT_BRIDGES.items():
+            record = self.record_with_names(records[ref], [*names, *questions.RECORD_LATER[ref]])
+            for name in names:
+                with self.subTest(ref=ref, missing=name):
+                    state = copy.deepcopy(rows[ref]['state'])
+                    self.assertEqual(generator.checked(ref, record, state), [])
+                    del state['bridges'][name]
+                    self.assertEqual(generator.checked(ref, record, state), [name])
+
+    def test_record_later_holds_the_later_theorems_the_notes_name(self):
+        # "a theorem proved after III.27 is not a bridge for it" (the coordinator's ruling of
+        # 29 October 2026, #674): the notes name these as context, and the rows do not supply them.
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        self.assertEqual(questions.RECORD_LATER, {
+            'III.27': ('Elements.BookIII.Prop29.of_measure', 'Elements.BookIII.Arc.congruent_iff'),
+            'III.29': ('Elements.BookIII.Arc.congruent_iff',)})
+        for ref, later in questions.RECORD_LATER.items():
+            main = generator.index.get(questions.heath.parse_ref(ref).lean)
+            record = self.record_with_names(records[ref], later)
+            self.assertEqual(generator.checked(ref, record, copy.deepcopy(rows[ref]['state'])), [])
+            for name in later:
+                with self.subTest(ref=ref, name=name):
+                    self.assertFalse(generator.index.available_before(name, main))
+                    self.assertNotIn(name, rows[ref]['state']['bridges'])
+            # The measure's `Arc.measure_eq_iff`, proved after III.29 too, stays a bridge of both,
+            # placed as an explanatory later declaration.
+            placement = rows[ref]['state']['bridge_placement']['Elements.BookIII.Arc.measure_eq_iff']
+            self.assertEqual(placement['role'], 'explanatory later declaration')
+
+    def test_a_record_later_entry_its_note_does_not_name_is_refused(self):
+        # A stale entry: a theorem proved after the main theorem that the note does not give in
+        # backticks, or one the note has ceased to name.
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        unnamed = 'Elements.BookIII.Prop30'
+        record = self.record_with_names(records['III.27'], questions.RECORD_LATER['III.27'])
+        self.assertFalse(generator.index.available_before(unnamed, generator.index.get('Elements.BookIII.Prop27')))
+        with self.subTest(name=unnamed), \
+                patch.dict(questions.RECORD_LATER, {'III.27': (*questions.RECORD_LATER['III.27'], unnamed)}), \
+                self.assertRaisesRegex(questions.Refusal, r"III\.27: RECORD_LATER names Elements\.BookIII\."
+                                       r"Prop30, which its record's \[representation\] note does not name"):
+            generator.checked('III.27', record, copy.deepcopy(rows['III.27']['state']))
+        name = 'Elements.BookIII.Arc.congruent_iff'
+        record = self.record_with_names(records['III.29'], [name])
+        self.assertEqual(generator.checked('III.29', record, copy.deepcopy(rows['III.29']['state'])), [])
+        record['representation']['note'] = ''
+        with self.subTest(name='Elements.BookIII.Arc.congruent_iff'), \
+                self.assertRaisesRegex(questions.Refusal, r"III\.29: RECORD_LATER names Elements\.BookIII\."
+                                       r"Arc\.congruent_iff, which its record's \[representation\] note "
+                                       r"does not name"):
+            generator.checked('III.29', record, copy.deepcopy(rows['III.29']['state']))
+
+    def test_a_record_later_entry_declared_before_the_main_theorem_is_refused(self):
+        # A theorem the note names that is declared before the main theorem is a bridge, which
+        # the row must supply, never context it may leave out.
+        found = congruent_rows()
+        generator, rows, records = found['generator'], found['rows'], found['records']
+        for ref, name in (('III.27', 'Elements.BookIII.Prop24.equalMeasure'),
+                          ('III.29', 'Elements.BookIII.Prop27')):
+            main = questions.heath.parse_ref(ref).lean
+            record = self.record_with_names(records[ref], [*questions.RECORD_LATER[ref], name])
+            with self.subTest(ref=ref, name=name):
+                self.assertTrue(generator.index.available_before(name, generator.index.get(main)))
+                with patch.dict(questions.RECORD_LATER, {ref: (*questions.RECORD_LATER[ref], name)}), \
+                        self.assertRaisesRegex(questions.Refusal,
+                                               re.escape(f'{ref}: RECORD_LATER names {name}, which is '
+                                                         f'declared before {main}')):
+                    generator.checked(ref, record, copy.deepcopy(rows[ref]['state']))
 
 
 def recomputed_lists(question, revision=HEAD):

@@ -15405,11 +15405,11 @@ class Units(unittest.TestCase):
                       advice)
         self.assertIn(f"git safe-push --branch revert-{'a' * 12} --label <kind>", advice)
         self.assertIn("--label tooling", safe_push.revert_advice(ctx, "tooling"))
-        self.assertEqual(safe_push.github_slug("https://github.com/jackChallis/stoicheia.git"),
-                         "jackChallis/stoicheia")
-        self.assertEqual(safe_push.github_slug("git@github.com:jackChallis/stoicheia.git"),
-                         "jackChallis/stoicheia")
-        self.assertFalse(safe_push.is_local("https://github.com/jackChallis/stoicheia.git"))
+        self.assertEqual(safe_push.github_slug("https://github.com/dodecaplex-co/stoicheia.git"),
+                         "dodecaplex-co/stoicheia")
+        self.assertEqual(safe_push.github_slug("git@github.com:dodecaplex-co/stoicheia.git"),
+                         "dodecaplex-co/stoicheia")
+        self.assertFalse(safe_push.is_local("https://github.com/dodecaplex-co/stoicheia.git"))
 
     def test_identities(self):
         flagged = safe_push.scan_identity
