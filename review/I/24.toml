@@ -40,11 +40,11 @@ case = "F beyond EG, on the opposite side from D, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b7b41f51"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:1fbf4c22b29ebd3f"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3)"
-text = "sha256:2067c17fd217e4a4"
+commit = "b5a89e529"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:a43503923e4f8c6f"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); card #302, ship BI: the extra cases by Euclid's own argument, read in full by Claude Opus 5.5, readers BI-r302 at 63d29c561 and BI-r302b at b5a89e529"
+text = "sha256:acf9ac5b46c28d73"
 
 [review.items]
 statement = "pass"
