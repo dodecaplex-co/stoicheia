@@ -11,7 +11,7 @@ note = "Euclid's two steps, on the angle BFD, carry the segment greater than a s
 at = "For let the centre of the circle ABCD be taken"
 kind = "helper"
 helper = "Tacit.exists_centre"
-note = "Euclid takes the centre F without a reference from Heath here. The Lean takes F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E."
+note = "Euclid takes the centre F without a reference from Heath here. The Lean takes F from `Tacit.exists_centre`, that every circle has a centre, which no rule of System E numbers."
 
 [[passage]]
 at = "let BF, FD be joined"
