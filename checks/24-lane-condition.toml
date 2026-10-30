@@ -4,8 +4,10 @@
 # parser, which CI's check job installs (scripts/requirements-test_safe_push.txt), and
 # clones the repository: a few seconds in CI, longer in the pre-flight, whose clone copies
 # the local repository's objects.
+# Concurrent (#608): its clone is in a temporary folder, and it writes only bytecode here.
 order = 135
 name = "python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition"
 job = "check"
 command = ["python3", "scripts/test_safe_push.py", "Units.test_every_step_after_the_lane_step_carries_its_condition"]
 section8 = "python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition"
+concurrent = true

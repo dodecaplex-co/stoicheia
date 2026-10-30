@@ -2,6 +2,7 @@
 # `git status --porcelain` sees new and deleted files as well as changed ones, over the
 # whole worktree, with no pathspec: the pages render.py has just written, and any file a
 # check before it wrote. The build's .lake/ and Python's caches are ignored by .gitignore.
+# Alone (#608): it judges the whole worktree, and the registry holds it so.
 order = 170
 name = "git status --porcelain is empty"
 job = "check"

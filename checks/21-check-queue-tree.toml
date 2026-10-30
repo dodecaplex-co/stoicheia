@@ -1,7 +1,9 @@
 # Check the decisions page repeats no dated heading: the merge queue judge's --tree step
 # (docs/WORKFLOW.md, section 10, "The merge queue's judge"), on the worktree as it stands.
+# Concurrent (#608): without --render it reads the tree through git; only bytecode.
 order = 175
 name = "python3 scripts/check_queue.py --tree ."
 job = "check"
 command = ["python3", "scripts/check_queue.py", "--tree", "."]
 section8 = "python3 scripts/check_queue.py --tree ."
+concurrent = true
