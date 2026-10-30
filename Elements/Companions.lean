@@ -1,3 +1,4 @@
+import Elements.BookI.Prop39
 import Elements.BookI.Prop40
 import Elements.BookI.Prop45
 import Elements.BookI.Prop47
@@ -36,6 +37,7 @@ double-backtick name resolves.
 
 /-- The companions, each with its reference in the certificate. -/
 def Elements.companions : List (Lean.Name × String) := [
+  (``Elements.BookI.Prop39.general, "I.39 general"),
   (``Elements.BookI.Prop40.general, "I.40 general"),
   (``Elements.BookI.Prop40.join, "I.40 join"),
   (``Elements.BookI.Prop40.special, "I.40 special"),
