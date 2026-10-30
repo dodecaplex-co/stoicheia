@@ -113,7 +113,7 @@ theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
       refine inside_of_len_lt hF_α hD_α (Magnitude.lt_of_add_lt_add_right (a := ‖F G‖) ?_)
       rw [hsum]
       exact h₁
-  exact circles_meet_of_centre hG_β hM_β (Or.inr hH_β) hM_in hH_out
+  exact circlesMeet_of_centre hG_β hM_β (Or.inr hH_β) hM_in hH_out
 
 /-- Out of three straight lines, which are equal to three given straight lines, to construct a
 triangle: thus it is necessary that two of the straight lines taken together in any manner

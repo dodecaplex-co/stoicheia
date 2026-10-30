@@ -404,7 +404,8 @@ theorem Prop14.square (R : Apart) :
      occur in the order P, S, T, Q. -/
   obtain ⟨X, hX, -⟩ := exists_off_line hne []
   obtain ⟨S, T, hsq, hS, hT⟩ := BookI.Prop46 hne hX
-  /- The described square is a parallelogram with area sq P Q. -/
+  /- The described square is a parallelogram, and its area is the square on PQ
+     (`sq P Q`). -/
   obtain ⟨hp, harea⟩ := Square.described hsq hS hT
   exact ⟨P, S, T, Q, hsq, hp, harea.trans hPQ⟩
 

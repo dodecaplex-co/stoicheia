@@ -37,10 +37,10 @@ note = "Like Heath's, this figure draws Euclid's impossible supposition. CA and 
 
 [review]
 stage = "full"
-commit = "b7b41f51"
+commit = "f800e27f1"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1)"
-lean = "sha256:e88aa082f83cd992"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1); #525, read-through 03's editorial leftovers: re-read whole by GPT-6 Astra (Codex), the family that did not write the original proof (#478), independent reader RD-s6, at f800e27f1"
+lean = "sha256:1fcc4bde7434d49b"
 text = "sha256:e65a5c02f253d34d"
 
 [review.items]
