@@ -1,5 +1,6 @@
 # Check the overlap catalogue's audit lemmas. Audit/ is a library nothing imports, outside
 # the default build.
+# Alone (#608): it writes Audit's build in .lake/, which check_style.py's S12 reads.
 order = 20
 name = "lake build Audit"
 job = "check"

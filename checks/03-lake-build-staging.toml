@@ -1,5 +1,6 @@
 # Check the staged statements, which await their proofs, still build. Staging is a library
 # nothing imports, outside the default build (docs/WORKFLOW.md, section 2).
+# Alone (#608): it writes Staging's build in .lake/.
 order = 30
 name = "lake build Staging"
 job = "check"

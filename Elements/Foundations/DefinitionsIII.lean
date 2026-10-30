@@ -93,14 +93,17 @@ The measure carries no radius. In one circle, or in equal circles, two circumfer
 are equal exactly when their measures are, and that is all Euclid ever asks of them; in
 unequal circles equal measures do not make equal circumferences. So the propositions
 that compare circumferences say "in equal circles", as he does, though not all of them
-need it as stated. III.27 holds for any two circles as stated: equal measures give equal
-angles whatever the radii, and its proof keeps the equal circles only along Euclid's
-route. III.26, III.28 and III.29 need them: III.26 and III.28 conclude that the
-circumferences are congruent as well as equal in measure (`Arc.Congruent`, below), which
-in unequal circles neither equal angles nor equal straight lines give, and in III.28 and
-III.29 the measures are tied to straight lines in the circles. III.24 proves Euclid's
-equal segments: laid one on the other, they coincide (`Arc.Congruent`); its companion
-`Prop24.equalCircles` proves the circles equal and the measures equal, by the radii.
+need it as stated. III.27 and III.29 take circumferences that coincide (`Arc.Congruent`,
+below), and those lie in equal circles already, so their statements do not need the equal
+circles, and their proofs keep them along Euclid's route. III.27's companion
+`Prop27.of_measure`, for circumferences equal in measure, holds for any two circles: equal
+measures give equal angles whatever the radii. III.26, III.28 and `Prop29.of_measure`,
+III.29's companion, need them: III.26 and III.28 conclude that the circumferences are
+congruent as well as equal in measure, which in unequal circles neither equal angles nor
+equal straight lines give, and in III.28 and in `Prop29.of_measure` the measures are tied
+to straight lines in the circles. III.24 proves Euclid's equal segments: laid one on the
+other, they coincide (`Arc.Congruent`); its companion `Prop24.equalCircles` proves the
+circles equal and the measures equal, by the radii.
 
 `circumference` chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. That every point `A` gives the same angle is III.21, the angles in the same

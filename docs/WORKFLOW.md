@@ -196,7 +196,7 @@ files working in parallel, the renderers, and an integrator followed by blind re
 
 Trains collide in hand-written files that tell the same news twice: a dated status paragraph
 added to a brief, a count typed again in a report, the same news in PROGRAM.md's prose
-([#572](https://github.com/jackChallis/stoicheia/issues/572)). So each piece of news is
+([#572](https://github.com/dodecaplex-co/stoicheia/issues/572)). So each piece of news is
 written once. A train records its progress in its own decisions entry, whose header names the
 briefs and PROGRAM sections it is news for (section 10, "Decision entries"); `render.py`
 compiles their notes. A count a file states exactly goes between count markers. Everything
@@ -274,6 +274,38 @@ worktree sets it, each with instructions for running the check without the overr
 module planted beside it, such as `scripts/unicodedata.py`, is never read in place of the
 standard library's.
 
+### The repository's address
+
+The repository moved from a personal account to the organization dodecaplex-co on 27
+October 2026 ([#626](https://github.com/dodecaplex-co/stoicheia/issues/626)), and its
+address is `https://github.com/dodecaplex-co/stoicheia`. The pages, which `render.py`
+writes from its constant `REPO`, and the documents outside three exempt folders give that
+address. The decision entries and the decisions page (`docs/decisions/`,
+`docs/briefs/0002-decisions.md`) and the reports (`docs/reports/`) are dated records, and
+keep the old address as they were written. Each was true on its day; GitHub's redirect
+still serves its links; an entry is never edited
+([the folder's README](decisions/README.md)); and rewriting a record's words, however
+small the change, would make it say what it never said when it was written. The briefs
+(`docs/briefs/`) are exempt as a whole, the current book briefs among them (`book-I.md`,
+`book-II.md`, `0004-book-III.md`, `0012-book-IV.md`): these are current guidance, and keep
+their links to the old address until their briefs are next revised
+([section 2](#correcting-a-frozen-brief)).
+[`scripts/check_address.py`](../scripts/check_address.py), in section 8's sequence,
+refuses any address of a repository named `stoicheia` on GitHub under an owner other than
+`dodecaplex-co`: in a web address (with or without `www.` and a port), Git's `git@` form,
+a Pages, raw, `codeload.` or `api.github.com/repos/` address, the wiki's
+(`stoicheia.wiki`), or the bare `<owner>/stoicheia` or `repos/<owner>/stoicheia` (as
+`gh api` writes it), unless a path runs into it (`~/.cache/stoicheia`), an `@` stands just
+before it (an npm scope) or it stands in another site's address after its `?` or `#`, in
+any Markdown file, and in `CITATION.cff`, `LICENSE` and `NOTICE`, outside those three folders. A local
+path that the check would read as bare is written from `./` or `~/` (`./dev/stoicheia`).
+The check does not judge the exempt folders, so it does not refuse an old address added
+there; it counts the addresses they hold. Code and configuration files (`.py`, `.yml`,
+`.toml`, `.json`, `.lean`) are outside its scope; code inside Markdown is read. A file in
+scope, or a file named outside the exempt folders, that cannot be read or decoded as UTF-8
+is refused. It refuses
+every other owner rather than the old one, so it never needs to name it.
+
 ## 5. Proving in parallel: a voyage
 
 A voyage is one stretch of a book, run as a workflow:
@@ -317,7 +349,8 @@ the record was last confirmed against. When any of the three no longer matches,
 since it was reviewed, and the record is read again. At the stage `exceptions` a record
 declares every departure; at the stage `full` it classifies every substantive passage. The
 record's `reviewer` names who read it; from the stage `full` it names the model or person
-and the role, and `run` names the brief, stage and workflow, so that a reader can tell the
+and the role, and `run` names the work the record was read for, the brief and stage or
+else the card or a ship's orders (review/SCHEMA.md), so that a reader can tell the
 reviewer from the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
@@ -366,7 +399,7 @@ artificial hypothesis uses and the concealing helpers, and marks those the recor
 declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each. A
 join under a sentence of Euclid's is written in the Lean only where the formal proof uses
 the line it draws (the coordinator's ruling of 28 October 2026,
-[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted,
+[#482](https://github.com/dodecaplex-co/stoicheia/issues/482)): an idle join is deleted,
 not declared; Heath's sentence stays as its `--` line, and the record says the join is
 drawn in the text and not needed by the formal proof. Another step a sentence of Euclid's
 stands over may stay, and is declared by naming its binding in the `unused` of the
@@ -425,6 +458,8 @@ ahead. On the integrated revision, run exactly what CI's `check` job runs, in it
 export PATH=$HOME/.elan/bin:$PATH
 python3 -I tests/test_check_paths.py
 python3 scripts/check_paths.py --self-test
+python3 -I tests/test_concurrent_checks.py
+python3 -I tests/test_concurrent_passes.py
 lake build
 lake build Audit
 lake build Staging
@@ -451,6 +486,7 @@ python3 scripts/render.py
 git status --porcelain                 # prints nothing
 python3 scripts/check_queue.py --tree .
 python3 scripts/check_links.py
+python3 scripts/check_address.py --self-test
 ```
 <!-- /checks -->
 
@@ -470,9 +506,10 @@ protected: each registry file it adds, removes or changes is named in a decision
 and the pull request carries `security-review`. And the change judges later trains only
 once it has merged. To add a check, add one file to `checks/`
 ([its README](../checks/README.md) says what a file holds), run `render.py`, and commit
-the file with the regenerated block; to remove one, or change its command, job or order,
-change its file. `checks/` is a protected path and a check input (section 10), of class
-R3, and neither `scripts/safe_push.py` nor the CI workflow changes with it. The registry's
+the file with the regenerated block; to remove one, or change its command, job, order,
+`concurrent` or `after`, change its file. `checks/` is a protected path and a check input
+(section 10), of class R3, and neither `scripts/safe_push.py` nor the CI workflow changes
+with it. The registry's
 reader, `scripts/registry.py`, and its runner, `scripts/run_checks.py`, are R5, with the
 landing tool and CI: main's reader decides the pre-flight's sequence, and the runner is
 CI's `check` job. The reader stays one self-contained file of the standard library, since
@@ -482,7 +519,7 @@ broken reader can merge.
 
 **One check needs the YAML parser.** The test that every step after a job's lane step
 carries the lane's condition
-([#346](https://github.com/jackChallis/stoicheia/issues/346)) is a test of
+([#346](https://github.com/dodecaplex-co/stoicheia/issues/346)) is a test of
 `scripts/test_safe_push.py`, which reads the workflows with PyYAML, pinned by version and
 hash in `scripts/requirements-test_safe_push.txt`. CI's `check` job installs it after
 elan and before the run of the checks; to run the sequence yourself, or the pre-flight,
@@ -691,7 +728,7 @@ The proof is built from what the shards ran, not from the dealing. Each shard wr
 tests it ran, each with its outcome, to the file `--ran` names, and keeps it as an
 artifact, a test having failed or not, for 35 days; and it keeps its log, from which the
 report takes the tests that failed. A run re-run either way is judged on every shard's
-list ([#411](https://github.com/jackChallis/stoicheia/issues/411),
+list ([#411](https://github.com/dodecaplex-co/stoicheia/issues/411),
 [the decision](decisions/2026-10-25-rerun-failed-jobs.md)). A run re-run with "re-run all
 jobs" is judged afresh. A run re-run in part, as with "re-run failed jobs", is judged on
 the lists of the shards it runs again and on those the others kept in an earlier attempt,
@@ -1318,9 +1355,10 @@ one carries that file, section 8's command block as `render.py` regenerates it, 
 decision entry naming the file in a sentence of its own; it is R3, and touches neither
 `scripts/safe_push.py` nor the CI workflow, so trains that each add a check no longer edit
 those two files, and a conflict in the block they both regenerate is settled by rendering
-it again. Removing a check, or changing its command, job or order, is a change to
-its one file, named the same way. The train's CI runs the train's own registry, the new
-check with it, while its pre-flight runs origin/main's whole registry, without it, in both
+it again. Removing a check, or changing its command, job, order, `concurrent` or
+`after`, is a change to its one file, named the same way. The train's CI runs the train's
+own registry, the new check with it, while its pre-flight runs origin/main's whole
+registry, without it, in both
 passes: the check joins the pre-flight at its merge, and judges the trains after it
 there. A command of another
 job (`model`, `negative`, `formal-model`, `acceptance`) is still a step of the CI workflow
@@ -1360,12 +1398,28 @@ judges the groups after it lands. GitHub runs a required file only on the events
 on a group, and the group waited, so main's copy must name `merge_group`. A skipped
 required job counts as passed, so neither job may skip on a group. The two jobs' names
 are never among the required status checks, which GitHub matches by name alone. **The
-second, the authenticity of the pre-flight's evidence**, is not held yet: the judge reads
-the body's block, which is a declaration (rule (b), below), and a block typed to be
-consistent with the repository passes it. Main's judge cannot tell it from a real one. It
-waits for evidence CI signs (#574) or for a dated decision of the owner on what
-authenticates the block until then. The queue must not be turned on before both are held.
-Its four rules are:
+second, the authenticity of the pre-flight's evidence**, is held by write access to the
+pull request, until evidence CI signs (#574) replaces it
+([28 October 2026](decisions/2026-10-28-queue-write-access.md)). The judge reads the
+body's block, which is a declaration (rule (b), below), and a block typed to be
+consistent with the repository passes it: main's judge cannot tell it from a real one.
+So whoever wrote or last edited the body is trusted not to type a block for a
+pre-flight that did not run, and the judge holds that trust to writers alone
+([28 October 2026](decisions/2026-10-28-queue-editor-write-access.md)): but for the
+automatic revert, it refuses an entry unless the pull request's author, and the body's
+last editor when anyone has edited it, each have write access to the repository
+(GitHub's write, maintain or admin role), read from GitHub for each queued entry as the
+group is judged; a permission it cannot read refuses too. GitHub lets a pull request's
+author edit its body, even after a writer has queued it, and lets a member of the
+organization without write access open one between the repository's branches: an
+author without write access, and a body such an account last edited, do not pass. No
+editor between the author and the last is read: the two of them vouch for the whole
+body. Only an account with write access can queue an entry. The judge refuses one
+whose head is not in this repository, the automatic revert included, and, but for that
+revert, one that a bot wrote, queued, last edited or last renamed; the revert's author
+must be the App, and its body is read only for its `Reverts:` and `Failed run:` lines,
+each checked against GitHub's record of the failed push (below). The queue must not be
+turned on before both are held. Its four rules are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
@@ -1397,8 +1451,8 @@ Its four rules are:
   request's merge commit. The group's own CI run is classed R5, so every check runs on
   the group before it merges. The block is a declaration: anyone who can edit the pull
   request's body can type one, and the judge checks it for consistency with the
-  repository, not as proof that a pre-flight ran. Its authenticity must be held by
-  something a group cannot change, as above, before the queue is turned on. A `train/`
+  repository, not as proof that a pre-flight ran. Its authenticity is held by write
+  access to the pull request, as above, until #574's signatures replace it. A `train/`
   entry's Members table is matched again to its actual member merges with
   `check_train.py`, against the pull request's current body. The queue does not repeat
   member review. An automatic revert has the narrowly checked exception below.
@@ -1470,9 +1524,10 @@ Every entry other than an automatic revert must have its head in this repository
 bot, the revert App's above all, may have written it: trains are written, named and
 queued by people. Of an entry still in the queue, no bot may have put it there, last
 edited its body or last renamed it (the last rename is read from its timeline; the title
-goes into main's merge commit); of one already merged, the merged prefix of the group,
-the judge reads only its head's repository and who wrote it, since GitHub's queue no
-longer lists it and its own group judged it when it merged. GraphQL names a bot by a
+goes into main's merge commit), and its author and its body's last editor must have
+write access (above); of one already merged, the merged prefix of the group, the judge
+reads only its head's repository and who wrote it, since GitHub's queue no longer lists
+it and its own group judged it when it merged. GraphQL names a bot by a
 login without the "[bot]" that REST adds, so the actor's type is read, not its login.
 And while an issue labelled `main-red` is open, an entry in the queue lands only as
 main's fix: its body must declare, as `--merge` reads it, every open `main-red` issue
@@ -1693,10 +1748,17 @@ things "The merge queue" names are held. The first: the organization ruleset req
 shows that main's copy runs on a group; that a group whose own copy of
 `queue-judge.yml` passes while main's fails is held; and that a group whose other
 workflow, `ci.yml` included, has a passing job named `queue-integrity` or `queue-gaps`
-while main's fails is held. The second: an authenticated source for the pre-flight's
-evidence, which rule (b) asks for and the owner chooses. The coordinator holds these
-steps: add the merge queue rule for main, keep merge commits and enable "only merge
-non-failing pull requests"; require `check`, `model`, `negative`, `formal-model`,
+while main's fails is held. The second: the pre-flight's evidence authenticated, which
+rule (b) asks for, and which write access to the pull request does by the owner's
+decision until #574's signatures replace it, the judge refusing an entry whose author or
+body's last editor lacks it; the same trial shows a group refused whose entry's body was
+last edited by an account without write access, after edits through the web page
+and through the API, one of them after a writer's edit, with the queue answer's
+`editor` recorded after each edit, so that the trial shows GitHub naming the last
+editor as the judge reads it (the refusal itself may name the author). So the queue may be turned on once the
+ruleset is imported and that trial (#606) passes. The coordinator holds these steps: add
+the merge queue rule for main, keep merge commits and enable "only merge non-failing
+pull requests"; require `check`, `model`, `negative`, `formal-model`,
 `acceptance` and `queue-tests`, and never `queue-integrity` or `queue-gaps`, which the
 organization ruleset requires by their file; set the queue's status check timeout to 150
 minutes: `acceptance`'s limit of 60 minutes, then a budget of 75 for `queue-gaps`'
@@ -2168,7 +2230,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       variables whose names begin `STOICHEIA_`, `LEAN`, `LAKE`, `PYTHON` or `LC_`, but
       the harness's own, which no check reads (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`,
       `STOICHEIA_PYTHON`), and the terminal's (`LC_TERMINAL`, `LC_TERMINAL_VERSION`); and
-      the lists of checks. An entry is used only when it is a
+      the lists of checks. `STOICHEIA_CHECK_WORKERS`, how many concurrent checks run at
+      once (#608), is keyed on purpose, though no check reads it: a record made at one
+      number is never used at another, so that a check whose outcome turns on the number,
+      against its declaration, is judged at the number the run uses. An entry is used only
+      when it is a
       regular file of the user's, mode 0600, its key is this run's and hashes to its
       name, its digest matches it, its harness is the one running, its written time is a
       valid `YYYY-MM-DD HH:MM UTC`, and its steps are that pass's, each once and in order,
@@ -2367,10 +2433,10 @@ the lock the model was last checked against). Since 19 October, `model/Model/Aud
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
 build. Since 22 October (#229), `checks/`, the registry of CI's `check` job, joins them,
-so that a check added or removed, or with its command, job or order changed, is named
-file by file; it is a check input too (step 4, above). Since 22 October (#249),
-`docs/ACCEPTANCE.md` joins them, a check input as well: its table of the limitations
-allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
+so that a check added or removed, or with its command, job, order, `concurrent` or
+`after` changed, is named file by file; it is a check input too (step 4, above). Since
+22 October (#249), `docs/ACCEPTANCE.md` joins them, a check input as well: its table of
+the limitations allowed and `check_acceptance.py`'s `ALLOWED_LIMITS`, which
 `tests/test_acceptance_limits.py` ties together, change in one pull request, a check
 change. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a

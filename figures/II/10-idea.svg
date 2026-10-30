@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.10 at a glance</title>
-  <desc>Halve AB at C and add BD: the squares on AD, DB (left) are twice the squares on AC (yellow) and CD (blue), for the red and black make a second blue and yellow.</desc>
+  <desc>Halve AB at C and add BD: the squares on AD, DB (left) are twice the squares on AC (yellow) and CD (blue), for the red and black make a second blue and yellow: a reading in areas, not Euclid's proof.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <g data-unlettered="the squares of the reading in areas, which Heath's figure does not draw">
     <polygon points="84.0,188.0 164.0,188.0 164.0,138.0 84.0,138.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
