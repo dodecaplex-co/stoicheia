@@ -83,11 +83,11 @@ note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is 
 
 [review]
 stage = "full"
-commit = "a6253fb01"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "88b85c36c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:1eb8be02f0e30805"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01"
-text = "sha256:954699162a69c70d"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01; card #34, ship AC: the figure drawn for some of its cases (read-through 02, M6), written by Claude, read in full by GPT-6 Astra (Codex), reader AC-b3text-r1, at 88b85c36c."
+text = "sha256:47d78ce7b8896af3"
 
 [review.items]
 statement = "pass"
