@@ -1,15 +1,18 @@
 # review/I/39.toml
-# `hAD : A ≠ D` says that the two triangles are two: on one base, ABC and DBC are one
-# triangle when A is D. In I.40 the same hypothesis does exclude a case, since ABC and
-# ACE are two triangles.
+# `Prop39` keeps `hAD : A ≠ D`, since Euclid's "let AD be joined" needs two points.
+# Equal triangles on one base and one side may have one vertex, and then ABC and DBC are
+# one triangle: `Prop39.general` (card #548) takes that case as well, with the parallel
+# through the vertex by I.31. The scope is full by the two theorems together, and rests on
+# no reading of "equal triangles" as two triangles.
 [statement]
 scope = "full"
-note = "Our statement takes A and D apart, so that AD names a straight line, and reads \"in the same parallels\" as AD parallel to BC."
-fingerprint = "sha256:e27bd8d22cd1f209"
+note = "`Prop39` is stated for two distinct vertices, as Euclid's \"let AD be joined\" needs, and `Prop39.general` with the vertices allowed to be one point."
+companions = ["I.39 general"]
+fingerprint = "sha256:9e6bc4539140c12d"
 
 [route]
 kind = "euclid"
-note = "Euclid's reductio: supposing AD not parallel to BC makes the parallel through A meet BD away from D. I.37 and Common Notion 1 give equal areas, contradicted by a strict area comparison in either order on the ray from B through D."
+note = "Euclid's reductio: supposing AD not parallel to BC makes the parallel through A meet BD away from D. I.37 and Common Notion 1 give equal areas, contradicted by a strict area comparison in either order on the ray from B through D. `Prop39.general` cites `Prop39` when the two vertices are two points, and I.31 when they are one."
 
 [[passage]]
 at = "I say that they are also in the same parallels"
@@ -43,11 +46,11 @@ note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Hea
 
 [review]
 stage = "full"
-commit = "a6253fb01"
+commit = "439015446"
 reviewer = "Claude Opus 5.5, independent reader"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex at 9c52ab48, begun from the Claude first mate's scratch T39 (54a08e61) and keeping some of its lines; closing reductio rewritten at 2a80d18a, whose proof author's family is unrecorded; current proof read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I37-I39, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01"
-lean = "sha256:53a1d4f866c33db4"
-text = "sha256:7b67f2ec225df35c"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex at 9c52ab48, begun from the Claude first mate's scratch T39 (54a08e61) and keeping some of its lines; closing reductio rewritten at 2a80d18a, whose proof author's family is unrecorded; current proof read by GPT-6 Astra (Codex) at 3ddb107d and Claude Opus 5.5; ship XS, reader XS-r-I37-I39, independent re-read at 78fb461d; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s2x); card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482c, at f9d627547; card #482, the coordinator's ruling on joins (28 October 2026): read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482k, at a6253fb01; card #548, ship BI: the companion Prop39.general, read in full by Claude Opus 5.5, reader BI-r548 at 439015446"
+lean = "sha256:26d74a9181aa277d"
+text = "sha256:0e4b6949d7005bc8"
 
 [review.items]
 statement = "pass"
