@@ -1,7 +1,7 @@
 # review/I/46.toml
 [statement]
 scope = "full"
-note = "The square stands on whichever side of AB a given point names."
+note = "The square stands on the side of AB where a given point P lies: a little more than Euclid asks, used in I.47 and I.48."
 fingerprint = "sha256:aa4983891ecca1b7"
 
 [route]

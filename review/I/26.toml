@@ -12,7 +12,7 @@ kind = "euclid"
 at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for the join and Postulate 1 is not called for it. The join of GC is drawn in the text and is not needed by the formal proof."
+note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A. The formal proof does not need Euclid's join of GC: GC is named by its ends, as a side of the triangle GBC, so nothing is drawn for it and Postulate 1 is not called."
 
 [[passage]]
 at = "therefore the base GC is equal to the base DF"
@@ -23,7 +23,7 @@ unused = ["hGC"]
 [[passage]]
 at = "and the triangle GBC is equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at C."
+note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it; like the base GC, it is not used again."
 unused = ["this"]
 
 [[passage]]
@@ -46,18 +46,18 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C. AH is named by its ends, as a side of the triangle ABH, so nothing is drawn for the join and Postulate 1 is not called for it. The join of AH is drawn in the text and is not needed by the formal proof."
+note = "Euclid cuts BH equal to EF, as he cut BG, and the Lean again uses I.3, which also puts H between B and C. Like GC above, AH is named by its ends, as a side of the triangle ABH, and its join is not needed by the formal proof."
 
 [[passage]]
 at = "therefore the base AH is equal to the base DF"
 kind = "carried"
-note = "The Lean proves that the base AH equals DF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at H."
+note = "The Lean proves that the base AH equals DF here, as Euclid states it; as with GC above, neither proof uses it again, and both go on by the angles at H."
 unused = ["hAH"]
 
 [[passage]]
 at = "and the triangle ABH is equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the angles at H."
+note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it; like the triangle GBC, it is not used again."
 unused = ["this"]
 
 [[passage]]
@@ -73,7 +73,7 @@ note = "Euclid supposes BC greater than EF; the Lean proves his argument once ov
 [[passage]]
 at = "the triangle ABC equal to the triangle DEF"
 kind = "carried"
-note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it. Neither his proof nor ours uses it again: the enunciation asks only for the remaining sides and angle."
+note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it, and it too is not used again: the enunciation asks only for the remaining sides and angle."
 unused = ["this"]
 
 [figure]

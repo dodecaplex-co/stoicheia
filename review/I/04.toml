@@ -22,7 +22,7 @@ note = "Inside the hypothetical placement, `Superposition.Derives.ray_unique` ma
 at = "the straight line AC will also coincide with DF"
 kind = "helper"
 helper = "Superposition.Derives.ray_of_angle"
-note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law names all three straight lines; the placement supplies the third, the side through D and C', so the step draws no line. `Superposition.Derives.ray_of_angle_side` puts C' on F's side of D and uses no side: its law is Pasch 3, which since the second axiom retirement is proved with a construction, joining C' to a point of DE. Neither step draws a line inside the placement: citing a law draws nothing there, whatever its proof draws (brief 0009, question 4)."
+note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law names all three straight lines; the placement supplies the third, the side through D and C', so the step draws no line. `Superposition.Derives.ray_of_angle_side` puts C' on F's side of D without that third straight line, the side laid down: its law is Pasch 3, which Book Zero proves with a construction, joining C' to a point of DE. Neither step draws a line inside the placement: citing a proved law draws nothing there, whatever its proof draws."
 
 [[passage]]
 at = "hence the point C will also coincide with the point F"
@@ -44,7 +44,7 @@ note = "Heiberg brackets this as an early scholium. A finite straight line enter
 at = "Thus the whole triangle ABC will coincide with the whole triangle DEF"
 kind = "helper"
 helper = "Superposition.Derives.area_of_congruent"
-note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Euclid's coincidence takes the triangle laid down to be ABC itself; beneath the next sentence the Lean makes it ABC's equal by Metric 9 (`Tacit.area_congruent`), which `Superposition.Derives.area_of_congruent` cites with the kept sides and angles: triangles equal in all their sides and angles are equal in area. So Euclid's step from coincidence to equality rests here in part on a rule that would give I.4's area clause at once, applied to ABC and DEF once their remaining sides and angles were proved; the overlap catalogue records it among its near misses."
+note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Euclid's coincidence takes the triangle laid down to be ABC itself; beneath the next sentence the Lean makes it ABC's equal by Metric 9 (`Tacit.area_congruent`), which `Superposition.Derives.area_of_congruent` cites with the kept sides and angles: triangles equal in all their sides and angles are equal in area. So Euclid's step from coincidence to equality rests here in part on a rule that would give I.4's area clause at once, applied to ABC and DEF once their remaining sides and angles were proved; [the overlap catalogue](../../docs/reports/overlaps.md#near-misses) records it among its near misses."
 
 [[passage]]
 at = "And the remaining angles will also coincide with the remaining angles"

@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For let a point D be taken at random on the other side of the straight line AB"
 kind = "helper"
 helper = "Tacit.line_meets_circle_of_inside"
-note = "Euclid takes the circle's crossings E and G with AB for granted. After choosing D by `exists_oppositeSidesOf` and drawing the circle by Postulate 3, `OppositeSides.exists_between` finds X on AB between C and D; `InsideCircle.of_between_centre` puts X inside by the radius comparison, and `Tacit.line_meets_circle_of_inside` (System E, Intersection 3), now proved in `Elements/Figure/Incidence.lean` by applying `line_circle_beyond` in both directions, supplies E and G."
+note = "Euclid takes the circle's crossings E and G with AB for granted. After choosing D by `exists_oppositeSidesOf` and drawing the circle by Postulate 3, `OppositeSides.exists_between` finds X on AB between C and D; `InsideCircle.of_between_centre` puts X inside by the radius comparison, and `Tacit.line_meets_circle_of_inside` (System E, Intersection 3), which Book Zero proves in `Elements/Figure/Incidence.lean` by applying `line_circle_beyond` in both directions, supplies E and G."
 
 [[passage]]
 at = "and let the straight lines CG, CH, CE be joined"
@@ -21,7 +21,7 @@ note = "Euclid joins CG, CH and CE; our triangles are named by their corners, so
 at = "and the base CG is equal to the base CE"
 kind = "helper"
 helper = "Definition15"
-note = "Euclid uses the equal radii CG and CE without naming a reason. The Lean applies `Definition15`, Euclid's definition of a circle, as a rule we assume."
+note = "Euclid uses the equal radii CG and CE without naming a reason. The Lean applies `Definition15`, Euclid's definition of a circle, which our foundations take as an axiom."
 
 [[passage]]
 at = "Therefore CH has been drawn perpendicular to the given infinite straight line AB"

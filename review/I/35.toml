@@ -9,7 +9,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that ABCD is equal to the parallelogram EBCF"
 kind = "case"
-note = "Euclid argues one arrangement, with AD and EF apart; the Lean also takes Proclus's two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`). When E is A, F is D; otherwise `AreParallel.sameSideOf_or` puts E on C's side of AB, towards D, or A on C's side of EB; the Lean applies the three cases directly in the first direction and exchanges the parallelograms in the second, covering Euclid's arrangement with EF before AD as well as Proclus's."
+note = "Euclid argues one arrangement, with AD and EF apart; the Lean also takes Proclus' two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`). When E is A, F is D; otherwise `AreParallel.sameSideOf_or` puts E on C's side of AB, towards D, or A on C's side of EB; the Lean applies the three cases directly in the first direction and exchanges the parallelograms in the second, covering Euclid's arrangement with EF before AD as well as Proclus'."
 
 [[passage]]
 at = "and DE is common"
@@ -27,7 +27,7 @@ note = "Euclid takes AE as AD and DE together, and DF as DE and EF together. The
 at = "and the angle FDC is equal to the angle EAB"
 kind = "helper"
 helper = "Tacit.between_of_between_right"
-note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right` (System E, Between 5), now proved from collinear orders, length addition and Postulate 2 in `Elements/Figure/Incidence.lean`, and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
+note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right` (System E, Between 5), which Book Zero proves from collinear orders, length addition and Postulate 2 in `Elements/Figure/Incidence.lean`, and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
 
 [[passage]]
 at = "therefore the base EB is equal to the base FC"

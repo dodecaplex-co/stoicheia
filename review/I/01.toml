@@ -1,7 +1,7 @@
 # review/I/01.toml
 [statement]
 scope = "full"
-note = "The triangle may be put on the side of AB where a given point P lies, when P is off AB: a little more than Euclid asks, used in I.9 and I.11."
+note = "The triangle stands on the side of AB where a given point P lies, when P is off AB: a little more than Euclid asks, used in I.9 and I.11."
 fingerprint = "sha256:a15d22bcd9cd5da0"
 
 [route]

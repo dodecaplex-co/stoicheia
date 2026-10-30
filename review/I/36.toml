@@ -24,7 +24,8 @@ note = "Euclid takes the opposite sides FG and EH of the parallelogram EFGH as e
 
 [[passage]]
 at = "Therefore EBCH is a parallelogram"
-kind = "carried"
+kind = "helper"
+helper = "AreParallel.of_parallel"
 note = "Euclid concludes that EBCH is a parallelogram, where Heath's reference is I.34. The Lean uses the definition: I.33 gives BE parallel to CH and `AreParallel.of_parallel` gives BC parallel to EH from the given parallels; I.34 supplies FG equal to EH above."
 
 [figure]
