@@ -113,7 +113,7 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
       exact hF ⟨L, hA_L, hE_L, hA_L⟩
     /- If AF passes through the centre, D itself is already within the circle. -/
     have hDF : ¬ Collinear A F D := fun h => hFA ⟨D, h, centre_inside hD⟩
-    /- Heath gives no reference for drawing this perpendicular: it is I.12. -/
+    /- Heath gives no bracket for drawing this perpendicular: it is I.12. -/
     obtain ⟨G, hG, hDG⟩ := BookI.Prop12 hAF hDF
     have hDAF : Triangle D A F := fun ⟨M, h1, h2, h3⟩ => hDF ⟨M, h2, h3, h1⟩
     /- Were G to be A, AF would be at right angles to AD at A, as AE is; but at A only
