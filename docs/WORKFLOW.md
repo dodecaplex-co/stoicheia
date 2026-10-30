@@ -363,10 +363,15 @@ reviewer from the authors of the proof.
 
 `python3 scripts/sweep_citations.py` lists the candidates for the dummy citations, the
 artificial hypothesis uses and the concealing helpers, and marks those the record already
-declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each: a
-step a sentence of Euclid's stands over stays, and is declared by naming its binding in
-the `unused` of the passage over it ([review/SCHEMA.md](../review/SCHEMA.md)), which no
-note and no `#` comment can do; any other is fixed, deleted or its part cleared with `-`.
+declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each. A
+join under a sentence of Euclid's is written in the Lean only where the formal proof uses
+the line it draws (the coordinator's ruling of 28 October 2026,
+[#482](https://github.com/jackChallis/stoicheia/issues/482)): an idle join is deleted,
+not declared; Heath's sentence stays as its `--` line, and the record says the join is
+drawn in the text and not needed by the formal proof. Another step a sentence of Euclid's
+stands over may stay, and is declared by naming its binding in the `unused` of the
+passage over it ([review/SCHEMA.md](../review/SCHEMA.md)), which no note and no `#`
+comment can do; any other is fixed, deleted or its part cleared with `-`.
 
 For the page, the reviewer's checklist is in [STYLE.md](STYLE.md), section 8; figures are
 checked as geometry.
@@ -1356,12 +1361,20 @@ judges the groups after it lands. GitHub runs a required file only on the events
 on a group, and the group waited, so main's copy must name `merge_group`. A skipped
 required job counts as passed, so neither job may skip on a group. The two jobs' names
 are never among the required status checks, which GitHub matches by name alone. **The
-second, the authenticity of the pre-flight's evidence**, is not held yet: the judge reads
-the body's block, which is a declaration (rule (b), below), and a block typed to be
-consistent with the repository passes it. Main's judge cannot tell it from a real one. It
-waits for evidence CI signs (#574) or for a dated decision of the owner on what
-authenticates the block until then. The queue must not be turned on before both are held.
-Its four rules are:
+second, the authenticity of the pre-flight's evidence**, is held by write access to the
+pull request, until evidence CI signs (#574) replaces it
+([28 October 2026](decisions/2026-10-28-queue-write-access.md)). The judge reads the
+body's block, which is a declaration (rule (b), below), and a block typed to be
+consistent with the repository passes it: main's judge cannot tell it from a real one.
+So whoever can edit the body is trusted not to type a block for a pre-flight that did
+not run: anyone with write access to the repository, and the pull request's own author,
+whom GitHub lets edit its body, even after a writer has queued it. Only an account with
+write access can queue an entry. The judge refuses one whose head is not in this
+repository, the automatic revert included, and, but for that revert, one that a bot
+wrote, queued, last edited or last renamed; the revert's author must be the App, and its
+body is read only for its `Reverts:` and `Failed run:` lines, each checked against
+GitHub's record of the failed push (below). The queue must not be turned on before both
+are held. Its four rules are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
@@ -1393,8 +1406,8 @@ Its four rules are:
   request's merge commit. The group's own CI run is classed R5, so every check runs on
   the group before it merges. The block is a declaration: anyone who can edit the pull
   request's body can type one, and the judge checks it for consistency with the
-  repository, not as proof that a pre-flight ran. Its authenticity must be held by
-  something a group cannot change, as above, before the queue is turned on. A `train/`
+  repository, not as proof that a pre-flight ran. Its authenticity is held by write
+  access to the pull request, as above, until #574's signatures replace it. A `train/`
   entry's Members table is matched again to its actual member merges with
   `check_train.py`, against the pull request's current body. The queue does not repeat
   member review. An automatic revert has the narrowly checked exception below.
@@ -1689,10 +1702,12 @@ things "The merge queue" names are held. The first: the organization ruleset req
 shows that main's copy runs on a group; that a group whose own copy of
 `queue-judge.yml` passes while main's fails is held; and that a group whose other
 workflow, `ci.yml` included, has a passing job named `queue-integrity` or `queue-gaps`
-while main's fails is held. The second: an authenticated source for the pre-flight's
-evidence, which rule (b) asks for and the owner chooses. The coordinator holds these
-steps: add the merge queue rule for main, keep merge commits and enable "only merge
-non-failing pull requests"; require `check`, `model`, `negative`, `formal-model`,
+while main's fails is held. The second: the pre-flight's evidence authenticated, which
+rule (b) asks for, and which write access to the pull request does by the owner's
+decision until #574's signatures replace it. So the queue may be turned on once the
+ruleset is imported and that trial (#606) passes. The coordinator holds these steps: add
+the merge queue rule for main, keep merge commits and enable "only merge non-failing
+pull requests"; require `check`, `model`, `negative`, `formal-model`,
 `acceptance` and `queue-tests`, and never `queue-integrity` or `queue-gaps`, which the
 organization ruleset requires by their file; set the queue's status check timeout to 150
 minutes: `acceptance`'s limit of 60 minutes, then a budget of 75 for `queue-gaps`'

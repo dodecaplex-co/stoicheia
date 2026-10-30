@@ -32,7 +32,7 @@ note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior ang
 [[passage]]
 at = "therefore the base EB is equal to the base FC"
 kind = "carried"
-note = "The Lean proves that the base EB equals FC here, as Euclid states it; the argument goes on by the triangles' areas, and does not use it again."
+note = "The Lean proves that the base EB equals FC here, as Euclid states it. Neither his proof nor ours uses it again: both go on by the equal triangles EAB and FDC."
 unused = ["hEB_FC"]
 
 [[passage]]
@@ -52,11 +52,11 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f2195c72"
+commit = "cfa06ffaf"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:eee60b54fb026d66"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; #248: re-read whole after its Lean note's Proclus credit was narrowed, independent re-read at a9b2b80f (reader RT-r35b); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, the family that did not write the Codex proof, reader F2-w2m2cl at f2195c72"
-text = "sha256:d1c868ee861de6d3"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; #248: re-read whole after its Lean note's Proclus credit was narrowed, independent re-read at a9b2b80f (reader RT-r35b); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, the family that did not write the Codex proof, reader F2-w2m2cl at f2195c72; card #482 (idle bindings), staging, read in full, by GPT-6 Astra (Codex), reader G2-r482b, at 071dc41c5; card #482, re-read by the other family: read in full by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), reader G2-r482cr, at cfa06ffaf"
+text = "sha256:cc486cd1c5540bd2"
 
 [review.items]
 statement = "pass"

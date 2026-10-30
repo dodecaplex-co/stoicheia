@@ -4,8 +4,8 @@ note = "The angles at any two points of one segment are equal, in a segment of a
 fingerprint = "sha256:60a9c816badb070c"
 
 [route]
-kind = "euclid"
-note = "Euclid's two steps, for a segment of any size: the angles BAD and BED are each half of the one angle at the centre standing on the circumference BCD (III.20), and halves of one angle are equal. The angle at the centre may be two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's; with it his argument covers the semicircle and the less segment too, which Heath says it does not with angles at the centre less than two right angles (vol. 2, p. 49), and Simson's completion is not needed. III.20, cited as Heath cites it, itself cites I.13 and III.2, which Heath's references for III.20 do not give."
+kind = "modified"
+note = "Euclid's two steps: the angles BAD and BED are each half of the one angle at the centre standing on the circumference BCD (III.20), and halves of one angle are equal. Heath says that with Euclid's angle at the centre, less than two right angles, his proof applies only to a segment greater than a semicircle (vol. 2, p. 49); the semicircle and the less segment are cases of his statement all the same. The Lean takes them in the same two steps, the first argued another way: there the angle at the centre standing on BCD is two right angles or more (`angleAtCentre`), a reading that is ours, made after Heath's notes, and not Euclid's, and III.20 doubles BAD and BED in every segment, so Simson's completion is not needed. III.20, cited as Heath cites it, itself cites I.13 and III.2, which Heath's references for III.20 do not give."
 
 [[passage]]
 at = "Let ABCD be a circle"
@@ -26,6 +26,11 @@ kind = "given"
 note = "The angle at the centre is the circle's, standing on the circumference BCD (`angleAtCentre`), and III.20 makes it up from angles at the centre itself, so the joins BF, FD need no construction in the Lean."
 
 [[passage]]
+at = "Now, since the angle BFD is at the centre"
+kind = "different"
+note = "Heath says that with Euclid's angle BFD, less than two right angles, his proof applies only to a segment greater than a semicircle (vol. 2, p. 49). The Lean takes the angle at the centre standing on the circumference BCD (`angleAtCentre`): the angle BFD in the greater segment, two right angles in a semicircle and more in a less segment (`angleAtCentre.size`). III.20 (`Prop20`) makes it double of BAD in every segment, and, under \"For the same reason\", double of BED."
+
+[[passage]]
 at = "therefore the angle BAD is equal to the angle BED"
 kind = "helper"
 helper = "Magnitude.eq_of_add_self_eq"
@@ -36,11 +41,11 @@ case = "the segment BAED greater than a semicircle, with F on A's and E's side o
 
 [review]
 stage = "full"
-commit = "5afb1d6a4"
+commit = "6c1cdc8f3"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:c023135d2332c0dc"
-run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex)"
-text = "sha256:46661cf244fedf67"
+lean = "sha256:ed5885e26b1de640"
+run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 85da23fb; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #129, ship ER: read again after review corrected its commentary, by GPT-6 Astra (Codex); card #546, ship ER: the route label made to say what the route is, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:40c6c6ca0608a5f3"
 
 [review.items]
 statement = "pass"
