@@ -135,10 +135,12 @@ workflow from main, once the owner imports it and the trial shows it holding a g
 until then nothing holds it. Under that rule GitHub runs main's copy of the workflow in
 place of a pull request's own (shown on a pull request; on a merge group, to be shown
 before the queue goes on), and each of its steps that judges takes scripts/ from the
-group's base. The second, the authenticity of the pre-flight's evidence, is not held: the
-block is a declaration (above), and a block typed to be consistent with the repository
-passes this judge, as tests/test_check_queue.py shows. The queue must not be turned on
-until both are held.
+group's base. The second, the authenticity of the pre-flight's evidence, is held not by
+this judge but by write access to the pull request, the owner's decision of 28 October
+2026 (docs/decisions/2026-10-28-queue-write-access.md), until evidence CI signs (#574)
+replaces it: the block is a declaration (above), and a block typed to be consistent with
+the repository passes this judge, as tests/test_check_queue.py shows. The queue must not
+be turned on until both are held.
 
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.

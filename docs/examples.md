@@ -71,9 +71,9 @@ argument.
   answers, one on each side, which is the proposition's point.
 
 III.8 is a second example of the kind: its helpers are De Morgan's two assumptions, named as
-his. Beyond the reach of Euclid's "which was proved impossible", the Lean joins his convex
-and concave orders for points on different circumferences; only a point of contact is
-compared by the angles at the centre, and the mishnah says so.
+his. Its last step uses the convex and concave orders also when the more remote point lies
+on the other circumference or at a point of contact; `Prop8.contact_last` shows that a point
+of contact cannot be the nearer, and the mishnah says so.
 
 ## An area proof: II.4
 

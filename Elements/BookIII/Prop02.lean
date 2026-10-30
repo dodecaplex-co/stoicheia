@@ -4,6 +4,7 @@ import Elements.BookI.Prop05
 import Elements.BookI.Helpers
 import Elements.BookI.Prop16
 import Elements.BookI.Prop19
+import Elements.BookIII.Prop01
 
 /-!
 # Book III, Proposition 2
@@ -52,9 +53,10 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
      the circle. We take up the outside one, and the point F it supplies, below. -/
   -- let the centre of the circle ABC be taken [III. 1], and let it be D; let DA, DB be joined,
   -- and let DFE be drawn through.
-  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
-     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
-  obtain ⟨D, hD⟩ := exists_centre ABC
+  /- The centre is found by III.1's construction, on a straight line drawn through the
+     circle at random (`Prop1.of_circle`), as Euclid finds it. The proof keeps the centre
+     alone, which is what Euclid takes from III.1. -/
+  obtain ⟨-, -, D, -, -, -, -, -, hD, -⟩ := Prop1.of_circle ABC
   have hAB : A ≠ B := ne_of_between_ends hAEB
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   have hE_L := on_line_of_between_ends hAEB hA_L hB_L
