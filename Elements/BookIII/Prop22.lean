@@ -27,7 +27,7 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle}
   -- I say that the opposite angles are equal to two right angles.
   -- Let AC, BD be joined.
   /- BD separates A from C, so AC crosses the straight line BD at a point X. X is within
-     the circle (III.2), so it lies between B and D (System E, Circle 1), as in III.21:
+     the circle (III.2), so it lies between B and D (System E, Circle 1), as in III.20:
      AC and BD cut one another. -/
   have hBD : B ≠ D := hAC.1
   obtain ⟨L, hB_L, hD_L⟩ := Postulate1 B D hBD
