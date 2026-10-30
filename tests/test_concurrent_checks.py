@@ -129,8 +129,8 @@ real, handled = safe_push.recorder, []
 def recorder(caught):
     record = real(caught)
     def marking(signum, frame):
-        # Recorded before it is marked: the test sends more once it sees the mark, and a
-        # handler Python runs inside this one must not be recorded before it.
+        # Recorded before it is marked: the test sends more once it sees the first mark,
+        # and a handler Python runs inside this one must not be recorded before it.
         record(signum, frame)
         handled.append(signum)
         open(os.path.join(marks, f"handled.{len(handled)}"), "w").close()

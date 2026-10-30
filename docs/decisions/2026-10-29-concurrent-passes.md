@@ -187,5 +187,7 @@
   the field runs alone within its pass.
 
   This entry approves the change to `tests/test_concurrent_checks.py`, whose check list
-  test no longer takes `STOICHEIA_PASS_WORKERS` from its environment, and whose list of
-  checks that run alone names the new one.
+  test no longer takes `STOICHEIA_PASS_WORKERS` from its environment, whose list of
+  checks that run alone names the new one, and whose signal test's stand-in pass records
+  each signal before it marks it, so that the burst follows the first signal's record
+  (#707).
