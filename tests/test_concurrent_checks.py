@@ -129,9 +129,11 @@ real, handled = safe_push.recorder, []
 def recorder(caught):
     record = real(caught)
     def marking(signum, frame):
+        # Recorded before it is marked: the test sends more once it sees the first mark,
+        # and a handler Python runs inside this one must not be recorded before it.
+        record(signum, frame)
         handled.append(signum)
         open(os.path.join(marks, f"handled.{len(handled)}"), "w").close()
-        record(signum, frame)
     return marking
 safe_push.recorder = recorder
 steps = [(name, [sys.executable, "-c", parent, marks, name,
@@ -763,11 +765,14 @@ class Workers(Stand):
 
     def listed(self, root: Path, value: str):
         """check_list on the registry at `root`, with STOICHEIA_CHECK_WORKERS `value` on a
-        machine of eight cores: the list, the refusal if any, and the step."""
+        machine of eight cores, and no STOICHEIA_PASS_WORKERS, which adds to the line
+        (#609) and which the lane may set for the run this test is a check of: the list,
+        the refusal if any, and the step."""
         ctx = types.SimpleNamespace(repo=root, base="HEAD")
         rep, refusal = safe_push.Report(), None
-        env = dict(os.environ, **{safe_push.CHECK_WORKERS: value})
-        with mock.patch.dict(os.environ, env), \
+        env = {k: v for k, v in os.environ.items() if k != safe_push.PASS_WORKERS}
+        env[safe_push.CHECK_WORKERS] = value
+        with mock.patch.dict(os.environ, env, clear=True), \
                 mock.patch.object(safe_push.os, "cpu_count", return_value=8), \
                 contextlib.redirect_stdout(io.StringIO()):
             try:
@@ -1263,6 +1268,7 @@ class TheRegistry(unittest.TestCase):
     }
     ALONE = {
         "python3 -I tests/test_concurrent_checks.py",
+        "python3 -I tests/test_concurrent_passes.py",
         "lake build", "lake build Audit", "lake build Staging",
         "lake env lean Certificate/Facts.lean",
         "python3 scripts/sweep_citations.py",
