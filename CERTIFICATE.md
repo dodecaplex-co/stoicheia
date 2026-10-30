@@ -124,7 +124,7 @@ What the proofs show:
 
 ## Book III
 
-**All 37 propositions proved in Lean**, every one as Euclid states it, or for [III.12](book/III/12.md) as the text states it. 32 proofs follow Euclid's argument, 4 follow it with one or more steps changed ([III.21](book/III/21.md), [III.26](book/III/26.md), [III.27](book/III/27.md), [III.29](book/III/29.md)) and [III.12](book/III/12.md)'s follows the argument Heath prints; each page says how. In [III.5](book/III/05.md) and [III.6](book/III/06.md) our tacit rules contain the propositions too, but our proofs never use those rules. In [III.1](book/III/01.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 37 propositions proved in Lean**, every one as Euclid states it, or for [III.12](book/III/12.md) as the text states it. 33 proofs follow Euclid's argument, 3 follow it with one or more steps changed ([III.26](book/III/26.md), [III.27](book/III/27.md), [III.29](book/III/29.md)) and [III.12](book/III/12.md)'s follows the argument Heath prints; each page says how. In [III.5](book/III/05.md) and [III.6](book/III/06.md) our tacit rules contain the propositions too, but our proofs never use those rules. In [III.1](book/III/01.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. [The overlap catalogue](docs/reports/overlaps.md) gives each.
 
 What the proofs show:
 
@@ -174,7 +174,7 @@ What the proofs show:
 | ✅ | [III.20](book/III/20.md) | whole | Euclid's | I.5, I.32 | I.5, I.13, I.32, III.2 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 10 | 25 |
 | ✅ | &emsp;[III.20 circumference](book/III/20.md#circumference) |  |  |  | III.2, III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 30 |
 | ✅ | &emsp;[III.20 special](book/III/20.md#special) |  |  |  | I.13, III.2, III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 35 |
-| ✅ | [III.21](book/III/21.md) | whole | Euclid's, one step changed | III.20 | III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 29 |
+| ✅ | [III.21](book/III/21.md) | whole | Euclid's | III.20 | III.2, III.20 special | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 27 |
 | ✅ | [III.22](book/III/22.md) | whole | Euclid's | I.32, III.21 | I.32, III.2, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 4 | 29 |
 | ✅ | [III.23](book/III/23.md) | whole | Euclid's | I.16 | I.16, III.2, III.10, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 8 | 22 |
 | ✅ | &emsp;[III.23 point](book/III/23.md#point) |  |  |  | I.21, III.2, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 21 |
