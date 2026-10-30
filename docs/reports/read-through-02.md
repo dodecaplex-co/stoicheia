@@ -5,7 +5,8 @@
 is given as at main 559237731, the head when their part was written; "Since the read" lists
 what changed in the paths read between the two. Book III was read the same day, before its
 queued trains had landed, at d4d65c48639fbafb50b2668603f82cd2be4d5334: main at 3938eacc7
-with Book III's 25 queued trains merged and the generated output rendered, the forecast of
+with the 25 trains then queued merged, Book III's among them, and the generated output
+rendered, the forecast of
 the edition a reader will meet. That commit is a local forecast and not in main's history,
 so Book III's findings are given as at d4d65c48, and the dated addendum (#34) reads every
 page that changes between it and the release candidate.*
@@ -91,11 +92,21 @@ G cut them. The phrase is loose rather than false, since "with the diameter BD" 
 by which Euclid finds G, and what the sentence says of the pieces, two squares and two equal
 complements, is true.
 
-In Book III three findings stay editorial though each touches a claim. Book III's index says
+In Book III one finding that its reader graded editorial is graded material here (M11, item
+81): a sentence of Elements/Foundations/DefinitionsIII.lean, which Book III's introduction
+links, that is false of III.27's and III.29's statements.
+
+Four findings stay editorial though each touches a claim. III.13's caption at a glance ends
+"the straight line through the two centres (black) runs to the point of contact, so there is
+only one" (item 82). Unlike II.9's and II.10's captions (M5), it gives no argument of another
+kind: it is the germ of Euclid's own for contact within, where III.11 puts the straight line
+through the centres on the points of contact, compressed past what it proves, and loose for
+contact without, which Euclid ends by III.2. Book III's index says
 "In III.5 and III.6 our tacit rules contain the propositions too, but our proofs never use
 those rules" (item 80): "our proofs" may be read as every proof of the book, which would be
-false, but read as the proofs of III.5 and III.6 it is true, and the next sentences are about
-those two. III.28's commentary names `angleAtCentre.semicircle` for a true fact its proof
+false, but the sentence opens on III.5 and III.6, and the next one ("In III.1 ... our proof
+rests on it") uses "our proof" for its own proposition in the same way, so read as the
+proofs of III.5 and III.6 it is true. III.28's commentary names `angleAtCentre.semicircle` for a true fact its proof
 takes from another lemma (item 84): the reference misleads a reader who looks for it in the
 listing, but nothing it says of the mathematics is false. III.37's "As De Morgan says of
 I.48, the appeal to I.8 only hides one to I.7, on which I.8 is founded and which Euclid
@@ -109,9 +120,9 @@ quotation, and the clause can be read as ours, so the attribution is loose rathe
 | I | 0 | 3 | 40 | 43 |
 | II | 0 | 3 | 16 | 19 |
 | Books I and II | 0 | 6 | 56 | 62 |
-| III | 0 | 4 | 35 | 39 |
+| III | 0 | 5 | 34 | 39 |
 | The pilot editor's second round, on pages of Books I and II | 0 | 0 | 2 | 2 |
-| All | 0 | 10 | 93 | 103 |
+| All | 0 | 11 | 92 | 103 |
 
 The counts are of distinct findings: a finding that several readers made counts once. The
 readers made 87 in all, 7 of them material as graded here (6 as the readers graded them); the pilot editor's 12 notes, all editorial, are
@@ -119,9 +130,11 @@ counted among these. A finding that spans both books (the line in the "Reviewed"
 terms of I.45 and II.14) is counted with Book I. The editorial findings are listed under
 their card drafts, below.
 
-Book III's readers made 78, 5 of them material as they graded them, which are 4 distinct
-findings, the same as graded here. Where readers made one point on several pages (a refrain,
-a word STYLE retires), the pages are one finding, as for Books I and II. The pilot editor's
+Book III's readers made 78, the pilot editor's 18 among them, 5 of them material as they
+graded them, which are 4 distinct findings; graded here, 5 are material (M7 to M11). Where
+readers made one point on several pages (a refrain, a word STYLE retires), the pages are one
+finding, as for Books I and II; and, as there, an item sometimes groups a few small points
+of one kind (items 74 and 76 to 78), so the editorial count is of items as grouped. The pilot editor's
 second round made 18 notes, all editorial: seven repeat findings of the first round, two are
 new findings on pages of Books I and II (items 93 and 94), counted on a row of their own so
 that the first round's counts stand, and the other nine are counted with Book III, two of
@@ -146,6 +159,7 @@ Book III's, at d4d65c48:
 | M8 | III.22 | "As in III.21, we prove that AC and BD cut one another": III.21 proves no such thing; the step is III.20's | RD-r8 1; RD-f3 1 | Open: card draft RD-C12 |
 | M9 | III.22 | "The first half is Heron's proof, which Heath gives under III.20": Heath credits Heron with the extension of III.20, and gives no proof of III.22 as his | RD-f3 2 | Open: card draft RD-C12 |
 | M10 | III.29 | Our own step, taking reflex angles from four right angles, is referenced to Heath's page 60, which says nothing of it | RD-r9 1 | Open: card draft RD-C13 |
+| M11 | Book III's introduction, by its link to DefinitionsIII.lean | The linked note says III.27 holds "as stated" because equal measures give equal angles, and that III.29 needs equal circles: both statements now take circumferences that coincide, and their records call the equal circles redundant | RD-r7 8 (graded editorial by its reader) | Open: card draft RD-C20, item 81 |
 
 **M1. I.8's commentary, on what the cited laws' proofs draw.** mishnah/I/08.md:5
 (book/I/08.md:363) says: "The same is true of two of the three other laws I.8 cites, that a
@@ -235,7 +249,7 @@ page's moved anchors changed). *What it should say:* the record takes `some_case
 keeping its `case`, and its note adds "It does not draw DE greater than AB or EF greater than
 BC, which the Lean rules out by exchanging the triangles."
 
-**M7. "Proved separately" on III.7 and III.8.** review/III/07.toml:63-65 gives the passage
+**M7. "Proved separately" on III.7 and III.8.** review/III/07.toml:64-66 gives the passage
 "Therefore FA is greatest, FD is least, and FB is greater than FC" `kind = "carried"` with
 `helper = "Prop7.general"`, which the page renders "**Proved separately, as
 `Prop7.general`.**" (book/III/07.md:123); review/III/08.toml:59-61 and :99-101 do the same for
@@ -255,8 +269,8 @@ gives the wording for III.8's two.)
 prove that AC and BD cut one another, putting DB within the angle ADC so that its two parts
 add up"; the note at Elements/BookIII/Prop22.lean:29-31 (book/III/22.md:82) says "as in
 III.21: AC and BD cut one another." III.21's proof proves no crossing:
-Elements/BookIII/Prop21.lean never names `between_of_inside_chord`, and its passages are two
-uses of III.20 and `Magnitude.eq_of_add_self_eq` (book/III/21.md:62-66). The step is III.20's
+Elements/BookIII/Prop21.lean never names `between_of_inside_chord`, and its proof is two uses
+of III.20 and `Magnitude.eq_of_add_self_eq` (Prop21.lean:55, :59, :61). The step is III.20's
 (Prop20.lean:91 and :305; its commentary, mishnah/III/20.md:7). *What it should say:* "As in
 III.20, ..." in both places. The Lean note is a `/- -/` comment, not a `--` line, but changing
 it makes III.22's record stale.
@@ -287,6 +301,24 @@ Euclid's text (Heath, vol. 2, p. 60)"; at :41, "... an additional step within th
 not in Euclid's text (Heath, vol. 2, p. 60)", so that the page names III.29's text and the
 step is said to be ours. RD checked both of Book III's Heath findings, M9 and M10, against the
 OCR of his second volume.
+
+**M11. The note on equal circles that Book III's introduction links.** The introduction sends
+the reader to [`DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean) for Book
+III's words (mishnah/intro/III.md:5). Its note on the measure of circumferences says (lines
+96-101 at d4d65c48): "III.27 holds for any two circles as stated: equal measures give equal
+angles whatever the radii, and its proof keeps the equal circles only along Euclid's route.
+III.26, III.28 and III.29 need them: ... and in III.28 and III.29 the measures are tied to
+straight lines in the circles." That was true of the statements in measures. At d4d65c48
+`Prop27` and `Prop29` take circumferences that coincide (`Arc.Congruent`), not equal measures
+(facts.json); both records are tagged `redundant-hypothesis` and say that in `Prop29` the
+equal circles are redundant (review/III/29.toml:13), as the introduction itself says ("In
+III.27 and III.29, which take circumferences that coincide, it adds nothing",
+book/III/index.md:15). So the reader who follows the link meets the contrary of the page.
+*What it should say* (RD-r7's wording): "III.27 and III.29 hold for any two circles as
+stated, since circumferences that coincide lie in equal circles already, and their proofs keep
+the equal circles along Euclid's route; of their companions, which take circumferences equal
+in measure, III.29's needs them, for there the measures are tied to straight lines. III.26 and
+III.28 need them: ...". The file is in the foundations, so the change is the coordinator's.
 
 ## The pilot editor
 
@@ -347,7 +379,8 @@ I.45 (item 45). The other eleven are new:
 Its verdict: "pass once the named findings are mended. There is no false claim and no scope
 misstatement. The defects are inconsistencies of form and term that every later page would
 copy from the pilot." It accepted III.24's route as `euclid` on the authority of #547's
-decision, and left one doubt, below.
+decision, and left the doubts below on III.24's "and here he needs it", on italics and on
+capitalised link anchors.
 
 ## The books read straight through
 
@@ -420,7 +453,9 @@ Read at d4d65c48, the forecast head; the addendum reads what changes after it.
   items 58 to 60, 66, 67, 75 and 76.
 - **III.13 to III.25 (RD-r8):** "pass once named findings are mended. The book reads straight
   through and the commentary's voice is common. The false cross-reference (finding 1,
-  material) must be fixed." That is M8.
+  material) must be fixed. The record and Lean-note register (findings 4 to 19) keeps the
+  "How the Lean follows the text" sections from sharing that voice." That is M8, with items
+  61, 63, 64, 66, 68, 69, 71 to 73 and 76 to 78.
 - **III.26 to III.37 (RD-r9):** "pass once named findings are mended. The book flows and the
   scope is truthful. The voice is common except where the mishnah repeats the table, and
   finding 1, which is material, must be mended before the claim is presented as complete."
@@ -435,13 +470,13 @@ told word for word on four pages, the record's own words ("so the route remains 
 and words STYLE section 4 keeps out of the prose ("chord", "arc", "bracket"). Eight
 commentaries, III.24's and III.26's among them, retell the notes above them (item 71).
 
-On scope, every reader found all 37 status lines true to their records: scope `full`
-throughout, routes `euclid` save the four `modified` ones (III.21, III.26, III.27 and III.29),
+On scope, the readers between them found all 37 status lines true to their records: scope
+`full` throughout, routes `euclid` save the four `modified` ones (III.21, III.26, III.27 and III.29),
 every certificate table and "Lean cites" row matching facts.json, the three badges for the
 measure of circumferences used consistently, and each figure note naming its case and each
 impossible supposition. They found no page whose scope reads fuller than its status line,
-save the doubts on III.16, III.20 and III.31's status lines, below. The false sentences are
-M7 to M10.
+save the doubts on the status lines of III.16, III.18, III.20 and III.31, below. The false
+sentences are M7 to M11.
 
 On depth, they found it following the difficulty: III.7, III.8, III.10, III.11, III.13,
 III.16, III.20, III.24, III.25 and III.27 are rich because their gaps are real (De Morgan's,
@@ -532,7 +567,10 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 23. II.14 glosses "the content theorem" as area_eq, another declaration than on I.45,
     Elements/BookII/Prop14.lean:474-477. RD-p P3.
 24. II.14's Representation row: "area-sum theorem" and "the other side forms", and an "It"
-    whose antecedent reads wrong, review/II/14.toml:60. RD-r6 5; RD-p P6.
+    whose antecedent reads wrong, review/II/14.toml:60. RD-r6 5; RD-p P6. In the second round
+    the pilot editor adds that the row says the main theorem "represents Euclid's pictured
+    division", though II.14's figure draws no diagonal ("A four-sided with no diagonal drawn,
+    as in Heath's figure", review/II/14.toml:63): the division is I.45's. RD-p2 3.
 25. II.1: `Prop1.two` cuts at one point beside a main theorem that cuts at two, with nothing
     to say that "two" counts segments, review/II/01.toml:3. RD-r5 6.
 26. Book II's introduction uses "unchecked" before saying what it means, mishnah/intro/II.md:5
@@ -631,8 +669,9 @@ mishnah says why"; section 3, "Told once"; section 4, the habits removed).
 
 Card draft RD-C10 also carries one line of ACCEPTANCE.md, under M2.
 
-Book III's card drafts, at d4d65c48. RD-C11 to RD-C13 carry the material findings M7 to M10
-(RD-C11: M7; RD-C12: M8 and M9; RD-C13: M10); the editorial findings follow.
+Book III's card drafts, at d4d65c48. RD-C11 to RD-C13 and RD-C20 carry the material findings
+M7 to M11 (RD-C11: M7; RD-C12: M8 and M9; RD-C13: M10; RD-C20: M11, item 81 of RD-C17); the
+editorial findings follow.
 
 **RD-C14: production history where readers look, Book III** (STYLE section 1; section 4,
 "Change-logs on the page").
@@ -672,8 +711,8 @@ why"; section 3, "Told once"; section 4, "Refrains").
     introduction; III.35 names `Tacit.exists_centre` without that pointer,
     review/III/02.toml:19, 04.toml:14, 08.toml:21, 17.toml:16, 35.toml:26. RD-r7 5; RD-f3 4;
     RD-r9 12.
-68. III.25: Heath's lack of a reference said in ten notes, three times in the last, and the
-    clause on `Prop25.complete` three times, review/III/25.toml:19 to :79. RD-r8 6.
+68. III.25: Heath's lack of a reference said ten times in nine notes, twice in the last, and
+    the clause on `Prop25.complete` three times, review/III/25.toml:19 to :79. RD-r8 6.
 69. III.14 and III.15 trace `Tacit.exists_centre`'s path through their proofs, which the
     certificate shows and no other page traces, review/III/14.toml:15, 15.toml:10. RD-r8 8;
     RD-f3 8.
@@ -686,16 +725,17 @@ why"; section 3, "Told once"; section 4, "Refrains").
 
 **RD-C16: terms, glosses and one name for one thing, Book III** (STYLE section 4).
 
-72. Modern words outside the modern way: "chord", "arc", "disks" and "reflex" in the records
-    and Lean notes of III.13, III.24, III.25, III.26, III.28 and III.29, and III.28's figure
-    case "non-diameter chords" (review/III/25.toml:3, 26.toml:8 and :35, 28.toml:34,
-    29.toml:9 and :35, mishnah/III/29.md:7, Elements/BookIII/Prop13.lean:148, :315, :379,
-    Prop24.lean:56, Prop26.lean:250-251 and :305); "map" and "image" unglossed on III.24
-    (review/III/24.toml:9 and :13). RD-r9 3; RD-f3 5; RD-r8 18 and 19; RD-p2 Q8.
+72. Modern words outside the modern way: "chord", "arc", "disks" and "reflex" in the records,
+    Lean notes and one commentary of III.13, III.24, III.25, III.26, III.28 and III.29, and
+    III.28's figure case "non-diameter chords" (review/III/25.toml:3, 26.toml:8, :35 and :41,
+    28.toml:34, :40 and :43, 29.toml:9 and :35, mishnah/III/29.md:7,
+    Elements/BookIII/Prop13.lean:148, :315, :379, Prop24.lean:56, Prop26.lean:250-251 and
+    :305); "map" and "image" unglossed on III.24 (review/III/24.toml:9 and :13). RD-r9 3;
+    RD-f3 5; RD-r8 18 and 19; RD-p2 Q8.
 73. "The names in brackets are System E's", on every page, for names in parentheses
     (scripts/render.py:727), and III.16's "Heath gives no bracket for drawing this
     perpendicular" (Elements/BookIII/Prop16.lean:116). RD-r8 11 and 12.
-74. "Heath prints no reference", in 29 of Book III's records, where Books I and II and STYLE
+74. "Heath prints no reference", in 28 of Book III's records, where Books I and II and STYLE
     say "gives"; and "[Post. 3]" and "System E's Diagram-segments 3 and 4" in III.24's note
     (review/III/24.toml:19, :31, :37). RD-p2 Q7 and Q9.
 75. Book III's introduction: "with background existence supplied inside its proof", and "None
@@ -727,9 +767,9 @@ sections 3 and 7).
     proof of the book, though III.10, III.23, III.24 and III.26 to III.30 rest on
     `circle_eq`, with III.25's companions (facts.json at d4d65c48),
     scripts/render.py:2062 and :2080 (book/III/index.md:5). RD-r7 7.
-81. Elements/Foundations/DefinitionsIII.lean:95-101, linked from the introduction, describes
-    III.27's and III.29's statements as they were before they took circumferences that
-    coincide; the file is the coordinator's. RD-r7 8.
+81. Material, M11, above: Elements/Foundations/DefinitionsIII.lean:96-101, linked from the
+    introduction, describes III.27's and III.29's statements as they were before they took
+    circumferences that coincide; the file is the coordinator's (card draft RD-C20). RD-r7 8.
 82. III.13 at a glance: "runs to the point of contact, so there is only one", a reason neither
     Euclid's nor enough, figures/III/13-idea.svg:3. RD-r8 20.
 83. III.31 at a glance: "cut the triangle ABC into two with equal sides", two of what,
@@ -802,10 +842,12 @@ Book III's:
   on III.3, III.7, III.9 to III.12, III.16 to III.18, III.20, III.24, III.29, III.33, III.35
   and the index stand unchecked: the leaves named in the readers' outputs (n13 to n85) settle
   them.
-- **Words that reach us through Heath.** Todhunter's in the further reading of III.3, III.5
-  and III.11, and De Morgan's on III.7, III.8 and III.9, match Heath's report of them (vol. 2,
-  pp. 3, 12 and 22); Todhunter 1872, pp. 271-272, and De Morgan 1849, p. 10, settle whether
-  the words are theirs.
+- **Words that reach us through Heath.** Todhunter's in the further reading of III.5 and
+  III.11, and De Morgan's on III.7, III.8 and III.9, match Heath's report of them (vol. 2,
+  pp. 3, 12 and 22); Todhunter's words on III.3 are not in the OCR at all. Todhunter 1872,
+  pp. 271-272, and De Morgan 1849, p. 10, settle whether the words are theirs.
+- **Pages not tied to a running head:** the equal-circles quotation (vol. 2, p. 2) and
+  Simson's note (1756, p. 363): the leaf and Simson's edition settle them.
 - **Heath's printed figures,** where a page says what they show: III.4's "In Heath's figure
   EA lies within the angle FEB", and III.7's dotted EK (leaves n23 and n26).
 - **III.10's "footnote"**, which the OCR sets among Heath's line notes: leaf n35.
@@ -818,6 +860,15 @@ Book III's:
   near the vertex (`mixed-angles-local`, which has no badge), and III.20 says "Euclid's
   argument" while its statement uses our angle at the centre (`angle-at-centre`, no badge):
   whether STYLE section 2 wants these readings beside the check is for the records' owner.
+  III.20's "Euclid's argument" beside III.21's "one step changed", for the same reading,
+  follows the records' logic (a case beyond the statement against a case within it), but a
+  reader may see the two as at odds: FORMALIZATION section 5 settles it.
+- **III.29's equal circles,** which M11 calls redundant in `Prop29` on the authority of its
+  record's tag and note: a scratch file stating `Prop29` without `EqualCircles` and proving it
+  from `Prop29` and `Arc.congruent_iff`, checked with `lake env lean`, settles it in Lean.
+- **"[III. 2]" and "[Post. 3]" in our notes,** III.25's (review/III/25.toml:9) as well as
+  III.24's (item 74): STYLE section 4 keeps bracketed references for Euclid's text, and
+  section 5 allows them in Lean remarks; whether a record's note counts is for STYLE's owner.
 - **III.33 and III.34 at a glance,** which say the segment's angles "all equal" the given
   angle, where the Lean gives it at one point (III.21 gives the rest): for the figures'
   owner, under STYLE section 7.
@@ -827,7 +878,9 @@ Book III's:
   tag's meaning settles it.
 - **Capitalised link anchors** such as `24.md#equalCircles`: clicking them on GitHub settles
   whether they resolve.
-- **The further reading's works** beyond Heath and Smith (Stillwell, Johnson, Loney, Yaglom,
+- **The further reading's works.** Of Smith's, only the III.26, III.31 and III.33 lines were
+  checked (against Project Gutenberg), not his pp. 202, 203 and 209 or his III.14 and III.36
+  lines; and none of the others' (Stillwell, Johnson, Loney, Yaglom,
   Mueller, Velleman, Hadamard, Ogilvy, Coolidge, Thomas, Maor, Aaboe, Courant and Robbins,
   Klein, Dunham, Casey, Chen, Andreescu and Andrica, and others): their pages and chapters
   settle them.
@@ -862,7 +915,8 @@ reads every page of Book III whose sources change between d4d65c48 and the relea
 candidate: the pages of the trains that land in another form than the forecast held, and
 those of trains not in it, the circle-centre chain (#629, #630, #672) among them.
 `git diff --name-only d4d65c48 <candidate> -- book/III mishnah/III mishnah/intro/III.md
-Elements/BookIII figures/III review/III reading/III` lists them.
+Elements/BookIII Elements/Foundations/DefinitionsIII.lean figures/III review/III reading/III`
+lists them; DefinitionsIII.lean is there because the introduction links it (M11).
 
 ## What #34 and B3 still need, for Books I and II
 
@@ -874,7 +928,9 @@ Elements/BookIII figures/III review/III reading/III` lists them.
    the Book I items of RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10, and on items 43 and 44 of
    RD-C7, besides M6 (item 40); Book II's on RD-C2 and RD-C3, and on the Book II items of
    RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10. Only RD-C8, and items 41 and 42 of RD-C7, hold
-   neither. The verdicts
+   neither. The pilot editor's second round passes on the same condition, so both books' B3
+   also wait on items 89 and 90 of RD-C19, on its pages of Books I and II, Book I's on item 93
+   and Book II's on item 94. The verdicts
    single out the voice lapses of RD-C4 and RD-C5; whether the other editorial findings must
    be mended before B3 is recorded, or may go to the backlog, is for the coordinator to
    rule.
@@ -888,17 +944,18 @@ Elements/BookIII figures/III review/III reading/III` lists them.
 
 ## What #34 and B3 still need, for Book III
 
-1. The four material findings, M7 to M10, mended (card drafts RD-C11 to RD-C13), each naming
-   here the commit that resolves it.
+1. The five material findings, M7 to M11, mended (card drafts RD-C11 to RD-C13 and RD-C20),
+   each naming here the commit that resolves it.
 2. The readers' conditions on B3. All five of Book III's verdicts, the pilot editor's
-   included, pass "once the named findings are mended", all of their findings. As written,
-   then, Book III's B3 waits on RD-C11 to RD-C18 and on items 89 to 92 of RD-C19. The verdicts
+   included, pass once the named findings are mended ("once named findings are mended", in
+   RD-r8's and RD-r9's words), all of their findings. As written, then, Book III's B3 waits on
+   RD-C11 to RD-C18, RD-C20 and items 89 to 92 of RD-C19. The verdicts
    single out the second voice of RD-C14, RD-C15 and RD-C16; whether the other editorial
    findings must be mended first, or may go to the backlog, is for the coordinator to rule,
    as for Books I and II.
-3. The pilot editor's notes Q1 to Q11, each with the commit that fixed it or the change it
-   made to docs/STYLE.md or docs/examples.md.
+3. The pilot editor's notes Q1 to Q9, each with the commit that fixed it or the change it
+   made to docs/STYLE.md or docs/examples.md (Q10 and Q11 are on Books I and II's pages).
 4. The addendum that "Since the read" asks for, read at the release candidate, which is a
    commit in main's history as B3's record requires; d4d65c48 is not.
 5. For B3, a `[read-through]` table in docs/reports/acceptance/book-III.toml that cites this
-   report, once its conditions are met.
+   report, once its conditions are met, and the acceptance report regenerated.
