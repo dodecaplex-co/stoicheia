@@ -21,11 +21,11 @@ note = "Euclid treats EAD and ADC as alternate; `SameSideOf.trans_opposite` puts
 
 [review]
 stage = "full"
-commit = "71146bf3f"
+commit = "8ef0d7c98"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:664aca971683e75b"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I31b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2); axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m1cx at 84a78856; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readI, at 71146bf3f"
-text = "sha256:f9b7c91a5ffd9d32"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I31b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2); axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, reader F2-w2m1cx at 84a78856; card #477, ship C7: re-read in full after Circle 1 left Book Zero, III.1 and III.2 (train P3), by GPT-6 Astra (Codex), reader C7-t477p3-readI, at 71146bf3f; card #705, ship MQ3: the given point's condition written into the statement note, written by Claude, read in full by GPT-6 Astra (Codex)"
+text = "sha256:1f56e11a3fcb3feb"
 
 [review.items]
 statement = "pass"
