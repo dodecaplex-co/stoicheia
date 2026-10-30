@@ -414,13 +414,18 @@ class TheSelfTest(unittest.TestCase):
                 self.assertEqual(got, expected)
 
 
-    def test_every_plant_that_gives_no_row_is_used_by_an_example(self):
-        used = {line.split(":=", 1)[1].strip().lstrip("@")
-                for line in released.PLANTS.splitlines()
-                if line.startswith(("example ", "noncomputable example "))}
+    def test_every_plant_that_gives_no_row_is_rejected_when_present(self):
         absent = {name for name, marker in released.PLANTED.items() if marker is None}
-        self.assertEqual(absent, used)
         self.assertEqual(len(absent), 12)
+        self.assertEqual(released.self_test(planted_output()), [])
+        for name in absent:
+            with self.subTest(name):
+                full = released.full_name(name)
+                rows = planted_output() | {full: "name"}
+                self.assertEqual(
+                    released.self_test(rows),
+                    [f"the probe read `{full}` as plain, where it must be absent"],
+                )
 
 
 def lake(test: unittest.TestCase, build: int, said: bytes = b"",
