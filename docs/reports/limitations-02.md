@@ -2,6 +2,8 @@
 
 *29 October 2026. Read at `5592377317aeca29ce685831bbbd192fd2c6025e` by Claude Opus 5.5, as the limitations reviewer of Book III. The reviewer wrote, prompted and edited none of the records, pages, catalogues or checks judged here.*
 
+*A note of 29 October 2026. This review's verdict, and the record it offers under "Verdict", were not recorded: an independent review held its new finding 1 material, not editorial, and so failed its pass. [Limitations review 03](limitations-03.md) reads Book III again at `a00151d876ac118eae16f5ba1c0c6e02beec7c7f`. The text below stands as read at its own revision.*
+
 ## What B4 asks
 
 B4 is in [ACCEPTANCE](../ACCEPTANCE.md), under "For each book" (`ACCEPTANCE.md:177`). It passes when "The remaining limitations are deliberate, few and stated plainly where they occur: the overlaps of III.2's kind, and any allowed below, where none is now."
