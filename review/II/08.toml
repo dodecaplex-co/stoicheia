@@ -39,7 +39,7 @@ note = "Euclid takes GK equal to GQ from the square GR. The Lean applies `Square
 at = "therefore the eight areas, which contain the gnomon STU"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid reads the gnomon STU as eight cells and AK as AG and CK together. `Parallelogram.about_diameter` divides CP into four cells, and `quadArea_add_of_parallelograms` divides AQ, QF and AK into two each, so the two groups of four equal areas give four times AK."
+note = "Euclid reads the gnomon STU as eight cells and AK as AG and CK together. `Parallelogram.about_diameter` divides CP into four cells, and `quadArea_add_of_parallelograms` divides AQ, QF and AK into two each, so the two groups of four equal areas give four times AK. Definition II.2's gnomon has no Lean definition of its own: here and in the four later sentences that name it, the Lean carries the gnomon STU as the sum of the areas of its three parallelograms, CP, about the diameter DE, and the complements AQ and QF beside it."
 
 [[passage]]
 at = "Now, since AK is the rectangle AB, BD"
@@ -61,11 +61,11 @@ note = "Euclid takes the gnomon STU and OH together as the whole square AEFD. `P
 
 [review]
 stage = "full"
-commit = "7103f442a"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "dd9307b3c"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:ce2b21d5eedee152"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at ad50305f use Common Notion 2 to add OH and simplify the equality CG = GQ; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a"
-text = "sha256:636a7f2644d915aa"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at ad50305f use Common Notion 2 to add OH and simplify the equality CG = GQ; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; card #481, ship BI: the gnomon sentences, read in full by Claude Opus 5.5, reader BI-r481, at dd9307b3c"
+text = "sha256:c4bd7fc63632eb88"
 
 [review.items]
 statement = "pass"
