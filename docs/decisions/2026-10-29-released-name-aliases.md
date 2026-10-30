@@ -30,14 +30,15 @@
 
   Where a citer finds them. The names now live in the module `Elements.Deprecated`, not in
   `Elements.Figure.OnCircles`, where `book-III` declared them: that module is Book Zero
-  and cannot import III.2, and no other module imports it. A citation written against
-  `book-III` elaborates as before, with a warning that names the replacement, wherever the
-  citer's imports bring in `Elements.Deprecated`, as `import Elements` does. At the tag
-  `Elements.Figure.Basics` imported `Elements.Figure.OnCircles`, and every proposition's
-  module imports `Basics`; so a citer who imported a single module, as the README's example
-  `import Elements.BookI.Prop20` does, had the names too. That citer gets an unknown
-  identifier until they add `import Elements.Deprecated`; the release notes say so beside
-  the three names.
+  and cannot import III.2. Only `Elements.lean` imports `Elements.Deprecated`. A citation
+  written against `book-III` elaborates as before, with a warning that names the
+  replacement, wherever the citer's imports bring in `Elements.Deprecated`, as
+  `import Elements` does. At the tag `Elements.Figure.Basics` imported
+  `Elements.Figure.OnCircles`, and every proposition's module imports `Basics`; so a citer
+  who imported a single proposition's module, as the README's example
+  `import Elements.BookI.Prop20` does, or `OnCircles` itself, had the names too. That
+  citer gets an unknown identifier until they add `import Elements.Deprecated`; the release
+  notes say so beside the three names.
 
   The audit. `Audit/Deprecated.lean` pins, for each name, its signature by `#check`, which
   prints every binder by name, the hypotheses' names included, and Lean's warning at a
