@@ -890,6 +890,9 @@ PYTHON = {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}}
 LEAN = ({"uses": "actions/cache@v5", "with": LEAN_CACHE}, {"run": ELAN_INSTALL})
 BUILD = {"run": ("lake build", "lake env lean Certificate/Facts.lean")}
 NEGATIVE_TESTS = {"run": ("python3 scripts/negative_tests.py",)}
+# CI's, in four workers (docs/decisions/2026-10-29-ci-negative-workers.md); the cadence's
+# run stays in one.
+CI_NEGATIVE_TESTS = {**NEGATIVE_TESTS, "env": {"STOICHEIA_NEGATIVE_WORKERS": "4"}}
 YAML_INSTALL = {"run": ("python3 -m pip install -r scripts/requirements-test_safe_push.txt",)}
 LANE = "steps.lane.outputs.full == 'true'"  # Units.LANE_CONDITION
 RISK = {"RESULT": "${{ needs.risk.result }}", "CLASS": "${{ needs.risk.outputs.class }}"}
@@ -942,7 +945,7 @@ WORKFLOW_CONTRACTS = {
                         "ab845bc546996a52ffbbe227cb9ec3ae",
                         lambda row: row["CLASS"] in CLASSES[3:] if row["CLASS"] in CLASSES
                         else None)},
-                    *when(LANE, CHECKOUT, PYTHON, *LEAN, BUILD, NEGATIVE_TESTS))},
+                    *when(LANE, CHECKOUT, PYTHON, *LEAN, BUILD, CI_NEGATIVE_TESTS))},
             "model": {"runs-on": "ubuntu-latest", "steps": (
                 CHECKOUT, PYTHON, {"run": ("python3 -I tests/model/run.py --fast",)},
                 {"run": ("python3 -I tests/model/results_check.py",)})},
@@ -15402,11 +15405,11 @@ class Units(unittest.TestCase):
                       advice)
         self.assertIn(f"git safe-push --branch revert-{'a' * 12} --label <kind>", advice)
         self.assertIn("--label tooling", safe_push.revert_advice(ctx, "tooling"))
-        self.assertEqual(safe_push.github_slug("https://github.com/jackChallis/stoicheia.git"),
-                         "jackChallis/stoicheia")
-        self.assertEqual(safe_push.github_slug("git@github.com:jackChallis/stoicheia.git"),
-                         "jackChallis/stoicheia")
-        self.assertFalse(safe_push.is_local("https://github.com/jackChallis/stoicheia.git"))
+        self.assertEqual(safe_push.github_slug("https://github.com/dodecaplex-co/stoicheia.git"),
+                         "dodecaplex-co/stoicheia")
+        self.assertEqual(safe_push.github_slug("git@github.com:dodecaplex-co/stoicheia.git"),
+                         "dodecaplex-co/stoicheia")
+        self.assertFalse(safe_push.is_local("https://github.com/dodecaplex-co/stoicheia.git"))
 
     def test_identities(self):
         flagged = safe_push.scan_identity
