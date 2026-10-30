@@ -11,7 +11,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that AB is also parallel to CD"
 kind = "case"
-note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD it need not, and that case rests on `Prop30.unique`: two straight lines through one point, each parallel to EF, are one (from I.29)."
+note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD, a straight line GH from AB to EF meets CD at K, by `Prop30.unique` (from I.29), and the Lean runs Euclid's chase on it, by I.29, Common Notion 1 and I.27, with CD or AB in the middle."
 
 [[passage]]
 at = "For let the straight line GK fall upon them"
@@ -36,11 +36,11 @@ case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b7b41f51"
+commit = "63d29c561"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:03f1460b4208dc1d"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4)"
-text = "sha256:65490a6c50d5dd08"
+lean = "sha256:6ec4de86c8dc33b2"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); card #302, ship BI: the extra cases by Euclid's own argument, read in full by Claude Opus 5.5, reader BI-r302, at 63d29c561"
+text = "sha256:f045821a5e502355"
 
 [review.items]
 statement = "pass"
