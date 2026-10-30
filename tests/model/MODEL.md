@@ -371,7 +371,7 @@ between `A` and `B`, would be inside by strict convexity of the disc.
 | `area_congruent` | The three sides fix the area (Heron's formula), so the angle hypotheses are more than the plane needs. |
 
 `radius_ne_zero` is a rule of our own, not System E's, joined by the owner's decision of 25
-October 2026 ([#473](https://github.com/jackChallis/stoicheia/issues/473)): every circle
+October 2026 ([#473](https://github.com/dodecaplex-co/stoicheia/issues/473)): every circle
 Euclid draws has a centre and a distance (Postulate 3), so its radius is something. In the
 hyperbolic plane too a circle is drawn about its centre through another point, and so has a
 positive radius. When it joined, the other laws gave it already: Book Zero proved the same
@@ -496,7 +496,7 @@ this run suggests that one should be.
 
 The evidence above is strong, but it is not a proof. The proof is a Lean model of the
 axioms, begun on 18 October 2026
-([#73](https://github.com/jackChallis/stoicheia/issues/73)) in a separate package,
+([#73](https://github.com/dodecaplex-co/stoicheia/issues/73)) in a separate package,
 [`model/`](../../model/README.md): a Lake package of its own in this repository, with a
 pinned Mathlib, built by CI's `formal-model` job. Stoicheia itself stays plain Lean:
 nothing in the main library imports the model. One repository keeps the laws, their
@@ -557,7 +557,7 @@ package is built, and how each check works, is in its [README](../../model/READM
 - **The consistency of the axioms is a theorem,** relative to Lean's logic and Mathlib's
   construction of the real numbers: Lean checks, in [the formal model](#the-formal-model),
   that the ordinary plane satisfies every locked law
-  ([#73](https://github.com/jackChallis/stoicheia/issues/73)). So the axioms cannot
+  ([#73](https://github.com/dodecaplex-co/stoicheia/issues/73)). So the axioms cannot
   contradict one another unless those foundations do.
 - **The interpretation** is the reading of the words above, with a short argument for
   each of the <!-- count:axioms -->48<!-- /count --> axioms and many configurations tested against each, exactly wherever
