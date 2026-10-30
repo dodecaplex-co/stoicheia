@@ -66,10 +66,12 @@ in 2.42; an older Git makes every group unreadable.
 
 GitHub reads use gh api and gh api graphql, with GH_TOKEN inherited and never
 printed. --github-json replaces that boundary completely: an object with
-pull_requests and runs (REST responses keyed by number), queue (the GraphQL response),
-main (the REST commits/main response), and pushes, queue_merges and main_red (lists of
-REST pages, as returned by gh api --paginate --slurp: main's push and queue merge
-activity, and the open issues labelled main-red). Queue entries include
+pull_requests and runs (REST responses keyed by number), permissions (REST
+collaborators/{login}/permission responses, an account's permission on the repository,
+keyed by the login asked for), queue (the GraphQL response), main (the REST commits/main
+response), and pushes, queue_merges and main_red (lists of REST pages, as returned by gh
+api --paginate --slurp: main's push and queue merge activity, and the open issues
+labelled main-red). Queue entries include
 pageInfo so a truncated answer cannot pass. The subject's number and the queue's
 headRefOid must agree. That GraphQL answer gives each queued entry's head, body, editor
 and last rename at once, and the head and body the verdict reads, by REST afterwards,
@@ -142,6 +144,11 @@ replaces it: the block is a declaration (above), and a block typed to be consist
 the repository passes this judge, as tests/test_check_queue.py shows. The queue must not
 be turned on until both are held.
 
+The judge refuses an ordinary queued entry whose author, or whose body's last editor,
+lacks write, maintain or admin access to the repository, so the trust rests on writers
+alone (docs/decisions/2026-10-28-queue-editor-write-access.md); a permission it cannot
+read is unreadable.
+
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
 """
@@ -183,6 +190,13 @@ for module in (safe_push, check_train, heath):
 OID = re.compile(r"[0-9a-f]{40}")
 SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 SUBJECT = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
+# A GitHub login: ASCII letters and digits, with single hyphens between them, 1 to 39
+# characters. No other string is put into an endpoint (write_access).
+LOGIN = re.compile(r"(?=[A-Za-z0-9-]{1,39}\Z)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
+# The permissions GitHub's REST answer gives an account on a repository, its legacy base
+# roles (maintain reads write and triage read), and those that may write to it.
+PERMISSIONS = ("admin", "write", "read", "none")
+WRITERS = ("admin", "write")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
 # Rule (d) reads the decisions page line by line, never as blocks, so it can only
@@ -335,10 +349,11 @@ def download(command: list[str]) -> bytes:
 
 class GitHub:
     """The only GitHub boundary; fixture reads never fall back to the network. A fixture
-    keys each answer of KEYED by its number, as a string, and gives an artifact's zip,
-    artifact_zips, in base64; a read of ci_runs is of `workflow`'s runs for `head`."""
+    keys each answer of KEYED by its number, as a string, save permissions, an account's
+    permission on the repository, keyed by the login asked for; and gives an artifact's
+    zip, artifact_zips, in base64. A read of ci_runs is of `workflow`'s runs for `head`."""
 
-    KEYED = ("pull_requests", "runs", "jobs", "artifacts", "artifact_zips")
+    KEYED = ("pull_requests", "runs", "jobs", "artifacts", "artifact_zips", "permissions")
 
     def __init__(self, repo: str, fixture: Path | None):
         self.repo = repo
@@ -347,11 +362,12 @@ class GitHub:
             raise ValueError("GitHub fixture must be an object")
 
     def read(self, kind: str, number: int | None = None, workflow: str | None = None,
-             head: str | None = None):
+             head: str | None = None, login: str | None = None):
         if self.fixture is not None:
             try:
                 value = self.fixture[kind]
-                value = value[str(number)] if kind in self.KEYED else value
+                key = login if kind == "permissions" else str(number)
+                value = value[key] if kind in self.KEYED else value
                 return base64.b64decode(value, validate=True) if kind == "artifact_zips" \
                     else value
             except (KeyError, TypeError):
@@ -388,9 +404,12 @@ class GitHub:
                          "jobs": f"actions/runs/{number}/jobs?filter=latest&per_page=100",
                          "artifacts": f"actions/runs/{number}/artifacts?name={ACCEPTANCE}"
                                       "&per_page=100",
-                         "artifact_zips": f"actions/artifacts/{number}/zip"}
+                         "artifact_zips": f"actions/artifacts/{number}/zip",
+                         "permissions": f"collaborators/{login}/permission"}
             if kind not in endpoints or kind == "ci_runs" and not (
-                    WORKFLOW_FILE.fullmatch(str(workflow)) and OID.fullmatch(str(head))):
+                    WORKFLOW_FILE.fullmatch(str(workflow)) and OID.fullmatch(str(head))) \
+                    or kind == "permissions" and not (isinstance(login, str)
+                                                      and LOGIN.fullmatch(login)):
                 raise ValueError("GitHub: unknown read")
             endpoint = endpoints[kind]
             command = ["gh", "api", "--method", "GET", f"repos/{self.repo}/{endpoint}"]
@@ -491,12 +510,14 @@ def queue_entries(answer) -> list[tuple[int, str]]:
         raise ValueError("GitHub: could not read a complete queue in position order") from None
 
 
-def queue_actors(answer) -> dict[int, tuple[bool, bool, bool]]:
+def queue_actors(answer) -> dict[int, tuple[bool, bool, bool, tuple[str, str] | None]]:
     """Whether a bot put each queued pull request in the queue, whether a bot last
     edited its body (False when nobody has), and whether a bot last renamed it (False
     when nobody has: its last title rename, from its timeline), read by GraphQL's type
     of the actor: GraphQL spells a bot's login without the "[bot]" REST adds, so logins
-    are not compared. Missing or malformed data refuses."""
+    are not compared; and who last edited its body, as that type and login (None when
+    nobody has), whose permission ordinary_entry reads. Missing or malformed data
+    refuses."""
     try:
         actors = {}
         for node in answer["data"]["repository"]["mergeQueue"]["entries"]["nodes"]:
@@ -516,7 +537,8 @@ def queue_actors(answer) -> dict[int, tuple[bool, bool, bool]]:
             actors[pr["number"]] = (
                 enqueuer["__typename"] == "Bot",
                 editor is not None and editor["__typename"] == "Bot",
-                renamer is not None and renamer["__typename"] == "Bot")
+                renamer is not None and renamer["__typename"] == "Bot",
+                None if editor is None else (editor["__typename"], editor["login"]))
         return actors
     except (KeyError, TypeError, ValueError):
         raise ValueError("GitHub: could not read who queued, edited and renamed each "
@@ -538,12 +560,40 @@ def queue_bodies(answer) -> dict[int, str]:
         raise ValueError("GitHub: could not read each queued entry's body") from None
 
 
-def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
+def write_access(api: GitHub, login, access: dict, whose: str) -> bool:
+    """Whether the account `login`, `whose` in a message, may write to the repository: its
+    permission there, by GitHub's REST answer, is admin or write (WRITERS), as maintain's
+    is. Each account is read once a run, `access` holding what was read by login in lower
+    case, since GitHub's logins ignore case. A login not of GitHub's shape (LOGIN) is
+    never put into an endpoint; it, an answer for another login or that gives no
+    permission of PERMISSIONS, and a failed read are unreadable, so that none passes."""
+    try:
+        if not isinstance(login, str) or not LOGIN.fullmatch(login):
+            raise ValueError
+        if login.lower() not in access:
+            answer = api.read("permissions", login=login)
+            answered, permission = answer["user"]["login"], answer["permission"]
+            if not isinstance(answered, str) or not answered.isascii() \
+                    or answered.lower() != login.lower() or permission not in PERMISSIONS:
+                raise ValueError
+            access[login.lower()] = permission in WRITERS
+        return access[login.lower()]
+    except (KeyError, TypeError, ValueError):
+        raise ValueError(f"GitHub: could not read the permission of {whose}") from None
+
+
+def ordinary_entry(pr: dict, actors: dict, repo_slug: str, api: GitHub,
+                   access: dict) -> None:
     """An entry that is not an automatic revert: its head is in this repository, and no
     bot (the revert App's above all) wrote it, put it in the queue, last edited its body
     or last renamed it (its title goes into main's merge commit), so the App's key
     cannot land anything but the revert the queue checks it to be. Trains are written,
-    named and queued by people."""
+    named and queued by people. While it is queued, its author and its body's last
+    editor, when anyone has edited it, must each have write access to the repository
+    (write_access, sharing `access`): the pre-flight block is a declaration that a
+    writer's account vouches for (#617), and GitHub lets a pull request's author edit
+    its body after a writer has queued it, and an organization member without write
+    access open one between the repository's branches."""
     if pr["head_repo"] != repo_slug:
         raise Refused(f"#{pr['number']}: its head is not in {repo_slug}")
     if pr["author"]["type"] == "Bot":
@@ -555,13 +605,27 @@ def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
         return
     if pr["number"] not in actors:
         raise ValueError(f"GitHub: #{pr['number']} is open but not in the queue read")
-    queued_by_bot, edited_by_bot, renamed_by_bot = actors[pr["number"]]
+    queued_by_bot, edited_by_bot, renamed_by_bot, editor = actors[pr["number"]]
     if queued_by_bot or edited_by_bot:
         raise Refused(f"#{pr['number']}: a bot wrote, queued or edited a pull request that "
                       "is not an automatic revert")
     if renamed_by_bot:
         raise Refused(f"#{pr['number']}: a bot last renamed a pull request that is not an "
                       "automatic revert, and its title goes into main's merge commit")
+    writer = f"write, maintain or admin access to {repo_slug}, and only a writer vouches " \
+             "for a pre-flight block"
+    author_writes = write_access(api, pr["author"]["login"], access,
+                                 f"#{pr['number']}'s author")
+    editor_writes = None
+    if editor is not None:
+        if editor[0] != "User":
+            raise ValueError(f"GitHub: #{pr['number']}'s body's last editor is not a user")
+        editor_writes = write_access(api, editor[1], access,
+                                     f"#{pr['number']}'s body's last editor")
+    if not author_writes:
+        raise Refused(f"#{pr['number']}: its author has no {writer}")
+    if editor_writes is False:
+        raise Refused(f"#{pr['number']}: its body's last editor has no {writer}")
 
 
 def pull_request(answer, number: int) -> dict:
@@ -2055,18 +2119,18 @@ def main(argv=None) -> int:
             checkout(repo, head)
             api = GitHub(args.repo, args.github_json)
             # The queue is read once, for its order, each entry's body and who queued,
-            # edited and renamed each entry.
+            # edited and renamed each entry; each account's permission once, if asked.
             queue_answer = api.read("queue")
             entries = chain(repo, base, head, api, queue_answer)
             actors = queue_actors(queue_answer)
-            red = None
+            red, access = None, {}
             for pr in entries:
                 if "auto-revert" in pr["labels"] or pr["ref"].startswith("revert/"):
                     if pr["head_repo"] != args.repo:
                         raise Refused(f"#{pr['number']}: its head is not in {args.repo}")
                     exact_revert(repo, pr, api)
                 else:
-                    ordinary_entry(pr, actors, args.repo)
+                    ordinary_entry(pr, actors, args.repo, api, access)
                     if pr["state"] == "OPEN":
                         # Read once, for the queued entries; a merged one is on main.
                         if red is None:
