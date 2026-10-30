@@ -96,7 +96,7 @@ note = "Proved as its own theorem, III.16 Por., from the first part of the state
 
 [figure]
 case = "FA off the centre, with G distinct from A and between D and H; the mixed angles are on E's side of AB"
-note = "G is drawn within the circle, where the proof puts it, and H, where DG produced meets the circumference, beyond it; Heath's figure draws the supposition, with H between D and G. CA is drawn as the first reductio supposes it, within the circle; the true perpendicular to AB is AE."
+note = "G is drawn within the circle, where the proof puts it, and H beyond G, where DG produced meets the circumference; Heath's figure draws the supposition, with H between D and G. CA is drawn as the first reductio supposes it, within the circle; the true perpendicular to AB is AE."
 
 [review]
 stage = "full"
