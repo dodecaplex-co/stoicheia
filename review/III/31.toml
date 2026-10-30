@@ -71,11 +71,11 @@ note = "The figure at a glance finishes by adding the triangle's three angles. E
 
 [review]
 stage = "full"
-commit = "689ab169f"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "5bbb773a7"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:9bc76ab4d216634c"
-run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f"
-text = "sha256:f9ed63844479d318"
+run = "brief 0005 stage 5, ship R3 (#29); the companions III.31 greater and less, written by Claude, read also by GPT-6 Astra (Codex); lines 185, 225, 250 and 285 of Prop31.lean, of unknown family, read by both; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 2f2c3c2f; previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after hE was named _hE in two step lemmas (written by Claude), by GPT-6 Astra (Codex), reader R3-u-r1, at 003a92058; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readB, at 689ab169f; #525, read-through 03's editorial leftovers: re-read whole by Claude Opus 5.5, of the family that did not write the original proof where one family wrote it (II.6, II.7, III.31, III.34, III.37: OpenAI Codex), and for III.5 and III.6, whose proofs both families wrote, an independent reader who wrote none of this (#478), independent reader RD-s5, at 5bbb773a7"
+text = "sha256:4428720dbb7901d5"
 
 [review.items]
 statement = "pass"
