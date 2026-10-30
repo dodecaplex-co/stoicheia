@@ -257,8 +257,8 @@ BC, which the Lean rules out by exchanging the triangles."
 "therefore DA is greatest, while DE is greater than DF" and "therefore DG is least, while DK
 is less than DL" (book/III/08.md:136 and :143). The main theorems prove these clauses
 themselves: Elements/BookIII/Prop07.lean:160 assembles them, `refine ⟨hgreatest, hleast,
-hnearer, ?_⟩`, and `Prop7.general` takes them from `Prop7` (:329, `obtain ⟨hgreatest,
-hleast, hnearer, hpartner⟩ := Prop7 ...`); `Prop8.general` takes them from `Prop8` in the
+hnearer, ?_⟩`, and `Prop7.general` takes them from `BookIII.Prop7` (:329, `obtain ⟨hgreatest,
+hleast, hnearer, hpartner⟩ := Prop7 ...`); `Prop8.general` takes them from `BookIII.Prop8` in the
 same way (Prop08.lean:550). So the page tells a reader that Euclid's conclusions live in a
 companion when they are in the theorem. *What it should say:* each passage `kind =
 "grouped"`, rendered "Carried together", with a note such as "Euclid's summary of the
@@ -311,9 +311,9 @@ III's words (mishnah/intro/III.md:5). Its note on the measure of circumferences 
 angles whatever the radii, and its proof keeps the equal circles only along Euclid's route.
 III.26, III.28 and III.29 need them: ... and in III.28 and III.29 the measures are tied to
 straight lines in the circles." That was true of the statements in measures. At d4d65c48
-`Prop27` and `Prop29` take circumferences that coincide (`Arc.Congruent`), not equal measures
+`BookIII.Prop27` and `BookIII.Prop29` take circumferences that coincide (`Arc.Congruent`), not equal measures
 (facts.json); both records are tagged `redundant-hypothesis` and call the equal circles
-redundant in `Prop27` and `Prop29` (review/III/27.toml:13, 29.toml:13), as the introduction
+redundant in `BookIII.Prop27` and `BookIII.Prop29` (review/III/27.toml:13, 29.toml:13), as the introduction
 itself says ("In III.27 and III.29, which take circumferences that coincide, it adds
 nothing", book/III/index.md:15). So the reader who follows the link meets, on III.29, the
 contrary of the page; on III.27 the note is true of the statement, but speaks of it in
@@ -402,7 +402,7 @@ I.45 (item 45). The other eleven are new:
 
 Its verdict: "pass once the named findings are mended. There is no false claim and no scope
 misstatement. The defects are inconsistencies of form and term that every later page would
-copy from the pilot." It accepted III.24's route as `euclid` on the authority of #547's
+copy from the pilot." It accepted III.24's route, `euclid` in its record, on the authority of #547's
 decision, and left the doubts below on III.24's "and here he needs it", on italics and on
 capitalised link anchors.
 
@@ -893,9 +893,9 @@ Book III's:
   III.20's "Euclid's argument" beside III.21's "one step changed", for the same reading,
   follows the records' logic (a case beyond the statement against a case within it), but a
   reader may see the two as at odds: FORMALIZATION section 5 settles it.
-- **III.29's equal circles,** which M11 calls redundant in `Prop29` on the authority of its
-  record's tag and note: a scratch file stating `Prop29` without `EqualCircles` and proving it
-  from `Prop29` and `Arc.congruent_iff`, checked with `lake env lean`, settles it in Lean.
+- **III.29's equal circles,** which M11 calls redundant in `BookIII.Prop29` on the authority of its
+  record's tag and note: a scratch file stating `BookIII.Prop29` without `EqualCircles` and proving it
+  from `BookIII.Prop29` and `Arc.congruent_iff`, checked with `lake env lean`, settles it in Lean.
 - **"[III. 2]" and "[Post. 3]" in our notes,** III.25's (review/III/25.toml:9) as well as
   III.24's (item 74): STYLE section 4 keeps bracketed references for Euclid's text, and
   section 5 allows them in Lean remarks; whether a record's note counts is for STYLE's owner.
