@@ -63,12 +63,11 @@ in a decisions entry, and the pull request carries the label security-review. --
 ## Reviews
 
 <!-- /code-review always; /security-review when a protected path changes; /no-mistakes
-before merge when the change is code, of R2 to R5 by scripts/risk.py, without its push and
-pull request steps (git safe-push does those). A change of documents, text and records
-alone, R0 or R1, needs no /no-mistakes: a second reader reads it instead, recorded in the
-/code-review row, and the /no-mistakes row says "Not needed".
-Give the commit each ran on, and how each blocking or material finding was resolved
-(docs/WORKFLOW.md, section 9). -->
+before merge, without its push and pull request steps (git safe-push does those), unless
+the change is of Markdown files alone, of R0 or R1 by scripts/risk.py: such a change has
+a second reader instead, recorded in the /code-review row, and the /no-mistakes row says
+"Not needed". Give the commit each ran on, and how each blocking or material finding was
+resolved (docs/WORKFLOW.md, section 9). -->
 
 | Review | Commit | Blocking or material findings, and how each was resolved |
 |---|---|---|

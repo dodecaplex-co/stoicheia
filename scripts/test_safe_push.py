@@ -4732,6 +4732,19 @@ class Merge(Edge):
         self.assertIn("unticked: Required if code:", out)
         self.assertEqual(self.origin_main(), BASE)
 
+    def test_data_of_r1_needs_its_no_mistakes_box(self):
+        # A file of R1 that is not Markdown, data the book is rendered from, is not
+        # documentation: a comment in it, which changes no page.
+        path = "docs/program.toml"
+        self.opened(**{path: self.text(path) + "\n# A comment for the test.\n"})
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]).replace(
+            "- [x] **Required if code:**", "- [ ] **Required if code:**")))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("unticked: Required if code:", out)
+        self.assertEqual(self.origin_main(), BASE)
+
     def test_a_document_merges_without_no_mistakes(self):
         # A change of R0, its /no-mistakes box unticked and its row "Not needed".
         self.opened()

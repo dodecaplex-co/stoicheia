@@ -1265,7 +1265,9 @@ yet done. A rule read from prose cannot list every way of saying that a review i
 done ("PASS if CI is green" still passes): the cells are written by the coordinator's
 crews, and each is read by the lane as well. The check imposes no prose length.
 `/no-mistakes` says `passed at <head>` for that same member head, or `not run:
-<reason>`, with at least five words giving the reason.
+<reason>`, with at least five words giving the reason; a member of Markdown files alone,
+of R0 or R1, which needs none, says so there
+([decision](decisions/2026-10-30-no-mistakes-for-code.md)).
 
 `What is new` says `None.` or gives bullet lines of these forms:
 
@@ -1309,8 +1311,9 @@ merge, differs from the text checked.
 
 **Building a train that passes.** Start the train from origin/main, never from a
 member. Merge each member once, at its final head, after its reviews and `/no-mistakes`
-have run on that head; if a member moves, build the train again from origin/main rather
-than merging the member a second time. A merge of origin/main into the train is
+(unless it needs none) have run on that head; if a member moves, build the train again
+from origin/main rather than merging the member a second time. A merge of origin/main
+into the train is
 allowed, and its tree is checked like the members' merges. The train itself resolves
 and adds nothing beyond the generated pages and the decisions page. A conflict between
 members, or between a member and origin/main, and a review record's stamp of a member's
@@ -2296,12 +2299,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       followed", exit 3, never as a refusal before the push.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
-   merge of a change of code, of R2 to R5 by `scripts/risk.py`, run without its push and
-   pull request steps, since `git safe-push` alone pushes and opens pull requests. A
-   change of documents, text and records alone, R0 or R1, has a second reader instead,
-   recorded in the `/code-review` row
-   ([decision](decisions/2026-10-30-no-mistakes-for-code.md)). Each blocking or material
-   finding (section 9) is
+   merge, run without its push and pull request steps, since `git safe-push` alone
+   pushes and opens pull requests. A change of Markdown files alone, of R0 or R1 by
+   `scripts/risk.py`, has a second reader instead of `/no-mistakes`, recorded in the
+   `/code-review` row ([decision](decisions/2026-10-30-no-mistakes-for-code.md)). Each
+   blocking or material finding (section 9) is
    resolved, and the pull request says how. A fix is a new commit on the branch, and the
    pre-flight runs again.
 4. **The merge.** `git safe-push --merge <n>` reads main's effective rules; an unreadable
@@ -2341,14 +2343,16 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    ruleset and the local check judgement described in
    [section 8](#8-validation-on-the-integrated-revision); no box marked **Required** in
    its checklist is unticked, nor one marked **Required if protected** when a protected
-   path changes, nor one marked **Required if code** when the change is of R2 to R5 by
-   current main's `scripts/risk.py` (any doubt counts as code), and none of the template's
+   path changes, nor one marked **Required if code** unless the change is of Markdown
+   files alone, of R0 or R1 by current main's `scripts/risk.py` (any doubt counts as
+   code), and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
    "Unfinished work" (once the template in force has that section),
    each review's commit and findings in the Reviews table (the security review's when a
-   protected path changes, and `/no-mistakes`'s when the change is code or protected)
+   protected path changes, and `/no-mistakes`'s when the change counts as code or is
+   protected)
    and "Needs the owner's OK". Boxes and other sections count
    where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
    so that nothing GitHub hides or shows differently can stand in for it. The body holds

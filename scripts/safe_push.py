@@ -6629,16 +6629,20 @@ def boxes(body: str) -> list[tuple[bool, str, str]]:
     return found
 
 
-# The classes of documents, text and records by scripts/risk.py. A change of these alone
-# needs no /no-mistakes, its second reader standing in; a change of code does
-# (docs/decisions/2026-10-30-no-mistakes-for-code.md).
+# The classes of documents, text and records by scripts/risk.py. A change of Markdown files
+# of these alone needs no /no-mistakes, its second reader standing in; any other change
+# does (docs/decisions/2026-10-30-no-mistakes-for-code.md).
 DOC_CLASSES = ("R0", "R1")
 
 
 def code_change(ctx: Context, labels: set[str] | None) -> bool:
-    """Whether the change is code, of R2 to R5 by current main's risk.py (risk_class), so
-    that the boxes and the review marked for code bind it. A class that cannot be found is
-    R5, and so are unreadable labels: a doubt binds them."""
+    """Whether the change counts as code, so that the boxes and the review marked for code
+    bind it: anything but Markdown files alone, of R0 or R1 by current main's risk.py
+    (risk_class). Data and records of those classes, a ruleset's JSON or a review record,
+    count as code; so do a class that cannot be found and unreadable labels, which are R5:
+    a doubt binds them."""
+    if any(not path.endswith(".md") for _, path in changed_files(ctx.repo, ctx.base, ctx.sha)):
+        return True
     policy = ctx.harness_sha or ctx.base
     return risk_class(ctx.repo, policy, ctx.sha, labels,
                       diff_base=ctx.base).cls not in DOC_CLASSES
@@ -6854,6 +6858,7 @@ def section_problems(body: str, template: str | None, protected: bool,
     security review's row binds a protected change, and /no-mistakes's a change of code
     (code_change) or a protected one."""
     wanted, have = sections(template or ""), sections(body)
+    bound = {"/security-review": protected, "/no-mistakes": code or protected}
     problems = []
     for name in (n for n in WRITTEN if n in wanted):
         if name not in have:
@@ -6862,7 +6867,6 @@ def section_problems(body: str, template: str | None, protected: bool,
             rows = review_rows(have[name])
             for review in review_rows(wanted[name]):
                 cells = rows.get(review, [])
-                bound = {"/security-review": protected, "/no-mistakes": code or protected}
                 if bound.get(review, True) and not (
                         len(cells) >= 2 and all(written(c) for c in cells[:2])):
                     problems.append(f"not written: the review {review}, its commit and its "
@@ -7435,7 +7439,7 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
     else:
         rep.add("G", "checklist", "ok", "every required box ticked" + (
-            "" if code else ": a change of documents, text and records (R0 or R1), so "
+            "" if code else ": a change of Markdown files of R0 or R1 alone, so "
             "/no-mistakes is not required"))
     unwritten = section_problems(body, template, bool(protected), code)
     if unwritten:
