@@ -500,18 +500,19 @@ jobs:
           path: ${{ runner.temp }}/acceptance/
 
   queue-tests:
-    # The offline cases of the queue's judge, its train check and its automatic reverts,
-    # which need no network: tests/test_check_queue.py, tests/test_check_train.py and
-    # tests/test_auto_revert.py. They run on every event CI runs on: each pull request,
-    # main in post-merge.yml's call, and each merge group too, where main's branch ruleset
-    # requires this check by its name once the queue is on, so it must report there. They
+    # The offline cases of the queue's judge and its automatic reverts, which need no
+    # network: tests/test_check_queue.py and tests/test_auto_revert.py. They run on every
+    # event CI runs on: each pull request, main in post-merge.yml's call, and each merge
+    # group too, where main's branch ruleset requires this check by its name once the
+    # queue is on, so it must report there. They
     # are the change's own tests of its own code: they test, they do not judge. The queue's
     # judge, queue-integrity and queue-gaps, is .github/workflows/queue-judge.yml, which the
     # organization ruleset of docs/rulesets/queue-judge.json is to run from main once the
     # owner imports it and the trial shows it holding a group; until then nothing holds it
     # (WORKFLOW, section 10, "The merge queue").
     runs-on: ubuntu-latest
-    # The three files took 22.5 minutes on a loaded Mac; 30 leaves room and stops a hang.
+    # With the train check's tests, since retired, the three files took 22.5 minutes on a
+    # loaded Mac; 30 leaves room for the two left and stops a hang.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -529,8 +530,7 @@ jobs:
         working-directory: ${{ runner.temp }}
         run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
 
-      - name: Check the queue and train checks, and automatic reverts, case by case
+      - name: Check the queue and automatic reverts, case by case
         run: |
           python3 -I tests/test_check_queue.py
-          python3 -I tests/test_check_train.py
           python3 -I tests/test_auto_revert.py

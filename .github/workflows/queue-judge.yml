@@ -116,8 +116,8 @@ jobs:
     runs-on: ubuntu-latest
     # The queue's status check timeout, 150 minutes from the group's start. The job starts
     # with the group and waits for acceptance (its limit 60 minutes) with no earlier cutoff
-    # of its own; then the changed checks' tests, the slowest group (safe_push's,
-    # check_queue's and check_train's at once) near 40 minutes here, and the judge's wait
+    # of its own; then the changed checks' tests, the slowest group (safe_push's and
+    # check_queue's at once) at most about 40 minutes here, and the judge's wait
     # of up to 10 minutes for a revert's run. The queue's own timeout, counted from the
     # group's start, binds first: to be measured again on the queue's trial.
     timeout-minutes: 150

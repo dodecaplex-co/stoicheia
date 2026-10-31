@@ -75,24 +75,24 @@ changed. CI's `scripts/run_checks.py` runs every check one after another, as bef
    number in its name is for people listing the folder; the order decides.
 2. Run `python3 scripts/render.py`, which writes the new line into section 8's block, and
    commit the file and the regenerated block together.
-3. Name the new file, in a sentence of its own, in the train's decision entry, as for any
+3. Name the new file, in a sentence of its own, in the part's decision entry, as for any
    protected path ([WORKFLOW, section 10](../docs/WORKFLOW.md#landing-work-pull-requests),
    "Protected paths"). Removing a check, or changing its command, job, order,
    `concurrent` or `after`, is the same: one file, named in the entry.
 
 A check declared concurrent that is to write in the worktree loses its `concurrent` first,
-in a train of its own. The commit's pass runs the commit's own scripts under origin/main's
-declarations, so a train that makes such a check write is refused by the guard until the
-train that undeclares it has landed.
+in a part of its own. The commit's pass runs the commit's own scripts under origin/main's
+declarations, so a part that makes such a check write is refused by the guard until the
+part that undeclares it has landed.
 
 A change to `checks/` is of risk class R3, and touches neither `scripts/safe_push.py` nor
 the CI workflow. Its pull request's CI runs its own registry, the new check with it, and
 that run is a required check of the pull request, so the change does alter checks that
 judge it there. Three things keep that safe:
 
-- Every train that touches `checks/` is R3 or above, so its pre-flight runs origin/main's
+- Every part that touches `checks/` is R3 or above, so its pre-flight runs origin/main's
   whole registry on it, in both passes, whatever its CI runs.
 - The change is protected: each file is named in a decision entry, and the pull request
   carries `security-review`.
-- The change judges later trains only once it has merged: the check joins the pre-flight
+- The change judges later parts only once it has merged: the check joins the pre-flight
   then.
