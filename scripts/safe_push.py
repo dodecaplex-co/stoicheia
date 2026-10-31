@@ -8418,9 +8418,9 @@ def main(argv=None) -> int:
                         "macOS's sandbox-exec, which stops it writing there (no sandbox, "
                         "no cache). The sandbox does not stop a run without the flag, nor "
                         "what a flagged run's code leaves for a later command or run to "
-                        "load before its sandbox starts. Only the runs that land a train pass "
+                        "load before its sandbox starts. Only the runs that land a part pass "
                         "it (the coordinator ruled): the coordinator's dry run of the "
-                        "train and its push")
+                        "part and its push")
     parser.add_argument("--emit-proof", metavar="FILE", help="with --dry-run, and neither "
                         "--merge, --land nor --main-checks-cache (a proof may not rest on a "
                         "cache entry): once the dry run has passed with step 4 in full, write "

@@ -39,3 +39,9 @@
   ([the decision](2026-10-30-single-parts-with-cards.md)), so the train check judged
   nothing that would land, and its tests still took about 2.5 minutes of CI's
   queue-tests job on every pull request.
+
+  Two train-only remnants stay in this part. The fixture driver's `edit-train-body`
+  action remains in `scripts/test_safe_push.py`, and 23 timing entries for deleted tests
+  remain in `scripts/test_safe_push_times.json`. Those obsolete entries continue to
+  contribute to `shard_plan`'s fallback median: it is 3.3 seconds with them, rather than
+  2.8 seconds for the current measured tests.

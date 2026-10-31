@@ -3741,6 +3741,18 @@ class PullRequests(Edge):
         self.assertIn("Commits (", pr["body"])
         self.assertIn("safe_push:preflight begin", pr["body"])
 
+    def test_unreadable_body_file_refuses_before_the_checks(self):
+        self.good_commit()
+        body = TMP / "body.md"
+        body.write_bytes(b"Not UTF-8: \xff\n")
+        r = self.safe_push("--branch", "docs/body", "--label", "docs",
+                           "--body-file", str(body))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("could not read --body-file", out)
+        self.assertNotIn("4. The full local checks", out)
+        self.assertIsNone(self.origin_branch("docs/body"))
+
     def test_branch_with_commits_this_one_lacks_refused(self):
         theirs = self.good_commit("Their line.")
         git(WORK, "push", "--quiet", "origin", f"{theirs}:refs/heads/{BRANCH}")
@@ -10029,6 +10041,7 @@ from pathlib import Path  # noqa: E402
 import tempfile  # noqa: E402
 
 sp = safe_push
+preloaded = {name: name in sys.modules for name in ARGS["preload"]}
 # The sequence step 4 runs is given to full_checks, as check_list gives it, and differs
 # from the built-in CHECKS, which the cache's key must not read.
 SEQUENCE = [(name, cmd) for name, cmd in ARGS["checks"]]
@@ -10082,7 +10095,7 @@ finally:
     sp.SANDBOX = None
 with open(ARGS["out"], "w") as f:
     json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "listed": listed,
-               "error": error,
+               "error": error, "preloaded": preloaded,
                "reader": reader is not None, "apart": apart,
                "planted": os.path.exists(os.path.join(ARGS["here"], "dataclasses.py")),
                "executed": os.path.exists(ARGS["sentinel"]),
@@ -10905,8 +10918,8 @@ class MainChecksCache(Edge):
         self.assertEqual(r.returncode, 0, r.stderr)
         text = " ".join(r.stdout.split())
         self.assertIn("--main-checks-cache the pre-flight only", text)
-        self.assertIn("Only the runs that land a train pass it (the coordinator ruled): the "
-                      "coordinator's dry run of the train and its push", text)
+        self.assertIn("Only the runs that land a part pass it (the coordinator ruled): the "
+                      "coordinator's dry run of the part and its push", text)
         self.assertIn("The sandbox does not stop a run without the flag", text)
 
     def test_every_command_starts_in_run(self):
@@ -10952,21 +10965,14 @@ class MainChecksCache(Edge):
         self.assertEqual(sorted(order, key=line.__getitem__), order)
 
 
-    def test_every_import_is_at_the_top(self):
-        # A module imported in a function could be imported once the sandbox is set, and
-        # found first in the harness's own directory: so safe_push.py imports nothing
-        # but at its top, nor through importlib or __import__, which the audit event of
-        # an import does not always see.
-        tree = ast.parse(SAFE_PUSH.read_text())
-        late = [ast.unparse(node) for top in tree.body
-                if not isinstance(top, (ast.Import, ast.ImportFrom))
-                for node in ast.walk(top) if isinstance(node, (ast.Import, ast.ImportFrom))]
-        self.assertEqual(late, [])
-        names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
-        self.assertFalse({"importlib", "__import__"} & names)
-        self.assertNotIn("import importlib", SAFE_PUSH.read_text())
-        for name in ("plistlib", "tomllib"):
-            self.assertIn(f"\nimport {name}", SAFE_PUSH.read_text())
+    def test_the_cache_path_imports_nothing_after_the_sandbox_is_set(self):
+        sha = self.check_change()
+        tools, _ = self.stand_in_tools()
+        seen = self.step4_watched(sha, tools)
+        self.assertEqual(seen["preloaded"], {"plistlib": True, "tomllib": True})
+        self.assertEqual((seen["seen"], seen["error"]), ([], None), seen["printed"])
+        self.assertEqual(set(seen["runs"]), {"miss", "hit"})
+        self.assertTrue(seen["listed"], seen["printed"])
 
 
     def test_the_preflight_activates_the_sandbox_after_classification_and_before_checks(self):
@@ -11097,6 +11103,7 @@ class MainChecksCache(Edge):
         given = {"events": sorted(PROCESS_EVENTS), "here": str(harness), "work": str(WORK),
                  "sha": sha, "base": BASE, "origin": str(ORIGIN), "inputs": self.inputs(sha),
                  "checks": self.CHECKS, "negative": self.NEGATIVE,
+                 "preload": ["plistlib", "tomllib"],
                  "sandbox_exec": str(self.fake), "cache": str(self.dir),
                  "path": str(tools) + os.pathsep + os.environ.get("PATH", ""),
                  "logs": tempfile.mkdtemp(prefix="logs-", dir=self.root),
