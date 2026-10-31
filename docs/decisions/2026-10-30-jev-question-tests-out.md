@@ -7,16 +7,13 @@
   tests: "Yes take these out." Those are the owner's words; what follows is the
   coordinator's record of what they take out.
 
-  `tests/test_jev_questions.py`, the 135 tests of the Jev question generator, is deleted.
-  It ran in no CI job and no check of `checks/`: one of its tests checks out a commit of
-  19 October that the `check` job's one-commit checkout does not hold. Run on 30 October
-  on main (5d10e4b28) with the whole history, that commit included, 55 of its 135 tests
-  errored and 6 were skipped. The generator,
+  The 135 tests of the Jev question generator, in `tests/test_jev_questions.py`, are taken
+  out. The file stays as a two-line comment that says so and names this entry, since dated
+  records link to it and are never edited. The tests ran in no CI job and no check of
+  `checks/`: one of them checks out a commit of 19 October that the `check` job's
+  one-commit checkout does not hold. Run on 30 October on main (5d10e4b28) with the whole
+  history, that commit included, 55 of the 135 errored and 6 were skipped. The generator,
   `scripts/audit/jev_questions.py`, stays, since other tests read it. Section 8 of
-  `docs/WORKFLOW.md` says so in place of its account of the deleted tests.
+  `docs/WORKFLOW.md` says so in place of its account of the tests.
 
   Why: a test that runs in no job guards nothing, and keeping it costs its upkeep.
-
-  The tests were removed. The path `tests/test_jev_questions.py` remains only as a
-  comment-only retirement stub so that historical links still resolve. This clarification
-  supersedes the literal file-deletion description above.
