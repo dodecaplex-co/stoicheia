@@ -1277,6 +1277,8 @@ class TheRegistry(unittest.TestCase):
         "python3 scripts/render.py",
         safe_push.EMPTY_CHECK,
         "python3 scripts/check_address.py --self-test",
+        "python3 -I tests/test_check_released_names.py",
+        "python3 -I scripts/check_released_names.py --self-test",
     }
 
     def test_the_declarations_are_the_audits(self):

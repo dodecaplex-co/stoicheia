@@ -508,11 +508,16 @@ class EntryHeaders(HeaderFolder):
         self.headed("2026-10-27-full.md", header(
             "id=full-2", "cards=577,12", "briefs=0008-centre,book-I",
             "program=landed", "corrects=2026-10-25-old.md",
-            "reverts=2026-10-26-older.md,2026-10-25-old.md", line=line))
+            "reverts=2026-10-26-older.md,2026-10-25-old.md",
+            "removes=Elements.Tacit.area_congruent,Elements.Old.«term∠___»,Elements.«a.b»",
+            line=line))
         self.assertEqual(self.headers()["2026-10-27-full.md"], {
             "id": "full-2", "cards": [577, 12], "briefs": ["0008-centre", "book-I"],
             "program": ["landed"], "corrects": ["2026-10-25-old.md"],
-            "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"], "line": line})
+            "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"],
+            "removes": ["Elements.Tacit.area_congruent", "Elements.Old.«term∠___»",
+                        "Elements.«a.b»"],
+            "line": line})
 
     def test_a_header_of_the_longest_length_is_read(self):
         # A header of ENTRY_HEADER_LIMIT characters is read; one character more is refused
@@ -532,7 +537,7 @@ class EntryHeaders(HeaderFolder):
         self.entry("2026-10-27-b.md", "- **No header.** An entry may have none.\n")
         self.assertEqual(self.headers(), {"2026-10-27-a.md": {
             "id": "a", "cards": [1], "briefs": [], "program": [], "corrects": [],
-            "reverts": [], "line": "News, of a kind."}})
+            "reverts": [], "removes": [], "line": "News, of a kind."}})
 
     def test_each_refusal(self):
         self.entry("2026-10-26-earlier.md", "- **Earlier.** Words.\n")
@@ -596,6 +601,29 @@ class EntryHeaders(HeaderFolder):
              "program names 'landed' twice"),
             ('<!-- entry: id=a cards=1 corrects=2026-10-26-earlier.md,2026-10-26-earlier.md '
              'line="x" -->', "corrects names '2026-10-26-earlier.md' twice"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a reverts=2026-10-26-earlier.md '
+             'line="x" -->', "the key 'reverts' is out of order"),
+            ('<!-- entry: id=a cards=1 removes=Tacit.area_congruent line="x" -->',
+             "removes 'Tacit.area_congruent': a removed name is a Lean name in full, under "
+             "Elements"),
+            ('<!-- entry: id=a cards=1 removes=Elements line="x" -->',
+             "removes 'Elements': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements..a line="x" -->',
+             "removes 'Elements..a': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a=b line="x" -->',
+             "removes 'Elements.a=b': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.1a line="x" -->',
+             "removes 'Elements.1a': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.«a«b» line="x" -->',
+             "removes 'Elements.«a«b»': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.«» line="x" -->',
+             "removes 'Elements.«»': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Other.x line="x" -->',
+             "removes 'Other.x': a removed name is a Lean name in full, under Elements"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a,Elements.a line="x" -->',
+             "removes names 'Elements.a' twice"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a, line="x" -->',
+             "removes is a list joined by commas, with no empty item"),
             ('<!-- entry: id=a cards=1 line="" -->', "the line is 1 to 300 characters, not 0"),
             (header("id=a", "cards=1", line="x" * 301), "the line is 1 to 300 characters, "
                                                          "not 301"),
@@ -604,6 +632,8 @@ class EntryHeaders(HeaderFolder):
             (header("id=a", "cards=1", line='a "b" c'), 'the line holds no "'),
             (header("id=a", "cards=1", line="a <!-- b"), "the line holds no <!-- or -->"),
             (header("id=a", "cards=1", line="a --> b"), "the line holds no <!-- or -->"),
+            (header("id=a", "cards=1", "removes=Elements.a", line="a --!> b"),
+             "a header holds no comment terminator before its final -->"),
             (header("id=a", "cards=1", line="see [it](../x.md)"),
              "the line holds no Markdown link"),
             # Raw HTML, which could hide text or link to a file, and a bracket, which could
@@ -646,6 +676,61 @@ class EntryHeaders(HeaderFolder):
             self.headers()
         self.assertEqual(str(caught.exception), "docs/decisions/2026-10-27-test.md:1: no brief "
                                                 "docs/briefs/book\\xa0I.md")
+
+    def test_removed_names_are_lean_names_as_the_released_names_check_reads_them(self):
+        import check_released_names
+        good = ("Elements.a", "Elements.Tacit.area_congruent", "Elements.«a.b»",
+                "Elements.Old.«term∠___»", "Elements.x'", "Elements.get!", "Elements.α₁",
+                "Elements.ℕ.x", "Elements._x", "Elements.é", "Elements.Ā", "Elements.aⱼ",
+                "Elements.«a,b»", "Elements.«a b»")
+        bad = ("Elements", "Other.x", "elements.x", "Elements..x", "Elements.x.",
+               "Elements.a=b", "Elements.1a", "Elements.λ", "Elements.«»", "Elements.«a«b»",
+               "Elements.«a\nb»", "Elements.a-b", "Elements.«a.b", "Elements.ⱼ",
+               "Elements.×", "Elements.÷")
+        first = header("id=a", "cards=1", "removes=" + ",".join(good))
+        parsed = render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+        self.assertEqual(parsed["removes"], list(good))
+        self.assertEqual(check_released_names.removes_of(first + "\n"), list(good))
+        for name in bad:
+            with self.subTest(name=name):
+                first = header("id=a", "cards=1", f"removes={name}")
+                with self.assertRaises(SystemExit):
+                    render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+                self.assertEqual(check_released_names.removes_of(first + "\n"), [])
+
+    def test_a_comment_unsafe_removed_name_has_an_exact_encoded_form(self):
+        import check_released_names
+        for name in ("Elements.«a-->b»", "Elements.«a--!>b»"):
+            with self.subTest(name=name):
+                encoded = "utf8hex:" + name.encode("utf-8").hex()
+                first = header("id=a", "cards=1", f"removes={encoded}")
+                parsed = render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+                self.assertEqual(parsed["removes"], [name])
+                self.assertEqual(check_released_names.removes_of(first + "\n"), [name])
+
+                unsafe = header("id=a", "cards=1", f"removes={name}")
+                with self.assertRaises(SystemExit):
+                    render.entry_header("2026-10-27-test.md", unsafe + "\n", [], [])
+                self.assertEqual(check_released_names.removes_of(unsafe + "\n"), [])
+
+    def test_malformed_removed_name_encodings_are_refused_by_both_readers(self):
+        import check_released_names
+        cases = ("utf8hex:", "utf8hex:0", "utf8hex:zz", "utf8hex:ff",
+                 "utf8hex:" + "Other.x".encode("utf-8").hex())
+        for encoded in cases:
+            with self.subTest(encoded=encoded):
+                first = header("id=a", "cards=1", f"removes={encoded}")
+                with self.assertRaises(SystemExit):
+                    render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+                self.assertEqual(check_released_names.removes_of(first + "\n"), [])
+
+    def test_removed_name_duplicates_are_compared_after_decoding(self):
+        name = "Elements.a"
+        encoded = "utf8hex:" + name.encode("utf-8").hex()
+        first = header("id=a", "cards=1", f"removes={name},{encoded}")
+        with self.assertRaises(SystemExit) as caught:
+            render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+        self.assertIn("removes names 'Elements.a' twice", str(caught.exception))
 
     def test_ids_are_unique(self):
         self.headed("2026-10-26-a.md", header("id=same", "cards=1"))
