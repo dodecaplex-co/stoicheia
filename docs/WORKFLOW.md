@@ -2060,7 +2060,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       while every one of origin/main's stays, by its `ref`, `field` and `law` (a `ref` or a
       `law` added or dropped is another expectation), with its `includes` and `excludes`
       the same or grown and only the values of `count.is` and `equals` changed (new
-      expectations are fine); an expectation dropped or loosened is a check change. A law
+      expectations are fine), and an expectation with `one_of` stays while the same states
+      stand, by name, none added or dropped, and each of an old state's expectations stays
+      in the same way in the state of that name; an expectation dropped or loosened is a
+      check change. A law
       of the model moves only with its axiom: a line of `laws.toml`,
       and the law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`, the
       two harnesses that check every law, count as pinned values only where the same pull
