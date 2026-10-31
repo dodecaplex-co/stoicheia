@@ -39,26 +39,29 @@ note = "Euclid takes L and M where HA and GB produced meet KL. The Lean finds bo
 
 [[passage]]
 at = "therefore LB is equal to BF"
-kind = "carried"
+kind = "helper"
+helper = "Between.of_sameSide"
 note = "Euclid applies I.43 to the complements in HLKF. Beneath the earlier constructions, `Between.of_sameSide` puts B between H and K, A between H and L, M between K and L, E between F and K, and G between H and F; these are the five orders `Prop43` takes here."
 
 [[passage]]
 at = "And, since the angle GBE is equal to the angle ABM"
-kind = "carried"
+kind = "helper"
+helper = "Between.of_sameSide"
 note = "Euclid uses the vertical angles at B. The Lean applies I.15 with A, B, E in order from `Prop44.place` and G, B, M in order from `Between.of_sameSide` beneath the production of GB."
 
 [[passage]]
 at = "Therefore the parallelogram LB equal to the given triangle C has been applied"
-kind = "carried"
+kind = "helper"
+helper = "OppositeSidesOf.of_between"
 note = "Euclid concludes that LB, equal to C, has been applied to AB in the angle ABM equal to D. For the side named in the statement, the Lean chose G across AB from that side beneath the placing sentence; `OppositeSidesOf.of_between` puts M across AB from G, and `OppositeSidesOf.sameSideOf` gives the requested side."
 
 [review]
 stage = "full"
-commit = "7103f442a"
+commit = "29b408c8c"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:85b0745263c930f7"
-run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, begun from the Claude first mate's scratch proof T44 (54a08e61) and keeping many of its lines, and incorporating the Claude Lean bosun's two Prop31.line substitutions at ab0c30c5; GPT-6 Astra (Codex) read the retained T44 lines, the two substitutions and the Claude first mate's Prop44.place at bd86a7b6, and Claude Opus 5.5 read the final proof; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a"
-text = "sha256:2c4b01c897fa1ba0"
+run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, begun from the Claude first mate's scratch proof T44 (54a08e61) and keeping many of its lines, and incorporating the Claude Lean bosun's two Prop31.line substitutions at ab0c30c5; GPT-6 Astra (Codex) read the retained T44 lines, the two substitutions and the Claude first mate's Prop44.place at bd86a7b6, and Claude Opus 5.5 read the final proof; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; card #767, ship PR767: the carried steps named as helpers (read-through 02, item 45), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r1, at 29b408c8c"
+text = "sha256:1ddba1131e1e7270"
 
 [review.items]
 statement = "pass"
