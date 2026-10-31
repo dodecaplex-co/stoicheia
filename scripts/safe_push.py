@@ -26,8 +26,8 @@ order, and the first that fails stops it with a message saying why:
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
    if origin has it, is an ancestor too, for nothing is ever forced; the branch is not
    main; the branch name and the title hold nothing the scan refuses. The harness is
-   origin/main's: when this copy of safe_push.py or heath.py, or the check_train.py
-   beside it, differs from origin/main's, origin/main's replaces this process
+   origin/main's: when this copy of safe_push.py or heath.py differs from
+   origin/main's, origin/main's replaces this process
    (os.execve), so that a branch cannot weaken the guards that judge it, and an
    interruption reaches the copy that pushed.
 2. A secret scan of every line the push adds, of every file it adds or changes, of its
@@ -123,11 +123,7 @@ order, and the first that fails stops it with a message saying why:
    each line of an entry that did not count and in which its own reading finds a mention
    of what it asks for, and why (uncounted). That comparison is for entries alone: a
    line added to the page is compared with nothing, and any new line there counts, but
-   its mentions are read by the same rules as an entry's (mention, names_path). A
-   branch named train/* requires --body-file, and step "3. train" then runs
-   origin/main's check_train.py on the commit and that body, before the full checks;
-   while origin/main has none, every train is refused, and no commit's own copy runs in
-   its place.
+   its mentions are read by the same rules as an entry's (mention, names_path).
 4. First the change's risk class (risk_class), from R0 to R5, as origin/main's
    scripts/risk.py gives it for `git diff origin/main...<commit>`: its copy at
    origin/main, read out of git and run from a temporary directory, never the commit's, so
@@ -186,9 +182,7 @@ order, and the first that fails stops it with a message saying why:
    only while its count markers stand), which move with the content they pin. A crash of
    origin/main's render.py, its check of docs/program.toml among them, is a verdict.
    Step 3's two checks run the same way. With --main-checks-cache, for R3 to R5 (the
-   classes that run this step in full), but not on a train/* branch, whose train check
-   runs in this process after the commit's code (open_cache), origin/main's pass here
-   (both its loops) is
+   classes that run this step in full), origin/main's pass here (both its loops) is
    reused from ~/.cache/stoicheia/main-checks/ when an earlier run checked the same trees
    with the same harness, toolchain and environment (main_checks_fields). After the
    class is read and origin/main's count-marker reader is loaded, every command the run
@@ -348,7 +342,6 @@ import copy
 import datetime
 import hashlib
 import html
-import importlib.util
 import inspect
 import io
 import json
@@ -4839,24 +4832,15 @@ def sandbox_problem(profile: str, cache: Path) -> str | None:
     return None
 
 
-def open_cache(rep: Report, risk: Risk, train: bool = False) -> None:
+def open_cache(rep: Report, risk: Risk) -> None:
     """--main-checks-cache, once the change's class is known and before any check runs:
     for R3 to R5, whose pre-flight runs step 4 in full, the cache's directory, beside the
     log (made here, mode 0700, when it is missing), and the sandbox that keeps every
     command this run starts from writing it (run). Without either, the run goes on as it
     would without the flag, and says why. For R0 to R2, which leave step 4 to CI, there is
     no pass to reuse: nothing is read, written or made, and no sandbox is set (should the
-    check inputs overrule the class, short_path, origin/main's pass runs uncached). Nor
-    for a train/* branch: its train check runs origin/main's check_train.py in this
-    process after the guards have run the commit's code (train_check), and so after a
-    sandboxed command could have written the harness's directory, from which it and what
-    it imports are read; so a train runs uncached, with no sandbox, as without the flag."""
+    check inputs overrule the class, short_path, origin/main's pass runs uncached)."""
     global CACHE, SANDBOX
-    if train:
-        rep.add("1", "main-checks cache", "note", "not used this run: a train/* branch's train "
-                "check runs origin/main's check_train.py in this process after the commit's "
-                "code has run, so the run goes on as without --main-checks-cache")
-        return
     if risk.cls in LOW_CLASSES:
         rep.add("1", "main-checks cache", "skip", f"not used this run: the class {risk.cls} "
                 "leaves step 4 to CI, and the cache serves only step 4 run in full (R3 to R5)")
@@ -5311,7 +5295,7 @@ def short_path(ctx, risk: Risk, g: Guarded, rep: Report) -> bool:
 
 
 def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
-                 checked: dict | None = None, train_body: str | None = None) -> Preflight:
+                 checked: dict | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     The class `risk` (risk_class) is reported at the head of step 4: for R0 to R2 the full
     checks are skipped (short_path), CI running the rest of section 8's sequence before the
@@ -5319,7 +5303,7 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
     they run. `checked`, a record of this commit against this origin/main by origin/main's
     harness, stands in for step 4 alone (--merge, --land; checks_record), its step line
     naming the pre-flight proof it came from when it did (--preflight-proof); steps 2 and
-    3, including the train check when given, always run."""
+    3 always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     rep.heading("3. Invariant guards against origin/main")
     # Before the commit is checked out (#186): on a case-insensitive disk a twin is written
@@ -5334,8 +5318,6 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
             g = guards(ctx, wt, rep, logs)
-            if train_body is not None:
-                train_check(ctx, train_body, rep)
             rep.heading("4. The full local checks (docs/WORKFLOW.md, section 8)")
             rep.add("4", "class", "ok", f"{risk.cls}, {risk.why}", risk.seconds)
             short = short_path(ctx, risk, g, rep)
@@ -5442,32 +5424,14 @@ def check_installed(repo, base: str, rep: Report) -> None:
                     "(sh scripts/install_hooks.sh --force)")
 
 
-def harness_train(repo: Path, base: str) -> bytes | None:
-    """origin/main's train module, distinguishing absent from unreadable."""
-    entry = git(repo, "ls-tree", base, "--", "scripts/check_train.py").strip()
-    if not entry:
-        return None
-    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py",
-                        entry):
-        raise Refusal("origin/main's scripts/check_train.py is not a regular file")
-    return git(repo, "cat-file", "blob", f"{base}:scripts/check_train.py", binary=True)
-
-
-def harness_copy(theirs: bytes, theirs_heath: bytes,
-                 theirs_train: bytes | None = None) -> Path:
+def harness_copy(theirs: bytes, theirs_heath: bytes) -> Path:
     """origin/main's harness modules, written to a directory named by their
     blobs, beside the log (~/.cache/stoicheia/harness/): it needs no
     cleaning up, since the same harness always lands in the same place, and each file is
     written afresh, through a rename, so that nothing left there earlier is run."""
-    train_id = blob_id(theirs_train) if theirs_train is not None else "no-train"
-    path = log_path().parent / "harness" / \
-        f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
+    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}"
     path.mkdir(parents=True, exist_ok=True)
-    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath),
-                       ("check_train.py", theirs_train)):
-        if data is None:
-            (path / name).unlink(missing_ok=True)
-            continue
+    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath)):
         fd, tmp = tempfile.mkstemp(prefix=f".{name}.", dir=path)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
@@ -5476,7 +5440,7 @@ def harness_copy(theirs: bytes, theirs_heath: bytes,
 
 
 def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
-    """origin/main's safe_push.py, heath.py and optional check_train.py judge the commit.
+    """origin/main's safe_push.py and heath.py judge the commit.
     When this copy differs from them, origin/main's replaces this process (os.execve),
     with the same arguments:
     its signals, its summary and its exit status are the run's own, so an interruption
@@ -5491,27 +5455,21 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
     own, own_heath = (here / "safe_push.py").read_bytes(), (here / "heath.py").read_bytes()
     theirs = show_bytes(repo, base, "scripts/safe_push.py")
     theirs_heath = show_bytes(repo, base, "scripts/heath.py")
-    theirs_train = harness_train(repo, base)
-    own_train = (here / "check_train.py").read_bytes() if (here / "check_train.py").exists() \
-        else None
-    # Older launchers carry only the first two modules. train_check copies main's train
-    # module afresh before importing it, so an absent local copy needs no hand-over.
-    same = (theirs, theirs_heath) == (own, own_heath) and \
-        (own_train is None or own_train == theirs_train)
+    same = (theirs, theirs_heath) == (own, own_heath)
     if not hand_over and not same:
         # Run again with the push's arguments, origin/main's harness would push again. The
         # merge has refused a moved main already, so the copy on disk was rewritten since
         # the run started, or origin/main's predates running from origin/main; a handed-over
         # run is refused here too, before STOICHEIA_HARNESS is read.
-        raise Refusal("this copy of safe_push.py, heath.py or check_train.py on disk no "
-                      "longer matches origin/main's: it was rewritten since the run "
+        raise Refusal("this copy of safe_push.py or heath.py on disk no longer matches "
+                      "origin/main's: it was rewritten since the run "
                       "started, or origin/main's predates running from origin/main; the "
                       "merge of --land runs no other copy, so nothing is merged: run "
                       "--merge")
     if os.environ.get("STOICHEIA_HARNESS"):
         if not same:
             raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
-                          "copy of safe_push.py, heath.py or check_train.py is not "
+                          "copy of safe_push.py or heath.py is not "
                           f"origin/main's (blob {blob_id(own)[:12]}): origin/main moved "
                           "since the hand-over, or the variable was set by hand. Run "
                           "safe_push again, with the variable unset.")
@@ -5532,9 +5490,9 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py "
                 f"(blob {blob_id(own)[:12]})")
         return
-    print("  this copy of safe_push.py, heath.py or check_train.py differs from "
-          "origin/main's: running origin/main's in its place", flush=True)
-    path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
+    print("  this copy of safe_push.py or heath.py differs from origin/main's: running "
+          "origin/main's in its place", flush=True)
+    path = harness_copy(theirs, theirs_heath) / "safe_push.py"
     # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
     # checks: so an older harness, whose run() sets neither, has them too (#256). No other
     # variable that ties git to one repository goes with them (#357).
@@ -5545,8 +5503,8 @@ def harness(repo, base: str, rep: Report, hand_over: bool = True) -> None:
 
 
 def body_input(args) -> str | None:
-    """--body-file's text, read once, as UTF-8, before the checks: the train check, the
-    dry run's body and the pull request's body are all that same text."""
+    """--body-file's text, read once, as UTF-8, before the checks: the dry run's body and
+    the pull request's body are that same text."""
     if not args.body_file:
         return None
     try:
@@ -5555,62 +5513,17 @@ def body_input(args) -> str | None:
         raise Refusal(f"could not read --body-file: {e}") from e
 
 
-def train_input(ctx: Context, body: str | None) -> str | None:
-    """A train needs an explicit body, including on a dry run or an update."""
-    if not (ctx.branch or "").startswith("train/"):
-        return None
-    if body is None:
-        raise Refusal("a train/* branch requires --body-file")
-    return body
-
-
-def train_check(ctx: Context, body: str, rep: Report) -> None:
-    """Run origin/main's train checker on the commit and the body. While origin/main has
-    none, every train is refused: no commit's own copy ever runs in its place. In queue
-    mode the base compared against is the newest commit of main's chain that the head
-    contains (queue_base), the judge's base too, perhaps older than main's tip, whose
-    checker (ctx.harness_sha's) is the one that runs."""
-    rep.heading("3. train")
-    started = time.time()
-    try:
-        if SANDBOX is not None:
-            # open_cache sets none for a train: never run check_train in this process once
-            # the commit's code may have written the harness's directory under the sandbox.
-            raise Refusal("the train check cannot run once the main-checks cache's sandbox "
-                          "is set")
-        source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
-        if source is None:
-            raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
-                          "checked: land the train checker first, then the train")
-        here = Path(__file__).resolve().parent
-        path = harness_copy((here / "safe_push.py").read_bytes(),
-                            (here / "heath.py").read_bytes(), source)
-        spec = importlib.util.spec_from_file_location("check_train", path / "check_train.py")
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = module
-        spec.loader.exec_module(module)
-        problems = module.check_train(ctx.repo, ctx.base, ctx.sha, body)
-        if not isinstance(problems, list) or any(not isinstance(p, str) or not p.strip()
-                                                 for p in problems):
-            raise Refusal("check_train returned an unreadable problem list")
-        if problems:
-            raise Refusal("\n".join(problems))
-    except (Exception, SystemExit) as e:
-        rep.add("3", "train", "FAIL", str(e), time.time() - started)
-        raise Refusal(f"the train check refused: {e}") from e
-    rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
-
-
 def block_current(ctx: Context, m, record: dict) -> bool:
     """Is the body's pre-flight summary a true account of this head? It must name this
-    head and, for a train, show the train step passing. Its base and harness are held to
+    head. Its base and harness are held to
     the queue's judge's rule (check_queue.preflight), read on this run's main: the base
     is the newest commit of main's first-parent chain that the head contains, which is
     what the pre-flight records (origin/main's tip, which the head held), and the
     harness that base or a later commit of the same chain. So a summary the judge would
     refuse is never current here, and one it would accept is current; in queue mode its
     base is the one this merge checks against (queue_base), even when the head's merge
-    base with main lies off main's chain (a member merged before its train). Without the
+    base with main lies off main's chain (a commit of the head that landed on main on its
+    own first). Without the
     queue the base and the harness are both main's tip, as the head holds it. That the
     full checks ran again here, and passed, leaves a summary of the same head and base
     true."""
@@ -5619,9 +5532,6 @@ def block_current(ctx: Context, m, record: dict) -> bool:
     sha, base, harness = m.group(1), m.group(2), m.group(3) or m.group(2)
     if sha != ctx.sha:
         return False
-    # A branch renamed train/ after its pre-flight has a summary with no train step.
-    if (ctx.branch or "").startswith("train/") and not TRAIN_ROW.search(m.group(0)):
-        return False
     main = record.get("harness_sha") or ctx.harness_sha or ctx.base
     chain = git(ctx.repo, "rev-list", "--first-parent", main).split()
     held = set(git(ctx.repo, "rev-list", ctx.sha).split())
@@ -5629,16 +5539,6 @@ def block_current(ctx: Context, m, record: dict) -> bool:
     if base != newest or harness not in chain or chain.index(harness) > chain.index(base):
         return False
     return ctx.queue or (base, harness) == (ctx.base, main)
-
-
-def merge_train_input(ctx: Context, view: dict) -> str | None:
-    """Read a train's current pull request body; an unreadable body cannot skip its check."""
-    if not (ctx.branch or "").startswith("train/"):
-        return None
-    body = view.get("body")
-    if not isinstance(body, str):
-        raise Refusal("could not read the train's current pull request body")
-    return body
 
 
 def gh_command(test_mode: bool) -> tuple:
@@ -5839,8 +5739,6 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
                    r"(?: sha=(\w+) base=(\w+)(?: harness=(\w+))?)? -->"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
-# The train step's row in that summary, as preflight_block writes it when it passed.
-TRAIN_ROW = re.compile(r"(?m)^\| 3\. train \| ok \| [0-9.]* \|[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
 STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
@@ -7815,10 +7713,10 @@ def red_or_fix(rep: Report, red: list[int], failed: str | None, detail: str,
 def queue_base(ctx: Context, head: str) -> str:
     """A queued head is checked against the newest commit of current main's first-parent
     chain that it contains: the base its pre-flight recorded, origin/main's tip then, and
-    the base the queue's judge holds that summary to and runs its train check against
-    (check_queue.preflight). So --merge's own checks, its train check and the judge
-    compare against one base, even when the head's merge base with main lies off the
-    chain (a member merged on its own before its train)."""
+    the base the queue's judge holds that summary to (check_queue.preflight). So
+    --merge's own checks and the judge compare against one base, even when the head's
+    merge base with main lies off the chain (a commit of the head that landed on main on
+    its own first)."""
     held = set(git(ctx.repo, "rev-list", head).split())
     chain = git(ctx.repo, "rev-list", "--first-parent", ctx.base).split()
     base = next((tip for tip in chain if tip in held), None)
@@ -8075,11 +7973,10 @@ def preflight_main(repo: Path, args) -> int:
         if args.main_checks_cache:
             if risk.cls not in LOW_CLASSES:
                 count_markers(ctx.repo, ctx.base)
-            open_cache(rep, risk, train=(ctx.branch or "").startswith("train/"))
+            open_cache(rep, risk)
         logs = logs_dir(sha)
         body_text = body_input(args)
-        pre = check_commit(ctx, rep, logs, args.test_mode, risk, checked=checked,
-                           train_body=train_input(ctx, body_text))
+        pre = check_commit(ctx, rep, logs, args.test_mode, risk, checked=checked)
         record = make_record(ctx, pre, rep, full=not args.test_mode and checked is None,
                              risk=risk, checked=checked)
         # For --land, the record as made, before it is saved: nothing done to the saved
@@ -8297,22 +8194,16 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
                     f"{ctx.base[:12]} ({checked.get('time')}): the secret scan and the guards "
                     "run again; the full checks are not repeated")
         logs = logs_dir(ctx.sha)
-        train_body = merge_train_input(ctx, view)
-        pre = check_commit(ctx, rep, logs, test_mode, risk, checked=checked,
-                           train_body=train_body)
+        pre = check_commit(ctx, rep, logs, test_mode, risk, checked=checked)
         record = make_record(ctx, pre, rep, full=not test_mode and checked is None,
                              risk=risk, checked=checked)
         save_record(record)
         view = gates(ctx, number, rep, record)
-        if merge_train_input(ctx, view) != train_body:
-            raise Refusal("the train's body changed during the checks: run --merge again")
         labels = pr_labels(view.get("labels"))
         # A release label given after the class was read: the record must still be full.
         release_needs_full_record(ctx, number, labels, record, record, test_mode, rep)
         # The body must already be of this head: --merge never writes it.
         body_view = gh_json(ctx, "pr", "view", str(number), "--json", "body")
-        if merge_train_input(ctx, body_view) != train_body:
-            raise Refusal("the train's body changed during the checks: run --merge again")
         body = body_view.get("body") or ""
         template = show(ctx.repo, ctx.harness_sha or ctx.base, TEMPLATE) \
             or show(ctx.repo, ctx.sha, TEMPLATE)
@@ -8344,8 +8235,6 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool,
                           f"({', '.join(sorted(labels)) or 'none'} to "
                           f"{', '.join(sorted(refreshed_labels)) or 'none'}): run --merge again")
         current_view = gates(ctx, number, rep, record)
-        if merge_train_input(ctx, current_view) != train_body:
-            raise Refusal("the train's body changed during the checks: run --merge again")
         current_labels = pr_labels(current_view.get("labels"))
         if current_labels != labels:
             raise Refusal(f"#{number}'s labels changed after the gates read them "
@@ -8522,8 +8411,7 @@ def main(argv=None) -> int:
                         help="everything but the push, the pull request and the merge")
     parser.add_argument("--main-checks-cache", action="store_true",
                         help="the pre-flight only, for a change of R3 to R5, whose step 4 "
-                        "runs in full, not on a train/* branch, whose train check runs in "
-                        "the harness's own process: reuse origin/main's pass of the full "
+                        "runs in full: reuse origin/main's pass of the full "
                         "checks from ~/.cache/stoicheia/main-checks/ when an earlier run "
                         "checked the same trees with the same harness, toolchain and "
                         "environment, every command the run starts then running under "
