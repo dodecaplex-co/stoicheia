@@ -7934,12 +7934,34 @@ class ProtectedPaths(Edge):
         self.assertEqual(removed, 2)
         expectations = json.loads(self.text(expect))
         for ref in ("III.1", "III.1 Por."):
-            pin = next(x for x in expectations["expectations"]
-                       if (x.get("ref"), x["field"]) == (ref, "axioms") and "count" in x)
-            self.assertEqual(pin["count"]["prefix"], "Tacit.")
-            pin["count"]["is"] -= 1
-            if "equals" in pin:
-                pin["equals"].remove(self.RETAINED_AXIOM)
+            changed = 0
+            for pin in expectations["expectations"]:
+                if (pin.get("ref"), pin.get("field")) != (ref, "axioms"):
+                    continue
+                if "count" in pin:
+                    self.assertEqual(pin["count"]["prefix"], "Tacit.")
+                    pin["count"]["is"] -= 1
+                    if "equals" in pin:
+                        self.assertIn(self.RETAINED_AXIOM, pin["equals"])
+                        pin["equals"].remove(self.RETAINED_AXIOM)
+                    changed += 1
+                elif "one_of" in pin:
+                    for state in pin["one_of"]:
+                        state_changed = 0
+                        for inner in state["expectations"]:
+                            if inner.get("field") != "axioms" or "count" not in inner:
+                                continue
+                            self.assertEqual(inner["count"]["prefix"], "Tacit.")
+                            inner["count"]["is"] -= 1
+                            if "equals" in inner:
+                                self.assertIn(self.RETAINED_AXIOM, inner["equals"])
+                                inner["equals"].remove(self.RETAINED_AXIOM)
+                            state_changed += 1
+                        self.assertGreater(state_changed, 0,
+                                           f"{ref}: state {state.get('state')!r} "
+                                           "has no counted axioms pin")
+                        changed += state_changed
+            self.assertGreater(changed, 0, f"{ref}: no counted axioms pin or one_of pin changed")
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
