@@ -632,6 +632,8 @@ class EntryHeaders(HeaderFolder):
             (header("id=a", "cards=1", line='a "b" c'), 'the line holds no "'),
             (header("id=a", "cards=1", line="a <!-- b"), "the line holds no <!-- or -->"),
             (header("id=a", "cards=1", line="a --> b"), "the line holds no <!-- or -->"),
+            (header("id=a", "cards=1", "removes=Elements.a", line="a --!> b"),
+             "a header holds no comment terminator before its final -->"),
             (header("id=a", "cards=1", line="see [it](../x.md)"),
              "the line holds no Markdown link"),
             # Raw HTML, which could hide text or link to a file, and a bracket, which could

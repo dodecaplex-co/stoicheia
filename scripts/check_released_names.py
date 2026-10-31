@@ -414,6 +414,11 @@ def decode_removed_name(item: str) -> str | None:
     return item if REMOVED_NAME.fullmatch(item) else None
 
 
+def has_premature_comment_end(header: str) -> bool:
+    before_final = header[:-len("-->")]
+    return "-->" in before_final or "--!>" in before_final
+
+
 def is_tag_name(tag: str) -> bool:
     """Whether `tag` has the restricted form here and makes a valid `refs/tags/` ref."""
     if not TAG.fullmatch(tag):
@@ -580,8 +585,9 @@ def removes_of(text: str) -> list[str]:
     item that is not a Lean name under `Elements` (REMOVED_NAME) is left out. None without
     a header; render.py checks the header's whole form."""
     first = text.split("\n", 1)[0]
-    if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")
-            and first.count("-->") == 1):
+    if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")):
+        return []
+    if has_premature_comment_end(first):
         return []
     for token in split_outside_escape(first[len(ENTRY_OPEN):], " "):
         if token.startswith("line="):

@@ -3267,6 +3267,11 @@ def decode_removed_name(item):
     return item if ENTRY_REMOVED.fullmatch(item) else None
 
 
+def has_premature_comment_end(header):
+    before_final = header[:-len("-->")]
+    return "-->" in before_final or "--!>" in before_final
+
+
 def brief_stems():
     """The stems of the Markdown files of docs/briefs/, as the disk holds them, the
     decisions page's among them; none where the folder is absent."""
@@ -3391,6 +3396,8 @@ def entry_header(name, text, stems, earlier):
     fault = news_fault(line)
     if fault:
         refuse(1, fault)
+    if has_premature_comment_end(first):
+        refuse(1, "a header holds no comment terminator before its final -->")
     return {"id": fields["id"], **lists, "cards": [int(card) for card in lists["cards"]],
             "line": line}
 

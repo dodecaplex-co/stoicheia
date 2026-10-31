@@ -307,6 +307,19 @@ class TheRemovals(unittest.TestCase):
                     "approves a removal"])
                 self.assertNotIn("removed with the owner's approval", lines[-1])
 
+    def test_a_premature_comment_end_in_news_cannot_approve_a_removal(self):
+        row = removed_rows(ROW)
+        lines, code = self.judge(row, {ENTRY: APPROVING})
+        self.assertEqual(code, 0, lines)
+        no_key = (f"{self.WHERE} {ENTRY} names no removes={GONE} in its header, where an "
+                  "entry approves a removal")
+        for terminator in ("-->", "--!>"):
+            with self.subTest(terminator=terminator):
+                entry = (f'<!-- entry: id=planted-removal cards=517 removes={GONE} '
+                         f'line="News {terminator} exposed." -->\nProse.\n')
+                lines, code = self.judge(row, {ENTRY: entry})
+                self.assertFails(lines, code, no_key)
+
     def test_an_approved_removal_that_is_not_listed_fails(self):
         lines, code = self.judge({}, {ENTRY: APPROVING})
         self.assertEqual(code, 1)
