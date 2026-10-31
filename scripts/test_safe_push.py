@@ -4702,11 +4702,58 @@ class Merge(Edge):
         self.assertEqual(self.guard(out, "sections"), "FAIL", out)
         for problem in ('not written: the section "What and why"',
                         "not written: the review /code-review",
-                        "not written: the review /no-mistakes",
                         'not written: the section "Needs the owner\'s OK"'):
             self.assertIn(problem, out)
         self.assertNotIn("the review /security-review", out)   # nothing protected changes
+        self.assertNotIn("the review /no-mistakes", out)       # a document, R0: no code
         self.assertEqual(self.origin_main(), BASE)
+
+    def test_code_needs_its_no_mistakes_row(self):
+        # A change of code, R3 here, has its /no-mistakes row written; a document's need
+        # not be (above; docs/decisions/2026-10-30-no-mistakes-for-code.md).
+        self.opened_r3()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]).replace(
+            "| /no-mistakes | abc1234 | None. |", "| /no-mistakes | | |")))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "sections"), "FAIL", out)
+        self.assertIn("not written: the review /no-mistakes", out)
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_code_needs_its_no_mistakes_box(self):
+        self.opened_r3()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]).replace(
+            "- [x] **Required if code:**", "- [ ] **Required if code:**")))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "checklist"), "FAIL", out)
+        self.assertIn("unticked: Required if code:", out)
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_data_of_r1_needs_its_no_mistakes_box(self):
+        # A file of R1 that is not Markdown, data the book is rendered from, is not
+        # documentation: a comment in it, which changes no page.
+        path = "docs/program.toml"
+        self.opened(**{path: self.text(path) + "\n# A comment for the test.\n"})
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]).replace(
+            "- [x] **Required if code:**", "- [ ] **Required if code:**")))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("unticked: Required if code:", out)
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_a_document_merges_without_no_mistakes(self):
+        # A change of R0, its /no-mistakes box unticked and its row "Not needed".
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]).replace(
+            "- [x] **Required if code:**", "- [ ] **Required if code:**").replace(
+            "| /no-mistakes | abc1234 | None. |", "| /no-mistakes | Not needed | - |")))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("so /no-mistakes is not required", r.stdout)
 
     def test_gates_read_the_heads_template_while_main_has_none(self):
         # PR #1's own case: origin/main has no template yet, and the head brings it. The
@@ -14777,6 +14824,10 @@ class Units(unittest.TestCase):
                                         "| /no-mistakes | - | - |")
         self.assertEqual(safe_push.section_problems(dash, template, False),
                          ["not written: the review /no-mistakes, its commit and its findings"])
+        # Its row binds a change of code, or a protected one, alone.
+        self.assertEqual(safe_push.section_problems(dash, template, False, False), [])
+        self.assertEqual(safe_push.section_problems(dash, template, True, False),
+                         ["not written: the review /no-mistakes, its commit and its findings"])
 
     def test_binary_findings_carry_a_window(self):
         data = b"A" * 500 + b"\0" + GH_TOKEN.encode() + b"\0" + b"B" * 500
@@ -15431,6 +15482,13 @@ class Units(unittest.TestCase):
         self.assertEqual(problems("- [x] **Required:** One.\n", template, True),
                          ["missing from the body: Required if protected: Two."])
         self.assertTrue(problems("No checklist at all.", None, False))
+        # A box for code binds a change of code, the default, or a protected one, alone.
+        coded = template + "- [ ] **Required if code:** Three.\n"
+        done = coded.replace("[ ] **Required:**", "[x] **Required:**")
+        self.assertEqual(problems(done, coded, False, False), [])
+        self.assertEqual(problems(done, coded, False, True), ["unticked: Required if code: Three."])
+        self.assertEqual(problems(done, coded, False), ["unticked: Required if code: Three."])
+        self.assertEqual(len(problems(done, coded, True, False)), 2)
 
     def test_judge_checks(self):
         judge = safe_push.judge_checks

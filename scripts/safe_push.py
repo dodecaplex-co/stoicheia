@@ -6613,7 +6613,7 @@ def judged_proof(proof: dict, made: datetime.datetime, ctx: Context, risk: Risk,
 
 
 # A required box of a checklist: the first line of a list item (boxes, below).
-BOX = re.compile(r"^\s*[-*][ \t]{1,4}\[([ xX])\]\s+\*\*(Required(?: if protected)?):\*\*"
+BOX = re.compile(r"^\s*[-*][ \t]{1,4}\[([ xX])\]\s+\*\*(Required(?: if (?:protected|code))?):\*\*"
                  r"\s*(.*?)\s*$")
 
 
@@ -6629,11 +6629,33 @@ def boxes(body: str) -> list[tuple[bool, str, str]]:
     return found
 
 
-def checklist_problems(body: str, template: str | None, protected: bool) -> list[str]:
+# The classes of documents, text and records by scripts/risk.py. A change of Markdown files
+# of these alone needs no /no-mistakes, its second reader standing in; any other change
+# does (docs/decisions/2026-10-30-no-mistakes-for-code.md).
+DOC_CLASSES = ("R0", "R1")
+
+
+def code_change(ctx: Context, labels: set[str] | None) -> bool:
+    """Whether the change counts as code, so that the boxes and the review marked for code
+    bind it: anything but Markdown files alone, of R0 or R1 by current main's risk.py
+    (risk_class). Data and records of those classes, a ruleset's JSON or a review record,
+    count as code; so do a class that cannot be found and unreadable labels, which are R5:
+    a doubt binds them."""
+    if any(not path.endswith(".md") for _, path in changed_files(ctx.repo, ctx.base, ctx.sha)):
+        return True
+    policy = ctx.harness_sha or ctx.base
+    return risk_class(ctx.repo, policy, ctx.sha, labels,
+                      diff_base=ctx.base).cls not in DOC_CLASSES
+
+
+def checklist_problems(body: str, template: str | None, protected: bool,
+                       code: bool = True) -> list[str]:
     """The required boxes unticked, or missing from the body, counted where GitHub shows
-    them (boxes): a box in a comment, in code or in a paragraph is not a box."""
+    them (boxes): a box in a comment, in code or in a paragraph is not a box. A box marked
+    "Required if code" binds a change of code (code_change); a protected change binds
+    every box."""
     def needed(kind):
-        return kind == "Required" or protected
+        return kind == "Required" or protected or (kind == "Required if code" and code)
 
     have = boxes(body)
     wanted = [(k, x) for _, k, x in boxes(template or "") if needed(k)]
@@ -6830,9 +6852,13 @@ def written(cell: str) -> bool:
     return cell.strip("`*_ ").lower() not in EMPTY_CELL
 
 
-def section_problems(body: str, template: str | None, protected: bool) -> list[str]:
-    """The coordinator's Markdown sections. Unfinished work has its own raw-text gate."""
+def section_problems(body: str, template: str | None, protected: bool,
+                     code: bool = True) -> list[str]:
+    """The coordinator's Markdown sections. Unfinished work has its own raw-text gate. The
+    security review's row binds a protected change, and /no-mistakes's a change of code
+    (code_change) or a protected one."""
     wanted, have = sections(template or ""), sections(body)
+    bound = {"/security-review": protected, "/no-mistakes": code or protected}
     problems = []
     for name in (n for n in WRITTEN if n in wanted):
         if name not in have:
@@ -6841,7 +6867,7 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
             rows = review_rows(have[name])
             for review in review_rows(wanted[name]):
                 cells = rows.get(review, [])
-                if (review != "/security-review" or protected) and not (
+                if bound.get(review, True) and not (
                         len(cells) >= 2 and all(written(c) for c in cells[:2])):
                     problems.append(f"not written: the review {review}, its commit and its "
                                     "findings")
@@ -7398,16 +7424,24 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 "an account could have, and the merge commit's subject names it: look with "
                 f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
+    try:
+        labels = pr_labels(view.get("labels"))
+    except ValueError as e:
+        labels = None
+        rep.add("G", "labels", "FAIL", str(e))
+    code = code_change(ctx, labels)
     # The template in force is current main's (the harness's), also in queue mode, where
     # ctx.base may be an older main (queue_base): a box main added since binds this merge.
     policy = ctx.harness_sha or ctx.base
     template = show(ctx.repo, policy, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
-    problems = checklist_problems(body, template, bool(protected))
+    problems = checklist_problems(body, template, bool(protected), code)
     if problems:
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
     else:
-        rep.add("G", "checklist", "ok", "every required box ticked")
-    unwritten = section_problems(body, template, bool(protected))
+        rep.add("G", "checklist", "ok", "every required box ticked" + (
+            "" if code else ": a change of Markdown files of R0 or R1 alone, so "
+            "/no-mistakes is not required"))
+    unwritten = section_problems(body, template, bool(protected), code)
     if unwritten:
         rep.add("G", "sections", "FAIL", "\n".join(unwritten))
     else:
@@ -7418,11 +7452,6 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     if notes:
         rep.add("G", "pre-flight notes", "note", f"{plural(len(notes), 'note')} of the "
                 "pre-flight, for the reviews:\n" + "\n".join(f"{n}: {d}" for n, d in notes))
-    try:
-        labels = pr_labels(view.get("labels"))
-    except ValueError as e:
-        labels = None
-        rep.add("G", "labels", "FAIL", str(e))
     verdict, detail = release_gate(ctx, labels)
     rep.add("G", "release", verdict, detail)
     verdict, detail = suite_gate(ctx, labels)
