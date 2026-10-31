@@ -125,8 +125,11 @@
   decision entry under `docs/decisions/`, and the owner's words as that entry quotes them.
   The check holds each row to three things: its name is one the list's tag declares and
   main does not; its entry is on origin/main, read out of Git, and the checkout holds it
-  byte for byte the same; and one paragraph of that copy names it in backticks, mentions
-  the owner and holds the row's words between quotation marks. So the approval lands
+  byte for byte the same; and that copy approves the removal in so many words, with the
+  name in its header's new `removes=` key and one paragraph that names it in backticks,
+  mentions the owner, as whole words, and holds the row's words between quotation marks.
+  Prose alone approves nothing, since a paragraph may quote the owner against a removal as
+  readily as for it; the key is the approval. So the approval lands
   first, in a pull request of its own that the owner sees, and the removal comes after: a
   pull request that removes a name cannot bring its own approval, nor change one already
   on main. A row that fails is a finding, naming its line, and a released name main lacks
@@ -138,7 +141,22 @@
   that commits the next release's list of names. `tests/test_check_released_names.py`
   holds both sides: an approved, listed removal whose entry is on main unchanged passes;
   one approved but not listed fails; and a listed one fails when its entry is new in the
-  pull request, changed there, or falls short of naming it and quoting the owner.
+  pull request, changed there, has no `removes=` naming it, or falls short of naming it
+  and quoting the owner.
+
+  The header's `removes=` key. `scripts/render.py` reads every entry's header and refuses
+  an unknown key, so it learns the key: it stands after `reverts` and before `line`, a
+  list joined by commas like the others, each item a Lean name in full under `Elements`.
+  The check reads the key only from the header's tokens before `line`, so words in the
+  news cannot pass for it. `docs/WORKFLOW.md`, "Decision entries", gives the key in the
+  header's form and says what it is for. This entry approves the change to
+  `scripts/render.py`: the key, its place among the keys and its refusal of an item that
+  is not a name under `Elements`.
+
+  This entry approves the change to `tests/test_decision_entries.py`: the header with
+  every key gains `removes=`, the header with the required keys alone reads it as empty,
+  and the refusals gain a removed name out of order, not under `Elements`, empty, given
+  twice and an empty item.
 
   This entry approves the new `tests/released_names_removed.txt`, the list of names removed
   with no alias. It has no rows yet, and each row it gains needs a decision entry already on

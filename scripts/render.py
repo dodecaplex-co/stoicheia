@@ -3190,15 +3190,20 @@ def decision_entries():
 #
 #   <!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]]
 #        [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]]
-#        [reverts=<entry>[,<entry>…]] line="<news>" -->
-ENTRY_KEYS = ("id", "cards", "briefs", "program", "corrects", "reverts", "line")
+#        [reverts=<entry>[,<entry>…]] [removes=<name>[,<name>…]] line="<news>" -->
+#
+# `removes` names the released Lean names whose removal with no alias the entry approves,
+# each in full under `Elements`: scripts/check_released_names.py accepts a row of
+# tests/released_names_removed.txt only from an entry on origin/main whose header names it.
+ENTRY_KEYS = ("id", "cards", "briefs", "program", "corrects", "reverts", "removes", "line")
 ENTRY_REQUIRED = ("id", "cards", "line")
-ENTRY_LISTS = ("cards", "briefs", "program", "corrects", "reverts")
+ENTRY_LISTS = ("cards", "briefs", "program", "corrects", "reverts", "removes")
 ENTRY_START = re.compile(r"<!--\s*entry", re.I)
 ENTRY_OPEN = "<!-- entry:"
 ENTRY_KEY = re.compile(r"([^= ]+)=")
 ENTRY_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 ENTRY_CARD = re.compile(r"[1-9][0-9]*")
+ENTRY_REMOVED = re.compile(r"Elements(?:\.[^\s.,\"<>]+)+")
 ENTRY_LINE_LIMIT = 300
 # The longest header read: a longer line 1 is refused before it is parsed.
 ENTRY_HEADER_LIMIT = 2000
@@ -3231,7 +3236,8 @@ def entry_header(name, text, stems, earlier):
     extra spaces, a missing `-->` or text after it; an id that is not lower-case letters
     and digits joined by hyphens; a card that is not an issue number; a brief not in
     docs/briefs/, or the decisions page, which is dated history; a section not in
-    PROGRAM_NOTES; a correction or revert of an entry that is not earlier; an item
+    PROGRAM_NOTES; a removed name that is not a Lean name in full under `Elements`
+    (ENTRY_REMOVED); a correction or revert of an entry that is not earlier; an item
     repeated or empty; and a line that is no news (news_fault)."""
     where = f"docs/decisions/{name}"
 
@@ -3313,6 +3319,10 @@ def entry_header(name, text, stems, earlier):
         if section not in PROGRAM_NOTES:
             refuse(1, f"unknown PROGRAM.md section {section!r}; the sections that hold notes "
                       f"are {', '.join(PROGRAM_NOTES)}")
+    for removed in lists["removes"]:
+        if not ENTRY_REMOVED.fullmatch(removed):
+            refuse(1, f"removes {removed!r}: a removed name is a Lean name in full, under "
+                      "Elements")
     for key in ("corrects", "reverts"):
         for other in lists[key]:
             if other not in earlier:

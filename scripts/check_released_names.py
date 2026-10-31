@@ -110,29 +110,30 @@ repository until the notes are written (#702): `#` comment lines, then a row for
 
     removed <name> docs/decisions/<YYYY-MM-DD>-<slug>.md <the owner's words, as quoted>
 
-each name once, with no blank line. Any other line is refused, naming it (exit 2). The check
-reads it before Lean, and holds each row to three things. Its name is one the list's tag
-declares, and main does not declare it. Its decision entry is on origin/main, read out of
-Git, and the checkout holds it byte for byte the same. And that copy has one paragraph that
-names it in backticks, says "the owner" and holds the row's words between quotation marks,
-`"…"` or `“…”`, line breaks and indentation read as single spaces and HTML comments, an
-entry's header among them, left out. A row that fails any of them is a finding, naming its
-line. A released name main lacks passes only when its row holds all three; with no row, or
-a row that fails, it is the finding above. So an approved removal passes only when it is
-listed, and a listed one only when it is approved; and the approval lands first, in a pull
-request of its own that the owner sees, so a pull request cannot approve its own removal.
-A row is judged only where the repository holds origin/main (exit 2 otherwise: fetch it).
-The list is emptied in the pull request that commits tests/released_names.txt made at the
-next release's tag.
+each name once, with no blank line. Any other line is refused, naming it (exit 2). The
+check reads it before Lean, and holds each row to three things. Its name is one the list's
+tag declares, and main does not declare it. Its decision entry is on origin/main, read out
+of Git, and the checkout holds it byte for byte the same. And that copy approves the
+removal in so many words: its header, `<!-- entry: … removes=<name>[,<name>…] line="…"
+-->`, names it in `removes=`, and one paragraph names it in backticks, says "the owner" as
+whole words and holds the row's words between quotation marks, `"…"` or `“…”`, line breaks
+and indentation read as single spaces and HTML comments, the header among them, left out. A
+row that fails any of them is a finding, naming its line. A released name main lacks passes
+only when its row holds all three; with no row, or a row that fails, it is the finding
+above. So an approved removal passes only when it is listed, and a listed one only when it
+is approved; and the approval lands first, in a pull request of its own that the owner
+sees, so a pull request cannot approve its own removal. A row is judged only where the
+repository holds origin/main (exit 2 otherwise: fetch it). The list is emptied in the pull
+request that commits tests/released_names.txt made at the next release's tag.
 
-Exits 0 when no released name is missing and the list's tag, where the repository holds
-it, points to the list's commit; 1 on any finding, printing each, then a summary of the
-names released, those present on main, those of them deprecated there and those missing;
-2 when it cannot judge: no `lake` on PATH, a build of `Elements` that is not current, the
-probe fails or prints anything but rows, or the list or the list of names removed is
-malformed or unreadable; and 2 when `--list` is refused. A temporary probe that cannot be created, resolved, written or removed also exits
-2 without a traceback. Standard library only; Python 3.11 or later. A module planted
-beside the script is never read in its place.
+Exits 0 when no released name is missing and the list's tag, where the repository holds it,
+points to the list's commit; 1 on any finding, printing each, then a summary of the names
+released, those present on main, those of them deprecated there and those missing; 2 when
+it cannot judge: no `lake` on PATH, a build of `Elements` that is not current, the probe
+fails or prints anything but rows, or the list or the list of names removed is malformed or
+unreadable; and 2 when `--list` is refused. A temporary probe that cannot be created,
+resolved, written or removed also exits 2 without a traceback. Standard library only;
+Python 3.11 or later. A module planted beside the script is never read in its place.
 """
 
 import os
@@ -168,6 +169,9 @@ REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
                          r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md) "
                          r"(?P<quote>\S(?:.*\S)?)")
 QUOTE_MARKS = (('"', '"'), ("“", "”"))
+THE_OWNER = re.compile(r"\bthe owner\b", re.I)
+# An entry's header begins so (docs/WORKFLOW.md, "Decision entries"; render.py reads it).
+ENTRY_OPEN = "<!-- entry: "
 
 # The probe, in two parts, so that the self-test can put its plants between them.
 PROBE_HEAD = """\
@@ -490,14 +494,32 @@ def base_entry(entry: str) -> bytes | None:
     return done.stdout
 
 
+def removes_of(text: str) -> list[str]:
+    """The names an entry's header gives in its `removes=` key: the released names whose
+    removal with no alias the entry approves (docs/WORKFLOW.md, "Decision entries"). The
+    header is line 1, `<!-- entry: key=value … line="<news>" -->`; its keys before `line`
+    hold no space, and the news is not read, so words in it cannot pass for the key. None
+    without a header; render.py checks the header's whole form."""
+    first = text.split("\n", 1)[0]
+    if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")):
+        return []
+    for token in first[len(ENTRY_OPEN):].split(" "):
+        if token.startswith("line="):
+            break
+        if token.startswith("removes="):
+            return token[len("removes="):].split(",")
+    return []
+
+
 def quotes_the_owner(text: str, quote: str, name: str) -> bool:
-    """Whether one paragraph of `text` names `name` in backticks, says "the owner" and holds
+    """Whether one paragraph of `text` names `name` in backticks, says "the owner" (whole
+    words, so not "the ownership") and holds
     `quote` between quotation marks, line breaks and indentation read as single spaces. HTML
     comments, an entry's header among them, are not read: they are not its prose."""
     words = " ".join(quote.split())
     for paragraph in re.split(r"\n[ \t]*\n", re.sub(r"<!--.*?-->", "", text, flags=re.S)):
         flat = " ".join(paragraph.split())
-        if (f"`{name}`" in flat and "the owner" in flat.lower()
+        if (f"`{name}`" in flat and THE_OWNER.search(flat)
                 and any(f"{left}{words}{right}" in flat for left, right in QUOTE_MARKS)):
             return True
     return False
@@ -507,8 +529,9 @@ def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
              read_entry=None, read_base=None) -> tuple[list[str], set[str]]:
     """The findings the list of names removed gives, in its order, and the names whose
     removal holds: each a name the tag declares and main does not, whose decision entry is
-    on origin/main, byte for byte as the checkout holds it, with one paragraph that names
-    it in backticks and quotes the owner's approval as its row gives it. So the approval
+    on origin/main, byte for byte as the checkout holds it, names it in its header's
+    `removes=` key, and has one paragraph that names it in backticks and quotes the
+    owner's approval as its row gives it. So the approval
     lands first, in a pull request of its own, and the removal after: a pull request cannot
     approve its own removal. `read_entry` reads an entry's bytes in the checkout,
     worktree_entry when None; `read_base` on origin/main, base_entry when None."""
@@ -539,7 +562,10 @@ def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
             text = base.decode("utf-8")
         except UnicodeError:
             raise Unreadable(f"{BASE}:{row.entry} is not UTF-8") from None
-        if f"`{name}`" not in text:
+        if name not in removes_of(text):
+            found.append(f"{where}: {entry} names no removes={name} in its header, where an "
+                         "entry approves a removal")
+        elif f"`{name}`" not in text:
             found.append(f"{where}: {entry} does not name `{name}`")
         elif not quotes_the_owner(text, row.quote, name):
             found.append(f"{where}: {entry} has no paragraph that names `{name}`, says \"the "

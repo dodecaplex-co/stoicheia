@@ -508,11 +508,14 @@ class EntryHeaders(HeaderFolder):
         self.headed("2026-10-27-full.md", header(
             "id=full-2", "cards=577,12", "briefs=0008-centre,book-I",
             "program=landed", "corrects=2026-10-25-old.md",
-            "reverts=2026-10-26-older.md,2026-10-25-old.md", line=line))
+            "reverts=2026-10-26-older.md,2026-10-25-old.md",
+            "removes=Elements.Tacit.area_congruent,Elements.Old.«term∠___»", line=line))
         self.assertEqual(self.headers()["2026-10-27-full.md"], {
             "id": "full-2", "cards": [577, 12], "briefs": ["0008-centre", "book-I"],
             "program": ["landed"], "corrects": ["2026-10-25-old.md"],
-            "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"], "line": line})
+            "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"],
+            "removes": ["Elements.Tacit.area_congruent", "Elements.Old.«term∠___»"],
+            "line": line})
 
     def test_a_header_of_the_longest_length_is_read(self):
         # A header of ENTRY_HEADER_LIMIT characters is read; one character more is refused
@@ -532,7 +535,7 @@ class EntryHeaders(HeaderFolder):
         self.entry("2026-10-27-b.md", "- **No header.** An entry may have none.\n")
         self.assertEqual(self.headers(), {"2026-10-27-a.md": {
             "id": "a", "cards": [1], "briefs": [], "program": [], "corrects": [],
-            "reverts": [], "line": "News, of a kind."}})
+            "reverts": [], "removes": [], "line": "News, of a kind."}})
 
     def test_each_refusal(self):
         self.entry("2026-10-26-earlier.md", "- **Earlier.** Words.\n")
@@ -596,6 +599,19 @@ class EntryHeaders(HeaderFolder):
              "program names 'landed' twice"),
             ('<!-- entry: id=a cards=1 corrects=2026-10-26-earlier.md,2026-10-26-earlier.md '
              'line="x" -->', "corrects names '2026-10-26-earlier.md' twice"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a reverts=2026-10-26-earlier.md '
+             'line="x" -->', "the key 'reverts' is out of order"),
+            ('<!-- entry: id=a cards=1 removes=Tacit.area_congruent line="x" -->',
+             "removes 'Tacit.area_congruent': a removed name is a Lean name in full, under "
+             "Elements"),
+            ('<!-- entry: id=a cards=1 removes=Elements line="x" -->',
+             "removes 'Elements': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements..a line="x" -->',
+             "removes 'Elements..a': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a,Elements.a line="x" -->',
+             "removes names 'Elements.a' twice"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a, line="x" -->',
+             "removes is a list joined by commas, with no empty item"),
             ('<!-- entry: id=a cards=1 line="" -->', "the line is 1 to 300 characters, not 0"),
             (header("id=a", "cards=1", line="x" * 301), "the line is 1 to 300 characters, "
                                                          "not 301"),

@@ -17,20 +17,24 @@ is neither; a tag targeting a blob or tree is a finding; and a later tag is a no
 it, beside a finding or alone, never a finding.
 
 Removals the owner approves. A released name main lacks, listed in the list of names
-removed with a decision entry that is on origin/main, unchanged in the checkout, and has a
-paragraph that names it, says "the owner" and quotes the row's words, passes, and the
-summary counts it; approved in an entry but not listed, it fails. Listed, it fails with
-both findings, the row's and the name's, when its row and its entry are both new in the head
-and the entry absent from origin/main; when the entry is on origin/main but changed in the
-head (the words added there, the file deleted, a line ending changed); and when origin/main's copy
-does not name it, quotes other words, does not put the words between quotation marks, has
-them only in an HTML comment, or puts them in a paragraph that does not say "the owner" or
-does not name it. Curly quotation marks and a quotation wrapped over a line are read. A row
-for a name main declares, or one the tag never declared, is a finding; a row for a name the
-tag marked deprecated is allowed, and the name counts as gone after that release. With git
-itself: an entry is read from origin/main byte for byte, CRLF kept; a path origin/main lacks,
-a folder, and an entry committed in the checkout but not on origin/main read as absent; and
-a repository with no origin/main cannot judge a row. The reader of the list of names removed
+removed with a decision entry that is on origin/main, unchanged in the checkout, whose
+header names it in `removes=` and which has a paragraph that names it, says "the owner" and
+quotes the row's words, passes, and the summary counts it; approved in an entry but not
+listed, it fails. Listed, it fails with both findings, the row's and the name's, when its
+row and its entry are both new in the head and the entry absent from origin/main; when the
+entry is on origin/main but changed in the head (the words added there, the file deleted, a
+line ending changed); when origin/main's copy has no `removes=` naming it (the owner quoted
+opposing the removal with no such key, no header at all, `removes=` naming another name, or
+the name only in the header's news); and when that copy does not name it in its prose,
+quotes other words, does not put the words between quotation marks, has them only in an
+HTML comment, or puts them in a paragraph that does not say "the owner" as whole words ("the
+ownership" does not) or does not name it. A `removes=` naming it among others passes.
+Curly quotation marks and a quotation wrapped over a line are read. A row for a name main
+declares, or one the tag never declared, is a finding; a row for a name the tag marked
+deprecated is allowed, and the name counts as gone after that release. With git itself: an
+entry is read from origin/main byte for byte, CRLF kept; a path origin/main lacks, a
+folder, and an entry committed in the checkout but not on origin/main read as absent; and a
+repository with no origin/main cannot judge a row. The reader of the list of names removed
 reads rows in order, and a file of comments alone as none, and refuses, naming the line, a
 blank line, an unknown word, a row with no words, an entry outside `docs/decisions/` or
 without its date, an entry path that climbs out, a trailing space and a name listed twice.
@@ -208,12 +212,22 @@ class TheRule(unittest.TestCase):
 
 
 # A planted removal: the name, its decision entry, the words the row gives, and an entry
-# whose paragraph says "the owner" and quotes them across a line break, as an entry wraps.
+# whose header names the name in `removes=` and whose paragraph says "the owner" and quotes
+# the words across a line break, as an entry wraps.
 GONE = "Elements.Tacit.gone"
 ENTRY = "docs/decisions/2026-10-31-planted-removal.md"
 WORDS = "a planted approval, for the test"
-APPROVING = (f"- **A planted removal.** The owner, 30 October 2026, of `{GONE}`: \"a planted\n"
-             "  approval, for the test\".\n")
+
+
+def headed(prose: str, removes: str = GONE) -> str:
+    """An entry: a header whose `removes=` gives `removes` (none when empty), then `prose`."""
+    key = f" removes={removes}" if removes else ""
+    return (f'<!-- entry: id=planted-removal cards=517{key} line="A planted removal." -->\n'
+            + prose)
+
+
+APPROVING = headed(f"- **A planted removal.** The owner, 30 October 2026, of `{GONE}`: "
+                   "\"a planted\n  approval, for the test\".\n")
 REMOVED_LINE = 11
 
 
@@ -295,19 +309,23 @@ class TheRemovals(unittest.TestCase):
         cases = {
             "the entry does not name it": ({ENTRY: APPROVING.replace(f"`{GONE}`", "it")},
                                            f"{self.WHERE} {ENTRY} does not name `{GONE}`"),
-            "other words quoted": ({ENTRY: APPROVING.replace("planted", "other")}, no_quote),
-            "the words not in quotation marks": ({ENTRY: APPROVING.replace('"', "")},
-                                                 no_quote),
+            "other words quoted": ({ENTRY: APPROVING.replace("planted\n  approval",
+                                                             "other\n  approval")}, no_quote),
+            "the words not in quotation marks": ({ENTRY: APPROVING.replace('"a planted',
+                                                                           "a planted")
+                                                  .replace('test".', "test.")}, no_quote),
             "the owner in another paragraph": (
-                {ENTRY: f"The owner decided, of `{GONE}`.\n\nThe crew: \"{WORDS}\".\n"},
+                {ENTRY: headed(f"The owner decided, of `{GONE}`.\n\nThe crew: \"{WORDS}\".\n")},
                 no_quote),
             "the words only in an HTML comment": (
-                {ENTRY: f"<!-- The owner, of `{GONE}`: \"{WORDS}\" -->\nOf `{GONE}`, the "
-                        "owner.\n"},
+                {ENTRY: headed(f"<!-- The owner, of `{GONE}`: \"{WORDS}\" -->\nOf `{GONE}`, "
+                               "the owner.\n")},
                 no_quote),
             "the name in another paragraph": (
-                {ENTRY: f"Of `{GONE}`.\n\nThe owner, of another name: \"{WORDS}\".\n"},
+                {ENTRY: headed(f"Of `{GONE}`.\n\nThe owner, of another name: \"{WORDS}\".\n")},
                 no_quote),
+            "the ownership, not the owner": (
+                {ENTRY: headed(f"The ownership of `{GONE}`: \"{WORDS}\".\n")}, no_quote),
         }
         for label, (entries, said) in cases.items():
             with self.subTest(label):
@@ -315,8 +333,38 @@ class TheRemovals(unittest.TestCase):
                                          entries)
                 self.assertFails(lines, code, said)
 
+    def test_an_entry_approves_a_removal_only_in_its_header(self):
+        # The prose alone approves nothing: an entry in which the owner opposes the removal,
+        # quoted, has no `removes=`; nor does one with no header, nor one whose header removes
+        # another name, nor one whose news, not its key, says removes=.
+        no_key = (f"{self.WHERE} {ENTRY} names no removes={GONE} in its header, where an "
+                  "entry approves a removal")
+        opposed = f"The owner opposed removing `{GONE}`: \"do not remove it\".\n"
+        cases = {
+            "the owner opposed, no removes=": (
+                headed(opposed, removes=""), "do not remove it"),
+            "no header at all": (opposed, "do not remove it"),
+            "removes= names another name": (
+                headed(f"The owner, of `{GONE}`: \"{WORDS}\".\n", removes="Elements.Other"),
+                WORDS),
+            "removes= in the news only": (
+                f'<!-- entry: id=x cards=517 line="News removes={GONE} of it" -->\n'
+                f"The owner, of `{GONE}`: \"{WORDS}\".\n", WORDS),
+        }
+        for label, (text, words) in cases.items():
+            with self.subTest(label):
+                lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {words}"),
+                                         {ENTRY: text})
+                self.assertFails(lines, code, no_key)
+        # removes= naming it among others, on main unchanged, passes.
+        both = headed(f"The owner, of `{GONE}`: \"{WORDS}\".\n",
+                      removes=f"Elements.Other,{GONE}")
+        lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                 {ENTRY: both})
+        self.assertEqual(code, 0, lines)
+
     def test_curly_quotation_marks_are_read(self):
-        curly = f"The owner, of `{GONE}`: “{WORDS}”.\n"
+        curly = headed(f"The owner, of `{GONE}`: “{WORDS}”.\n")
         lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
                                  {ENTRY: curly})
         self.assertEqual(code, 0, lines)

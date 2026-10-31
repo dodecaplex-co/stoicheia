@@ -3,9 +3,9 @@
 # is kept here until the notes are written (#702). scripts/check_released_names.py accepts a
 # name that tests/released_names.txt holds and main lacks only when it has a row here, and a
 # row only when its name is one the list's tag declares and main does not, and its decision
-# entry is already on origin/main, unchanged in the pull request, with one paragraph that
-# names it in backticks, mentions the owner and holds the row's words between quotation
-# marks. A row, one for each name, with no blank line:
+# entry is already on origin/main, unchanged in the pull request, with the name in its
+# header's removes= key and one paragraph that names it in backticks, mentions the owner and
+# holds the row's words between quotation marks. A row, one for each name, no blank line:
 #     removed <name> docs/decisions/<YYYY-MM-DD>-<slug>.md <the owner's words, as quoted>
 # The entry lands first, in a pull request of its own; the row comes in a later one, with the
 # removal. The list is emptied in the pull request that commits tests/released_names.txt

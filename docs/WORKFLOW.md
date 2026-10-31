@@ -1844,7 +1844,7 @@ one, the coordinator:
 The header line says what the entry is news for:
 
 ```text
-<!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]] [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]] [reverts=<entry>[,<entry>…]] line="<news>" -->
+<!-- entry: id=<id> cards=<n>[,<n>…] [briefs=<stem>[,<stem>…]] [program=<section>[,<section>…]] [corrects=<entry>[,<entry>…]] [reverts=<entry>[,<entry>…]] [removes=<name>[,<name>…]] line="<news>" -->
 ```
 
 Its keys stand in that order, each once at most, separated by single spaces; `id`,
@@ -1867,6 +1867,11 @@ characters at most:
 - `corrects` and `reverts`, the file names of the entries it corrects or reverts, as
   `2026-10-26-routes-iii-centre.md`, each earlier in name order, an entry without a
   header among them;
+- `removes`, the released Lean names whose removal with no alias the entry approves, each
+  in full under `Elements`, as `Elements.Tacit.area_congruent`.
+  `scripts/check_released_names.py` accepts a row of `tests/released_names_removed.txt`
+  only when that row's entry is already on main, unchanged, with the row's name in this
+  key and the owner's words quoted in its prose;
 - `line`, its news, in double quotes: one line of 1 to 300 characters, with no space at
   either end, holding no `"`, no `<!--` or `-->`, no Markdown link and no `<`, `[` or `]`,
   since it is copied into pages in other folders, where a relative link would break, raw
