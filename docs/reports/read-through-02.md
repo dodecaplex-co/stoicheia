@@ -142,14 +142,14 @@ them (items 89 and 90) on all four pages.
 
 ### The material findings
 
-| # | Page | Finding | Readers | State at 559237731 |
+| # | Page | Finding | Readers | State |
 |---|---|---|---|---|
-| M1 | I.8 | The commentary says two of the laws I.8 cites have proofs that "draw circles and straight lines too"; the certificate puts only Postulate 3 beneath them | RD-r1 1; RD-f1 2 | Open: card draft RD-C1 |
+| M1 | I.8 | The commentary says two of the laws I.8 cites have proofs that "draw circles and straight lines too"; the certificate puts only Postulate 3 beneath them | RD-r1 1; RD-f1 2 | Resolved at 1f5769ca9 (pull request #752): their proofs draw a circle too (Postulate 3), and only Metric 3 is proved with no construction |
 | M2 | I.13, I.47 | Metric 5 supplied a step of I.47's proof that is a consequence of I.13, and I.13's status line did not say so | RD-f1 1 | Resolved at 559237731 (pull request #699): I.47 now takes the step from I.13 itself |
-| M3 | Book II's introduction | "Two enunciations are wider than the case Euclid's proof draws": II.5's and II.9's are wider too | RD-r5 1 | Open: card draft RD-C2 |
-| M4 | Book II's introduction | "We prove each once": II.5 and II.14 prove the right angle beside a right angle again, in their own Lean | RD-f2 1 | Open: card draft RD-C2 |
-| M5 | II.9, II.10 | The captions at a glance give a reason in areas that is not Euclid's, without the label II.8's caption gives | RD-f2 2 | Open: card draft RD-C3 |
-| M6 | I.26 | The figure note says "Drawn for one case" of a figure that draws two, and leaves undisclosed the cases the Lean covers that the figure does not draw | RD-r3 1 (graded editorial by its reader) | Open: card draft RD-C7, item 40 |
+| M3 | Book II's introduction | "Two enunciations are wider than the case Euclid's proof draws": II.5's and II.9's are wider too | RD-r5 1 | Resolved at 32eebe4ba (pull request #750): the introduction says that II.5 and II.9 let D fall on either side of C |
+| M4 | Book II's introduction | "We prove each once": II.5 and II.14 prove the right angle beside a right angle again, in their own Lean | RD-f2 1 | Resolved at 32eebe4ba (pull request #750): the introduction says that we prove each in one place, in Rectangles.lean or, for one of them, in I.13's file |
+| M5 | II.9, II.10 | The captions at a glance give a reason in areas that is not Euclid's, without the label II.8's caption gives | RD-f2 2 | Resolved at 1f5769ca9 (pull request #752): both captions end "a reading in areas, not Euclid's proof" |
+| M6 | I.26 | The figure note says "Drawn for one case" of a figure that draws two, and leaves undisclosed the cases the Lean covers that the figure does not draw | RD-r3 1 (graded editorial by its reader) | Resolved at 1f5769ca9 (pull request #752): review/I/26.toml marks the figure `some_cases`, and its note says which cases the figure does not draw |
 
 Book III's, at d4d65c48:
 
@@ -952,7 +952,9 @@ lists them; DefinitionsIII.lean is there because the introduction links it (M11)
 ## What #34 and B3 still need, for Books I and II
 
 1. The five open material findings, M1 and M3 to M6, mended on main (card drafts RD-C1 to
-   RD-C3, and item 40 of RD-C7), each naming here the commit that resolves it.
+   RD-C3, and item 40 of RD-C7), each naming here the commit that resolves it. Met on 30
+   October 2026: pull requests #750 and #752 mended them, and the table above names each
+   commit.
 2. The readers' conditions on B3. Every verdict but those of RD-r3 and RD-r4 passes "once
    the named findings are mended", all of its reader's findings; RD-r3 names its findings 2
    and 3, and RD-r4 passes as it stands. As written, then, Book I's B3 waits on RD-C1, on
