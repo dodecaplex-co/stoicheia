@@ -178,12 +178,10 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import safe_push
-import check_train
 import heath
-from check_train import declared_new, derive_new
 
 # Isolated invocation and this directory supply the judge's complete script imports.
-for module in (safe_push, check_train, heath):
+for module in (safe_push, heath):
     if Path(module.__file__).resolve().parent != Path(__file__).resolve().parent:
         raise ImportError("queue judge dependencies must come from its own directory")
 
@@ -274,6 +272,16 @@ WORKFLOW_FILE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.ya?ml")
 STAMP = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?Z")
 # A test file --gaps runs for itself: test_*.py directly under tests/ or scripts/.
 GAP_TEST = re.compile(r"(?:tests|scripts)/test_[^/]+\.py")
+# What --gaps reads from an entry's diff (derive_new): the checks whose tests it runs, the
+# foundations, and the propositions whose acceptance items it reports.
+CHECK_PATHS = ("scripts/", "tests/", ".github/")
+FOUNDATION_PATHS = ("Elements/Foundations/", "Certificate/axioms.lock", "model/")
+PROPOSITION_PATHS = (
+    re.compile(r"Elements/Book([IVX]+)/Prop(\d+)\.lean"),
+    re.compile(r"review/([IVX]+)/(\d+)\.toml"),
+    re.compile(r"(?:heath|mishnah)/([IVX]+)/(\d+)\.md"),
+    re.compile(r"figures/([IVX]+)/(\d+)[^/]*"),
+)
 # The tests --gaps runs for each file under .github/, changed or deleted: those that read
 # it. scripts/test_safe_push.py reads every workflow and the pull request template;
 # tests/test_auto_revert.py and tests/test_check_queue.py read ci.yml and post-merge.yml,
@@ -961,16 +969,6 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
                         light.group(1))
     else:
         preflight_steps(inner, checked, against, harness_check_names(repo, harness_commit))
-    if pr["ref"].startswith("train/"):
-        try:
-            problems = check_train.check_train(repo, base=against, sha=checked, body=body)
-        except ValueError:
-            problems = check_train.body_problems(body)
-            if problems:
-                raise Refused("; ".join(problems)) from None
-            raise
-        if problems:
-            raise Refused("; ".join(problems))
 
 
 def hand_written_intact(repo: Path, path: str, group: str, mb: str, train: str) -> bool:
@@ -1945,6 +1943,24 @@ def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) 
     return [list(command) for command in sorted(commands)]
 
 
+def derive_new(repo: Path, base: str, sha: str) -> dict:
+    """The checks, propositions and foundations that base..sha changes, read from its
+    diff alone."""
+    base, sha = commit(repo, base), commit(repo, sha)
+    result = {"checks": set(), "propositions": set(), "foundations": set()}
+    for _, path in safe_push.changed_files(repo, base, sha):
+        if safe_push.under(path, CHECK_PATHS):
+            result["checks"].add(path)
+        if safe_push.under(path, FOUNDATION_PATHS):
+            result["foundations"].add(path)
+        for pattern in PROPOSITION_PATHS:
+            if match := pattern.fullmatch(path):
+                book, number = match.groups()
+                result["propositions"].add(f"{book}.{int(number)}")
+                break
+    return result
+
+
 def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
     """Choose the focused tests, and report acceptance's existing proposition verdicts;
     run nothing (run_gaps runs what this chooses)."""
@@ -1959,14 +1975,10 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
         deleted.update(set.intersection(*(
             {path for status, path in safe_push.changed_files(repo, mb, pr["head"])
              if status == "D"} for mb in bases)))
-        if pr["ref"].startswith("train/"):
-            changes.append(declared_new(pr["body"]))
         for change in changes:
             checks.update(change["checks"])
             propositions.update(change["propositions"])
             foundations.update(change["foundations"])
-            for rule in change["rules"]:
-                print(f"gaps: declared rule: {rule}", flush=True)
     if propositions:
         source = os.environ.get("ACCEPTANCE_VERDICTS")
         if not source:
