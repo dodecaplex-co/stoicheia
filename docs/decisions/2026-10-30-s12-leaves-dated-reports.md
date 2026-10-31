@@ -18,7 +18,10 @@
   entry of `docs/reports/mixed-angles-prototype.md`, with its 147 findings, and the seven
   entries the check reports as done; `tests/test_check_style.py` drops the tests of that
   sorting and that index, and adds one that `strace` fails a Catalogue and the Prose and
-  never a report. Section 8 of `docs/STYLE.md` says the same.
+  never a report. `tests/test_check_acceptance.py` no longer asks whether the generated
+  acceptance report would pass S12, which no longer reads it, and keeps its tests of the
+  report's one revision and of findings quoted whole. Section 8 of `docs/STYLE.md` says
+  the same.
 
   Why: a dated report in `docs/reports/` is an editorial part, right as of its commit.
   Held to today's Lean library, a report nobody touched fails when a Lean name changes

@@ -18,11 +18,10 @@ these cases put it to small files of verdicts, each with the outcome it should g
 * --json writes a verdict for every item of every proposition, book and the edition, with
   each failure's messages and why an item was not run;
 * the report, written by the generator in a small repository under several widths of
-  Git's short hashes, gives one revision, which the style check's S12 reads as a commit,
-  and no name for S12 to put to Lean; and the style check's findings on the report it
-  replaces are quoted in E5 whole, each as one code span, which shows each message as
-  the check printed it and in which neither S12 nor the report's other text rules find
-  anything again (issue #178);
+  Git's short hashes, gives one revision; and the style check's findings on the report
+  it replaces are quoted in E5 whole, each as one code span, which shows each message as
+  the check printed it and in which the report's text rules find nothing again (issue
+  #178; S12 no longer reads the dated reports, since 30 October 2026);
 * CI copies the pull request's checks into main but keeps main's content pins, so an
   updated definition or expected count cannot hide a later E2 failure;
 * P10 and E6 read a staged file's imports as check_fidelity's rule 3 reads Book Zero's
@@ -258,8 +257,8 @@ class Verdicts(unittest.TestCase):
 
 
 class Report(unittest.TestCase):
-    """The report as the generator writes it, read by the style check's S12 and its other
-    rules for a report (issue #178)."""
+    """The report as the generator writes it, read by the style check's rules for a report
+    (issue #178)."""
 
     def setUp(self):
         ca.failures.clear()
@@ -298,15 +297,6 @@ class Report(unittest.TestCase):
                 yield head, git
 
     @staticmethod
-    def s12_asks(text: str) -> list[str]:
-        """The names S12's plan puts to Lean in `text`, read as the report (call it
-        outside `repository`, where ca.REPORT is the report's own path)."""
-        import check_style as style
-        named = style.NamedText(ca.REPORT, text, style.every_book_opens())
-        _, asked, _, _ = style.s12_plan([named], True, (set(), set()))
-        return sorted(n for group in asked.values() for n in group)
-
-    @staticmethod
     def text_rules_find(text: str) -> list[str]:
         """What the style check's text rules for a report (S1, S7, S8 and S22) find in
         `text`, read as the report, each finding as the check prints it after its "✗"
@@ -327,11 +317,11 @@ class Report(unittest.TestCase):
                 ca.check_style_rules()
             return ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
 
-    def test_a_regenerated_report_passes_s12(self):
+    def test_a_regenerated_report_gives_one_revision(self):
         # Git's own width is seven digits in the small repository; under core.abbrev 4 it
-        # is four, which is not a commit to S12 (heath.COMMIT) but a name it puts to Lean.
-        # Whatever the width, the report gives one revision, in heath.COMMIT's form
-        # beside the word "Revision", and S12 asks Lean about nothing in it.
+        # is four. Whatever the width, the report gives one revision, in heath.COMMIT's
+        # form beside the word "Revision". (S12 no longer reads the dated reports,
+        # docs/decisions/2026-10-30-s12-leaves-dated-reports.md.)
         import check_style as style
         self.assertTrue(style.is_report(ca.REPORT), ca.REPORT)
         self.assertEqual(ca.REVISION_DIGITS, 12)
@@ -351,21 +341,18 @@ class Report(unittest.TestCase):
                 self.assertIsNotNone(line, text[:800])
                 revision = line.group(1)
                 revisions.add(revision)
-                self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
                 self.assertTrue(ca.heath.COMMIT.fullmatch(revision), revision)
                 self.assertTrue(head.startswith(revision), (revision, head))
                 self.assertEqual(revision, head[:ca.REVISION_DIGITS])
         self.assertEqual(len(revisions), 1, revisions)
 
-    def test_a_finding_on_the_old_report_is_not_quoted_back_to_s12(self):
+    def test_a_finding_on_the_old_report_is_quoted_whole(self):
         # The style check reads the report a run replaces, and E5 quotes its findings in
-        # the new one. Here S12 found names in the old report: its revision, of four
-        # digits as the old generator wrote it under core.abbrev 4, or of twelve as the
-        # generator writes it now, and a name Lean does not know, as B2 and E2 quote a
-        # catalogue's on purpose. Quoted as they were, away from the word "Revision", each
-        # is a name S12 puts to Lean in the new report, and every regeneration quotes the
-        # last one's finding back. E5 fails with each whole finding as one code span, and
-        # S12 asks Lean about nothing in the new report.
+        # the new one. Here S12 found names in the old report (as it could before 30
+        # October 2026, when it read the dated reports): its revision, of four digits as
+        # the old generator wrote it under core.abbrev 4, or of twelve as the generator
+        # writes it now, and a name Lean does not know. E5 fails with each whole finding
+        # as one code span.
         where = ca.REPORT.relative_to(ca.ROOT).as_posix()
         with self.repository() as (head, _):
             names = [head[:4], head[:ca.REVISION_DIGITS], "Elements.BookI.no_such_lemma"]
@@ -376,7 +363,6 @@ class Report(unittest.TestCase):
             with patch.object(ca, "run", return_value=style_check):
                 ca.check_style_rules()
             text = ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
-        self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
         quoted = [f"`` {finding} ``" for finding in found]
         self.assertEqual(ca.failures, {("edition", "E5"): quoted})
         for message in quoted:
@@ -411,8 +397,7 @@ class Report(unittest.TestCase):
         # finding elsewhere holds an em dash only in code. Quoted outside code, each
         # would fail its rule again in the new report, and every regeneration would quote
         # it back. E5 quotes each finding in the new report, and none of the style
-        # check's rules for a report finds anything there: S1, S7, S8 and S22 nothing,
-        # and S12's plan no name.
+        # check's rules for a report finds anything there: S1, S7, S8 and S22 nothing.
         import check_style as style
         old = ("# The old report\n\nA line \u2014 with Definition 15 and "
                "\u201cquoted\u201d words.\n")
@@ -423,7 +408,6 @@ class Report(unittest.TestCase):
                      'and the step `A\u2014B`…')
         text = self.regenerate(found)
         self.assertEqual(self.text_rules_find(text), [], "the text rules on the new report")
-        self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
         spans = [content for _, _, content in style.markdown_code_spans(text)]
         self.assertEqual([finding for finding in found if finding not in spans], [])
         self.assertEqual(len(ca.failures[("edition", "E5")]), len(found))
