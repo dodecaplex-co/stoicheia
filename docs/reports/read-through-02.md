@@ -951,17 +951,18 @@ lists them; DefinitionsIII.lean is there because the introduction links it (M11)
 
 ## What #34 and B3 still need, for Books I and II
 
-1. The five open material findings, M1 and M3 to M6, mended on main (card drafts RD-C1 to
-   RD-C3, and item 40 of RD-C7), each naming here the commit that resolves it. Met on 30
-   October 2026: pull requests #750 and #752 mended them, and the table above names each
-   commit.
+1. The five material findings open at the read, M1 and M3 to M6, mended on main (card
+   drafts RD-C1 to RD-C3, and item 40 of RD-C7), each naming here the commit that resolves
+   it. Met on 30 October 2026: pull requests #750 and #752 mended them, and the table above
+   names each commit.
 2. The readers' conditions on B3. Every verdict but those of RD-r3 and RD-r4 passes "once
    the named findings are mended", all of its reader's findings; RD-r3 names its findings 2
    and 3, and RD-r4 passes as it stands. As written, then, Book I's B3 waits on RD-C1, on
    the Book I items of RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10, and on items 43 and 44 of
    RD-C7, besides M6 (item 40); Book II's on RD-C2 and RD-C3, and on the Book II items of
    RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10. Only RD-C8, and items 41 and 42 of RD-C7, hold
-   neither. The pilot editor's second round passes on the same condition, so both books' B3
+   neither. RD-C1 to RD-C3, and M6 (item 40), are met since (item 1). The pilot editor's
+   second round passes on the same condition, so both books' B3
    also wait on items 89, 90 and 93 of RD-C19, on its pages of Books I and II, and Book II's
    on item 94. The verdicts
    single out the voice lapses of RD-C4 and RD-C5; whether the other editorial findings must
