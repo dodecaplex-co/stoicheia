@@ -1,4 +1,4 @@
-<!-- entry: id=queue-without-trains cards=283 line="The merge queue's judge stops using the train check, so that trains can be retired; every queued pull request is judged alike." -->
+<!-- entry: id=queue-without-trains cards=283 line="The merge queue's judge stops using the train check, so that trains can be retired; ordinary queued pull requests are judged alike, while automatic-revert entries keep their separate path." -->
 - **The queue's judge without the train check (landing,
   [#283](https://github.com/dodecaplex-co/stoicheia/issues/283)).** On 30 October 2026,
   asked whether to retire trains, with their check, tests and docs, the owner answered:
@@ -18,8 +18,9 @@
   longer judges an entry on a `train/*` branch by the train check's rules (its Members
   table, the reviews named there and its What is new section), nor adds to the tests it
   chooses those such a section declared beyond the diff. An entry from such a branch is
-  judged as every other entry is: by its pre-flight, by whether the group keeps the lines
-  it changed, and by the tests of what its diff changes.
+  judged as every other ordinary entry is: by its pre-flight, by whether the group keeps
+  the lines it changed, and by the tests of what its diff changes. Automatic-revert
+  entries keep their separate path.
 
   `tests/test_check_queue.py` builds its groups from single parts, each pull request one
   commit whose body is its pre-flight block, and drops the seven cases that tested only

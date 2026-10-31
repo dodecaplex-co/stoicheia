@@ -2422,6 +2422,16 @@ class QueueTests(unittest.TestCase):
                                 capture_output=True, text=True)
         self.verdict(result, 0, "queue: PASS")
 
+    def test_real_judge_runs_without_check_train(self):
+        judge = self.root / "judge"
+        shutil.copytree(SCRIPTS, judge, ignore=shutil.ignore_patterns("__pycache__"))
+        (judge / "check_train.py").unlink(missing_ok=True)
+        self.checkout(self.head)
+        result = subprocess.run([sys.executable, "-I", str(judge / "check_queue.py"),
+                                 "--tree", str(self.repo)], cwd=self.repo,
+                                capture_output=True, text=True)
+        self.verdict(result, 0, "queue: PASS")
+
     def test_gaps_failing_test_refuses(self):
         one = self.train(1, {TEST: "raise SystemExit(7)\n"})
         first = self.merge(self.base, one, 1)
