@@ -39,17 +39,20 @@ note = "Euclid takes L and M where HA and GB produced meet KL. The Lean finds bo
 
 [[passage]]
 at = "therefore LB is equal to BF"
-kind = "carried"
+kind = "helper"
+helper = "Between.of_sameSide"
 note = "Euclid applies I.43 to the complements in HLKF. Beneath the earlier constructions, `Between.of_sameSide` puts B between H and K, A between H and L, M between K and L, E between F and K, and G between H and F; these are the five orders `Prop43` takes here."
 
 [[passage]]
 at = "And, since the angle GBE is equal to the angle ABM"
-kind = "carried"
+kind = "helper"
+helper = "Between.of_sameSide"
 note = "Euclid uses the vertical angles at B. The Lean applies I.15 with A, B, E in order from `Prop44.place` and G, B, M in order from `Between.of_sameSide` beneath the production of GB."
 
 [[passage]]
 at = "Therefore the parallelogram LB equal to the given triangle C has been applied"
-kind = "carried"
+kind = "helper"
+helper = "OppositeSidesOf.of_between"
 note = "Euclid concludes that LB, equal to C, has been applied to AB in the angle ABM equal to D. For the side named in the statement, the Lean chose G across AB from that side beneath the placing sentence; `OppositeSidesOf.of_between` puts M across AB from G, and `OppositeSidesOf.sameSideOf` gives the requested side."
 
 [review]

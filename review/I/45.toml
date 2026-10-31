@@ -15,7 +15,8 @@ note = "The main theorem is an area-sum theorem: it takes ABD and DBC unchecked,
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
-kind = "carried"
+kind = "helper"
+helper = "Prop42"
 note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D wherever Euclid writes H, and its parallelogram KFLM overlaps ABCD."
 
 [[passage]]
