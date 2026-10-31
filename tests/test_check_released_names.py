@@ -16,6 +16,20 @@ git unable to say where it points, is a note of one line and no finding; the sam
 is neither; a tag targeting a blob or tree is a finding; and a later tag is a note naming
 it, beside a finding or alone, never a finding.
 
+Removals the owner approves. A released name main lacks, listed in the list of names
+removed with a decision entry that names it and quotes the owner's approval as the row gives
+it, passes, and the summary counts it; approved in an entry but not listed, it fails; listed
+with an entry that does not exist, does not name it, quotes other words, does not put the
+words between quotation marks, or puts them in a paragraph that does not say "the owner",
+it fails with both findings, the row's and the name's. Curly quotation marks and a quotation
+wrapped over a line are read. A row for a name main declares, or one the tag never declared,
+is a finding; a row for a name the tag marked deprecated is allowed, and the name counts as
+gone after that release. The reader of the list of names removed reads rows in order, and a
+file of comments alone as none, and refuses, naming the line, a blank line, an unknown word,
+a row with no words, an entry outside `docs/decisions/` or without its date, an entry path
+that climbs out, a trailing space and a name listed twice. The check, and the self-test,
+read the list of names removed before Lean, and refuse one malformed or absent (exit 2).
+
 The list's reader refuses, naming the line: no tag line (a row before it, or no line at
 all but comments), two tag lines, a tag line of the wrong shape, a commit that is short, in
 capitals or not hex, a tag's name that is not one, an unknown marker, a row with no name or
@@ -68,7 +82,8 @@ And the real tests/released_names.txt reads, names `book-III` with a full commit
 names, none of them the parser of one of the four notations, and holds
 `Elements.Triangle.of_onCircle`, `Elements.exists_onCircle_oppositeSidesOf` and
 `Elements.exists_onCircle_sameSideOf` as plain released names; it is byte for byte what
-`render_list` makes of its own rows.
+`render_list` makes of its own rows. The real tests/released_names_removed.txt reads, and
+each name it lists is a released name with an entry that exists.
 """
 
 import io
@@ -183,6 +198,135 @@ class TheRule(unittest.TestCase):
         self.assertEqual((lines, code), ([
             "✓ tests/released_names.txt: 1 names released in book-III: 1 present on main, 0 "
             "of them deprecated there; 0 missing with no deprecated alias"], 0))
+
+
+# A planted removal: the name, its decision entry, the words the row gives, and an entry
+# whose paragraph says "the owner" and quotes them across a line break, as an entry wraps.
+GONE = "Elements.Tacit.gone"
+ENTRY = "docs/decisions/2026-10-31-planted-removal.md"
+WORDS = "a planted approval, for the test"
+APPROVING = (f"- **A planted removal.** The owner, 30 October 2026, of `{GONE}`: \"a planted\n"
+             "  approval, for the test\".\n")
+REMOVED_LINE = 11
+
+
+def removed_rows(*rows: str) -> dict:
+    """The list of names removed with `rows` after ten comment lines, as parse_removed
+    reads it."""
+    return released.parse_removed("# a comment\n" * (REMOVED_LINE - 1)
+                                  + "".join(f"{row}\n" for row in rows))
+
+
+class TheRemovals(unittest.TestCase):
+    """A released name main lacks passes only when it is listed as removed and its decision
+    entry quotes the owner's approval; lacking either, it fails."""
+    RELEASED = {GONE: "name", "Elements.a": "name"}
+    MAIN = {"Elements.a": "name"}
+
+    def judge(self, removed: dict, entries: dict) -> tuple[list[str], int]:
+        return released.report(listed(self.RELEASED), self.MAIN, COMMIT, removed=removed,
+                               read_entry=entries.get)
+
+    def test_an_approved_listed_removal_passes(self):
+        lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                 {ENTRY: APPROVING})
+        self.assertEqual((lines, code), ([
+            "✓ tests/released_names.txt: 2 names released in book-III: 1 present on main, 0 "
+            "of them deprecated there; 0 missing with no deprecated alias; 1 removed with the "
+            "owner's approval (tests/released_names_removed.txt)"], 0))
+
+    def test_an_approved_removal_that_is_not_listed_fails(self):
+        lines, code = self.judge({}, {ENTRY: APPROVING})
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[:-1], [released.finding(GONE, "book-III")])
+
+    def test_a_listed_removal_without_the_owners_approval_fails(self):
+        where = f"tests/released_names_removed.txt:{REMOVED_LINE}: {GONE}: its decision entry"
+        no_quote = (f"{where} {ENTRY} has no paragraph that says \"the owner\" and quotes "
+                    f"\"{WORDS}\"")
+        cases = {
+            "no such entry": ({}, f"{where} {ENTRY} does not exist"),
+            "the entry does not name it": ({ENTRY: APPROVING.replace(f"`{GONE}`", "it")},
+                                           f"{where} {ENTRY} does not name `{GONE}`"),
+            "other words quoted": ({ENTRY: APPROVING.replace("planted", "other")}, no_quote),
+            "the words not in quotation marks": ({ENTRY: APPROVING.replace('"', "")},
+                                                 no_quote),
+            "the owner in another paragraph": (
+                {ENTRY: f"The owner decided, of `{GONE}`.\n\nThe crew: \"{WORDS}\".\n"},
+                no_quote),
+        }
+        for label, (entries, said) in cases.items():
+            with self.subTest(label):
+                lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                         entries)
+                self.assertEqual(code, 1)
+                self.assertEqual(lines[:-1], [released.finding(GONE, "book-III"), said])
+                self.assertNotIn("removed with the owner's approval", lines[-1])
+
+    def test_curly_quotation_marks_are_read(self):
+        curly = f"The owner, of `{GONE}`: “{WORDS}”.\n"
+        lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                 {ENTRY: curly})
+        self.assertEqual(code, 0, lines)
+
+    def test_a_row_main_declares_or_the_tag_did_not_release_is_a_finding(self):
+        approving = {ENTRY: APPROVING.replace(GONE, "Elements.a")}
+        lines, code = released.report(listed({"Elements.a": "name"}), {"Elements.a": "name"},
+                                      COMMIT, removed=removed_rows(
+                                          f"removed Elements.a {ENTRY} {WORDS}",
+                                          f"removed Elements.never {ENTRY} {WORDS}"),
+                                      read_entry=approving.get)
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[:-1], [
+            f"tests/released_names_removed.txt:{REMOVED_LINE}: Elements.a: listed as removed, "
+            "but main declares it",
+            f"tests/released_names_removed.txt:{REMOVED_LINE + 1}: Elements.never: not a name "
+            "book-III declares, so not a released name to remove"])
+
+    def test_a_name_the_tag_deprecated_may_be_listed_and_counts_as_gone(self):
+        lines, code = released.report(listed({GONE: "deprecated"}), {}, COMMIT,
+                                      removed=removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                      read_entry={ENTRY: APPROVING}.get)
+        self.assertEqual((lines, code), ([
+            "✓ tests/released_names.txt: 1 names released in book-III: 0 present on main, 0 "
+            "of them deprecated there; 0 missing with no deprecated alias; 1 gone after the "
+            "release that deprecated them"], 0))
+
+
+class TheRemovedList(unittest.TestCase):
+    def test_rows_read_in_order_and_comments_alone_read_as_none(self):
+        got = removed_rows(f"removed {GONE} {ENTRY} {WORDS}",
+                           f"removed Elements.b {ENTRY} “curly” words")
+        self.assertEqual(got, {GONE: released.Removal(REMOVED_LINE, ENTRY, WORDS),
+                               "Elements.b": released.Removal(REMOVED_LINE + 1, ENTRY,
+                                                              "“curly” words")})
+        self.assertEqual(released.parse_removed("# a comment\n# another\n"), {})
+        self.assertEqual(released.parse_removed(""), {})
+
+    def test_a_line_outside_the_form_is_refused_naming_it(self):
+        cases = {
+            "a blank line": ("", "a blank line"),
+            "an unknown word": (f"gone {GONE} {ENTRY} {WORDS}", "is not a row"),
+            "no words": (f"removed {GONE} {ENTRY}", "is not a row"),
+            "an entry outside docs/decisions": (f"removed {GONE} docs/x.md {WORDS}",
+                                                "is not a row"),
+            "an entry that climbs out": (
+                f"removed {GONE} docs/decisions/../../2026-10-31-x.md {WORDS}", "is not a row"),
+            "an undated entry": (f"removed {GONE} docs/decisions/x.md {WORDS}",
+                                 "is not a row"),
+            "a trailing space": (f"removed {GONE} {ENTRY} {WORDS} ", "is not a row"),
+        }
+        for label, (line, says) in cases.items():
+            with self.subTest(label), self.assertRaises(released.Unreadable) as raised:
+                released.parse_removed(f"# a comment\n{line}\n")
+            self.assertIn("tests/released_names_removed.txt:2: ", str(raised.exception))
+            self.assertIn(says, str(raised.exception))
+
+    def test_a_name_listed_twice_is_refused(self):
+        with self.assertRaises(released.Unreadable) as raised:
+            removed_rows(f"removed {GONE} {ENTRY} {WORDS}", f"removed {GONE} {ENTRY} other")
+        self.assertIn(f"`{GONE}` is listed twice (first at line {REMOVED_LINE})",
+                      str(raised.exception))
 
 
 class TheTag(unittest.TestCase):
@@ -736,6 +880,9 @@ class TheModes(unittest.TestCase):
         self.folder = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.list = self.folder / "released_names.txt"
         self.enterContext(mock.patch.object(released, "LIST_FILE", self.list))
+        self.removed = self.folder / "released_names_removed.txt"
+        self.removed.write_text("# none removed\n", encoding="utf-8")
+        self.enterContext(mock.patch.object(released, "REMOVED_FILE", self.removed))
 
     def run_lake(self, argv, build: int):
         """The script's exit code, standard output and standard error, with git stood in
@@ -806,6 +953,42 @@ class TheModes(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("is out of order", err)
         probe.assert_not_called()
+
+    def test_the_check_reads_the_list_of_names_removed_and_its_entries(self):
+        # An approved, listed removal passes; the same row with its entry gone fails.
+        self.write(f"name {GONE}", "name Elements.a")
+        self.removed.write_text(f"removed {GONE} {ENTRY} {WORDS}\n", encoding="utf-8")
+        entry = self.folder / ENTRY
+        entry.parent.mkdir(parents=True)
+        entry.write_text(APPROVING, encoding="utf-8")
+        with mock.patch.object(released, "ROOT", self.folder):
+            code, out, _, _ = self.run_main([], {"Elements.a": "name"})
+            self.assertEqual(code, 0, out)
+            self.assertIn("1 removed with the owner's approval", out)
+            entry.unlink()
+            code, out, _, _ = self.run_main([], {"Elements.a": "name"})
+        self.assertEqual(code, 1, out)
+        self.assertEqual(out.splitlines()[:2], [
+            released.finding(GONE, "book-III"),
+            f"tests/released_names_removed.txt:1: {GONE}: its decision entry {ENTRY} does not "
+            "exist"])
+
+    def test_a_malformed_or_absent_list_of_names_removed_stops_before_lean(self):
+        self.write("name Elements.a")
+        for argv in ([], ["--self-test"]):
+            with self.subTest(argv):
+                self.removed.write_text("removed Elements.a\n", encoding="utf-8")
+                code, out, err, probe = self.run_main(argv, {"Elements.a": "name"})
+                self.assertEqual(code, 2, err)
+                self.assertEqual(out, "")
+                self.assertIn("released_names_removed.txt:1: `removed Elements.a` is not a row",
+                              err)
+                probe.assert_not_called()
+                self.removed.unlink()
+                code, out, err, probe = self.run_main(argv, {"Elements.a": "name"})
+                self.assertEqual(code, 2, err)
+                self.assertIn("cannot read", err)
+                probe.assert_not_called()
 
     def test_malformed_tags_stop_before_tag_lookup_or_lean(self):
         for tag in ("book..IV", "book/", "book.lock"):
@@ -923,6 +1106,15 @@ class TheRealList(unittest.TestCase):
             with self.subTest(name):
                 self.assertNotIn(name, got.names)
         self.assertEqual(source, released.render_list(got.tag, got.commit, got.names))
+
+    def test_the_real_list_of_names_removed_reads_and_names_released_names(self):
+        names = released.parse_list((REPO / released.LIST).read_text(encoding="utf-8")).names
+        removed = released.parse_removed(
+            (REPO / released.REMOVED).read_text(encoding="utf-8"))
+        for name, row in removed.items():
+            with self.subTest(name):
+                self.assertIn(name, names)
+                self.assertTrue((REPO / row.entry).is_file(), row.entry)
 
 
 if __name__ == "__main__":

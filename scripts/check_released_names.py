@@ -103,12 +103,30 @@ deprecated passes; and a list that names nothing new on main passes, though `New
 `New.b` are there. Any surprise fails it (exit 1). Then the check runs on the same output,
 with the planted namespace left out: one Lean file in all.
 
+Removals the owner approves. A released name may leave main with no alias only when the
+owner has approved its removal, as for Metric 9 (#517), and the release notes list it as
+removed. tests/released_names_removed.txt is that list of names removed, kept in the
+repository until the notes are written (#702): `#` comment lines, then a row for each name,
+
+    removed <name> docs/decisions/<YYYY-MM-DD>-<slug>.md <the owner's words, as quoted>
+
+each name once, with no blank line. Any other line is refused, naming it (exit 2). The check
+reads it before Lean, and holds each row to three things. Its name is one the list's tag
+declares, and main does not declare it. Its decision entry exists, names it in backticks,
+and has one paragraph that says "the owner" and holds the row's words between quotation
+marks, `"…"` or `“…”`, line breaks and indentation read as single spaces. A row that fails
+any of them is a finding, naming its line. A released name main lacks passes only when its
+row holds all three; with no row, or a row that fails, it is the finding above. So an
+approved removal passes only when it is listed, and a listed one only when it is approved.
+The list is emptied in the pull request that commits tests/released_names.txt made at the
+next release's tag.
+
 Exits 0 when no released name is missing and the list's tag, where the repository holds
 it, points to the list's commit; 1 on any finding, printing each, then a summary of the
 names released, those present on main, those of them deprecated there and those missing;
 2 when it cannot judge: no `lake` on PATH, a build of `Elements` that is not current, the
-probe fails or prints anything but rows, or the list is malformed; and 2 when `--list` is
-refused. A temporary probe that cannot be created, resolved, written or removed also exits
+probe fails or prints anything but rows, or the list or the list of names removed is
+malformed or unreadable; and 2 when `--list` is refused. A temporary probe that cannot be created, resolved, written or removed also exits
 2 without a traceback. Standard library only; Python 3.11 or later. A module planted
 beside the script is never read in its place.
 """
@@ -137,6 +155,13 @@ ROOT = Path(__file__).resolve().parent.parent
 LIST = Path("tests/released_names.txt")
 LIST_FILE = ROOT / LIST
 RULE = "FORMALIZATION.md, section 2"
+# The names removed with the owner's approval, which the release notes list as removed.
+REMOVED = Path("tests/released_names_removed.txt")
+REMOVED_FILE = ROOT / REMOVED
+REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
+                         r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md) "
+                         r"(?P<quote>\S(?:.*\S)?)")
+QUOTE_MARKS = (('"', '"'), ("“", "”"))
 
 # The probe, in two parts, so that the self-test can put its plants between them.
 PROBE_HEAD = """\
@@ -293,6 +318,14 @@ class TagTarget(NamedTuple):
     kind: str
 
 
+class Removal(NamedTuple):
+    """A row of the list of names removed: its line, its decision entry, and the owner's
+    words that the entry quotes."""
+    line: int
+    entry: str
+    quote: str
+
+
 def printable(text: str) -> str:
     return text.encode("utf-8", "surrogateescape").decode("utf-8", "backslashreplace")
 
@@ -394,6 +427,80 @@ def parse_list(text: str, shown: str = str(LIST)) -> Listed:
         raise Unreadable(f"{shown}:{tag_line}: no row follows the tag line, so the list "
                          "names nothing")
     return Listed(tag, commit, tag_line, names)
+
+
+def parse_removed(text: str, shown: str = str(REMOVED)) -> dict[str, Removal]:
+    """The list of names removed `text`, each name with its Removal, in the list's order;
+    Unreadable, naming the line, when it breaks the form."""
+    removed: dict[str, Removal] = {}
+    for number, line in enumerate(lines_of(text), 1):
+        where = f"{shown}:{number}"
+        if line.startswith("#"):
+            continue
+        if not line.strip():
+            raise Unreadable(f"{where}: a blank line; the list holds its comments and its "
+                             "rows, and nothing else")
+        row = REMOVED_ROW.fullmatch(line)
+        if not row:
+            raise Unreadable(f"{where}: `{shorten(line)}` is not a row, which is `removed "
+                             "<name> docs/decisions/<YYYY-MM-DD>-<slug>.md <the owner's "
+                             "words>`")
+        name = row["name"]
+        if name in removed:
+            raise Unreadable(f"{where}: `{name}` is listed twice (first at line "
+                             f"{removed[name].line})")
+        removed[name] = Removal(number, row["entry"], row["quote"])
+    return removed
+
+
+def entry_text(entry: str) -> str | None:
+    """The decision entry `entry`, a path from the repository's root; None when no such
+    file exists."""
+    path = ROOT / entry
+    return read(path) if path.is_file() else None
+
+
+def quotes_the_owner(text: str, quote: str) -> bool:
+    """Whether one paragraph of `text` says "the owner" and holds `quote` between quotation
+    marks, line breaks and indentation read as single spaces."""
+    words = " ".join(quote.split())
+    for paragraph in re.split(r"\n[ \t]*\n", text):
+        flat = " ".join(paragraph.split())
+        if "the owner" in flat.lower() and any(f"{left}{words}{right}" in flat
+                                               for left, right in QUOTE_MARKS):
+            return True
+    return False
+
+
+def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
+             read_entry=None) -> tuple[list[str], set[str]]:
+    """The findings the list of names removed gives, in its order, and the names whose
+    removal holds: each a name the tag declares and main does not, with a decision entry
+    that exists, names it in backticks and quotes the owner's approval as its row gives
+    it. `read_entry` reads an entry, entry_text when None."""
+    read_entry = entry_text if read_entry is None else read_entry
+    found: list[str] = []
+    approved: set[str] = set()
+    for name, row in removed.items():
+        where = f"{REMOVED}:{row.line}: {name}"
+        if name not in listed.names:
+            found.append(f"{where}: not a name {listed.tag} declares, so not a released name "
+                         "to remove")
+            continue
+        if name in main:
+            found.append(f"{where}: listed as removed, but main declares it")
+            continue
+        text = read_entry(row.entry)
+        if text is None:
+            found.append(f"{where}: its decision entry {row.entry} does not exist")
+        elif f"`{name}`" not in text:
+            found.append(f"{where}: its decision entry {row.entry} does not name `{name}`")
+        elif not quotes_the_owner(text, row.quote):
+            found.append(f"{where}: its decision entry {row.entry} has no paragraph that "
+                         f"says \"the owner\" and quotes \"{shorten(row.quote, 60)}\"")
+        else:
+            approved.add(name)
+    return found, approved
 
 
 def render_list(tag: str, commit: str, rows: dict[str, str]) -> str:
@@ -659,11 +766,12 @@ def finding(name: str, tag: str) -> str:
     return f"{name}: released in {tag}, missing on main with no deprecated alias ({RULE})"
 
 
-def missing(listed: Listed, main: dict[str, str]) -> list[str]:
+def missing(listed: Listed, main: dict[str, str], approved=frozenset()) -> list[str]:
     """The rule: a finding for each name the list holds plain that main does not declare,
-    in the list's order. A name the tag marked deprecated, and a name new on main, pass."""
+    in the list's order, unless its removal holds (`approved`, from removals). A name the
+    tag marked deprecated, and a name new on main, pass."""
     return [finding(name, listed.tag) for name, marker in listed.names.items()
-            if marker == "name" and name not in main]
+            if marker == "name" and name not in main and name not in approved]
 
 
 def tag_lines(listed: Listed, local: str | None, error: str | None = None,
@@ -693,22 +801,30 @@ def tag_lines(listed: Listed, local: str | None, error: str | None = None,
 
 
 def report(listed: Listed, main: dict[str, str], local: str | None,
-           error: str | None = None, later: list[str] = ()) -> tuple[list[str], int]:
-    """The lines the check prints, and its exit code, for the list and main's names."""
+           error: str | None = None, later: list[str] = (),
+           removed: dict[str, Removal] | None = None,
+           read_entry=None) -> tuple[list[str], int]:
+    """The lines the check prints, and its exit code, for the list, main's names and the
+    list of names removed (none when `removed` is None)."""
     found, notes = tag_lines(listed, local, error, later)
-    gone = missing(listed, main)
+    bad, approved = removals(listed, main, removed or {}, read_entry)
+    gone = missing(listed, main, approved)
     released = len(listed.names)
     present = sum(name in main for name in listed.names)
     deprecated = sum(main.get(name) == "deprecated" for name in listed.names)
-    retired = released - present - len(gone)
+    retired = sum(marker == "deprecated" and name not in main
+                  for name, marker in listed.names.items())
+    taken = sum(listed.names[name] == "name" for name in approved)
     counts = (f"{released} names released in {listed.tag}: {present} present on main, "
               f"{deprecated} of them deprecated there; {len(gone)} missing with no "
               "deprecated alias")
+    if taken:
+        counts += f"; {taken} removed with the owner's approval ({REMOVED})"
     if retired:
         counts += f"; {retired} gone after the release that deprecated them"
-    if gone or found:
+    if gone or found or bad:
         tail = "; and the list is not the tag's" if found else ""
-        return notes + gone + found + [f"✗ {LIST}: {counts}{tail}"], 1
+        return notes + gone + bad + found + [f"✗ {LIST}: {counts}{tail}"], 1
     return notes + [f"✓ {LIST}: {counts}"], 0
 
 
@@ -756,8 +872,10 @@ def self_test(rows: dict[str, str]) -> list[str]:
     return problems
 
 
-def check_with(listed: Listed, rows: dict[str, str]) -> int:
-    """Print the check's lines for the list and main's names; its exit code."""
+def check_with(listed: Listed, rows: dict[str, str],
+               removed: dict[str, Removal] | None = None) -> int:
+    """Print the check's lines for the list, main's names and the list of names removed;
+    its exit code."""
     try:
         target = tag_target(listed.tag)
         local, error = target.oid if target is not None else None, None
@@ -767,20 +885,26 @@ def check_with(listed: Listed, rows: dict[str, str]) -> int:
         later = later_tags(listed)
     except Unreadable:
         later = []
-    lines, code = report(listed, rows, local, error, later)
+    lines, code = report(listed, rows, local, error, later, removed)
     for line in lines:
         print(line)
     return code
 
 
+def read_lists() -> tuple[Listed, dict[str, Removal]]:
+    """The list and the list of names removed, read before Lean, so that a malformed one
+    stops the run first."""
+    return (parse_list(read(LIST_FILE), display(LIST_FILE)),
+            parse_removed(read(REMOVED_FILE), display(REMOVED_FILE)))
+
+
 def run_check() -> int:
-    listed = parse_list(read(LIST_FILE), display(LIST_FILE))
-    return check_with(listed, run_probe(probe()))
+    listed, removed = read_lists()
+    return check_with(listed, run_probe(probe()), removed)
 
 
 def run_self_test() -> int:
-    # The list is read first, so that a malformed one stops the run before Lean.
-    listed = parse_list(read(LIST_FILE), display(LIST_FILE))
+    listed, removed = read_lists()
     rows = run_probe(probe(PLANTS))
     problems = self_test(rows)
     for problem in problems:
@@ -796,7 +920,7 @@ def run_self_test() -> int:
           f"{len(PLANT_CASES)} planted lists were judged as expected")
     prefix = f"{PLANT_NAMESPACE}."
     return check_with(listed, {name: marker for name, marker in rows.items()
-                               if not name.startswith(prefix)})
+                               if not name.startswith(prefix)}, removed)
 
 
 def make_list(tag: str) -> str:
