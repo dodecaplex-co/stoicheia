@@ -2984,8 +2984,10 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
     else. Its includes and excludes the same or grown, its count's prefix the same, its
     equals still there; only the values of count.is and equals may differ, and its why, the
     words shown when it fails. An expectation with one_of is kept while the same states
-    stand, by name, and each old state's expectations are kept in the same way by the
-    state of that name. New expectations are fine. A removed expectation or field, a
+    stand, by name, and each state's expectations stay as they were, in order, but for
+    the values of count.is and equals and the words of why; growing a state's lists or
+    adding to it is not kept, since tightening one state can loosen the choice of exactly
+    one. New top-level expectations are fine. A removed expectation or field, a
     list shrunk, or a file that does not read, is not kept."""
     def entries(text: str | None) -> list[dict] | None:
         try:
@@ -2996,17 +2998,35 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
         return found if ok else None
 
     def states_kept(have, want):
+        def moves_only_values(y, x):
+            if not (isinstance(y, dict) and isinstance(x, dict)) or y.keys() != x.keys():
+                return False
+            for key, value in x.items():
+                if key in ("why", "equals"):
+                    continue
+                if key == "count":
+                    if not (isinstance(value, dict) and isinstance(y[key], dict)):
+                        return False
+                    if value.keys() != y[key].keys() or any(value[k] != y[key][k]
+                                                           for k in value if k != "is"):
+                        return False
+                elif y[key] != value:
+                    return False
+            return True
+
         if not (isinstance(have, list) and isinstance(want, list)):
             return False
         if not all(isinstance(s, dict) and isinstance(s.get("state"), str)
                    and isinstance(s.get("expectations"), list) for s in have + want):
             return False
         new = {s["state"]: s["expectations"] for s in have}
-        if len(new) != len(have) or set(new) != {s["state"] for s in want}:
+        if len(new) != len(have) or len(new) != len(want) \
+                or set(new) != {s["state"] for s in want}:
             return False
-        return all(isinstance(u, dict) and any(isinstance(v, dict) and asks_as_much(v, u)
-                                               for v in new[s["state"]])
-                   for s in want for u in s["expectations"])
+        return all(len(new[s["state"]]) == len(s["expectations"])
+                   and all(moves_only_values(v, u)
+                           for v, u in zip(new[s["state"]], s["expectations"]))
+                   for s in want)
 
     def asks_as_much(y: dict, x: dict) -> bool:
         if any((key in y) != (key in x) for key in ("ref", "law")):

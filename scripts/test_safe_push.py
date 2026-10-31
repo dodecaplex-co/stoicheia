@@ -15352,7 +15352,8 @@ class Units(unittest.TestCase):
 
     def test_an_expectation_with_one_of_is_kept_by_its_states(self):
         # #517's first part made III.1 Por.'s pin a one_of: a re-proof must move its
-        # counts with the content, as it moves a counted pin's.
+        # counts with the content, as it moves a counted pin's; tightening a state can
+        # loosen the choice of exactly one, so it is not kept.
         def file(*expectations):
             return json.dumps({"expectations": list(expectations)})
 
@@ -15376,6 +15377,15 @@ class Units(unittest.TestCase):
             "a state renamed": file(dict(pin, one_of=[dict(a, state="Renamed"), b]), ordinary),
             "a state's excludes emptied": file(dict(pin, one_of=[
                 dict(a, expectations=[dict(metric, excludes=[])]), b]), ordinary),
+            "a state's excludes grown": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, excludes=["Tacit.centre_unique",
+                                                            "Tacit.area_swap"])]), b]),
+                ordinary),
+            "a state's includes key added": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, includes=["Tacit.line_unique"])]), b]),
+                ordinary),
+            "an expectation added to a state": file(dict(pin, one_of=[
+                dict(a, expectations=[metric, ordinary]), b]), ordinary),
             "a state's count removed": file(dict(pin, one_of=[
                 dict(a, expectations=[without(metric, "count")]), b]), ordinary),
             "a state's count's prefix changed": file(dict(pin, one_of=[
@@ -15388,6 +15398,17 @@ class Units(unittest.TestCase):
         for name, new in not_kept.items():
             with self.subTest(name):
                 self.assertFalse(safe_push.kept_expectations(old, new))
+        both = {"one_of": [
+            {"state": "A", "expectations": [{"includes": ["Tacit.a"]}]},
+            {"state": "B", "expectations": [{"includes": ["Tacit.b"]}]},
+        ]}
+        tightened = dict(both, one_of=[
+            both["one_of"][0],
+            dict(both["one_of"][1], expectations=[
+                {"includes": ["Tacit.b"], "excludes": ["Tacit.a"]}]),
+        ])
+        with self.subTest("a state tightened so that a tree holding both states passes"):
+            self.assertFalse(safe_push.kept_expectations(file(both), file(tightened)))
         moved = [dict(s, expectations=[dict(x, count={"prefix": x["count"]["prefix"],
                                                      "is": x["count"]["is"] - 1},
                                             equals=[n for n in x["equals"]
@@ -15396,10 +15417,8 @@ class Units(unittest.TestCase):
         kept = {
             "unchanged": old,
             "each state's count and equals moved": file(dict(pin, one_of=moved), ordinary),
-            "a state's excludes grown": file(dict(pin, one_of=[
-                dict(a, expectations=[dict(metric, excludes=["Tacit.centre_unique",
-                                                            "Tacit.area_swap"])]), b]),
-                ordinary),
+            "the one_of's why reworded": file(dict(pin, why="Either axiom may hold."),
+                                            ordinary),
         }
         for name, new in kept.items():
             with self.subTest(name):
