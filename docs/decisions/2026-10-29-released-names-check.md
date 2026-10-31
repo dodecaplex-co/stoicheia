@@ -116,45 +116,56 @@
   coordinator's message of 30 October 2026 asks that the check allow one thing more: the
   owner decided that day that Metric 9, `Elements.Tacit.area_congruent`, a name tag
   `book-III` declares, leaves main this release with no alias (#517), and that the release
-  notes list it as removed. This entry quotes no approval of that removal, and is not one.
+  notes list it as removed. This entry records no approval of that removal, and is not one.
   A released name may leave main with no alias when two things hold, and only then: a
-  decision entry already on main quotes the owner's approval of its removal, and the
-  release notes' list of names removed records it. The release notes are written at the
-  release, so that list is kept until then in `tests/released_names_removed.txt`, for the
-  notes to take it from (#702). Each row there is `removed`, the name, the path of its
-  decision entry under `docs/decisions/`, and the owner's words as that entry quotes them.
-  The check holds each row to three things: its name is one the list's tag declares and
-  main does not; its entry is on origin/main, read out of Git, and the checkout holds it
-  byte for byte the same; and that copy approves the removal in so many words, with the
-  name in its header's new `removes=` key and one paragraph that names it in backticks,
-  mentions the owner, as whole words, and holds the row's words between quotation marks.
-  Prose alone approves nothing, since a paragraph may quote the owner against a removal as
-  readily as for it; the key is the approval. So the approval lands
-  first, in a pull request of its own that the owner sees, and the removal comes after: a
-  pull request that removes a name cannot bring its own approval, nor change one already
-  on main. A row that fails is a finding, naming its line, and a released name main lacks
-  passes only when its row holds; with no row, or one that fails, it is the finding it
-  always was. The list is read before Lean, and a malformed or missing one stops the check
-  (exit 2), as does a repository with no origin/main when the list has a row. The list has
-  no rows yet. Metric 9's row needs an entry already on main that quotes the owner, and
-  comes in the pull request that removes Metric 9; the list is emptied in the pull request
-  that commits the next release's list of names. `tests/test_check_released_names.py`
-  holds both sides: an approved, listed removal whose entry is on main unchanged passes;
-  one approved but not listed fails; and a listed one fails when its entry is new in the
-  pull request, changed there, has no `removes=` naming it, or falls short of naming it
-  and quoting the owner.
+  decision entry already on main approves its removal, and the release notes' list of
+  names removed records it. The release notes are written at the release, so that list is
+  kept until then in `tests/released_names_removed.txt`, for the notes to take it from
+  (#702). Each row there is `removed`, the name, and the path of its decision entry under
+  `docs/decisions/`. The check holds each row to three things: its name is one the list's
+  tag declares and main does not; its entry is at the base the change is merged into,
+  read out of Git, and the checkout holds it byte for byte the same; and that copy's
+  header names it in a new key, `removes=`. The key is the approval. The entry's prose
+  holds the owner's words, for people to read; the check does not parse it, since prose
+  can be made to read as an approval in more ways than a reader can list, and the guard
+  is that the entry landed on main through review, unchanged since. So the approval lands
+  first, in a pull request of its own, and the removal comes after: a pull request that
+  removes a name can neither bring its own approval nor change one already on main. A row
+  that fails is a finding, naming its line, and a released name main lacks passes only
+  when its row holds; with no row, or one that fails, it is the finding it always was.
+
+  The base. Outside GitHub Actions it is origin/main, as the pre-flight and a contributor
+  have it. In GitHub Actions it is the first parent of the commit the job checked out, and
+  never origin/main, which there is absent or may stand elsewhere: for a pull request,
+  whose base branch `GITHUB_BASE_REF` names, the checkout is GitHub's merge of the head
+  into that branch, so its first parent is the exact base tested, and a checkout with any
+  other number of parents gives none; for main's run after a merge, it is main before the
+  merge. CI's `check` job checks out that one commit alone today (`actions/checkout` with
+  no `fetch-depth`, so a depth of 1), which holds no parent, so there is no base in CI
+  yet. The list is read before Lean, and a malformed or missing one stops the check (exit
+  2); a row with no base to judge it against stops it too, and an empty list asks for no
+  base. The list has no rows, so CI needs none now. Before the first row lands,
+  `.github/workflows/ci.yml`'s `check` job must fetch the parent (`fetch-depth: 2` on its
+  checkout), and the contract of that job in `scripts/test_safe_push.py` must say so, as
+  it pins each job's checkout: a change of risk class R5, the coordinator's, in a pull
+  request of its own; this one changes neither file. Metric 9's row comes in the pull
+  request that removes Metric 9, after an entry on main whose header removes it; the list
+  is emptied in the pull request that commits the next release's list of names.
+  `tests/test_check_released_names.py` holds both sides: an approved, listed removal whose
+  entry is at the base unchanged passes; one approved but not listed fails; a listed one
+  fails when its entry is new in the pull request, changed there, or has no `removes=`
+  naming it; and with no base, an empty list passes and a row stops the check.
 
   The header's `removes=` key. `scripts/render.py` reads every entry's header and refuses
   an unknown key, so it learns the key: it stands after `reverts` and before `line`, a
   list joined by commas like the others, each item a Lean name in full under `Elements`:
   segments joined by dots, each a Lean identifier or a `«…»` escape holding no `«`, `»`
   or line break, and nothing else. The check holds the same pattern, and an item outside
-  it approves nothing there.
-  The check reads the key only from the header's tokens before `line`, so words in the
-  news cannot pass for it. `docs/WORKFLOW.md`, "Decision entries", gives the key in the
-  header's form and says what it is for. This entry approves the change to
-  `scripts/render.py`: the key, its place among the keys and its refusal of an item that
-  is not a name under `Elements`.
+  it approves nothing there. The check reads the key only from the header's tokens before
+  `line`, so words in the news cannot pass for it. `docs/WORKFLOW.md`, "Decision
+  entries", gives the key in the header's form and says what it is for. This entry
+  approves the change to `scripts/render.py`: the key, its place among the keys and its
+  refusal of an item that is not a name under `Elements`.
 
   This entry approves the change to `tests/test_decision_entries.py`: the header with
   every key gains `removes=`, an escaped name among its items, the header with the
@@ -165,7 +176,7 @@
 
   This entry approves the new `tests/released_names_removed.txt`, the list of names removed
   with no alias. It has no rows yet, and each row it gains needs a decision entry already on
-  main that quotes the owner's approval of that removal.
+  main whose header removes that name.
 
   This entry approves the new `scripts/check_released_names.py`, the check with its probe
   and its self-test.

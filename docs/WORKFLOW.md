@@ -1871,8 +1871,9 @@ characters at most:
   in full under `Elements`, as `Elements.Tacit.area_congruent`: segments joined by dots,
   each a Lean identifier or a `«…»` escape holding no `«`, `»` or line break.
   `scripts/check_released_names.py` accepts a row of `tests/released_names_removed.txt`
-  only when that row's entry is already on main, unchanged, with the row's name in this
-  key and the owner's words quoted in its prose;
+  only when that row's entry is already at the base the change is merged into, unchanged,
+  with the row's name in this key; the entry's prose gives the owner's words for people to
+  read;
 - `line`, its news, in double quotes: one line of 1 to 300 characters, with no space at
   either end, holding no `"`, no `<!--` or `-->`, no Markdown link and no `<`, `[` or `]`,
   since it is copied into pages in other folders, where a relative link would break, raw

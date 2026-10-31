@@ -108,32 +108,34 @@ owner has approved its removal, as for Metric 9 (#517), and the release notes li
 removed. tests/released_names_removed.txt is that list of names removed, kept in the
 repository until the notes are written (#702): `#` comment lines, then a row for each name,
 
-    removed <name> docs/decisions/<YYYY-MM-DD>-<slug>.md <the owner's words, as quoted>
+    removed <name> docs/decisions/<YYYY-MM-DD>-<slug>.md
 
 each name once, with no blank line. Any other line is refused, naming it (exit 2). The
 check reads it before Lean, and holds each row to three things. Its name is one the list's
-tag declares, and main does not declare it. Its decision entry is on origin/main, read out
-of Git, and the checkout holds it byte for byte the same. And that copy approves the
-removal in so many words: its header, `<!-- entry: … removes=<name>[,<name>…] line="…"
--->`, names it in `removes=`, and one paragraph names it in backticks, says "the owner" as
-whole words and holds the row's words between quotation marks, `"…"` or `“…”`, line breaks
-and indentation read as single spaces and HTML comments, the header among them, left out. A
-row that fails any of them is a finding, naming its line. A released name main lacks passes
-only when its row holds all three; with no row, or a row that fails, it is the finding
-above. So an approved removal passes only when it is listed, and a listed one only when it
-is approved; and the approval lands first, in a pull request of its own that the owner
-sees, so a pull request cannot approve its own removal. A row is judged only where the
-repository holds origin/main (exit 2 otherwise: fetch it). The list is emptied in the pull
-request that commits tests/released_names.txt made at the next release's tag.
+tag declares, and main does not declare it. Its decision entry is at the base the change is
+merged into (base_commit: in GitHub Actions, the first parent of the commit checked out,
+which for a pull request is GitHub's merge of its head into its base; elsewhere,
+origin/main), read out of Git, and the checkout holds it byte for byte the same. And that
+copy's header, `<!-- entry: … removes=<name>[,<name>…] line="…" -->`, names it in
+`removes=`. A row that fails any of them is a finding, naming its line. A released name
+main lacks passes only when its row holds all three; with no row, or a row that fails, it
+is the finding above. So an approved removal passes only when it is listed, and a listed
+one only when it is approved; and the approval lands first, through review in a pull
+request of its own, so a pull request can neither bring its own approval nor change one.
+The entry's prose holds the owner's words for people to read; the check does not parse it.
+A row with no base to judge it against stops the check (exit 2), and an empty list needs no
+base. The list is emptied in the pull request that commits tests/released_names.txt made at
+the next release's tag.
 
 Exits 0 when no released name is missing and the list's tag, where the repository holds it,
 points to the list's commit; 1 on any finding, printing each, then a summary of the names
 released, those present on main, those of them deprecated there and those missing; 2 when
 it cannot judge: no `lake` on PATH, a build of `Elements` that is not current, the probe
-fails or prints anything but rows, or the list or the list of names removed is malformed or
-unreadable; and 2 when `--list` is refused. A temporary probe that cannot be created,
-resolved, written or removed also exits 2 without a traceback. Standard library only;
-Python 3.11 or later. A module planted beside the script is never read in its place.
+fails or prints anything but rows, the list or the list of names removed is malformed or
+unreadable, or a row of the latter has no base; and 2 when `--list` is refused. A temporary
+probe that cannot be created, resolved, written or removed also exits 2 without a
+traceback. Standard library only; Python 3.11 or later. A module planted beside the script
+is never read in its place.
 """
 
 import os
@@ -163,13 +165,11 @@ RULE = "FORMALIZATION.md, section 2"
 # The names removed with the owner's approval, which the release notes list as removed.
 REMOVED = Path("tests/released_names_removed.txt")
 REMOVED_FILE = ROOT / REMOVED
-# What a row's decision entry is judged against: the approval must already be on main.
+# Where a row's decision entry is judged outside GitHub Actions: the approval must already
+# be on main (base_commit).
 BASE = "origin/main"
 REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
-                         r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md) "
-                         r"(?P<quote>\S(?:.*\S)?)")
-QUOTE_MARKS = (('"', '"'), ("“", "”"))
-THE_OWNER = re.compile(r"\bthe owner\b", re.I)
+                         r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md)")
 # A Lean name under `Elements`, as `removes=` gives it: dot-separated segments after
 # `Elements`, each an identifier or a `«…»` escape holding no `«`, `»` or line break. An
 # identifier is Lean 4's: it begins with an ASCII letter, `_` or a letter-like character
@@ -344,11 +344,9 @@ class TagTarget(NamedTuple):
 
 
 class Removal(NamedTuple):
-    """A row of the list of names removed: its line, its decision entry, and the owner's
-    words that the entry quotes."""
+    """A row of the list of names removed: its line, and its decision entry."""
     line: int
     entry: str
-    quote: str
 
 
 def printable(text: str) -> str:
@@ -468,13 +466,12 @@ def parse_removed(text: str, shown: str = str(REMOVED)) -> dict[str, Removal]:
         row = REMOVED_ROW.fullmatch(line)
         if not row:
             raise Unreadable(f"{where}: `{shorten(line)}` is not a row, which is `removed "
-                             "<name> docs/decisions/<YYYY-MM-DD>-<slug>.md <the owner's "
-                             "words>`")
+                             "<name> docs/decisions/<YYYY-MM-DD>-<slug>.md`")
         name = row["name"]
         if name in removed:
             raise Unreadable(f"{where}: `{name}` is listed twice (first at line "
                              f"{removed[name].line})")
-        removed[name] = Removal(number, row["entry"], row["quote"])
+        removed[name] = Removal(number, row["entry"])
     return removed
 
 
@@ -490,14 +487,46 @@ def worktree_entry(entry: str) -> bytes | None:
         raise Unreadable(f"cannot read {entry}") from None
 
 
-def base_entry(entry: str) -> bytes | None:
-    """The bytes of the decision entry `entry` as origin/main holds it, read out of Git;
-    None when origin/main has no such file. Unreadable when the repository holds no
-    origin/main, or git cannot say."""
-    if commit_of(BASE) is None:
-        raise Unreadable(f"this repository holds no {BASE}, against which each row of "
-                         f"{REMOVED} is judged; fetch it (git fetch origin main)")
-    oid = object_of(f"{BASE}:{entry}")
+def base_commit() -> str | None:
+    """The commit a row's decision entry is judged against, the base the change is merged
+    into; None when the repository holds none.
+
+    In GitHub Actions (GITHUB_ACTIONS is "true"), the first parent of the commit the job
+    checked out, and never origin/main, which there is absent or may stand elsewhere. For a
+    pull request (GITHUB_BASE_REF names its base branch) the checkout is GitHub's merge of
+    the head into that branch, whose first parent is the exact base tested; a checkout
+    with any other number of parents there gives none. For main's run after a merge, and
+    a merge group, it is the commit before. A checkout that holds HEAD alone, as a
+    one-commit fetch does, gives none. Elsewhere, origin/main."""
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return commit_of(BASE)
+    done = git("rev-list", "--parents", "-n", "1", "HEAD")
+    commits = done.stdout.split() if done.returncode == 0 else []
+    if os.environ.get("GITHUB_BASE_REF") and len(commits) != 3:
+        return None
+    if len(commits) < 2 or not COMMIT.fullmatch(commits[1]):
+        return None
+    return commit_of(commits[1])
+
+
+def require_base(removed: dict[str, Removal]) -> str | None:
+    """base_commit when the list of names removed has a row, else None: an empty list needs
+    no base. Unreadable when a row has no base to be judged against."""
+    if not removed:
+        return None
+    base = base_commit()
+    if base is None:
+        raise Unreadable(f"{REMOVED} has a row, and this repository holds no base to judge "
+                         "its decision entry against: in GitHub Actions, the first parent of "
+                         "the commit checked out, which the check job's checkout must fetch "
+                         f"(fetch-depth: 2); elsewhere, {BASE} (git fetch origin main)")
+    return base
+
+
+def base_entry(entry: str, base: str) -> bytes | None:
+    """The bytes of the decision entry `entry` at the commit `base`, read out of Git; None
+    when the base has no such file. Unreadable when git cannot say."""
+    oid = object_of(f"{base}:{entry}")
     if oid is None:
         return None
     kind = git("cat-file", "-t", oid)
@@ -505,7 +534,7 @@ def base_entry(entry: str) -> bytes | None:
         return None
     done = git("cat-file", "blob", oid, raw=True)
     if done.returncode != 0:
-        raise Unreadable(f"git cannot read {BASE}:{entry}")
+        raise Unreadable(f"git cannot read {entry} at {base}")
     return done.stdout
 
 
@@ -528,32 +557,21 @@ def removes_of(text: str) -> list[str]:
     return []
 
 
-def quotes_the_owner(text: str, quote: str, name: str) -> bool:
-    """Whether one paragraph of `text` names `name` in backticks, says "the owner" (whole
-    words, so not "the ownership") and holds
-    `quote` between quotation marks, line breaks and indentation read as single spaces. HTML
-    comments, an entry's header among them, are not read: they are not its prose."""
-    words = " ".join(quote.split())
-    for paragraph in re.split(r"\n[ \t]*\n", re.sub(r"<!--.*?-->", "", text, flags=re.S)):
-        flat = " ".join(paragraph.split())
-        if (f"`{name}`" in flat and THE_OWNER.search(flat)
-                and any(f"{left}{words}{right}" in flat for left, right in QUOTE_MARKS)):
-            return True
-    return False
-
-
 def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
              read_entry=None, read_base=None) -> tuple[list[str], set[str]]:
     """The findings the list of names removed gives, in its order, and the names whose
     removal holds: each a name the tag declares and main does not, whose decision entry is
-    on origin/main, byte for byte as the checkout holds it, names it in its header's
-    `removes=` key, and has one paragraph that names it in backticks and quotes the
-    owner's approval as its row gives it. So the approval
-    lands first, in a pull request of its own, and the removal after: a pull request cannot
-    approve its own removal. `read_entry` reads an entry's bytes in the checkout,
-    worktree_entry when None; `read_base` on origin/main, base_entry when None."""
+    at the base the change is merged into, byte for byte as the checkout holds it, and
+    names it in its header's `removes=` key. So the approval lands first, through review
+    in a pull request of its own, and the removal after: a pull request can neither bring
+    its own approval nor change one. The entry's prose, with the owner's words, is for
+    people to read, and is not parsed. `read_entry` reads an entry's bytes in the checkout,
+    worktree_entry when None; `read_base` at the base, base_entry at require_base's commit
+    when None."""
     read_entry = worktree_entry if read_entry is None else read_entry
-    read_base = base_entry if read_base is None else read_base
+    if read_base is None and removed:
+        base = require_base(removed)
+        read_base = lambda entry: base_entry(entry, base)  # noqa: E731
     found: list[str] = []
     approved: set[str] = set()
     for name, row in removed.items():
@@ -568,25 +586,20 @@ def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
         entry = f"its decision entry {row.entry}"
         base = read_base(row.entry)
         if base is None:
-            found.append(f"{where}: {entry} is not on {BASE}; the owner's approval lands "
+            found.append(f"{where}: {entry} is not at the base; the owner's approval lands "
                          "first, in a pull request of its own, and the removal after")
             continue
         if read_entry(row.entry) != base:
-            found.append(f"{where}: {entry} differs from {BASE}'s copy; an approval is "
-                         f"judged as {BASE} holds it, unchanged")
+            found.append(f"{where}: {entry} differs from the base's copy; an approval is "
+                         "judged as the base holds it, unchanged")
             continue
         try:
             text = base.decode("utf-8")
         except UnicodeError:
-            raise Unreadable(f"{BASE}:{row.entry} is not UTF-8") from None
+            raise Unreadable(f"{row.entry} at the base is not UTF-8") from None
         if name not in removes_of(text):
             found.append(f"{where}: {entry} names no removes={name} in its header, where an "
                          "entry approves a removal")
-        elif f"`{name}`" not in text:
-            found.append(f"{where}: {entry} does not name `{name}`")
-        elif not quotes_the_owner(text, row.quote, name):
-            found.append(f"{where}: {entry} has no paragraph that names `{name}`, says \"the "
-                         f"owner\" and quotes \"{shorten(row.quote, 60)}\"")
         else:
             approved.add(name)
     return found, approved
@@ -968,9 +981,9 @@ def self_test(rows: dict[str, str]) -> list[str]:
 
 
 def check_with(listed: Listed, rows: dict[str, str],
-               removed: dict[str, Removal] | None = None) -> int:
-    """Print the check's lines for the list, main's names and the list of names removed;
-    its exit code."""
+               removed: dict[str, Removal] | None = None, read_base=None) -> int:
+    """Print the check's lines for the list, main's names and the list of names removed,
+    whose entries `read_base` reads at the base; its exit code."""
     try:
         target = tag_target(listed.tag)
         local, error = target.oid if target is not None else None, None
@@ -980,26 +993,30 @@ def check_with(listed: Listed, rows: dict[str, str],
         later = later_tags(listed)
     except Unreadable:
         later = []
-    lines, code = report(listed, rows, local, error, later, removed)
+    lines, code = report(listed, rows, local, error, later, removed, None, read_base)
     for line in lines:
         print(line)
     return code
 
 
-def read_lists() -> tuple[Listed, dict[str, Removal]]:
-    """The list and the list of names removed, read before Lean, so that a malformed one
-    stops the run first."""
-    return (parse_list(read(LIST_FILE), display(LIST_FILE)),
-            parse_removed(read(REMOVED_FILE), display(REMOVED_FILE)))
+def read_lists():
+    """The list, the list of names removed, and the reader of their entries at the base
+    (None for a list with no row), all before Lean, so that a malformed list, or a row
+    with no base to judge it against, stops the run first."""
+    listed = parse_list(read(LIST_FILE), display(LIST_FILE))
+    removed = parse_removed(read(REMOVED_FILE), display(REMOVED_FILE))
+    base = require_base(removed)
+    read_base = None if base is None else (lambda entry: base_entry(entry, base))
+    return listed, removed, read_base
 
 
 def run_check() -> int:
-    listed, removed = read_lists()
-    return check_with(listed, run_probe(probe()), removed)
+    listed, removed, read_base = read_lists()
+    return check_with(listed, run_probe(probe()), removed, read_base)
 
 
 def run_self_test() -> int:
-    listed, removed = read_lists()
+    listed, removed, read_base = read_lists()
     rows = run_probe(probe(PLANTS))
     problems = self_test(rows)
     for problem in problems:
@@ -1015,7 +1032,7 @@ def run_self_test() -> int:
           f"{len(PLANT_CASES)} planted lists were judged as expected")
     prefix = f"{PLANT_NAMESPACE}."
     return check_with(listed, {name: marker for name, marker in rows.items()
-                               if not name.startswith(prefix)}, removed)
+                               if not name.startswith(prefix)}, removed, read_base)
 
 
 def make_list(tag: str) -> str:
