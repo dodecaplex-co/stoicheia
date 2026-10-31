@@ -112,12 +112,16 @@ repository until the notes are written (#702): `#` comment lines, then a row for
 
 each name once, with no blank line. Any other line is refused, naming it (exit 2). The check
 reads it before Lean, and holds each row to three things. Its name is one the list's tag
-declares, and main does not declare it. Its decision entry exists, names it in backticks,
-and has one paragraph that says "the owner" and holds the row's words between quotation
-marks, `"…"` or `“…”`, line breaks and indentation read as single spaces. A row that fails
-any of them is a finding, naming its line. A released name main lacks passes only when its
-row holds all three; with no row, or a row that fails, it is the finding above. So an
-approved removal passes only when it is listed, and a listed one only when it is approved.
+declares, and main does not declare it. Its decision entry is on origin/main, read out of
+Git, and the checkout holds it byte for byte the same. And that copy has one paragraph that
+names it in backticks, says "the owner" and holds the row's words between quotation marks,
+`"…"` or `“…”`, line breaks and indentation read as single spaces and HTML comments, an
+entry's header among them, left out. A row that fails any of them is a finding, naming its
+line. A released name main lacks passes only when its row holds all three; with no row, or
+a row that fails, it is the finding above. So an approved removal passes only when it is
+listed, and a listed one only when it is approved; and the approval lands first, in a pull
+request of its own that the owner sees, so a pull request cannot approve its own removal.
+A row is judged only where the repository holds origin/main (exit 2 otherwise: fetch it).
 The list is emptied in the pull request that commits tests/released_names.txt made at the
 next release's tag.
 
@@ -158,6 +162,8 @@ RULE = "FORMALIZATION.md, section 2"
 # The names removed with the owner's approval, which the release notes list as removed.
 REMOVED = Path("tests/released_names_removed.txt")
 REMOVED_FILE = ROOT / REMOVED
+# What a row's decision entry is judged against: the approval must already be on main.
+BASE = "origin/main"
 REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
                          r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md) "
                          r"(?P<quote>\S(?:.*\S)?)")
@@ -453,32 +459,61 @@ def parse_removed(text: str, shown: str = str(REMOVED)) -> dict[str, Removal]:
     return removed
 
 
-def entry_text(entry: str) -> str | None:
-    """The decision entry `entry`, a path from the repository's root; None when no such
-    file exists."""
+def worktree_entry(entry: str) -> bytes | None:
+    """The bytes of the decision entry `entry`, a path from the repository's root, as the
+    checkout holds it; None when no such file exists."""
     path = ROOT / entry
-    return read(path) if path.is_file() else None
+    if not path.is_file():
+        return None
+    try:
+        return path.read_bytes()
+    except OSError:
+        raise Unreadable(f"cannot read {entry}") from None
 
 
-def quotes_the_owner(text: str, quote: str) -> bool:
-    """Whether one paragraph of `text` says "the owner" and holds `quote` between quotation
-    marks, line breaks and indentation read as single spaces."""
+def base_entry(entry: str) -> bytes | None:
+    """The bytes of the decision entry `entry` as origin/main holds it, read out of Git;
+    None when origin/main has no such file. Unreadable when the repository holds no
+    origin/main, or git cannot say."""
+    if commit_of(BASE) is None:
+        raise Unreadable(f"this repository holds no {BASE}, against which each row of "
+                         f"{REMOVED} is judged; fetch it (git fetch origin main)")
+    oid = object_of(f"{BASE}:{entry}")
+    if oid is None:
+        return None
+    kind = git("cat-file", "-t", oid)
+    if kind.returncode != 0 or kind.stdout.strip() != "blob":
+        return None
+    done = git("cat-file", "blob", oid, raw=True)
+    if done.returncode != 0:
+        raise Unreadable(f"git cannot read {BASE}:{entry}")
+    return done.stdout
+
+
+def quotes_the_owner(text: str, quote: str, name: str) -> bool:
+    """Whether one paragraph of `text` names `name` in backticks, says "the owner" and holds
+    `quote` between quotation marks, line breaks and indentation read as single spaces. HTML
+    comments, an entry's header among them, are not read: they are not its prose."""
     words = " ".join(quote.split())
-    for paragraph in re.split(r"\n[ \t]*\n", text):
+    for paragraph in re.split(r"\n[ \t]*\n", re.sub(r"<!--.*?-->", "", text, flags=re.S)):
         flat = " ".join(paragraph.split())
-        if "the owner" in flat.lower() and any(f"{left}{words}{right}" in flat
-                                               for left, right in QUOTE_MARKS):
+        if (f"`{name}`" in flat and "the owner" in flat.lower()
+                and any(f"{left}{words}{right}" in flat for left, right in QUOTE_MARKS)):
             return True
     return False
 
 
 def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
-             read_entry=None) -> tuple[list[str], set[str]]:
+             read_entry=None, read_base=None) -> tuple[list[str], set[str]]:
     """The findings the list of names removed gives, in its order, and the names whose
-    removal holds: each a name the tag declares and main does not, with a decision entry
-    that exists, names it in backticks and quotes the owner's approval as its row gives
-    it. `read_entry` reads an entry, entry_text when None."""
-    read_entry = entry_text if read_entry is None else read_entry
+    removal holds: each a name the tag declares and main does not, whose decision entry is
+    on origin/main, byte for byte as the checkout holds it, with one paragraph that names
+    it in backticks and quotes the owner's approval as its row gives it. So the approval
+    lands first, in a pull request of its own, and the removal after: a pull request cannot
+    approve its own removal. `read_entry` reads an entry's bytes in the checkout,
+    worktree_entry when None; `read_base` on origin/main, base_entry when None."""
+    read_entry = worktree_entry if read_entry is None else read_entry
+    read_base = base_entry if read_base is None else read_base
     found: list[str] = []
     approved: set[str] = set()
     for name, row in removed.items():
@@ -490,14 +525,25 @@ def removals(listed: Listed, main: dict[str, str], removed: dict[str, Removal],
         if name in main:
             found.append(f"{where}: listed as removed, but main declares it")
             continue
-        text = read_entry(row.entry)
-        if text is None:
-            found.append(f"{where}: its decision entry {row.entry} does not exist")
-        elif f"`{name}`" not in text:
-            found.append(f"{where}: its decision entry {row.entry} does not name `{name}`")
-        elif not quotes_the_owner(text, row.quote):
-            found.append(f"{where}: its decision entry {row.entry} has no paragraph that "
-                         f"says \"the owner\" and quotes \"{shorten(row.quote, 60)}\"")
+        entry = f"its decision entry {row.entry}"
+        base = read_base(row.entry)
+        if base is None:
+            found.append(f"{where}: {entry} is not on {BASE}; the owner's approval lands "
+                         "first, in a pull request of its own, and the removal after")
+            continue
+        if read_entry(row.entry) != base:
+            found.append(f"{where}: {entry} differs from {BASE}'s copy; an approval is "
+                         f"judged as {BASE} holds it, unchanged")
+            continue
+        try:
+            text = base.decode("utf-8")
+        except UnicodeError:
+            raise Unreadable(f"{BASE}:{row.entry} is not UTF-8") from None
+        if f"`{name}`" not in text:
+            found.append(f"{where}: {entry} does not name `{name}`")
+        elif not quotes_the_owner(text, row.quote, name):
+            found.append(f"{where}: {entry} has no paragraph that names `{name}`, says \"the "
+                         f"owner\" and quotes \"{shorten(row.quote, 60)}\"")
         else:
             approved.add(name)
     return found, approved
@@ -619,8 +665,13 @@ def git_env() -> dict[str, str]:
     return env
 
 
-def git(*args: str) -> subprocess.CompletedProcess:
+def git(*args: str, raw: bool = False) -> subprocess.CompletedProcess:
+    """git `args` in the repository, with git_env(); its output as text, or as bytes when
+    `raw`."""
     try:
+        if raw:
+            return subprocess.run(["git", *args], cwd=ROOT, env=git_env(),
+                                  capture_output=True)
         return subprocess.run(["git", *args], cwd=ROOT, env=git_env(), capture_output=True,
                               text=True, encoding="utf-8", errors="surrogateescape")
     except OSError as error:
@@ -803,11 +854,12 @@ def tag_lines(listed: Listed, local: str | None, error: str | None = None,
 def report(listed: Listed, main: dict[str, str], local: str | None,
            error: str | None = None, later: list[str] = (),
            removed: dict[str, Removal] | None = None,
-           read_entry=None) -> tuple[list[str], int]:
+           read_entry=None, read_base=None) -> tuple[list[str], int]:
     """The lines the check prints, and its exit code, for the list, main's names and the
-    list of names removed (none when `removed` is None)."""
+    list of names removed (none when `removed` is None); `read_entry` and `read_base` as
+    removals takes them."""
     found, notes = tag_lines(listed, local, error, later)
-    bad, approved = removals(listed, main, removed or {}, read_entry)
+    bad, approved = removals(listed, main, removed or {}, read_entry, read_base)
     gone = missing(listed, main, approved)
     released = len(listed.names)
     present = sum(name in main for name in listed.names)

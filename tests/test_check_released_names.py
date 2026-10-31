@@ -17,18 +17,25 @@ is neither; a tag targeting a blob or tree is a finding; and a later tag is a no
 it, beside a finding or alone, never a finding.
 
 Removals the owner approves. A released name main lacks, listed in the list of names
-removed with a decision entry that names it and quotes the owner's approval as the row gives
-it, passes, and the summary counts it; approved in an entry but not listed, it fails; listed
-with an entry that does not exist, does not name it, quotes other words, does not put the
-words between quotation marks, or puts them in a paragraph that does not say "the owner",
-it fails with both findings, the row's and the name's. Curly quotation marks and a quotation
-wrapped over a line are read. A row for a name main declares, or one the tag never declared,
-is a finding; a row for a name the tag marked deprecated is allowed, and the name counts as
-gone after that release. The reader of the list of names removed reads rows in order, and a
-file of comments alone as none, and refuses, naming the line, a blank line, an unknown word,
-a row with no words, an entry outside `docs/decisions/` or without its date, an entry path
-that climbs out, a trailing space and a name listed twice. The check, and the self-test,
-read the list of names removed before Lean, and refuse one malformed or absent (exit 2).
+removed with a decision entry that is on origin/main, unchanged in the checkout, and has a
+paragraph that names it, says "the owner" and quotes the row's words, passes, and the
+summary counts it; approved in an entry but not listed, it fails. Listed, it fails with
+both findings, the row's and the name's, when its row and its entry are both new in the head
+and the entry absent from origin/main; when the entry is on origin/main but changed in the
+head (the words added there, the file deleted, a line ending changed); and when origin/main's copy
+does not name it, quotes other words, does not put the words between quotation marks, has
+them only in an HTML comment, or puts them in a paragraph that does not say "the owner" or
+does not name it. Curly quotation marks and a quotation wrapped over a line are read. A row
+for a name main declares, or one the tag never declared, is a finding; a row for a name the
+tag marked deprecated is allowed, and the name counts as gone after that release. With git
+itself: an entry is read from origin/main byte for byte, CRLF kept; a path origin/main lacks,
+a folder, and an entry committed in the checkout but not on origin/main read as absent; and
+a repository with no origin/main cannot judge a row. The reader of the list of names removed
+reads rows in order, and a file of comments alone as none, and refuses, naming the line, a
+blank line, an unknown word, a row with no words, an entry outside `docs/decisions/` or
+without its date, an entry path that climbs out, a trailing space and a name listed twice.
+The check, and the self-test, read the list of names removed before Lean, and refuse one
+malformed or absent (exit 2).
 
 The list's reader refuses, naming the line: no tag line (a row before it, or no line at
 all but comments), two tag lines, a tag line of the wrong shape, a commit that is short, in
@@ -217,17 +224,33 @@ def removed_rows(*rows: str) -> dict:
                                   + "".join(f"{row}\n" for row in rows))
 
 
+def readers(head: dict, base: dict | None = None) -> dict:
+    """The readers removals takes, from entries given as text: `head` the checkout's, and
+    `base` origin/main's, the same as the checkout's when None."""
+    head_bytes = {path: text.encode("utf-8") for path, text in head.items()}
+    base_bytes = head_bytes if base is None else {path: text.encode("utf-8")
+                                                  for path, text in base.items()}
+    return {"read_entry": head_bytes.get, "read_base": base_bytes.get}
+
+
 class TheRemovals(unittest.TestCase):
     """A released name main lacks passes only when it is listed as removed and its decision
-    entry quotes the owner's approval; lacking either, it fails."""
+    entry, on origin/main and unchanged, quotes the owner's approval; lacking either, it
+    fails. Each entry here is on origin/main unchanged unless a case says otherwise."""
     RELEASED = {GONE: "name", "Elements.a": "name"}
     MAIN = {"Elements.a": "name"}
+    WHERE = f"tests/released_names_removed.txt:{REMOVED_LINE}: {GONE}: its decision entry"
 
-    def judge(self, removed: dict, entries: dict) -> tuple[list[str], int]:
+    def judge(self, removed: dict, head: dict, base: dict | None = None):
         return released.report(listed(self.RELEASED), self.MAIN, COMMIT, removed=removed,
-                               read_entry=entries.get)
+                               **readers(head, base))
 
-    def test_an_approved_listed_removal_passes(self):
+    def assertFails(self, lines, code, said):
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[:-1], [released.finding(GONE, "book-III"), said])
+        self.assertNotIn("removed with the owner's approval", lines[-1])
+
+    def test_an_approved_listed_removal_on_main_unchanged_passes(self):
         lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
                                  {ENTRY: APPROVING})
         self.assertEqual((lines, code), ([
@@ -240,28 +263,57 @@ class TheRemovals(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(lines[:-1], [released.finding(GONE, "book-III")])
 
-    def test_a_listed_removal_without_the_owners_approval_fails(self):
-        where = f"tests/released_names_removed.txt:{REMOVED_LINE}: {GONE}: its decision entry"
-        no_quote = (f"{where} {ENTRY} has no paragraph that says \"the owner\" and quotes "
-                    f"\"{WORDS}\"")
+    def test_a_row_and_its_entry_both_new_in_the_head_fail(self):
+        # The pull request that removes the name brings its own row and its own entry, with
+        # words of its own: main holds no such entry, so the approval is not judged at all.
+        lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                 {ENTRY: APPROVING}, base={})
+        self.assertFails(lines, code, f"{self.WHERE} {ENTRY} is not on origin/main; the "
+                         "owner's approval lands first, in a pull request of its own, and "
+                         "the removal after")
+
+    def test_an_entry_on_main_but_changed_in_the_head_fails(self):
+        differs = (f"{self.WHERE} {ENTRY} differs from origin/main's copy; an approval is "
+                   "judged as origin/main holds it, unchanged")
         cases = {
-            "no such entry": ({}, f"{where} {ENTRY} does not exist"),
+            "words added in the head": ({ENTRY: APPROVING},
+                                        {ENTRY: APPROVING.replace("\"a planted\n  approval, "
+                                                                  "for the test\"", "nothing")}),
+            "the entry deleted in the head": ({}, {ENTRY: APPROVING}),
+            "a line ending changed": ({ENTRY: APPROVING.replace("\n", "\r\n")},
+                                      {ENTRY: APPROVING}),
+        }
+        for label, (head, base) in cases.items():
+            with self.subTest(label):
+                lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
+                                         head, base)
+                self.assertFails(lines, code, differs)
+
+    def test_a_listed_removal_without_the_owners_approval_on_main_fails(self):
+        no_quote = (f"{self.WHERE} {ENTRY} has no paragraph that names `{GONE}`, says \"the "
+                    f"owner\" and quotes \"{WORDS}\"")
+        cases = {
             "the entry does not name it": ({ENTRY: APPROVING.replace(f"`{GONE}`", "it")},
-                                           f"{where} {ENTRY} does not name `{GONE}`"),
+                                           f"{self.WHERE} {ENTRY} does not name `{GONE}`"),
             "other words quoted": ({ENTRY: APPROVING.replace("planted", "other")}, no_quote),
             "the words not in quotation marks": ({ENTRY: APPROVING.replace('"', "")},
                                                  no_quote),
             "the owner in another paragraph": (
                 {ENTRY: f"The owner decided, of `{GONE}`.\n\nThe crew: \"{WORDS}\".\n"},
                 no_quote),
+            "the words only in an HTML comment": (
+                {ENTRY: f"<!-- The owner, of `{GONE}`: \"{WORDS}\" -->\nOf `{GONE}`, the "
+                        "owner.\n"},
+                no_quote),
+            "the name in another paragraph": (
+                {ENTRY: f"Of `{GONE}`.\n\nThe owner, of another name: \"{WORDS}\".\n"},
+                no_quote),
         }
         for label, (entries, said) in cases.items():
             with self.subTest(label):
                 lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
                                          entries)
-                self.assertEqual(code, 1)
-                self.assertEqual(lines[:-1], [released.finding(GONE, "book-III"), said])
-                self.assertNotIn("removed with the owner's approval", lines[-1])
+                self.assertFails(lines, code, said)
 
     def test_curly_quotation_marks_are_read(self):
         curly = f"The owner, of `{GONE}`: “{WORDS}”.\n"
@@ -275,7 +327,7 @@ class TheRemovals(unittest.TestCase):
                                       COMMIT, removed=removed_rows(
                                           f"removed Elements.a {ENTRY} {WORDS}",
                                           f"removed Elements.never {ENTRY} {WORDS}"),
-                                      read_entry=approving.get)
+                                      **readers(approving))
         self.assertEqual(code, 1)
         self.assertEqual(lines[:-1], [
             f"tests/released_names_removed.txt:{REMOVED_LINE}: Elements.a: listed as removed, "
@@ -286,7 +338,7 @@ class TheRemovals(unittest.TestCase):
     def test_a_name_the_tag_deprecated_may_be_listed_and_counts_as_gone(self):
         lines, code = released.report(listed({GONE: "deprecated"}), {}, COMMIT,
                                       removed=removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),
-                                      read_entry={ENTRY: APPROVING}.get)
+                                      **readers({ENTRY: APPROVING}))
         self.assertEqual((lines, code), ([
             "✓ tests/released_names.txt: 1 names released in book-III: 0 present on main, 0 "
             "of them deprecated there; 0 missing with no deprecated alias; 1 gone after the "
@@ -851,6 +903,24 @@ class WithGit(unittest.TestCase):
                     probe.assert_not_called()
                     self.git("update-ref", "-d", "refs/tags/book-III")
 
+    def test_an_entry_is_read_from_origin_main_byte_for_byte(self):
+        with self.assertRaises(released.Unreadable) as raised:
+            released.base_entry(ENTRY)
+        self.assertIn("holds no origin/main", str(raised.exception))
+        body = APPROVING.replace("\n", "\r\n")
+        (self.repo / ENTRY).parent.mkdir(parents=True)
+        (self.repo / ENTRY).write_bytes(body.encode("utf-8"))
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "c")
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.assertEqual(released.base_entry(ENTRY), body.encode("utf-8"))
+        self.assertEqual(released.worktree_entry(ENTRY), body.encode("utf-8"))
+        self.assertIsNone(released.base_entry("docs/decisions/2026-10-31-absent.md"))
+        self.assertIsNone(released.base_entry("docs/decisions"))
+        # Committed in the checkout but not on origin/main: absent there.
+        self.commit({"docs/decisions/2026-10-31-new.md": APPROVING})
+        self.assertIsNone(released.base_entry("docs/decisions/2026-10-31-new.md"))
+
     def test_the_later_tags_hold_the_lists_commit(self):
         first = self.commit({"a": "1\n"})
         self.git("tag", "book-III")
@@ -955,23 +1025,31 @@ class TheModes(unittest.TestCase):
         probe.assert_not_called()
 
     def test_the_check_reads_the_list_of_names_removed_and_its_entries(self):
-        # An approved, listed removal passes; the same row with its entry gone fails.
+        # An approved, listed removal whose entry is on origin/main unchanged passes; the
+        # entry changed in the checkout, or absent from origin/main, fails.
         self.write(f"name {GONE}", "name Elements.a")
         self.removed.write_text(f"removed {GONE} {ENTRY} {WORDS}\n", encoding="utf-8")
         entry = self.folder / ENTRY
         entry.parent.mkdir(parents=True)
         entry.write_text(APPROVING, encoding="utf-8")
-        with mock.patch.object(released, "ROOT", self.folder):
+        on_main = {ENTRY: APPROVING.encode("utf-8")}
+        with mock.patch.object(released, "ROOT", self.folder), \
+                mock.patch.object(released, "base_entry", on_main.get):
             code, out, _, _ = self.run_main([], {"Elements.a": "name"})
             self.assertEqual(code, 0, out)
             self.assertIn("1 removed with the owner's approval", out)
-            entry.unlink()
+            entry.write_text(APPROVING + "\nMore.\n", encoding="utf-8")
+            code, out, _, _ = self.run_main([], {"Elements.a": "name"})
+            self.assertEqual(code, 1, out)
+            self.assertIn(f"{ENTRY} differs from origin/main's copy", out)
+            on_main.clear()
             code, out, _, _ = self.run_main([], {"Elements.a": "name"})
         self.assertEqual(code, 1, out)
         self.assertEqual(out.splitlines()[:2], [
             released.finding(GONE, "book-III"),
-            f"tests/released_names_removed.txt:1: {GONE}: its decision entry {ENTRY} does not "
-            "exist"])
+            f"tests/released_names_removed.txt:1: {GONE}: its decision entry {ENTRY} is not on "
+            "origin/main; the owner's approval lands first, in a pull request of its own, and "
+            "the removal after"])
 
     def test_a_malformed_or_absent_list_of_names_removed_stops_before_lean(self):
         self.write("name Elements.a")

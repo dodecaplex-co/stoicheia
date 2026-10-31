@@ -1,4 +1,4 @@
-<!-- entry: id=released-names-check cards=700 line="A new check holds main to the names the last release tag declares: each stays, under its own name or a deprecated alias, unless that tag had deprecated it or the owner approved its removal." -->
+<!-- entry: id=released-names-check cards=700 line="A new check holds main to the names the last release tag declares: each stays, under its own name or a deprecated alias, unless that tag had deprecated it, or its removal is approved and listed." -->
 - **A check that main keeps every released name (checks,
   [#700](https://github.com/dodecaplex-co/stoicheia/issues/700)).** The coordinator's
   orders of 29 October 2026, 12:18, assign card #700.
@@ -116,28 +116,33 @@
   coordinator's message of 30 October 2026 asks that the check allow one thing more: the
   owner decided that day that Metric 9, `Elements.Tacit.area_congruent`, a name tag
   `book-III` declares, leaves main this release with no alias (#517), and that the release
-  notes list it as removed. So a released name may leave main with no alias when two
-  things hold, and only then: a decision entry quotes the owner's approval of its removal,
-  and the release notes' list of names removed records it. The release notes are written
-  at the release, so that list is kept until then in `tests/released_names_removed.txt`,
-  for the notes to take it from (#702). Each row there is `removed`, the name, the path of
-  its decision entry under `docs/decisions/`, and the owner's words as the entry quotes
-  them. The check holds each row to three things: its name is one the list's tag declares
-  and main does not; its entry exists and names it in backticks; and one paragraph of the
-  entry says "the owner" and holds the row's words between quotation marks. A row that
-  fails is a finding, naming its line, and a released name main lacks passes only when its
-  row holds; with no row, or one that fails, it is the finding it always was. So an
-  approved removal passes only when it is listed, and a listed one only when it is
-  approved. The list is read before Lean, and a malformed or missing one stops the check
-  (exit 2). It is committed with comments and no row: Metric 9's row comes in the pull
-  request that removes Metric 9, with the entry that quotes the owner, and the list is
-  emptied in the pull request that commits the next release's list of names.
-  `tests/test_check_released_names.py` holds both sides, an approved, listed removal
-  passing and one approved but not listed, or listed but not approved, failing, with each
-  way an entry can fall short.
+  notes list it as removed. This entry quotes no approval of that removal, and is not one.
+  A released name may leave main with no alias when two things hold, and only then: a
+  decision entry already on main quotes the owner's approval of its removal, and the
+  release notes' list of names removed records it. The release notes are written at the
+  release, so that list is kept until then in `tests/released_names_removed.txt`, for the
+  notes to take it from (#702). Each row there is `removed`, the name, the path of its
+  decision entry under `docs/decisions/`, and the owner's words as that entry quotes them.
+  The check holds each row to three things: its name is one the list's tag declares and
+  main does not; its entry is on origin/main, read out of Git, and the checkout holds it
+  byte for byte the same; and one paragraph of that copy names it in backticks, mentions
+  the owner and holds the row's words between quotation marks. So the approval lands
+  first, in a pull request of its own that the owner sees, and the removal comes after: a
+  pull request that removes a name cannot bring its own approval, nor change one already
+  on main. A row that fails is a finding, naming its line, and a released name main lacks
+  passes only when its row holds; with no row, or one that fails, it is the finding it
+  always was. The list is read before Lean, and a malformed or missing one stops the check
+  (exit 2), as does a repository with no origin/main when the list has a row. The list has
+  no rows yet. Metric 9's row needs an entry already on main that quotes the owner, and
+  comes in the pull request that removes Metric 9; the list is emptied in the pull request
+  that commits the next release's list of names. `tests/test_check_released_names.py`
+  holds both sides: an approved, listed removal whose entry is on main unchanged passes;
+  one approved but not listed fails; and a listed one fails when its entry is new in the
+  pull request, changed there, or falls short of naming it and quoting the owner.
 
-  This entry approves the new `tests/released_names_removed.txt`, the names removed with
-  the owner's approval, none yet.
+  This entry approves the new `tests/released_names_removed.txt`, the list of names removed
+  with no alias. It has no rows yet, and each row it gains needs a decision entry already on
+  main that quotes the owner's approval of that removal.
 
   This entry approves the new `scripts/check_released_names.py`, the check with its probe
   and its self-test.
