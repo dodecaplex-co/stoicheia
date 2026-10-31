@@ -40,7 +40,7 @@ note = "Euclid takes L and M where HA and GB produced meet KL. The Lean finds bo
 [[passage]]
 at = "therefore LB is equal to BF"
 kind = "helper"
-helper = "Between.of_sameSide"
+helper = "Prop43"
 note = "Euclid applies I.43 to the complements in HLKF. Beneath the earlier constructions, `Between.of_sameSide` puts B between H and K, A between H and L, M between K and L, E between F and K, and G between H and F; these are the five orders `Prop43` takes here."
 
 [[passage]]
