@@ -4,13 +4,15 @@ Stoicheia's pull request template (docs/WORKFLOW.md, "Landing work: pull request
 marked `safe_push` and writes its pre-flight summary between the preflight markers; the
 coordinator writes the rest. `git safe-push --merge <n>` refuses while a box marked
 **Required** is unticked, or one marked **Required if protected** when a protected path
-changes, while a required box of this template is missing from the body, and while "What
-and why", a row of the Reviews table (the security review's when a protected path
-changes), "Unfinished work" or "Needs the owner's OK" is unwritten, or an issue named
-under "Unfinished work" is not open with blocks-release. A pull request labelled release
-is refused while any blocks-release issue is open. Boxes and other sections count where
-GitHub shows them; "Unfinished work" is checked as raw text, as docs/WORKFLOW.md says
-under "The merge".
+changes, or one marked **Required if code** unless the change is of Markdown files alone,
+of R0 or R1 by current main's `scripts/risk.py`, while a required box of this template is
+missing from the body, and while "What and why", a row of the Reviews table (the security
+review's when a protected path changes, and `/no-mistakes`'s when the change counts as
+code or is protected), "Unfinished work" or "Needs the owner's OK" is unwritten, or an
+issue named under "Unfinished work" is not open with blocks-release. A pull request
+labelled release is refused while any blocks-release issue is open. Boxes and other
+sections count where GitHub shows them; "Unfinished work" is checked as raw text, as
+docs/WORKFLOW.md says under "The merge".
 -->
 
 ## What and why

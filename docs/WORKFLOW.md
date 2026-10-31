@@ -1319,9 +1319,11 @@ and adds nothing beyond the generated pages and the decisions page. A conflict b
 members, or between a member and origin/main, and a review record's stamp of a member's
 change, are made in a branch that contains the sides it resolves or stamps: merge
 origin/main, or the other member, into the member, resolve or stamp there, and review
-that head, with its own `/no-mistakes`; the train then merges it, with one row (a
-member it contains may still be merged before it, with its own row). A branch from
-origin/main cannot hold them: a resolution made there conflicts again when
+that head, with its own `/no-mistakes` unless the resulting branch's complete change is
+of Markdown files alone, of R0 or R1; a branch that changes a review record still needs
+it. The train then merges the branch, with one row (a member it contains may still be
+merged before it, with its own row). A branch from origin/main cannot hold them: a
+resolution made there conflicts again when
 the train merges it beside the members, and `scripts/review_stamp.py` stamps a record
 with the hashes of the files in the checkout it runs in, refusing a `--commit` whose Lean
 file differs. A stamp or an edit that stands alone, touching no file a member changes,
