@@ -45,3 +45,8 @@
   remain in `scripts/test_safe_push_times.json`. Those obsolete entries continue to
   contribute to `shard_plan`'s fallback median: it is 3.3 seconds with them, rather than
   2.8 seconds for the current measured tests.
+
+  The late-import coverage described above is narrower than the whole landing tool. Its
+  replacement test exercises the cached pre-flight's step 4 on a cache miss and a cache
+  hit; it does not exercise every landing-tool path. `merge_main`, for example, lies
+  outside that coverage.
