@@ -2,7 +2,8 @@
 """The unfinished work and release gates, without Lean, gh or a network.
 
 Run with python3 -I tests/test_release_gate.py. The command's fixture mode is exercised
-as a subprocess; GitHub's replies and HTTP pages are data supplied by the tests.
+as a subprocess; GitHub's replies and HTTP pages are data supplied by the tests. Its
+--results-current mode runs git for real, in a repository the tests build for it.
 """
 
 import io
@@ -85,6 +86,487 @@ class Fixtures(unittest.TestCase):
                 redirect_stderr(io.StringIO()):
             self.assertEqual(gate.main(["--issues-json", ""]), 2)
         read.assert_not_called()
+
+
+COMMITTED = "harness files as committed"
+OLDER = "1" * 40   # a commit the fixture's repository lacks
+DIGEST = "0" * 64
+
+
+def results_files(commit, state=COMMITTED):
+    """The model's results, their headers as run.py writes them, naming commit."""
+    line = f"# commit: {commit} ({state})\n"
+    files = {f"tests/model/results/{key}.txt":
+             f"# {key}: a run\n# command: python3 {key}.py\n# seeds: none (deterministic)\n"
+             f"{line}# harness sha256: {DIGEST}\n# date: 2026-10-30\n\n{key}: done\n"
+             for key in ("exhaustive", "mutations")}
+    files["tests/model/results/summary.txt"] = f"{line}# harness: {DIGEST}\n\nno counterexample\n"
+    return files
+
+
+def model_page(commit, prose="The model checks each axiom on configurations of points."):
+    return (f"# The model\n\n{prose}\n\n<!-- counts:begin -->\n"
+            f"Counts from `run.py --full --write` at commit `{commit[:12]}`, 2026-10-30.\n"
+            "<!-- counts:end -->\n\nWhat the counts say.\n")
+
+
+def screen_source(record="none yet", code="RULES = 1\n"):
+    return f'"""The overlap screen.\n\nIts last run: {record}.\n"""\nimport sys\n\n{code}'
+
+
+class ResultsCurrent(unittest.TestCase):
+    """--results-current on a git repository of its own, built as results_check's self-test
+    builds one, its git run for real with its environment cleared. Its commits: O, the
+    library, the model's page and results naming an older commit, the screen and its
+    record of an older run, the reports and the README; C, a change to the library; R, the
+    results and counts naming C; S, the screen's record, catalogue and docstring; E, the
+    release's decisions entry; P, the acceptance report. No Lean, network or gh."""
+
+    @classmethod
+    def setUpClass(cls):
+        folder = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(folder.cleanup)
+        cls.root = Path(folder.name) / "edition"
+        cls.root.mkdir()
+        # The script keeps HOME, so its git reads no configuration of the person running.
+        home = Path(folder.name) / "home"
+        home.mkdir()
+        cls.home = {"HOME": str(home), "XDG_CONFIG_HOME": str(home)}
+        cls.env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        cls.env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", **cls.home)
+        cls.git("init", "-q")
+        cls.O = cls.commit(None, {
+            "Elements/A.lean": "theorem a : True := trivial\n",
+            "tests/model/MODEL.md": model_page(OLDER), **results_files(OLDER),
+            "Audit/screen.py": screen_source(),
+            "Audit/screen-run.toml": f'commit = "{OLDER}"\n',
+            "docs/reports/overlaps.md": "# Overlaps\n\nNone screened yet.\n",
+            "docs/reports/acceptance-books-I-III.md": "Revision: none\n",
+            "README.md": "# Edition\n\n<!-- scope:books -->\nBooks I and II\n"
+                         "<!-- /scope:books -->\n",
+            "docs/decisions/README.md": "The entries, in name order.\n",
+            "docs/decisions/2026-10-21-entry-files.md": "- **Entry files.** One each.\n"})
+        cls.C = cls.commit(cls.O, {"Elements/A.lean": "theorem a : True := by trivial\n"})
+        cls.R = cls.commit(cls.C, {**results_files(cls.C),
+                                   "tests/model/MODEL.md": model_page(cls.C)})
+        cls.S = cls.commit(cls.R, {
+            "Audit/screen-run.toml": f'commit = "{cls.C}"\n',
+            "docs/reports/overlaps.md": "# Overlaps\n\nScreened: none closed.\n",
+            "Audit/screen.py": screen_source(record=cls.C[:12])})
+        cls.E = cls.commit(cls.S, {
+            "docs/decisions/2026-10-30-release-books-i-iii.md": "- **The release.** Its runs.\n"})
+        cls.P = cls.commit(cls.E, {"docs/reports/acceptance-books-I-III.md":
+                                   f"Revision: {cls.E}\n"})
+
+    @classmethod
+    def git(cls, *args):
+        return subprocess.run(["git", "-c", "user.name=release-gate test",
+                               "-c", "user.email=release-gate@example.invalid", *args],
+                              cwd=cls.root, env=cls.env, check=True, capture_output=True,
+                              text=True).stdout.strip()
+
+    @classmethod
+    def commit(cls, base, changes):
+        """A commit on base with these files changed: text, None to delete, or a function
+        given the path."""
+        if base:
+            cls.git("checkout", "-q", "-f", "--detach", base)
+            cls.git("clean", "-q", "-f", "-d", "-x")
+        for name, change in changes.items():
+            path = cls.root / name
+            if change is None or callable(change):
+                path.unlink()
+            if callable(change):
+                change(path)
+            elif change is not None:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(change, encoding="utf-8")
+        cls.git("add", "-A")
+        cls.git("commit", "-q", "--allow-empty", "-m", "a commit")
+        return cls.git("rev-parse", "HEAD")
+
+    @classmethod
+    def by_git(cls, base, *commands):
+        """A commit on base made by these git commands, for what the helper above cannot
+        make: a rename by git mv, a merge, a gitlink."""
+        cls.git("checkout", "-q", "-f", "--detach", base)
+        cls.git("clean", "-q", "-f", "-d", "-x")
+        for command in commands:
+            cls.git(*command)
+        return cls.git("rev-parse", "HEAD")
+
+    def judge(self, rev, folder=None, **environ):
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(os.environ, {**self.home, **environ}), \
+                redirect_stdout(out), redirect_stderr(err):
+            code = gate.main(["--results-current", "--repo-dir", str(folder or self.root),
+                              f"--rev={rev}"])
+        return code, out.getvalue(), err.getvalue()
+
+    def refused(self, rev, paths, *said, folder=None):
+        """Exit 1, naming exactly these paths, each reason with its words."""
+        code, out, err = self.judge(rev, folder)
+        self.assertEqual(code, 1, out + err)
+        named = {line[2:].split(": ", 1)[0] for line in out.splitlines()
+                 if line.startswith("  ")}
+        self.assertEqual(named, set(paths), out)
+        for words in said:
+            self.assertIn(words, out)
+        return out
+
+    def test_the_heads_own_fresh_run_passes(self):
+        for rev in (self.R, self.S, self.E, self.P):
+            with self.subTest(rev=rev):
+                code, out, err = self.judge(rev)
+                self.assertEqual((code, err), (0, ""), out)
+                self.assertIn(f"they name {self.C[:12]}", out)
+        # O holds a record, so S modifies it; the screen's first run adds one, which passes.
+        first = self.commit(self.C, {"Audit/screen-run.toml": None})
+        fresh = self.commit(first, {**results_files(first),
+                                    "tests/model/MODEL.md": model_page(first)})
+        code, out, err = self.judge(self.commit(fresh, {
+            "Audit/screen-run.toml": f'commit = "{first}"\n'}))
+        self.assertEqual((code, err), (0, ""), out)
+        self.assertIn(f"they name {first[:12]}", out)
+        # Run where it is, as the coordinator runs it: HEAD, with no option but the mode.
+        self.git("checkout", "-q", "-f", "--detach", self.P)
+        with mock.patch.dict(os.environ, self.home), redirect_stdout(io.StringIO()):
+            cwd = os.getcwd()
+            try:
+                os.chdir(self.root)
+                self.assertEqual(gate.main(["--results-current"]), 0)
+            finally:
+                os.chdir(cwd)
+
+    def test_results_from_an_older_commit_fail_naming_the_library(self):
+        stale = self.commit(self.P, {**results_files(self.O),
+                                     "tests/model/MODEL.md": model_page(self.O)})
+        self.refused(stale, ["Elements/A.lean"],
+                     f"Elements/A.lean: modified since {self.O[:12]}, the results' commit")
+        # So does a change to the library made after the run, edited or added.
+        changed = self.commit(self.P, {"Elements/A.lean": "theorem a : 1 = 1 := rfl\n",
+                                       "Elements/B.lean": "theorem b : True := trivial\n"})
+        self.refused(changed, ["Elements/A.lean", "Elements/B.lean"], "modified since",
+                     "Elements/B.lean: added since")
+
+    def test_each_change_outside_the_release_steps_outputs_is_refused(self):
+        entry = "docs/decisions/2026-10-30-release-books-i-iii.md"
+        old_entry = "docs/decisions/2026-10-21-entry-files.md"
+        cases = [
+            ({"tests/model/MODEL.md": model_page(self.C, prose="Other prose.")},
+             ["tests/model/MODEL.md"], "changed outside its one counts block"),
+            ({"tests/model/MODEL.md": model_page(self.C).replace("<!-- counts:end -->\n",
+                                                                 "")},
+             ["tests/model/MODEL.md"], "has no one counts block"),
+            ({"tests/model/MODEL.md": None}, ["tests/model/MODEL.md"], "deleted since"),
+            ({"tests/model/MODEL.md": lambda p: p.symlink_to("../../README.md")},
+             ["tests/model/MODEL.md"], "has no one counts block", "changed in type"),
+            ({"tests/model/MODEL.md": model_page(self.C) * 2}, ["tests/model/MODEL.md"],
+             "has no one counts block", "changed outside its one counts block"),
+            ({"tests/model/MODEL.md": model_page(self.C).replace(
+                "<!-- counts:end -->", "<!-- counts:begin -->\n<!-- counts:end -->")},
+             ["tests/model/MODEL.md"], "has no one counts block"),
+            ({"Audit/screen-run.toml": None}, ["Audit/screen-run.toml"], "deleted since"),
+            ({"Audit/screen.py": screen_source(self.C[:12], code="RULES = 2\n")},
+             ["Audit/screen.py"], "changed in the code the screen hashes"),
+            # Code on the docstring's last line keeps the whole text, so the change is refused.
+            ({"Audit/screen.py": '"""The screen, run."""; import sys\n'},
+             ["Audit/screen.py"], "changed in the code"),
+            ({"Audit/screen.py": screen_source(self.C[:12], code="RULES = (\n")},
+             ["Audit/screen.py"], "changed in the code"),
+            ({"Audit/screen.py": None}, ["Audit/screen.py"], "deleted since"),
+            ({"README.md": "# Edition\n\n<!-- scope:books -->\nBooks I to III\n"
+                           "<!-- /scope:books -->\n"}, ["README.md"], "modified since"),
+            ({old_entry: "- **Entry files.** Two each.\n"}, [old_entry], "modified since"),
+            ({old_entry: None}, [old_entry], "deleted since"),
+            ({"docs/decisions/README.md": "Changed.\n"}, ["docs/decisions/README.md"],
+             "modified since"),
+            ({"docs/decisions/2026-10-30-second.md": "- **Another.** Its runs.\n"},
+             [entry, "docs/decisions/2026-10-30-second.md"],
+             "one of 2 decisions entries added, where a release adds one"),
+            ({"docs/decisions/2026-10-30-Release.md": "- **Misnamed.**\n"},
+             ["docs/decisions/2026-10-30-Release.md"], "added since"),
+            ({"tests/model/results/mutations.txt": None},
+             ["tests/model/results/mutations.txt"], "deleted since"),
+            ({"tests/model/results/notes.md": "A note.\n"},
+             ["tests/model/results/notes.md"], "added since"),
+            ({"tests/model/results/mutations.txt": lambda p: p.symlink_to("summary.txt")},
+             ["tests/model/results/mutations.txt"], "not a regular file", "changed in type"),
+            ({"docs/reports/overlaps.md": None}, ["docs/reports/overlaps.md"], "deleted"),
+            ({"docs/reports/acceptance-books-I-III.md": None},
+             ["docs/reports/acceptance-books-I-III.md"], "deleted"),
+            ({"facts.json": "{}\n"}, ["facts.json"], "added since"),
+        ]
+        for changes, paths, *said in cases:
+            with self.subTest(changes=list(changes), said=said):
+                self.refused(self.commit(self.P, changes), paths, *said)
+        # A rename is refused as a deletion and an addition, and so is main's later work
+        # merged after the run.
+        main = self.commit(self.C, {"Elements/B.lean": "theorem b : True := trivial\n"})
+        for commands, paths, *said in (
+                ([("mv", "Elements/A.lean", "Elements/Z.lean"),
+                  ("commit", "-q", "-m", "a rename")],
+                 ["Elements/A.lean", "Elements/Z.lean"], "Elements/A.lean: deleted since",
+                 "Elements/Z.lean: added since"),
+                ([("merge", "-q", "--no-edit", main)], ["Elements/B.lean"],
+                 "Elements/B.lean: added since")):
+            with self.subTest(commands=commands[0][0]):
+                self.refused(self.by_git(self.P, *commands), paths, *said)
+        # An added results file that names C passes: which files the results hold is
+        # results_check's job, and this mode's is only whether they are the head's own.
+        with self.subTest(changes=["tests/model/results/extra.txt"]):
+            extra = results_files(self.C)["tests/model/results/exhaustive.txt"]
+            code, out, err = self.judge(self.commit(self.P, {
+                "tests/model/results/extra.txt": extra}))
+            self.assertEqual((code, err), (0, ""), out)
+
+    def test_results_that_name_another_commit_or_state_are_refused(self):
+        two = self.commit(self.P, results_files(self.O) | {
+            k: v for k, v in results_files(self.C).items() if k.endswith("summary.txt")})
+        out = self.refused(two, ["the results name 2 commits"])
+        self.assertIn(f"{self.C[:12]} in tests/model/results/summary.txt", out)
+        state = self.commit(self.P, {k: v for k, v in results_files(
+            self.C, "harness files differ from this commit").items()
+            if k.endswith("mutations.txt")})
+        self.refused(state, ["tests/model/results/mutations.txt"],
+                     '"(harness files differ from this commit)", not '
+                     '"(harness files as committed)"')
+        named = self.commit(self.P, {"tests/model/MODEL.md": model_page(self.O)})
+        self.refused(named, ["tests/model/MODEL.md"],
+                     f"its counts name {self.O[:12]}, not {self.C[:12]}")
+        # Results run on a side branch: their commit is not in the head's history.
+        side = self.commit(self.O, {"Elements/A.lean": "theorem a : 2 = 2 := rfl\n"})
+        moved = self.commit(self.P, {**results_files(side),
+                                     "tests/model/MODEL.md": model_page(side)})
+        self.refused(moved, [f"{side[:12]}, the results' commit, is not an ancestor of "
+                             f"{moved[:12]}"])
+        # Results naming an annotated tag of C, which merge-base and diff would peel to C.
+        self.git("tag", "-a", "-m", "a tag", "results-tag", self.C)
+        try:
+            tag = self.git("rev-parse", "results-tag")
+            tagged = self.commit(self.P, {**results_files(tag),
+                                          "tests/model/MODEL.md": model_page(tag)})
+            self.refused(tagged, [f"the results name {tag}, which is no commit"],
+                         "which is no commit")
+        finally:
+            self.git("tag", "-d", "results-tag")
+
+    def test_paths_are_printed_escaped(self):
+        out = self.refused(self.commit(self.P, {"Elements/\x1b[2J.lean": "x\n"}),
+                           ["Elements/\\x1b[2J.lean"])
+        self.assertNotIn("\x1b", out)
+
+    def test_what_cannot_be_read_is_exit_two(self):
+        summary = "tests/model/results/summary.txt"
+        line = f"# commit: {self.C} ({COMMITTED})\n"
+        cases = [
+            (self.commit(self.P, {**results_files(OLDER),
+                                  "tests/model/MODEL.md": model_page(OLDER)}), "lacks"),
+            (self.O, "lacks"),
+            (self.commit(self.P, {k: None for k in results_files(self.C)}),
+             "holds no tests/model/results"),
+            (self.commit(self.P, {**{k: None for k in results_files(self.C)},
+                                  "tests/model/results/README": "Notes.\n"}),
+             "holds no results in tests/model/results"),
+            (self.commit(self.P, {"tests/model/results/mutations.txt":
+                                  "# mutations: a run\n# command: c\n# seeds: none\n"
+                                  "# commit: unknown (state unknown)\n\n"}),
+             "mutations.txt: its header names no commit, once, on line 4"),
+            (self.commit(self.P, {summary: f"# harness: {DIGEST}\n{line}\n"}),
+             "summary.txt: its header names no commit, once, on line 1"),
+            (self.commit(self.P, {summary: f"{line}{line}\n"}),
+             "summary.txt: its header names no commit, once"),
+            (self.commit(self.P, {summary: f"{line.rstrip()} \n\n"}), "on line 1"),
+            (self.commit(self.P, {k: v.replace("\n", "\r\n")
+                                  for k, v in results_files(self.C).items()}),
+             "its header names no commit, once"),
+            ("no-such-branch", "names no commit"),
+            ("--output=/dev/null", "names no commit"),
+        ]
+        for rev, said in cases:
+            with self.subTest(rev=rev, said=said):
+                code, out, err = self.judge(rev)
+                self.assertEqual(code, 2, out + err)
+                self.assertEqual(out, "")
+                self.assertIn(said, err)
+        with tempfile.TemporaryDirectory() as empty, redirect_stderr(io.StringIO()), \
+                mock.patch.dict(os.environ, self.home):
+            self.assertEqual(gate.main(["--results-current", "--repo-dir", empty]), 2)
+
+    def test_git_is_not_redirected_by_the_environment_or_replacements(self):
+        stale = self.commit(self.P, {"Elements/A.lean": "theorem a : 3 = 3 := rfl\n"})
+        other = Path(self.root.parent) / "other"
+        subprocess.run(["git", "init", "-q", str(other)], env=self.env, check=True,
+                       capture_output=True)
+        redirect = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other),
+                    "GIT_OBJECT_DIRECTORY": str(other / ".git/objects"),
+                    "GIT_INDEX_FILE": str(other / ".git/index"),
+                    "GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "diff.external",
+                    "GIT_CONFIG_VALUE_0": "false"}
+        self.assertEqual(self.judge(self.P, **redirect)[0], 0)
+        self.assertEqual(self.judge(stale, **redirect)[0], 1)
+        # A replacement cannot make a stale head read as the fresh one.
+        self.git("replace", stale, self.P)
+        try:
+            self.assertEqual(self.git("rev-parse", f"{stale}^{{tree}}"),
+                             self.git("rev-parse", f"{self.P}^{{tree}}"))
+            self.refused(stale, ["Elements/A.lean"])
+        finally:
+            self.git("replace", "-d", stale)
+        # Nor can a graft put results run on other history into the head's.
+        side = self.commit(self.O, {"Elements/A.lean": "theorem a : 5 = 5 := rfl\n"})
+        moved = self.commit(self.P, {**results_files(side),
+                                     "tests/model/MODEL.md": model_page(side)})
+        grafts = self.root / ".git" / "info" / "grafts"
+        grafts.parent.mkdir(exist_ok=True)
+        grafts.write_text(f"{moved} {self.P} {side}\n", encoding="ascii")
+        try:
+            # git, grafts read, agrees; a git that reads none cannot be fooled by one.
+            agrees = subprocess.run(["git", "merge-base", "--is-ancestor", side, moved],
+                                    cwd=self.root, env=self.env, capture_output=True)
+            if agrees.returncode:
+                self.skipTest("this git reads no grafts")
+            self.refused(moved, [f"{side[:12]}, the results' commit, is not an ancestor of "
+                                 f"{moved[:12]}"])
+        finally:
+            grafts.unlink()
+
+    def test_a_subfolder_and_the_repositorys_own_config_hide_no_change(self):
+        # Run from a subfolder, with a config that would limit the diff to that folder and
+        # leave out every gitlink: the library's change, and a gitlink added, are named.
+        stale = self.commit(self.P, {"Elements/A.lean": "theorem a : 6 = 6 := rfl\n"})
+        linked = self.by_git(self.P, ("update-index", "--add", "--cacheinfo",
+                                      f"160000,{self.C},Elements/Sub"),
+                             ("commit", "-q", "-m", "a gitlink"))
+        config = {"diff.relative": "true", "diff.ignoreSubmodules": "all"}
+        for key, value in config.items():
+            self.git("config", "--local", key, value)
+        try:
+            for folder in (self.root, self.root / "docs"):
+                with self.subTest(folder=folder.name):
+                    code, out, err = self.judge(self.P, folder)
+                    self.assertEqual((code, err), (0, ""), out)
+                    self.refused(stale, ["Elements/A.lean"], folder=folder)
+                    self.refused(linked, ["Elements/Sub"], "Elements/Sub: added since",
+                                 folder=folder)
+        finally:
+            for key in config:
+                self.git("config", "--local", "--unset", key)
+
+    def test_the_command_line(self):
+        script = str(ROOT / "scripts/check_release_gate.py")
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        env.update(self.home)
+        stale = self.commit(self.P, {"Elements/A.lean": "theorem a : 4 = 4 := rfl\n"})
+        for rev, code, stream, words in (
+                (self.P, 0, "stdout", "the model's results are current"),
+                (stale, 1, "stdout", "Elements/A.lean: modified since"),
+                (self.O, 2, "stderr", "release gate: the results name")):
+            with self.subTest(code=code):
+                result = subprocess.run([sys.executable, script, "--results-current",
+                                         "--repo-dir", str(self.root), "--rev", rev],
+                                        capture_output=True, text=True, env=env)
+                self.assertEqual(result.returncode, code, result.stdout + result.stderr)
+                self.assertIn(words, getattr(result, stream))
+        for args, words in ((["--results-current", "--issues-json", os.devnull],
+                             "--results-current reads no issue"),
+                            (["--results-current", "--repo", "example/edition"],
+                             "--results-current reads no issue"),
+                            (["--repo-dir", str(self.root)], "go with --results-current"),
+                            (["--issues-json", os.devnull, "--rev", self.P],
+                             "go with --results-current")):
+            with self.subTest(args=args):
+                result = subprocess.run([sys.executable, script, *args], capture_output=True,
+                                        text=True, env=env)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("usage:", result.stderr)
+                self.assertIn(words, result.stderr)
+
+    def test_the_patterns_are_run_pys(self):
+        # tests/model/run.py is imported as results_check imports it, but in a process of
+        # its own, so that the harness modules its import brings stay out of this one; its
+        # header() is given a stand-in run, and its paths are taken from its root. So are
+        # Audit/screen.py and scripts/check_acceptance.py, for the screen's rule, its code
+        # without its docstring, and the paths of the screen, its record, the catalogue of
+        # overlaps and the report.
+        cases = {
+            "empty": "",
+            "no_module_docstring": "# no module docstring\nx = 1\n",
+            "single_line_docstring": '"""module"""\nx = 1\n',
+            "multiline_docstring": '"""module\ntext\n"""\nx = 1\n',
+            "preceding_comments": '# before\n"""module"""\nx = 1\n',
+            "code_on_last_line": '"""module"""; x = 1\n',
+            "nested_docstring": 'def f():\n    """nested"""\n    return 1\n',
+            "crlf": '"""module"""\r\nx = 1\r\n',
+            "invalid_python": "def broken(:\n",
+        }
+        expected = {
+            "empty": ["return", ""],
+            "no_module_docstring": ["return", cases["no_module_docstring"]],
+            "single_line_docstring": ["return", "x = 1\n"],
+            "multiline_docstring": ["return", "x = 1\n"],
+            "preceding_comments": ["return", "# before\nx = 1\n"],
+            "code_on_last_line": ["return", cases["code_on_last_line"]],
+            "nested_docstring": ["return", cases["nested_docstring"]],
+            "crlf": ["return", "x = 1\r\n"],
+            "invalid_python": ["raise", "SyntaxError"],
+        }
+        program = (
+            "import json, os, sys, types\n"
+            "sys.path.insert(0, os.path.join(sys.argv[1], 'tests', 'model'))\n"
+            "import run\n"
+            "for folder in ('scripts', 'Audit'):\n"
+            "    sys.path.insert(0, os.path.join(sys.argv[1], folder))\n"
+            "import check_acceptance, check_release_gate, screen\n"
+            "def outcome(f, text):\n"
+            "    try:\n"
+            "        return ['return', f(text)]\n"
+            "    except Exception as error:\n"
+            "        return ['raise', type(error).__name__]\n"
+            "cases = json.loads(sys.argv[2])\n"
+            "r = types.SimpleNamespace(key='k', what='w', command='c', seeds=None, seconds=0.0)\n"
+            "prov = {'commit': 'a' * 40 + ' (' + run.COMMITTED + ')', 'harness': 'h',\n"
+            "        'python': 'p', 'date': 'd'}\n"
+            "print(json.dumps({'committed': run.COMMITTED, 'counts_from': run.COUNTS_FROM,\n"
+            "    'counts': [run.COUNTS.pattern, run.COUNTS.flags], 'summary': run.SUMMARY,\n"
+            "    'results': os.path.relpath(run.RESULTS, run.ROOT),\n"
+            "    'model_md': os.path.relpath(run.MODEL_MD, run.ROOT),\n"
+            "    'header': run.header(r, prov), 'short': run.short_commit(prov['commit']),\n"
+            "    'rules': {name: [outcome(screen.without_docstring, text),\n"
+            "                     outcome(check_release_gate.without_docstring, text)]\n"
+            "              for name, text in cases.items()},\n"
+            "    'screen': screen.SCREEN,\n"
+            "    'record': screen.RECORD.relative_to(screen.ROOT).as_posix(),\n"
+            "    'overlaps': check_acceptance.OVERLAPS\n"
+            "    .relative_to(check_acceptance.ROOT).as_posix(),\n"
+            "    'report': check_acceptance.REPORT.relative_to(check_acceptance.ROOT)\n"
+            "    .as_posix()}))\n")
+        result = subprocess.run([sys.executable, "-I", "-c", program, str(ROOT),
+                                 json.dumps(cases)],
+                                capture_output=True, text=True, cwd=ROOT)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        run = json.loads(result.stdout)
+        self.assertEqual(gate.COMMITTED, run["committed"])
+        self.assertEqual(gate.COUNTS_FROM, run["counts_from"])
+        self.assertEqual([gate.COUNTS.pattern, gate.COUNTS.flags], run["counts"])
+        self.assertEqual((gate.SUMMARY, gate.RESULTS, gate.MODEL_MD),
+                         (run["summary"], run["results"], run["model_md"]))
+        self.assertEqual(run["short"], "a" * 12)
+        match = gate.COMMIT_LINE.fullmatch(run["header"].splitlines()[3])
+        self.assertEqual(match.groups(), ("a" * 40, COMMITTED))
+        for name, outcome in expected.items():
+            with self.subTest(case=name):
+                self.assertEqual(run["rules"][name], [outcome, outcome])
+        self.assertEqual(gate.SCREEN, run["screen"])
+        self.assertEqual(list(gate.OUTPUTS),
+                         [run["record"], run["overlaps"], run["report"]])
+        # And each of this repository's own results names its commit where the gate reads.
+        for path in sorted((ROOT / gate.RESULTS).glob("*.txt")):
+            with self.subTest(path=path.name):
+                lines = path.read_text(encoding="utf-8").splitlines()
+                at = 0 if path.name == gate.SUMMARY else 3
+                self.assertTrue(gate.COMMIT_LINE.fullmatch(lines[at]), lines[at])
 
 
 class UnfinishedWork(unittest.TestCase):

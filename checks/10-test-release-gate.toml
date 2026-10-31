@@ -1,6 +1,7 @@
 # Check the unfinished work and release gates, case by case. These cases need no Lean and
 # no network; unreadable issues must hold a release.
-# Concurrent (#608): its cases run in a temporary folder, gh and git mocked; only bytecode.
+# Concurrent (#608): its cases run in temporary folders, gh mocked; git is mocked too, save
+# in the results' cases (#701), which run it in a repository of their own. Only bytecode.
 order = 100
 name = "python3 -I tests/test_release_gate.py"
 job = "check"

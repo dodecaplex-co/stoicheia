@@ -944,12 +944,13 @@ an older Git they refuse every train and group as unreadable.
   The screen itself needs Lean, takes minutes, and is not run by CI.
   `python3 -I tests/test_acceptance_limits.py` checks the limitations that acceptance item
   P3 allows against [ACCEPTANCE's table](ACCEPTANCE.md#the-limitations-allowed), and P3
-  itself on review records varied in memory. The Jev question generator's tests,
-  `python3 -I tests/test_jev_questions.py`, are not in the sequence, for one of them
-  checks out a commit of 19 October, `39ae65c2`, which the `check` job's checkout, one
-  commit deep, does not hold. Two more of them now fail at any depth, on main too, at the
-  I.40 mutation anchor; their repair is card #350. The file can join a job with the whole
-  history once those failures are repaired.
+  itself on review records varied in memory. The Jev question generator,
+  `scripts/audit/jev_questions.py`, has no test file of its own: its tests ran in no job,
+  one needing a commit of 19 October that the `check` job's checkout does not hold, and 55
+  of the 135 erroring on main even with the whole history; they were taken out on 30
+  October 2026
+  ([decision](decisions/2026-10-30-jev-question-tests-out.md)); quick calls are to move to
+  a quicker model (#861).
 - **The restriction's theorems are pinned by their statements.**
   `python3 -I scripts/check_superposition_pins.py` checks that every theorem and definition
   brief 0009's section "The restriction theorem" names has a statement pin in
