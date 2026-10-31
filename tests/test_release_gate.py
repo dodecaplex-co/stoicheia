@@ -490,17 +490,41 @@ class ResultsCurrent(unittest.TestCase):
         # Audit/screen.py and scripts/check_acceptance.py, for the screen's rule, its code
         # without its docstring, and the paths of the screen, its record, the catalogue of
         # overlaps and the report.
+        cases = {
+            "empty": "",
+            "no_module_docstring": "# no module docstring\nx = 1\n",
+            "single_line_docstring": '"""module"""\nx = 1\n',
+            "multiline_docstring": '"""module\ntext\n"""\nx = 1\n',
+            "preceding_comments": '# before\n"""module"""\nx = 1\n',
+            "code_on_last_line": '"""module"""; x = 1\n',
+            "nested_docstring": 'def f():\n    """nested"""\n    return 1\n',
+            "crlf": '"""module"""\r\nx = 1\r\n',
+            "invalid_python": "def broken(:\n",
+        }
+        expected = {
+            "empty": ["return", ""],
+            "no_module_docstring": ["return", cases["no_module_docstring"]],
+            "single_line_docstring": ["return", "x = 1\n"],
+            "multiline_docstring": ["return", "x = 1\n"],
+            "preceding_comments": ["return", "# before\nx = 1\n"],
+            "code_on_last_line": ["return", cases["code_on_last_line"]],
+            "nested_docstring": ["return", cases["nested_docstring"]],
+            "crlf": ["return", "x = 1\r\n"],
+            "invalid_python": ["raise", "SyntaxError"],
+        }
         program = (
-            "import ast, inspect, json, os, sys, types\n"
+            "import json, os, sys, types\n"
             "sys.path.insert(0, os.path.join(sys.argv[1], 'tests', 'model'))\n"
             "import run\n"
             "for folder in ('scripts', 'Audit'):\n"
             "    sys.path.insert(0, os.path.join(sys.argv[1], folder))\n"
             "import check_acceptance, check_release_gate, screen\n"
-            "def code(f):\n"
-            "    node = ast.parse(inspect.getsource(f)).body[0]\n"
-            "    node.body = node.body[1:]   # its docstring, which says whose it is\n"
-            "    return ast.dump(node)\n"
+            "def outcome(f, text):\n"
+            "    try:\n"
+            "        return ['return', f(text)]\n"
+            "    except Exception as error:\n"
+            "        return ['raise', type(error).__name__]\n"
+            "cases = json.loads(sys.argv[2])\n"
             "r = types.SimpleNamespace(key='k', what='w', command='c', seeds=None, seconds=0.0)\n"
             "prov = {'commit': 'a' * 40 + ' (' + run.COMMITTED + ')', 'harness': 'h',\n"
             "        'python': 'p', 'date': 'd'}\n"
@@ -509,15 +533,17 @@ class ResultsCurrent(unittest.TestCase):
             "    'results': os.path.relpath(run.RESULTS, run.ROOT),\n"
             "    'model_md': os.path.relpath(run.MODEL_MD, run.ROOT),\n"
             "    'header': run.header(r, prov), 'short': run.short_commit(prov['commit']),\n"
-            "    'rule': [code(screen.without_docstring),\n"
-            "             code(check_release_gate.without_docstring)],\n"
+            "    'rules': {name: [outcome(screen.without_docstring, text),\n"
+            "                     outcome(check_release_gate.without_docstring, text)]\n"
+            "              for name, text in cases.items()},\n"
             "    'screen': screen.SCREEN,\n"
             "    'record': screen.RECORD.relative_to(screen.ROOT).as_posix(),\n"
             "    'overlaps': check_acceptance.OVERLAPS\n"
             "    .relative_to(check_acceptance.ROOT).as_posix(),\n"
             "    'report': check_acceptance.REPORT.relative_to(check_acceptance.ROOT)\n"
             "    .as_posix()}))\n")
-        result = subprocess.run([sys.executable, "-I", "-c", program, str(ROOT)],
+        result = subprocess.run([sys.executable, "-I", "-c", program, str(ROOT),
+                                 json.dumps(cases)],
                                 capture_output=True, text=True, cwd=ROOT)
         self.assertEqual(result.returncode, 0, result.stderr)
         run = json.loads(result.stdout)
@@ -529,7 +555,9 @@ class ResultsCurrent(unittest.TestCase):
         self.assertEqual(run["short"], "a" * 12)
         match = gate.COMMIT_LINE.fullmatch(run["header"].splitlines()[3])
         self.assertEqual(match.groups(), ("a" * 40, COMMITTED))
-        self.assertEqual(*run["rule"])
+        for name, outcome in expected.items():
+            with self.subTest(case=name):
+                self.assertEqual(run["rules"][name], [outcome, outcome])
         self.assertEqual(gate.SCREEN, run["screen"])
         self.assertEqual(list(gate.OUTPUTS),
                          [run["record"], run["overlaps"], run["report"]])
