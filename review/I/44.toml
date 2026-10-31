@@ -46,7 +46,7 @@ note = "Euclid applies I.43 to the complements in HLKF. Beneath the earlier cons
 [[passage]]
 at = "And, since the angle GBE is equal to the angle ABM"
 kind = "helper"
-helper = "Between.of_sameSide"
+helper = "Prop15"
 note = "Euclid uses the vertical angles at B. The Lean applies I.15 with A, B, E in order from `Prop44.place` and G, B, M in order from `Between.of_sameSide` beneath the production of GB."
 
 [[passage]]
