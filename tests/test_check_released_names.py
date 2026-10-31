@@ -275,6 +275,17 @@ class TheRemovals(unittest.TestCase):
         lines, code = self.judge(removed_rows(ROW), {ENTRY: both})
         self.assertEqual(code, 0, lines)
 
+    def test_unicode_and_escaped_names_pass_the_approved_removal_path(self):
+        names = ("Elements.é", "Elements.Ā", "Elements.aⱼ", "Elements.«a,b»",
+                 "Elements.«a b»")
+        for name in names:
+            with self.subTest(name=name):
+                entry = headed("Prose.\n", removes=name)
+                row = removed_rows(f"removed {name} {ENTRY}")
+                lines, code = released.report(listed({name: "name"}), {}, COMMIT,
+                                              removed=row, **readers({ENTRY: entry}))
+                self.assertEqual(code, 0, lines)
+
     def test_an_approved_removal_that_is_not_listed_fails(self):
         lines, code = self.judge({}, {ENTRY: APPROVING})
         self.assertEqual(code, 1)
@@ -514,6 +525,11 @@ class TheList(unittest.TestCase):
         self.assertEqual(list(got.names), ["Elements.a", "Elements.Triangle.ne₁₂",
                                            "Elements.b", "Elements.«term∟»"])
 
+    def test_escaped_spaces_survive_released_list_rows(self):
+        rows = {"Elements.«a b»": "name", "Elements.«a,b»": "deprecated"}
+        made = released.render_list("book-IV", OTHER, rows)
+        self.assertEqual(released.parse_list(made).names, rows)
+
 
 class TheProbe(unittest.TestCase):
     def refused(self, out: str, says: str):
@@ -524,6 +540,10 @@ class TheProbe(unittest.TestCase):
     def test_rows_of_both_markers_are_read(self):
         self.assertEqual(released.read_probe("deprecated Elements.b\nname Elements.a\n"),
                          {"Elements.b": "deprecated", "Elements.a": "name"})
+
+    def test_escaped_spaces_survive_probe_rows(self):
+        self.assertEqual(released.read_probe("name Elements.«a b»\n"),
+                         {"Elements.«a b»": "name"})
 
     def test_a_lean_message_is_refused(self):
         warning = ("/tmp/released-names-x/Probe.lean:10:2: warning: `[deprecated]` attribute "

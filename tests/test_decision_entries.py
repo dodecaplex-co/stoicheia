@@ -676,22 +676,25 @@ class EntryHeaders(HeaderFolder):
                                                 "docs/briefs/book\\xa0I.md")
 
     def test_removed_names_are_lean_names_as_the_released_names_check_reads_them(self):
-        # render.py refuses a removed name the check would not read as one, and the check
-        # reads every name render.py accepts: the two hold one pattern.
         import check_released_names
-        self.assertEqual(render.ENTRY_REMOVED.pattern, check_released_names.REMOVED_NAME.pattern)
         good = ("Elements.a", "Elements.Tacit.area_congruent", "Elements.«a.b»",
                 "Elements.Old.«term∠___»", "Elements.x'", "Elements.get!", "Elements.α₁",
-                "Elements.ℕ.x", "Elements._x")
+                "Elements.ℕ.x", "Elements._x", "Elements.é", "Elements.Ā", "Elements.aⱼ",
+                "Elements.«a,b»", "Elements.«a b»")
         bad = ("Elements", "Other.x", "elements.x", "Elements..x", "Elements.x.",
                "Elements.a=b", "Elements.1a", "Elements.λ", "Elements.«»", "Elements.«a«b»",
-               "Elements.«a\nb»", "Elements.a-b", "Elements.«a.b")
-        for name in good:
-            with self.subTest(name=name):
-                self.assertTrue(render.ENTRY_REMOVED.fullmatch(name))
+               "Elements.«a\nb»", "Elements.a-b", "Elements.«a.b", "Elements.ⱼ",
+               "Elements.×", "Elements.÷")
+        first = header("id=a", "cards=1", "removes=" + ",".join(good))
+        parsed = render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+        self.assertEqual(parsed["removes"], list(good))
+        self.assertEqual(check_released_names.removes_of(first + "\n"), list(good))
         for name in bad:
             with self.subTest(name=name):
-                self.assertFalse(render.ENTRY_REMOVED.fullmatch(name))
+                first = header("id=a", "cards=1", f"removes={name}")
+                with self.assertRaises(SystemExit):
+                    render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+                self.assertEqual(check_released_names.removes_of(first + "\n"), [])
 
     def test_ids_are_unique(self):
         self.headed("2026-10-26-a.md", header("id=same", "cards=1"))

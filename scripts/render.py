@@ -3211,9 +3211,10 @@ ENTRY_CARD = re.compile(r"[1-9][0-9]*")
 # subscripts (Lean's isLetterLike, isIdFirst, isIdRest and isSubScriptAlnum).
 # scripts/check_released_names.py and scripts/render.py hold the same pattern, and
 # tests/test_decision_entries.py checks that they agree.
-LEAN_LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"
+LEAN_LETTER_LIKE = ("\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u017f"
+                    "\u03b1-\u03ba\u03bc-\u03c9\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"
                     "\u03ca-\u03fb\u1f00-\u1ffe\u2100-\u214f\U0001d49c-\U0001d59f")
-LEAN_SUBSCRIPT = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a"
+LEAN_SUBSCRIPT = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a\u2c7c"
 LEAN_IDENT = (f"[A-Za-z_{LEAN_LETTER_LIKE}]"
               f"[A-Za-z0-9_'!?{LEAN_LETTER_LIKE}{LEAN_SUBSCRIPT}]*")
 LEAN_SEGMENT = f"(?:{LEAN_IDENT}|«[^«»\n]+»)"
@@ -3226,6 +3227,28 @@ ENTRY_HEADER_LIMIT = 2000
 PROGRAM_NOTES = heath.PROGRAM_NOTES
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
           "September", "October", "November", "December")
+
+
+def separator_outside_escape(text, separator, start=0):
+    escaped = False
+    for at in range(start, len(text)):
+        if text[at] == "«":
+            escaped = True
+        elif text[at] == "»":
+            escaped = False
+        elif text[at] == separator and not escaped:
+            return at
+    return -1
+
+
+def split_outside_escape(text, separator):
+    parts, start = [], 0
+    while True:
+        at = separator_outside_escape(text, separator, start)
+        if at < 0:
+            return parts + [text[start:]]
+        parts.append(text[start:at])
+        start = at + 1
 
 
 def brief_stems():
@@ -3301,7 +3324,7 @@ def entry_header(name, text, stems, earlier):
                 refuse(1, 'the line comes last, in double quotes: line="<news>"')
             fields[key], at = inner[start + 1:-1], len(inner)
         else:
-            stop = inner.find(" ", start)
+            stop = separator_outside_escape(inner, " ", start)
             stop = len(inner) if stop < 0 else stop
             fields[key], at = inner[start:stop], stop + 1
     for key in ENTRY_REQUIRED:
@@ -3310,7 +3333,8 @@ def entry_header(name, text, stems, earlier):
     if not ENTRY_ID.fullmatch(fields["id"]):
         refuse(1, f"the id {fields['id']!r} is not lower-case letters and digits joined by "
                   "hyphens")
-    lists = {key: fields[key].split(",") if key in fields else [] for key in ENTRY_LISTS}
+    lists = {key: split_outside_escape(fields[key], ",") if key in fields else []
+             for key in ENTRY_LISTS}
     for key, items in lists.items():
         if "" in items:
             refuse(1, f"{key} is a list joined by commas, with no empty item")

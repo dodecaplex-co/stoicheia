@@ -168,7 +168,8 @@ REMOVED_FILE = ROOT / REMOVED
 # Where a row's decision entry is judged outside GitHub Actions: the approval must already
 # be on main (base_commit).
 BASE = "origin/main"
-REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
+ROW_NAME = r"(?:[^\s«»]+|«[^«»\n]+»)+"
+REMOVED_ROW = re.compile(f"removed (?P<name>{ROW_NAME}) "
                          r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md)")
 # A Lean name under `Elements`, as `removes=` gives it: dot-separated segments after
 # `Elements`, each an identifier or a `«…»` escape holding no `«`, `»` or line break. An
@@ -178,9 +179,10 @@ REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
 # subscripts (Lean's isLetterLike, isIdFirst, isIdRest and isSubScriptAlnum).
 # scripts/render.py holds the same pattern, and tests/test_decision_entries.py checks that
 # they agree; an item of `removes=` outside it approves nothing.
-LEAN_LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"
+LEAN_LETTER_LIKE = ("\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u017f"
+                    "\u03b1-\u03ba\u03bc-\u03c9\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"
                     "\u03ca-\u03fb\u1f00-\u1ffe\u2100-\u214f\U0001d49c-\U0001d59f")
-LEAN_SUBSCRIPT = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a"
+LEAN_SUBSCRIPT = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a\u2c7c"
 LEAN_IDENT = (f"[A-Za-z_{LEAN_LETTER_LIKE}]"
               f"[A-Za-z0-9_'!?{LEAN_LETTER_LIKE}{LEAN_SUBSCRIPT}]*")
 LEAN_SEGMENT = f"(?:{LEAN_IDENT}|«[^«»\n]+»)"
@@ -294,7 +296,7 @@ PLANT_CASES = (
 
 MARKERS = ("name", "deprecated")
 SHOWN = {"name": "plain", "deprecated": "deprecated", None: "absent"}
-ROW = re.compile(r"(?P<marker>name|deprecated) (?P<name>\S+)")
+ROW = re.compile(f"(?P<marker>name|deprecated) (?P<name>{ROW_NAME})")
 TAG_LINE = re.compile(r"tag (?P<tag>\S+) (?P<commit>\S+)")
 TAG = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]*")
 COMMIT = re.compile(r"[0-9a-f]{40}")
@@ -378,6 +380,22 @@ def lines_of(text: str) -> list[str]:
     if lines[-1] == "":
         lines.pop()
     return lines
+
+
+def split_outside_escape(text: str, separator: str) -> list[str]:
+    parts: list[str] = []
+    start = 0
+    escaped = False
+    for at, char in enumerate(text):
+        if char == "«":
+            escaped = True
+        elif char == "»":
+            escaped = False
+        elif char == separator and not escaped:
+            parts.append(text[start:at])
+            start = at + 1
+    parts.append(text[start:])
+    return parts
 
 
 def is_tag_name(tag: str) -> bool:
@@ -548,11 +566,11 @@ def removes_of(text: str) -> list[str]:
     first = text.split("\n", 1)[0]
     if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")):
         return []
-    for token in first[len(ENTRY_OPEN):].split(" "):
+    for token in split_outside_escape(first[len(ENTRY_OPEN):], " "):
         if token.startswith("line="):
             break
         if token.startswith("removes="):
-            return [item for item in token[len("removes="):].split(",")
+            return [item for item in split_outside_escape(token[len("removes="):], ",")
                     if REMOVED_NAME.fullmatch(item)]
     return []
 
