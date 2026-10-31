@@ -142,25 +142,25 @@ them (items 89 and 90) on all four pages.
 
 ### The material findings
 
-| # | Page | Finding | Readers | State at 559237731 |
+| # | Page | Finding | Readers | State |
 |---|---|---|---|---|
-| M1 | I.8 | The commentary says two of the laws I.8 cites have proofs that "draw circles and straight lines too"; the certificate puts only Postulate 3 beneath them | RD-r1 1; RD-f1 2 | Open: card draft RD-C1 |
+| M1 | I.8 | The commentary says two of the laws I.8 cites have proofs that "draw circles and straight lines too"; the certificate puts only Postulate 3 beneath them | RD-r1 1; RD-f1 2 | Resolved at 1f5769ca9 (pull request #752): their proofs draw a circle too (Postulate 3), and only Metric 3 is proved with no construction |
 | M2 | I.13, I.47 | Metric 5 supplied a step of I.47's proof that is a consequence of I.13, and I.13's status line did not say so | RD-f1 1 | Resolved at 559237731 (pull request #699): I.47 now takes the step from I.13 itself |
-| M3 | Book II's introduction | "Two enunciations are wider than the case Euclid's proof draws": II.5's and II.9's are wider too | RD-r5 1 | Open: card draft RD-C2 |
-| M4 | Book II's introduction | "We prove each once": II.5 and II.14 prove the right angle beside a right angle again, in their own Lean | RD-f2 1 | Open: card draft RD-C2 |
-| M5 | II.9, II.10 | The captions at a glance give a reason in areas that is not Euclid's, without the label II.8's caption gives | RD-f2 2 | Open: card draft RD-C3 |
-| M6 | I.26 | The figure note says "Drawn for one case" of a figure that draws two, and leaves undisclosed the cases the Lean covers that the figure does not draw | RD-r3 1 (graded editorial by its reader) | Open: card draft RD-C7, item 40 |
+| M3 | Book II's introduction | "Two enunciations are wider than the case Euclid's proof draws": II.5's and II.9's are wider too | RD-r5 1 | Resolved at 32eebe4ba (pull request #750): the introduction says that II.5 and II.9 let D fall on either side of C |
+| M4 | Book II's introduction | "We prove each once": II.5 and II.14 prove the right angle beside a right angle again, in their own Lean | RD-f2 1 | Resolved at 32eebe4ba (pull request #750): the introduction says that we prove each in one place, in Rectangles.lean or, for one of them, in I.13's file |
+| M5 | II.9, II.10 | The captions at a glance give a reason in areas that is not Euclid's, without the label II.8's caption gives | RD-f2 2 | Resolved at 1f5769ca9 (pull request #752): both captions end "a reading in areas, not Euclid's proof" |
+| M6 | I.26 | The figure note says "Drawn for one case" of a figure that draws two, and leaves undisclosed the cases the Lean covers that the figure does not draw | RD-r3 1 (graded editorial by its reader) | Resolved at 1f5769ca9 (pull request #752): review/I/26.toml marks the figure `some_cases`, and its note says which cases the figure does not draw |
 
 Book III's, at d4d65c48:
 
-| # | Page | Finding | Readers | State at d4d65c48 |
+| # | Page | Finding | Readers | State |
 |---|---|---|---|---|
 | M7 | III.7, III.8 | Three of Euclid's conclusions are labelled "Proved separately" by a companion, though the main theorem proves them | RD-r7 1 | Open: card draft RD-C11 |
-| M8 | III.22 | "As in III.21, we prove that AC and BD cut one another": III.21 proves no such thing; the step is III.20's | RD-r8 1; RD-f3 1 | Open: card draft RD-C12 |
-| M9 | III.22 | "The first half is Heron's proof, which Heath gives under III.20": Heath credits Heron with the extension of III.20, and gives no proof of III.22 as his | RD-f3 2 | Open: card draft RD-C12 |
+| M8 | III.22 | "As in III.21, we prove that AC and BD cut one another": III.21 proves no such thing; the step is III.20's | RD-r8 1; RD-f3 1 | Resolved at abb6b35f4 (pull request #746): mishnah/III/22.md:5 says "As in III.20, we prove that AC and BD cut one another", and the note at Elements/BookIII/Prop22.lean:30 says "as in III.20"; review/III/22.toml was read in full and stamped by an independent reader after it (6a656e53f) |
+| M9 | III.22 | "The first half is Heron's proof, which Heath gives under III.20": Heath credits Heron with the extension of III.20, and gives no proof of III.22 as his | RD-f3 2 | Resolved at abb6b35f4 (pull request #746): mishnah/III/22.md:7 says "The first half is not Euclid's route: it is the one Heath points to under III.20", where III.22 "will follow immediately" (vol. 2, p. 47) |
 | M10 | III.29 | Our own step, taking reflex angles from four right angles, is referenced to Heath's page 60, which says nothing of it | RD-r9 1 | Open: card draft RD-C13 |
 | M11 | Book III's introduction, by its link to DefinitionsIII.lean | The linked note says III.29 needs equal circles and speaks of III.27 in equal measures: both statements take circumferences that coincide, and their records call the equal circles redundant | RD-r7 8 (graded editorial by its reader) | Mended on main since the read, by pull request #720 (89118233a8a9cc2c90569c10220e64170f248f2b, #474), which d4d65c48 did not hold; the addendum confirms it (card draft RD-C20, a check) |
-| M12 | III.13 | The caption at a glance gives, for contact without, a reason that is not Euclid's, unmarked | RD-r8 20 (graded editorial by its reader) | Open: card draft RD-C21, item 82 |
+| M12 | III.13 | The caption at a glance gives, for contact without, a reason that is not Euclid's, unmarked | RD-r8 20 (graded editorial by its reader) | Resolved at 1f5769ca9 (pull request #752): figures/III/13-idea.svg:3 reads "they meet at the point of contact and nowhere else, and the straight line through the centres (black) runs to it" |
 
 **M1. I.8's commentary, on what the cited laws' proofs draw.** mishnah/I/08.md:5
 (book/I/08.md:363) says: "The same is true of two of the three other laws I.8 cites, that a
@@ -951,15 +951,18 @@ lists them; DefinitionsIII.lean is there because the introduction links it (M11)
 
 ## What #34 and B3 still need, for Books I and II
 
-1. The five open material findings, M1 and M3 to M6, mended on main (card drafts RD-C1 to
-   RD-C3, and item 40 of RD-C7), each naming here the commit that resolves it.
+1. The five material findings open at the read, M1 and M3 to M6, mended on main (card
+   drafts RD-C1 to RD-C3, and item 40 of RD-C7), each naming here the commit that resolves
+   it. Met on 30 October 2026: pull requests #750 and #752 mended them, and the table above
+   names each commit.
 2. The readers' conditions on B3. Every verdict but those of RD-r3 and RD-r4 passes "once
    the named findings are mended", all of its reader's findings; RD-r3 names its findings 2
    and 3, and RD-r4 passes as it stands. As written, then, Book I's B3 waits on RD-C1, on
    the Book I items of RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10, and on items 43 and 44 of
    RD-C7, besides M6 (item 40); Book II's on RD-C2 and RD-C3, and on the Book II items of
    RD-C4, RD-C5, RD-C6, RD-C9 and RD-C10. Only RD-C8, and items 41 and 42 of RD-C7, hold
-   neither. The pilot editor's second round passes on the same condition, so both books' B3
+   neither. RD-C1 to RD-C3, and M6 (item 40), are met since (item 1). The pilot editor's
+   second round passes on the same condition, so both books' B3
    also wait on items 89, 90 and 93 of RD-C19, on its pages of Books I and II, and Book II's
    on item 94. The verdicts
    single out the voice lapses of RD-C4 and RD-C5; whether the other editorial findings must
@@ -977,11 +980,14 @@ lists them; DefinitionsIII.lean is there because the introduction links it (M11)
 
 1. The material findings M7 to M10 and M12 mended (card drafts RD-C11 to RD-C13 and RD-C21),
    each naming here the commit that resolves it; and M11, mended on main by pull request #720,
-   confirmed on the page in the addendum (RD-C20).
+   confirmed on the page in the addendum (RD-C20). Met for M8, M9 and M12 on 30 October 2026:
+   pull requests #746 and #752 mended them, and the table above names each commit. M7 and
+   M10 (RD-C11 and RD-C13) are open.
 2. The readers' conditions on B3. All five of Book III's verdicts, the pilot editor's
    included, pass once the named findings are mended ("once named findings are mended", in
    RD-r8's and RD-r9's words), all of their findings. As written, then, Book III's B3 waits on
-   RD-C11 to RD-C18, RD-C20, RD-C21 and items 89 to 92 of RD-C19. The verdicts
+   RD-C11 to RD-C18, RD-C20, RD-C21 and items 89 to 92 of RD-C19. RD-C12 and RD-C21 are met
+   since (item 1). The verdicts
    single out the second voice of RD-C14, RD-C15 and RD-C16; whether the other editorial
    findings must be mended first, or may go to the backlog, is for the coordinator to rule,
    as for Books I and II.
