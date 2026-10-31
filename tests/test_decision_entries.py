@@ -698,17 +698,18 @@ class EntryHeaders(HeaderFolder):
 
     def test_a_comment_unsafe_removed_name_has_an_exact_encoded_form(self):
         import check_released_names
-        name = "Elements.«a-->b»"
-        encoded = "utf8hex:" + name.encode("utf-8").hex()
-        first = header("id=a", "cards=1", f"removes={encoded}")
-        parsed = render.entry_header("2026-10-27-test.md", first + "\n", [], [])
-        self.assertEqual(parsed["removes"], [name])
-        self.assertEqual(check_released_names.removes_of(first + "\n"), [name])
+        for name in ("Elements.«a-->b»", "Elements.«a--!>b»"):
+            with self.subTest(name=name):
+                encoded = "utf8hex:" + name.encode("utf-8").hex()
+                first = header("id=a", "cards=1", f"removes={encoded}")
+                parsed = render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+                self.assertEqual(parsed["removes"], [name])
+                self.assertEqual(check_released_names.removes_of(first + "\n"), [name])
 
-        unsafe = header("id=a", "cards=1", f"removes={name}")
-        with self.assertRaises(SystemExit):
-            render.entry_header("2026-10-27-test.md", unsafe + "\n", [], [])
-        self.assertEqual(check_released_names.removes_of(unsafe + "\n"), [])
+                unsafe = header("id=a", "cards=1", f"removes={name}")
+                with self.assertRaises(SystemExit):
+                    render.entry_header("2026-10-27-test.md", unsafe + "\n", [], [])
+                self.assertEqual(check_released_names.removes_of(unsafe + "\n"), [])
 
     def test_malformed_removed_name_encodings_are_refused_by_both_readers(self):
         import check_released_names

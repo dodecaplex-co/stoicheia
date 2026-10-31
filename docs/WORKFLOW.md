@@ -1869,7 +1869,10 @@ characters at most:
   header among them;
 - `removes`, the released Lean names whose removal with no alias the entry approves, each
   in full under `Elements`, as `Elements.Tacit.area_congruent`: segments joined by dots,
-  each a Lean identifier or a `«…»` escape holding no `«`, `»` or line break.
+  each a Lean identifier or a `«…»` escape holding no `«`, `»` or line break. A name whose
+  raw spelling contains `-->` or `--!>`, either of which closes an HTML comment, is written
+  here as `utf8hex:` followed by the lower-case hexadecimal UTF-8 bytes of its whole
+  qualified name. Its row in `tests/released_names_removed.txt` keeps the original name.
   `scripts/check_released_names.py` accepts a row of `tests/released_names_removed.txt`
   only when that row's entry is already at the base the change is merged into, unchanged,
   with the row's name in this key; the entry's prose gives the owner's words for people to

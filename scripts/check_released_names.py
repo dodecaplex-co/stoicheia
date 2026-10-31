@@ -168,7 +168,7 @@ REMOVED_FILE = ROOT / REMOVED
 # Where a row's decision entry is judged outside GitHub Actions: the approval must already
 # be on main (base_commit).
 BASE = "origin/main"
-ROW_NAME = r"(?:[^\s«»]+|«[^«»\n]+»)+"
+ROW_NAME = r"(?:[^\s«»]|«[^«»\n]+»)+"
 REMOVED_ROW = re.compile(f"removed (?P<name>{ROW_NAME}) "
                          r"(?P<entry>docs/decisions/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*\.md)")
 # A Lean name under `Elements`, as `removes=` gives it: dot-separated segments after
@@ -409,7 +409,7 @@ def decode_removed_name(item: str) -> str | None:
         except UnicodeError:
             return None
         return decoded if REMOVED_NAME.fullmatch(decoded) else None
-    if "-->" in item:
+    if "-->" in item or "--!>" in item:
         return None
     return item if REMOVED_NAME.fullmatch(item) else None
 

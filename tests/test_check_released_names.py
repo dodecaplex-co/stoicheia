@@ -287,24 +287,25 @@ class TheRemovals(unittest.TestCase):
                 self.assertEqual(code, 0, lines)
 
     def test_a_comment_unsafe_name_uses_an_encoded_header_item(self):
-        name = "Elements.«a-->b»"
-        encoded = "utf8hex:" + name.encode("utf-8").hex()
-        row = removed_rows(f"removed {name} {ENTRY}")
-        entry = headed("Prose.\n", removes=encoded)
-        lines, code = released.report(listed({name: "name"}), {}, COMMIT, removed=row,
-                                      **readers({ENTRY: entry}))
-        self.assertEqual(code, 0, lines)
+        for name in ("Elements.«a-->b»", "Elements.«a--!>b»"):
+            with self.subTest(name=name):
+                encoded = "utf8hex:" + name.encode("utf-8").hex()
+                row = removed_rows(f"removed {name} {ENTRY}")
+                entry = headed("Prose.\n", removes=encoded)
+                lines, code = released.report(listed({name: "name"}), {}, COMMIT, removed=row,
+                                              **readers({ENTRY: entry}))
+                self.assertEqual(code, 0, lines)
 
-        unsafe = headed("Prose.\n", removes=name)
-        lines, code = released.report(listed({name: "name"}), {}, COMMIT, removed=row,
-                                      **readers({ENTRY: unsafe}))
-        self.assertEqual(code, 1)
-        self.assertEqual(lines[:-1], [
-            released.finding(name, "book-III"),
-            f"tests/released_names_removed.txt:{REMOVED_LINE}: {name}: its decision entry "
-            f"{ENTRY} names no removes={name} in its header, where an entry approves a "
-            "removal"])
-        self.assertNotIn("removed with the owner's approval", lines[-1])
+                unsafe = headed("Prose.\n", removes=name)
+                lines, code = released.report(listed({name: "name"}), {}, COMMIT, removed=row,
+                                              **readers({ENTRY: unsafe}))
+                self.assertEqual(code, 1)
+                self.assertEqual(lines[:-1], [
+                    released.finding(name, "book-III"),
+                    f"tests/released_names_removed.txt:{REMOVED_LINE}: {name}: its decision "
+                    f"entry {ENTRY} names no removes={name} in its header, where an entry "
+                    "approves a removal"])
+                self.assertNotIn("removed with the owner's approval", lines[-1])
 
     def test_an_approved_removal_that_is_not_listed_fails(self):
         lines, code = self.judge({}, {ENTRY: APPROVING})
@@ -413,6 +414,21 @@ class TheRemovedList(unittest.TestCase):
             removed_rows(ROW, ROW.replace(ENTRY, "docs/decisions/2026-10-30-other.md"))
         self.assertIn(f"`{GONE}` is listed twice (first at line {REMOVED_LINE})",
                       str(raised.exception))
+
+    def test_a_long_malformed_row_is_refused_within_a_fixed_bound(self):
+        program = f"""
+import sys
+sys.path.insert(0, {str(REPO / "scripts")!r})
+import check_released_names as released
+try:
+    released.parse_removed(sys.stdin.read())
+except released.Unreadable:
+    raise SystemExit(0)
+raise SystemExit(1)
+"""
+        done = subprocess.run([sys.executable, "-c", program], input="removed " + "a" * 50000,
+                              text=True, capture_output=True, timeout=2)
+        self.assertEqual(done.returncode, 0, done.stderr)
 
 
 class TheTag(unittest.TestCase):

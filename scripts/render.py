@@ -3262,7 +3262,7 @@ def decode_removed_name(item):
         except UnicodeError:
             return None
         return decoded if ENTRY_REMOVED.fullmatch(decoded) else None
-    if "-->" in item:
+    if "-->" in item or "--!>" in item:
         return None
     return item if ENTRY_REMOVED.fullmatch(item) else None
 
