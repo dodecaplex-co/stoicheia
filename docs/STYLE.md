@@ -719,18 +719,9 @@ review record, a rendered docstring, a `name : type` and letters in backticks, i
   describe the edition as it stands.
 - **Other reports:** every other `docs/reports/*.md`, save an outside review
   (`outside-review-*.md`), which keeps its reviewer's words as written; the crew's own
-  logs, `docs/reports/crew/`, are not read. S12 reads them with every book's namespace
-  open, as texts with no book of their own. For these reports alone, it distinguishes
-  declaration references from repository file names, known by their shape (an extension,
-  a numeric line location) or by prose that calls them files; from Lean's syntax and
-  namespace-only names; and from what the prose identifies as a namespace, an external
-  tactic, an Internet Archive scan identifier or a revision identifier. A name the prose
-  calls a declaration goes to Lean, whatever else it could be. It also recognizes documented certificate fields and review schema fields and values
-  where the prose discusses their files or records. Lean supplies the syntax, tactic and
-  attribute vocabulary; these are categories, not a list of unknown names to excuse.
-  A trailing dot names a family, not a complete declaration. A typed hypothesis still
-  goes to Lean, and an unknown declaration reference still fails unless its file is
-  pending for S12. None of these report classifications excuses a mishnah name.
+  logs, `docs/reports/crew/`, are not read. S12 does not read the Other reports, for a
+  dated report is right as of its commit, and a Lean name changed later must not fail a
+  report nobody touched.
 - **README:** `README.md`, without its section "How it was made".
 - **Lean notes:** in `Elements/**/*.lean`, the text of `/- … -/` blocks and docstrings,
   except the docstring of each `theorem PropN` (Heath's enunciation). The `--` lines are
@@ -753,7 +744,7 @@ blocks in Markdown; text means bytes with no NUL that decode as UTF-8. It uses
 `.mypy_cache`, `.ruff_cache`, `.tox`, `.venv`, `venv`, `node_modules`, `build`, `dist`
 and `_build`. Traversal errors stop the check with the affected path. Symlinks are
 skipped, since Git stores the target path rather than the target's contents. This walk
-serves S23 alone; S12 still requires Git's tracked-file index.
+serves S23 alone.
 
 | Rule | What fails | Where |
 |---|---|---|
@@ -768,7 +759,7 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Review notes, Catalogues, Lean notes |
 | S10 | TeX in the mishnah: a backslash, `^{` or `$`, save within a `$…$` span of a paragraph that opens `**The modern way.**`, a paragraph that ends where Markdown ends it, at a blank line or at a line opening a heading, a list item (a numbered list only from 1), a quotation, a code fence, an HTML block, a rule or a table; and there, a span of a shape known to break on GitHub (section 4, "Mathematics"): a `$` unpaired in the paragraph, `$$`, a span across a line break or with white space just inside a dollar, an opening `$` not at a line's start or after white space or `(`, a closing `$` not before white space, a line's end or one of `. , ; : ! ? ) ] ' " - – /`, braces that do not balance, a backslash before an ASCII punctuation mark, `<`, `>` or `&`, a `*`, `~` or backtick, or a `_` first in the span or after anything but a letter or digit within it. Before reading anything else, the script checks its reading of this boundary against sample mishnahs on both sides of it | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
-| S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, Other reports, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then. The mishnah is asked as it always was, every name with `import Elements` alone: neither excuse holds there | Prose, Review notes, Catalogues, Other reports, Rendered docstrings, `book/<book>/front.md` |
+| S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then. The mishnah is asked as it always was, every name with `import Elements` alone: neither excuse holds there | Prose, Review notes, Catalogues, Rendered docstrings, `book/<book>/front.md` |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
 | S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than `<book>.N at a glance` ("II.4 at a glance", "III.17 at a glance"), with a name after a colon if it has one | Idea figures |
 | S15 | A viewBox width outside 400–440; a letter not at font-size 17, or, with the switch for upright letters on (below), not upright; a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than `Euclid <book>.N: …` ("Euclid II.1: …", "Euclid III.1: …") | Euclid's figures |
