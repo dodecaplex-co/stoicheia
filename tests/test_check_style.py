@@ -75,16 +75,17 @@ it, put to the script's own patterns and functions:
   21 October, and D15 lists nothing;
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
-  `name : type`; S22's reading of letters in backticks, one code span at a time; and the
-  reach of 19 October, whose findings in a file of REACH_PENDING are reported only for the
-  rules the file is listed for, while every other finding in that file still fails, and
-  whose rules are reported as done one by one, as each is left with no finding;
+  `name : type`, and the texts main gives it, no dated report among them; S22's reading
+  of letters in backticks, one code span at a time; and the reach of 19 October, whose
+  findings in a file of REACH_PENDING are reported only for the rules the file is listed
+  for, while every other finding in that file still fails, and whose rules are reported
+  as done one by one, as each is left with no finding;
 * the acceptance case: check_acceptance.py sorts a style finding in a review record to
   its proposition's P9, the item for the record's notes, and every other as before;
 * the conflict-marker cases: S23 reads tracked UTF-8 text and copies without Git,
   refuses each marker kind even in Markdown fences and comments, allows setext headings
   over ordinary paragraphs but refuses possible reference definitions throughout a block,
-  raises on traversal errors and skips symlinks; S12 keeps Git's index.
+  raises on traversal errors and skips symlinks.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -670,8 +671,9 @@ KIND_CASES = [   # (a line drawn through a letter A at (150, 100); what S26 call
 
 
 # ---------------------------------------------------------------------------------------
-# The scope cases (#66). (S7 and S12 once skipped the review notes, the reports, the front
-# pages and the rendered docstrings, and let "Definition 8" and `hnearer` onto the pages.)
+# The scope cases (#66). (S7 once skipped the reports, and S7 and S12 the review notes, the
+# front pages and the rendered docstrings, and let "Definition 8" and `hnearer` onto the
+# pages.)
 
 SAMPLE_RECORD = """# review/I/99.toml: a comment no page shows, `hX : T` and Definition 8 in it
 [statement]
@@ -824,6 +826,51 @@ def main_named_records() -> list[style.NamedText]:
 def main_named_texts() -> dict[Path, str]:
     """The paths and namespaces main gives S12."""
     return {text.path: text.opens for text in main_named_records()}
+
+
+def main_s12_files(files: dict[str, Path], text: str) -> list[str]:
+    """The files main fails S12 in when each of `files` ({the function that lists its
+    kind: the file}) holds `text` and they are all it reads, and Lean knows no name. The
+    script's own findings (a word of NOT_DECLARED out of use) are left out, and the other
+    checks are stubs."""
+    read = Path.read_text
+    texts = {path: text for path in files.values()}
+
+    def read_text(path, *args, **kwargs):
+        return texts[path] if path in texts else read(path, *args, **kwargs)
+
+    def reject(args, **_):
+        probe = Path(args[-1])
+        errors = [f"{probe.name}:{k}:1: error: unknown identifier"
+                  for k, line in enumerate(probe.read_text().splitlines(), 1)
+                  if line.startswith("#check")]
+        return SimpleNamespace(returncode=1, stdout="\n".join(errors), stderr="")
+
+    with ExitStack() as stack:
+        for name in ("mishnah_files", "intro_files", "reading_files", "review_files",
+                     "catalogue_files", "report_files", "lean_files", "generated_files",
+                     "front_files"):
+            stack.enter_context(patch.object(style, name, return_value=[files[name]]
+                                             if name in files else []))
+        for name in ("check_conflict_markers", "check_text", "check_mishnah", "check_reading",
+                     "check_intros", "check_figures"):
+            stack.enter_context(patch.object(style, name))
+        stack.enter_context(patch.object(style, "reading_links", return_value=set()))
+        stack.enter_context(patch.object(style, "review_texts", return_value=[]))
+        stack.enter_context(patch.object(style, "rendered_docstrings", return_value={}))
+        stack.enter_context(patch.object(style, "REACH_PENDING", {}))
+        stack.enter_context(patch.object(style, "failures", []))
+        stack.enter_context(patch.object(style, "reports", defaultdict(list)))
+        stack.enter_context(patch.object(style, "reach_found", set()))
+        stack.enter_context(patch.object(style, "lean_short", []))
+        stack.enter_context(patch.object(style.shutil, "which", return_value="lake"))
+        stack.enter_context(patch.object(style.subprocess, "run", side_effect=reject))
+        stack.enter_context(patch.object(Path, "read_text", read_text))
+        stack.enter_context(patch.object(sys, "argv", ["check_style.py"]))
+        with redirect_stdout(StringIO()):
+            style.main()
+        script = style.rel(style.SCRIPT)
+        return sorted({f for rule, f, *_ in style.failures if rule == "S12" and f != script})
 
 
 def failure_lines(text: str, rule: str) -> list[int]:
@@ -4420,74 +4467,20 @@ class Scopes(unittest.TestCase):
                           if note.key == "statement.hypotheses")
         self.assertEqual(actual, expected)
 
-    def test_reports_reach_s12(self):
-        """Every eligible ordinary report is among the texts main gives S12."""
+    def test_reports_do_not_reach_s12(self):
+        """No dated report is among the texts main gives S12, and every Catalogue is."""
         named = main_named_texts()
-        self.assertEqual({path: named.get(path) for path in style.report_files()},
-                         {path: style.every_book_opens() for path in style.report_files()})
+        self.assertTrue(style.report_files())
+        self.assertFalse(set(style.report_files()) & set(named))
+        self.assertLessEqual(set(style.catalogue_files()), set(named))
 
-    def test_report_token_classification(self):
-        """Reports distinguish declarations from syntax, files and explicitly named objects."""
-        vocabulary = ({"axiom", "native_decide", "implemented_by"},
-                      {"Elements", "Elements.BookIII"})
-        cases = [
-            ("`NOTICE:59-60`, `README:17`, `references.bib:9` and `references.bib`", []),
-            ("`NOTICE` and `README`", ["NOTICE", "README"]),
-            ("The file `NOTICE`, the `README` page and the script `check_fidelity`.", []),
-            ("The files `NOTICE` and `README`.", []),
-            ("It passes `check_fidelity`.", ["check_fidelity"]),
-            ("The declaration `README` is missing.", ["README"]),
-            ("The declaration `README.md` is missing.", ["README.md"]),
-            ("The declaration `grind` is missing.", ["grind"]),
-            ("`Squares.lean` is a nested repository file.", []),
-            ("The theorem `Squares.lean` is missing.", ["Squares.lean"]),
-            ("The declaration `references.bib`, the `NOTICE` theorem and the files "
-             "`README`, `check_fidelity`.", ["NOTICE", "references.bib"]),
-            ("The declarations `Elements` and `axiom`.", ["Elements", "axiom"]),
-            ("`NOTICE : Point` and `README : Point`", ["NOTICE", "README"]),
-            ("`axiom`, `native_decide`, `implemented_by`", []),
-            ("`Elements` and `Elements.BookIII`", []),
-            ("The namespace `Example.Geometry`. Later, `Example.Geometry`.", []),
-            ("The namespace `Example.Geometry`. Then `Example.geometry`.", ["Example.geometry"]),
-            ("<!-- namespace `Missing.name` -->\n`Missing.name`", ["Missing.name"]),
-            ("The tactics\n`external_step` / `external_finish`.", []),
-            ("`external_step` and `Exceeds.nearVertexOpen`",
-             ["Exceeds.nearVertexOpen", "external_step"]),
-            ("Internet Archive scans: vol. 4 (a supplement) is `another_scan_04`.", []),
-            ("An Internet Archive scan `another_scan_04`.", []),
-            ("`another_scan_04` is a name to check.", ["another_scan_04"]),
-            ("The revision read at `abcdef1`.", []),
-            ("`abcdef1`", ["abcdef1"]),
-            ("- **Revision:** `d95125f0`.", []),
-            ("`d95125f0`", ["d95125f0"]),
-            ("- **Revision:** `not_a_commit`.", ["not_a_commit"]),
-            ("Read the proof of `decafed`.", ["decafed"]),
-            ("Reviewed the proof of `decafed`.", ["decafed"]),
-            ("Verification of `decafed` remains incomplete.", ["decafed"]),
-            ("The record has stage `full`, with a `helper` passage.", []),
-            ("`full` and `helper`", ["full", "helper"]),
-            ("The `axiom_modules` field of `facts.json`.", []),
-            ("The record's `helper : Point`.", ["helper"]),
-            ("The `Example.` family and `Example.missing`.", ["Example.missing"]),
-            ("A tactic `external_step`.\n\nA declaration `external_step`.", ["external_step"]),
-        ]
-        path = style.REPORTS_DIR / "sample.md"
-        for raw, want in cases:
-            with self.subTest(raw=raw):
-                named = style.NamedText(path, raw, style.every_book_opens())
-                old, new, unchecked, _ = style.s12_plan([named], True, vocabulary)
-                self.assertFalse(old)
-                self.assertFalse(unchecked)
-                self.assertEqual(sorted(n for g in new.values() for n in g), want)
-
-    def test_explicit_declaration_does_not_use_exemption(self):
-        """An explicit declaration use is checked rather than satisfying NOT_DECLARED."""
-        path = style.REPORTS_DIR / "sample.md"
-        named = style.NamedText(path, "The declaration `grind` is missing.",
-                                style.every_book_opens())
-        _, new, _, used = style.s12_plan([named], True, ({"grind"}, set()))
-        self.assertEqual(sorted(n for group in new.values() for n in group), ["grind"])
-        self.assertNotIn("grind", used)
+    def test_s12_finds_a_word_in_a_catalogue_or_the_prose_never_in_a_report(self):
+        """A word Lean does not know, as `strace`, fails a Catalogue and the Prose, not a report."""
+        reading = style.ROOT / "reading" / "I" / "99.md"
+        found = main_s12_files({"report_files": style.REPORTS_DIR / "sample.md",
+                                "catalogue_files": CATALOGUE, "mishnah_files": MISHNAH,
+                                "reading_files": reading}, "Traced with `strace`.")
+        self.assertEqual(found, sorted(style.rel(path) for path in (CATALOGUE, MISHNAH, reading)))
 
     def test_only_page_axioms_have_rendered_docstrings(self):
         """Rendered-docstring scope follows the axioms shown on proposition pages."""
@@ -4496,35 +4489,9 @@ class Scopes(unittest.TestCase):
         # Circle 3 has a docstring, and check_fidelity.py forbids every entry to rest on it.
         self.assertNotIn("Tacit.outside_of_between", shown)
 
-    def test_report_classification_keeps_mishnah_enforcement(self):
-        """The report's syntax and namespace classification cannot excuse a mishnah name."""
-        raw = "`axiom` and `Elements` and `NOTICE` and `grind` and `Unknown.name`."
-        named = style.NamedText(MISHNAH, raw, style.book_opens("I"), held=True)
-        old, new, _, _ = style.s12_plan([named], True, ({"axiom"}, {"Elements"}))
-        self.assertEqual(sorted(n for g in old.values() for n in g),
-                         ["Elements", "NOTICE", "Unknown.name", "axiom", "grind"])
-        self.assertFalse(new)
-
-    def test_report_vocabulary_failure_is_not_pending(self):
-        """A failed syntax query fails S12 itself, even when its report is pending."""
-        path = style.REPORTS_DIR / "sample.md"
-        with ExitStack() as stack:
-            stack.enter_context(patch.object(style, "failures", []))
-            stack.enter_context(patch.object(style, "lean_short", []))
-            stack.enter_context(patch.object(style, "REACH_PENDING",
-                                             {style.rel(path): ("S12", "a test")}))
-            stack.enter_context(patch.object(style.subprocess, "run", return_value=
-                SimpleNamespace(returncode=1, stdout="", stderr="could not import Elements")))
-            named = style.NamedText(path, "`Missing.name`", style.every_book_opens())
-            self.assertEqual(style.report_vocabulary([named]), (set(), set()))
-            self.assertEqual(len(style.failures), 1)
-            self.assertEqual(style.failures[0][:2], ("S12", style.rel(style.SCRIPT)))
-            self.assertTrue(style.lean_short)
-            self.assertFalse(style.reach_done())
-
-    def test_report_pending_names_and_error_limit(self):
-        """A report's unknown name fails without S12 pending, including after 100 errors."""
-        path = style.REPORTS_DIR / "sample.md"
+    def test_pending_names_and_error_limit(self):
+        """An unknown name fails a text without S12 pending, including after 100 errors."""
+        path = GAPS
 
         def reject(args, **_):
             self.assertIn("-DmaxErrors=0", args)
@@ -4562,7 +4529,7 @@ class Scopes(unittest.TestCase):
                                              {style.rel(path): ("S12", "a test")}))
             stack.enter_context(patch.object(style.subprocess, "run", side_effect=reject))
             raw = " ".join(f"`Missing.name{k:03}`" for k in range(105))
-            later = style.REPORTS_DIR / "later.md"
+            later = CATALOGUE
             named = [style.NamedText(path, raw, style.every_book_opens()),
                      style.NamedText(later, "`ZMissing.later`", style.every_book_opens())]
             _, groups, _, _ = style.s12_plan(named, False)
@@ -5135,50 +5102,13 @@ class ConflictMarkers(unittest.TestCase):
                 self.assertTrue(path.is_symlink() or not path.exists())
 
 
-class TrackedFiles(unittest.TestCase):
-    """S12 has no filesystem fallback, and importing the check needs no Git."""
+class Importing(unittest.TestCase):
+    """Importing the check runs nothing, so it needs no Git."""
 
-    def test_git_index_ignores_untracked_files(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / "Bogus.missing").write_text("untracked")
-            listing = SimpleNamespace(returncode=0, stdout="docs/kept.md\0", stderr="")
-            with patch.object(style, "ROOT", root), \
-                    patch.object(style.subprocess, "run", return_value=listing) as run:
-                self.assertEqual(style.tracked_file_index(),
-                    (frozenset({"docs/kept.md"}), frozenset({"kept.md"})))
-                run.assert_called_once_with(["git", "ls-files", "-z"], cwd=root,
-                                            capture_output=True, text=True)
-
-    def test_git_failure_without_metadata_still_raises(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / "Bogus.missing").write_text("untracked")
-            listing = SimpleNamespace(returncode=128, stdout="", stderr="not a git repository")
-            with patch.object(style, "ROOT", root), \
-                    patch.object(style.subprocess, "run", return_value=listing):
-                with self.assertRaisesRegex(RuntimeError, "could not list tracked files"):
-                    style.tracked_file_index()
-
-    def test_import_does_not_build_the_git_index(self):
+    def test_import_runs_no_subprocess(self):
         with patch.object(style.subprocess, "run", side_effect=FileNotFoundError) as run:
             runpy.run_path(str(style.SCRIPT), run_name="style_import_probe")
             run.assert_not_called()
-
-    def test_report_classification_cannot_use_the_fallback_walk(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / "Bogus.missing").write_text("untracked")
-            named = style.NamedText(root / "report.md", "`Bogus.missing`",
-                                   style.every_book_opens())
-            occurrence, = style.lean_name_occurrences(named.text, all_uses=True)
-            listing = SimpleNamespace(returncode=128, stdout="", stderr="not a git repository")
-            with patch.object(style, "ROOT", root), \
-                    patch.object(style, "TRACKED_FILE_INDEX", None), \
-                    patch.object(style.subprocess, "run", return_value=listing):
-                with self.assertRaisesRegex(RuntimeError, "could not list tracked files"):
-                    style.report_non_declaration(named, occurrence, (set(), set()))
-                self.assertIsNone(style.TRACKED_FILE_INDEX)
 
 
 class Acceptance(unittest.TestCase):
