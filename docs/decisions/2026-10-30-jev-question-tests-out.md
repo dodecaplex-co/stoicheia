@@ -16,3 +16,7 @@
   `docs/WORKFLOW.md` says so in place of its account of the deleted tests.
 
   Why: a test that runs in no job guards nothing, and keeping it costs its upkeep.
+
+  The tests were removed. The path `tests/test_jev_questions.py` remains only as a
+  comment-only retirement stub so that historical links still resolve. This clarification
+  supersedes the literal file-deletion description above.
