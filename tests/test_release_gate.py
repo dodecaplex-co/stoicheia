@@ -648,6 +648,7 @@ class MergeChecks(unittest.TestCase):
         # RiskPreflight tests its refusals. These tests judge the release-gate job alone.
         with mock.patch.object(safe_push, "gh_json", return_value=view), \
                 mock.patch.object(safe_push, "protected_files", return_value=[]), \
+                mock.patch.object(safe_push, "code_change", return_value=True), \
                 mock.patch.object(safe_push, "show", return_value=template), \
                 mock.patch.object(safe_push, "pr_checks", return_value=checks + [extra]), \
                 mock.patch.object(safe_push, "read_issues", return_value=[]), \
