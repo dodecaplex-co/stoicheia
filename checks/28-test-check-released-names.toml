@@ -1,0 +1,12 @@
+# Check the released-names check's own reading, case by case: the rule, the list's form, the
+# probe's output, the refusal of a stale build, the modes, and the committed list of
+# book-III's names itself.
+# tests/test_check_released_names.py needs no Lean; it runs first, so that a reading found
+# wrong stops the job before the check's verdict.
+# Alone (#608): a new check runs alone until a reviewed change declares it concurrent; this
+# one starts git processes of its own, in temporary repositories outside the tree.
+order = 147
+name = "python3 -I tests/test_check_released_names.py"
+job = "check"
+command = ["python3", "-I", "tests/test_check_released_names.py"]
+section8 = "python3 -I tests/test_check_released_names.py"
