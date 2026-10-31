@@ -38,9 +38,10 @@ The words used here:
     deleted; then edited, with a word added to a line of running text a reader sees; then changed in bytes only, with
     a comment that does not show on the page added at the end.
   - 70 units read these files: 5 checks (named below), 12 tests and all 53 plants. Each round ran again the 5
-    checks, the 12 tests and 5 of the plants (`broken_link`, `count_markers`, `path_faults`, `retired_rule_used` and
-    `style_error`): 22 units. It also ran 6 units that read none of the files, as controls, to show that a verdict
-    did not move for some other reason. That is 28 units in each of three rounds, 84 runs in all.
+    checks, the 12 tests and 5 of the plants, those in `scripts/negative/broken_link.py`, `count_markers.py`,
+    `path_faults.py`, `retired_rule_used.py` and `style_error.py`: 22 units. It also ran 6 units that read none of
+    the files, as controls, to show that a verdict did not move for some other reason. That is 28 units in each of
+    three rounds, 84 runs in all.
 
 ## What it found
 
@@ -79,7 +80,7 @@ they were deleted.
 
 ## Limits
 
-- **One run, on one commit and one machine.** `strace` slows what it watches, so the minutes show where the time goes
+- **One run, on one commit and one machine.** strace slows what it watches, so the minutes show where the time goes
   rather than what a run takes.
 - **Some units were sampled.** Three tests a class of `scripts/test_safe_push.py` ran, not all 552, and they were the
   quickest, so its minutes here are low.
