@@ -21,9 +21,9 @@
   `/no-mistakes` row of the Reviews table, bind every change but one of Markdown files
   alone, of R0 or R1, and every protected change. `scripts/test_safe_push.py` tests that a
   change of a Markdown file of R0 merges without them, and that a change of R3, or of a
-  file of R1 that is not Markdown, does not. `tests/test_release_gate.py`, whose merge checks
-  judge the release gate alone, gives them a fixed answer for the new classification, as it
-  already does for the protected paths. Section 10 of `docs/WORKFLOW.md` says the same
+  file of R1 that is not Markdown, does not. The merge checks in `tests/test_release_gate.py`
+  make `code_change` answer true, as they make `protected_files` answer an empty list, so
+  that they judge the release gate alone. Section 10 of `docs/WORKFLOW.md` says the same
   of the reviews and the merge's gates, and its account of trains says what a member that
   needs no `/no-mistakes` writes in its row.
 
