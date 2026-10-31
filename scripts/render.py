@@ -3219,6 +3219,7 @@ LEAN_IDENT = (f"[A-Za-z_{LEAN_LETTER_LIKE}]"
               f"[A-Za-z0-9_'!?{LEAN_LETTER_LIKE}{LEAN_SUBSCRIPT}]*")
 LEAN_SEGMENT = f"(?:{LEAN_IDENT}|«[^«»\n]+»)"
 ENTRY_REMOVED = re.compile(f"Elements(?:\\.{LEAN_SEGMENT})+")
+REMOVED_ENCODING = "utf8hex:"
 ENTRY_LINE_LIMIT = 300
 # The longest header read: a longer line 1 is refused before it is parsed.
 ENTRY_HEADER_LIMIT = 2000
@@ -3249,6 +3250,21 @@ def split_outside_escape(text, separator):
             return parts + [text[start:]]
         parts.append(text[start:at])
         start = at + 1
+
+
+def decode_removed_name(item):
+    if item.startswith(REMOVED_ENCODING):
+        encoded = item[len(REMOVED_ENCODING):]
+        if not encoded or len(encoded) % 2 or re.fullmatch(r"[0-9a-f]+", encoded) is None:
+            return None
+        try:
+            decoded = bytes.fromhex(encoded).decode("utf-8")
+        except UnicodeError:
+            return None
+        return decoded if ENTRY_REMOVED.fullmatch(decoded) else None
+    if "-->" in item:
+        return None
+    return item if ENTRY_REMOVED.fullmatch(item) else None
 
 
 def brief_stems():
@@ -3338,6 +3354,15 @@ def entry_header(name, text, stems, earlier):
     for key, items in lists.items():
         if "" in items:
             refuse(1, f"{key} is a list joined by commas, with no empty item")
+    decoded_removed = []
+    for removed in lists["removes"]:
+        decoded = decode_removed_name(removed)
+        if decoded is None:
+            refuse(1, f"removes {removed!r}: a removed name is a Lean name in full, under "
+                      "Elements")
+        decoded_removed.append(decoded)
+    lists["removes"] = decoded_removed
+    for key, items in lists.items():
         seen = set()
         for item in items:
             if item in seen:
@@ -3357,10 +3382,6 @@ def entry_header(name, text, stems, earlier):
         if section not in PROGRAM_NOTES:
             refuse(1, f"unknown PROGRAM.md section {section!r}; the sections that hold notes "
                       f"are {', '.join(PROGRAM_NOTES)}")
-    for removed in lists["removes"]:
-        if not ENTRY_REMOVED.fullmatch(removed):
-            refuse(1, f"removes {removed!r}: a removed name is a Lean name in full, under "
-                      "Elements")
     for key in ("corrects", "reverts"):
         for other in lists[key]:
             if other not in earlier:

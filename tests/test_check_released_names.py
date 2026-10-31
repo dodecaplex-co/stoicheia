@@ -286,6 +286,26 @@ class TheRemovals(unittest.TestCase):
                                               removed=row, **readers({ENTRY: entry}))
                 self.assertEqual(code, 0, lines)
 
+    def test_a_comment_unsafe_name_uses_an_encoded_header_item(self):
+        name = "Elements.«a-->b»"
+        encoded = "utf8hex:" + name.encode("utf-8").hex()
+        row = removed_rows(f"removed {name} {ENTRY}")
+        entry = headed("Prose.\n", removes=encoded)
+        lines, code = released.report(listed({name: "name"}), {}, COMMIT, removed=row,
+                                      **readers({ENTRY: entry}))
+        self.assertEqual(code, 0, lines)
+
+        unsafe = headed("Prose.\n", removes=name)
+        lines, code = released.report(listed({name: "name"}), {}, COMMIT, removed=row,
+                                      **readers({ENTRY: unsafe}))
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[:-1], [
+            released.finding(name, "book-III"),
+            f"tests/released_names_removed.txt:{REMOVED_LINE}: {name}: its decision entry "
+            f"{ENTRY} names no removes={name} in its header, where an entry approves a "
+            "removal"])
+        self.assertNotIn("removed with the owner's approval", lines[-1])
+
     def test_an_approved_removal_that_is_not_listed_fails(self):
         lines, code = self.judge({}, {ENTRY: APPROVING})
         self.assertEqual(code, 1)

@@ -187,6 +187,7 @@ LEAN_IDENT = (f"[A-Za-z_{LEAN_LETTER_LIKE}]"
               f"[A-Za-z0-9_'!?{LEAN_LETTER_LIKE}{LEAN_SUBSCRIPT}]*")
 LEAN_SEGMENT = f"(?:{LEAN_IDENT}|«[^«»\n]+»)"
 REMOVED_NAME = re.compile(f"Elements(?:\\.{LEAN_SEGMENT})+")
+REMOVED_ENCODING = "utf8hex:"
 # An entry's header begins so (docs/WORKFLOW.md, "Decision entries"; render.py reads it).
 ENTRY_OPEN = "<!-- entry: "
 
@@ -398,6 +399,21 @@ def split_outside_escape(text: str, separator: str) -> list[str]:
     return parts
 
 
+def decode_removed_name(item: str) -> str | None:
+    if item.startswith(REMOVED_ENCODING):
+        encoded = item[len(REMOVED_ENCODING):]
+        if not encoded or len(encoded) % 2 or re.fullmatch(r"[0-9a-f]+", encoded) is None:
+            return None
+        try:
+            decoded = bytes.fromhex(encoded).decode("utf-8")
+        except UnicodeError:
+            return None
+        return decoded if REMOVED_NAME.fullmatch(decoded) else None
+    if "-->" in item:
+        return None
+    return item if REMOVED_NAME.fullmatch(item) else None
+
+
 def is_tag_name(tag: str) -> bool:
     """Whether `tag` has the restricted form here and makes a valid `refs/tags/` ref."""
     if not TAG.fullmatch(tag):
@@ -564,14 +580,19 @@ def removes_of(text: str) -> list[str]:
     item that is not a Lean name under `Elements` (REMOVED_NAME) is left out. None without
     a header; render.py checks the header's whole form."""
     first = text.split("\n", 1)[0]
-    if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")):
+    if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")
+            and first.count("-->") == 1):
         return []
     for token in split_outside_escape(first[len(ENTRY_OPEN):], " "):
         if token.startswith("line="):
             break
         if token.startswith("removes="):
-            return [item for item in split_outside_escape(token[len("removes="):], ",")
-                    if REMOVED_NAME.fullmatch(item)]
+            removed = []
+            for item in split_outside_escape(token[len("removes="):], ","):
+                decoded = decode_removed_name(item)
+                if decoded is not None:
+                    removed.append(decoded)
+            return removed
     return []
 
 

@@ -696,6 +696,39 @@ class EntryHeaders(HeaderFolder):
                     render.entry_header("2026-10-27-test.md", first + "\n", [], [])
                 self.assertEqual(check_released_names.removes_of(first + "\n"), [])
 
+    def test_a_comment_unsafe_removed_name_has_an_exact_encoded_form(self):
+        import check_released_names
+        name = "Elements.«a-->b»"
+        encoded = "utf8hex:" + name.encode("utf-8").hex()
+        first = header("id=a", "cards=1", f"removes={encoded}")
+        parsed = render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+        self.assertEqual(parsed["removes"], [name])
+        self.assertEqual(check_released_names.removes_of(first + "\n"), [name])
+
+        unsafe = header("id=a", "cards=1", f"removes={name}")
+        with self.assertRaises(SystemExit):
+            render.entry_header("2026-10-27-test.md", unsafe + "\n", [], [])
+        self.assertEqual(check_released_names.removes_of(unsafe + "\n"), [])
+
+    def test_malformed_removed_name_encodings_are_refused_by_both_readers(self):
+        import check_released_names
+        cases = ("utf8hex:", "utf8hex:0", "utf8hex:zz", "utf8hex:ff",
+                 "utf8hex:" + "Other.x".encode("utf-8").hex())
+        for encoded in cases:
+            with self.subTest(encoded=encoded):
+                first = header("id=a", "cards=1", f"removes={encoded}")
+                with self.assertRaises(SystemExit):
+                    render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+                self.assertEqual(check_released_names.removes_of(first + "\n"), [])
+
+    def test_removed_name_duplicates_are_compared_after_decoding(self):
+        name = "Elements.a"
+        encoded = "utf8hex:" + name.encode("utf-8").hex()
+        first = header("id=a", "cards=1", f"removes={name},{encoded}")
+        with self.assertRaises(SystemExit) as caught:
+            render.entry_header("2026-10-27-test.md", first + "\n", [], [])
+        self.assertIn("removes names 'Elements.a' twice", str(caught.exception))
+
     def test_ids_are_unique(self):
         self.headed("2026-10-26-a.md", header("id=same", "cards=1"))
         self.headed("2026-10-27-b.md", header("id=other", "cards=2"))
