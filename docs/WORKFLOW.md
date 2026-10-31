@@ -1265,7 +1265,9 @@ yet done. A rule read from prose cannot list every way of saying that a review i
 done ("PASS if CI is green" still passes): the cells are written by the coordinator's
 crews, and each is read by the lane as well. The check imposes no prose length.
 `/no-mistakes` says `passed at <head>` for that same member head, or `not run:
-<reason>`, with at least five words giving the reason.
+<reason>`, with at least five words giving the reason; a member of Markdown files alone,
+of R0 or R1, which needs none, says so there
+([decision](decisions/2026-10-30-no-mistakes-for-code.md)).
 
 `What is new` says `None.` or gives bullet lines of these forms:
 
@@ -1309,16 +1311,19 @@ merge, differs from the text checked.
 
 **Building a train that passes.** Start the train from origin/main, never from a
 member. Merge each member once, at its final head, after its reviews and `/no-mistakes`
-have run on that head; if a member moves, build the train again from origin/main rather
-than merging the member a second time. A merge of origin/main into the train is
+(unless it needs none) have run on that head; if a member moves, build the train again
+from origin/main rather than merging the member a second time. A merge of origin/main
+into the train is
 allowed, and its tree is checked like the members' merges. The train itself resolves
 and adds nothing beyond the generated pages and the decisions page. A conflict between
 members, or between a member and origin/main, and a review record's stamp of a member's
 change, are made in a branch that contains the sides it resolves or stamps: merge
 origin/main, or the other member, into the member, resolve or stamp there, and review
-that head, with its own `/no-mistakes`; the train then merges it, with one row (a
-member it contains may still be merged before it, with its own row). A branch from
-origin/main cannot hold them: a resolution made there conflicts again when
+that head, with its own `/no-mistakes` unless the resulting branch's complete change is
+of Markdown files alone, of R0 or R1; a branch that changes a review record still needs
+it. The train then merges the branch, with one row (a member it contains may still be
+merged before it, with its own row). A branch from origin/main cannot hold them: a
+resolution made there conflicts again when
 the train merges it beside the members, and `scripts/review_stamp.py` stamps a record
 with the hashes of the files in the checkout it runs in, refusing a `--commit` whose Lean
 file differs. A stamp or an edit that stands alone, touching no file a member changes,
@@ -2297,7 +2302,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
    merge, run without its push and pull request steps, since `git safe-push` alone
-   pushes and opens pull requests. Each blocking or material finding (section 9) is
+   pushes and opens pull requests. A change of Markdown files alone, of R0 or R1 by
+   `scripts/risk.py`, has a second reader instead of `/no-mistakes`, recorded in the
+   `/code-review` row ([decision](decisions/2026-10-30-no-mistakes-for-code.md)). Each
+   blocking or material finding (section 9) is
    resolved, and the pull request says how. A fix is a new commit on the branch, and the
    pre-flight runs again.
 4. **The merge.** `git safe-push --merge <n>` reads main's effective rules; an unreadable
@@ -2337,13 +2345,17 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    ruleset and the local check judgement described in
    [section 8](#8-validation-on-the-integrated-revision); no box marked **Required** in
    its checklist is unticked, nor one marked **Required if protected** when a protected
-   path changes, and none of the template's
+   path changes, nor one marked **Required if code** unless the change is of Markdown
+   files alone, of R0 or R1 by current main's `scripts/risk.py` (any doubt counts as
+   code), and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
    "Unfinished work" (once the template in force has that section),
    each review's commit and findings in the Reviews table (the security review's when a
-   protected path changes) and "Needs the owner's OK". Boxes and other sections count
+   protected path changes, and `/no-mistakes`'s when the change counts as code or is
+   protected)
+   and "Needs the owner's OK". Boxes and other sections count
    where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
    so that nothing GitHub hides or shows differently can stand in for it. The body holds
    the line `## Unfinished work` once, at the left edge, where GitHub shows it as a
