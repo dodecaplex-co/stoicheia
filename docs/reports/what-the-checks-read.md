@@ -17,7 +17,7 @@ The words used here:
 
 ## What was run
 
-- **The trace,** from 20:42 to 21:07 UTC. Every unit below ran once under `strace`, a Linux tool that recorded the
+- **The trace,** from 20:42 to 21:07 UTC. Every unit below ran once under strace, a Linux tool that recorded the
   files it opened, listed or looked for, the programs it started and any network connection. The units were:
   - each check in `checks/` with a command of its own;
   - each test function in `tests/`;
