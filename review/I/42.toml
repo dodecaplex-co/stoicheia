@@ -38,7 +38,7 @@ note = "Euclid takes ABC as ABE and AEC together. `area_cut` proves that divisio
 [[passage]]
 at = "And it has the angle CEF equal to the given angle D"
 kind = "helper"
-helper = "OnRay.of_sameSideOf"
+helper = "angle_eq_of_onRay"
 note = "Euclid identifies CEF with the angle constructed by I.23. Beneath the construction of AG, the Lean uses `Parallel.sameSide` and `OnRay.of_sameSideOf` to put F on the constructed arm from E; `angle_eq_of_onRay` then gives the angle here."
 
 [figure]
