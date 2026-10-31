@@ -15,7 +15,8 @@ note = "The main theorem is an area-sum theorem: it takes ABD and DBC unchecked,
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
-kind = "carried"
+kind = "helper"
+helper = "Prop42"
 note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D wherever Euclid writes H, and its parallelogram KFLM overlaps ABCD."
 
 [[passage]]
@@ -36,11 +37,11 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "9ca65638c"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "29b408c8c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:df27ec018e27a2ab"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x); #34, read-through 03's pilot editor's note 4 (RT-p3): the route and representation notes told once, re-read whole by Claude Opus 5.5, the family that did not write the original proof (#478), independent reader RD-s2, at 9ca65638c"
-text = "sha256:f54c65b3fe4fb325"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x); #34, read-through 03's pilot editor's note 4 (RT-p3): the route and representation notes told once, re-read whole by Claude Opus 5.5, the family that did not write the original proof (#478), independent reader RD-s2, at 9ca65638c; card #767, ship PR767: the carried steps named as helpers (read-through 02, item 45), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r1, at 29b408c8c"
+text = "sha256:78986d390a306e7e"
 
 [review.items]
 statement = "pass"
