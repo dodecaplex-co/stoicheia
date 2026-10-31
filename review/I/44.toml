@@ -57,11 +57,11 @@ note = "Euclid concludes that LB, equal to C, has been applied to AB in the angl
 
 [review]
 stage = "full"
-commit = "29b408c8c"
+commit = "54901a33e"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:85b0745263c930f7"
-run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, begun from the Claude first mate's scratch proof T44 (54a08e61) and keeping many of its lines, and incorporating the Claude Lean bosun's two Prop31.line substitutions at ab0c30c5; GPT-6 Astra (Codex) read the retained T44 lines, the two substitutions and the Claude first mate's Prop44.place at bd86a7b6, and Claude Opus 5.5 read the final proof; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; card #767, ship PR767: the carried steps named as helpers (read-through 02, item 45), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r1, at 29b408c8c"
-text = "sha256:1ddba1131e1e7270"
+run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, begun from the Claude first mate's scratch proof T44 (54a08e61) and keeping many of its lines, and incorporating the Claude Lean bosun's two Prop31.line substitutions at ab0c30c5; GPT-6 Astra (Codex) read the retained T44 lines, the two substitutions and the Claude first mate's Prop44.place at bd86a7b6, and Claude Opus 5.5 read the final proof; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); previous reviewer: Claude Opus 5.5, independent reader; card #295, ship R3: re-read in full after the disclosures (written by Claude, crew R3-d-w1), by GPT-6 Astra (Codex), reader R3-d-r1, at 7103f442a; card #767, ship PR767: the carried steps named as helpers (read-through 02, item 45), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r1, at 29b408c8c; card #767, ship PR767: helpers named as the declaration under each passage (the checker's finding), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r3, at 54901a33e"
+text = "sha256:8c0f20b22e23647a"
 
 [review.items]
 statement = "pass"
