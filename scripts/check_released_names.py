@@ -170,6 +170,21 @@ REMOVED_ROW = re.compile(r"removed (?P<name>\S+) "
                          r"(?P<quote>\S(?:.*\S)?)")
 QUOTE_MARKS = (('"', '"'), ("“", "”"))
 THE_OWNER = re.compile(r"\bthe owner\b", re.I)
+# A Lean name under `Elements`, as `removes=` gives it: dot-separated segments after
+# `Elements`, each an identifier or a `«…»` escape holding no `«`, `»` or line break. An
+# identifier is Lean 4's: it begins with an ASCII letter, `_` or a letter-like character
+# (Greek but λ, Π and Σ, Coptic, polytonic Greek, the letter-like symbols and the
+# mathematical alphanumerics), and goes on with those, ASCII digits, `'`, `!`, `?` and
+# subscripts (Lean's isLetterLike, isIdFirst, isIdRest and isSubScriptAlnum).
+# scripts/render.py holds the same pattern, and tests/test_decision_entries.py checks that
+# they agree; an item of `removes=` outside it approves nothing.
+LEAN_LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"
+                    "\u03ca-\u03fb\u1f00-\u1ffe\u2100-\u214f\U0001d49c-\U0001d59f")
+LEAN_SUBSCRIPT = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a"
+LEAN_IDENT = (f"[A-Za-z_{LEAN_LETTER_LIKE}]"
+              f"[A-Za-z0-9_'!?{LEAN_LETTER_LIKE}{LEAN_SUBSCRIPT}]*")
+LEAN_SEGMENT = f"(?:{LEAN_IDENT}|«[^«»\n]+»)"
+REMOVED_NAME = re.compile(f"Elements(?:\\.{LEAN_SEGMENT})+")
 # An entry's header begins so (docs/WORKFLOW.md, "Decision entries"; render.py reads it).
 ENTRY_OPEN = "<!-- entry: "
 
@@ -498,8 +513,9 @@ def removes_of(text: str) -> list[str]:
     """The names an entry's header gives in its `removes=` key: the released names whose
     removal with no alias the entry approves (docs/WORKFLOW.md, "Decision entries"). The
     header is line 1, `<!-- entry: key=value … line="<news>" -->`; its keys before `line`
-    hold no space, and the news is not read, so words in it cannot pass for the key. None
-    without a header; render.py checks the header's whole form."""
+    hold no space, and the news is not read, so words in it cannot pass for the key. An
+    item that is not a Lean name under `Elements` (REMOVED_NAME) is left out. None without
+    a header; render.py checks the header's whole form."""
     first = text.split("\n", 1)[0]
     if not (first.startswith(ENTRY_OPEN) and first.endswith(" -->")):
         return []
@@ -507,7 +523,8 @@ def removes_of(text: str) -> list[str]:
         if token.startswith("line="):
             break
         if token.startswith("removes="):
-            return token[len("removes="):].split(",")
+            return [item for item in token[len("removes="):].split(",")
+                    if REMOVED_NAME.fullmatch(item)]
     return []
 
 

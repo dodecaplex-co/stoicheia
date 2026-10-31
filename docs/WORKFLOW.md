@@ -1868,7 +1868,8 @@ characters at most:
   `2026-10-26-routes-iii-centre.md`, each earlier in name order, an entry without a
   header among them;
 - `removes`, the released Lean names whose removal with no alias the entry approves, each
-  in full under `Elements`, as `Elements.Tacit.area_congruent`.
+  in full under `Elements`, as `Elements.Tacit.area_congruent`: segments joined by dots,
+  each a Lean identifier or a `«…»` escape holding no `«`, `»` or line break.
   `scripts/check_released_names.py` accepts a row of `tests/released_names_removed.txt`
   only when that row's entry is already on main, unchanged, with the row's name in this
   key and the owner's words quoted in its prose;

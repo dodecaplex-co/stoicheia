@@ -509,12 +509,14 @@ class EntryHeaders(HeaderFolder):
             "id=full-2", "cards=577,12", "briefs=0008-centre,book-I",
             "program=landed", "corrects=2026-10-25-old.md",
             "reverts=2026-10-26-older.md,2026-10-25-old.md",
-            "removes=Elements.Tacit.area_congruent,Elements.Old.«term∠___»", line=line))
+            "removes=Elements.Tacit.area_congruent,Elements.Old.«term∠___»,Elements.«a.b»",
+            line=line))
         self.assertEqual(self.headers()["2026-10-27-full.md"], {
             "id": "full-2", "cards": [577, 12], "briefs": ["0008-centre", "book-I"],
             "program": ["landed"], "corrects": ["2026-10-25-old.md"],
             "reverts": ["2026-10-26-older.md", "2026-10-25-old.md"],
-            "removes": ["Elements.Tacit.area_congruent", "Elements.Old.«term∠___»"],
+            "removes": ["Elements.Tacit.area_congruent", "Elements.Old.«term∠___»",
+                        "Elements.«a.b»"],
             "line": line})
 
     def test_a_header_of_the_longest_length_is_read(self):
@@ -608,6 +610,16 @@ class EntryHeaders(HeaderFolder):
              "removes 'Elements': a removed name is a Lean name in full"),
             ('<!-- entry: id=a cards=1 removes=Elements..a line="x" -->',
              "removes 'Elements..a': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.a=b line="x" -->',
+             "removes 'Elements.a=b': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.1a line="x" -->',
+             "removes 'Elements.1a': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.«a«b» line="x" -->',
+             "removes 'Elements.«a«b»': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Elements.«» line="x" -->',
+             "removes 'Elements.«»': a removed name is a Lean name in full"),
+            ('<!-- entry: id=a cards=1 removes=Other.x line="x" -->',
+             "removes 'Other.x': a removed name is a Lean name in full, under Elements"),
             ('<!-- entry: id=a cards=1 removes=Elements.a,Elements.a line="x" -->',
              "removes names 'Elements.a' twice"),
             ('<!-- entry: id=a cards=1 removes=Elements.a, line="x" -->',
@@ -662,6 +674,24 @@ class EntryHeaders(HeaderFolder):
             self.headers()
         self.assertEqual(str(caught.exception), "docs/decisions/2026-10-27-test.md:1: no brief "
                                                 "docs/briefs/book\\xa0I.md")
+
+    def test_removed_names_are_lean_names_as_the_released_names_check_reads_them(self):
+        # render.py refuses a removed name the check would not read as one, and the check
+        # reads every name render.py accepts: the two hold one pattern.
+        import check_released_names
+        self.assertEqual(render.ENTRY_REMOVED.pattern, check_released_names.REMOVED_NAME.pattern)
+        good = ("Elements.a", "Elements.Tacit.area_congruent", "Elements.«a.b»",
+                "Elements.Old.«term∠___»", "Elements.x'", "Elements.get!", "Elements.α₁",
+                "Elements.ℕ.x", "Elements._x")
+        bad = ("Elements", "Other.x", "elements.x", "Elements..x", "Elements.x.",
+               "Elements.a=b", "Elements.1a", "Elements.λ", "Elements.«»", "Elements.«a«b»",
+               "Elements.«a\nb»", "Elements.a-b", "Elements.«a.b")
+        for name in good:
+            with self.subTest(name=name):
+                self.assertTrue(render.ENTRY_REMOVED.fullmatch(name))
+        for name in bad:
+            with self.subTest(name=name):
+                self.assertFalse(render.ENTRY_REMOVED.fullmatch(name))
 
     def test_ids_are_unique(self):
         self.headed("2026-10-26-a.md", header("id=same", "cards=1"))

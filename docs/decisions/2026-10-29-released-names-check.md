@@ -146,7 +146,10 @@
 
   The header's `removes=` key. `scripts/render.py` reads every entry's header and refuses
   an unknown key, so it learns the key: it stands after `reverts` and before `line`, a
-  list joined by commas like the others, each item a Lean name in full under `Elements`.
+  list joined by commas like the others, each item a Lean name in full under `Elements`:
+  segments joined by dots, each a Lean identifier or a `«…»` escape holding no `«`, `»`
+  or line break, and nothing else. The check holds the same pattern, and an item outside
+  it approves nothing there.
   The check reads the key only from the header's tokens before `line`, so words in the
   news cannot pass for it. `docs/WORKFLOW.md`, "Decision entries", gives the key in the
   header's form and says what it is for. This entry approves the change to
@@ -154,9 +157,11 @@
   is not a name under `Elements`.
 
   This entry approves the change to `tests/test_decision_entries.py`: the header with
-  every key gains `removes=`, the header with the required keys alone reads it as empty,
-  and the refusals gain a removed name out of order, not under `Elements`, empty, given
-  twice and an empty item.
+  every key gains `removes=`, an escaped name among its items, the header with the
+  required keys alone reads it as empty, and the refusals gain a removed name out of
+  order, not under `Elements`, with an empty segment, a character no identifier holds, a
+  leading digit or a broken escape, given twice, and an empty item; and a case holds
+  render.py's pattern and the check's to one.
 
   This entry approves the new `tests/released_names_removed.txt`, the list of names removed
   with no alias. It has no rows yet, and each row it gains needs a decision entry already on

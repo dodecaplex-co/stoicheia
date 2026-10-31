@@ -363,6 +363,13 @@ class TheRemovals(unittest.TestCase):
                                  {ENTRY: both})
         self.assertEqual(code, 0, lines)
 
+    def test_removes_reads_only_lean_names_under_elements(self):
+        header = ('<!-- entry: id=x cards=517 removes=Elements.«a.b»,Elements.a=b,'
+                  'Elements..x,Other.x,Elements.Tacit.gone line="News." -->\n')
+        self.assertEqual(released.removes_of(header + "Prose.\n"),
+                         ["Elements.«a.b»", "Elements.Tacit.gone"])
+        self.assertEqual(released.removes_of("Prose, no header.\n"), [])
+
     def test_curly_quotation_marks_are_read(self):
         curly = headed(f"The owner, of `{GONE}`: “{WORDS}”.\n")
         lines, code = self.judge(removed_rows(f"removed {GONE} {ENTRY} {WORDS}"),

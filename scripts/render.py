@@ -3203,7 +3203,21 @@ ENTRY_OPEN = "<!-- entry:"
 ENTRY_KEY = re.compile(r"([^= ]+)=")
 ENTRY_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 ENTRY_CARD = re.compile(r"[1-9][0-9]*")
-ENTRY_REMOVED = re.compile(r"Elements(?:\.[^\s.,\"<>]+)+")
+# A Lean name under `Elements`, as `removes=` gives it: dot-separated segments after
+# `Elements`, each an identifier or a `«…»` escape holding no `«`, `»` or line break. An
+# identifier is Lean 4's: it begins with an ASCII letter, `_` or a letter-like character
+# (Greek but λ, Π and Σ, Coptic, polytonic Greek, the letter-like symbols and the
+# mathematical alphanumerics), and goes on with those, ASCII digits, `'`, `!`, `?` and
+# subscripts (Lean's isLetterLike, isIdFirst, isIdRest and isSubScriptAlnum).
+# scripts/check_released_names.py and scripts/render.py hold the same pattern, and
+# tests/test_decision_entries.py checks that they agree.
+LEAN_LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"
+                    "\u03ca-\u03fb\u1f00-\u1ffe\u2100-\u214f\U0001d49c-\U0001d59f")
+LEAN_SUBSCRIPT = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a"
+LEAN_IDENT = (f"[A-Za-z_{LEAN_LETTER_LIKE}]"
+              f"[A-Za-z0-9_'!?{LEAN_LETTER_LIKE}{LEAN_SUBSCRIPT}]*")
+LEAN_SEGMENT = f"(?:{LEAN_IDENT}|«[^«»\n]+»)"
+ENTRY_REMOVED = re.compile(f"Elements(?:\\.{LEAN_SEGMENT})+")
 ENTRY_LINE_LIMIT = 300
 # The longest header read: a longer line 1 is refused before it is parsed.
 ENTRY_HEADER_LIMIT = 2000
