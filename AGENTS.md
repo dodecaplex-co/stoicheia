@@ -67,7 +67,7 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
   between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
   `<!-- status -->` markers, and inline `count:` values) and the companions list
   (`Elements/Companions.lean`); WORKFLOW section 8's first command block between the
-  `<!-- checks -->` markers is generated from `checks/` too, but a train that changes
+  `<!-- checks -->` markers is generated from `checks/` too, but a part that changes
   `checks/` commits it regenerated with `render.py`; the coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
   `lakefile.toml`, `lake-manifest.json`), the decisions page and `docs/decisions/`,
@@ -94,7 +94,7 @@ Each rule has one home, linked; this list only points to it.
 - Weaken, skip or remove a check, test, expected value, lock or schema to let a change pass
   (FORMALIZATION, section 1).
 - Commit generated files unless you are the integrator (WORKFLOW, section 4), save the
-  `<!-- checks -->` region, which a train that changes `checks/` commits regenerated.
+  `<!-- checks -->` region, which a part that changes `checks/` commits regenerated.
 - Push, or open, merge or approve a pull request: agents never do. The coordinator lands
   work on main only as a pull request, through `scripts/safe_push.py` (WORKFLOW, section
   10, "Landing work: pull requests").

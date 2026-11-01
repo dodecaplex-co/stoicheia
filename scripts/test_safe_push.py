@@ -32,9 +32,7 @@ one commit and runs safe_push.py against that origin:
   GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
   the pull request merged and origin/main holds the merge commit GitHub names, the merge
   state otherwise unknown, with no revert advised (issue #42);
-- trains require a body, read once, and run main's train module; while main has none,
-  every train is refused, one adding its own copy too; a body changed during a merge's
-  checks refuses the merge; queue rules and main health fail closed, a red main admits
+- queue rules and main health fail closed, a red main admits
   only the fix its body declares, and a queued head is pinned, followed to merge or
   ejection, and checked on main;
 - unfinished work must be written as None or with issues open and labelled blocks-release;
@@ -241,8 +239,6 @@ one commit and runs safe_push.py against that origin:
   sandboxed child plants beside the harness; the same watch covers a flagged dry run and
   push of an R3 commit; and on macOS a command run there cannot write the cache, nor
   rename a directory above it, and a profile without the rules above the cache is caught;
-  and a flagged train/* branch, however written, gets no cache and no sandbox while its
-  train check still runs, and the train check refuses under a sandbox (#383);
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -989,7 +985,6 @@ WORKFLOW_CONTRACTS = {
                 "runs-on": "ubuntu-latest", "timeout-minutes": 30, "steps": (
                     HISTORY, PYTHON, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
                     {"run": ("python3 -I tests/test_check_queue.py",
-                             "python3 -I tests/test_check_train.py",
                              "python3 -I tests/test_auto_revert.py")})}}},
     "post-merge.yml": {
         "name": "Post-merge", "on": {"push": {"branches": ["main"]}},
@@ -1839,9 +1834,6 @@ def setUpModule():
         (UNDER_TEST / name).write_bytes(subprocess.run(
             ["git", "show", f"{BASE}:scripts/{name}"], cwd=WORK, capture_output=True,
             check=True).stdout)
-    train = safe_push.show_bytes(WORK, BASE, "scripts/check_train.py")
-    if train is not None:
-        (UNDER_TEST / "check_train.py").write_bytes(train)
     git(WORK, "fetch", "--quiet", "origin")
     r = subprocess.run(["sh", str(INSTALL_HOOKS)], cwd=WORK, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -3749,6 +3741,18 @@ class PullRequests(Edge):
         self.assertIn("Commits (", pr["body"])
         self.assertIn("safe_push:preflight begin", pr["body"])
 
+    def test_unreadable_body_file_refuses_before_the_checks(self):
+        self.good_commit()
+        body = TMP / "body.md"
+        body.write_bytes(b"Not UTF-8: \xff\n")
+        r = self.safe_push("--branch", "docs/body", "--label", "docs",
+                           "--body-file", str(body))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("could not read --body-file", out)
+        self.assertNotIn("4. The full local checks", out)
+        self.assertIsNone(self.origin_branch("docs/body"))
+
     def test_branch_with_commits_this_one_lacks_refused(self):
         theirs = self.good_commit("Their line.")
         git(WORK, "push", "--quiet", "origin", f"{theirs}:refs/heads/{BRANCH}")
@@ -5350,7 +5354,7 @@ class Land(Edge):
                 self.assertEqual(r.returncode, 3, out)
                 self.assertEqual(running.read_text(), rewritten, "the copy was not rewritten")
                 merged = self.merge_part(out)
-                self.assertIn("this copy of safe_push.py, heath.py or check_train.py on "
+                self.assertIn("this copy of safe_push.py or heath.py on "
                               "disk no longer matches origin/main's: it was rewritten since "
                               "the run started, or origin/main's predates running from "
                               "origin/main; the merge of --land runs no other copy, so "
@@ -6176,411 +6180,6 @@ class PreflightProof(Edge):
 # B: the review's findings, each with a planted commit
 
 
-class Trains(Edge):
-    """The train checker is main's public function, including through a hand-over."""
-
-    def body_file(self) -> Path:
-        path = TMP / "train-body.md"
-        path.write_text("A train body for the test.\n")
-        return path
-
-    def without_checker(self) -> str:
-        base = self.commit("Main before the train checker", remove=("scripts/check_train.py",))
-        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
-        return base
-
-    def test_train_requires_body_file(self):
-        self.good_commit()
-        for branch in ("train/tooling-1", "refs/heads/train/tooling-1"):
-            with self.subTest(branch=branch):
-                r = self.safe_push("--branch", branch, "--label", "tooling")
-                self.assertRefused(r, "a train/* branch requires --body-file")
-                self.assertIsNone(self.origin_branch("train/tooling-1"))
-
-    def test_main_without_train_module_refuses(self):
-        if safe_push.show_bytes(WORK, BASE, "scripts/check_train.py") is not None:
-            base = self.commit("Main before the train checker", remove=("scripts/check_train.py",))
-            git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
-        self.good_commit()
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(self.body_file()), "--dry-run")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.step(out, "train"), "FAIL")
-        self.assertIn("origin/main has no scripts/check_train.py", out)
-        self.assertIsNone(self.origin_branch("train/docs-1"))
-
-    def test_train_adding_its_own_checker_is_refused_while_main_has_none(self):
-        # No bootstrap: a commit's own check_train.py never judges the commit.
-        base = self.without_checker()
-        self.commit("Introduce the train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return []\n",
-            **self.decision("scripts/check_train.py: the train checker is introduced.")})
-        r = self.safe_push("--branch", "train/tooling-1", "--label", "tooling",
-                           "--body-file", str(self.body_file()))
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.step(out, "train"), "FAIL", out)
-        self.assertIn("origin/main has no scripts/check_train.py, so no train can be "
-                      "checked", out)
-        self.assertNotIn("bootstrap", out)
-        self.assertNotIn("4. The full local checks", out)
-        self.assertIsNone(self.origin_branch("train/tooling-1"))
-        self.assertEqual(self.origin_main(), base)
-
-    def test_main_checker_refusal_exception_and_early_exit_refuse(self):
-        cases = (("return ['planted refusal']", "planted refusal"),
-                 ("return None", "unreadable problem list"),
-                 ("raise RuntimeError('broken checker')", "broken checker"),
-                 ("raise SystemExit(0)", "train check refused"))
-        for statement, message in cases:
-            with self.subTest(statement=statement):
-                self.setUp()
-                base = self.new_base("Main's train checker", {
-                    "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                              f"    {statement}\n"})
-                self.good_commit()
-                r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                                   "--body-file", str(self.body_file()))
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 1, out)
-                self.assertEqual(self.step(out, "train"), "FAIL", out)
-                self.assertIn(message, out)
-                self.assertNotIn("4. The full local checks", out)
-                self.assertEqual(self.origin_main(), base)
-                self.assertIsNone(self.origin_branch("train/docs-1"))
-
-    def test_merge_checks_current_train_body_in_both_modes_with_or_without_record(self):
-        for queued in (False, True):
-            for cached in (False, True):
-                with self.subTest(queued=queued, cached=cached):
-                    self.setUp()
-                    base = self.new_base("Main's train checker", {
-                        "scripts/check_train.py":
-                            "def check_train(repo, base, sha, body):\n"
-                            "    return [] if 'Good train body.' in body else ['bad body']\n"})
-                    sha = self.good_commit()
-                    body = self.body_file()
-                    body.write_text(self.text(safe_push.TEMPLATE) + "\nGood train body.\n")
-                    r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                                       "--body-file", str(body), "--ready")
-                    self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-                    self.set_gh(lambda s: s["prs"][0].update(
-                        body=ticked(s["prs"][0]["body"]).replace("Good train body.", "Bad.")))
-                    self.set_gh(lambda s: s.update(
-                        rules=[[{"type": "merge_queue"}]] if queued else [[]]))
-                    if not cached:
-                        (LOG.parent / "preflight" / f"{sha}-{base}.json").unlink()
-                    r = self.safe_push("--merge", "1")
-                    out = r.stdout + r.stderr
-                    self.assertEqual(r.returncode, 1, out)
-                    self.assertEqual(self.step(out, "train"), "FAIL", out)
-                    self.assertIn("bad body", out)
-                    self.assertEqual(self.origin_main(), base)
-                    self.assertEqual(self.merges(), [])
-                    self.assertFalse(any("enqueuePullRequest" in arg
-                                         for call in self.gh_state()["calls"] for arg in call))
-
-    def test_renamed_train_without_checker_is_refused_at_merge(self):
-        base = self.without_checker()
-        sha = self.good_commit()
-        r = self.safe_push("--ready")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        git(ORIGIN, "update-ref", "refs/heads/train/docs-1", sha)
-        self.set_gh(lambda s: s["prs"][0].update(
-            headRefName="train/docs-1", body=ticked(s["prs"][0]["body"])))
-        for queued in (False, True):
-            with self.subTest(queued=queued):
-                self.set_gh(lambda s: s.update(
-                    rules=[[{"type": "merge_queue"}]] if queued else [[]]))
-                r = self.safe_push("--merge", "1")
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 1, out)
-                self.assertEqual(self.step(out, "train"), "FAIL", out)
-                self.assertIn("origin/main has no scripts/check_train.py", out)
-                self.assertEqual(self.origin_main(), base)
-                self.assertEqual(self.merges(), [])
-
-    def test_renamed_train_adding_its_own_checker_is_refused_at_merge_in_both_modes(self):
-        for queued in (False, True):
-            with self.subTest(queued=queued):
-                self.setUp()
-                base = self.without_checker()
-                sha = self.commit("Introduce the train checker", {
-                    "scripts/check_train.py":
-                        "def check_train(repo, base, sha, body):\n"
-                        "    return []\n",
-                    **self.decision("scripts/check_train.py: the new checker.")})
-                body = self.body_file()
-                body.write_text(self.text(safe_push.TEMPLATE) + "\nGood train body.\n")
-                r = self.safe_push("--label", "tooling", "--body-file", str(body), "--ready")
-                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-                git(ORIGIN, "update-ref", "refs/heads/train/tooling-1", sha)
-                self.set_gh(lambda s: s["prs"][0].update(
-                    headRefName="train/tooling-1", body=ticked(s["prs"][0]["body"])))
-                self.set_gh(lambda s: s.update(
-                    rules=[[{"type": "merge_queue"}]] if queued else [[]]))
-                r = self.safe_push("--merge", "1")
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 1, out)
-                self.assertEqual(self.step(out, "train"), "FAIL", out)
-                self.assertIn("origin/main has no scripts/check_train.py", out)
-                self.assertEqual(self.origin_main(), base)
-                self.assertEqual(self.merges(), [])
-
-    def test_renamed_train_needs_a_summary_with_its_train_step_in_both_modes(self):
-        # A branch renamed train/ after its pre-flight has a summary with no train step:
-        # --merge, which never writes the body, refuses it as out of date, so the record
-        # of the merge shows the train check that a fresh pre-flight runs.
-        for queued in (False, True):
-            with self.subTest(queued=queued):
-                self.setUp()
-                base = self.new_base("Main's train checker", {
-                    "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                              "    return []\n"})
-                sha = self.good_commit()
-                r = self.safe_push("--ready")
-                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-                self.assertNotIn("| 3. train |", self.gh_state()["prs"][0]["body"])
-                git(ORIGIN, "update-ref", "refs/heads/train/docs-1", sha)
-                self.set_gh(lambda s: s["prs"][0].update(
-                    headRefName="train/docs-1", body=ticked(s["prs"][0]["body"])))
-                self.set_gh(lambda s: s.update(
-                    rules=[[{"type": "merge_queue"}]] if queued else [[]]))
-                r = self.safe_push("--merge", "1")
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 1, out)
-                self.assertEqual(self.step(out, "train"), "ok", out)
-                self.assertEqual(self.guard(out, "body"), "FAIL", out)
-                self.assertIn("run `git safe-push --branch train/docs-1`", out)
-                self.assertEqual(self.origin_main(), base)
-                self.assertEqual(self.merges(), [])
-                self.assertFalse(any("enqueuePullRequest" in arg
-                                     for call in self.gh_state()["calls"] for arg in call))
-
-    def test_unreadable_main_train_module_refuses(self):
-        # origin/main's check_train.py as a link is not a regular file: the harness,
-        # which compares it, refuses before anything runs.
-        (WORK / "scripts/check_train.py").unlink()
-        os.symlink("safe_push.py", WORK / "scripts/check_train.py")
-        git(WORK, "add", "--", "scripts/check_train.py")
-        base = self.commit("Main's train module as a link")
-        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
-        git(WORK, "fetch", "--quiet", "origin")
-        self.good_commit()
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(self.body_file()), "--dry-run")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertIn("origin/main's scripts/check_train.py is not a regular file", out)
-        self.assertEqual(self.origin_main(), base)
-
-    def test_only_a_different_train_module_hands_over(self):
-        base = self.new_base("Main's train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return ['main checker ran']\n"})
-        self.good_commit()
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(self.body_file()), "--dry-run")
-        out = r.stdout + r.stderr
-        self.assertIn("safe_push.py, heath.py or check_train.py differs from origin/main's: "
-                      "running origin/main's in its place", out)
-        self.assertEqual(self.step(out, "harness"), "ok", out)
-        self.assertEqual(self.step(out, "train"), "FAIL", out)
-        self.assertIn("main checker ran", out)
-        self.assertEqual(self.origin_main(), base)
-
-    def test_harness_variable_checks_the_train_module_too(self):
-        self.new_base("Main's train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return []\n"})
-        self.good_commit()
-        env = clean_env()
-        env["STOICHEIA_HARNESS"] = "origin/main"
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(self.body_file()), "--dry-run", env=env)
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertIn("copy of safe_push.py, heath.py or check_train.py is not "
-                      "origin/main's", out)
-
-    def test_unreadable_body_file_refuses_before_the_checks(self):
-        self.new_base("Main's train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return []\n"})
-        self.good_commit()
-        body = self.body_file()
-        body.write_bytes(b"Not UTF-8: \xff\n")
-        for branch in ("train/docs-1", "docs/body"):
-            with self.subTest(branch=branch):
-                r = self.safe_push("--branch", branch, "--label", "docs",
-                                   "--body-file", str(body))
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 1, out)
-                self.assertIn("could not read --body-file", out)
-                self.assertNotIn("4. The full local checks", out)
-                self.assertIsNone(self.origin_branch(branch))
-
-    GOOD_BODY_CHECKER = ("def check_train(repo, base, sha, body):\n"
-                         "    return [] if 'Good train body.' in body else ['bad body']\n")
-
-    def opened_train(self) -> str:
-        """An open, ready train pull request whose body main's checker accepts."""
-        base = self.new_base("Main's train checker",
-                             {"scripts/check_train.py": self.GOOD_BODY_CHECKER})
-        self.good_commit()
-        body = self.body_file()
-        body.write_text(self.text(safe_push.TEMPLATE) + "\nGood train body.\n")
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(body), "--ready")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        return base
-
-    def assertMergeRefusedForChangedBody(self, r, base: str) -> None:
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.step(out, "train"), "ok", out)
-        self.assertIn("the train's body changed during the checks: run --merge again", out)
-        self.assertEqual(self.origin_main(), base)
-        self.assertEqual(self.merges(), [])
-
-    def test_body_edited_during_the_merge_checks_refuses(self):
-        # The gates' read after the checks sees an edit made while the train check ran.
-        # The driven harness carries main's train module, so that it is origin/main's
-        # and runs in place, with the driver's stand-ins, rather than handing over.
-        base = self.opened_train()
-        harness = TMP / "harness-with-train"
-        harness.mkdir(exist_ok=True)
-        for name in ("safe_push.py", "heath.py"):
-            shutil.copy2(UNDER_TEST / name, harness / name)
-        (harness / "check_train.py").write_text(self.GOOD_BODY_CHECKER)
-        r = subprocess.run([sys.executable, "-c", DRIVER, str(harness), "edit-train-body",
-                            str(ORIGIN), "", "--_test-skip-checks", "--merge", "1"],
-                           cwd=WORK, env=clean_env(), capture_output=True, text=True)
-        self.assertNotIn("running origin/main's in its place", r.stdout + r.stderr)
-        self.assertMergeRefusedForChangedBody(r, base)
-
-    def test_body_edited_before_the_merge_s_own_read_refuses(self):
-        base = self.opened_train()
-        self.set_gh(lambda s: s.update(reread_body=s["prs"][0]["body"] + "\nAn edit.\n"))
-        self.assertMergeRefusedForChangedBody(self.safe_push("--merge", "1"), base)
-
-    def test_body_edited_before_the_final_gates_refuses(self):
-        base = self.opened_train()
-        self.set_gh(lambda s: s.update(after_body={"prs": [
-            dict(s["prs"][0], body=s["prs"][0]["body"] + "\nAn edit.\n")]}))
-        self.assertMergeRefusedForChangedBody(self.safe_push("--merge", "1"), base)
-
-    def test_origin_train_failure_refuses_even_if_candidate_passes(self):
-        base = self.new_base("Main's train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return ['planted train refusal']\n"})
-        self.commit("A candidate checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return []\n",
-            **self.decision("scripts/check_train.py: the proposed checker.")})
-        r = self.safe_push("--branch", "train/tooling-1", "--label", "tooling",
-                           "--body-file", str(self.body_file()))
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.step(out, "train"), "FAIL")
-        self.assertIn("planted train refusal", out)
-        self.assertEqual(self.origin_main(), base)
-        self.assertIsNone(self.origin_branch("train/tooling-1"))
-        self.assertNotIn("4. The full local checks", out)
-
-    def test_main_train_function_receives_the_checked_commit_and_body(self):
-        base = self.new_base("Main's train checker", {
-            "scripts/check_train.py":
-                "from pathlib import Path\n"
-                "def check_train(repo, base, sha, body):\n"
-                "    if not isinstance(repo, Path) or len(base) != 40 or len(sha) != 40:\n"
-                "        return ['wrong train arguments']\n"
-                "    if body != 'A train body for the test.\\n':\n"
-                "        return ['wrong train body']\n"
-                "    return []\n"})
-        sha = self.good_commit()
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(self.body_file()))
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 0, out)
-        self.assertEqual(self.step(out, "train"), "ok")
-        self.assertEqual(self.origin_main(), base)
-        self.assertEqual(self.origin_branch("train/docs-1"), sha)
-
-    def test_unreadable_train_result_refuses(self):
-        base = self.new_base("An unreadable train checker result", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return None\n"})
-        self.good_commit()
-        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
-                           "--body-file", str(self.body_file()), "--dry-run")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertIn("unreadable problem list", out)
-        self.assertEqual(self.origin_main(), base)
-
-    def test_changed_body_is_checked_again_before_push(self):
-        base = self.new_base("Main's train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return [] if body == 'Good.\\n' else ['bad body']\n"})
-        sha = self.good_commit()
-        body = self.body_file()
-        body.write_text("Good.\n")
-        args = ("--branch", "train/docs-1", "--label", "docs", "--body-file", str(body))
-        r = self.safe_push(*args, "--dry-run")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        path = LOG.parent / "preflight" / f"{sha}-{base}.json"
-        self.assertTrue(path.is_file())
-        body.write_text("Bad.\n")
-        r = self.safe_push(*args)
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.step(out, "train"), "FAIL", out)
-        self.assertIn("bad body", out)
-        self.assertNotIn("4. The full local checks", out)
-        self.assertIsNone(self.origin_branch("train/docs-1"))
-        self.assertEqual(self.origin_main(), base)
-
-    def test_a_flagged_train_runs_uncached_and_still_checks_its_train(self):
-        # #224 after #383: with --main-checks-cache, a train/* branch, however written,
-        # gets no cache and no sandbox, since its train check loads main's check_train.py
-        # into the harness after the commit's code has run; the train check still runs,
-        # in a process with no sandbox and no cache.
-        marker = TMP / "flagged-train.txt"
-        checker = ("import sys\n"
-                   "def check_train(repo, base, sha, body):\n"
-                   "    m = sys.modules['__main__']\n"
-                   f"    open({str(marker)!r}, 'a').write(repr((m.SANDBOX, m.CACHE)) + '\\n')\n"
-                   "    return []\n")
-        for branch in ("train/tooling-1", "refs/heads/train/tooling-1"):
-            with self.subTest(branch=branch):
-                self.setUp()
-                marker.unlink(missing_ok=True)
-                self.new_base("Main's train checker", {"scripts/check_train.py": checker})
-                path = "scripts/check_links.py"
-                change = {path: self.text(path) + "\n# A comment for the test.\n"}
-                change.update(self.decision(f"A comment in `{path}`, for the test."))
-                self.commit("A comment in a check", change)
-                # The log's directory resolved: dir_problem refuses a symlink above it.
-                root = Path(os.path.realpath(tempfile.mkdtemp(prefix="flagged-train-",
-                                                              dir=TMP)))
-                env = clean_env()
-                env["STOICHEIA_PUSH_LOG"] = str(root / "pushes.log")
-                r = self.safe_push("--branch", branch, "--label", "tooling", "--body-file",
-                                   str(self.body_file()), "--dry-run", "--main-checks-cache",
-                                   env=env)
-                out = r.stdout + r.stderr
-                self.assertEqual(r.returncode, 0, out)
-                self.assertEqual(self.step(out, "main-checks cache"), "note", out)
-                self.assertIn("a train/* branch's train check", out)
-                self.assertEqual(self.guard(out, "train"), "ok", out)
-                self.assertEqual(marker.read_text(), "(None, None)\n", out)
-                self.assertFalse((root / "main-checks").exists(), out)
-
-
 class Queue(Edge):
     """A stand-in queue, with no network and a deterministic clock for the timeout."""
 
@@ -6724,23 +6323,6 @@ class Queue(Edge):
         self.assertIn(f"origin/main's `scripts/safe_push.py` (blob `{old_blob[:12]}`)", body)
         self.assertEqual(body.count("safe_push:preflight begin"), 1)
         self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
-
-    def test_queue_train_uses_main_checker_after_its_merge_base(self):
-        # A renamed branch had its pre-flight before main acquired the new checker.
-        sha = self.opened()
-        git(WORK, "checkout", "--quiet", "--detach", BASE)
-        main = self.new_base("Main's later train checker", {
-            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
-                                      "    return ['later main checker refused']\n"})
-        git(ORIGIN, "update-ref", "refs/heads/train/docs-1", sha)
-        self.set_gh(lambda s: s["prs"][0].update(headRefName="train/docs-1"))
-        r = self.safe_push("--merge", "1")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertIn("later main checker refused", out)
-        self.assertEqual(self.step(out, "train"), "FAIL", out)
-        self.assertEqual(self.enqueues(), [])
-        self.assertEqual(self.origin_main(), main)
 
     def test_queue_dry_run_does_not_enqueue(self):
         self.opened()
@@ -8352,12 +7934,34 @@ class ProtectedPaths(Edge):
         self.assertEqual(removed, 2)
         expectations = json.loads(self.text(expect))
         for ref in ("III.1", "III.1 Por."):
-            pin = next(x for x in expectations["expectations"]
-                       if (x.get("ref"), x["field"]) == (ref, "axioms") and "count" in x)
-            self.assertEqual(pin["count"]["prefix"], "Tacit.")
-            pin["count"]["is"] -= 1
-            if "equals" in pin:
-                pin["equals"].remove(self.RETAINED_AXIOM)
+            changed = 0
+            for pin in expectations["expectations"]:
+                if (pin.get("ref"), pin.get("field")) != (ref, "axioms"):
+                    continue
+                if "count" in pin:
+                    self.assertEqual(pin["count"]["prefix"], "Tacit.")
+                    pin["count"]["is"] -= 1
+                    if "equals" in pin:
+                        self.assertIn(self.RETAINED_AXIOM, pin["equals"])
+                        pin["equals"].remove(self.RETAINED_AXIOM)
+                    changed += 1
+                elif "one_of" in pin:
+                    for state in pin["one_of"]:
+                        state_changed = 0
+                        for inner in state["expectations"]:
+                            if inner.get("field") != "axioms" or "count" not in inner:
+                                continue
+                            self.assertEqual(inner["count"]["prefix"], "Tacit.")
+                            inner["count"]["is"] -= 1
+                            if "equals" in inner:
+                                self.assertIn(self.RETAINED_AXIOM, inner["equals"])
+                                inner["equals"].remove(self.RETAINED_AXIOM)
+                            state_changed += 1
+                        self.assertGreater(state_changed, 0,
+                                           f"{ref}: state {state.get('state')!r} "
+                                           "has no counted axioms pin")
+                        changed += state_changed
+            self.assertGreater(changed, 0, f"{ref}: no counted axioms pin or one_of pin changed")
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
@@ -10459,6 +10063,7 @@ from pathlib import Path  # noqa: E402
 import tempfile  # noqa: E402
 
 sp = safe_push
+preloaded = {name: name in sys.modules for name in ARGS["preload"]}
 # The sequence step 4 runs is given to full_checks, as check_list gives it, and differs
 # from the built-in CHECKS, which the cache's key must not read.
 SEQUENCE = [(name, cmd) for name, cmd in ARGS["checks"]]
@@ -10512,7 +10117,7 @@ finally:
     sp.SANDBOX = None
 with open(ARGS["out"], "w") as f:
     json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "listed": listed,
-               "error": error,
+               "error": error, "preloaded": preloaded,
                "reader": reader is not None, "apart": apart,
                "planted": os.path.exists(os.path.join(ARGS["here"], "dataclasses.py")),
                "executed": os.path.exists(ARGS["sentinel"]),
@@ -11138,36 +10743,6 @@ class MainChecksCache(Edge):
                 self.assertEqual(self.step(out, "generated pages"), "ok", out)
         self.assertEqual(self.origin_branch(), git(WORK, "rev-parse", "HEAD").strip())
 
-    def test_the_flag_for_a_train(self):
-        # #383: a train/* branch's train check runs origin/main's check_train.py in the
-        # harness's own process after the guards have run the commit's code, so with the
-        # flag a train gets no cache and no sandbox; and the check refuses to run if one is
-        # set, should a later change call it so.
-        root = self.root / "train"
-        with mock.patch.object(safe_push, "CACHE", None), \
-                mock.patch.object(safe_push, "SANDBOX", None), \
-                mock.patch.object(safe_push, "sandbox_problem",
-                                  side_effect=AssertionError("a sandbox tried")), \
-                mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG": str(root / "pushes.log")}), \
-                contextlib.redirect_stdout(io.StringIO()):
-            rep = safe_push.Report()
-            safe_push.open_cache(rep, self.R3, train=True)
-            self.assertIsNone(safe_push.CACHE)
-            self.assertIsNone(safe_push.SANDBOX)
-            self.assertEqual(rep.steps[-1].outcome, "note")
-            self.assertIn("train/* branch", rep.steps[-1].detail)
-        self.assertFalse((root / "main-checks").exists())
-        ctx = safe_push.Context(WORK, BASE, BASE, 1, str(ORIGIN), "train/for-the-test", {})
-        with mock.patch.object(safe_push, "SANDBOX", "(version 1)"), \
-                mock.patch.object(safe_push, "harness_train",
-                                  side_effect=AssertionError("check_train was read")), \
-                contextlib.redirect_stdout(io.StringIO()):
-            rep = safe_push.Report()
-            with self.assertRaises(safe_push.Refusal) as caught:
-                safe_push.train_check(ctx, "A body.", rep)
-        self.assertIn("cannot run once the main-checks cache's sandbox is set",
-                      str(caught.exception))
-
     def test_the_flag_for_a_change_of_r0_to_r2(self):
         # A change of R0 leaves step 4 to CI: there is no pass to reuse, so the flag makes,
         # reads and writes nothing, and sets no sandbox; the run says so.
@@ -11365,8 +10940,8 @@ class MainChecksCache(Edge):
         self.assertEqual(r.returncode, 0, r.stderr)
         text = " ".join(r.stdout.split())
         self.assertIn("--main-checks-cache the pre-flight only", text)
-        self.assertIn("Only the runs that land a train pass it (the coordinator ruled): the "
-                      "coordinator's dry run of the train and its push", text)
+        self.assertIn("Only the runs that land a part pass it (the coordinator ruled): the "
+                      "coordinator's dry run of the part and its push", text)
         self.assertIn("The sandbox does not stop a run without the flag", text)
 
     def test_every_command_starts_in_run(self):
@@ -11412,29 +10987,14 @@ class MainChecksCache(Edge):
         self.assertEqual(sorted(order, key=line.__getitem__), order)
 
 
-    def test_every_import_is_at_the_top(self):
-        # A module imported in a function could be imported once the sandbox is set, and
-        # found first in the harness's own directory: so safe_push.py imports nothing
-        # but at its top, nor through importlib or __import__, which the audit event of
-        # an import does not always see.
-        tree = ast.parse(SAFE_PUSH.read_text())
-        late = [ast.unparse(node) for top in tree.body
-                if not isinstance(top, (ast.Import, ast.ImportFrom))
-                for node in ast.walk(top) if isinstance(node, (ast.Import, ast.ImportFrom))]
-        self.assertEqual(late, [])
-        # importlib only in train_check, which never runs with the sandbox set: open_cache
-        # sets none for a train/* branch, and train_check refuses if one is set (#383).
-        def names(nodes):
-            return {node.id for node in nodes if isinstance(node, ast.Name)}
-        trains = [node for node in ast.walk(tree)
-                  if isinstance(node, ast.FunctionDef) and node.name == "train_check"]
-        self.assertEqual(len(trains), 1)
-        inside = {id(node) for node in ast.walk(trains[0])}
-        self.assertFalse({"importlib", "__import__"}
-                         & names(n for n in ast.walk(tree) if id(n) not in inside))
-        self.assertNotIn("__import__", names(ast.walk(trains[0])))
-        for name in ("plistlib", "tomllib"):
-            self.assertIn(f"\nimport {name}", SAFE_PUSH.read_text())
+    def test_the_cache_path_imports_nothing_after_the_sandbox_is_set(self):
+        sha = self.check_change()
+        tools, _ = self.stand_in_tools()
+        seen = self.step4_watched(sha, tools)
+        self.assertEqual(seen["preloaded"], {"plistlib": True, "tomllib": True})
+        self.assertEqual((seen["seen"], seen["error"]), ([], None), seen["printed"])
+        self.assertEqual(set(seen["runs"]), {"miss", "hit"})
+        self.assertTrue(seen["listed"], seen["printed"])
 
 
     def test_the_preflight_activates_the_sandbox_after_classification_and_before_checks(self):
@@ -11452,8 +11012,7 @@ class MainChecksCache(Edge):
             self.assertIsNone(safe_push.SANDBOX)
             events.append("count reader")
 
-        def activate(rep, risk, train=False):
-            self.assertFalse(train)     # the commit is not on a train/* branch
+        def activate(rep, risk):
             self.assertEqual(events, ["classification", "count reader"])
             self.assertIsNone(safe_push.SANDBOX)
             events.append("sandbox")
@@ -11566,6 +11125,7 @@ class MainChecksCache(Edge):
         given = {"events": sorted(PROCESS_EVENTS), "here": str(harness), "work": str(WORK),
                  "sha": sha, "base": BASE, "origin": str(ORIGIN), "inputs": self.inputs(sha),
                  "checks": self.CHECKS, "negative": self.NEGATIVE,
+                 "preload": ["plistlib", "tomllib"],
                  "sandbox_exec": str(self.fake), "cache": str(self.dir),
                  "path": str(tools) + os.pathsep + os.environ.get("PATH", ""),
                  "logs": tempfile.mkdtemp(prefix="logs-", dir=self.root),
@@ -15116,18 +14676,6 @@ class Units(unittest.TestCase):
         for previous in (block, older):
             self.assertEqual(safe_push.put_block(previous, block), block)
 
-    def test_merge_train_input_refuses_unreadable_body(self):
-        ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 1, "", None, {},
-                                branch="train/docs-1")
-        for view in ({}, {"body": None}, {"body": []}, {"body": False}):
-            with self.subTest(view=view):
-                with self.assertRaisesRegex(safe_push.Refusal, "current pull request body"):
-                    safe_push.merge_train_input(ctx, view)
-        self.assertEqual(safe_push.merge_train_input(ctx, {"body": ""}), "")
-        self.assertEqual(safe_push.merge_train_input(ctx, {"body": "Current body."}),
-                         "Current body.")
-        self.assertIsNone(safe_push.merge_train_input(ctx._replace(branch="docs/test"), {}))
-
     def test_main_red_fix_is_read_as_github_shows_the_body(self):
         read = safe_push.main_red_fix
         self.assertIsNone(read(""))
@@ -15179,12 +14727,11 @@ class Units(unittest.TestCase):
                                 queue=True, harness_sha=tip)
         record = {"harness_sha": tip}
 
-        def block(harness, train_row=False, at=base):
+        def block(harness, at=base):
             return safe_push.BLOCK.search(
                 f"<!-- safe_push:preflight begin sha={sha} base={at} harness={harness} -->\n"
                 "Verdict: PASS.\n\n| Step | Outcome | Seconds |\n|---|---|---|\n"
-                + ("| 3. train | ok | 0.4 |\n" if train_row else "")
-                + "<!-- safe_push:preflight end -->")
+                "<!-- safe_push:preflight end -->")
 
         def history(*first_parents):
             """git as block_current asks it: main's first-parent chain, or what the head
@@ -15206,9 +14753,6 @@ class Units(unittest.TestCase):
                                                      block(later), record))
             self.assertFalse(safe_push.block_current(ctx._replace(sha="f" * 40),
                                                      block(tip), record))
-            train = ctx._replace(branch="train/docs-1")
-            self.assertFalse(safe_push.block_current(train, block(tip), record))
-            self.assertTrue(safe_push.block_current(train, block(tip, train_row=True), record))
             # As b7aac65f: an old main commit as both base and harness, for a head built on
             # newer main. The judge refuses it, so it is not current, even were this run
             # to compare against that old commit.
@@ -15801,6 +15345,80 @@ class Units(unittest.TestCase):
                                        listed, top),
             "an expectation added": file(law, listed, top, dict(law, law="lenSymm",
                                                                  includes=[], equals=[])),
+        }
+        for name, new in kept.items():
+            with self.subTest(name):
+                self.assertTrue(safe_push.kept_expectations(old, new))
+
+    def test_an_expectation_with_one_of_is_kept_by_its_states(self):
+        # #517's first part made III.1 Por.'s pin a one_of: a re-proof must move its
+        # counts with the content, as it moves a counted pin's; tightening a state can
+        # loosen the choice of exactly one, so it is not kept.
+        def file(*expectations):
+            return json.dumps({"expectations": list(expectations)})
+
+        def without(x, key):
+            return {k: v for k, v in x.items() if k != key}
+
+        metric = {"ref": "III.1 Por.", "field": "axioms",
+                  "equals": ["Tacit.line_unique", "Tacit.area_congruent"],
+                  "excludes": ["Tacit.centre_unique"],
+                  "count": {"prefix": "Tacit.", "is": 2}}
+        figures = dict(metric, equals=["Tacit.line_unique", "Tacit.figures_coincide"])
+        a = {"state": "Metric 9", "expectations": [metric]}
+        b = {"state": "Common Notion 4 for figures", "expectations": [figures]}
+        pin = {"ref": "III.1 Por.", "field": "axioms", "one_of": [a, b],
+               "why": "The porism rests on either axiom while #517 lands."}
+        ordinary = {"ref": "III.1", "field": "axioms", "includes": ["Tacit.line_unique"]}
+        old = file(pin, ordinary)
+        not_kept = {
+            "a state dropped": file(dict(pin, one_of=[a]), ordinary),
+            "a state added": file(dict(pin, one_of=[a, b, dict(a, state="Third")]), ordinary),
+            "a state renamed": file(dict(pin, one_of=[dict(a, state="Renamed"), b]), ordinary),
+            "a state's excludes emptied": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, excludes=[])]), b]), ordinary),
+            "a state's excludes grown": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, excludes=["Tacit.centre_unique",
+                                                            "Tacit.area_swap"])]), b]),
+                ordinary),
+            "a state's includes key added": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, includes=["Tacit.line_unique"])]), b]),
+                ordinary),
+            "an expectation added to a state": file(dict(pin, one_of=[
+                dict(a, expectations=[metric, ordinary]), b]), ordinary),
+            "a state's count removed": file(dict(pin, one_of=[
+                dict(a, expectations=[without(metric, "count")]), b]), ordinary),
+            "a state's count's prefix changed": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, count={"prefix": "Postulate", "is": 2})]),
+                b]), ordinary),
+            "a state's expectations emptied": file(dict(pin, one_of=[
+                dict(a, expectations=[]), b]), ordinary),
+            "the one_of replaced by one state's expectation": file(metric, ordinary),
+        }
+        for name, new in not_kept.items():
+            with self.subTest(name):
+                self.assertFalse(safe_push.kept_expectations(old, new))
+        both = {"one_of": [
+            {"state": "A", "expectations": [{"includes": ["Tacit.a"]}]},
+            {"state": "B", "expectations": [{"includes": ["Tacit.b"]}]},
+        ]}
+        tightened = dict(both, one_of=[
+            both["one_of"][0],
+            dict(both["one_of"][1], expectations=[
+                {"includes": ["Tacit.b"], "excludes": ["Tacit.a"]}]),
+        ])
+        with self.subTest("a state tightened so that a tree holding both states passes"):
+            self.assertFalse(safe_push.kept_expectations(file(both), file(tightened)))
+        moved = [dict(s, expectations=[dict(x, count={"prefix": x["count"]["prefix"],
+                                                     "is": x["count"]["is"] - 1},
+                                            equals=[n for n in x["equals"]
+                                                    if n != "Tacit.line_unique"])
+                                       for x in s["expectations"]]) for s in (a, b)]
+        kept = {
+            "unchanged": old,
+            "each state's count and equals moved": file(dict(pin, one_of=moved), ordinary),
+            "the one_of's why reworded": file(dict(pin, why="Either axiom may hold."),
+                                            ordinary),
         }
         for name, new in kept.items():
             with self.subTest(name):

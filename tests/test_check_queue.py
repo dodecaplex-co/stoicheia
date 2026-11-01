@@ -2371,7 +2371,7 @@ class QueueTests(unittest.TestCase):
         install = [step for step in tests["steps"] if step.get("name") ==
                    "Install the queue tests' pinned YAML parser"]
         offline = [step for step in tests["steps"] if step.get("name") ==
-                   "Check the queue and train checks, and automatic reverts, case by case"]
+                   "Check the queue and automatic reverts, case by case"]
         self.assertEqual(len(install), 1)
         self.assertEqual(len(offline), 1)
         for spec in (tests, *tests["steps"]):
@@ -2417,16 +2417,6 @@ class QueueTests(unittest.TestCase):
         for name in ("check_queue.py", "safe_push.py", "heath.py"):
             (self.repo / "scripts" / name).write_text("raise SystemExit('hostile script')\n",
                                                      encoding="utf-8")
-        result = subprocess.run([sys.executable, "-I", str(judge / "check_queue.py"),
-                                 "--tree", str(self.repo)], cwd=self.repo,
-                                capture_output=True, text=True)
-        self.verdict(result, 0, "queue: PASS")
-
-    def test_real_judge_runs_without_check_train(self):
-        judge = self.root / "judge"
-        shutil.copytree(SCRIPTS, judge, ignore=shutil.ignore_patterns("__pycache__"))
-        (judge / "check_train.py").unlink(missing_ok=True)
-        self.checkout(self.head)
         result = subprocess.run([sys.executable, "-I", str(judge / "check_queue.py"),
                                  "--tree", str(self.repo)], cwd=self.repo,
                                 capture_output=True, text=True)
