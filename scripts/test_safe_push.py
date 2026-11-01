@@ -7934,12 +7934,34 @@ class ProtectedPaths(Edge):
         self.assertEqual(removed, 2)
         expectations = json.loads(self.text(expect))
         for ref in ("III.1", "III.1 Por."):
-            pin = next(x for x in expectations["expectations"]
-                       if (x.get("ref"), x["field"]) == (ref, "axioms") and "count" in x)
-            self.assertEqual(pin["count"]["prefix"], "Tacit.")
-            pin["count"]["is"] -= 1
-            if "equals" in pin:
-                pin["equals"].remove(self.RETAINED_AXIOM)
+            changed = 0
+            for pin in expectations["expectations"]:
+                if (pin.get("ref"), pin.get("field")) != (ref, "axioms"):
+                    continue
+                if "count" in pin:
+                    self.assertEqual(pin["count"]["prefix"], "Tacit.")
+                    pin["count"]["is"] -= 1
+                    if "equals" in pin:
+                        self.assertIn(self.RETAINED_AXIOM, pin["equals"])
+                        pin["equals"].remove(self.RETAINED_AXIOM)
+                    changed += 1
+                elif "one_of" in pin:
+                    for state in pin["one_of"]:
+                        state_changed = 0
+                        for inner in state["expectations"]:
+                            if inner.get("field") != "axioms" or "count" not in inner:
+                                continue
+                            self.assertEqual(inner["count"]["prefix"], "Tacit.")
+                            inner["count"]["is"] -= 1
+                            if "equals" in inner:
+                                self.assertIn(self.RETAINED_AXIOM, inner["equals"])
+                                inner["equals"].remove(self.RETAINED_AXIOM)
+                            state_changed += 1
+                        self.assertGreater(state_changed, 0,
+                                           f"{ref}: state {state.get('state')!r} "
+                                           "has no counted axioms pin")
+                        changed += state_changed
+            self.assertGreater(changed, 0, f"{ref}: no counted axioms pin or one_of pin changed")
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
@@ -15323,6 +15345,80 @@ class Units(unittest.TestCase):
                                        listed, top),
             "an expectation added": file(law, listed, top, dict(law, law="lenSymm",
                                                                  includes=[], equals=[])),
+        }
+        for name, new in kept.items():
+            with self.subTest(name):
+                self.assertTrue(safe_push.kept_expectations(old, new))
+
+    def test_an_expectation_with_one_of_is_kept_by_its_states(self):
+        # #517's first part made III.1 Por.'s pin a one_of: a re-proof must move its
+        # counts with the content, as it moves a counted pin's; tightening a state can
+        # loosen the choice of exactly one, so it is not kept.
+        def file(*expectations):
+            return json.dumps({"expectations": list(expectations)})
+
+        def without(x, key):
+            return {k: v for k, v in x.items() if k != key}
+
+        metric = {"ref": "III.1 Por.", "field": "axioms",
+                  "equals": ["Tacit.line_unique", "Tacit.area_congruent"],
+                  "excludes": ["Tacit.centre_unique"],
+                  "count": {"prefix": "Tacit.", "is": 2}}
+        figures = dict(metric, equals=["Tacit.line_unique", "Tacit.figures_coincide"])
+        a = {"state": "Metric 9", "expectations": [metric]}
+        b = {"state": "Common Notion 4 for figures", "expectations": [figures]}
+        pin = {"ref": "III.1 Por.", "field": "axioms", "one_of": [a, b],
+               "why": "The porism rests on either axiom while #517 lands."}
+        ordinary = {"ref": "III.1", "field": "axioms", "includes": ["Tacit.line_unique"]}
+        old = file(pin, ordinary)
+        not_kept = {
+            "a state dropped": file(dict(pin, one_of=[a]), ordinary),
+            "a state added": file(dict(pin, one_of=[a, b, dict(a, state="Third")]), ordinary),
+            "a state renamed": file(dict(pin, one_of=[dict(a, state="Renamed"), b]), ordinary),
+            "a state's excludes emptied": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, excludes=[])]), b]), ordinary),
+            "a state's excludes grown": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, excludes=["Tacit.centre_unique",
+                                                            "Tacit.area_swap"])]), b]),
+                ordinary),
+            "a state's includes key added": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, includes=["Tacit.line_unique"])]), b]),
+                ordinary),
+            "an expectation added to a state": file(dict(pin, one_of=[
+                dict(a, expectations=[metric, ordinary]), b]), ordinary),
+            "a state's count removed": file(dict(pin, one_of=[
+                dict(a, expectations=[without(metric, "count")]), b]), ordinary),
+            "a state's count's prefix changed": file(dict(pin, one_of=[
+                dict(a, expectations=[dict(metric, count={"prefix": "Postulate", "is": 2})]),
+                b]), ordinary),
+            "a state's expectations emptied": file(dict(pin, one_of=[
+                dict(a, expectations=[]), b]), ordinary),
+            "the one_of replaced by one state's expectation": file(metric, ordinary),
+        }
+        for name, new in not_kept.items():
+            with self.subTest(name):
+                self.assertFalse(safe_push.kept_expectations(old, new))
+        both = {"one_of": [
+            {"state": "A", "expectations": [{"includes": ["Tacit.a"]}]},
+            {"state": "B", "expectations": [{"includes": ["Tacit.b"]}]},
+        ]}
+        tightened = dict(both, one_of=[
+            both["one_of"][0],
+            dict(both["one_of"][1], expectations=[
+                {"includes": ["Tacit.b"], "excludes": ["Tacit.a"]}]),
+        ])
+        with self.subTest("a state tightened so that a tree holding both states passes"):
+            self.assertFalse(safe_push.kept_expectations(file(both), file(tightened)))
+        moved = [dict(s, expectations=[dict(x, count={"prefix": x["count"]["prefix"],
+                                                     "is": x["count"]["is"] - 1},
+                                            equals=[n for n in x["equals"]
+                                                    if n != "Tacit.line_unique"])
+                                       for x in s["expectations"]]) for s in (a, b)]
+        kept = {
+            "unchanged": old,
+            "each state's count and equals moved": file(dict(pin, one_of=moved), ordinary),
+            "the one_of's why reworded": file(dict(pin, why="Either axiom may hold."),
+                                            ordinary),
         }
         for name, new in kept.items():
             with self.subTest(name):
