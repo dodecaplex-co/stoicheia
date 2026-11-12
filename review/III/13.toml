@@ -54,11 +54,11 @@ note = "Like Heath's, this figure draws both impossible suppositions: EBFD touch
 
 [review]
 stage = "full"
-commit = "689ab169f"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:cf2efd52c3c89363"
-run = "brief 0005 stage 5, ship R3 (#29); read again at e572d5c0 only where train C6c changed it (its representation note and a docstring); full read at 9eae4df1; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 9eae4df1; card #126, ship ER: read in full after Definition III.3 read at the point of contact moved in, with III.13's three companions, written by Claude, read by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f"
+reviewer = "Claude Fable (claude-fable-5-1), independent re-reader"
+lean = "sha256:4c6e2d95463ea2ea"
+run = "brief 0005 stage 5, ship R3 (#29); read again at e572d5c0 only where train C6c changed it (its representation note and a docstring); full read at 9eae4df1; focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 9eae4df1; card #126, ship ER: read in full after Definition III.3 read at the point of contact moved in, with III.13's three companions, written by Claude, read by GPT-6 Astra (Codex); card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; the straight lines no longer called chords: the record, its Lean file's changed lines written by GPT-6 Astra (gpt-6-astra), read in full and cold by Claude Fable (claude-fable-5-1), of the Claude family, which wrote none of it, on 10 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own and III.29's record and commentary, which then held III.29's greater-case revision"
 text = "sha256:201abc512418771a"
+commit = "87855b317ed24cbab09c088a4a8878ab13c93feb"
 
 [review.items]
 statement = "pass"

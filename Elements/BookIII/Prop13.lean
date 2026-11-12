@@ -145,7 +145,7 @@ the point of contact C off that straight line, a small circle about C would cut 
 circle at a point on the far side of the radius GC from the outer centre F, and the angle at
 G would put that point farther from F than C is [I. 24], as III.7 compares straight lines
 from a point to a circle; without, the point on the near side would be within the other
-circle, and a point of the chord joining it to C [III. 2] within both. Were C on that
+circle, and a point of the straight line joining it to C [III. 2] within both. Were C on that
 straight line on the wrong side, I.20, or a point of a radius near C, would do the same.
 So C lies on the straight line through the centres, beyond the inner centre within
 (`TouchesInternallyAt.between`) and between the centres without
@@ -312,7 +312,7 @@ or with the centres on one side of C on a straight line through it, a point betw
 the nearer centre will do. Off the straight line FG, a small circle about C cuts `β` at X on
 F's side of GC, and near enough to C to be on C's side of GF (`Touching.small`,
 `Touching.sameSide_of_near`); then GX falls within the angle FGC, and the less angle at G
-gives the less base [I. 24], so X is within `α`. A point of the chord CX of `β` near C is
+gives the less base [I. 24], so X is within `α`. A point of the straight line CX of `β` near C is
 then within `β` [III. 2], within `α` (III.2 for points on or within the circle), and near C.
 
 The conclusion is III.12's, reached by another route. -/
@@ -376,7 +376,7 @@ theorem TouchesExternallyAt.between {α β : Circle} {C F G : Point} (hF : Centr
   have hFX : ‖F X‖ < ‖F C‖ :=
     BookI.Prop24 hGFC hXC.triangle rfl (Definition15 hG hCβ hXβ) hlt
   have hXα : InsideCircle X α := inside_of_len_lt hF hCα hFX
-  /- A point P of the chord CX: within `γ`, as X is; within `β` [III. 2]; and within `α`,
+  /- A point P of the straight line CX: within `γ`, as X is; within `β` [III. 2]; and within `α`,
      between C on it and X within it (III.2, for points on or within the circle). -/
   have hCX : C ≠ X := (ne_of_centre_of_on hδ hXδ).symm
   obtain ⟨T, hC_T, hX_T⟩ := Postulate1 C X hCX
