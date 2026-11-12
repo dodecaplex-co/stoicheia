@@ -96,22 +96,33 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
 
 ## Run it
 
-1. Install Lean: the easiest route is VS Code with the **Lean 4** extension, or `curl https://elan.lean-lang.org/elan-init.sh -sSf | sh`. The `lean-toolchain` file pins Lean 4.35.0. The checks below and the pages need Python 3.11 or later, and nothing else.
+1. Install Lean: the easiest route is VS Code with the **Lean 4** extension, or `curl https://elan.lean-lang.org/elan-init.sh -sSf | sh`. The `lean-toolchain` file pins Lean 4.35.0. Requirements for the commands below include Lean, git, `grep`, `shasum` and Python 3.11 or later, with no Python package beyond the standard library, and a network connection.
+   Clone the repository at https://github.com/dodecaplex-co/stoicheia and start at its root; run the commands that follow in the order shown.
 2. Check every proof:
    ```sh
    lake build
    ```
-3. Rebuild the certificate and the pages, and check that the Lean still quotes Heath word for word:
+   A build that passes ends with a line beginning `Build completed successfully`.
+3. Rebuild the certificate and the pages, check that the Lean still quotes Heath word for word, and compare the rebuilt files with the committed ones:
    ```sh
    lake env lean Certificate/Facts.lean
    python3 scripts/check_fidelity.py
    python3 scripts/render.py
+   git status --porcelain                 # prints nothing
    ```
+   On success, `Certificate/Facts.lean` writes `facts.json` and prints a line beginning `certificate: 99 propositions,`; the fidelity check ends with `✓ fidelity: all 99 propositions quote Heath exactly; house rules, the axiom lock, the policies for every entry and the 99 review records hold`; and `render.py` ends with a line beginning `rendered book pages`.
+   Then `git status --porcelain` prints nothing when the rebuilt certificate and pages equal the committed files, and otherwise lists the files that differ.
 4. Run the other checks behind [What the checks show](#what-the-checks-show). The kernel
-   check reads the build of step 2, and takes about a minute on a laptop. The negative
-   tests break files on purpose and put them back, so run them on a clean checkout:
+   check reads the build of step 2, and takes about a minute on a laptop. It uses
+   `leanchecker`, by Morrison and Ullrich; `leanexport`, by Böving for the Lean FRO;
+   and `nanoda_bin`, the executable of Bailey's nanoda.
+   All three come in the `bin` folder of the pinned toolchain, whose path the check gets
+   with `lake env lean --print-prefix` from the root, so the check installs nothing.
+   The negative tests break files on purpose and put them back, so run them on a clean checkout:
    ```sh
    lake build Audit
+   python3 scripts/sweep_citations.py --self-test
+   python3 scripts/sweep_citations.py
    python3 scripts/check_kernel.py --self-test
    python3 scripts/check_style.py
    python3 scripts/check_links.py
@@ -119,12 +130,30 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
    python3 -I tests/model/run.py --fast
    python3 -I tests/model/results_check.py
    ```
+   Of these, `scripts/sweep_citations.py` is the citation sweep, and with `--self-test` its self-test; `tests/model/run.py --fast` runs the numerical model tests and the hyperbolic check, with fewer samples than its `--full` run.
+   Each command exits with status 0 when its check passes. `lake build Audit` ends with a line beginning `Build completed successfully`; the sweep's self-test, with a line beginning `✓ self-test:`; the kernel check, with a line beginning `✓ kernel: Lean's kernel accepts the whole environment of Elements again`; the style check, with `✓ style: the hard rules hold (S1–S26)`; and the link check, with a line beginning `✓ links: all`.
+   The sweep does not fail on a hit: it lists each, and every hit is declared in its review record when the summary's last line, beginning `In all:`, ends `0 undeclared`.
+
+5. Check the formal model, starting from the repository's root; the commands stop at the first failure. The lock check prints
+   `Certificate/axioms.lock: OK` when the hash agrees:
+   ```sh
+   grep -v '^#' model/lock.sha256 | shasum -a 256 -c - &&
+   (cd model && lake exe cache get && lake build) &&
+   python3 scripts/check_model_kernel.py --self-test &&
+   python3 scripts/check_model_kernel.py
+   ```
+   When every command passes, the chain exits with status 0.
+   On the machine that built the model's package,
+   as [the model's README](model/README.md) reports, fetching Mathlib's prebuilt files downloaded 452 MB and unpacked 6.6 GB in about 65 seconds.
+   The build took 11 to 13 seconds. On that machine the kernel check took 205 seconds and its
+   self-test 162 seconds; with two threads the first replay peaked near 2.6 GB.
+   These are observed times and sizes, not promises for your machine.
 
 **Try breaking it.** In [`Prop01.lean`](Elements/BookI/Prop01.lean), change `Definition15 hA_BCD hC_BCD hB_BCD` to `Definition15 hB_ACE hC_ACE hA_ACE` and run `lake build`. Lean refuses: B is the centre of the other circle, so the radii it gives are the wrong ones.
 
 ## Use it
 
-Stoicheia is a Lean library as well as a book, and a Lean project of yours can build on it. Once the release of Books I to III is published, pin it in your `lakefile.toml` to the release's tag, `v1.0`; until then, put a commit of main in place of `v1.0`:
+Stoicheia is a Lean library as well as a book, and a Lean project of yours can build on it. `v1.0` is the name of the release of Books I to III, and the tag is made when that release is published. Until then, `git ls-remote --tags https://github.com/dodecaplex-co/stoicheia v1.0` prints nothing; set `rev` to a commit of main instead, since main is what this page and the book's pages describe. Use that same commit in the `lakefile.lean` form below. After publication, pin your `lakefile.toml` to the release's tag as shown here:
 
 ```toml
 [[require]]
@@ -133,7 +162,7 @@ git = "https://github.com/dodecaplex-co/stoicheia"
 rev = "v1.0"
 ```
 
-`v1.0` is the name of the release of Books I to III, and the tag is made when that release is published. Until then, `git ls-remote --tags https://github.com/dodecaplex-co/stoicheia v1.0` prints nothing; set `rev` to a commit of main instead, since main is what this page and the book's pages describe. A declaration not yet in a release may still be renamed or restated. `book-III`, of 17 October 2026, is an older release tag, kept as history, and main has moved on since: the lock of `book-III` lists 87 axioms, where main's lists <!-- count:axioms -->48<!-- /count -->.
+A declaration not yet in a release may still be renamed or restated. `book-III`, of 17 October 2026, is an older release tag, kept as history, and main has moved on since: the lock of `book-III` lists 87 axioms, where main's lists <!-- count:axioms -->48<!-- /count -->.
 
 In a `lakefile.lean` it is one line: `require stoicheia from git "https://github.com/dodecaplex-co/stoicheia" @ "v1.0"`. Your `lean-toolchain` must name the same Lean, `leanprover/lean4:v4.35.0`. There is nothing else to download. In a new project, `lake build` fetches Stoicheia at that `rev` and builds the modules you import; in one that already has a `lake-manifest.json`, run `lake update stoicheia` first, which adds Stoicheia to the manifest and leaves your other dependencies as they are (a bare `lake update` would update them all). The same command moves you to another tag or commit once you change `rev`. Then import a proposition and use it; here I.20, that any two sides of a triangle are together greater than the third, gives one of its three inequalities:
 
