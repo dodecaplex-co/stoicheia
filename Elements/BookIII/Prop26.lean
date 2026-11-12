@@ -31,23 +31,20 @@ Otherwise we must deal separately with the cases where the angle at the circumfe
 equal to or greater than a right angle" (vol. 2, p. 57). Here the angles at the centres are
 `angleAtCentre`, with III.20 in `Elements/BookIII/Prop20.lean`, and may be two right angles
 or more, a reading that is ours, after Heath's notes, and not Euclid's. The proof follows
-Euclid's steps with the additional cases at I.4 described below. Equal angles at the circumferences give equal angles at the
-centres, their doubles (III.20); the bases are equal by I.4; the segments are similar and on
-equal straight lines, so equal [III. 24], and their circumferences equal in measure
-(`Prop24.equalMeasure`); and the circumferences that remain are equal in measure, the wholes
-being equal [C.N. 3]. One division into cases stays, at I.4, labelled where it stands: where
-the angles at the centres are two right angles, BC and EF are diameters, and there are no
-triangles for I.4; where they are greater, I.4 applies to the angles BGC, EHF that remain of
-four right angles. The whole circle is four right angles (`Circumference.whole`). The
+Euclid's acute argument: equal radii and I.4 give equal bases, and III.24 gives equal
+segments whose circumferences have equal measures (`Prop24.equalMeasure`).
+For obtuse angles, our route reduces the case
+by III.22 to acute equal angles in the opposite segments; Euclid's acute argument and
+his subtraction from equal whole circles give the circumferences in question.
+For right angles the bases are diameters, each two radii.
+III.20 makes each angle at the centre double the angle at the circumference.
+The whole circle is four right angles (`Circumference.whole`). The
 congruence of the remainders BKC, ELF follows by the same subtraction. The given map of
 BAC onto EDF extends radially from an interior neighbourhood to a distance-preserving
 map of the plane, onto by the reverse construction (`Prop26.extend_places`). III.9
 identifies the image of the centre; Definition I.15 and the radius comparisons carry the
-whole circle and disk across (`Prop26.extend`). The same map keeps the sides of the chord,
+whole circle and disk across (`Prop26.extend`). The same map keeps the sides of BC,
 so restricting it to the remaining segments proves their congruence (`Prop26.remainder`).
-No comparison of angles in the remaining segments is needed. The obtuse inscribed-angle
-case still differs from Euclid's written argument: I.4 uses the ordinary angles left from
-the reflex central angles, as Heath's discussion on p. 57 requires.
 -/
 
 namespace Elements.BookIII
@@ -204,7 +201,7 @@ theorem Prop26.radial_extension {S : Point → Prop} {f : Point → Point} {O : 
 
 /-- An application fixing a neighbourhood fixes every point. The short point on the
 ray to a given point stays fixed; I.20 carries that ray across and its distance fixes
-the endpoint. This makes the two radial applications inverse in III.26. -/
+the end. This makes the two radial applications inverse in III.26. -/
 theorem Prop26.fixed_of_surrounds {S : Point → Prop} {f : Point → Point} {O : Point}
     (hs : Surrounds S O) (hd : ∀ P Q, ‖(f P) (f Q)‖ = ‖P Q‖)
     (hf : ∀ P, S P → f P = P) : ∀ P, f P = P := by
@@ -247,8 +244,8 @@ theorem Prop26.extend_places {S T : Point → Prop} {f : Point → Point}
   exact ⟨g, ⟨fun _ _ => True.intro, fun Q _ => ⟨j Q, True.intro, gj Q⟩,
     fun P Q _ _ => gd P Q⟩, gf⟩
 
-/-- The whole-plane application keeps the sides of a chord. I.20 carries collinearity
-and betweenness across; a crossing of the chord would give a crossing before the
+/-- The whole-plane application keeps the sides of a straight line. I.20 carries collinearity
+and betweenness across; a crossing of the straight line would give a crossing before the
 application. This identifies the part to be removed in III.26's subtraction. -/
 theorem Prop26.same_side {f : Point → Point}
     (hf : Places f (fun _ => True) (fun _ => True)) {A B P Q : Point}
@@ -302,7 +299,7 @@ and EDF from their equal circles (Heath, vol. 2, pp. 56–57). Extend their give
 radially from an interior neighbourhood. The reverse construction makes the extension
 onto. Three points of the given arc then identify the image of its centre by III.9;
 Definition I.15 and the radius rules carry the whole circle and disk across. Collinearity
-and betweenness keep the sides of the chord. In all it uses I.2, I.4, I.8, I.12, I.17,
+and betweenness keep the sides of BC. In all it uses I.2, I.4, I.8, I.12, I.17,
 I.19, I.20, III.2 and III.9.
 
 The given congruence controls its witness only on the segment and arc. This constructs a
@@ -418,9 +415,9 @@ theorem Prop26.remainder {A B C D E F K L : Point} {ABC DEF : Circle}
 the circumference BKC is equal to the angle at the centre H standing on ELF, then G and H
 lie alike: both on the other sides of BC and EF from K and L, both on BC and EF, or both
 on K's and L's sides. For an angle at the centre is less than two right angles, two right
-angles, or greater, as its centre lies (`angleAtCentre.size`). Euclid's figure draws the
-first; this is the step that tells us which case we are in: I.4 on the angles at the
-centres, no triangles at all, or I.4 on what remains of four right angles. -/
+angles, or greater, as its centre lies (`angleAtCentre.size`). The three positions give
+the acute case, the diameter case and the reduction
+through opposite segments. -/
 theorem Prop26.alike {B C E F G H K L : Point} {α β : Circle} (hG : Centre G α)
     (hB : OnCircle B α) (hC : OnCircle C α) (hK : Triangle B C K) (hH : Centre H β)
     (hE : OnCircle E β) (hF : OnCircle F β) (hL : Triangle E F L)
@@ -438,6 +435,48 @@ theorem Prop26.alike {B C E F G H K L : Point} {α β : Circle} (hG : Centre G �
   · rw [h] at h₁; exact absurd (lt_trans h₁ h₂) (lt_irrefl _)
   · rw [h, h₂] at h₁; exact absurd h₁ (lt_irrefl _)
   · exact Or.inr (Or.inr ⟨hG', hH'⟩)
+
+/-- Equal bases and equal angles at the circumferences give equal and congruent complementary
+circumferences by III.24 and subtraction. -/
+theorem Prop26.finish {A B C D E F K L : Point} {ABC DEF : Circle}
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC)
+    (hD : OnCircle D DEF) (hE : OnCircle E DEF) (hF : OnCircle F DEF)
+    (hAK : OppositeSidesOf A K B C) (hDL : OppositeSidesOf D L E F)
+    (hBC : ‖B C‖ = ‖E F‖) (hAD : ∠ B A C = ∠ E D F) :
+    circumference ABC B K C = circumference DEF E L F ∧
+      Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩ := by
+  have hBCA : Triangle B C A := hAK.triangle
+  have hEFD : Triangle E F D := hDL.triangle
+  have seg := Prop24 hB hC hA hE hF hD hBCA hEFD hBC hAD
+  /- So their circumferences are equal in measure (`Prop24.equalMeasure`). -/
+  have hBAC : circumference ABC B A C = circumference DEF E D F :=
+    Prop24.equalMeasure (a := ⟨ABC, B, C, A⟩) (b := ⟨DEF, E, F, D⟩)
+      ⟨hB, hC, hBCA⟩ ⟨hE, hF, hEFD⟩ seg
+  have w₁ := Circumference.whole hB hC hAK
+  have w₂ := Circumference.whole hE hF hDL
+  have hKL := CommonNotion3 (w₁.trans w₂.symm) hBAC
+  /- The same subtraction for congruence restricts the common application of the whole
+     circles (`Prop26.extend`) to the remaining segments (`Prop26.remainder`). -/
+  exact ⟨hKL, Prop26.remainder hB hC hE hF hAK hDL seg⟩
+
+/-- Equal angles in equal circles give equal and congruent circumferences in the acute case. -/
+theorem Prop26.acute {A B C D E F G H K L : Point} {ABC DEF : Circle}
+    (hcircles : EqualCircles ABC DEF) (hG : Centre G ABC) (hH : Centre H DEF)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC)
+    (hD : OnCircle D DEF) (hE : OnCircle E DEF) (hF : OnCircle F DEF)
+    (hAK : OppositeSidesOf A K B C) (hDL : OppositeSidesOf D L E F)
+    (hGK : OppositeSidesOf G K B C) (hHL : OppositeSidesOf H L E F)
+    (hGH : angleAtCentre ABC B K C = angleAtCentre DEF E L F)
+    (hAD : ∠ B A C = ∠ E D F) :
+    circumference ABC B K C = circumference DEF E L F ∧
+      Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩ := by
+  have hGB : ‖G B‖ = ‖H E‖ := hcircles.radii hG hH hB hE
+  have hGC : ‖G C‖ = ‖H F‖ := hcircles.radii hG hH hC hF
+  have hang : ∠ B G C = ∠ E H F := by
+    rw [← angleAtCentre.within hG hB hC hGK, ← angleAtCentre.within hH hE hF hHL]
+    exact hGH
+  have hBC := (BookI.Prop4 hGK.triangle.cab hHL.triangle.cab hGB hGC hang).1
+  exact Prop26.finish hA hB hC hD hE hF hAK hDL hBC hAD
 
 /-- In equal circles equal angles stand on equal circumferences, whether they stand at the centres
 or at the circumferences. -/
@@ -464,66 +503,63 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
       circumference ABC B K C = circumference DEF E L F ∧
         Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩ := by
     intro hGH hAD
+    have hBCK : Triangle B C K := hAK.symm.triangle
+    have hEFL : Triangle E F L := hDL.symm.triangle
+    /- Equal radii and equal angles at G and H give equal bases;
+       equal angles at the centres put G and H in matching positions (`Prop26.alike`). -/
+    have halike := Prop26.alike hG hB hC hBCK hH hE hF hEFL hGH
     -- For let BC, EF be joined.
-    have hBCA : Triangle B C A := hAK.triangle
-    have hEFD : Triangle E F D := hDL.triangle
     -- Now, since the circles ABC, DEF are equal,
     -- the radii are equal.
-    have hGB : ‖G B‖ = ‖H E‖ := hcircles.radii hG hH hB hE
-    have hGC : ‖G C‖ = ‖H F‖ := hcircles.radii hG hH hC hF
     -- Thus the two straight lines BG, GC are equal to the two straight lines EH, HF;
     -- and the angle at G is equal to the angle at H;
-    /- "Thus …" gathers the radii just found, which I.4 uses below. The angles at G and
-       H, being equal, are alike: both less than two right angles, both two right angles,
-       or both greater, and so G and H lie alike (`Prop26.alike`). Euclid's figure has the
-       first. -/
-    have halike := Prop26.alike hG hB hC hAK.symm.triangle hH hE hF hDL.symm.triangle hGH
     -- therefore the base BC is equal to the base EF. [I. 4]
-    have hBC : ‖B C‖ = ‖E F‖ := by
-      rcases halike with ⟨hGK, hHL⟩ | ⟨hBGC, hEHF⟩ | ⟨hGK, hHL⟩
-      · /- Euclid's figure: the angles at the centres are the angles BGC, EHF of the
-           triangles GBC, HEF (`angleAtCentre.within`), and I.4 gives the bases. -/
-        have hang : ∠ B G C = ∠ E H F := by
-          rw [← angleAtCentre.within hG hB hC hGK, ← angleAtCentre.within hH hE hF hHL]
-          exact hGH
-        exact (BookI.Prop4 hGK.triangle.cab hHL.triangle.cab hGB hGC hang).1
-      · /- A case Euclid's figure leaves aside: the angles at the centres are two right
-           angles, G is on BC and H on EF, and there are no triangles for I.4. BC and EF
-           are diameters, each two radii, and so equal. -/
-        rw [← len_add_of_between hBGC, ← len_add_of_between hEHF, len_symm B G, hGB, hGC,
-          len_symm E H]
-      · /- A case Euclid's figure leaves aside: the angles at the centres are greater than
-           two right angles, and G and H lie beyond BC and EF. The angles BGC, EHF of the
-           triangles GBC, HEF are what remains when the angles at the centres are taken
-           from four right angles (`angleAtCentre.reflex`), and so are equal [C.N. 3];
-           I.4 applies to them. -/
-        have hang : ∠ B G C = ∠ E H F :=
-          CommonNotion3
-            (by rw [add_comm (∠ B G C), angleAtCentre.reflex hG hB hC hGK,
-              add_comm (∠ E H F), angleAtCentre.reflex hH hE hF hHL]) hGH
-        exact (BookI.Prop4 hGK.triangle.cab hHL.triangle.cab hGB hGC hang).1
     -- And, since the angle at A is equal to the angle at D,
     -- the segment BAC is similar to the segment EDF; [III. Def. 11]
     -- and they are upon equal straight lines.
     -- But similar segments of circles on equal straight lines are equal to one
     -- another; [III. 24]
     -- therefore the segment BAC is equal to EDF.
-    have seg : Arc.Congruent ⟨ABC, B, C, A⟩ ⟨DEF, E, F, D⟩ :=
-      Prop24 hB hC hA hE hF hD hBCA hEFD hBC hAD
-    /- So their circumferences are equal in measure (`Prop24.equalMeasure`). -/
-    have hBAC : circumference ABC B A C = circumference DEF E D F :=
-      Prop24.equalMeasure (a := ⟨ABC, B, C, A⟩) (b := ⟨DEF, E, F, D⟩)
-        ⟨hB, hC, hBCA⟩
-        ⟨hE, hF, hEFD⟩ seg
     -- But the whole circle ABC is also equal to the whole circle DEF;
-    have w₁ := Circumference.whole hB hC hAK
-    have w₂ := Circumference.whole hE hF hDL
     -- therefore the circumference BKC which remains is equal to the circumference ELF.
-    have hKL : circumference ABC B K C = circumference DEF E L F :=
-      CommonNotion3 (w₁.trans w₂.symm) hBAC
-    /- The same subtraction for congruence restricts the common application of the whole
-       circles (`Prop26.extend`) to the remaining segments (`Prop26.remainder`). -/
-    exact ⟨hKL, Prop26.remainder hB hC hE hF hAK hDL seg⟩
+    rcases halike with ⟨hGK, hHL⟩ | ⟨hBGC, hEHF⟩ | ⟨hGK, hHL⟩
+    /- Euclid's figure: the angles at the centres are the angles BGC, EHF of the
+       triangles GBC, HEF (`angleAtCentre.within`), and I.4 gives the bases. -/
+    · exact Prop26.acute hcircles hG hH hA hB hC hD hE hF hAK hDL hGK hHL hGH hAD
+    /- A case Euclid's figure leaves aside: the angles at the centres are two right
+       angles, G is on BC and H on EF, and there are no triangles for I.4. BC and EF
+       are diameters, each two radii, and so equal. -/
+    · have hGB : ‖G B‖ = ‖H E‖ := hcircles.radii hG hH hB hE
+      have hGC : ‖G C‖ = ‖H F‖ := hcircles.radii hG hH hC hF
+      have hBC : ‖B C‖ = ‖E F‖ := by
+        rw [← len_add_of_between hBGC, ← len_add_of_between hEHF, len_symm B G, hGB, hGC,
+          len_symm E H]
+      exact Prop26.finish hA hB hC hD hE hF hAK hDL hBC hAD
+    /- For obtuse angles at A and D, our route reduces the case
+       by III.22 to acute equal angles in the opposite segments.
+       Euclid's acute argument equates their complementary circumferences;
+       his subtraction from equal whole circles gives BKC and ELF. -/
+    · obtain ⟨X, hX, hXK⟩ := Prop2.sameSide hB hC hBCK
+      obtain ⟨Y, hY, hYL⟩ := Prop2.sameSide hE hF hEFL
+      have hKA := hAK.symm; have hLD := hDL.symm
+      have hXA := hXK.trans_opposite hKA
+      have hYD := hYL.trans_opposite hLD
+      have hGA := hGK.trans_opposite hKA
+      have hHD := hHL.trans_opposite hLD
+      have hx := (Prop22 hX hC hA hB hXA.swap).2
+      have hy := (Prop22 hY hF hD hE hYD.swap).2
+      have tX := hXA.triangle; have tY := hYD.triangle
+      rw [angle_symm tX.ne₂₃ tX.ne₁₃] at hx
+      rw [angle_symm tY.ne₂₃ tY.ne₁₃] at hy
+      have hXY := CommonNotion3 (hx.trans hy.symm) hAD
+      have px := Prop20 hX hB hC hXA; have py := Prop20 hY hE hF hYD
+      have hcent : angleAtCentre ABC B A C = angleAtCentre DEF E D F := by rw [px, py, hXY]
+      obtain ⟨hBAC, seg⟩ := Prop26.acute hcircles hG hH hX hB hC hY hE hF
+        hXA hYD hGA hHD hcent hXY
+      have w₁ := Circumference.whole hB hC hAK
+      have w₂ := Circumference.whole hE hF hDL
+      have hKL := CommonNotion3 (w₁.trans w₂.symm) hBAC
+      exact ⟨hKL, Prop26.remainder hB hC hE hF hAK hDL seg⟩
   -- Therefore etc.
   /- Our statement takes the two pairs of equal angles one at a time, as the enunciation's
      "whether they stand at the centres or at the circumferences" does, and III.20 gives

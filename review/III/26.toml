@@ -5,7 +5,20 @@ fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, with I.4 on the angles BGC, EHF, where those are the angles at the centres, as in his figure (Heath, vol. 2, pp. 56–57). For the other cases the Lean takes the way Heath gives under III.26: \"if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles\" (vol. 2, p. 57). Where the angles at the circumferences are obtuse, the angles at the centres standing on BKC, ELF (`angleAtCentre`, which III.20 makes double of them) are greater than two right angles, while the triangle angles BGC, EHF are each less than two, so I.4 cannot use the angles at the centres, and `angleAtCentre.reflex` with Common Notion 3 takes them from four right angles, leaving the angles BGC, EHF for I.4. That subtraction is a step his written argument lacks, for a case within the statement, so the route is modified. Where the angles at the circumferences are right, the angles at the centres are two right angles and the bases are diameters, each the sum of two radii, the case Heath completes by showing that two radii \"are in a straight line, whence they make equal bases in the two circles as in Euclid's proof\" (vol. 2, p. 57); `Prop26.alike` sorts the cases. The subtraction of the remaining circumferences follows Euclid: Common Notion 3 gives equal measures, and `Prop26.extend` extends the given segment congruence to one application of the whole circles, which `Prop26.remainder` restricts to the remaining segments and arcs."
+note = """\
+In the acute case, equal radii and I.4 give equal bases, III.24 gives equal segments, and \
+subtraction from equal whole circles gives equal circumferences (\
+Heath, vol. 2, pp. 56–57). The obtuse case is the edition's own route, resting on III.22: \
+\"The opposite angles of quadrilaterals in circles are equal to two right angles.\" \
+(Heath, vol. 2, pp. 51–52). Thus the angles in the opposite segments \
+are acute and equal; Euclid's acute argument gives equal complementary circumferences. \
+Subtraction from the equal whole circles gives the circumferences in question, as in \
+III.28 (Heath, vol. 2, pp. 59–60) and \
+III.26 (Heath, vol. 2, pp. 56–57). \
+For right angles the bases are diameters, each two radii. \
+For the remainders, Common Notion 3 \
+equates the measures, and `Prop26.extend` extends the segment map to the whole circles so that \
+`Prop26.remainder` can restrict it to the complementary segments."""
 
 [representation]
 tags = ["angle-measure"]
@@ -15,30 +28,51 @@ note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc
 at = "and the angle at G is equal to the angle at H"
 kind = "helper"
 helper = "Prop26.alike"
-note = "Euclid's figure has the centres on A's and D's sides, where the angles at G and H are angles of the triangles GBC, HEF. The Lean shows that equal angles at the centres lie alike, both less than two right angles, both two right angles, or both greater, so that G and H lie alike (`Prop26.alike`, by `angleAtCentre.size`); this tells which case of I.4 follows."
+note = """\
+Equal angles at the centres place G and H alike: across BC and EF from K and L, between their \
+ends, or on K's and L's sides (`Prop26.alike`). The last position calls for the reduction by \
+III.22 (Heath, vol. 2, pp. 51–52), in the edition's own route."""
 
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
-note = "In Euclid's figure I.4 applies to the angles BGC, EHF, which are the angles at the centres (`angleAtCentre.within`). Where the angles at A and D are obtuse, the angles at the centres are greater than two right angles, which no angle of a triangle is, so I.4 cannot take them: `angleAtCentre.reflex` makes each, with the angle BGC or EHF, four right angles, and Common Notion 3 leaves the angles BGC, EHF equal for I.4, a step within the statement that Euclid's written argument lacks. Where they are right, G and H lie on BC and EF, and the bases are diameters, each the sum of two equal radii, as Heath completes that case (vol. 2, p. 57)."
+note = """\
+I.4 gives BC equal to EF in the acute case, and addition of the equal radii gives the \
+bases when they are diameters. For obtuse angles at A and D, the Lean applies I.4 in the \
+opposite segments by our route through III.22, and obtains BAC \
+and EDF by Euclid's subtraction."""
 
 [[passage]]
 at = "therefore the segment BAC is equal to EDF"
 kind = "helper"
 helper = "Prop24.equalMeasure"
-note = "III.24 makes the segments BAC, EDF congruent, and its companion `Prop24.equalMeasure` gives what Euclid takes with them: their circumferences are equal in measure. That companion uses I.8, III.2, III.21 and III.22, for which Heath prints no references here, to compare angles at corresponding points and subtract their doubles from the whole circles."
+note = """\
+For acute or right angles at A and D, III.24 gives congruent segments BAC and EDF, and \
+`Prop24.equalMeasure` equates their circumferences. For obtuse angles, the acute argument in the \
+opposite segments gives BAC and EDF as equal and congruent remainders."""
 
 [[passage]]
 at = "But the whole circle ABC is also equal to the whole circle DEF"
 kind = "helper"
 helper = "Circumference.whole"
-note = "Euclid subtracts the equal segment circumferences from the equal whole circles. `Circumference.whole` proves that the two circumferences cut off by each chord together measure four right angles, using III.2, III.21 and III.22, for which Heath gives no references here."
+note = """\
+Euclid subtracts the equal segment circumferences from the equal whole circles. \
+`Circumference.whole` proves that the two circumferences cut off by each straight line together \
+measure four right angles, using III.2, III.21 and III.22, for which Heath gives no references \
+here."""
 
 [[passage]]
 at = "therefore the circumference BKC which remains is equal to the circumference ELF"
 kind = "helper"
 helper = "Prop26.remainder"
-note = "Common Notion 3 gives the equal measures. For congruence, `Prop26.extend` extends the given map radially from a small circle inside the segment; the reverse construction makes it onto, and III.9 identifies the image of the centre. Definition I.15 and the radius rules carry the disks and circumferences across, while collinearity and betweenness preserve the sides of the chord. In all, `Prop26.extend` uses I.2, I.4, I.8, I.12, I.17, I.19, I.20, III.2 and III.9. Restricting that same map to the complementary closed sides gives both remaining figures, including their bases, as Euclid's subtraction requires (Heath, vol. 2, pp. 56–57)."
+note = """\
+Common Notion 3 gives the equal measures; for congruence, `Prop26.extend` extends the given map \
+radially from a small circle inside the segment; the reverse construction makes it onto, and \
+III.9 identifies the image of the centre. Definition I.15 and the radius rules carry the disks \
+and circumferences across, while collinearity and betweenness preserve the sides of the straight \
+line; in all, `Prop26.extend` uses I.2, I.4, I.8, I.12, I.17, I.19, I.20, III.2 and III.9; \
+restricting that same map to the complementary closed sides gives both remaining figures, \
+including their bases."""
 
 [[passage]]
 at = "Therefore etc."
@@ -51,11 +85,10 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "full"
-commit = "f52a0761f"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:a58407e186a833ee"
-run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean (as at 3d6f7a126; gone since 38588002e), written by Codex in 416676d6e, their call renamed to Prop24.angle_type by 908ad2065, which names no writer (card 503, traced from git), read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the release limitation distinguishes subtraction and congruence, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the remainders' congruence by Euclid's subtraction under one map (Prop26.extend, Prop26.remainder), and the step at I.4 marked as argued another way, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5; card #704, ship BT: the departing cases' reasons and bridges stated after Heath's note on III.26, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r2627read, at b987a7ca0.; card #704, ship BT: the departing cases' reasons and bridges stated after Heath's note on III.26, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r26read2, at 044ea925e.; card #661, ship BT: Prop26.extend's nine propositions named alike in the docstring and records 26 and 28, written by Claude, read in full by Claude Opus 5.5, reader BT-r661read, at f52a0761f."
-text = "sha256:4c11b44713efbd6e"
+reviewer = "Claude Fable (claude-fable-5-1), independent re-reader"
+lean = "sha256:0fd95d75b456e3a0"
+run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean (as at 3d6f7a126; gone since 38588002e), written by Codex in 416676d6e, their call renamed to Prop24.angle_type by 908ad2065, which names no writer (card 503, traced from git), read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 4fddce18; card #129, ship ER: read in full after the angle at the centre of any size moved in, written by Claude, read by GPT-6 Astra (Codex); card #252 item 4, ship ER: the clause given at the centres tightened in the mishnah and representation note, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the release limitation distinguishes subtraction and congruence, written by Claude, read in full by GPT-6 Astra (Codex); card #547, ship ER: the remainders' congruence by Euclid's subtraction under one map (Prop26.extend, Prop26.remainder), and the step at I.4 marked as argued another way, skeleton and proof by GPT-6 Astra (Codex), read in full by Claude Opus 5.5; card #704, ship BT: the departing cases' reasons and bridges stated after Heath's note on III.26, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r2627read, at b987a7ca0.; card #704, ship BT: the departing cases' reasons and bridges stated after Heath's note on III.26, written by Claude, read in full by GPT-6 Astra (Codex), reader BT-r26read2, at 044ea925e.; card #661, ship BT: Prop26.extend's nine propositions named alike in the docstring and records 26 and 28, written by Claude, read in full by Claude Opus 5.5, reader BT-r661read, at f52a0761f.; the obtuse case by the edition's own route on Euclid's III.22: the record written by GPT-6 Astra (gpt-6-astra) and read in full and cold by Claude Fable (claude-fable-5-1), of the Claude family, which wrote none of it, on 10 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own and III.29's record and commentary, which then held III.29's greater-case revision"
+text = "sha256:51cb781e1addf7c9"
 
 [review.items]
 statement = "pass"

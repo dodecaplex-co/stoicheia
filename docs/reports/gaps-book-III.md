@@ -248,8 +248,8 @@ references to III.1, in III.14, whose statement names its centre, has no call be
 - C, G, F and H name only sides of AB and DE. Points of each circle on those sides (`Prop2.oppositeSide`, from III.2) give III.26 its setting-out.
 
 ## III.29
-- Euclid's figure has BGC less than a semicircle. When the centre K is on BC, both straight lines are diameters, each two radii; Heath calls this case "even easier than the corresponding case of III. 28 itself" (vol. 2, p. 61). When BGC is greater than a semicircle, the angle BKC stands on BAC, the circumference that remains: III.27's equal angles at A and D, doubled by III.20, give equal angles at the centres on BGC, EHF, greater than two right angles, and taken from four right angles they leave the angles BKC, ELF equal (`angleAtCentre.reflex`, C.N. 3) for I.4.
-- Equal angles at the centres lie alike (`Prop26.alike`), so L falls as K does.
+- Euclid's figure has BGC less than a semicircle. When the centre K is on BC, both straight lines are diameters, each two radii; Heath calls this case "even easier than the corresponding case of III. 28 itself" (vol. 2, p. 61). When BGC is greater than a semicircle, subtracting the equal measures from equal whole circles gives equal lesser remainders (`Circumference.whole`, Common Notion 3); points on the centres' sides give angles standing on those remainders, and III.27 (`Prop27.of_measure`) gives equal angles BKC, ELF for I.4.
+- Equal circumference measures put K and L alike with respect to BC and EF (`Prop29.matchSizes`): `Prop29.size` distinguishes lesser circumferences, semicircles and greater circumferences, and equal measures rule out different cases.
 - "Let the centres of the circles be taken" has no bracket for III.1, and needs none: our equal circles carry their centres (`EqualCircles`, Definition III.1).
 - Heath adds that III.26–III.29 "are of course equally true if the *same* circle is taken instead of *two equal* circles" (vol. 2, p. 61). A circle is equal to itself (`EqualCircles.refl`), and III.30 uses III.28 so.
 
