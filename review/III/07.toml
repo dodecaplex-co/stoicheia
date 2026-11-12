@@ -98,6 +98,7 @@ reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c17359dc02a3b53d"
 run = "brief 0005 stage 5, ship R3 (#29); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at 18c7a5cf; previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; III.7's summary grouped with the theorem's own conclusions: read by GPT-6 Astra (Codex), source reader, and by GPT-6 Astra (Codex), cold mathematical gate, independent readers, on 11 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own"
 text = "sha256:ab8682fa0b80ecaf"
+commit = "87855b317ed24cbab09c088a4a8878ab13c93feb"
 
 [review.items]
 statement = "pass"
