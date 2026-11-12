@@ -1,13 +1,13 @@
 # review/I/45.toml
 [statement]
 scope = "full"
-note = "`Prop45` takes two triangles unchecked; `Prop45.outline` covers any rectilineal figure by its boundary; others take checked divisions, sums or a triangle more."
+note = "The main theorem `Prop45` is an area-sum form; `Prop45.fan` is Euclid's figure. `Prop45.outline` covers the whole enunciation."
 companions = ["I.45 outline", "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:4bc8a67608702506"
 
 [route]
 kind = "euclid"
-note = "Euclid shows two triangles. The companions repeat his second step for each triangle after the first, as Oliver Byrne draws it for three: `Prop45.append` is the second half of his proof, with the parallelogram so far given in place of the one I.42 makes, and `Prop45.sum` applies it to one triangle after another, any triangles, which need not make a figure. `Prop45.apart`, and through it `Prop45.figure` and `Prop45.fan`, is `Prop45.sum` for the triangles a figure is given with. For `Prop45.outline`, Book Zero divides the figure into triangles that do not overlap, no point inside two of them (`Figures.division_exists`), and `Prop45.apart` makes their parallelogram, equal to the figure's area (see Representation)."
+note = "The main theorem `Prop45` uses an area-sum form of Euclid's argument. `Prop45.fan` gives Euclid's figure. Euclid shows two triangles. The companions repeat his second step for each triangle after the first, as Oliver Byrne draws it for three: `Prop45.append` is the second half of his proof, with the parallelogram so far given in place of the one I.42 makes, and `Prop45.sum` applies it to one triangle after another, any triangles, which need not make a figure. `Prop45.apart`, and through it `Prop45.figure` and `Prop45.fan`, is `Prop45.sum` for the triangles a figure is given with. For `Prop45.outline`, Book Zero divides the figure into triangles that do not overlap, no point inside two of them (`Figures.division_exists`), and `Prop45.apart` makes their parallelogram, equal to the figure's area (see Representation)."
 
 [representation]
 tags = ["figure-with-dissection"]
@@ -37,11 +37,10 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "29b408c8c"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:df27ec018e27a2ab"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x); #34, read-through 03's pilot editor's note 4 (RT-p3): the route and representation notes told once, re-read whole by Claude Opus 5.5, the family that did not write the original proof (#478), independent reader RD-s2, at 9ca65638c; card #767, ship PR767: the carried steps named as helpers (read-through 02, item 45), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r1, at 29b408c8c"
-text = "sha256:78986d390a306e7e"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5; read-through 03 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at ece9c2d71 (reader RT-s1x); read-through 03, correction (#34, #220): RT-s1x's reading above is by a reader of the family that did not write the outline companions, which Claude's writers added; the original proof is Codex's; re-read whole by GPT-6 Astra (Codex), independent re-read at a973c8726 (reader RT-s4x); #34, read-through 03's pilot editor's note 4 (RT-p3): the route and representation notes told once, re-read whole by Claude Opus 5.5, the family that did not write the original proof (#478), independent reader RD-s2, at 9ca65638c; card #767, ship PR767: the carried steps named as helpers (read-through 02, item 45), written by Claude, read in full by GPT-6 Astra (Codex), reader PR767-r1, at 29b408c8c; I.45's main theorem labelled an area-sum form: read by GPT-6 Astra (Codex), source reader, and by GPT-6 Astra (Codex), cold mathematical gate, independent readers, on 11 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own"
+text = "sha256:17fb150d9dab5919"
 
 [review.items]
 statement = "pass"
