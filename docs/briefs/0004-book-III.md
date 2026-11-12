@@ -492,6 +492,10 @@ worth naming. The first mate's report has a note on every statement.
 
   **26 October 2026 (#129).** Our proof of III.21 now follows Euclid's argument in every
   segment, by III.20 of any size; Simson's proof is no longer used.
+
+  **11 November 2026, dated note (#704).** III.21's semicircle and less segment follow by Simson's completion (Heath, vol. 2, p. 50).
+  III.21 keeps Euclid's two steps where the segment is greater than a semicircle, by `Prop20.special`.
+  Source: [the route ruling](../decisions/2026-10-29-route-label-iii21-simson.md).
 - **III.22** takes a quadrilateral in the circle as four points of it with the straight line
   `BD` (joining opposite corners) separating `A` from `C`; that `AC` separates `B` from `D`
   follows.
