@@ -162,3 +162,13 @@ None of these is a mend of this read-through's. Before the release, a dated adde
 6. I.4's record, whose history clause waits for C1's heading and a re-read of I.4.
 7. The dated addendum that "Since the read" asks for.
 8. For B3, a [read-through] table in docs/reports/acceptance/book-I.toml, book-II.toml and book-III.toml that cites this report, written once its book's verdicts' conditions are met, and the acceptance report regenerated to show B3 passing for each book ([ACCEPTANCE](../ACCEPTANCE.md)). B4 is the limitations review's ([limitations-01.md](limitations-01.md)): it passes Books I and II, whose [limitations] tables stand in the same commit as this report, and holds Book III on the measure of III.24's and III.25's status lines, the finding on card draft C5.
+
+## Addendum, 11 November 2026: Book II's conditions
+
+Written for Book II's parts of the re-read of 079318c04's mends and of Book II's [read-through] table. It adds to the report of 26 October and changes none of its words.
+
+- 079318c04's mend to II.14's commentary is re-read by GPT-6 Astra (Codex), a reader who did not write it, on 11 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except I.45's page, which then held I.45's area-sum label: no finding.
+- The reader read book/II/14.md whole, as the page renders mishnah/II/14.md, with the mend's diff, `Elements/BookII/Prop14.lean` and heath/II/14.md, on 11 November 2026; its verdict: "the mend 079318c04 to II.14's commentary reads true; no finding."
+- Read-through 03's condition from Book II's reader is met: its finding 1, the line over every commentary, is mended in d9e476fcb.
+- d9e476fcb put the readers' wording, "Our commentary: why Euclid's proof, and ours, look as they do.", over every commentary (docs/decisions/2026-10-26-generated-phrases-read-through-03.md); finding 2 was mended in 8bbeee79d, as the body above records.
+- III.24's half of the re-read of 079318c04's mends and the [read-through] table for Book II are not this addendum's; the human sign-off of Book II's [read-through] table is the owner's.
