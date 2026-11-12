@@ -674,12 +674,16 @@ run_cmd do
   let euclidOnly (xs : Array Name) : Array Name :=
     xs.filter fun a => !leanFoundations.contains a && a != ``sorryAx
   /- Proved tacit rules keep their names when they leave the axiom lock. Record what
-     Lean finds beneath each, so the policy check can still refuse a forbidden rule, and
+     Lean finds beneath each, so the policy check can refuse a forbidden rule, and
      the entries each cites, found by the entries' own walk, `directDeps`: an entry whose
      proof uses a proved rule is found to cite every entry in the rule's list. They are
      listed before the entries, so that each entry records which of them it rests on, and
-     a pin can refuse an entry that comes to use one. -/
+     a pin can refuse an entry that comes to use one. Apart from these, as each entry keeps
+     its `lean_foundations`, record what `euclidOnly` leaves out of the first list, Lean's
+     own foundations and `sorryAx`, so that a rule proved by `Classical.choice` is not
+     taken for one that rests on no axiom at all. -/
   let mut provedRules : Array (String × Json) := #[]
+  let mut provedRuleFoundations : Array (String × Json) := #[]
   let mut provedRuleCites : Array (String × Json) := #[]
   let mut ruleSet : NameSet := {}
   for (n, ci) in env.constants.toList do
@@ -689,9 +693,12 @@ run_cmd do
       (`Elements).isPrefixOf env.header.moduleNames[idx.toNat]!
     unless own && (`Elements.Tacit).isPrefixOf n do continue
     if let .thmInfo _ := ci then
-      let axs := euclidOnly (← collectAxioms n)
+      let all ← collectAxioms n
+      let axs := euclidOnly all
       provedRules := provedRules.push
         (nameStr n, toJson ((axs.map nameStr).qsort (· < ·)))
+      provedRuleFoundations := provedRuleFoundations.push
+        (nameStr n, toJson (((all.filter (!axs.contains ·)).map nameStr).qsort (· < ·)))
       let cites := (← directDeps env toolchain entrySet n).cites
       provedRuleCites := provedRuleCites.push
         (nameStr n, toJson ((cites.toList.map refOf).toArray.qsort (· < ·)))
@@ -904,6 +911,7 @@ run_cmd do
     ("axiom_types", Json.mkObj axiomTypes.toList),
     ("vocabulary", Json.mkObj words.toList),
     ("proved_rules", Json.mkObj (provedRules.qsort (·.1 < ·.1)).toList),
+    ("proved_rule_foundations", Json.mkObj (provedRuleFoundations.qsort (·.1 < ·.1)).toList),
     ("proved_rule_cites", Json.mkObj (provedRuleCites.qsort (·.1 < ·.1)).toList),
     ("construction_rules", Json.arr ((construction.toList.map nameStr).toArray.qsort (· < ·)
       |>.map Json.str))]

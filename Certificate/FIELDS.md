@@ -37,10 +37,12 @@ in Books I-III, I.15, III.1 and III.16.
 | `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
 | `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. Each entry's own `proved_rules` (below) names those it rests on. |
 | `proved_rule_cites` | object, name to list of refs | **New** (23 October 2026, [#294](https://github.com/dodecaplex-co/stoicheia/issues/294)). For every theorem in `proved_rules`, with the same keys, the entries its proof cites, found by the walk that finds an entry's `cites`, as `["I.13"]` for `Tacit.inside_of_angle_add`: an entry whose proof uses a proved rule is found to cite every entry in the rule's list. Refs as an entry's `cites` writes them, each list sorted by string. `scripts/check_fidelity.py` accepts a forbidden circle rule missing from the lock as a theorem whose list holds `"III.2"`, with III.2 proved and resting on neither rule ([FORMALIZATION](../docs/FORMALIZATION.md), section 7, "Circle 2 and Circle 3"). |
+| `proved_rule_foundations` | object, name to list of names | **New** (10 November 2026, [#629](https://github.com/dodecaplex-co/stoicheia/issues/629)). For every theorem in `proved_rules`, with the same keys, what `collectAxioms` finds beneath it that `proved_rules` leaves out: which of `propext`, `Classical.choice`, `Quot.sound` and `sorryAx`, each list sorted by string. |
 | `construction_rules` | list of names | **New** (21 October 2026, [#150](https://github.com/dodecaplex-co/stoicheia/issues/150)). The axioms in `axiom_modules` that are [construction rules](../docs/FORMALIZATION.md#construction-rules), found from Lean's statements of them (below). Sorted by string. |
 
-Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
-has always written them: `"Postulate1"`, `"Tacit.circle_eq"`, `"Magnitude.add"`.
+Names declared by this project omit the leading `Elements.`, as in `axiom_modules`:
+`"Postulate1"`, `"Tacit.circle_eq"`, `"Magnitude.add"`. The values of
+`proved_rule_foundations` use Lean's full names.
 `Certificate/axioms.lock` is compared with `axiom_types` and `vocabulary` in both
 directions (stage 1c).
 

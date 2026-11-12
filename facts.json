@@ -1614,6 +1614,61 @@
    "Tacit.same_ray_of_angle_eq_zero",
    "Tacit.same_side_trans",
    "Tacit.superposition"]},
+ "proved_rule_foundations":
+ {"Tacit.triple_incidence3": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.triple_incidence2": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.triple_incidence1": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.same_side_symm": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.same_side_refl": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.same_side_or": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.pasch4": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.pasch3": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.pasch1": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.outside_of_between": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.on_line_of_between_ends":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.on_line_of_between": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.on_circle_of_len_eq": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.not_same_side_of_circles_meet":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.not_between_of_between_between":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.ne_of_between_ends": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.ne_of_between": [],
+  "Tacit.line_meets_circle_of_opposite_sides":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.line_meets_circle_of_inside":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.len_lt_of_inside": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.inside_of_len_lt": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.inside_of_between": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.inside_of_angle_add": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.inside_not_on": ["Classical.choice"],
+  "Tacit.exists_point_same_side": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.exists_point_outside_circle":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.exists_point_opposite_side":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.exists_point_on_line_off_line":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.exists_point_on_circle": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.exists_point_between": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.eq_of_len_eq_zero": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.circles_meet_opposite_side":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.circles_meet_of_on_inside_outside":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.centre_unique": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.centre_inside": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.between_of_inside_chord":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.between_of_between_right":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.between_of_between_left":
+  ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.between_of_area_add": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.area_swap": ["Classical.choice", "Quot.sound", "propext"],
+  "Tacit.adjacent_eq_of_right": ["Classical.choice", "Quot.sound", "propext"]},
  "proved_rule_cites":
  {"Tacit.triple_incidence3": [],
   "Tacit.triple_incidence2": [],
