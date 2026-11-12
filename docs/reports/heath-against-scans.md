@@ -328,3 +328,25 @@ Specks and pencil marks on the leaves that are not print (volume 1's n323, n330,
 | 1 | n401 | 381 | ca5681d4752b18aa745c5071aa1d88844a1e3de41499d4dc550c364e37cbd18c (Heath's note, for II.4's comment) |
 | 2 | n76 | 64 | 0360e009e2a3a1bf5db99f636ad0a84305657c9a49d9c6d7aa887199e606a445 (Heath's note, for III.31's comment) |
 | 2 | n45 | 38 | 58fa810189d14ea660204e741eb7cac4ebf578b2aa5314b42523dc866fc1f830 (the second copy, euclid-the-thirteen-books-of-the-elements-vol.-2, for note 4; fetched 28 October 2026) |
+
+## Human sign-off: Book I sample I.1
+
+Human reader's sign-off for Book I sample I.1 (review/I/01.toml and scan check): signed by Jack Challis, 2026-11-11.
+
+I.1 scan sample: heath/I/01.md against volume 1 leaves n261 and n262.
+
+I.1 sign-off: read at a private commit whose files are byte-identical to public main's b34df2274feb.
+
+I.1 approved claims: the record's account of the statement; of where the two circles meet, at "and from the point C"; of the triangle, at "Therefore the triangle ABC is equilateral"; and heath/I/01.md checked line by line against the two leaves.
+
+I.1 human sign-off was given in chat.
+
+I.1 reviewed docs/reports/heath-against-scans.md SHA-256: 4ea340f6a4d2ff0721cc1d6e428e4931f48d676061942e5d5e812577dcc48a19.
+
+I.1 reviewed review/I/01.toml SHA-256: cf7b74477dd3bab526a7fc88d5dc7e9c6aad00636a89986b2293f2c3855d2c17.
+
+I.1 reviewed heath/I/01.md SHA-256: f6fbc5b09ce9d002dd2b2d49d8e32fef10aba241af92bd4316727813dd56fb2a.
+
+I.1 reviewed Elements/BookI/Prop01.lean SHA-256: 02664b10a40223fd38eb1c88ea94771d3ccd91afedd16ab41a6d0ab4909c6be2.
+
+The name, date, commit and file digests above are those of the materials given to the reader for this sign-off; he added no note.
