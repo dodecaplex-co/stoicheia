@@ -27,13 +27,14 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- **In equal circles, equal measure is equal chord and same kind.** For two drawn arcs in equal
-circles, the measures are equal exactly when the straight lines joining their ends are equal and
-the arcs are of the same kind (both less than semicircles, both semicircles, or both greater).
+/-- **In equal circles, the straight lines are equal and both arcs are of the same kind exactly when
+their measures are equal.** For two drawn arcs in equal circles, the measures are equal exactly when
+the straight lines joining their ends are equal and the arcs are of the same kind (both less than
+semicircles, both semicircles, or both greater).
 
 Proved one way by III.29, in its companion for circumferences equal in measure
 (`Prop29.of_measure`: equal circumferences, equal straight lines), the kind read off from the
-measure (`Prop29.size`); and the other way by III.28 (equal chords, kind decided by the
+measure (`Prop29.size`); and the other way by III.28 (equal straight lines, kind decided by the
 centre's side), with the comparison of each kind with a semicircle
 (`Circumference.lt_semicircle`, `.semicircle`, `.gt_semicircle`).
 
@@ -111,10 +112,10 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
 their circles are equal and their measures are equal.
 
 Proved: one way, the measures are equal by `Prop24.equalMeasure`, and the circles by
-`Prop24.equalCircles`, the congruence keeping the chord and, at a point of the arc and its
+`Prop24.equalCircles`, the congruence keeping the straight line and, at a point of the arc and its
 image, the angle in the segment [I. 8] (`Prop24.image`); neither is proved again here. The
-other way, by `Arc.measure_eq_iff` the chords are equal; the circumferences on the other sides
-of the bases are the remainders of the whole circles [C.N. 3], each twice the angle in its
+other way, by `Arc.measure_eq_iff` the straight lines are equal; the circumferences on the other
+sides of the bases are the remainders of the whole circles [C.N. 3], each twice the angle in its
 segment (`Circumference.eq`), so the angles in the segments are equal, and III.24 (restated)
 makes the segments congruent.
 
@@ -133,7 +134,7 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     exact ⟨(Prop24.equalCircles hB hC hP hD hE hQ hPK.triangle hQL.triangle
       hBC hPQ).1, Prop24.equalMeasure ha hb h⟩
   · rintro ⟨hcircles, hm⟩
-    /- The chords are equal (`Arc.measure_eq_iff`). -/
+    /- The straight lines are equal (`Arc.measure_eq_iff`). -/
     have hBC : ‖a.B a.C‖ = ‖b.B b.C‖ := ((Arc.measure_eq_iff ha hb hcircles).mp hm).1
     /- The angles in the segments, at points P and Q of the arcs off their bases, are equal.
        The circumferences on the other sides of the bases, named by points X and Y there, are

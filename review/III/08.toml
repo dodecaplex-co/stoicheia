@@ -9,6 +9,10 @@ fingerprint = "sha256:a9259e6b54eb5360"
 kind = "euclid"
 note = "Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
+[representation]
+tags = ["hypothesis-dropped"]
+note = "The main statement compares straight lines on the same side of DA (`Prop8.general` gives both sides), while its greatest and least clauses range over the whole circumference, beyond the straight lines falling on the concave and on the convex circumference."
+
 [[passage]]
 at = "Let ABC be a circle"
 kind = "given"
@@ -57,8 +61,8 @@ note = "Euclid leaves F and C to the same argument without writing it out. The L
 
 [[passage]]
 at = "therefore DA is greatest, while DE is greater than DF"
-kind = "carried"
-helper = "Prop8.general"
+kind = "grouped"
+note = "Euclid's summary of the comparisons just proved on the concave circumference; the Lean gathers them as the theorem's first two conclusions. Its companion `Prop8.general` compares two of the rest on opposite sides of DA as well."
 
 [[passage]]
 at = "and MG is equal to MK"
@@ -97,8 +101,8 @@ note = "Euclid leaves L and H to the same argument without writing it out. The L
 
 [[passage]]
 at = "therefore DG is least, while DK is less than DL"
-kind = "carried"
-helper = "Prop8.general"
+kind = "grouped"
+note = "Euclid's summary of the comparisons just proved on the convex circumference; the Lean gathers them as the theorem's third and fourth conclusions. The companion `Prop8.general` makes the same comparison for two points of that circumference on opposite sides of DA."
 
 [[passage]]
 at = "On the straight line MD, and at the point M on it"
@@ -130,11 +134,10 @@ note = "N marks the supposed third point of Euclid's reductio, with DN equal to 
 
 [review]
 stage = "full"
-commit = "a8e2c2e41"
-reviewer = "Claude Opus 5.5, independent reader"
+reviewer = "Claude Fable (claude-fable-5-1), independent re-reader"
 lean = "sha256:ac178de3a6fc2c61"
-run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex); cards #547 and #381, ship ER: the centre by III.1's construction (Prop1.of_circle), written by Claude, read in full by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main and with the Circle 1 retirement, by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main, with the Circle 1 retirement and with the trains beneath it, by GPT-6 Astra (Codex); card #547, ship ER: the last step by both orders with contact, and the partner note, written by Claude, read in full by GPT-6 Astra (Codex); card #624, ship XS: the representations item judged afresh; main proof by OpenAI Codex; read in full by Claude Opus 5.5, a reader of the other family from the main proof's writer, reader XS-r624c-III08, at a8e2c2e41"
-text = "sha256:52c6a56af35a6a19"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex); focused re-read after axiom wave two (card 337): the retired-rule wording only, by Claude Opus 5.5, against e00da4b4; full read at eed076538; read-through 03 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 07416606e (reader RT-s3x); previous reviewer: Claude Opus 5.5, independent reader; card #477, ship C7: re-read in full after Circle 1 was retired into a theorem after III.2 (train P4), by GPT-6 Astra (Codex), reader C7-t477p4-readA, at 689ab169f; card #547, ship ER: the last step by Euclid's two orders for points on different circumferences, I.24 at M kept for a point of contact, written by Claude, read in full by GPT-6 Astra (Codex); cards #547 and #381, ship ER: the centre by III.1's construction (Prop1.of_circle), written by Claude, read in full by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main and with the Circle 1 retirement, by GPT-6 Astra (Codex); ship ER, 27 October: re-read in full after the merges with main, with the Circle 1 retirement and with the trains beneath it, by GPT-6 Astra (Codex); card #547, ship ER: the last step by both orders with contact, and the partner note, written by Claude, read in full by GPT-6 Astra (Codex); card #624, ship XS: the representations item judged afresh; main proof by OpenAI Codex; read in full by Claude Opus 5.5, a reader of the other family from the main proof's writer, reader XS-r624c-III08, at a8e2c2e41; the representation note says what the Lean statement compares: the record written by GPT-6 Astra (gpt-6-astra) and read in full and cold by Claude Fable (claude-fable-5-1), of the Claude family, which wrote none of it, on 10 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own; III.8's two summaries grouped with the theorem's own conclusions: read by GPT-6 Astra (Codex), source reader, and by GPT-6 Astra (Codex), cold mathematical gate, independent readers, on 11 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own"
+text = "sha256:a509b585ec43dd7e"
 
 [review.items]
 statement = "pass"
