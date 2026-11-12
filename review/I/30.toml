@@ -4,9 +4,11 @@
 [statement]
 scope = "full"
 fingerprint = "sha256:ac0ec095401a8c5e"
+note = "The theorem also covers the added cases where EF lies outside AB and CD."
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "Euclid's angle chase, with a parallel-uniqueness argument for the added cases."
 
 [[passage]]
 at = "I say that AB is also parallel to CD"
@@ -36,11 +38,11 @@ case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "63d29c561"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:6ec4de86c8dc33b2"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); card #302, ship BI: the extra cases by Euclid's own argument, read in full by Claude Opus 5.5, reader BI-r302, at 63d29c561"
-text = "sha256:f045821a5e502355"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4); card #302, ship BI: the extra cases by Euclid's own argument, read in full by Claude Opus 5.5, reader BI-r302, at 63d29c561; I.30's route summary names the added cases: read by GPT-6 Astra (Codex), source reader, and by GPT-6 Astra (Codex), cold mathematical gate, independent readers, on 11 November 2026, at a commit whose files were byte-identical to main's b34df2274feb in every file it was given, except this change's own"
+text = "sha256:fb2410e47d3ead3b"
+commit = "15f4906b58f7b1178bc642975fcd6d0f676f0425"
 
 [review.items]
 statement = "pass"
