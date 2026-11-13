@@ -92,7 +92,7 @@ System E's rules, as I.1 does); `Parallel.between` and `quadArea_add_of_parallel
   draws the square for any figure given by its outline, and `Prop14.outline_side` finds its
   side, by I.45's division of the outline and the content theorem
   ([Book I's brief](book-I.md#representations)); the scope is `full`
-  ([#116](https://github.com/jackChallis/stoicheia/issues/116)). The older companions square
+  ([#116](https://github.com/dodecaplex-co/stoicheia/issues/116)). The older companions square
   figures given with a checked division into triangles, as I.45's do, and `Prop14.square`
   draws the square for them.
 
