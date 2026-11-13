@@ -116,8 +116,13 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
    check reads the build of step 2, and takes about a minute on a laptop. It uses
    `leanchecker`, by Morrison and Ullrich; `leanexport`, by Böving for the Lean FRO;
    and `nanoda_bin`, the executable of Bailey's nanoda.
-   All three come in the `bin` folder of the pinned toolchain, whose path the check gets
-   with `lake env lean --print-prefix` from the root, so the check installs nothing.
+   `leanchecker`, `leanexport` and `nanoda_bin` come from the Lean 4.35.0 release. [Download Lean 4.35.0](https://github.com/leanprover/lean4/releases/tag/v4.35.0).
+   The check finds the toolchain's `bin` folder with `lake env lean --print-prefix` and installs nothing.
+   For a fresh Linux x86_64 installation, run `bash scripts/install_lean.sh` from the repository root.
+   If elan's three download attempts fail, the installer downloads `lean-4.35.0-linux.tar.zst` from GitHub's Lean 4.35.0 release.
+   An existing toolchain with `bin/lean` is reused, even if a replay tool is missing.
+   The installer verifies elan's SHA-256, but checks no checksum for the Lean archive or the three replay tools.
+   If a replay tool is still missing, stop: `scripts/check_kernel.py` cannot run without all three.
    The negative tests break files on purpose and put them back, so run them on a clean checkout:
    ```sh
    lake build Audit
