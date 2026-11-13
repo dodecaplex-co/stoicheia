@@ -46,6 +46,7 @@ reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a43503923e4f8c6f"
 run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3); card #302, ship BI: the extra cases by Euclid's own argument, read in full by Claude Opus 5.5, readers BI-r302 at 63d29c561 and BI-r302b at b5a89e529; re-read whole by GPT-6 Astra (Codex), in two independent readings by a family that did not write the change, against main at c6fd19b76c1e, 2026-11-12"
 text = "sha256:6e3cae0bebc655ae"
+commit = "11a8cd5ab1948671d6c2bb412b3a4b12b61b8d98"
 
 [review.items]
 statement = "pass"
