@@ -92,7 +92,7 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   proved, for his measure of area, and whose argument we follow
   ([the gap catalogue](../reports/gaps-book-I.md#i45), [brief 0013](0013-figures.md)). The
   general statement is `Prop45.outline`, and the scope is `full`
-  ([#116](https://github.com/jackChallis/stoicheia/issues/116)). The older companions take
+  ([#116](https://github.com/dodecaplex-co/stoicheia/issues/116)). The older companions take
   the figure with its division into triangles, checked: triangles that lie apart (`Apart`),
   allowing a figure with a hole; triangles fitted together in a suitable order (`Fitted`,
   `Rectilineal`), for a figure with one boundary; or Euclid's and Oliver Byrne's triangles
