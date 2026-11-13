@@ -183,6 +183,8 @@ names are an interface, and they change only in the open.
   `<word>` follows the same rule: `Prop25.of_circle`, and `Prop24.equalCircles` after the
   predicate `EqualCircles`. `PropN`, `PostulateN`, `Definition15` and `CommonNotionN`
   keep Euclid's numbers.
+  A fact about a type is declared in that type's namespace, so dot notation finds it.
+  For example, declare `Elements.Arc.measure_eq_iff`, not `Elements.BookIII.Arc.measure_eq_iff`.
   [The table of names](../book/names.md), which `scripts/render.py` writes from
   `facts.json`, gives every proposition, porism and companion with its module, its page
   and its certificate.
