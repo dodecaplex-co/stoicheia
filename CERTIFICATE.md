@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it, or for [I.40](book/I/40.md) as the text states it. 46 proofs follow Euclid's argument, 1 follows it with one or more steps changed ([I.30](book/I/30.md)) and [I.40](book/I/40.md)'s follows the argument Heath prints; each page says how.
+**All 48 propositions proved in Lean**, every one as Euclid states it, or for [I.40](book/I/40.md) as the text states it. 45 proofs follow Euclid's argument, 2 follow it with one or more steps changed ([I.24](book/I/24.md), [I.30](book/I/30.md)) and [I.40](book/I/40.md)'s follows the argument Heath prints; each page says how.
 
 What the proofs show:
 
@@ -49,7 +49,7 @@ What the proofs show:
 | ✅ | [I.21](book/I/21.md) | whole | Euclid's | I.16, I.20 | I.16, I.20 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 12 | 21 |
 | ✅ | [I.22](book/I/22.md) | whole | Euclid's | I.3, I.20 | I.2, I.3 | 1, 2, 3 | Def. I.15 | 1, 3, 5 | 26 | 14 | 15 |
 | ✅ | [I.23](book/I/23.md) | whole | Euclid's | I.8, I.22 | I.8, I.20, I.22 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 3 | 2 |
-| ✅ | [I.24](book/I/24.md) | whole | Euclid's | I.4, I.5, I.19, I.23 | I.4, I.5, I.16, I.18, I.19, I.23 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 8 | 26 |
+| ✅ | [I.24](book/I/24.md) | whole | Euclid's, with a step changed | I.4, I.5, I.19, I.23 | I.4, I.5, I.16, I.18, I.19, I.23 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 8 | 26 |
 | ✅ | [I.25](book/I/25.md) | whole | Euclid's | I.4, I.24 | I.4, I.24 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 3 | 0 |
 | ✅ | [I.26](book/I/26.md) | whole | Euclid's | I.4, I.16 | I.3, I.4, I.16 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 7 | 30 |
 | ✅ | [I.27](book/I/27.md) | whole | Euclid's | I.16 | I.16 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 37 | 5 | 29 |
