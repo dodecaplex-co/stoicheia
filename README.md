@@ -156,6 +156,17 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
 
 **Try breaking it.** In [`Prop01.lean`](Elements/BookI/Prop01.lean), change `Definition15 hA_BCD hC_BCD hB_BCD` to `Definition15 hB_ACE hC_ACE hA_ACE` and run `lake build`. Lean refuses: B is the centre of the other circle, so the radii it gives are the wrong ones.
 
+**Which run guards which change.** CI gives each pull request a risk class, from R0 (docs) to R5 (the landing tool and CI): the highest class that [`scripts/risk.py`](scripts/risk.py) gives a file it changes, except that [`ci.yml`](.github/workflows/ci.yml) gives R5 to a pull request whose run starts with the `release` label, to one into a branch other than main, and to one whose checkout is not GitHub's merge of its head into main (lines 70-81), and to a pull request when main has no `scripts/risk.py` (lines 90-93).
+
+- The pull request's own run guards a change of any class with the `check`, `model` and `acceptance` jobs.
+- The pull request's own run guards a change of class R3, R4 or R5 with the negative tests.
+- The pull request's own run guards a change of class R4 or R5 with the formal model's checks.
+- The pull request's own run guards a change to a file the formal model imports, of any class, with the formal model.
+- Main's run after each merge guards a change of any class with the negative tests and the formal model.
+- The run on main every six hours guards every change on main with the negative tests and the formal model.
+- A merge group's run guards every change in the group with the negative tests and the formal model.
+- A run at a release pull request's head guards every change with the negative tests and the formal model ([the workflow, section 8](docs/WORKFLOW.md#8-validation-on-the-integrated-revision)).
+
 ## Use it
 
 Stoicheia is a Lean library as well as a book, and a Lean project of yours can build on it. `v1.0` is the name of the release of Books I to III, and the tag is made when that release is published. Until then, `git ls-remote --tags https://github.com/dodecaplex-co/stoicheia v1.0` prints nothing; set `rev` to a commit of main instead, since main is what this page and the book's pages describe. Use that same commit in the `lakefile.lean` form below. After publication, pin your `lakefile.toml` to the release's tag as shown here:
