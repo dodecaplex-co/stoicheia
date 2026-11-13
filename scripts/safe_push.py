@@ -133,8 +133,9 @@ order, and the first that fails stops it with a message saying why:
    compute the class. The class and why are a step line, and the record's "class". For
    R0 to R2 the rest of this step is skipped: CI runs the rest of section 8's sequence on
    the pull request before the merge, and --merge waits for CI green, while the negative
-   tests run on main after the merge and on the cadence
-   (docs/decisions/2026-10-22-checks-by-risk.md); one "skip" line says so. Such a change
+   tests, while main's group lane is off, the merge group runs them in CI as R5; after the
+   merge they run on the VM (ruling 1581); safe-push-tests.yml is disabled
+   (docs/decisions/2026-11-12-ci-scope-1a.md); one "skip" line says so. Such a change
    touches no check input and no protected path but
    judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
    ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
@@ -557,8 +558,10 @@ LABELS = {
 }
 KIND_LABELS = ("tooling", "text", "lean", "docs")      # every pull request carries one
 assert set(KIND_LABELS) <= set(LABELS)
-# The required status checks of the ruleset on main, in its order (judge_checks).
-REQUIRED_CHECKS = ("check", "model", "negative", "formal-model", "acceptance")
+# The required status checks of the ruleset on main, in its order (judge_checks), and
+# gate-tests, the verdict on the landing tool's tests, which the merge gate holds until the
+# owner adds it to the ruleset (docs/decisions/2026-11-12-ci-scope-1a.md).
+REQUIRED_CHECKS = ("check", "model", "negative", "formal-model", "acceptance", "gate-tests")
 # The risk classifier (docs/decisions/2026-10-22-risk-lanes.md), whose copy at origin/main,
 # never the commit's, gives the class of the change (risk_class); and the classes whose
 # pre-flight leaves step 4 to CI (docs/decisions/2026-10-22-checks-by-risk.md).
@@ -5337,8 +5340,9 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     The class `risk` (risk_class) is reported at the head of step 4: for R0 to R2 the full
     checks are skipped (short_path), CI running the rest of section 8's sequence before the
-    merge and the negative tests running on main after it and on the cadence; for R3 to R5
-    they run. `checked`, a record of this commit against this origin/main by origin/main's
+    merge, and the negative tests: while main's group lane is off, the merge group runs them
+    in CI as R5; after the merge they run on the VM (ruling 1581); safe-push-tests.yml is
+    disabled. For R3 to R5 they run. `checked`, a record of this commit against this origin/main by origin/main's
     harness, stands in for step 4 alone (--merge, --land; checks_record), its step line
     naming the pre-flight proof it came from when it did (--preflight-proof); steps 2 and
     3 always run."""

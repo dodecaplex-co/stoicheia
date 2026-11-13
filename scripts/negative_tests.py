@@ -4,8 +4,8 @@ Each test makes one small change that must be caught, runs the check that should
 catch it, and puts everything back. Run from the repo root after `lake build` and
 `lake env lean Certificate/Facts.lean`, with `Certificate/axioms.lock` and the review
 records current. CI's `negative` job runs it on every push to main, and on a pull request
-of class R3 and above (scripts/risk.py); the cadence runs it on main
-every six hours.
+of class R3 and above (scripts/risk.py); the cadence workflow is disabled; main's run after
+each merge runs it on the VM (ruling 1581).
 
 Each plant is a file of its own in scripts/negative/, named for the plant: `<name>.py`,
 the name lower-case letters, digits and underscores, beginning with a letter. The file
@@ -18,7 +18,10 @@ Helpers that more than one plant uses, or that tests/test_negative_tests.py test
 here. Adding a plant is adding one file: there is no number to choose and no list to edit.
 
 The plants run in a stable order: every plant whose `BUILDS` is False, by name, then every
-plant whose `BUILDS` is True, by name. Each is named, with its file, before it runs, and
+plant whose `BUILDS` is True, by name, in a run of one worker; a worker of a run with
+workers runs its share in the run order it is given instead (below), and the run prints
+every plant's output in the stable order all the same. Each is named, with its file, before
+it runs, and
 its elapsed time is printed after it, restoration included. The entry Git status is taken
 first of all, before the regressions, the first of which loads the plants' folder in a
 process of its own, and so before any plant's file is read: a file that a plant's file
@@ -73,9 +76,12 @@ to do that is not caught: the run trusts the configuration of the machine it run
 The shares are dealt longest first, by the seconds each plant took as
 tests/negative_times.json records them (`--times-from-log LOG` writes it from a run's time
 lines): each plant, heaviest first, ties going to a plant that builds and then to the
-stable order, goes to the worker with the least so far, and each worker runs its share in
-the stable order. A plant the record does not name weighs their median; with no record,
-every plant weighs the same. The deal is printed on stderr, so stdout is unchanged, and
+stable order, goes to the worker with the least so far. Each worker runs its share in its
+run order, which it is given by `--plant` and keeps: first the plants the record does not
+name, those that build first, then by name; then the plants that build, longest first;
+then the rest, longest first, ties by name; so no plant that builds waits at the tail,
+where every worker would build at once. A plant the record does not name weighs their
+median; with no record, every plant weighs the same. The deal is printed on stderr, so stdout is unchanged, and
 changes only the speed, never a verdict: a stale record only balances less well.
 
 A worker is a run that `--plant` narrows, with all of its bracket, its Git status taken as
@@ -866,7 +872,8 @@ def choose(parser: argparse.ArgumentParser, args: argparse.Namespace,
            sources: dict[int, str]) -> tuple[list[Plant], int] | None:
     """The plants the run asks for, loaded, and how many plants there are; or None when
     the folder has a fault, each recorded under the loader's heading. An unknown name for
-    --plant exits 2."""
+    --plant exits 2. A worker's plants are in the order its --plant arguments give them;
+    any other run's are in the stable order."""
     plants, faults = load_plants()
     if faults:
         for fault in faults:
@@ -880,6 +887,10 @@ def choose(parser: argparse.ArgumentParser, args: argparse.Namespace,
     if unknown:
         parser.error(f"no plant {', '.join(map(repr, unknown))} in {PLANTS}/; "
                      f"the plants are {', '.join(names)}")
+    if args.worker_report is not None:
+        # A worker runs its share in the order the run gave it by --plant (run_order).
+        by_name = {p.name: p for p in plants}
+        return [by_name[name] for name in dict.fromkeys(wanted)], len(plants)
     return [p for p in plants if p.name in wanted], len(plants)
 
 
@@ -966,8 +977,8 @@ def deal(plants: list[Plant], count: int,
     going to a plant that builds and then to the order of `plants`, goes to the worker with
     the least weight so far, then the fewest plants, then the lowest number. A plant weighs
     its `seconds`, or their median when it has none; with none at all, every plant weighs
-    the same. Each share keeps the order of `plants`, and every plant is in exactly one;
-    with each share, its weight."""
+    the same. Each share is in its run order (run_order), and every plant is in exactly
+    one; with each share, its weight."""
     median = statistics.median(seconds.values()) if seconds else 1.0
     weight = [seconds.get(p.name, median) for p in plants]
     shares: list[list[int]] = [[] for _ in range(count)]
@@ -976,7 +987,16 @@ def deal(plants: list[Plant], count: int,
         k = min(range(count), key=lambda k: (loads[k], len(shares[k]), k))
         shares[k].append(i)
         loads[k] += weight[i]
-    return [[plants[i] for i in sorted(share)] for share in shares], loads
+    return [sorted((plants[i] for i in share), key=lambda p: run_order(p, seconds))
+            for share in shares], loads
+
+
+def run_order(plant: Plant, seconds: dict[str, float]) -> tuple:
+    """Where a plant runs in its worker's share: the plants the record does not name first,
+    those that build first, then by name; then the plants that build, longest first; then
+    the rest, longest first; ties by name."""
+    recorded = plant.name in seconds
+    return (recorded, not plant.builds, -seconds.get(plant.name, 0.0), plant.name)
 
 
 def write_times(log: Path) -> int:
@@ -1173,10 +1193,10 @@ def well_formed(report) -> bool:
 
 def read_report(path: Path, names: list[str], code: int) -> tuple[list[dict], list[str],
                                                                    list[str]]:
-    """What a worker that was given the plants `names` and exited with `code` reported: the
-    plants it ran, in order, each with its output and failures; its own failures; and why
-    it crashed, if it did (the docstring). A report that names other plants than its own,
-    in their order, is trusted for none."""
+    """What a worker that was given the plants `names`, in its run order, and exited with
+    `code` reported: the plants it ran, in order, each with its output and failures; its own
+    failures; and why it crashed, if it did (the docstring). A report that names other
+    plants than its own, in the order it was given them, is trusted for none."""
     crashed = [] if code in (0, 1) else [f"exit {code}"]
     try:
         report = json.loads(path.read_text(encoding="utf-8"))
@@ -1285,6 +1305,8 @@ def run_workers(chosen: list[Plant], count: int, entry: str, sources: dict[int, 
     for k, (share, load) in enumerate(zip(shares, loads), 1):
         print(f"  worker {k}{f', about {load:.0f} s' if seconds else ''}: "
               f"{', '.join(p.name for p in share)}", file=sys.stderr)
+    print("  run order in each worker: unrecorded first, then BUILDS, then longest",
+          file=sys.stderr)
     base = Path(tempfile.mkdtemp(prefix="stoicheia-negative-")).resolve()
     trees = [base / f"worker-{k}" for k in range(1, count + 1)]
     registered: list[Path] = []

@@ -1,0 +1,15 @@
+# Check that main's group lane is off, or on only for a condition held in code: a merge group
+# is R5 while scripts/risk.py's GROUP_LANE is None, as built, and its own protected pull
+# request turns it on only when post-merge.yml verifies main's negative tests and formal
+# model after each merge, with a revert of a red one shown working (L6), or ci.yml verifies
+# a signed checklist of the group's for every class (GROUP-VERIFY)
+# (docs/decisions/2026-11-12-ci-scope-1a.md). The test reads GROUP_LANE by ast and the
+# workflows with the pinned YAML parser, which CI's check job installs.
+# Concurrent (#608): it reads the checkout's files, and its planted cases write only in
+# temporary folders of their own.
+order = 137
+name = "python3 -I tests/test_group_lane.py"
+job = "check"
+command = ["python3", "-I", "tests/test_group_lane.py"]
+section8 = "python3 -I tests/test_group_lane.py"
+concurrent = true

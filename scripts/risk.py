@@ -26,10 +26,14 @@ checkout differ from the text Git holds, which this reads.
                                                   base (origin/main), then each path's,
                                                   then whether the formal model must run
     python3 scripts/risk.py --diff BASE HEAD      the same for `git diff BASE...HEAD` in
-                                                  the current repository; with
-                                                  --github-output, also class=Rn and
-                                                  formal_model=true|false appended to
+                                                  the current repository, then whether
+                                                  the landing tool's tests must run; with
+                                                  --github-output, also class=Rn,
+                                                  formal_model=true|false and
+                                                  gate=true|false appended to
                                                   $GITHUB_OUTPUT
+    python3 scripts/risk.py --group-lane          whether a merge group is classed by its
+                                                  diff (GROUP_LANE), and on what condition
     python3 scripts/risk.py --paths <file>...     the class of each path given (for cards,
                                                   up front)
     python3 scripts/risk.py --audit <worktree>    every tracked file's class; exit 1 if any
@@ -38,6 +42,22 @@ checkout differ from the text Git holds, which this reads.
                                                   imports at REV, directly or through others,
                                                   then each file among them whose header or
                                                   imports it cannot read or resolve, and why
+
+The landing tool's tests, scripts/test_safe_push.py, run in twelve shards for a change that
+reaches what they read or run (gate_inputs): the paths of the R5 rule, every file they and
+scripts/safe_push.py import, directly or through one another, read by `ast` from Git's
+blobs, each import resolved in the importing file's own folder and in each folder its own
+`sys.path.insert` names; the data files they read; and GATE_EXECUTED, the files they run or
+read otherwise, each with its citing lines. It fails closed: while a file the scan reads
+does not parse, or names a folder for sys.path that the reader cannot resolve, every change
+reaches them. The change reaches them when a path of `git diff base...head` is among the
+inputs at either end, as the formal model's inputs are read at both.
+
+A merge group is R5, as any event but a pull request into main, while GROUP_LANE is None,
+as built. It names the condition under which a group may be classed by its diff instead,
+L6 or GROUP-VERIFY, and only its own protected pull request sets it, which
+tests/test_group_lane.py holds to that condition in code (docs/decisions/
+2026-11-12-ci-scope-1a.md).
 
 A rule matches a path whole, by fnmatch's rules, under which `*` matches `/` too, so
 `scripts/*` holds `scripts/audit/jev.py`. Git gives the paths separated by NUL bytes
@@ -52,6 +72,7 @@ only; tests/test_risk.py tests it.
 
 from __future__ import annotations
 
+import ast
 import fnmatch
 import os
 import posixpath
@@ -111,7 +132,88 @@ LOCK = "Certificate/axioms.lock"
 EXTERNAL_ROOTS = ("Check", "Model", "Mathlib", "Lean", "Init", "Std")
 
 USAGE = ("usage: risk.py <worktree> [base] | --diff BASE HEAD [--github-output] | "
-         "--paths <file>... | --audit <worktree> | --model-inputs REV")
+         "--paths <file>... | --audit <worktree> | --model-inputs REV | --group-lane")
+
+# The group lane (docs/decisions/2026-11-12-ci-scope-1a.md): None, as built, and every merge
+# group is R5, as CI's risk job makes any event but a pull request into main. Set only by its
+# own protected pull request, to the condition under which a group's negative tests and
+# formal model may leave CI: "L6", main's run after each merge, with an automatic revert of a
+# red one that a recorded run has shown working; or "GROUP-VERIFY", the group's negative
+# tests and formal model checked at the group's head off CI and verified, signed, on the
+# merge group for every class. tests/test_group_lane.py, in the check job, refuses either
+# unless ci.yml or post-merge.yml holds it in code, and L6 unless GROUP_LANE_GROUNDS, a
+# decisions entry, names the demonstrated revert.
+GROUP_LANE = None
+GROUP_LANE_CONDITIONS = ("L6", "GROUP-VERIFY")
+GROUP_LANE_GROUNDS = None
+
+# The landing tool's tests and what they read or run (gate_inputs). GATE_ROOTS are scanned
+# for their imports first; GATE_DATA are read beside them; GATE_EXECUTED are run, or read
+# from the tree, by the tests or by safe_push.py, each with how and the lines that cite it,
+# audited at the commit before this list (tests/test_risk.py holds every `HERE /` and
+# `SOURCE /` read of the two files to gate_inputs). A Python file among them is scanned for
+# its imports too.
+GATE_ROOTS = ("scripts/safe_push.py", "scripts/test_safe_push.py")
+GATE_DATA = ("scripts/test_safe_push_times.json", "scripts/requirements-test_safe_push.txt",
+             "scripts/safe_push_allow.toml")
+GATE_EXECUTED = (
+    ("scripts/check_paths.py", "origin/main's blob run by exec(compile(...)), and run by "
+     "subprocess in a test", "safe_push.py 2468, 2518-2524; test_safe_push.py 8747, 8763"),
+    ("scripts/install_hooks.sh", "run with sh in every fixture's setup, and committed in the "
+     "harness", "test_safe_push.py 310, 331, 1838"),
+    ("tests/model/*", "run.py, search.py and hyperbolic.py run by subprocess; run.py imports "
+     "search, hyperbolic, derived and model, and reads tests/model/<name> by cat-file blob",
+     "test_safe_push.py 334, 8495, 8501; tests/model/run.py 123, 181-186"),
+    ("scripts/check_release_gate.py", "committed as the fixtures' origin/main harness",
+     "test_safe_push.py 333-334, 1819"),
+    ("tests/test_release_gate.py", "committed as the fixtures' origin/main harness",
+     "test_safe_push.py 333-334, 1819"),
+    ("tests/certificate_expectations.json", "committed as the fixtures' origin/main harness",
+     "test_safe_push.py 333-334, 1819"),
+    ("checks/*", "committed as the fixtures' origin/main harness, and read there by blob as "
+     "the registry", "test_safe_push.py 335-336, 1819; safe_push.py 4292"),
+    ("docs/briefs/0002-decisions.md", "the decisions record, read by cat-file blob",
+     "safe_push.py 1825; test_safe_push.py 327"),
+    ("docs/decisions/*", "the decisions record, read by cat-file blob",
+     "safe_push.py 1825; test_safe_push.py 327"),
+    ("docs/WORKFLOW.md", 'read as SOURCE / "docs" / "WORKFLOW.md"', "test_safe_push.py 9212"),
+    ("Elements/BookIII/Prop16.lean", "read as a SOURCE / path", "test_safe_push.py 14280"),
+    ("README.md", 'SOURCE / "README.md", its generated regions', "test_safe_push.py 13533"),
+    ("Elements/BookIII/Prop01.lean", 'SOURCE / "Elements" / "BookIII" / "Prop01.lean"; and '
+     "check_fidelity.py, which the tests run, opens each proposition's Lean file",
+     "test_safe_push.py 14446; check_fidelity.py 1729-1732"),
+    ("facts.json", "SOURCE / path over a literal tuple", "test_safe_push.py 14302-14308"),
+    ("review/III/16.toml", "SOURCE / path over a literal tuple; and check_fidelity.py, which "
+     "the tests run, opens every review record", "test_safe_push.py 14302-14308; "
+     "check_fidelity.py 1724"),
+    ("figures/I/01-idea.svg", "SOURCE / path over a literal tuple",
+     "test_safe_push.py 14302-14308"),
+    ("AGENTS.md", "SOURCE / path over a literal tuple; and generated_counts.py, which "
+     "check_fidelity.py and render.py run, reads every tracked Markdown file",
+     "test_safe_push.py 14302-14308; generated_counts.py 723, 732"),
+    ("docs/FORMALIZATION.md", "SOURCE / path over a literal tuple",
+     "test_safe_push.py 14302-14308"),
+    ("docs/PROGRAM.md", "SOURCE / path over a literal tuple", "test_safe_push.py 14302-14308"),
+    ("assets/*.png", '(SOURCE / "assets").glob("*.png")', "test_safe_push.py 14311"),
+)
+# The reads of the tests that are fixture data alone: content the tests read as sample
+# input, which the code under test (safe_push.py, GATE_EXECUTED and the files the scan
+# reaches) never reads or runs itself, shown so by tests/test_risk.py's trace of that code.
+# Each row is (file, first line, last line, path, reason): the lines of `file` whose `HERE /`
+# or `SOURCE /` read takes `path`. The list is closed and only shrinks: a row is added only
+# by its own protected pull request, which adds it to tests/test_risk.py's EXCLUDED_AS_BUILT
+# with a decisions entry naming the path and the test. While GATE_READ_EXCLUDED_LIVE is
+# False, as built, every row still reaches the gate; it is set True only by its own protected
+# pull request, whose grounds, GATE_READ_EXCLUDED_GROUNDS, a decisions entry, record the
+# compensating runs of the whole suite on main (tests/test_risk.py refuses True without
+# them).
+GATE_READ_EXCLUDED = (
+    ("scripts/test_safe_push.py", 14693, 14693, "assets/*.png",
+     "the code under test names assets/ only in path rules (check_paths.py, risk.py) and "
+     "reads a PNG only as a pushed change's own file (scan_binary)"),
+)
+GATE_READ_EXCLUDED_LIVE = False
+GATE_READ_EXCLUDED_GROUNDS = None
 
 
 class GitFailure(Exception):
@@ -412,6 +514,171 @@ def formal_model(top: str, paths, base: str, head: str,
                    "the formal model imports")
 
 
+def folder_of(node, path: str, names: dict, depth: int = 0):
+    """What a Python expression in the file `path` names, read by a narrow grammar: a path of
+    the tree, relative to its root ("" for the root itself), for `__file__` and the forms
+    built from it (Path(...), str(...), .resolve(), .parent, .parents[n], os.path's dirname,
+    abspath, realpath and join, and `/` with a string), and for a name the module binds once
+    to one of them; ("text", s) for a string; None for anything else, or for a path above
+    the root."""
+    if depth > 20:
+        return None
+    if isinstance(node, ast.Name):
+        if node.id == "__file__":
+            return path
+        return folder_of(names[node.id], path, names, depth + 1) if node.id in names else None
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return ("text", node.value)
+
+    def within(value) -> str | None:
+        if not isinstance(value, str):
+            return None
+        value = posixpath.normpath(value) if value else ""
+        value = "" if value == "." else value
+        return None if value == ".." or value.startswith(("../", "/")) else value
+
+    if isinstance(node, ast.Call):
+        func = ast.unparse(node.func)
+        args = node.args
+        if node.keywords:
+            return None
+        if func in ("str", "Path", "pathlib.Path", "os.fspath", "os.path.abspath",
+                    "os.path.realpath") and len(args) == 1:
+            return folder_of(args[0], path, names, depth + 1)
+        if func == "os.path.dirname" and len(args) == 1:
+            inner = folder_of(args[0], path, names, depth + 1)
+            return within(posixpath.dirname(inner)) if isinstance(inner, str) else None
+        if func == "os.path.join" and args:
+            parts = [folder_of(arg, path, names, depth + 1) for arg in args]
+            if not isinstance(parts[0], str) or not all(
+                    isinstance(part, tuple) for part in parts[1:]):
+                return None
+            return within(posixpath.join(parts[0], *(part[1] for part in parts[1:])))
+        if isinstance(node.func, ast.Attribute) and node.func.attr in ("resolve", "absolute") \
+                and not args:
+            return folder_of(node.func.value, path, names, depth + 1)
+        return None
+    if isinstance(node, ast.Attribute) and node.attr == "parent":
+        inner = folder_of(node.value, path, names, depth + 1)
+        return within(posixpath.dirname(inner)) if isinstance(inner, str) and inner else None
+    if (isinstance(node, ast.Subscript) and isinstance(node.value, ast.Attribute)
+            and node.value.attr == "parents" and isinstance(node.slice, ast.Constant)
+            and type(node.slice.value) is int and node.slice.value >= 0):
+        inner = folder_of(node.value.value, path, names, depth + 1)
+        for _ in range(node.slice.value + 1):
+            if not isinstance(inner, str) or not inner:
+                return None
+            inner = posixpath.dirname(inner)
+        return within(inner)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        left = folder_of(node.left, path, names, depth + 1)
+        right = folder_of(node.right, path, names, depth + 1)
+        if isinstance(left, str) and isinstance(right, tuple):
+            return within(posixpath.join(left, right[1]))
+    return None
+
+
+def imports_of(path: str, text: str, folders: set[str]) -> tuple[set[str], str | None]:
+    """The files of the tree, among `folders` (every folder holding a file), that the Python
+    file `path`, whose text is `text`, imports, each `import m` or `from m import ...` of
+    level 0 resolved as m.py in the file's own folder and in each folder its own
+    `sys.path.insert` or `sys.path.append` names, read by `ast`; a module with no such file
+    is passed over (the standard library). Then why the file is unread, or None: it does not
+    parse, or names for sys.path a folder this reader cannot resolve to one of the tree's."""
+    try:
+        tree = ast.parse(text, filename=path)
+    except (SyntaxError, ValueError) as error:
+        return set(), f"it does not parse ({type(error).__name__}: {error})"
+    names = {statement.targets[0].id: statement.value for statement in tree.body
+             if isinstance(statement, ast.Assign) and len(statement.targets) == 1
+             and isinstance(statement.targets[0], ast.Name)}
+    roots, modules = [posixpath.dirname(path)], set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call)
+                and ast.unparse(node.func) in ("sys.path.insert", "sys.path.append")):
+            folder = folder_of(node.args[-1], path, names) if node.args else None
+            if not isinstance(folder, str) or folder not in folders:
+                return set(), (f"line {node.lineno} names a folder for sys.path that the "
+                               f"reader cannot resolve: {ast.unparse(node)[:80]}")
+            roots.append(folder)
+        elif isinstance(node, ast.Import):
+            modules.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            modules.add(node.module.split(".")[0])
+    return {posixpath.join(root, f"{module}.py") for module in modules for root in roots}, None
+
+
+def gate_inputs(rev: str, cwd: str | None = None) -> tuple[set[str], dict[str, str]]:
+    """The landing tool's inputs at rev, as patterns and paths a change's paths are matched
+    to by fnmatch, as `classify` matches them: the R5 rule's patterns, every path under
+    .github/ among them; GATE_DATA; GATE_EXECUTED but, while GATE_READ_EXCLUDED_LIVE is
+    True, the paths of GATE_READ_EXCLUDED; and the Python files GATE_ROOTS and the Python
+    files of GATE_EXECUTED import, directly or through one another (imports_of), the scanned
+    files among them. Then each scanned file that is unread, with why: while one is, every
+    change reaches the gate."""
+    files = tree_files(rev, cwd)
+    folders = {posixpath.dirname(path) for path in files} | {""}
+    folders |= {posixpath.dirname(folder) for folder in set(folders)}
+    excluded = {row[3] for row in GATE_READ_EXCLUDED} if GATE_READ_EXCLUDED_LIVE else set()
+    executed = [row[0] for row in GATE_EXECUTED if row[0] not in excluded]
+    inputs = {*RULES[0][1], *GATE_DATA, *executed}
+    queue = sorted({*GATE_ROOTS, *(path for path in files if path.endswith(".py")
+                                    and any(fnmatch.fnmatchcase(path, pattern)
+                                            for pattern in executed))} & set(files))
+    seen: set[str] = set()
+    unread: dict[str, str] = {}
+    while queue:
+        texts = file_texts([files[path] for path in queue], cwd)
+        found: set[str] = set()
+        for path, text in zip(queue, texts):
+            seen.add(path)
+            imported, why = imports_of(path, text, folders)
+            if why is not None:
+                unread[path] = why
+            found |= imported & set(files)
+        queue = sorted(found - seen)
+    return inputs | seen, unread
+
+
+def reaches(path: str, inputs: set[str]) -> bool:
+    """Whether a path is among the inputs, matched whole by fnmatch, as `classify` matches."""
+    return any(fnmatch.fnmatchcase(path, pattern) for pattern in inputs)
+
+
+def gate(base: str, head: str, paths=None,
+         cwd: str | None = None) -> tuple[bool, str, str | None]:
+    """Whether the change `git diff base...head` (its `paths`, read when None) reaches the
+    landing tool's inputs, at its end or at any of its starts, its merge bases with base;
+    why, as a sentence; and the path that reaches them, or None. While a file the scan reads
+    at either end is unread, every change reaches them."""
+    if paths is None:
+        paths = diff_paths(base, head, cwd)
+    starts = git_bytes(["merge-base", "--all", revision(base), revision(head)], cwd)
+    inputs, unread = gate_inputs(head, cwd)
+    for start in starts.decode().split():
+        more_inputs, more_unread = gate_inputs(start, cwd)
+        inputs |= more_inputs
+        unread = {**more_unread, **unread}
+    if unread:
+        first = sorted(unread)[0]
+        return True, (f"{shown(first)}, which the landing tool's tests read, cannot be read "
+                      f"({shown(unread[first])}), so every change reaches them"), None
+    for path in sorted(paths):
+        if reaches(path, inputs):
+            return True, f"{shown(path)} is among the landing tool's inputs", path
+    return False, "the change touches none of the landing tool's inputs", None
+
+
+def group_lane() -> tuple[int, str]:
+    """`--group-lane`: the exit status and the line GROUP_LANE gives."""
+    if GROUP_LANE is None:
+        return 0, "group-lane: off"
+    if isinstance(GROUP_LANE, str) and GROUP_LANE in GROUP_LANE_CONDITIONS:
+        return 0, f"group-lane: on, because {GROUP_LANE}"
+    return 2, (f"risk.py: GROUP_LANE is {shown(repr(GROUP_LANE))}, neither None, "
+               f"{' nor '.join(GROUP_LANE_CONDITIONS)}")
+
+
 def show_change(top: str, per: dict[str, tuple[str, bool]],
                 model: tuple[bool, str] | None = None) -> None:
     print(f"{top} {CLASSES[top]}")
@@ -471,6 +738,13 @@ def main(argv: list[str]) -> int:
                 cls, ruled = classify(path)
                 print(f"{cls} {shown(path)}" + ("" if ruled else "  (no rule: R5 by default)"))
             return 0
+        if mode == "--group-lane":
+            if rest:
+                print(USAGE, file=sys.stderr)
+                return 2
+            status, line = group_lane()
+            print(line, file=sys.stderr if status else sys.stdout)
+            return status
         if mode == "--audit":
             if len(rest) != 1:
                 print(USAGE, file=sys.stderr)
@@ -498,10 +772,13 @@ def main(argv: list[str]) -> int:
                 print("--github-output: GITHUB_OUTPUT is not set", file=sys.stderr)
                 return 2
             top, per, model = judged(*revs)
+            reached, why, _ = gate(*revs, paths=list(per))
             if github:
                 with open(output, "a", encoding="utf-8") as out:
-                    out.write(f"class={top}\nformal_model={'true' if model[0] else 'false'}\n")
+                    out.write(f"class={top}\nformal_model={'true' if model[0] else 'false'}\n"
+                              f"gate={'true' if reached else 'false'}\n")
             show_change(top, per, model)
+            print(f"gate tests: {'in full' if reached else 'pass at once'}, since {why}")
             return 0
         if mode.startswith("-") or len(args) > 2:
             print(USAGE, file=sys.stderr)

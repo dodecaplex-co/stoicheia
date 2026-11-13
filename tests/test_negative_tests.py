@@ -2419,7 +2419,8 @@ class DealTests(unittest.TestCase):
     def test_longest_first(self):
         shares, loads = negative.deal(self.plants("a", "b", "c", "d"), 2,
                                       {"a": 1.0, "b": 10.0, "c": 5.0, "d": 4.0})
-        self.assertEqual(self.names(shares), [["b"], ["a", "c", "d"]])
+        # Each share in its run order: longest first (L2).
+        self.assertEqual(self.names(shares), [["b"], ["c", "d", "a"]])
         self.assertEqual(loads, [10.0, 10.0])
 
     def test_a_plant_with_no_time_weighs_the_median(self):
@@ -2427,12 +2428,14 @@ class DealTests(unittest.TestCase):
         a beside c."""
         shares, loads = negative.deal(self.plants("a", "b", "c", "x"), 2,
                                       {"a": 1.0, "b": 6.0, "c": 8.0})
-        self.assertEqual(self.names(shares), [["a", "c"], ["b", "x"]])
+        # x, which the record does not name, runs first in its share (L2).
+        self.assertEqual(self.names(shares), [["c", "a"], ["x", "b"]])
         self.assertEqual(loads, [9.0, 12.0])
 
     def test_with_no_record_every_plant_weighs_the_same(self):
         shares, loads = negative.deal(self.plants("a", "b", "c", "d", builds=("c", "d")), 2, {})
-        self.assertEqual(self.names(shares), [["a", "c"], ["b", "d"]])
+        # With no record, each share runs its plants that build first, then by name (L2).
+        self.assertEqual(self.names(shares), [["c", "a"], ["d", "b"]])
         self.assertEqual(loads, [2.0, 2.0])
 
     def test_a_plant_that_builds_goes_first_on_a_tie(self):
@@ -2450,11 +2453,11 @@ class DealTests(unittest.TestCase):
                 with self.subTest(count=count, record=bool(seconds)):
                     shares, loads = negative.deal(plants, count, seconds)
                     self.assertEqual(len(shares), count)
-                    dealt = [p for share in shares for p in share]
-                    self.assertEqual(sorted(p.name for p in dealt), sorted(p.name for p in plants))
+                    self.assertEqual(deal_problems(plants, shares), [])
                     for share in shares:
                         self.assertTrue(share)
-                        self.assertEqual(share, [p for p in plants if p in share])
+                        self.assertEqual(share, sorted(
+                            share, key=lambda p: negative.run_order(p, seconds)))
                     median = statistics.median(seconds.values()) if seconds else 1.0
                     self.assertAlmostEqual(sum(loads),
                                            sum(seconds.get(p.name, median) for p in plants))
@@ -2517,6 +2520,49 @@ class DealTests(unittest.TestCase):
                     self.assertEqual(negative.main(["--times-from-log", str(log)]), 1)
                 self.assertIn(reason, errors.getvalue())
                 self.assertFalse((root / negative.TIMES).exists())
+
+
+    def test_L2_b1_a_deal_that_loses_a_plant_is_refused_by_its_property(self):
+        plants = self.plants("a", "b", "c", "d", "e", builds=("b", "d"))
+        seconds = {"a": 10.0, "b": 80.0, "c": 5.0}
+        shares, _ = negative.deal(plants, 4, seconds)
+        self.assertEqual(deal_problems(plants, shares), [])
+        lossy = [[p for p in share if p.name != "c"] for share in shares]
+        self.assertEqual(deal_problems(plants, lossy),
+                         ["every plant in exactly one share: c is in 0"])
+        print("  L2.b1: a deal that loses c: every plant in exactly one share: c is in 0")
+
+    def test_L2_b3_an_unread_record_runs_each_share_by_builds_then_name(self):
+        # recorded_times gives none for a record it cannot read (its note: the test above),
+        # and every share then runs its plants that build first, then by name.
+        plants = self.plants("e", "a", "d", "c", "b", builds=("b", "d"))
+        self.assertEqual([p.name for p in sorted(
+            plants, key=lambda p: negative.run_order(p, {}))], ["b", "d", "a", "c", "e"])
+        print("  L2.b3: with the record unread, each share runs b, d (BUILDS) then a, c, e")
+
+    def test_L2_b2_a_report_that_lacks_a_given_plant_or_reorders_them_is_a_crash(self):
+        root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        names = ["d", "c", "e", "b", "a"]
+        def report(given):
+            path = root / "report.json"
+            path.write_text(json.dumps({"plants": [{"name": n, "output": "", "failures": []}
+                                                   for n in given],
+                                        "failures": [], "status": 0}))
+            return negative.read_report(path, names, 0)[2]
+        self.assertEqual(report(names), [])
+        self.assertEqual(report(names[:4]), ["its report lacks a"])
+        self.assertEqual(report(["c", "d", "e", "b", "a"]),
+                         ["its report names c, d, e, b, a, not its plants in order"])
+        print("  L2.b2: a worker given 5 that reports 4: its report lacks a")
+
+
+def deal_problems(plants, shares) -> list[str]:
+    """The property every deal keeps: every plant in exactly one share."""
+    counts = {p.name: sum(share.count(p) for share in shares) for p in plants}
+    extra = [p.name for share in shares for p in share if p.name not in counts]
+    return [f"every plant in exactly one share: {name} is in {count}"
+            for name, count in counts.items() if count != 1] + [
+        f"every plant in exactly one share: {name} was not given" for name in extra]
 
 
 class WorkerOptionTests(unittest.TestCase):
@@ -3514,6 +3560,94 @@ class WorkerTests(unittest.TestCase):
             self.git("worktree", "remove", "--force", "--force", str(trees[0]))
             delete(base, ignore_errors=True)
 
+
+# A plant that notes, in the file STOICHEIA_ORDER_LOG names, the tree it runs in (a worker's
+# is named worker-<k>) and its name, as it starts.
+NOTES_ORDER = ('import os\n    with open(os.environ["STOICHEIA_ORDER_LOG"], "a") as log:\n'
+               '        log.write(os.path.basename(os.getcwd()) + " {name}\\n")\n'
+               '    nt.refused("{name}: caught")')
+
+
+class WorkerOrderTests(WorkerTests):
+    """The run order in each worker (L2): the deal unchanged, each worker given its share by
+    --plant in its run order and running it so, and the run's stdout in the stable order."""
+
+    def setUp(self):
+        super().setUp()
+        self.order = self.tmp / "order.log"
+        self.env["STOICHEIA_ORDER_LOG"] = str(self.order)
+
+    def plants(self, seconds=None):
+        if seconds is not None:
+            (self.root / "tests/negative_times.json").write_text(
+                json.dumps({"about": "A record of the test's own.", "seconds": seconds}))
+        self.commit(**{name: NOTES_ORDER for name in
+                       ("a_one", "b_two_builds", "c_three", "d_four_builds", "e_five")})
+
+    def started(self) -> dict[str, list[str]]:
+        found: dict[str, list[str]] = {}
+        for line in self.order.read_text().splitlines():
+            tree, name = line.split()
+            found.setdefault(tree, []).append(name)
+        return found
+
+    def test_L2_g1_each_worker_runs_its_share_in_its_run_order(self):
+        # Record times a:10, b:80 (BUILDS), c:5, d none (BUILDS), e none: the deal as before;
+        # worker 2 is given d then c, d unrecorded, and starts d before c; the run prints its
+        # plants in the stable order, a, c, e, b, d.
+        self.plants({"a_one": 10.0, "b_two_builds": 80.0, "c_three": 5.0})
+        result = self.suite("--workers", "4")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("  worker 1, about 80 s: b_two_builds\n"
+                      "  worker 2, about 15 s: d_four_builds, c_three\n"
+                      "  worker 3, about 10 s: a_one\n"
+                      "  worker 4, about 10 s: e_five\n"
+                      "  run order in each worker: unrecorded first, then BUILDS, then longest\n",
+                      result.stderr)
+        self.assertEqual(self.started()["worker-2"], ["d_four_builds", "c_three"])
+        headings = [line.split()[0] for line in result.stdout.splitlines()
+                    if line.endswith(".py)")]
+        self.assertEqual(headings, ["a_one", "c_three", "e_five", "b_two_builds", "d_four_builds"])
+        self.assertTrue(result.stdout.endswith("5 of 5 plants run\n✓ every planted change was "
+                                               "caught\n"), result.stdout)
+        print("  L2.g1: worker 2 given --plant d_four_builds --plant c_three, started "
+              f"{', '.join(self.started()['worker-2'])}; stdout in the stable order "
+              f"{', '.join(headings)}; 5 of 5 plants run")
+
+    def test_L2_g2_one_worker_keeps_the_stable_order(self):
+        self.plants({"a_one": 10.0, "b_two_builds": 80.0, "c_three": 5.0})
+        alone = self.suite()
+        self.assertEqual(alone.returncode, 0, alone.stdout)
+        self.assertEqual(alone.stderr, "")
+        [(tree, names)] = self.started().items()
+        self.assertEqual(names, ["a_one", "c_three", "e_five", "b_two_builds", "d_four_builds"])
+        self.order.unlink()
+        workers = self.suite("--workers", "4")
+        self.assertEqual(TIME.sub("", workers.stdout), TIME.sub("", alone.stdout))
+        print(f"  L2.g2: one worker ran {', '.join(names)}, the stable order; its stdout is "
+              "the four workers' but for the times")
+
+    def test_L2_g3_with_no_record_each_worker_runs_its_builds_first_then_by_name(self):
+        self.plants()
+        result = self.suite("--workers", "2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("dealt in turn", result.stderr)
+        started = self.started()
+        self.assertEqual(sorted(started), ["worker-1", "worker-2"])
+        for tree, names in started.items():
+            with self.subTest(tree=tree):
+                builds = [n for n in names if n.endswith("_builds")]
+                self.assertEqual(names, builds + sorted(n for n in names if n not in builds))
+                self.assertEqual(builds, sorted(builds))
+        print("  L2.g3: no record, two workers: "
+              + "; ".join(f"{tree} started {', '.join(names)}"
+                          for tree, names in sorted(started.items())))
+
+
+
+# WorkerOrderTests shares WorkerTests' fixture, not its tests, which run once, there.
+for _name in [name for name in vars(WorkerTests) if name.startswith("test_")]:
+    setattr(WorkerOrderTests, _name, None)
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,9 +13,20 @@ name: Queue judge
 # scripts/ from the group's base by Git's objects, never from the checkout, and first
 # checks that the checkout is the group's head.
 #
-# A skipped required job counts as passed (the same trial), so neither job has an if of
-# its own, and on a merge group every step runs; on a pull request each job runs its first
-# step alone, which says there is nothing to judge, and passes. The rule runs the file only
+# queue-gate-plan, queue-gate-shards and queue-gate judge the landing tool's tests,
+# scripts/test_safe_push.py, which queue-gaps never runs whole (docs/decisions/
+# 2026-11-12-ci-scope-1a.md): main's check_queue.py decides once whether the group reaches
+# them (--gate-plan; --gaps makes the same choice and marks them carried), runs the group's
+# own suite in 12 shards with no token (--gate-shard), and proves from the shards' lists
+# that every test ran once and passed, as ok or as a skip main allows (--gate-prove).
+#
+# A skipped required job counts as passed (the same trial), so no required job has an if of
+# its own but always(), and on a merge group every step runs; on a pull request each job
+# runs its first step and its last, which say there is nothing to judge, and passes. The
+# last step of each, under always(), fails unless its work step succeeded, or the event
+# was a pull request and the work was skipped (a work step skipped on a group by a wrong
+# if, say). Only queue-gate-shards has an if, the plan's gate: queue-gate judges its
+# result, and on a pull request no shard runs. The rule runs the file only
 # on the events its own `on:` names: in the same trial, a required file whose `on:` lacked
 # merge_group never ran on a group, and the group waited. So merge_group must stay, and
 # pull_request too, since the rule holds a pull request until the file has run on it. They
@@ -75,6 +86,7 @@ jobs:
           python-version: "3.12"
 
       - name: Check the group with main's copy of check_queue.py
+        id: judge
         if: github.event_name == 'merge_group'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -98,6 +110,20 @@ jobs:
           test -f "$RUNNER_TEMP/judge/check_queue.py" || exit 2
           python3 -I "$RUNNER_TEMP/judge/check_queue.py" --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
 
+      - name: The judge's verdict, on its own step's outcome
+        # Red unless the judge step passed on a merge group, or was skipped on a pull
+        # request, where there is nothing to judge.
+        if: always()
+        env:
+          EVENT: ${{ github.event_name }}
+          WORK: ${{ steps.judge.outcome }}
+        run: |
+          case "$EVENT:$WORK" in
+            pull_request:skipped) echo "A pull request: nothing to judge here; the queue's judge reads merge groups." ;;
+            merge_group:success) echo "queue-integrity: the group was judged by main's check_queue.py, and passed." ;;
+            *) echo "queue-integrity: its judge step ended '$WORK' on a $EVENT event."; exit 1 ;;
+          esac
+
   queue-gaps:
     # The gaps of what is new, on each merge group: the tests of each check the group
     # changes, chosen by main's copy of check_queue.py, and the changed propositions'
@@ -116,10 +142,12 @@ jobs:
     runs-on: ubuntu-latest
     # The queue's status check timeout, 150 minutes from the group's start. The job starts
     # with the group and waits for acceptance (its limit 60 minutes) with no earlier cutoff
-    # of its own; then the changed checks' tests, the slowest group (safe_push's and
-    # check_queue's at once) at most about 40 minutes here, and the judge's wait
-    # of up to 10 minutes for a revert's run. The queue's own timeout, counted from the
-    # group's start, binds first: to be measured again on the queue's trial.
+    # of its own; then the changed checks' tests, and the judge's wait of up to 10 minutes
+    # for a revert's run. The landing tool's tests, whose 12 shards sum to about 400
+    # runner-minutes, never run here: whenever the group reaches them, main's check_queue.py
+    # marks them carried, and queue-gate runs them in 12 shards. The queue's own timeout,
+    # counted from the group's start, binds first: to be measured again on the queue's
+    # trial.
     timeout-minutes: 150
     permissions:
       contents: read
@@ -189,6 +217,15 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
           python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY" --plan "$RUNNER_TEMP/gaps-plan.json"
 
+      - name: Keep the plan, which queue-gate compares with its own
+        if: github.event_name == 'merge_group'
+        uses: actions/upload-artifact@v5
+        with:
+          name: queue-gaps-plan
+          path: ${{ runner.temp }}/gaps-plan.json
+          if-no-files-found: error
+          overwrite: true
+
       - name: Install the tests' pinned YAML parser, main's pin
         # After the token's last step: what pip installs could run in any later Python.
         # Isolated, from the runner's temporary directory: nothing in the group's
@@ -200,9 +237,263 @@ jobs:
       - name: Run the tests of what is new
         # No token here: the tests are the group's own code. Main's check_queue.py runs
         # the chosen tests and refuses to while a variable named with TOKEN is set.
+        id: run
         if: github.event_name == 'merge_group'
         env:
           GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
         run: |
           test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
           python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"
+
+      - name: The gaps' verdict, on the run's own outcome
+        # Red unless the tests ran and passed on a merge group, or were skipped on a pull
+        # request, where there is nothing to judge.
+        if: always()
+        env:
+          EVENT: ${{ github.event_name }}
+          WORK: ${{ steps.run.outcome }}
+        run: |
+          case "$EVENT:$WORK" in
+            pull_request:skipped) echo "A pull request: nothing to judge here; the queue's judge reads merge groups." ;;
+            merge_group:success) echo "queue-gaps: the tests of what is new ran and passed." ;;
+            *) echo "queue-gaps: its run of the tests ended '$WORK' on a $EVENT event."; exit 1 ;;
+          esac
+
+  queue-gate-plan:
+    # Whether the group reaches the landing tool's tests, decided once by main's
+    # check_queue.py --gate-plan from Git alone (no token): the tests --gaps chooses for the
+    # group's entries, each against its own merge base, or main's risk.py's gate for the
+    # group's diff, whichever holds. The plan is kept as an artifact, and its gate is the job's
+    # output, which queue-gate-shards reads.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      gate: ${{ steps.plan.outputs.gate }}
+    steps:
+      - name: Say what this event gives the judge
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          case "$EVENT" in
+            pull_request) echo "A pull request: nothing to judge here; the queue's judge reads merge groups." ;;
+            merge_group) echo "A merge group: the steps below judge it with main's scripts." ;;
+            *) echo "A $EVENT event: the queue's judge runs on pull requests and merge groups only."; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v5
+        if: github.event_name == 'merge_group'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: github.event_name == 'merge_group'
+        with:
+          python-version: "3.12"
+
+      - name: Plan the landing tool's tests with main's copy of check_queue.py
+        id: plan
+        if: github.event_name == 'merge_group'
+        env:
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+        run: |
+          test -n "$GROUP_HEAD"
+          test -n "$GROUP_BASE"
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gate-plan --head "$GROUP_HEAD" --base "$GROUP_BASE" --out "$RUNNER_TEMP/queue-gate-plan.json" --github-output
+
+      - name: Keep the plan
+        if: github.event_name == 'merge_group'
+        uses: actions/upload-artifact@v5
+        with:
+          name: queue-gate-plan
+          path: ${{ runner.temp }}/queue-gate-plan.json
+          if-no-files-found: error
+          overwrite: true
+
+      - name: The plan's verdict, on its own step's outcome
+        # Red unless the plan was made on a merge group, or skipped on a pull request.
+        if: always()
+        env:
+          EVENT: ${{ github.event_name }}
+          WORK: ${{ steps.plan.outcome }}
+        run: |
+          case "$EVENT:$WORK" in
+            pull_request:skipped) echo "A pull request: nothing to judge here; the queue's judge reads merge groups." ;;
+            merge_group:success) echo "queue-gate-plan: the plan was made by main's check_queue.py." ;;
+            *) echo "queue-gate-plan: its plan step ended '$WORK' on a $EVENT event."; exit 1 ;;
+          esac
+
+  queue-gate-shards:
+    # The group's own scripts/test_safe_push.py in 12 shards, as the cadence dealt them, each
+    # run by main's check_queue.py --gate-shard in the group's checkout with no token in its
+    # step, which it refuses to run under. Only when the plan's gate is true: queue-gate
+    # judges this job's result, and needs the plan's gate to read a skip.
+    needs: queue-gate-plan
+    if: needs.queue-gate-plan.outputs.gate == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Take main's scripts from the group's base
+        env:
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+        run: |
+          test -n "$GROUP_HEAD"
+          test -n "$GROUP_BASE"
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+
+      - name: Install the tests' pinned YAML parser, main's pin
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"
+
+      - name: Run the group's tests of the landing tool, this shard, with no token
+        env:
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -o pipefail
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gate-shard "${{ matrix.shard }}/12" --head "$GROUP_HEAD" --ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json" 2>&1 | tee "$RUNNER_TEMP/queue-gate-${{ matrix.shard }}.log"
+
+      - if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: queue-gate-ran-${{ matrix.shard }}
+          path: ${{ runner.temp }}/ran-${{ matrix.shard }}.json
+          if-no-files-found: error
+          overwrite: true
+
+      - if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: queue-gate-log-${{ matrix.shard }}
+          path: ${{ runner.temp }}/queue-gate-${{ matrix.shard }}.log
+          if-no-files-found: ignore
+          overwrite: true
+
+  queue-gate:
+    # The verdict on the landing tool's tests for the group, by main's check_queue.py
+    # --gate-prove with no token: the plan, held to the group and to its job's output; the
+    # plan compared with queue-gaps', which must carry the tests exactly when the gate is
+    # true; and, when it is, every shard's list, the group's own --cover against the plan's
+    # 12, and main's skip judge (ALLOWED_SKIPS). Its last step passes only when the proof
+    # passed and, for a gate true, the shards succeeded, each judged on its own.
+    needs: [queue-gate-plan, queue-gate-shards, queue-gaps]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Say what this event gives the judge, and how the jobs it needs ended
+        env:
+          EVENT: ${{ github.event_name }}
+          PLAN: ${{ needs.queue-gate-plan.result }}
+          GAPS: ${{ needs.queue-gaps.result }}
+        run: |
+          case "$EVENT" in
+            pull_request) echo "A pull request: nothing to judge here; the queue's judge reads merge groups."; exit 0 ;;
+            merge_group) ;;
+            *) echo "A $EVENT event: the queue's judge runs on pull requests and merge groups only."; exit 1 ;;
+          esac
+          for need in "queue-gate-plan:$PLAN" "queue-gaps:$GAPS"; do
+            if [ "${need#*:}" != success ]; then
+              echo "queue-gate: the ${need%%:*} job ended: ${need#*:}; without it the gate's tests cannot be judged"
+              exit 1
+            fi
+          done
+          echo "A merge group: the steps below judge the landing tool's tests with main's scripts."
+
+      - uses: actions/checkout@v5
+        if: github.event_name == 'merge_group'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: github.event_name == 'merge_group'
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v5
+        if: github.event_name == 'merge_group'
+        with:
+          name: queue-gate-plan
+          path: ${{ runner.temp }}/queue-gate-plan
+
+      - uses: actions/download-artifact@v5
+        if: github.event_name == 'merge_group'
+        with:
+          name: queue-gaps-plan
+          path: ${{ runner.temp }}/queue-gaps-plan
+
+      - uses: actions/download-artifact@v5
+        if: github.event_name == 'merge_group' && needs.queue-gate-plan.outputs.gate == 'true'
+        with:
+          pattern: queue-gate-ran-*
+          path: ${{ runner.temp }}/queue-gate-ran
+
+      - name: Prove the landing tool's tests with main's copy of check_queue.py, with no token
+        id: prove
+        if: github.event_name == 'merge_group'
+        env:
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          PLAN_GATE: ${{ needs.queue-gate-plan.outputs.gate }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gate-prove --head "$GROUP_HEAD" --base "$GROUP_BASE" --plan "$RUNNER_TEMP/queue-gate-plan/queue-gate-plan.json" --plan-gate "$PLAN_GATE" --gaps-plan "$RUNNER_TEMP/queue-gaps-plan/gaps-plan.json" --lists "$RUNNER_TEMP/queue-gate-ran"
+
+      - name: The verdict, the proof and the shards each judged on its own
+        if: always()
+        env:
+          EVENT: ${{ github.event_name }}
+          PROVE: ${{ steps.prove.outcome }}
+          PLAN_GATE: ${{ needs.queue-gate-plan.outputs.gate }}
+          SHARDS: ${{ needs.queue-gate-shards.result }}
+        run: |
+          case "$EVENT" in
+            pull_request) echo "A pull request: nothing to judge here; the queue's judge reads merge groups."; exit 0 ;;
+            merge_group) ;;
+            *) echo "A $EVENT event: the queue's judge runs on pull requests and merge groups only."; exit 1 ;;
+          esac
+          if [ "$PROVE" != success ]; then
+            echo "queue-gate: the proof ended '$PROVE'; without it the gate's tests are not judged."
+            exit 1
+          fi
+          case "$PLAN_GATE:$SHARDS" in
+            false:*) echo "queue-gate: the group does not reach the landing tool's tests." ;;
+            true:success) echo "queue-gate: the 12 shards succeeded, and the proof passed." ;;
+            true:skipped) echo "The shards were skipped, so no test ran."; exit 1 ;;
+            true:*) echo "The shards ended in $SHARDS: a shard failed, was cancelled or did not finish."; exit 1 ;;
+            *) echo "queue-gate: the plan gave gate '$PLAN_GATE', neither true nor false."; exit 1 ;;
+          esac

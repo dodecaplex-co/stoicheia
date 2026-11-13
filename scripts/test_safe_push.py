@@ -6,6 +6,7 @@
     python3 scripts/test_safe_push.py --shard 3/12   # one of the cadence's twelve shards (#233)
     python3 scripts/test_safe_push.py --shard 3/12 --ran ran-3.json   # and the list of what it ran
     python3 scripts/test_safe_push.py --cover DIR   # every test ran once, by the lists in DIR
+    python3 scripts/test_safe_push.py --cover DIR --shards 12   # against 12 shards, given
     python3 scripts/test_safe_push.py --times-from-log run.log   # the times, from a CI run's log
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
@@ -266,9 +267,13 @@ side by side, `--shard K/N` for each K, N written once, in its matrix (#233): th
 are listed by unittest's own loader and dealt out by the seconds each took on a GitHub
 runner, kept in test_safe_push_times.json beside this file, so that each test runs in
 exactly one shard; a test missing there weighs their median. Each shard writes the tests
-it ran, with their outcomes (`--ran FILE`), and `--cover DIR` proves from those lists that
-every test the loader lists ran once, and passed or was skipped. `--times-from-log` writes
-the times file from a CI run's log. Without --shard the whole suite runs.
+it ran, with their outcomes, a skip's reason and the shard's environment (`--ran FILE`),
+and `--cover DIR` proves from those lists that every test the loader lists ran once, and
+passed or was skipped, against the shards of the cadence's matrix, or `--shards N` given,
+when the workflow is not read: the queue's judge and CI's gate-tests give the count from
+their own plan (CI-SCOPE-1a), and their judge, main's check_queue.py, then admits only `ok`
+and the skips it allows. `--times-from-log` writes the times file from a CI run's log.
+Without --shard the whole suite runs.
 """
 
 from __future__ import annotations
@@ -881,6 +886,28 @@ def lane(digest: str, full, **inputs) -> Table:
                  else (0, (f"full={str(full(row)).lower()}",)))
 
 
+def judged_by_outcome(digest: str, passes) -> Table:
+    """A job's last step, under always() (CI-SCOPE-1a, SJ), over its lane step's outcome and
+    output and its work step's outcome: green only for the rows `passes` holds, the lane's
+    pass at once with the work skipped, or the work run in full and passed."""
+    return Table(digest=digest, inputs=(("LANE", RESULTS), ("FULL", ("true", "false", "")),
+                                        ("WORK", RESULTS)),
+                 outcome=lambda row: (0 if (row["LANE"], row["FULL"], row["WORK"]) in passes
+                                      else 1, ()))
+
+
+LANE_PASSES = {("success", "false", "skipped"), ("success", "true", "success")}
+EVENTS = ("pull_request", "merge_group", "push", "workflow_dispatch")
+
+
+def event_verdict(digest: str) -> Table:
+    """A queue judge job's last step: green on a pull request whose work was skipped, or a
+    merge group whose work passed; red otherwise."""
+    return Table(digest=digest, inputs=(("EVENT", EVENTS), ("WORK", RESULTS)),
+                 outcome=lambda row: (0 if (row["EVENT"], row["WORK"]) in (
+                     ("pull_request", "skipped"), ("merge_group", "success")) else 1, ()))
+
+
 PYTHON = {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}}
 # The toolchains' cache, then the install.
 LEAN = ({"uses": "actions/cache@v5", "with": LEAN_CACHE}, {"run": ELAN_INSTALL})
@@ -910,26 +937,52 @@ FORMAL_MODEL = (
     {"working-directory": "model", "run": ("lake build",)},
     {"run": ("python3 scripts/check_model_kernel.py --self-test",
              "python3 scripts/check_model_kernel.py")})
+
+
+def gate_lane(row: dict) -> tuple:
+    """gate-tests' lane over its row (L3.3): red unless the risk job succeeded; a merge group
+    and a push pass at once; a pull request passes at once for gate false, runs in full for
+    gate true or none, and is red for any other gate; any other event is red."""
+    if row["RESULT"] != "success":
+        return 1, ()
+    if row["EVENT"] in ("merge_group", "push") or row["EVENT"] == "pull_request" \
+            and row["GATE"] == "false":
+        return 0, ("full=false",)
+    if row["EVENT"] == "pull_request" and row["GATE"] in ("true", ""):
+        return 0, ("full=true",)
+    return 1, ()
+
+
 WORKFLOW_CONTRACTS = {
     "ci.yml": {
         "name": "CI", "on": {"pull_request": None, "merge_group": None, "workflow_call": None},
         "permissions": {"contents": "read"},
         "jobs": {
             "risk": {
-                "runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                "runs-on": "ubuntu-latest",
+                "permissions": {"contents": "read", "pull-requests": "read"},
                 "timeout-minutes": 10,
                 "outputs": {"class": "${{ steps.classify.outputs.class }}",
-                            "formal_model": "${{ steps.classify.outputs.formal_model }}"},
+                            "formal_model": "${{ steps.classify.outputs.formal_model }}",
+                            "gate": "${{ steps.classify.outputs.gate }}"},
                 "steps": (HISTORY, {
                     "id": "classify",
                     "env": {"EVENT": "${{ github.event_name }}", "REF": "${{ github.ref }}",
                             "BASE_REF": "${{ github.base_ref }}",
                             "HEAD_SHA": "${{ github.event.pull_request.head.sha }}",
                             "RELEASE": "${{ contains(github.event.pull_request.labels.*.name,"
-                                       " 'release') }}"},
+                                       " 'release') }}",
+                            "GROUP_BASE": "${{ github.event.merge_group.base_sha }}",
+                            "GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
+                            "GROUP_BASE_REF": "${{ github.event.merge_group.base_ref }}",
+                            "GH_TOKEN": "${{ github.token }}",
+                            "REPOSITORY": "${{ github.repository }}"},
                     # R5, but for a pull request into main, unlabelled release, checked out
-                    # as GitHub's merge, which main's scripts/risk.py classifies if it has one.
-                    "run": Script("436fd10e4d811be19ea01e7bdbb7300d")})},
+                    # as GitHub's merge, and for a merge group into main whose ids, checkout,
+                    # ancestry and pull requests' labels hold, while main's group lane is on;
+                    # each classed by main's scripts/risk.py, if it has one, its answer held
+                    # to its form (RiskJobSteps runs it).
+                    "run": Script(digest="4e2e8c482753a00535d211b23336d688")})},
             "check": {"runs-on": "ubuntu-latest", "steps": (
                 CHECKOUT, PYTHON, *LEAN, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
                 {"run": (RUN_CHECKS,)})},
@@ -938,10 +991,78 @@ WORKFLOW_CONTRACTS = {
                     # Full for R3 to R5, not for R0 to R2; else, or if the risk job did not
                     # succeed, red.
                     {"id": "lane", "env": RISK, "run": lane(
-                        "ab845bc546996a52ffbbe227cb9ec3ae",
-                        lambda row: row["CLASS"] in CLASSES[3:] if row["CLASS"] in CLASSES
+                        digest="f8f83b37195814e251f2471c9efff7e3",
+                        full=lambda row: row["CLASS"] in CLASSES[3:] if row["CLASS"] in CLASSES
                         else None)},
-                    *when(LANE, CHECKOUT, PYTHON, *LEAN, BUILD, CI_NEGATIVE_TESTS))},
+                    *when(LANE, CHECKOUT, PYTHON, *LEAN, BUILD),
+                    {**CI_NEGATIVE_TESTS, "id": "plants", "if": LANE},
+                    # Green only for the lane's pass at once, or the tests run and passed.
+                    {"if": "always()",
+                     "env": {"LANE": "${{ steps.lane.outcome }}",
+                             "FULL": "${{ steps.lane.outputs.full }}",
+                             "WORK": "${{ steps.plants.outcome }}"},
+                     "run": judged_by_outcome(
+                         digest="45df5bb0fd50b94273bf6d3fb207b02c", passes=LANE_PASSES)})},
+            # The landing tool's tests in 12 shards, on a pull request whose risk job gave a
+            # gate other than false; each shard keeps its list for gate-tests' proof.
+            "gate-shards": {
+                "needs": ("risk",),
+                "if": ("always() && needs.risk.result == 'success' && github.event_name == "
+                       "'pull_request' && needs.risk.outputs.gate != 'false'"),
+                "runs-on": "ubuntu-latest", "permissions": {"contents": "read"},
+                "timeout-minutes": 90,
+                "strategy": {"fail-fast": False,
+                             "matrix": {"shard": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}},
+                "steps": (HISTORY, PYTHON, {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
+                          {"run": (
+                              "set -o pipefail", "python3 scripts/test_safe_push.py --shard"
+                              " ${{ matrix.shard }}/${{ strategy.job-total }}"
+                              ' --ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json" 2>&1'
+                              ' | tee "$RUNNER_TEMP/test_safe_push-${{ matrix.shard }}.log"')},
+                          *when("always()", {
+                              "uses": "actions/upload-artifact@v5",
+                              "with": {"name": "gate-ran-${{ matrix.shard }}",
+                                       "path": "${{ runner.temp }}/ran-${{ matrix.shard }}.json",
+                                       "if-no-files-found": "error", "overwrite": True}}, {
+                              "uses": "actions/upload-artifact@v5",
+                              "with": {"name": "gate-log-${{ matrix.shard }}",
+                                       "path": "${{ runner.temp }}/test_safe_push-"
+                                               "${{ matrix.shard }}.log",
+                                       "if-no-files-found": "ignore", "overwrite": True}}))},
+            # The verdict on the landing tool's tests, on every event: a merge group's and
+            # main's pass at once, saying where they run; a pull request's pass at once when
+            # its gate is false, and are judged in full by main's check_queue.py --gate-prove
+            # when it is true or not given.
+            "gate-tests": {
+                "needs": ("gate-shards", "risk"), "if": "always()", "runs-on": "ubuntu-latest",
+                "permissions": {"contents": "read"}, "timeout-minutes": 10, "steps": (
+                    {"id": "lane",
+                     "env": {"EVENT": "${{ github.event_name }}", **RISK,
+                             "GATE": "${{ needs.risk.outputs.gate }}"},
+                     "run": Table(digest="e1edba4b00820e30f6d5183320538b2a", inputs=(
+                         ("EVENT", EVENTS), ("RESULT", RESULTS), ("CLASS", ("R0", "R5", "")),
+                         ("GATE", ("true", "false", "", "maybe"))),
+                         outcome=lambda row: gate_lane(row))},
+                    *when(LANE, HISTORY, PYTHON,
+                          {"working-directory": PIP_DIRECTORY, "run": PIP_INSTALL},
+                          {"uses": "actions/download-artifact@v5",
+                           "with": {"pattern": "gate-ran-*",
+                                    "path": "${{ runner.temp }}/gate-ran"}},
+                          # Main's check_queue.py --gate-prove, from the checkout's first
+                          # parent, over the shards' lists.
+                          {"id": "cover",
+                           "run": Script(digest="9cf5790984cf7bc5f8e4707bc5ccb229")}),
+                    {"if": "always()",
+                     "env": {"LANE": "${{ steps.lane.outcome }}",
+                             "FULL": "${{ steps.lane.outputs.full }}",
+                             "SHARDS": "${{ needs.gate-shards.result }}",
+                             "COVER": "${{ steps.cover.outcome }}"},
+                     "run": Table(digest="aac00aa1956253dfcd026a7b5f9df8ed", inputs=(
+                         ("LANE", RESULTS), ("FULL", ("true", "false", "", "maybe")),
+                         ("SHARDS", RESULTS), ("COVER", RESULTS)),
+                         outcome=lambda row: (0 if row["LANE"] == "success" and (
+                             row["FULL"] == "false" or row["FULL"] == "true"
+                             and row["SHARDS"] == row["COVER"] == "success") else 1, ()))})},
             "model": {"runs-on": "ubuntu-latest", "steps": (
                 CHECKOUT, PYTHON, {"run": ("python3 -I tests/model/run.py --fast",)},
                 {"run": ("python3 -I tests/model/results_check.py",)})},
@@ -953,12 +1074,19 @@ WORKFLOW_CONTRACTS = {
                     {"id": "lane",
                      "env": {**RISK, "FORMAL_MODEL": "${{ needs.risk.outputs.formal_model }}"},
                      "run": lane(
-                         "862fb01750843f2c10e590fb48c47ef0",
-                         lambda row: row["CLASS"] in CLASSES[4:] or {
+                         digest="c2b0b1b54f84fb37ef1ec1766a169a79",
+                         full=lambda row: row["CLASS"] in CLASSES[4:] or {
                              "true": True, "false": False}.get(row["FORMAL_MODEL"])
                          if row["CLASS"] in CLASSES else None,
                          FORMAL_MODEL=("true", "false", ""))},
-                    *when(LANE, CHECKOUT, *FORMAL_MODEL))},
+                    *when(LANE, CHECKOUT, *FORMAL_MODEL[:-1]),
+                    {**FORMAL_MODEL[-1], "id": "kernel", "if": LANE},
+                    {"if": "always()",
+                     "env": {"LANE": "${{ steps.lane.outcome }}",
+                             "FULL": "${{ steps.lane.outputs.full }}",
+                             "WORK": "${{ steps.kernel.outcome }}"},
+                     "run": judged_by_outcome(
+                         digest="bb75e5a83747f1edc3286fbada75af21", passes=LANE_PASSES)})},
             "acceptance": {
                 "runs-on": "ubuntu-latest", "timeout-minutes": 60,
                 "env": {"ACCEPTANCE_GATE": "ratchet"}, "steps": (
@@ -970,15 +1098,28 @@ WORKFLOW_CONTRACTS = {
                              "lake env lean Certificate/Facts.lean")},
                     # The checklist's verdicts: red for a status above 1, or above 0 where
                     # the gate is full, and for a gate neither ratchet nor full.
-                    {"run": Script("8ec6343e948147054abf7d2b2e3aaae4")},
+                    {"id": "checklist", "run": Script(digest="8ec6343e948147054abf7d2b2e3aaae4")},
                     *when("env.ACCEPTANCE_GATE == 'ratchet'",
                           # Main's verdicts, at MAIN_SHA with these checks: red above status 1.
                           {"run": Script("7005c73c6b4e1cdfa1d2fffb9e9aa1d2")},
-                          {"run": ('python3 scripts/check_acceptance.py --compare'
+                          {"id": "compare",
+                           "run": ('python3 scripts/check_acceptance.py --compare'
                                    ' "$RUNNER_TEMP/acceptance/main.json"'
                                    ' "$RUNNER_TEMP/acceptance/verdicts.json"',)}),
                     {"if": "always()", "uses": "actions/upload-artifact@v5",
-                     "with": {"name": "acceptance", "path": "${{ runner.temp }}/acceptance/"}})},
+                     "with": {"name": "acceptance", "path": "${{ runner.temp }}/acceptance/"}},
+                    # Green only for the ratchet with the checklist and the comparison passed,
+                    # or the full gate with the checklist passed.
+                    {"if": "always()",
+                     "env": {"CHECKLIST": "${{ steps.checklist.outcome }}",
+                             "COMPARE": "${{ steps.compare.outcome }}"},
+                     "run": Table(digest="b1f0bac052af7cac5a95f02ac568722e", inputs=(
+                         ("ACCEPTANCE_GATE", ("ratchet", "full", "off")),
+                         ("CHECKLIST", RESULTS), ("COMPARE", RESULTS)),
+                         outcome=lambda row: (0 if (row["ACCEPTANCE_GATE"], row["CHECKLIST"],
+                                                    row["COMPARE"]) in (
+                             ("ratchet", "success", "success"), ("full", "success", "skipped"))
+                             else 1, ()))})},
             # The queue's offline cases, on every event, a merge group's among them: once the
             # queue is on, main's ruleset requires the check by its name there.
             "queue-tests": {
@@ -1037,9 +1178,11 @@ WORKFLOW_CONTRACTS = {
                 # it, while main's tip is this push; if main has moved on, nothing.
                 "steps": (AFTER, {"shell": "bash",
                                   "run": Script("14d2173eabf07dbf2c70ebda4e1c99c3")})}}},
-    # The queue's judge, which the organization's ruleset requires from main: neither job
-    # has an if, since a skipped required job counts as passed, and on a merge group every
-    # step runs; on a pull request each runs its first step alone.
+    # The queue's judge, which the organization's ruleset requires from main: no required
+    # job has an if but always(), since a skipped required job counts as passed, and on a
+    # merge group every step runs; on a pull request each runs its first step and its last,
+    # which judges its work step's outcome (CI-SCOPE-1a, SJ). queue-gate-shards runs only
+    # when the plan's gate is true, and queue-gate judges its result.
     "queue-judge.yml": {
         "name": "Queue judge", "on": {"pull_request": None, "merge_group": None},
         "permissions": {"contents": "read"},
@@ -1053,7 +1196,11 @@ WORKFLOW_CONTRACTS = {
                     *when(GROUP, HISTORY, PYTHON,
                           # The group judged by its base's check_queue.py, or red if it has
                           # none.
-                          {"env": GROUP_ENV, "run": Script("78503063a56c338cbe24f7705c7deb52")}))},
+                          {"id": "judge", "env": GROUP_ENV,
+                           "run": Script(digest="78503063a56c338cbe24f7705c7deb52")}),
+                    {"if": "always()", "env": {"EVENT": "${{ github.event_name }}",
+                                               "WORK": "${{ steps.judge.outcome }}"},
+                     "run": event_verdict(digest="313c10a081186a77155ac18bc75b9b74")})},
             "queue-gaps": {
                 "runs-on": "ubuntu-latest", "timeout-minutes": 150, "permissions": READS,
                 "steps": (
@@ -1073,13 +1220,119 @@ WORKFLOW_CONTRACTS = {
                         "env": {**GROUP_ENV, "ACCEPTANCE_VERDICTS":
                                 "${{ runner.temp }}/acceptance/verdicts.json"},
                         "run": Script("fd7578b75cc58cac34995a4c33cfd4ac")}, {
+                        "uses": "actions/upload-artifact@v5",
+                        "with": {"name": "queue-gaps-plan",
+                                 "path": "${{ runner.temp }}/gaps-plan.json",
+                                 "if-no-files-found": "error", "overwrite": True}}, {
                         "working-directory": PIP_DIRECTORY,
                         "run": ('python3 -I -m pip install -r'
                                 ' "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"',)}, {
+                        "id": "run",
                         "env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}"},
                         "run": ('test "$(git rev-parse HEAD)" = "$GROUP_HEAD"',
                                 'python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan'
-                                ' "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"')}))}}},
+                                ' "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"')}),
+                    {"if": "always()", "env": {"EVENT": "${{ github.event_name }}",
+                                               "WORK": "${{ steps.run.outcome }}"},
+                     "run": event_verdict(digest="fd686a9e5e2d8e6a48aaf450cb9a9fc3")})},
+            "queue-gate-plan": {
+                "runs-on": "ubuntu-latest", "timeout-minutes": 10,
+                "permissions": {"contents": "read"},
+                "outputs": {"gate": "${{ steps.plan.outputs.gate }}"},
+                "steps": (
+                    {"env": {"EVENT": "${{ github.event_name }}"},
+                     "run": Script(digest="e73fe69ac2a8b90d3c6c9a002d4a0966")},
+                    *when(GROUP, HISTORY, PYTHON,
+                          # The base's check_queue.py --gate-plan, with no token; its gate the
+                          # job's output.
+                          {"id": "plan",
+                           "env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
+                                   "GROUP_BASE": "${{ github.event.merge_group.base_sha }}"},
+                           "run": Script(digest="4b9aa9ed2487dc5c671aa9f69fa704ad")},
+                          {"uses": "actions/upload-artifact@v5",
+                           "with": {"name": "queue-gate-plan",
+                                    "path": "${{ runner.temp }}/queue-gate-plan.json",
+                                    "if-no-files-found": "error", "overwrite": True}}),
+                    {"if": "always()", "env": {"EVENT": "${{ github.event_name }}",
+                                               "WORK": "${{ steps.plan.outcome }}"},
+                     "run": event_verdict(digest="6886e1057e102b85c04bd93afb00f4d2")})},
+            "queue-gate-shards": {
+                "needs": ("queue-gate-plan",),
+                "if": "needs.queue-gate-plan.outputs.gate == 'true'",
+                "runs-on": "ubuntu-latest", "timeout-minutes": 90,
+                "permissions": {"contents": "read"},
+                "strategy": {"fail-fast": False,
+                             "matrix": {"shard": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}},
+                "steps": (
+                    HISTORY, PYTHON,
+                    # The base's scripts/, from Git's objects, the checkout its head.
+                    {"env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
+                             "GROUP_BASE": "${{ github.event.merge_group.base_sha }}"},
+                     "run": Script(digest="116f7170e2adbcb99a64819b78cb9398")},
+                    {"working-directory": PIP_DIRECTORY,
+                     "run": ('python3 -I -m pip install -r'
+                             ' "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"',)},
+                    {"env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}"},
+                     "run": ("set -o pipefail",
+                             'python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gate-shard'
+                             ' "${{ matrix.shard }}/12" --head "$GROUP_HEAD" --ran'
+                             ' "$RUNNER_TEMP/ran-${{ matrix.shard }}.json" 2>&1 | tee'
+                             ' "$RUNNER_TEMP/queue-gate-${{ matrix.shard }}.log"')},
+                    *when("always()", {
+                        "uses": "actions/upload-artifact@v5",
+                        "with": {"name": "queue-gate-ran-${{ matrix.shard }}",
+                                 "path": "${{ runner.temp }}/ran-${{ matrix.shard }}.json",
+                                 "if-no-files-found": "error", "overwrite": True}}, {
+                        "uses": "actions/upload-artifact@v5",
+                        "with": {"name": "queue-gate-log-${{ matrix.shard }}",
+                                 "path": "${{ runner.temp }}/queue-gate-${{ matrix.shard }}.log",
+                                 "if-no-files-found": "ignore", "overwrite": True}}))},
+            "queue-gate": {
+                "needs": ("queue-gaps", "queue-gate-plan", "queue-gate-shards"),
+                "if": "always()", "runs-on": "ubuntu-latest", "timeout-minutes": 20,
+                "permissions": {"contents": "read"},
+                "steps": (
+                    # Green on a pull request; on a merge group, red unless the plan and the
+                    # gaps succeeded; red on any other event.
+                    {"env": {"EVENT": "${{ github.event_name }}",
+                             "PLAN": "${{ needs.queue-gate-plan.result }}",
+                             "GAPS": "${{ needs.queue-gaps.result }}"},
+                     "run": Table(digest="2256edba944e891c94bf5c05a8439596", inputs=(
+                         ("EVENT", EVENTS), ("PLAN", RESULTS), ("GAPS", RESULTS)),
+                         outcome=lambda row: (0 if row["EVENT"] == "pull_request" or (
+                             row["EVENT"] == "merge_group"
+                             and row["PLAN"] == row["GAPS"] == "success") else 1, ()))},
+                    *when(GROUP, HISTORY, PYTHON,
+                          {"uses": "actions/download-artifact@v5",
+                           "with": {"name": "queue-gate-plan",
+                                    "path": "${{ runner.temp }}/queue-gate-plan"}},
+                          {"uses": "actions/download-artifact@v5",
+                           "with": {"name": "queue-gaps-plan",
+                                    "path": "${{ runner.temp }}/queue-gaps-plan"}}),
+                    {"if": GROUP + " && needs.queue-gate-plan.outputs.gate == 'true'",
+                     "uses": "actions/download-artifact@v5",
+                     "with": {"pattern": "queue-gate-ran-*",
+                              "path": "${{ runner.temp }}/queue-gate-ran"}},
+                    # The base's check_queue.py --gate-prove, with no token.
+                    {"id": "prove", "if": GROUP,
+                     "env": {"GROUP_HEAD": "${{ github.event.merge_group.head_sha }}",
+                             "GROUP_BASE": "${{ github.event.merge_group.base_sha }}",
+                             "PLAN_GATE": "${{ needs.queue-gate-plan.outputs.gate }}"},
+                     "run": Script(digest="e0656b2945b040dab1f8f8ed1d1151e2")},
+                    # Green on a pull request; on a merge group, only when the proof passed
+                    # and, for a gate true, the shards succeeded; red otherwise.
+                    {"if": "always()",
+                     "env": {"EVENT": "${{ github.event_name }}",
+                             "PROVE": "${{ steps.prove.outcome }}",
+                             "PLAN_GATE": "${{ needs.queue-gate-plan.outputs.gate }}",
+                             "SHARDS": "${{ needs.queue-gate-shards.result }}"},
+                     "run": Table(digest="3d7b170f867bbf17b1414ccd12d29d9d", inputs=(
+                         ("EVENT", EVENTS), ("PROVE", RESULTS),
+                         ("PLAN_GATE", ("true", "false", "", "maybe")), ("SHARDS", RESULTS)),
+                         outcome=lambda row: (0 if row["EVENT"] == "pull_request" or (
+                             row["EVENT"] == "merge_group" and row["PROVE"] == "success" and (
+                                 row["PLAN_GATE"] == "false" or row["PLAN_GATE"] == "true"
+                                 and row["SHARDS"] == "success")) else 1, ()))})}}},
     "release-gate.yml": {
         "name": "Release gate", "permissions": {},
         "on": {"pull_request": {"types": ["opened", "synchronize", "reopened", "labeled",
@@ -1263,7 +1516,7 @@ FOLDED_HOME = "-" + "Users" + "-someone"
 SCRATCHPAD = "/private" + "/tmp/" + "claude" + "-501/" + FOLDED_HOME + "/0123/scratchpad/x.txt"
 
 PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
-           for n in ("check", "model", "negative", "formal-model", "acceptance")]
+           for n in ("check", "model", "negative", "formal-model", "acceptance", "gate-tests")]
 # A green run of the safe-push-tests workflow, as GitHub's API gives it, with its jobs: the
 # stand-in for gh gives it at every head unless a test says otherwise, as it gives PASSING
 # (a release's merge gate asks for one at its head, #301). `report` runs only for a red
@@ -12896,6 +13149,93 @@ class HookEnvironment(unittest.TestCase):
                          "stoicheia.global=from-home\nstoicheia.system=from-the-system-file\n")
 
 
+# The skipped-job invariant (CI-SCOPE-1a, SJ). GitHub counts a required job it skips as
+# passed, so every job a required check names takes one form: (1) no job-level if but
+# always(), which a job with needs must have; (2) a first step that reads the result of each
+# job it needs and decides on, the shard matrices aside, whose result its last step judges;
+# (3) when any step has an if, a last step under always() that reads the outcome of the job's
+# last conditional work step, so that no step skipped by a wrong condition leaves the job
+# green. checks/24's lane-condition test holds them (Units).
+SJ_JOBS = {"ci.yml": ("check", "model", "negative", "formal-model", "acceptance", "queue-tests",
+                      "gate-tests"),
+           "queue-judge.yml": ("queue-integrity", "queue-gaps", "queue-gate-plan", "queue-gate")}
+SJ_SHARDS = ("gate-shards", "queue-gate-shards")
+
+
+def sj_condition(spec: dict) -> str:
+    condition = str(spec.get("if", "")).strip()
+    if condition.startswith("${{") and condition.endswith("}}"):
+        condition = condition[3:-2].strip()
+    return condition
+
+
+def sj_problems(workflows: dict) -> list[str]:
+    """Each required job that breaks the skipped-job form, named with why."""
+    problems = []
+    for name, jobs in SJ_JOBS.items():
+        for job_id in jobs:
+            job = workflows[name]["jobs"].get(job_id)
+            if not isinstance(job, dict):
+                problems.append(f"{name}: job {job_id}: missing")
+                continue
+            where = f"{name}: job {job_id}"
+            needs = job.get("needs", [])
+            needs = [needs] if isinstance(needs, str) else list(needs)
+            condition = sj_condition(job)
+            if condition not in ("", "always()"):
+                problems.append(f"{where}: its if, {condition!r}, is not always(): a required "
+                                "job GitHub skips counts as passed")
+                continue
+            if needs and condition != "always()":
+                problems.append(f"{where}: it needs {', '.join(needs)} without if: always(): a "
+                                "need that does not succeed would skip it, which counts as "
+                                "passed")
+                continue
+            steps = job.get("steps") or []
+            first = str(steps[0].get("run", "")) + " ".join(
+                map(str, (steps[0].get("env") or {}).values())) if steps else ""
+            unread = [need for need in needs if need not in SJ_SHARDS
+                      and f"needs.{need}.result" not in first]
+            if unread:
+                problems.append(f"{where}: its first step does not read needs.{unread[0]}.result: "
+                                "a cancelled need would reach the work")
+                continue
+            conditional = [i for i, step in enumerate(steps[:-1]) if "if" in step]
+            if not conditional:
+                continue
+            work = [step for step in steps[:-1] if "if" in step and "run" in step]
+            last = steps[-1]
+            text = str(last.get("run", "")) + " ".join(
+                map(str, (last.get("env") or {}).values()))
+            if sj_condition(last) != "always()" or not work or not work[-1].get("id") \
+                    or f"steps.{work[-1]['id']}.outcome" not in text:
+                problems.append(f"{where}: its last step is not one under always() that judges "
+                                "its work step's outcome: a work step skipped by a wrong "
+                                "condition would leave the job green")
+    return problems
+
+
+SJ_PLANTS = (
+    ("U2", "ci.yml", "negative", lambda job: job.update({"if": "github.event_name == "
+                                                               "'pull_request'"}),
+     "ci.yml: job negative: its if, \"github.event_name == 'pull_request'\", is not always(): "
+     "a required job GitHub skips counts as passed"),
+    ("U3", "ci.yml", "gate-tests", lambda job: job.pop("if"),
+     "ci.yml: job gate-tests: it needs risk, gate-shards without if: always(): a need that does "
+     "not succeed would skip it, which counts as passed"),
+    ("U4", "queue-judge.yml", "queue-gate", lambda job: job["steps"][0]["env"].pop("GAPS"),
+     "queue-judge.yml: job queue-gate: its first step does not read "
+     "needs.queue-gaps.result: a cancelled need would reach the work"),
+    ("U5", "ci.yml", "formal-model", lambda job: job["steps"].pop(),
+     "ci.yml: job formal-model: its last step is not one under always() that judges its work "
+     "step's outcome: a work step skipped by a wrong condition would leave the job green"),
+    ("U5, a work step skipped by a wrong lane output", "ci.yml", "negative",
+     lambda job: job["steps"][-1]["env"].update({"WORK": "${{ steps.lane.outcome }}"}),
+     "ci.yml: job negative: its last step is not one under always() that judges its work "
+     "step's outcome: a work step skipped by a wrong condition would leave the job green"),
+)
+
+
 class Units(unittest.TestCase):
     """The scanner and helpers, with temporary Git only where history is the subject."""
 
@@ -13425,7 +13765,9 @@ class Units(unittest.TestCase):
         runs = [line.strip() for step in jobs["model"]["steps"]
                 for line in step.get("run", "").splitlines() if line.strip()]
         self.assertEqual(runs, [name for name, _ in safe_push.MODEL_JOB] + CI_ONLY_MODEL)
-        runs = [line.strip() for step in jobs["negative"]["steps"][1:]
+        # The lane step aside, and the last, which judges the work's outcome (SJ).
+        self.assertEqual(jobs["negative"]["steps"][-1]["if"], "always()")
+        runs = [line.strip() for step in jobs["negative"]["steps"][1:-1]
                 if not step.get("uses") and tuple(
                     line.strip() for line in step.get("run", "").splitlines()
                     if line.strip()) != ELAN_INSTALL
@@ -13593,7 +13935,8 @@ class Units(unittest.TestCase):
         """Each job with a step `lane`: the steps that would run for R0 to R2, by name,
         action or position. That is each step before the lane step, which must come
         first, and each step after it whose `if:` is not LANE_CONDITION, alone or as
-        ${{ LANE_CONDITION }}."""
+        ${{ LANE_CONDITION }}, but the job's last step under always(), which judges the
+        lane's outcome and its work's (SJ, sj_problems)."""
         found = {}
         for job_id, job in (workflow.get("jobs") or {}).items():
             steps = job.get("steps") or []
@@ -13608,6 +13951,8 @@ class Units(unittest.TestCase):
                 condition = str(step.get("if", "")).strip()
                 if condition.startswith("${{") and condition.endswith("}}"):
                     condition = condition[3:-2].strip()
+                if condition == "always()" and i == len(steps):
+                    continue
                 if condition != self.LANE_CONDITION:
                     ungated.append(label(step, i))
             found[job_id] = ungated
@@ -13627,14 +13972,14 @@ class Units(unittest.TestCase):
                                  f"first, and each step after it needs if: "
                                  f"{self.LANE_CONDITION}")
         ci = self.ungated_after_lane(workflows["ci.yml"])
-        self.assertTrue({"negative", "formal-model"} <= set(ci), sorted(ci))
+        self.assertTrue({"negative", "formal-model", "gate-tests"} <= set(ci), sorted(ci))
         # Planted: the condition taken from one step of each job, or changed, is found.
-        for job_id in ("negative", "formal-model"):
+        for job_id in ("negative", "formal-model", "gate-tests"):
             for change in ("removed", "always()", "steps.lane.outputs.full == 'false'"):
                 with self.subTest(job=job_id, change=change):
                     planted = copy.deepcopy(workflows["ci.yml"])
                     steps = planted["jobs"][job_id]["steps"]
-                    victim = steps[-1]
+                    victim = steps[-2]
                     if change == "removed":
                         del victim["if"]
                     else:
@@ -13650,12 +13995,24 @@ class Units(unittest.TestCase):
         early["jobs"]["negative"]["steps"].insert(0, {"name": "Too early", "run": "true"})
         self.assertEqual(self.ungated_after_lane(early)["negative"],
                          ["Too early (before the lane step)"])
-        # A step with no name is named by its action, and one with neither by its place.
+        # A step with no name is named by its action, and one with neither by its place;
+        # and the always() step that judged the job, no longer its last, is ungated too.
         unnamed = copy.deepcopy(workflows["ci.yml"])
         steps = unnamed["jobs"]["negative"]["steps"]
+        verdict = steps[-1]["name"]
         steps += [{"uses": "actions/an-action@v1"}, {"run": "true"}]
         self.assertEqual(self.ungated_after_lane(unnamed)["negative"],
-                         ["actions/an-action@v1", f"step {len(steps)}"])
+                         [verdict, "actions/an-action@v1", f"step {len(steps)}"])
+        print("  U1: the lane rule holds every step after the lane step of negative, "
+              "formal-model and gate-tests to its condition, the last always() step aside")
+        # SJ (CI-SCOPE-1a): every job a required check names takes the skipped-job form.
+        self.assertEqual(sj_problems(workflows), [])
+        for label, workflow, job_id, plant, refusal in SJ_PLANTS:
+            with self.subTest(label):
+                planted = copy.deepcopy(workflows)
+                plant(planted[workflow]["jobs"][job_id])
+                self.assertEqual(sj_problems(planted), [refusal])
+                print(f"  {label}: {refusal}")
 
     def test_ci_check_job_rejects_skip_and_failure_suppression(self):
         # The run of the registry's checks is the job's one step after its setup (#229):
@@ -13990,6 +14347,27 @@ class Units(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     hold_to_contracts(weakened)
 
+    def test_F_BC_the_new_jobs_refuse_continue_on_error_on_the_job_and_each_step(self):
+        # CI-SCOPE-1a's build condition: the workflow-contract machinery treats
+        # continue-on-error on an enforced job or step as a weakening, on each new job.
+        workflows = read_workflows(SOURCE)
+        refused = 0
+        for name, job_id in (("ci.yml", "gate-shards"), ("ci.yml", "gate-tests"),
+                             ("queue-judge.yml", "queue-gate-plan"),
+                             ("queue-judge.yml", "queue-gate-shards"),
+                             ("queue-judge.yml", "queue-gate")):
+            places = [None, *range(len(workflows[name]["jobs"][job_id]["steps"]))]
+            for place in places:
+                with self.subTest(job=job_id, step=place):
+                    planted = copy.deepcopy(workflows)
+                    job = planted[name]["jobs"][job_id]
+                    (job if place is None else job["steps"][place])["continue-on-error"] = True
+                    with self.assertRaises(AssertionError):
+                        hold_to_contracts(planted)
+                    refused += 1
+        print(f"  F-BC: continue-on-error refused on each of the 5 new jobs and their steps, "
+              f"{refused} plants")
+
     def test_the_queue_judge_workflow_refuses_its_plants(self):
         # The planted cases of the queue judge's design (MQ3-reqwf, 27 October 2026,
         # section 7) that the contracts guard: hold_to_contracts, with the contract of
@@ -14016,8 +14394,8 @@ class Units(unittest.TestCase):
             ("a merge-group step skipped", "queue-judge.yml jobs queue-gaps steps 4 if",
              lambda w: judge(w, "queue-gaps")["steps"][3].update(
                  {"if": "github.event_name == 'pull_request'"})),
-            ("the judge step removed", "queue-judge.yml jobs queue-integrity steps: 3 items",
-             lambda w: judge(w, "queue-integrity")["steps"].pop()),
+            ("the judge step removed", "queue-judge.yml jobs queue-integrity steps: 4 items",
+             lambda w: judge(w, "queue-integrity")["steps"].pop(3)),
             ("cancel-in-progress, of the workflow", "the model does not read: concurrency",
              lambda w: judge(w).update(concurrency=stopping)),
             ("cancel-in-progress, of a job", "queue-judge.yml jobs queue-gaps concurrency: not in",
@@ -14046,7 +14424,11 @@ class Units(unittest.TestCase):
         rows = [len(step["run"].rows()) for contract in WORKFLOW_CONTRACTS.values()
                 for spec in contract["jobs"].values() if isinstance(spec, dict)
                 for step in spec.get("steps", ()) if isinstance(step.get("run"), Table)]
-        self.assertEqual(rows, [45, 135, 25])
+        # The negative lane, verdict and gate-tests' lane and verdict; formal-model's lane
+        # and verdict; acceptance's verdict; the queue judge's three job verdicts, queue-gate's
+        # first step and verdict; the cadence's verdict (CI-SCOPE-1a's SJ and L0 to L3).
+        self.assertEqual(rows, [45, 75, 240, 500, 135, 75, 75, 20, 20, 20, 100, 400, 25])
+        lane_digest = WORKFLOW_CONTRACTS["ci.yml"]["jobs"]["negative"]["steps"][0]["run"].digest
         first = 'if [ "$RESULT" != success ]; then'
         row = (r"with \{'RESULT': 'failure', 'CLASS': 'R0'\}, exit 0 and output \[\], "
                r"not exit 1")
@@ -14088,7 +14470,7 @@ class Units(unittest.TestCase):
                 self.assertIn(old, step["run"])
                 step["run"] = step["run"].replace(old, new)
                 with self.assertRaisesRegex(AssertionError, r"negative steps 1 run: [0-9a-f]{32}, "
-                                            "not ab845bc546996a52ffbbe227cb9ec3ae") as refused:
+                                            f"not {lane_digest}") as refused:
                     hold_to_contracts(changed)
                 self.assertNotRegex(str(refused.exception), row)
                 fixture_text = "\n".join(fixture)
@@ -15048,10 +15430,11 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="skipping",
                                                state="SKIPPED")])[0], "success")
         # The two checks the ruleset gained on 20 October (#142) hold a merge as the first
-        # three do. `acceptance` runs only on a pull request, and a push's run skips it, so
-        # a skipped run beside the pull request's passing one is a pass, and a skipped run
-        # alone is not.
-        for name in ("formal-model", "acceptance"):
+        # three do, and so does gate-tests, which the merge gate requires though the
+        # ruleset does not yet (CI-SCOPE-1a). `acceptance` runs only on a pull request, and
+        # a push's run skips it, so a skipped run beside the pull request's passing one is a
+        # pass, and a skipped run alone is not.
+        for name in ("formal-model", "acceptance", "gate-tests"):
             with self.subTest(name=name):
                 own = next(c for c in PASSING if c["name"] == name)
                 others = [c for c in PASSING if c is not own]
@@ -15435,6 +15818,404 @@ class Units(unittest.TestCase):
         self.assertEqual(cut, ["structured stopped before its last line"])
 
 
+# A stand-in for gh in the risk job's steps (RiskJobSteps): `gh api repos/<R>/pulls/<N> --jq
+# <the release test>` answered from the labels in STUB_LABELS, a JSON object by number; a
+# number in STUB_UNREAD exits 1, and any other call exits 3. Each call is logged.
+STUB_GH = r"""import json, os, sys
+args = sys.argv[1:]
+with open(os.environ["STUB_GH_LOG"], "a", encoding="utf-8") as log:
+    log.write(" ".join(args) + "\n")
+expected = '[.labels[].name | ascii_downcase] | index("release") != null'
+if len(args) != 4 or args[0] != "api" or args[2] != "--jq" or args[3] != expected:
+    sys.exit(3)
+number = args[1].rsplit("/", 1)[-1]
+if number in json.loads(os.environ.get("STUB_UNREAD", "[]")):
+    print("gh: HTTP 502", file=sys.stderr)
+    sys.exit(1)
+labels = json.loads(os.environ.get("STUB_LABELS", "{}")).get(number, [])
+print("true" if any(label.lower() == "release" for label in labels) else "false")
+"""
+# What a stand-in risk.py of main says to --group-lane, and what it writes for --diff.
+STUB_RISK = r"""import os, sys
+if sys.argv[1:] == ["--group-lane"]:
+    print("group-lane: on, because L6")
+    sys.exit(0)
+with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+    out.write({out!r})
+sys.exit({code})
+"""
+
+
+class RiskJobSteps(unittest.TestCase):
+    """The risk job's classify step (CI-SCOPE-1a, L1), run under bash -e as GitHub runs it, in
+    a repository of the test's own whose main holds this checkout's scripts/risk.py, with its
+    group lane on because L6 unless a case says otherwise (L1.s5), and gh a stand-in
+    (STUB_GH). Each merge group is main and its pull requests' merges, as the queue makes
+    them."""
+
+    BASE = {"README.md": "A reader's edition.\n", "docs/notes.md": "Notes.\n",
+            "scripts/safe_push.py": "import check_style\nimport heath\n",
+            "scripts/check_style.py": "import re\n", "scripts/heath.py": "import os\n",
+            "scripts/test_safe_push.py": "import safe_push\n"}
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        self.env = {**clean_env(), "GIT_AUTHOR_NAME": "Risk step", "GIT_COMMITTER_NAME": "Risk step",
+                    "GIT_AUTHOR_EMAIL": "risk@example.invalid",
+                    "GIT_COMMITTER_EMAIL": "risk@example.invalid"}
+        self.git("init", "-q", "--initial-branch=main")
+        tools = self.root / "tools"
+        tools.mkdir()
+        (tools / "gh.py").write_text(STUB_GH)
+        (tools / "gh").write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} -I "
+                                  f"{shlex.quote(str(tools / 'gh.py'))} \"$@\"\n")
+        (tools / "gh").chmod(0o755)
+        self.tools = tools
+        self.step = next(step for step in yaml.safe_load(
+            (SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]["risk"]["steps"]
+            if step.get("id") == "classify")["run"]
+
+    def git(self, *args) -> str:
+        return subprocess.run(["git", *args], cwd=self.repo, env=self.env, capture_output=True,
+                              text=True, check=True).stdout.strip()
+
+    def commit(self, files, message="A change", parents=None):
+        """A commit of the tree of `parents[0]` (or none) with `files` written (None
+        removes), on the parents given; checked out."""
+        if parents:
+            self.git("checkout", "-q", "--detach", parents[0])
+        for path, text in files.items():
+            target = self.repo / path
+            if text is None:
+                self.git("rm", "-q", "--", path)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text)
+            self.git("add", "--", path)
+        tree = self.git("write-tree")
+        sha = self.git("commit-tree", tree, *(arg for p in (parents or []) for arg in ("-p", p)),
+                       "-m", message)
+        self.git("checkout", "-q", "--detach", sha)
+        return sha
+
+    def main(self, lane='"L6"', risk=None):
+        """Main: BASE, and scripts/risk.py, this checkout's with GROUP_LANE = `lane`, or
+        `risk` given (None: no risk.py)."""
+        text = (SOURCE / "scripts/risk.py").read_text()
+        text = text.replace("\nGROUP_LANE = None\n", f"\nGROUP_LANE = {lane}\n")
+        return self.commit({**self.BASE, "scripts/risk.py": text if risk is None else risk},
+                           "Main")
+
+    def group(self, base, *entries, subjects=None):
+        """A merge group on `base` of the pull requests `entries`, each (number, files),
+        each merged as the queue merges it; the group's head."""
+        head = base
+        for i, (number, files) in enumerate(entries):
+            branch = self.commit(files, f"Change {number}", parents=[base])
+            self.git("checkout", "-q", "--detach", head)
+            merged = self.git("merge-tree", "--write-tree", head, branch)
+            subject = (subjects or {}).get(number,
+                                           f"Merge pull request #{number} from owner/branch-{number}")
+            head = self.git("commit-tree", merged, "-p", head, "-p", branch, "-m", subject)
+        self.git("checkout", "-q", "--detach", head)
+        return head
+
+    def classify(self, event, base="", head="", base_ref="refs/heads/main", labels=None,
+                 unread=(), head_sha="", pr_base_ref="main", release="false"):
+        """The step, on `event`: its exit, what it prints, the lines of GITHUB_OUTPUT, and
+        gh's calls."""
+        output, log = self.root / "github-output", self.root / "gh.log"
+        output.write_text("")
+        log.write_text("")
+        ref = {"merge_group": f"refs/heads/gh-readonly-queue/main/pr-1-{head}",
+               "push": "refs/heads/main", "pull_request": "refs/pull/1/merge"}[event]
+        env = {**self.env, "EVENT": event, "REF": ref,
+               "BASE_REF": pr_base_ref if event == "pull_request" else "",
+               "HEAD_SHA": head_sha, "RELEASE": release, "GROUP_BASE": base,
+               "GROUP_HEAD": head, "GROUP_BASE_REF": base_ref if event == "merge_group" else "",
+               "GH_TOKEN": "fixture-token", "REPOSITORY": "owner/repository",
+               "GITHUB_OUTPUT": str(output), "RUNNER_TEMP": str(self.root / "runner"),
+               "STUB_GH_LOG": str(log), "STUB_LABELS": json.dumps(labels or {}),
+               "STUB_UNREAD": json.dumps(list(unread)),
+               "PATH": f"{self.tools}{os.pathsep}{os.environ['PATH']}"}
+        (self.root / "runner").mkdir(exist_ok=True)
+        done = subprocess.run(["bash", "-e", "-c", self.step], cwd=self.repo, env=env,
+                              capture_output=True, text=True)
+        return (done.returncode, done.stdout + done.stderr,
+                output.read_text().splitlines(), log.read_text().splitlines())
+
+    def assertR5(self, label, why, **classify):
+        code, out, lines, _ = self.classify(**classify)
+        self.assertEqual((code, lines), (0, ["class=R5", "formal_model=true"]), out)
+        self.assertIn(f"{why}: R5, negative and formal-model run in full", out)
+        print(f"  {label}: R5: {why}")
+
+    def assertClassed(self, label, expected, **classify):
+        code, out, lines, calls = self.classify(**classify)
+        self.assertEqual((code, lines), (0, expected), out)
+        self.assertNotIn("unbound variable", out)
+        print(f"  {label}: {', '.join(lines)}")
+        return out, calls
+
+    def test_L1_g1_g6_s5_an_R0_group_is_classed_by_its_diff(self):
+        # #884's group: README.md alone, unlabelled. With the lane on, R0, and the formal
+        # model passes at once; the gate is true, since R3.F puts README.md among the
+        # landing tool's inputs (F-README). Under set -u, base and head are assigned before
+        # the release check reads them (L1.g6).
+        base = self.main()
+        head = self.group(base, (884, {"README.md": "A reader's edition, run it.\n"}))
+        out, calls = self.assertClassed("L1.g1, L1.g6, L1.s5",
+                                        ["class=R0", "formal_model=false", "gate=true"],
+                                        event="merge_group", base=base, head=head)
+        self.assertIn(f"main's scripts/risk.py, at {base}, classifies the merge group "
+                      f"{head[:12]} (pull requests #884)", out)
+        self.assertEqual(len(calls), 1)
+        # Its negative lane passes at once, saying where the tests run.
+        lane = next(step for step in yaml.safe_load(
+            (SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]["negative"]["steps"]
+            if step.get("id") == "lane")["run"]
+        output = self.root / "lane-output"
+        done = subprocess.run(["bash", "-e", "-c", lane], capture_output=True, text=True,
+                              env={"RESULT": "success", "CLASS": "R0",
+                                   "GITHUB_OUTPUT": str(output)})
+        self.assertEqual(done.stdout, "class R0: the negative tests are not run in this job; "
+                         "under ruling 1581 they run on the VM at the merge commit, after the "
+                         "merge\n")
+        print(f"  L1.g1: negative: {done.stdout.strip()}")
+
+    def test_L1_g2_a_group_of_two_R0_pull_requests_reads_both_labels(self):
+        base = self.main()
+        head = self.group(base, (901, {"docs/notes.md": "Notes, one.\n"}),
+                          (902, {"docs/more.md": "More notes.\n"}))
+        _, calls = self.assertClassed("L1.g2", ["class=R0", "formal_model=false", "gate=false"],
+                                      event="merge_group", base=base, head=head)
+        self.assertEqual(sorted(call.split()[1] for call in calls),
+                         ["repos/owner/repository/pulls/901", "repos/owner/repository/pulls/902"])
+
+    def test_L1_g3_g4_a_check_or_the_landing_tool_in_the_group(self):
+        base = self.main()
+        head = self.group(base, (901, {"docs/notes.md": "Notes, one.\n"}),
+                          (903, {"scripts/check_style.py": "import re\n# changed\n"}))
+        self.assertClassed("L1.g3", ["class=R3", "formal_model=false", "gate=true"],
+                           event="merge_group", base=base, head=head)
+        head = self.group(base, (904, {"scripts/safe_push.py": "import check_style\n#\n"}))
+        self.assertClassed("L1.g4", ["class=R5", "formal_model=true", "gate=true"],
+                           event="merge_group", base=base, head=head)
+
+    def test_L1_g5_a_push_to_main_is_R5_unchanged(self):
+        self.assertR5("L1.g5", "a push to main", event="push")
+
+    def test_L1_b1_to_b6_b10_b11_each_doubtful_group_is_R5(self):
+        base = self.main()
+        head = self.group(base, (902, {"docs/notes.md": "Notes, two.\n"}))
+        self.assertR5("L1.b1", "a merge group into refs/heads/next, not main",
+                      event="merge_group", base=base, head=head, base_ref="refs/heads/next")
+        other = self.group(base, (903, {"docs/other.md": "Other.\n"}))
+        self.git("checkout", "-q", "--detach", head)
+        self.assertR5("L1.b2", f"a merge group whose checkout is not its head, {other}",
+                      event="merge_group", base=base, head=other)
+        moved = self.commit({"docs/moved.md": "Main moved.\n"}, "Main moved", parents=[base])
+        self.git("checkout", "-q", "--detach", head)
+        self.assertR5("L1.b3", "a merge group whose base is not an ancestor of its head",
+                      event="merge_group", base=moved, head=head)
+        plain = self.group(base, (906, {"README.md": "Updated.\n"}),
+                           subjects={906: "Update README"})
+        self.assertR5("L1.b4", f"a merge group whose commit {plain[:12]} names no pull request",
+                      event="merge_group", base=base, head=plain)
+        self.git("checkout", "-q", "--detach", head)
+        self.assertR5("L1.b5", "the labels of #902 could not be read", event="merge_group",
+                      base=base, head=head, unread=["902"])
+        released = self.group(base, (905, {"docs/notes.md": "Released.\n"}))
+        self.assertR5("L1.b6", "a merge group holding #905, labelled release",
+                      event="merge_group", base=base, head=released, labels={"905": ["Release"]})
+        for label, value in (("all zeros", "0" * 40), ("39 hex digits", base[:39])):
+            with self.subTest(label):
+                self.assertR5("L1.b10", "a merge group whose base or head is not a full commit "
+                              "id", event="merge_group", base=value, head=released)
+        bare = self.commit({"scripts/risk.py": None}, "Main without a classifier",
+                           parents=[base])
+        group = self.group(bare, (907, {"docs/notes.md": "Notes.\n"}))
+        self.assertR5("L1.b11", f"main, at {bare}, has no scripts/risk.py to classify the merge "
+                      f"group {group[:12]} (pull requests #907)", event="merge_group",
+                      base=bare, head=group)
+
+    def test_L1_b7_b8_b9_main_s_answer_is_held_to_its_form(self):
+        for label, out, code, why in (
+                ("L1.b7", "", 2, "main's risk.py could not class the merge group (exit 2)"),
+                ("L1.b8", "class=R7\nformal_model=false\ngate=false\n", 0,
+                 "main's risk.py gave no class for the merge group: class=R7"),
+                ("L1.b9, two class lines", "class=R1\nclass=R0\nformal_model=false\n", 0,
+                 "main's risk.py gave no class for the merge group: class=R1"),
+                ("L1.b9, no formal_model", "class=R1\ngate=false\n", 0,
+                 "main's risk.py gave no class for the merge group: class=R1"),
+                ("L1.b9, a line more", "class=R1\nformal_model=false\nextra=1\n", 0,
+                 "main's risk.py gave no class for the merge group: class=R1")):
+            with self.subTest(label):
+                base = self.main(risk=STUB_RISK.format(out=out, code=code))
+                head = self.group(base, (908, {"docs/notes.md": "Notes.\n"}))
+                self.assertR5(label, why, event="merge_group", base=base, head=head)
+
+    def test_L1_b12_a_pull_request_s_answer_is_held_to_its_form_too(self):
+        base = self.main(risk=STUB_RISK.format(out="class=R1\nclass=R1\nformal_model=false\n",
+                                               code=0))
+        pr = self.commit({"docs/notes.md": "A pull request.\n"}, "A pull request",
+                         parents=[base])
+        self.git("checkout", "-q", "--detach", base)
+        merge = self.git("commit-tree", self.git("merge-tree", "--write-tree", base, pr),
+                         "-p", base, "-p", pr, "-m", "Merge pr into main")
+        self.git("checkout", "-q", "--detach", merge)
+        self.assertR5("L1.b12", "main's risk.py gave no class for the pull request: class=R1",
+                      event="pull_request", head_sha=pr)
+
+    def test_L1_s1_s4_s6_the_switch(self):
+        for label, lane, risk, why in (
+                ("L1.s1", "None", None, "a merge group while main's group lane is off "
+                 "(scripts/risk.py GROUP_LANE)"),
+                ("L1.s4", '"L2"', None, "main's risk.py gave no group lane (exit 2)"),
+                ("L1.s6", None, 'import sys\nprint("usage: risk.py ...", file=sys.stderr)\n'
+                                "sys.exit(2)\n", "main's risk.py gave no group lane (exit 2)")):
+            with self.subTest(label):
+                base = self.main(lane or "None", risk)
+                head = self.group(base, (884, {"README.md": "Run it.\n"}))
+                self.assertR5(label, why, event="merge_group", base=base, head=head)
+
+
+class GateTestsSteps(unittest.TestCase):
+    """CI's gate-shards and gate-tests (CI-SCOPE-1a, L3.3), case by case: the shards' if,
+    gate-tests' lane and last step run under bash as GitHub runs them, its proof by main's
+    check_queue.py from the checkout's first parent. The contract's Tables hold every row of
+    the lane and the last step; these name the cases."""
+
+    @classmethod
+    def setUpClass(cls):
+        jobs = yaml.safe_load((SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]
+        cls.shards_if = jobs["gate-shards"]["if"]
+        steps = jobs["gate-tests"]["steps"]
+        cls.lane = steps[0]["run"]
+        cls.cover = next(step for step in steps if step.get("id") == "cover")["run"]
+        cls.verdict = steps[-1]["run"]
+
+    def shards_run(self, result="success", event="pull_request", gate="true") -> bool:
+        values = {"always()": "True", "needs.risk.result": repr(result),
+                  "github.event_name": repr(event), "needs.risk.outputs.gate": repr(gate)}
+        text = self.shards_if
+        for name, value in values.items():
+            text = text.replace(name, value)
+        text = text.replace("&&", " and ")
+        self.assertRegex(text, r"^(?:\s|True|and|==|!=|'[^']*')*$")
+        return bool(eval(text, {"__builtins__": {}}))  # noqa: S307 - the regex above
+
+    def run_step(self, script, **row) -> tuple[int, str, list[str]]:
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp, "output")
+            output.write_text("")
+            done = subprocess.run(["bash", "-e", "-c", script], capture_output=True, text=True,
+                                  env={**row, "GITHUB_OUTPUT": str(output)})
+            return done.returncode, done.stdout.strip(), output.read_text().splitlines()
+
+    def lane_of(self, event="pull_request", result="success", gate="true", cls="R5"):
+        return self.run_step(self.lane, EVENT=event, RESULT=result, CLASS=cls, GATE=gate)
+
+    def verdict_of(self, shards, cover, full="true", lane="success"):
+        return self.run_step(self.verdict, LANE=lane, FULL=full, SHARDS=shards, COVER=cover)
+
+    def test_L3_g1_g2_g4_the_gate_decides_the_shards(self):
+        for label, gate, shards, line, full in (
+                ("L3.g1", "true", True, "class R5, gate 'true': the gate's tests are judged in "
+                 "full, from their 12 shards", "full=true"),
+                ("L3.g2", "false", False, "class R0: the change touches none of the landing "
+                 "tool's inputs (risk.py gate_inputs)", "full=false"),
+                ("L3.g4", "", True, "class R5, gate '': the gate's tests are judged in full, "
+                 "from their 12 shards", "full=true")):
+            with self.subTest(label):
+                self.assertEqual(self.shards_run(gate=gate), shards)
+                code, said, out = self.lane_of(gate=gate, cls="R0" if gate == "false" else "R5")
+                self.assertEqual((code, said, out), (0, line, [full]))
+                print(f"  {label}: gate {gate!r}: shards {'run' if shards else 'not run'}; "
+                      f"{said}")
+        self.assertEqual(self.verdict_of("success", "success")[0], 0)
+        self.assertEqual(self.verdict_of("skipped", "skipped", full="false")[0], 0)
+        self.assertFalse(self.shards_run(event="merge_group"))
+        self.assertFalse(self.shards_run(result="failure"))
+
+    def test_L3_b1_b2_b4_b11_the_last_step_judges_the_shards_and_the_proof_on_their_own(self):
+        for label, shards, cover, line in (
+                ("L3.b1", "failure", "failure", "The shards ended in failure: a shard failed, "
+                 "and the proof above and the shard's log name the test."),
+                ("L3.b2", "cancelled", "failure", "The shards ended cancelled: a shard was "
+                 "cancelled, so not every test is known to have passed."),
+                ("L3.b4", "skipped", "failure", "The shards were skipped, so no test ran."),
+                ("L3.b11", "success", "skipped", "Main's proof ended 'skipped', not success.")):
+            with self.subTest(label):
+                code, said, _ = self.verdict_of(shards, cover)
+                self.assertEqual(code, 1)
+                self.assertIn(line, said)
+                print(f"  {label}: red: {line}")
+
+    def test_L3_b5_b6_b10_the_lane_refuses(self):
+        for label, kwargs, line in (
+                ("L3.b5", {"result": "failure"}, "the risk job ended: failure; without its "
+                 "answer the gate's tests cannot pass"),
+                ("L3.b6", {"gate": "maybe"}, "the risk job gave gate 'maybe', neither true nor "
+                 "false"),
+                ("L3.b10", {"event": "workflow_dispatch"}, "gate-tests: event workflow_dispatch "
+                 "is not pull_request, merge_group or push")):
+            with self.subTest(label):
+                self.assertEqual(self.lane_of(**kwargs), (1, line, []))
+                print(f"  {label}: exit 1: {line}")
+        for event, line in (("merge_group", "merge group: the gate's tests are not run in this "
+                             "job; queue-gate runs them from main's queue-judge.yml when main's "
+                             "check_queue.py gate_reached is true (L0.1)"),
+                            ("push", "main: the gate's tests are not run in this job; under "
+                             "ruling 1581 they run on the VM at each merge that reaches the gate "
+                             "and once a day")):
+            self.assertEqual(self.lane_of(event=event, gate=""), (0, line, ["full=false"]))
+
+    def repo(self, temp: Path, main_judge: str, own_judge: str) -> Path:
+        """GitHub's merge of a pull request into main: main's scripts/check_queue.py
+        `main_judge`, the pull request's `own_judge`; checked out at the merge."""
+        repo = temp / "repo"
+        repo.mkdir()
+        env = {**clean_env(), "GIT_AUTHOR_NAME": "Gate", "GIT_COMMITTER_NAME": "Gate",
+               "GIT_AUTHOR_EMAIL": "gate@example.invalid",
+               "GIT_COMMITTER_EMAIL": "gate@example.invalid"}
+
+        def git(*args):
+            return subprocess.run(["git", *args], cwd=repo, env=env, capture_output=True,
+                                  text=True, check=True).stdout.strip()
+        git("init", "-q", "--initial-branch=main")
+        (repo / "scripts").mkdir()
+        (repo / "scripts/check_queue.py").write_text(main_judge)
+        git("add", "--", ".")
+        git("commit", "-q", "-m", "Main")
+        main = git("rev-parse", "HEAD")
+        (repo / "scripts/check_queue.py").write_text(own_judge)
+        git("commit", "-q", "-am", "The pull request")
+        pr = git("rev-parse", "HEAD")
+        git("checkout", "-q", "--detach", main)
+        merge = git("commit-tree", git("merge-tree", "--write-tree", main, pr), "-p", main,
+                    "-p", pr, "-m", "Merge pr into main")
+        git("checkout", "-q", "--detach", merge)
+        return repo
+
+    def test_L3_3_the_verdict_is_main_s_check_queue_never_the_pull_request_s(self):
+        with tempfile.TemporaryDirectory() as temp:
+            temp = Path(temp)
+            repo = self.repo(temp, "import sys\nprint('main judge:', *sys.argv[1:])\n",
+                             "raise SystemExit('the pull request judge ran')\n")
+            runner = temp / "runner"
+            runner.mkdir()
+            done = subprocess.run(["bash", "-e", "-c", self.cover], cwd=repo,
+                                  capture_output=True, text=True,
+                                  env={**os.environ, "RUNNER_TEMP": str(runner)})
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertRegex(done.stdout, r"^main judge: --gate-prove --head [0-9a-f]{40} --lists ")
+        print("  L3.3: gate-tests' proof ran main's check_queue.py, from the merge's first "
+              "parent, not the pull request's copy")
+
+
 # The shards (#233). On the cadence the suite took 72 to 78 minutes in one job, and more on
 # a slow runner, so the cadence workflow runs it as `--shard K/N` for each K from 1 to N,
 # side by side, and its safe-push-tests job passes only when every shard succeeded and the
@@ -15447,7 +16228,7 @@ TIMES = HERE / "test_safe_push_times.json"
 CADENCE = SOURCE / safe_push.SUITE_PATH
 SHARD_JOB, GATHER_JOB = "safe-push-shards", "safe-push-tests"
 USAGE = ("usage: test_safe_push.py --shard K/N [--ran FILE], with 1 <= K <= N; "
-         "--cover DIR; or --times-from-log LOG..., each alone")
+         "--cover DIR [--shards N]; or --times-from-log LOG..., each alone")
 # The outcomes, as unittest's log words them, of a test that passed or was skipped.
 PASSED = ("ok", "skipped", "expected failure")
 
@@ -15511,8 +16292,9 @@ def shard_report(plan: ShardPlan, shard: int) -> list[str]:
 def script_command(argv: list[str]) -> tuple | None:
     """What the command line asks of this script beyond unittest's own arguments, each form
     standing alone: ("shard", K, N, FILE or None) for `--shard K/N [--ran FILE]`, ("cover",
-    DIR) for `--cover DIR` and ("times", [LOG, ...]) for `--times-from-log LOG...`; None
-    when it names none of them. Any other use of them exits with status 2."""
+    DIR, N or None) for `--cover DIR [--shards N]` and ("times", [LOG, ...]) for
+    `--times-from-log LOG...`; None when it names none of them. Any other use of them exits
+    with status 2."""
     if not any(arg.startswith(("--shard", "--ran", "--cover", "--times-from-log"))
                for arg in argv):
         return None
@@ -15526,7 +16308,10 @@ def script_command(argv: list[str]) -> tuple | None:
                 and (len(argv) == 2 or (argv[2] == "--ran" and plain(argv[3])))):
             return "shard", int(match[1]), int(match[2]), Path(argv[3]) if argv[2:] else None
     elif argv[0] == "--cover" and len(argv) == 2 and plain(argv[1]):
-        return "cover", Path(argv[1])
+        return "cover", Path(argv[1]), None
+    elif (argv[0] == "--cover" and len(argv) == 4 and plain(argv[1]) and argv[2] == "--shards"
+          and re.fullmatch(r"[1-9][0-9]*", argv[3]) and int(argv[3]) > 1):
+        return "cover", Path(argv[1]), int(argv[3])
     elif argv[0] == "--times-from-log" and len(argv) > 1 and all(map(plain, argv[1:])):
         return "times", [Path(arg) for arg in argv[1:]]
     print(USAGE, file=sys.stderr)
@@ -15536,8 +16321,9 @@ def script_command(argv: list[str]) -> tuple | None:
 class RanResult(unittest.TextTestResult):
     """unittest's verbose result, which also keeps each test it ran, as Class.test_name,
     with its outcome in the word its log gives: ok, skipped, expected failure, FAIL, ERROR
-    or unexpected success. A subtest's failure is its test's; a failing fixture of a module
-    or a class is no test, and the tests it kept from running are not listed."""
+    or unexpected success, and a skip's reason beside it. A subtest's failure is its
+    test's; a failing fixture of a module or a class is no test, and the tests it kept from
+    running are not listed."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -15547,11 +16333,11 @@ class RanResult(unittest.TextTestResult):
         super().startTest(test)
         self.ran.append([time_key(test), "unfinished"])
 
-    def outcome(self, test, word: str) -> None:
+    def outcome(self, test, word: str, reason: str | None = None) -> None:
         test = getattr(test, "test_case", test)  # a subtest's test
         if (isinstance(test, unittest.TestCase) and self.ran
                 and self.ran[-1][0] == time_key(test) and self.ran[-1][1] not in ("FAIL", "ERROR")):
-            self.ran[-1][1] = word
+            self.ran[-1][1:] = [word] if reason is None else [word, reason]
 
     def addSuccess(self, test):
         super().addSuccess(test)
@@ -15567,7 +16353,7 @@ class RanResult(unittest.TextTestResult):
 
     def addSkip(self, test, reason):
         super().addSkip(test, reason)
-        self.outcome(test, "skipped")
+        self.outcome(test, "skipped", str(reason))
 
     def addExpectedFailure(self, test, err):
         super().addExpectedFailure(test, err)
@@ -15599,7 +16385,8 @@ class RanRunner(unittest.TextTestRunner):
 def run_shard(shard: int, count: int, ran: Path | None = None) -> None:
     """Run exactly the tests dealt to shard `shard` of `count`, in unittest's order, and
     exit with unittest's verdict. When `ran` is given, write to it the tests the shard ran,
-    each with its outcome: a shard that stops before its end writes nothing there."""
+    each with its outcome and a skip's reason, and the shard's environment (shard_env): a
+    shard that stops before its end writes nothing there."""
     tests = loaded_tests()
     setup, times = load_times()
     plan = shard_plan([time_key(test) for test in tests], count, times, setup)
@@ -15614,9 +16401,16 @@ def run_shard(shard: int, count: int, ran: Path | None = None) -> None:
     if ran is not None:
         ran.parent.mkdir(parents=True, exist_ok=True)
         ran.write_text(json.dumps({"shard": shard, "count": count,
-                                   "ran": runner.result.ran if runner.result else []},
-                                  indent=1) + "\n")
+                                   "ran": runner.result.ran if runner.result else [],
+                                   "env": shard_env()}, indent=1) + "\n")
     sys.exit(0 if runner.result is not None and runner.result.wasSuccessful() else 1)
+
+
+def shard_env() -> dict:
+    """What a skip's condition reads, as the shard ran (H-RAN): its platform, and the values
+    of GITHUB_ACTIONS and STOICHEIA_SLOW_TESTS, None for one unset."""
+    return {"platform": sys.platform, "github_actions": os.environ.get("GITHUB_ACTIONS"),
+            "slow_tests": os.environ.get("STOICHEIA_SLOW_TESTS")}
 
 
 def ci_jobs() -> dict:
@@ -15639,19 +16433,23 @@ def ci_shard_count(jobs: dict) -> int:
 
 
 def read_ran(path: Path) -> tuple[int, int, list[tuple[str, str]]] | None:
-    """(K, N, [(test, outcome), ...]) from the list `--shard K/N --ran FILE` wrote; None
-    when the file is not such a list."""
+    """(K, N, [(test, outcome), ...]) from the list `--shard K/N --ran FILE` wrote, with its
+    environment and each skip's reason (H-RAN); None when the file is not such a list."""
     try:
         data = json.loads(path.read_text())
     except (OSError, UnicodeDecodeError, ValueError):
         return None
-    if not (isinstance(data, dict) and set(data) == {"shard", "count", "ran"}
+    if not (isinstance(data, dict) and set(data) == {"shard", "count", "ran", "env"}
             and type(data["shard"]) is int and type(data["count"]) is int
+            and isinstance(data["env"], dict)
+            and set(data["env"]) == {"platform", "github_actions", "slow_tests"}
             and isinstance(data["ran"], list)
-            and all(isinstance(entry, list) and len(entry) == 2
-                    and all(isinstance(part, str) for part in entry) for entry in data["ran"])):
+            and all(isinstance(entry, list) and all(isinstance(part, str) for part in entry)
+                    and (len(entry) == 2 and entry[1] != "skipped"
+                         or len(entry) == 3 and entry[1] == "skipped")
+                    for entry in data["ran"])):
         return None
-    return data["shard"], data["count"], [(key, outcome) for key, outcome in data["ran"]]
+    return data["shard"], data["count"], [(entry[0], entry[1]) for entry in data["ran"]]
 
 
 def cover(directory: Path, count: int, discovered: list[str]) -> list[str]:
@@ -15696,14 +16494,16 @@ def cover(directory: Path, count: int, discovered: list[str]) -> list[str]:
     return problems
 
 
-def cover_command(directory: Path) -> int:
-    """`--cover DIR`: the proof over the shards' lists in DIR, against this checkout's tests
-    as unittest's loader lists them and the N of the cadence workflow's matrix."""
-    try:
-        count = ci_shard_count(ci_jobs())
-    except ValueError as error:
-        print(error, file=sys.stderr)
-        return 1
+def cover_command(directory: Path, count: int | None = None) -> int:
+    """`--cover DIR [--shards N]`: the proof over the shards' lists in DIR, against this
+    checkout's tests as unittest's loader lists them and N, given, or else the N of the
+    cadence workflow's matrix, which is then read."""
+    if count is None:
+        try:
+            count = ci_shard_count(ci_jobs())
+        except ValueError as error:
+            print(error, file=sys.stderr)
+            return 1
     discovered = [time_key(test) for test in loaded_tests()]
     problems = cover(directory, count, discovered)
     if problems:
@@ -16238,10 +17038,10 @@ class CadenceRun:
         return kind == "shard" and code == 0
 
     def cover(self, script: str, temp: Path) -> bool:
-        kind, directory = self.command(script.strip(), temp)
+        kind, directory, count = self.command(script.strip(), temp)
         said = io.StringIO()
         with contextlib.redirect_stdout(said), contextlib.redirect_stderr(said):
-            code = cover_command(directory)
+            code = cover_command(directory, count)
         self.said["cover"] = said.getvalue()
         return kind == "cover" and code == 0
 
@@ -16360,7 +17160,8 @@ class Shards(unittest.TestCase):
                 self.assertEqual(names, [key for key in keys if key in set(names)])
                 self.assertEqual(json.loads((Path(tmp) / f"ran-{shard}.json").read_text()),
                                  {"shard": shard, "count": count,
-                                  "ran": [[name, "ok"] for name in names]})
+                                  "ran": [[name, "ok"] for name in names],
+                                  "env": shard_env()})
             self.assertEqual(cover(Path(tmp), count, keys), [])
         self.assertEqual(sorted(key for names in dealt for key in names), sorted(keys))
         setup, times = load_times()
@@ -16463,7 +17264,8 @@ class Shards(unittest.TestCase):
 
             def beyond(directory: Path):
                 (directory / "ran-extra.json").write_text(json.dumps(
-                    {"shard": count + 1, "count": count + 1, "ran": []}))
+                    {"shard": count + 1, "count": count + 1, "ran": [],
+                     "env": shard_env()}))
             directory, problems = planted("beyond the matrix", beyond)
             self.assertEqual(problems, [f"{directory / 'ran-extra.json'} is the list of shard "
                                         f"{count + 1} of {count + 1}, but CI's matrix has "
@@ -16536,12 +17338,27 @@ class Shards(unittest.TestCase):
                                       for case in (Outcomes, Unready)))
         self.assertEqual(runner.result.ran, [
             ["Outcomes.test_a_pass", "ok"], ["Outcomes.test_b_failure", "FAIL"],
-            ["Outcomes.test_c_error", "ERROR"], ["Outcomes.test_d_skip", "skipped"],
+            # A skip keeps its reason (H-RAN), which the queue's judge holds to ALLOWED_SKIPS.
+            ["Outcomes.test_c_error", "ERROR"], ["Outcomes.test_d_skip", "skipped", "planted"],
             ["Outcomes.test_e_expected_failure", "expected failure"],
             ["Outcomes.test_f_unexpected_success", "unexpected success"],
             ["Outcomes.test_g_a_subtest_fails", "FAIL"], ["Outcomes.test_h_subtests_pass", "ok"]])
         self.assertFalse(runner.result.wasSuccessful())
         self.assertEqual(len(runner.result.errors), 2, "test_c_error, and Unready's fixture")
+
+    def test_L0_b12_a_count_given_reads_no_workflow(self):
+        # The queue's judge and gate-tests give --cover the count from their plan, 12: the
+        # cadence's matrix is then never read, so a change to it changes no count proved.
+        with tempfile.TemporaryDirectory() as tmp, mock.patch(
+                f"{__name__}.ci_jobs", side_effect=AssertionError("the workflow was read")), \
+                contextlib.redirect_stderr(io.StringIO()) as said:
+            self.assertEqual(cover_command(Path(tmp), 12), 1)
+        self.assertIn("Shard 12 of 12 left no list", said.getvalue())
+        with tempfile.TemporaryDirectory() as tmp, mock.patch(
+                f"{__name__}.ci_jobs", side_effect=AssertionError("the workflow was read")), \
+                self.assertRaisesRegex(AssertionError, "the workflow was read"):
+            cover_command(Path(tmp))
+        print("  L0.b12: --cover DIR --shards 12 proves against 12 and reads no workflow")
 
     def test_the_count_of_shards_is_read_from_the_matrix(self):
         def jobs(matrix) -> dict:
@@ -16592,7 +17409,18 @@ class Shards(unittest.TestCase):
         self.assertEqual(script_command(["--shard", "3/7"]), ("shard", 3, 7, None))
         self.assertEqual(script_command(["--shard", "3/7", "--ran", "ran-3.json"]),
                          ("shard", 3, 7, Path("ran-3.json")))
-        self.assertEqual(script_command(["--cover", "lists"]), ("cover", Path("lists")))
+        self.assertEqual(script_command(["--cover", "lists"]), ("cover", Path("lists"), None))
+        self.assertEqual(script_command(["--cover", "lists", "--shards", "12"]),
+                         ("cover", Path("lists"), 12))
+        for argv in (["--cover", "lists", "--shards"], ["--cover", "lists", "--shards", "1"],
+                     ["--cover", "lists", "--shards", "012"], ["--cover", "lists", "--shards",
+                                                               "x"],
+                     ["--cover", "lists", "--shards", "12", "Units"], ["--shards", "12"],
+                     ["--cover", "--shards", "12"]):
+            with self.subTest(argv=argv), contextlib.redirect_stderr(io.StringIO()), \
+                    self.assertRaises(SystemExit) as stopped:
+                script_command(argv)
+            self.assertEqual(stopped.exception.code, 2)
         self.assertEqual(script_command(["--times-from-log", "a.log", "b.log"]),
                          ("times", [Path("a.log"), Path("b.log")]))
         for argv in (["--shard"], ["--shard", "0/7"], ["--shard", "8/7"], ["--shard", "3"],
@@ -17161,6 +17989,6 @@ if __name__ == "__main__":
     elif command[0] == "shard":
         run_shard(*command[1:])
     elif command[0] == "cover":
-        sys.exit(cover_command(command[1]))
+        sys.exit(cover_command(*command[1:]))
     else:
         sys.exit(times_command(command[1]))

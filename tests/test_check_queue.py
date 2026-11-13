@@ -55,6 +55,8 @@ CLASSIFIER = (SCRIPTS / "risk.py").read_text(encoding="utf-8")
 # The queue's judge, which the organization ruleset requires from main.
 JUDGE = ".github/workflows/queue-judge.yml"
 JUDGE_JOBS = ("queue-integrity", "queue-gaps")
+# What --run-plan says of the landing tool's tests, which queue-gate carries (L0.3).
+QUEUE_GAPS_CARRIED = "queue-gaps: scripts/test_safe_push.py is carried by queue-gate's 12 shards (L0)"
 # The group's CI run, its acceptance job and that job's artifact, as GitHub gives them
 # (acceptance_answers): the job ran from STARTED to COMPLETED, and made the artifact at
 # CREATED.
@@ -2079,19 +2081,23 @@ class QueueTests(unittest.TestCase):
             "scripts/safe_push.py": harness_source('A new fixture harness.'),
         })
         first = self.merge(self.base, one, 1)
-        self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 0,
-                     "gaps: python3 -I scripts/test_another.py",
-                     "gaps: python3 scripts/test_safe_push.py",
-                     "another test ran", "safe push test ran")
+        # The landing tool's tests are carried by queue-gate, never run here (L0.3).
+        output = self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 0,
+                              "gaps: python3 -I scripts/test_another.py", "another test ran",
+                              "queue-gaps: scripts/test_safe_push.py is carried by queue-gate's 12 shards (L0)")
+        self.assertNotIn("safe push test ran", output)
 
     def test_gaps_runs_a_changed_script_test_without_its_production_script(self):
-        for path, command in (("scripts/test_another.py", "python3 -I"),
-                              ("scripts/test_safe_push.py", "python3")):
-            with self.subTest(path=path):
-                one = self.train(1, {path: "raise SystemExit(7)\n"})
-                first = self.merge(self.base, one, 1)
-                self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 1,
-                             f"gaps: {command} {path} failed (exit 7)")
+        one = self.train(1, {"scripts/test_another.py": "raise SystemExit(7)\n"})
+        first = self.merge(self.base, one, 1)
+        self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 1,
+                     "gaps: python3 -I scripts/test_another.py failed (exit 7)")
+        # The landing tool's tests are carried by queue-gate, whose shards would fail
+        # (L0.3): queue-gaps runs them not.
+        one = self.train(1, {"scripts/test_safe_push.py": "raise SystemExit(7)\n"})
+        first = self.merge(self.base, one, 1)
+        self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 0,
+                     "queue-gaps: scripts/test_safe_push.py is carried by queue-gate's 12 shards (L0)")
 
     def test_gaps_does_not_require_a_deleted_test(self):
         one = self.train(1, {TEST: None})
@@ -2164,11 +2170,17 @@ class QueueTests(unittest.TestCase):
                     plan = self.root / f"github-plan-{number}-{deleted}.json"
                     self.verdict(self.cli("--gaps", "--plan", str(plan), head=group), 0,
                                  "queue: PASS")
+                    # Every path under .github/ reaches the landing tool's tests, which the
+                    # plan names carried by queue-gate (L0.3).
+                    carried = [{"command": c, "carried": "queue-gate"} if c == self.SAFE_PUSH
+                               else c for c in commands]
                     self.assertEqual(json.loads(plan.read_text(encoding="utf-8")),
-                                     {"head": group, "commands": commands})
+                                     {"head": group, "commands": carried})
                     output = self.verdict(self.run_plan(plan, group), 0, "queue: PASS")
                     for command in commands:
-                        self.assertEqual(output.count(f"gaps: {' '.join(command)}\n"), 1)
+                        self.assertEqual(output.count(f"gaps: {' '.join(command)}\n"),
+                                         0 if command == self.SAFE_PUSH else 1)
+                    self.assertEqual(output.count(QUEUE_GAPS_CARRIED), 1)
 
     def test_gaps_refuses_a_github_file_it_maps_no_tests_to(self):
         # A new workflow, or any other file under .github/, has no tests until main's
@@ -2254,11 +2266,29 @@ class QueueTests(unittest.TestCase):
         with (SCRIPTS.parent / ".github/workflows" / name).open(encoding="utf-8") as source:
             return yaml.safe_load(source)
 
-    # The ifs the step runner reads, each as it is on the event the runner simulates.
-    CONDITIONS = {"": lambda event: True,
-                  "github.event_name == 'merge_group'": lambda event: event == "merge_group",
-                  "github.event_name != 'merge_group'": lambda event: event != "merge_group",
-                  "github.event_name == 'pull_request'": lambda event: event == "pull_request"}
+    # The contexts the step runner reads in an if, and the status functions; any other
+    # name in an if fails the test (ifs).
+    REFERENCE = re.compile(r"github\.event_name|needs\.[\w-]+\.(?:result|outputs\.[\w-]+)"
+                           r"|steps\.[\w-]+\.(?:outcome|outputs\.[\w-]+)")
+    STATUS = re.compile(r"\b(?:always|success|failure|cancelled)\(\)")
+
+    def ifs(self, condition, values, failed):
+        """Whether GitHub runs a step (or job) whose if is `condition`, given the values of
+        the contexts it reads and whether an earlier step failed: an if with no status
+        function has success() too, as GitHub reads it."""
+        if not condition:
+            return not failed
+        implicit = not self.STATUS.search(condition)
+        text = self.STATUS.sub(lambda m: {"always()": "True", "success()": str(not failed),
+                                          "failure()": str(failed),
+                                          "cancelled()": "False"}[m.group()], condition)
+        text = self.REFERENCE.sub(lambda m: repr(values.get(m.group(), "")), text)
+        text = text.replace("&&", " and ").replace("||", " or ")
+        text = re.sub(r"!(?!=)", " not ", text)
+        self.assertRegex(text, r"^(?:\s|True|False|and|or|not|==|!=|\(|\)|'[^']*')*$",
+                         f"an if the runner does not read: {condition}")
+        held = bool(eval(text, {"__builtins__": {}}))  # noqa: S307 - the regex above
+        return held and not failed if implicit else held
 
     def fixture_tools(self, real_python=False):
         """The folder put first on the PATH of a workflow's steps: gh, FAKE_GH over this
@@ -2281,26 +2311,55 @@ class QueueTests(unittest.TestCase):
                 (tools / name).chmod(0o755)
         return tools
 
+    def artifact(self, step, given):
+        """upload-artifact and download-artifact, on a store of the test's own: an upload
+        keeps the file under its name, replacing one kept before; a download by name of one
+        not kept fails, and by pattern takes each match into a folder of its own. 0 or 1."""
+        store = self.root / "artifacts"
+        if step["uses"] == "actions/upload-artifact@v5":
+            source = Path(given["path"])
+            if not source.is_file():
+                return 1 if given.get("if-no-files-found", "warn") == "error" else 0
+            target = store / given["name"]
+            shutil.rmtree(target, ignore_errors=True)
+            target.mkdir(parents=True)
+            shutil.copy2(source, target / source.name)
+            return 0
+        destination = Path(given["path"])
+        if "name" in given:
+            if not (store / given["name"]).is_dir():
+                return 1
+            shutil.copytree(store / given["name"], destination, dirs_exist_ok=True)
+            return 0
+        for kept in sorted(store.glob(given["pattern"])) if store.is_dir() else []:
+            shutil.copytree(kept, destination / kept.name, dirs_exist_ok=True)
+        return 0
+
     def run_job(self, job, event="merge_group", head=None, base=None, workflow=None,
-                steps=None, runner=None, real_python=False):
+                steps=None, runner=None, real_python=False, needs=None, matrix=None):
         """Run the steps of the queue judge's `job` in order, from main's copy of
         queue-judge.yml or a planted `workflow`, as GitHub's runner would on `event`, in
-        the checkout as the test left it. The job may have no if of its own, since a
-        skipped required job counts as passed. Each step's if is read against the event
-        (CONDITIONS; any other fails the test): a step whose if is false is skipped, as
-        GitHub skips it, but on a merge group every step must run, so that no plant passes
-        by running a step GitHub would skip. Each expression of a step's environment or
-        working directory is given its value on the event, and any other fails the test.
-        The checkout and Python's setup are the fixture's own; gh and pip are FAKE_GH and
-        FAKE_PYTHON (fixture_tools), and the snapshot is written for gh first. With
-        `steps`, only the steps so named run, the test having set up what those before
-        them leave. As on GitHub, the first step that fails ends the job. The result's
-        args are the labels of the steps that ran, its status the failing step's or 0,
-        and its output theirs. A `head` or `base` of "" is an event that gives none."""
+        the checkout as the test left it. A required job may have no if of its own but
+        always(), since a skipped required job counts as passed. Each step's if is read
+        against the event, the jobs it `needs` (each {"result", "outputs"}) and the steps
+        before it, with success() implied (ifs); a step that does not run is skipped, as
+        GitHub skips it, but on a merge group every step with an if on the event alone
+        must run, so that no plant passes by running a step GitHub would skip. Each
+        expression of a step's environment, working directory, inputs or run is given its
+        value, and any other fails the test. The checkout and Python's setup are the
+        fixture's own; gh and pip are FAKE_GH and FAKE_PYTHON (fixture_tools), and the
+        snapshot is written for gh first; artifacts are kept in a store of the test's own
+        (artifact). With `steps`, only the steps so named run, the test having set up what
+        those before them leave. As on GitHub, a failed step skips each later step but
+        those whose if says always(). The result's args are the labels of the steps that
+        ran, its status the first failing step's or 0, its output theirs, and its outputs
+        the job's. A `head` or `base` of "" is an event that gives none."""
         head = self.head if head is None else head
         base = self.base if base is None else base
         spec = (workflow or self.workflow("queue-judge.yml"))["jobs"][job]
-        self.assertNotIn("if", spec, f"{job}: a skipped required job counts as passed")
+        self.assertIn(str(spec.get("if", "always()")), ("always()", "needs.queue-gate-plan."
+                      "outputs.gate == 'true'"), f"{job}: a skipped required job counts as "
+                      "passed")
         runner = runner or self.root / f"runner-{job}"
         runner.mkdir(exist_ok=True)
         group = event == "merge_group"
@@ -2309,12 +2368,20 @@ class QueueTests(unittest.TestCase):
                   "runner.temp": str(runner),
                   "github.event.merge_group.head_sha": head if group else "",
                   "github.event.merge_group.base_sha": base if group else ""}
+        for need, answer in (needs or {}).items():
+            values[f"needs.{need}.result"] = answer.get("result", "success")
+            values.update({f"needs.{need}.outputs.{key}": value
+                           for key, value in answer.get("outputs", {}).items()})
+        if matrix is not None:
+            values.update({"matrix.shard": str(matrix), "strategy.job-total": "12"})
 
         def evaluated(text):
             def value(match):
-                self.assertIn(match.group(1), values, f"{job}: an expression the runner "
-                              "does not know")
-                return values[match.group(1)]
+                name = match.group(1)
+                if name.startswith(("needs.", "steps.")):
+                    return values.get(name, "")
+                self.assertIn(name, values, f"{job}: an expression the runner does not know")
+                return values[name]
             return re.sub(r"\$\{\{\s*(.*?)\s*\}\}", value, str(text))
 
         self.fixture.write_text(json.dumps(self.snapshot), encoding="utf-8")
@@ -2326,35 +2393,54 @@ class QueueTests(unittest.TestCase):
             # pip run outside a virtual environment, as a hosted runner's Python does.
             common.update(PIP_NO_INDEX="1", PIP_DISABLE_PIP_VERSION_CHECK="1",
                           PIP_BREAK_SYSTEM_PACKAGES="1")
-        ran, out, err, status = [], [], [], 0
+        ran, out, err, status, failed = [], [], [], 0, False
         for number, step in enumerate(spec["steps"], 1):
             label = step.get("name") or step.get("uses") or f"step {number}"
             condition = str(step.get("if", "")).strip()
             if condition.startswith("${{") and condition.endswith("}}"):
                 condition = condition[3:-2].strip()
-            self.assertIn(condition, self.CONDITIONS, f"{label}: an if the runner does not read")
-            if not self.CONDITIONS[condition](event):
-                self.assertFalse(group, f"{label}: skipped on a merge group, where every step "
-                                 "runs")
-                continue
-            if steps is not None and label not in steps:
+            runs = self.ifs(condition, values, failed)
+            if not runs or (steps is not None and label not in steps):
+                # An if on the event alone that skips a step of a merge group, no step having
+                # failed, would let a plant pass by running a step GitHub would skip.
+                if not runs and group and not failed and not self.STATUS.search(condition) \
+                        and not re.search(r"\b(?:needs|steps)\.", condition):
+                    self.fail(f"{label}: skipped on a merge group, where every step runs")
+                if step.get("id"):
+                    values[f"steps.{step['id']}.outcome"] = "skipped"
                 continue
             ran.append(label)
             if "uses" in step:
-                self.assertIn(step["uses"], ("actions/checkout@v5", "actions/setup-python@v5"),
-                              label)
-                continue
-            env = dict(common, **{key: evaluated(text)
-                                  for key, text in (step.get("env") or {}).items()})
-            where = evaluated(step.get("working-directory", self.repo))
-            result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", step["run"]],
-                                    cwd=where, env=env, capture_output=True, text=True)
-            out.append(result.stdout)
-            err.append(result.stderr)
-            if result.returncode:
-                status = result.returncode
-                break
-        return subprocess.CompletedProcess(ran, status, "".join(out), "".join(err))
+                self.assertIn(step["uses"], ("actions/checkout@v5", "actions/setup-python@v5",
+                                             "actions/upload-artifact@v5",
+                                             "actions/download-artifact@v5"), label)
+                code = 0 if "artifact" not in step["uses"] else self.artifact(
+                    step, {key: evaluated(value) for key, value in
+                           (step.get("with") or {}).items()})
+            else:
+                env = dict(common, **{key: evaluated(text)
+                                      for key, text in (step.get("env") or {}).items()})
+                output = runner / f"output-{number}"
+                output.write_text("")
+                env["GITHUB_OUTPUT"] = str(output)
+                where = evaluated(step.get("working-directory", self.repo))
+                result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c",
+                                         evaluated(step["run"])],
+                                        cwd=where, env=env, capture_output=True, text=True)
+                out.append(result.stdout)
+                err.append(result.stderr)
+                code = result.returncode
+                if step.get("id"):
+                    for line in output.read_text().splitlines():
+                        key, _, value = line.partition("=")
+                        values[f"steps.{step['id']}.outputs.{key}"] = value
+            if step.get("id"):
+                values[f"steps.{step['id']}.outcome"] = "success" if code == 0 else "failure"
+            if code and not failed:
+                status, failed = code, True
+        done = subprocess.CompletedProcess(ran, status, "".join(out), "".join(err))
+        done.outputs = {key: evaluated(value) for key, value in (spec.get("outputs") or {}).items()}
+        return done
 
     def queue_job(self, head, base):
         """Run the queue judge's queue-integrity job on a merge group of `head` and `base`,
@@ -2528,6 +2614,9 @@ class QueueTests(unittest.TestCase):
         "tokens = sorted(key for key in os.environ if 'TOKEN' in key.upper())\n"
         "with open(log, 'a', encoding='utf-8') as calls:\n"
         "    calls.write(json.dumps([sys.argv[1:], tokens]) + '\\n')\n"
+        "if '--gaps' in sys.argv and '--plan' in sys.argv:\n"
+        "    with open(sys.argv[sys.argv.index('--plan') + 1], 'w', encoding='utf-8') as plan:\n"
+        "        plan.write('{}')\n"
         "if '--acceptance-run' in sys.argv:\n"
         "    out = sys.argv[sys.argv.index('--out') + 1]\n"
         "    os.makedirs(out)\n"
@@ -2628,7 +2717,8 @@ class QueueTests(unittest.TestCase):
         # The check job installs the parser the lane-condition check reads the workflows
         # with (checks/24-lane-condition.toml, #346).
         self.assertEqual(sorted(job for _, job, _, _ in modules),
-                         ["check", "queue-gaps", "queue-tests"])
+                         ["check", "gate-shards", "gate-tests", "queue-gaps",
+                          "queue-gate-shards", "queue-tests"])
         for name, job, directory, line in modules:
             with self.subTest(job=job):
                 self.assertEqual(directory, "${{ runner.temp }}")
@@ -2724,13 +2814,14 @@ class QueueTests(unittest.TestCase):
 
     def test_on_a_pull_request_each_judge_job_passes_at_once(self):
         # Neither job has an if of its own, since a skipped required job counts as passed:
-        # on a pull request each runs its first step alone, which says there is nothing to
-        # judge, and passes; on any other event but a merge group that step fails.
+        # on a pull request each runs its first step and its last, which says there is
+        # nothing to judge, the work having been skipped (SJ), and passes; on any other
+        # event but a merge group the first step fails, and so does the last.
         for job in JUDGE_JOBS:
             with self.subTest(job=job):
                 result = self.run_job(job, event="pull_request")
                 self.verdict(result, 0, "A pull request: nothing to judge here")
-                self.assertEqual(result.args, self.labels(job)[:1])
+                self.assertEqual(result.args, [self.labels(job)[0], self.labels(job)[-1]])
                 result = self.run_job(job, event="push", runner=self.root / f"push-{job}")
                 self.verdict(result, 1, "A push event: the queue's judge runs on pull "
                              "requests and merge groups only")
@@ -2742,7 +2833,9 @@ class QueueTests(unittest.TestCase):
         for change, refusal in (
                 (lambda job: job["steps"][3].update({"if": "github.event_name == 'pull_request'"}),
                  "skipped on a merge group, where every step runs"),
-                (lambda job: job["steps"][3].update({"if": "always()"}),
+                # The runner reads always() and the other status functions, the event, needs
+                # and steps (ifs); a context it does not, the ref's name, fails it.
+                (lambda job: job["steps"][3].update({"if": "github.ref_name == 'main'"}),
                  "an if the runner does not read"),
                 (lambda job: job.update({"if": "github.event_name == 'merge_group'"}),
                  "a skipped required job counts as passed")):
@@ -2972,23 +3065,35 @@ class QueueTests(unittest.TestCase):
                 self.verdict(result, 0, "queue: PASS")
                 self.assertEqual(result.args, self.labels(job))
         self.assertIn("tests/test_check_queue.py ran", result.stdout)
-        self.assertIn("safe push test ran", result.stdout)
+        self.assertIn(QUEUE_GAPS_CARRIED, result.stdout)
+        self.assertNotIn("safe push test ran", result.stdout)
 
     def test_risk_job_classes_a_merge_group_r5(self):
-        # The judge accepts a light pre-flight only because a merge group's own run is R5,
-        # by the risk job's last case, so every check runs on the group before it merges.
+        # The judge accepts a light pre-flight only because a merge group's own run is R5:
+        # while main's group lane is off, as built, the risk job's merge group case classes
+        # every group R5 (L1.s1), after its checks of the group's ids, checkout, ancestry
+        # and labels, and so every check runs on the group before it merges.
         steps = self.workflow("ci.yml")["jobs"]["risk"]["steps"]
         classify = [step for step in steps if step.get("id") == "classify"]
         self.assertEqual(len(classify), 1)
         self.assertEqual(classify[0]["env"]["EVENT"], "${{ github.event_name }}")
+        group = self.sound_group({TEXT: "A reviewed line.\n"})
+        tools = self.root / "labels-unread"
+        tools.mkdir()
+        (tools / "gh").write_text("#!/bin/sh\necho false\n", encoding="utf-8")
+        (tools / "gh").chmod(0o755)
         output = self.root / "github-output"
         env = dict(os.environ, EVENT="merge_group", BASE_REF="", HEAD_SHA="", RELEASE="false",
-                   REF=f"refs/heads/gh-readonly-queue/main/pr-1-{self.head}",
+                   REF=f"refs/heads/gh-readonly-queue/main/pr-1-{group}",
+                   GROUP_BASE=self.base, GROUP_HEAD=group, GROUP_BASE_REF="refs/heads/main",
+                   GH_TOKEN="fixture-workflow-secret", REPOSITORY="owner/repository",
+                   PATH=f"{tools}{os.pathsep}{os.environ['PATH']}",
                    GITHUB_OUTPUT=str(output), RUNNER_TEMP=str(self.root))
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", classify[0]["run"]],
                                 cwd=self.repo, env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("a merge_group event of", result.stdout)
+        self.assertIn("a merge group while main's group lane is off (scripts/risk.py "
+                      "GROUP_LANE): R5, negative and formal-model run in full", result.stdout)
         self.assertEqual(output.read_text(encoding="utf-8").splitlines(),
                          ["class=R5", "formal_model=true"])
 
@@ -3051,6 +3156,396 @@ class QueueTests(unittest.TestCase):
                                                         "regular file"):
                     queue.page_blob(self.repo, head)
         self.assertEqual(queue.page_blob(self.repo, self.head), self.trees[self.head][PAGE])
+
+
+# The group's scripts/test_safe_push.py in the queue gate's cases: a stand-in that runs as a
+# shard, writing its list of round 3 (H-RAN), and proves as --cover, each as STUB_PLANT, a
+# JSON object in its environment, plants: a shard that fails, one that keeps no list, more
+# entries for a shard's list, its environment, and the cover's exit.
+SHARD_STUB = r"""import json, os, sys
+args = sys.argv[1:]
+plant = json.loads(os.environ.get("STUB_PLANT", "{}"))
+if args[:1] == ["--shard"]:
+    k, n = (int(x) for x in args[1].split("/"))
+    if str(k) in plant.get("fail", []):
+        print(f"stub shard {k}: CaseTwins.test_{k} ... FAIL")
+        sys.exit(1)
+    entries = [[f"CaseTwins.test_{k}", "ok"]] + plant.get("entries", {}).get(str(k), [])
+    env = plant.get("env", {"platform": "linux", "github_actions": "true", "slow_tests": None})
+    if str(k) not in plant.get("no_list", []):
+        with open(args[3], "w", encoding="utf-8") as ran:
+            json.dump({"shard": k, "count": n, "ran": entries, "env": env}, ran)
+    print(f"stub shard {k} of {n} ran")
+    sys.exit(0)
+if args[:1] == ["--cover"]:
+    print("stub cover: " + " ".join(args[2:]))
+    sys.exit(int(plant.get("cover_exit", 0)))
+print("safe push test ran")
+"""
+# The three skips main allows, each as a shard on ubuntu-latest words it (ALLOWED_SKIPS).
+ALLOWED = [[test, "skipped", reason] for test, (_, _, _, reason) in queue.ALLOWED_SKIPS.items()]
+
+
+class QueueGateTests(QueueTests):
+    """The queue's judge of the landing tool's tests (L0): --gate-plan, --gate-shard and
+    --gate-prove, and queue-judge.yml's queue-gate-plan, queue-gate-shards and queue-gate,
+    run step by step with the other jobs' results given, as GitHub would need them."""
+
+    def gate_group(self, changes, start=None, second=None):
+        """A group of main as it is (real_main, real_harness), its landing tool's tests
+        SHARD_STUB, the first train making `changes` (on `start`, main by default), the
+        second `second`, a change elsewhere by default; checked out."""
+        self.real_main()
+        self.base = self.make([self.base], {"scripts/test_safe_push.py": SHARD_STUB})
+        self.snapshot["main"]["sha"] = self.base
+        one = self.train(1, changes)
+        two = self.train(2, second or {SECOND: "The second train's reviewed line.\n"},
+                         start=one if start == "one" else None)
+        self.real_harness()
+        group = self.merge(self.merge(self.base, one, 1), two, 2)
+        self.snapshot.update(acceptance_answers(group))
+        self.checkout(group)
+        return group
+
+    def gate_cli(self, *args):
+        return subprocess.run([sys.executable, "-I", str(SCRIPTS / "check_queue.py"), *args],
+                              cwd=self.repo, capture_output=True, text=True)
+
+    def plan(self, group, name="plan.json"):
+        """--gate-plan for the group: its result and the plan it wrote."""
+        out = self.root / name
+        out.unlink(missing_ok=True)
+        result = self.gate_cli("--gate-plan", "--head", group, "--base", self.base,
+                               "--out", str(out))
+        return result, (json.loads(out.read_text(encoding="utf-8")) if out.exists() else None)
+
+    def judge(self, group, plant=None, workflow=None, plan_gate=None, plan_doc=None,
+              shards=True):
+        """queue-gate-plan, then each of queue-gate-shards' 12 when the plan's gate is true,
+        then queue-gaps, then queue-gate, each needing the results before it; `plant` is the
+        stand-in's STUB_PLANT. A `plan_gate` or `plan_doc` given replaces the plan job's
+        output or its artifact (a planted divergence). The results, by job."""
+        with patch.dict(os.environ, STUB_PLANT=json.dumps(plant or {})):
+            planned = self.run_job("queue-gate-plan", head=group, workflow=workflow)
+            gate = planned.outputs["gate"] if plan_gate is None else plan_gate
+            if plan_doc is not None:
+                stored = self.root / "artifacts/queue-gate-plan/queue-gate-plan.json"
+                stored.write_text(json.dumps(plan_doc), encoding="utf-8")
+            plan_need = {"result": "success" if planned.returncode == 0 else "failure",
+                         "outputs": {"gate": gate}}
+            results = {"queue-gate-plan": planned, "shards": []}
+            if gate == "true" and shards:
+                for k in range(1, 13):
+                    self.checkout(group)
+                    results["shards"].append(self.run_job(
+                        "queue-gate-shards", head=group, workflow=workflow, matrix=k,
+                        needs={"queue-gate-plan": plan_need},
+                        runner=self.root / f"runner-shard-{k}"))
+            shard_result = ("skipped" if not results["shards"] else "success"
+                            if all(r.returncode == 0 for r in results["shards"]) else "failure")
+            self.checkout(group)
+            gaps = self.run_job("queue-gaps", head=group, workflow=workflow)
+            results["queue-gaps"] = gaps
+            self.checkout(group)
+            results["queue-gate"] = self.run_job("queue-gate", head=group, workflow=workflow, needs={
+                "queue-gate-plan": plan_need,
+                "queue-gaps": {"result": "success" if gaps.returncode == 0 else "failure"},
+                "queue-gate-shards": {"result": shard_result}})
+        return results
+
+    def test_L0_g1_a_changed_workflow_reaches_the_gate_in_12_shards(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        result, plan = self.plan(group)
+        self.verdict(result, 0, f"GATE {group[:12]} on {self.base[:12]}: in 12 shards, since "
+                     ".github/workflows/ci.yml changed")
+        self.assertEqual(plan, {"schema": "stoicheia.queue-gate-plan/1", "head": group,
+                                "base": self.base, "gate": True, "shards": 12,
+                                "why": ".github/workflows/ci.yml"})
+        results = self.judge(group)
+        self.assertEqual(results["queue-gate-plan"].outputs, {"gate": "true"})
+        self.assertEqual([r.returncode for r in results["shards"]], [0] * 12)
+        gaps = self.verdict(results["queue-gaps"], 0, QUEUE_GAPS_CARRIED,
+                            "tests/test_auto_revert.py ran", "tests/test_check_queue.py ran")
+        self.assertNotIn("safe push test ran", gaps)
+        gate = self.verdict(results["queue-gate"], 0, "stub cover: --shards 12",
+                            "queue-gate: the 12 shards succeeded, and the proof passed.")
+        print(f"  L0.g1: {result.stdout.strip()}; 12 shards green; queue-gaps: "
+              f"{QUEUE_GAPS_CARRIED}; queue-gate green")
+        self.assertIn("lists prove every test ran once and passed", gate)
+
+    def test_L0_g2_a_group_outside_the_inputs_is_not_reached(self):
+        group = self.gate_group({TEXT: "A reviewed line.\n"})
+        result, plan = self.plan(group)
+        self.verdict(result, 0, f"GATE {group[:12]} on {self.base[:12]}: not reached; "
+                     "queue-gaps' other tests stand")
+        self.assertEqual((plan["gate"], plan["why"]), (False, None))
+        results = self.judge(group)
+        self.assertEqual(results["shards"], [])
+        self.verdict(results["queue-gate"], 0, f"queue-gate: not reached for {group[:12]}",
+                     "queue-gate: the group does not reach the landing tool's tests.")
+        print(f"  L0.g2: {result.stdout.strip()}; no shard; queue-gate passes, not reached")
+
+    def test_L0_g3_on_a_pull_request_the_three_jobs_pass_at_once(self):
+        planned = self.run_job("queue-gate-plan", event="pull_request")
+        self.verdict(planned, 0, "A pull request: nothing to judge here")
+        labels = [s.get("name") or s.get("uses")
+                  for s in self.workflow("queue-judge.yml")["jobs"]["queue-gate-plan"]["steps"]]
+        self.assertEqual(planned.args, [labels[0], labels[-1]])
+        shards = self.workflow("queue-judge.yml")["jobs"]["queue-gate-shards"]
+        self.assertFalse(self.ifs(shards["if"], {"needs.queue-gate-plan.outputs.gate":
+                                                 planned.outputs["gate"]}, False))
+        gate = self.run_job("queue-gate", event="pull_request", needs={
+            "queue-gate-plan": {"result": "success", "outputs": planned.outputs},
+            "queue-gaps": {"result": "success"}, "queue-gate-shards": {"result": "skipped"}})
+        self.verdict(gate, 0, "A pull request: nothing to judge here")
+        print("  L0.g3: queue-gate-plan and queue-gate pass at once on a pull request; "
+              "queue-gate-shards' if is false")
+
+    def test_L0_g4_a_change_the_import_scan_reaches_is_planned_by_risk_s_gate(self):
+        group = self.gate_group({"scripts/heath.py": "# A change to heath.\n"})
+        result, plan = self.plan(group)
+        self.verdict(result, 0, f"GATE {group[:12]} on {self.base[:12]}: in 12 shards, since "
+                     "scripts/heath.py changed")
+        self.assertEqual((plan["gate"], plan["why"]), (True, "scripts/heath.py"))
+        results = self.judge(group)
+        self.assertEqual([r.returncode for r in results["shards"]], [0] * 12)
+        self.verdict(results["queue-gaps"], 0, QUEUE_GAPS_CARRIED)
+        self.verdict(results["queue-gate"], 0, "queue-gate: the 12 shards succeeded")
+        print(f"  L0.g4: {result.stdout.strip()}; queue-gaps carries; queue-gate green")
+
+    def test_L0_g5_an_entry_undone_by_a_later_one_still_reaches_it(self):
+        harness = (SCRIPTS / "safe_push.py").read_text(encoding="utf-8")
+        group = self.gate_group({"scripts/test_safe_push.py": SHARD_STUB + "# changed\n"},
+                                start=None)
+        undone = self.gate_group({"scripts/test_safe_push.py": SHARD_STUB + "# changed\n"},
+                                 start="one", second={"scripts/test_safe_push.py": SHARD_STUB})
+        self.assertEqual(self.git("diff", "--name-only", f"{self.base}...{undone}",
+                                  "--", "scripts/test_safe_push.py"), "")
+        result, plan = self.plan(undone)
+        self.verdict(result, 0, "in 12 shards, since scripts/test_safe_push.py changed")
+        self.assertEqual((plan["gate"], plan["shards"]), (True, 12))
+        self.assertTrue(harness)
+        print(f"  L0.g5: {result.stdout.strip()}, by the first entry's own change")
+
+    def test_L0_b1_a_plan_that_disagrees_with_queue_gaps_fails_queue_gate(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        _, plan = self.plan(group)
+        results = self.judge(group, plan_gate="false", plan_doc={**plan, "gate": False})
+        gate = self.verdict(results["queue-gate"], 1, "queue-gate: queue-gaps carries the "
+                            "gate's tests true, the plan's gate is false")
+        self.assertIn("queue-gate: the proof ended 'failure'", gate)
+        print("  L0.b1: queue-gate: queue-gaps carries the gate's tests true, the plan's "
+              "gate is false; the verdict step exits 1")
+
+    def test_L0_b2_a_shard_that_keeps_no_list_fails_queue_gate_naming_it(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        results = self.judge(group, plant={"no_list": ["4"]})
+        self.assertEqual([r.returncode for r in results["shards"]],
+                         [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.verdict(results["queue-gate"], 1, "queue-gate: shard 4 of 12 left no list of the "
+                     "tests it ran")
+        print("  L0.b2: queue-gate: shard 4 of 12 left no list of the tests it ran; red")
+
+    def test_L0_b3_a_plan_that_carries_elsewhere_is_refused(self):
+        plan = self.root / "elsewhere.json"
+        self.checkout(self.head)
+        plan.write_text(json.dumps({"head": self.head, "commands": [
+            {"command": ["python3", "scripts/test_safe_push.py"], "carried": "elsewhere"}]}))
+        result = self.run_plan(plan, self.head)
+        self.verdict(result, 2, "run-plan: 'elsewhere' carries nothing")
+        plan.write_text(json.dumps({"head": self.head, "commands": [
+            {"command": ["python3", "-I", TEST], "carried": "queue-gate"}]}))
+        self.verdict(self.run_plan(plan, self.head), 2, "run-plan: 'queue-gate' carries nothing")
+        print("  L0.b3: run-plan: 'elsewhere' carries nothing")
+
+    def test_L0_b4_a_token_in_a_shard_s_step_is_refused(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        workflow = self.workflow("queue-judge.yml")
+        step = workflow["jobs"]["queue-gate-shards"]["steps"][4]
+        self.assertIn("--gate-shard", step["run"])
+        step["env"]["GH_TOKEN"] = "${{ github.token }}"
+        result = self.run_job("queue-gate-shards", head=group, workflow=workflow, matrix=1,
+                              needs={"queue-gate-plan": {"outputs": {"gate": "true"}}})
+        output = self.verdict(result, 2, "gate-shard: this process's environment holds a "
+                              "token (GH_TOKEN)")
+        self.assertNotIn("stub shard", output)
+        print("  L0.b4: gate-shard: this process's environment holds a token (GH_TOKEN): "
+              "refused before any test")
+
+    def test_L0_b5_a_shard_whose_checkout_is_not_the_group_head_runs_no_test(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        self.checkout(self.base)
+        result = self.run_job("queue-gate-shards", head=group, matrix=1,
+                              needs={"queue-gate-plan": {"outputs": {"gate": "true"}}})
+        self.assertEqual(result.returncode, 1)
+        self.assertNotIn("stub shard", result.stdout)
+        self.assertEqual(result.args[-3:-2], ["Take main's scripts from the group's base"])
+        print("  L0.b5: the shard's step fails at the head check, before any test")
+
+    def prove(self, group, lists, plan=None, gaps_carry=True, plan_gate="true"):
+        """--gate-prove over shard lists given as {k: (entries, env)}, the plan made for the
+        group, and a gaps plan that carries the tests or not."""
+        folder = self.root / "lists"
+        shutil.rmtree(folder, ignore_errors=True)
+        for k, (entries, env) in lists.items():
+            (folder / f"queue-gate-ran-{k}").mkdir(parents=True)
+            (folder / f"queue-gate-ran-{k}/ran-{k}.json").write_text(json.dumps(
+                {"shard": k, "count": 12, "ran": entries, "env": env}))
+        if plan is None:
+            plan = self.root / "plan.json"
+            plan.unlink(missing_ok=True)
+            self.gate_cli("--gate-plan", "--head", group, "--base", self.base, "--out", str(plan))
+        gaps = self.root / "gaps.json"
+        gaps.write_text(json.dumps({"head": group, "commands": [
+            {"command": ["python3", "scripts/test_safe_push.py"], "carried": "queue-gate"}]
+            if gaps_carry else []}))
+        return self.gate_cli("--gate-prove", "--head", group, "--base", self.base, "--plan",
+                             str(plan), "--plan-gate", plan_gate, "--gaps-plan", str(gaps),
+                             "--lists", str(folder))
+
+    LINUX = {"platform": "linux", "github_actions": "true", "slow_tests": None}
+
+    def shard_lists(self, extra=None, env=None):
+        lists = {k: ([[f"CaseTwins.test_{k}", "ok"]], dict(self.LINUX)) for k in range(1, 13)}
+        for k, entries in (extra or {}).items():
+            lists[k][0].extend(entries)
+        for k, value in (env or {}).items():
+            lists[k][1].update(value)
+        return lists
+
+    def test_L0_b8_to_b11_main_s_skip_judge(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        cases = (
+            ("L0.b8", self.shard_lists({3: [["CaseTwins.test_extra", "skipped", "debugging"]]}),
+             1, "queue-gate: CaseTwins.test_extra was skipped in shard 3: not an allowed skip"),
+            ("L0.b9", self.shard_lists({5: ALLOWED}), 0,
+             "the 12 shards' lists prove every test ran once and passed, as ok or an allowed "
+             "skip"),
+            ("L0.b10", self.shard_lists({7: [["FullChecks.test_full_sequence_on_a_good_commit",
+                                              "skipped", "slow"]]}), 1,
+             "queue-gate: FullChecks.test_full_sequence_on_a_good_commit was skipped in shard 7 "
+             "with the reason 'slow', not the allowed 'the full checks need Lean and take "
+             "minutes: STOICHEIA_SLOW_TESTS=1'"),
+            ("L0.b11", self.shard_lists({7: ALLOWED[2:]}, env={7: {"slow_tests": "1"}}), 1,
+             "queue-gate: FullChecks.test_full_sequence_on_a_good_commit was skipped in shard "
+             "7, but its condition STOICHEIA_SLOW_TESTS is not \"1\" does not hold there"),
+            ("an expected failure", self.shard_lists({2: [["CaseTwins.test_x",
+                                                           "expected failure"]]}), 1,
+             "queue-gate: CaseTwins.test_x ended 'expected failure' in shard 2: only ok passes "
+             "here"),
+            ("a skip on macOS", self.shard_lists({5: ALLOWED[:1]}, env={5: {"platform": "darwin"}}),
+             1, "but its condition the platform is not darwin does not hold there"))
+        for label, lists, code, message in cases:
+            with self.subTest(label):
+                self.checkout(group)
+                output = self.verdict(self.prove(group, lists), code, message)
+                print(f"  {label}: exit {code}: "
+                      + next(line for line in output.splitlines() if message[:40] in line))
+        # A list with a skip and no reason, or with no environment, is not round 3.
+        lists = self.shard_lists()
+        lists[6][0].append(["CaseTwins.test_y", "skipped"])
+        self.verdict(self.prove(group, lists), 1, "queue-gate: the list of shard 6 is not H-RAN "
+                     "round 3")
+
+    def test_L0_b12_the_count_is_the_plan_s_never_the_workflow_s(self):
+        # The group changes the cadence's matrix to 8 shards: the proof's count is the plan's
+        # 12, given to the group's --cover as --shards 12, and no workflow is read.
+        cadence = (SCRIPTS.parent / ".github/workflows/safe-push-tests.yml").read_text()
+        group = self.gate_group({".github/workflows/safe-push-tests.yml": cadence.replace(
+            "shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]", "shard: [1, 2, 3, 4, 5, 6, 7, 8]")})
+        self.verdict(self.prove(group, self.shard_lists()), 0, "stub cover: --shards 12")
+        print("  L0.b12: the cover is given --shards 12 from the plan; the matrix of 8 is "
+              "not read")
+
+    def test_L3_b3_gate_tests_proof_fails_naming_a_shard_that_kept_no_list(self):
+        # gate-tests' proof, main's --gate-prove with no queue plan, over a pull request's
+        # 12 lists of which shard 5's was never kept: red, naming shard 5.
+        self.checkout(self.head)
+        lists = self.shard_lists()
+        del lists[5]
+        folder = self.root / "gate-ran"
+        for k, (entries, env) in lists.items():
+            (folder / f"gate-ran-{k}").mkdir(parents=True)
+            (folder / f"gate-ran-{k}/ran-{k}.json").write_text(json.dumps(
+                {"shard": k, "count": 12, "ran": entries, "env": env}))
+        result = self.gate_cli("--gate-prove", "--head", self.head, "--lists", str(folder))
+        self.verdict(result, 1, "gate-tests: shard 5 of 12 left no list of the tests it ran")
+        print("  L3.b3: gate-tests: shard 5 of 12 left no list of the tests it ran; the proof "
+              "fails, and gate-tests' last step is red")
+
+    def test_L0_b13_a_plan_job_that_made_no_plan_fails_queue_gate(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        missing = self.root / "no-plan.json"
+        self.verdict(self.prove(group, self.shard_lists(), plan=missing, plan_gate=""), 1,
+                     f"queue-gate: no plan for {group[:12]}")
+        # On the workflow: the plan step skipped, the job green, its output empty and no
+        # artifact kept: the plan's download fails, the proof does not run, and the
+        # verdict step is red.
+        result = self.run_job("queue-gate", head=group, needs={
+            "queue-gate-plan": {"result": "success", "outputs": {"gate": ""}},
+            "queue-gaps": {"result": "success"}, "queue-gate-shards": {"result": "skipped"}})
+        self.verdict(result, 1, "queue-gate: the proof ended 'skipped'")
+        print(f"  L0.b13: queue-gate: no plan for {group[:12]}; the verdict step exits 1")
+
+    def test_L0_b14_a_proof_skipped_by_a_planted_condition_leaves_queue_gate_red(self):
+        group = self.gate_group({".github/workflows/ci.yml": "name: CI\njobs: {}\n"})
+        workflow = self.workflow("queue-judge.yml")
+        prove = [s for s in workflow["jobs"]["queue-gate"]["steps"] if s.get("id") == "prove"]
+        prove[0]["if"] = "github.event_name == 'merge_group' && needs.queue-gate-plan.outputs.gate == 'false'"
+        results = self.judge(group, workflow=workflow)
+        self.assertEqual([r.returncode for r in results["shards"]], [0] * 12)
+        self.verdict(results["queue-gate"], 1, "queue-gate: the proof ended 'skipped'")
+        print("  L0.b14: the proof skipped by a planted condition: the verdict step exits 1")
+
+    def test_L0_b7_a_main_risk_py_without_the_gate_reaches_it_for_every_group(self):
+        group = self.gate_group({TEXT: "A reviewed line.\n"})
+        entries = queue.git_entries(self.repo, self.base, group)
+        self.assertFalse(queue.gate_reached(self.repo, self.base, group, entries))
+        import types
+        for label, gate in (("no gate_inputs", None), ("one that raises", RuntimeError)):
+            with self.subTest(label):
+                stand_in = types.ModuleType("risk")
+                stand_in.__file__ = str(SCRIPTS / "risk.py")
+                if gate is not None:
+                    stand_in.gate_inputs = lambda *a, **k: (set(), {})
+                    def raising(*args, **kwargs):
+                        raise RuntimeError("planted")
+                    stand_in.gate = raising
+                with patch.dict(sys.modules, {"risk": stand_in}):
+                    reached, path, why = queue.gate_reach(self.repo, self.base, group, entries)
+                self.assertEqual((reached, path), (True, None))
+                print(f"  L0.b7 ({label}): {why}")
+
+    def test_L0_b6_a_gate_reached_of_rule_a_alone_turns_L0_g4_red(self):
+        # The mutation: gate_reached with main's risk.py's gate left out. Run against this
+        # file, the suite's L0.g4 fails, its gate-plan false for scripts/heath.py.
+        with tempfile.TemporaryDirectory() as temp:
+            tree = Path(temp)
+            shutil.copytree(SCRIPTS, tree / "scripts",
+                            ignore=shutil.ignore_patterns("__pycache__"))
+            shutil.copytree(SCRIPTS.parent / ".github", tree / ".github")
+            (tree / "tests").mkdir()
+            shutil.copy2(Path(__file__), tree / "tests/test_check_queue.py")
+            judge = tree / "scripts/check_queue.py"
+            text = judge.read_text(encoding="utf-8")
+            rule_b = "    reached, path, why = risk_gate(repo, base, head)\n"
+            self.assertEqual(text.count(rule_b), 1)
+            judge.write_text(text.replace(rule_b, "    reached, path, why = False, None, "
+                                          "\"rule (a) alone\"\n"), encoding="utf-8")
+            done = subprocess.run([sys.executable, "-I", str(tree / "tests/test_check_queue.py"),
+                                   "QueueGateTests.test_L0_g4_a_change_the_import_scan_reaches_"
+                                   "is_planned_by_risk_s_gate"],
+                                  capture_output=True, text=True, cwd=tree)
+        self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+        self.assertIn("FAIL: test_L0_g4", done.stderr)
+        self.assertIn(": not reached; queue-gaps' other tests stand", done.stderr)
+        print("  L0.b6: with rule (a) alone, the suite reports L0.g4 failed, its gate-plan "
+              "not reached for scripts/heath.py, and exits 1")
+
+
+# QueueGateTests shares QueueTests' fixture, not its tests, which run once, there.
+for _name in [name for name in vars(QueueTests) if name.startswith("test_")]:
+    setattr(QueueGateTests, _name, None)
 
 
 class AcceptanceRunTests(unittest.TestCase):

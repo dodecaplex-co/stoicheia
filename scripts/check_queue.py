@@ -8,6 +8,25 @@
     python3 scripts/check_queue.py --acceptance-run --head <sha> --repo <owner/name>
         --ci-workflow <file> --out <dir>
     python3 scripts/check_queue.py --tree <dir> [--render]
+    python3 scripts/check_queue.py --gate-plan --head <sha> --base <sha> --out <new file>
+        [--github-output]
+    python3 scripts/check_queue.py --gate-shard K/12 --head <sha> --ran <file>
+    python3 scripts/check_queue.py --gate-prove --head <sha> --base <sha> --plan <file>
+        --plan-gate true|false --lists <dir> [--gaps-plan <file>]
+
+--gate-plan, --gate-shard and --gate-prove are the queue's judge of the landing tool's
+tests, scripts/test_safe_push.py (CI-SCOPE-1a, L0), which --gaps never runs whole. They
+read Git alone and hold no token. --gate-plan decides once whether the group reaches them
+(gate_reach, the union of --gaps' own choice, entry by entry, and main's risk.py's gate
+for base...head) and writes that as JSON, canonical, schema stoicheia.queue-gate-plan/1;
+--gaps makes the same choice, and its plan names the tests carried by queue-gate.
+--gate-shard runs the group's own `scripts/test_safe_push.py --shard K/12 --ran FILE` in
+its checkout. --gate-prove judges the plan, compares it with queue-gaps' plan, and, when
+the gate is reached, requires a list of round 3 from each of the 12 shards, the group's
+own `--cover DIR --shards 12`, and main's skip judge: every test `ok`, or a skip
+ALLOWED_SKIPS names, honest in that shard's recorded environment, with its exact reason.
+It does not prove that the group's own suite ran: a group that can rewrite its suite can
+forge its lists, as with queue-gaps' tests today.
 
 Group commands require a checkout of the supplied head. --gaps chooses the tests of what
 the group changes: for a path under .github/, changed or deleted, every test GITHUB_TESTS
@@ -126,7 +145,12 @@ to R2 by the group base's scripts/risk.py, with the entry's labels, and touch no
 input nor any protected path but judged content (safe_push.beyond_low): the block's
 own, from its base to its head, and what the entry's merge brings into the group, from
 the merge's first parent to the merge, as CI's risk job classes a pull request's merge
-commit. The group's own CI run is R5, so every check still runs on it before it merges.
+commit. While main's group lane is off (scripts/risk.py GROUP_LANE, off as built), the
+group's own CI run is R5, so every check still runs on it before it merges. With it on,
+an R0 to R2 group runs as its pull request did: check, model, acceptance and queue-tests
+in full in CI, and negative and formal-model held by the lane's named condition, proven
+before the merge by a verified VM result (GROUP-VERIFY) or run after it on the VM with
+an automatic revert on red (L6).
 The block is a declaration that anyone who can edit the pull request body can type: the
 judge checks it for consistency, not as proof that a pre-flight ran.
 
@@ -302,6 +326,35 @@ GITHUB_TESTS = {
                                           "tests/test_check_queue.py"),
     ".github/workflows/release-gate.yml": ("scripts/test_safe_push.py",),
     ".github/workflows/safe-push-tests.yml": ("scripts/test_safe_push.py",),
+}
+# The landing tool's tests, which --gaps never runs whole (CI-SCOPE-1a, L0): whenever the
+# group reaches them (gate_reached), its plan names them carried by queue-gate, the queue
+# judge's job that runs them in GATE_SHARDS shards from main's copy of this file
+# (--gate-plan, --gate-shard and --gate-prove), and --run-plan says so and runs them not.
+GATE_TESTS = "scripts/test_safe_push.py"
+GATE_COMMAND = ["python3", GATE_TESTS]
+GATE_CARRIER = "queue-gate"
+GATE_SHARDS = 12
+GATE_PLAN_SCHEMA = "stoicheia.queue-gate-plan/1"
+# The skips a shard's list may hold, keyed by test id, each with the condition under which
+# it is honest, read from the list's own environment (H-RAN), and its reason, exactly as the
+# test words it; any other skip, and any expected failure or unexpected success, fails
+# queue-gate and gate-tests: only `ok` passes there. Read from main's copy, never the
+# group's, as the judge is. The shards run on ubuntu-latest, with GITHUB_ACTIONS "true" and
+# no STOICHEIA_SLOW_TESTS, where these three skip. The other skip sites of the suite are not
+# honest there: CadenceReport's and Shards' run wherever GITHUB_ACTIONS is "true", and
+# HermeticModule's skip only inside their own planted child; the planted Outcomes tests are
+# never listed by the loader.
+ALLOWED_SKIPS = {
+    "MainChecksCache.test_the_sandbox_keeps_every_command_from_the_cache": (
+        "platform", lambda value: value != "darwin", "the platform is not darwin",
+        "macOS's sandbox is needed: not macOS, so there is no sandbox-exec"),
+    "MainChecksCache.test_a_profile_without_the_rules_above_the_cache_is_caught": (
+        "platform", lambda value: value != "darwin", "the platform is not darwin",
+        "macOS's sandbox is needed: not macOS, so there is no sandbox-exec"),
+    "FullChecks.test_full_sequence_on_a_good_commit": (
+        "slow_tests", lambda value: value != "1", 'STOICHEIA_SLOW_TESTS is not "1"',
+        "the full checks need Lean and take minutes: STOICHEIA_SLOW_TESTS=1"),
 }
 # The attributes with which Git may write a file to a checkout other than as its blob
 # holds it; --tree, which reads the checkout, refuses to read a page that has any of them.
@@ -871,8 +924,13 @@ def light_preflight(repo: Path, base: str, against: str, checked: str, harness_c
     and the one recomputed now. That is recomputed for two diffs, the block's own change,
     `against` to `checked`, and what the entry's merge brings into the group, its first
     parent to the merge; and neither may touch a check input nor any protected path but
-    judged content, as short_path requires (beyond_low). The group's own CI run is R5,
-    so every check runs on it."""
+    judged content, as short_path requires (beyond_low).
+    While main's group lane is off (scripts/risk.py GROUP_LANE, off as built), the
+    group's own CI run is R5, so every check still runs on it before it merges. With it
+    on, an R0 to R2 group runs as its pull request did: check, model, acceptance and
+    queue-tests in full in CI, and negative and formal-model held by the lane's named
+    condition, proven before the merge by a verified VM result (GROUP-VERIFY) or run
+    after it on the VM with an automatic revert on red (L6)."""
     if recorded not in safe_push.LOW_CLASSES:
         raise Refused(f"pre-flight: left the full checks to CI for the class {recorded}, "
                       "which only a change of R0 to R2 may")
@@ -1892,6 +1950,44 @@ def checkout(repo: Path, head: str) -> None:
                           f"part of {path} written by hand, outside its regions' bodies")
 
 
+def github_readers() -> dict[str, list[str]]:
+    """Each test GITHUB_TESTS names, with the paths under .github/ it reads."""
+    readers: dict[str, list[str]] = {}
+    for path, tests in GITHUB_TESTS.items():
+        for test in tests:
+            readers.setdefault(test, []).append(path)
+    return readers
+
+
+def gap_candidates(repo: Path, path: str, readers: dict[str, list[str]],
+                   deleted: set[str]) -> list[str]:
+    """The tests --gaps chooses for one changed or deleted path (gap_commands), before it
+    checks that each is a regular file: for a path under .github/, those GITHUB_TESTS names
+    for it, and a refusal if it names none; for a test GITHUB_TESTS names, the test itself;
+    nothing for any other deletion; a test file, itself; scripts/safe_push.py, its tests;
+    any other scripts/<name>.py, its test files that exist. gate_reached reads the same
+    choice, so that queue-gaps and queue-gate cannot differ on the landing tool's tests."""
+    if path == ".github" or path.startswith(".github/"):
+        if path not in GITHUB_TESTS:
+            raise Refused(f"gaps: no tests are mapped to {path}: a path under .github/ "
+                          "lands only once main's check_queue.py names its tests in "
+                          "GITHUB_TESTS")
+        return list(GITHUB_TESTS[path])
+    if path in readers:
+        return [path]
+    if path in deleted:
+        return []
+    if GAP_TEST.fullmatch(path):
+        return [path]
+    if path == "scripts/safe_push.py":
+        return [GATE_TESTS]
+    if re.fullmatch(r"scripts/[^/]+\.py", path):
+        name = Path(path).stem
+        candidates = [f"tests/test_{name}.py", f"scripts/test_{name}.py"]
+        return [p for p in candidates if (repo / p).is_file()]
+    return []
+
+
 def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) -> list[list[str]]:
     """Choose tests once; skip proven deletions and refuse unexplained missing tests. A
     path under .github/, deleted or not, asks for every test GITHUB_TESTS names for it,
@@ -1901,32 +1997,10 @@ def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) 
     deletion always refuses."""
     commands = set()
     deleted = deleted or set()
-    readers = {}
-    for path, tests in GITHUB_TESTS.items():
-        for test in tests:
-            readers.setdefault(test, []).append(path)
+    readers = github_readers()
     for path in sorted(checks | (deleted & readers.keys())):
         github = path == ".github" or path.startswith(".github/")
-        if github:
-            if path not in GITHUB_TESTS:
-                raise Refused(f"gaps: no tests are mapped to {path}: a path under .github/ "
-                              "lands only once main's check_queue.py names its tests in "
-                              "GITHUB_TESTS")
-            candidates = list(GITHUB_TESTS[path])
-        elif path in readers:
-            candidates = [path]
-        elif path in deleted:
-            continue
-        elif GAP_TEST.fullmatch(path):
-            candidates = [path]
-        elif path == "scripts/safe_push.py":
-            candidates = ["scripts/test_safe_push.py"]
-        elif re.fullmatch(r"scripts/[^/]+\.py", path):
-            name = Path(path).stem
-            candidates = [f"tests/test_{name}.py", f"scripts/test_{name}.py"]
-            candidates = [p for p in candidates if (repo / p).is_file()]
-        else:
-            candidates = []
+        candidates = gap_candidates(repo, path, readers, deleted)
         for candidate in candidates:
             if candidate in deleted and candidate not in readers:
                 continue
@@ -1961,15 +2035,15 @@ def derive_new(repo: Path, base: str, sha: str) -> dict:
     return result
 
 
-def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
-    """Choose the focused tests, and report acceptance's existing proposition verdicts;
-    run nothing (run_gaps runs what this chooses)."""
+def entry_changes(repo: Path, base: str, entries: list[dict]) -> tuple[set, set, set, set]:
+    """What the group's entries change, each against its own merge base with the group's
+    base, unioned: the checks, propositions and foundations (derive_new), and the files it
+    deletes. After criss-cross merges an entry has several merge bases: it counts what it
+    changes against any of them, and a file as deleted only if it deletes it against all of
+    them. So an entry that changes a file counts even when a later entry restores it."""
     checks, propositions, foundations = set(), set(), set()
     deleted = set()
     for pr in entries:
-        # After criss-cross merges an entry has several merge bases: it asks for the
-        # tests of what it changes against any of them, and is excused a test only for
-        # a file it deletes against all of them.
         bases = merge_bases(repo, base, pr["head"], pr["number"])
         changes = [derive_new(repo, mb, pr["head"]) for mb in bases]
         deleted.update(set.intersection(*(
@@ -1979,6 +2053,13 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
             checks.update(change["checks"])
             propositions.update(change["propositions"])
             foundations.update(change["foundations"])
+    return checks, propositions, foundations, deleted
+
+
+def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
+    """Choose the focused tests, and report acceptance's existing proposition verdicts;
+    run nothing (run_gaps runs what this chooses)."""
+    checks, propositions, foundations, deleted = entry_changes(repo, base, entries)
     if propositions:
         source = os.environ.get("ACCEPTANCE_VERDICTS")
         if not source:
@@ -1999,6 +2080,87 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[list[str]]:
     return gap_commands(repo, checks, deleted - tracked)
 
 
+def git_entries(repo: Path, base: str, head: str) -> list[dict] | None:
+    """The group's entries read from Git alone, for --gate-plan, which holds no token: each
+    commit of head's first-parent chain down to base, newest last, a merge whose second
+    parent is the entry's head, numbered by its subject when it names a pull request. None
+    when the chain is not such merges down to base: --gaps, which reads the queue too,
+    refuses that group (chain), and the plan fails closed."""
+    entries, current = [], head
+    while current != base:
+        pp = parents(repo, current)
+        if len(pp) != 2:
+            return None
+        subject = safe_push.git(repo, "show", "-s", "--format=%s", current).strip()
+        match = SUBJECT.fullmatch(subject)
+        entries.append({"number": int(match.group(1)) if match else 0, "head": pp[1]})
+        current = pp[0]
+    return list(reversed(entries))
+
+
+def risk_gate(repo: Path, base: str, head: str) -> tuple[bool, str | None, str]:
+    """Rule (b) of gate_reached: main's scripts/risk.py, imported from this file's own
+    folder (the group's base, as the judge's scripts/ is), gives the gate for base...head:
+    whether, the path that reaches it or None, and why. A risk.py without gate_inputs, or one
+    that raises, reaches it for every group (fail closed)."""
+    try:
+        import risk
+        if Path(risk.__file__).resolve().parent != Path(__file__).resolve().parent:
+            raise ImportError("risk.py must come from the judge's own folder")
+        if not callable(getattr(risk, "gate_inputs", None)) \
+                or not callable(getattr(risk, "gate", None)):
+            return True, None, "main's scripts/risk.py has no gate_inputs, so every group reaches it"
+        reached, why, path = risk.gate(base, head, cwd=str(repo))
+        return bool(reached), path, why
+    except Exception as error:  # noqa: BLE001 - any failure fails closed
+        return True, None, (f"main's scripts/risk.py could not give the gate "
+                            f"({type(error).__name__}), so every group reaches it")
+
+
+def gate_reach(repo: Path, base: str, head: str,
+               entries: list[dict] | None) -> tuple[bool, str | None, str]:
+    """Whether the group reaches the landing tool's tests, the path by which, and why (L0.1):
+    (a) the tests --gaps chooses for the group's entries, each against its own merge base
+    (entry_changes, gap_candidates), hold scripts/test_safe_push.py; or (b) main's risk.py
+    gives the gate for base...head (risk_gate). So the group's reach is the union of
+    queue-gaps' choice and of the reach its pull requests' gate-tests used. Entries that
+    cannot be read, or a path under .github/ that GITHUB_TESTS does not map, reach it."""
+    if entries is None:
+        return True, None, "its chain is not a pull request's merges down to its base"
+    checks, _, _, deleted = entry_changes(repo, base, entries)
+    readers = github_readers()
+    for path in sorted(checks | (deleted & readers.keys())):
+        try:
+            candidates = gap_candidates(repo, path, readers, deleted)
+        except Refused:
+            return True, path, f"{path} changed, and no tests are mapped to it"
+        if GATE_TESTS in candidates:
+            return True, path, f"{path} changed"
+    reached, path, why = risk_gate(repo, base, head)
+    if reached:
+        return True, path, f"{path} changed" if path else why
+    return False, None, why
+
+
+def gate_reached(repo: Path, base: str, head: str, entries: list[dict] | None) -> bool:
+    """L0.1's one choice, which --gaps and --gate-plan both make (gate_reach)."""
+    return gate_reach(repo, base, head, entries)[0]
+
+
+def gate_plan(repo: Path, base: str, head: str) -> tuple[dict, str]:
+    """--gate-plan: the plan queue-gate-plan uploads, and the line it prints."""
+    reached, path, why = gate_reach(repo, base, head, git_entries(repo, base, head))
+    plan = {"schema": GATE_PLAN_SCHEMA, "head": head, "base": base, "gate": reached,
+            "shards": GATE_SHARDS, "why": path}
+    where = f"GATE {head[:12]} on {base[:12]}"
+    return plan, (f"{where}: in {GATE_SHARDS} shards, since {why}" if reached
+                  else f"{where}: not reached; queue-gaps' other tests stand")
+
+
+def canonical(data) -> str:
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True) + "\n"
+
+
 def tokens_held() -> list[str]:
     """The names of this process's environment variables that may hold a token."""
     return sorted(key for key in os.environ if "TOKEN" in key.upper())
@@ -2017,6 +2179,10 @@ def run_gaps(repo: Path, commands: list[list[str]]) -> list[str]:
                          "with --run-plan, in a process that holds none")
     problems = []
     for command in commands:
+        if isinstance(command, dict):
+            print(f"queue-gaps: {GATE_TESTS} is carried by {GATE_CARRIER}'s {GATE_SHARDS} "
+                  "shards (L0)", flush=True)
+            continue
         print("gaps: " + shlex.join(command), flush=True)
         result = safe_push.run(command, repo, env=dict(os.environ))
         print(result.stdout, end="", flush=True)
@@ -2026,14 +2192,28 @@ def run_gaps(repo: Path, commands: list[list[str]]) -> list[str]:
     return problems
 
 
-def write_plan(path: Path, head: str, commands: list[list[str]]) -> None:
+def carried(commands: list[list[str]], reached: bool) -> list:
+    """The chosen tests as the plan holds them: when the group reaches the landing tool's
+    tests (gate_reached), its entry, chosen or not, carried by queue-gate, in its place."""
+    if not reached:
+        return commands
+    rest = [command for command in commands if command != GATE_COMMAND]
+    return sorted([*rest, {"command": GATE_COMMAND, "carried": GATE_CARRIER}],
+                  key=lambda c: c["command"] if isinstance(c, dict) else c)
+
+
+def write_plan(path: Path, head: str, commands: list) -> None:
     """Record the chosen tests for --run-plan, as JSON naming the group head, in a file
     that must not exist yet."""
     with open(path, "x", encoding="utf-8") as plan:
         json.dump({"head": head, "commands": commands}, plan)
         plan.write("\n")
     for command in commands:
-        print("gaps: chosen: " + shlex.join(command), flush=True)
+        if isinstance(command, dict):
+            print(f"gaps: carried by {GATE_CARRIER}: " + shlex.join(command["command"]),
+                  flush=True)
+        else:
+            print("gaps: chosen: " + shlex.join(command), flush=True)
 
 
 def read_plan(repo: Path, head: str, path: Path) -> list[list[str]]:
@@ -2047,6 +2227,15 @@ def read_plan(repo: Path, head: str, path: Path) -> list[list[str]]:
         raise ValueError("gaps: the plan is not one for this head")
     commands = []
     for command in plan["commands"]:
+        if isinstance(command, dict):
+            mark = command.get("carried")
+            if set(command) != {"command", "carried"} or mark != GATE_CARRIER \
+                    or command["command"] != GATE_COMMAND:
+                raise ValueError(f"run-plan: {mark!r} carries nothing")
+            if command in commands:
+                raise ValueError(f"gaps: the plan repeats or misnames a test: {GATE_TESTS}")
+            commands.append(command)
+            continue
         if command == ["python3", "scripts/test_safe_push.py"]:
             test = command[1]
         elif isinstance(command, list) and len(command) == 3 \
@@ -2059,7 +2248,176 @@ def read_plan(repo: Path, head: str, path: Path) -> list[list[str]]:
         if command in commands or target.is_symlink() or not target.is_file():
             raise ValueError(f"gaps: the plan repeats or misnames a test: {test}")
         commands.append(command)
+    if GATE_COMMAND in commands and any(isinstance(c, dict) for c in commands):
+        raise ValueError(f"gaps: the plan both carries and runs {GATE_TESTS}")
     return commands
+
+
+def shard_spec(value: str) -> int:
+    """K of `K/12`, the shard --gate-shard runs; anything else is unreadable."""
+    match = re.fullmatch(r"([1-9][0-9]*)/([1-9][0-9]*)", value or "")
+    if not match or int(match[2]) != GATE_SHARDS or not 1 <= int(match[1]) <= GATE_SHARDS:
+        raise ValueError(f"--gate-shard must be K/{GATE_SHARDS}, with 1 <= K <= {GATE_SHARDS}")
+    return int(match[1])
+
+
+def gate_shard(repo: Path, head: str, shard: int, ran: Path) -> list[str]:
+    """--gate-shard K/12: the group's own `python3 scripts/test_safe_push.py --shard K/12
+    --ran FILE`, as the cadence's shards run it, in the checkout of the group's head, in a
+    process that holds no token (run_gaps' rule)."""
+    if held := tokens_held():
+        raise ValueError("gate-shard: this process's environment holds a token ("
+                         + ", ".join(held) + "), which the tests could read: run the shard in "
+                         "a step that holds none")
+    checkout(repo, head)
+    command = [*GATE_COMMAND, "--shard", f"{shard}/{GATE_SHARDS}", "--ran", str(ran)]
+    print("gate-shard: " + shlex.join(command), flush=True)
+    done = subprocess.run(command, cwd=repo, stdin=subprocess.DEVNULL)
+    return [] if done.returncode == 0 else \
+        [f"gate-shard: {shlex.join(command)} failed (exit {done.returncode})"]
+
+
+def ran_list(path: Path) -> dict | None:
+    """A shard's list as test_safe_push.py's `--ran` writes it, round 3 (H-RAN): the shard
+    K, the count N, each test it ran as [id, outcome], a skip as [id, "skipped", reason],
+    and the shard's environment, {"platform", "github_actions", "slow_tests"}; None for
+    anything else, a skip with no reason or a list with no environment among it."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return None
+    env = data.get("env") if isinstance(data, dict) else None
+    if not (isinstance(data, dict) and set(data) == {"shard", "count", "ran", "env"}
+            and type(data["shard"]) is int and type(data["count"]) is int
+            and isinstance(data["ran"], list) and isinstance(env, dict)
+            and set(env) == {"platform", "github_actions", "slow_tests"}
+            and isinstance(env["platform"], str)
+            and all(value is None or isinstance(value, str)
+                    for value in (env["github_actions"], env["slow_tests"]))):
+        return None
+    for entry in data["ran"]:
+        if not (isinstance(entry, list) and all(isinstance(part, str) for part in entry)
+                and (len(entry) == 2 and entry[1] != "skipped"
+                     or len(entry) == 3 and entry[1] == "skipped")):
+            return None
+    return data
+
+
+def skip_problems(shard: int, data: dict, who: str = "queue-gate") -> list[str]:
+    """main's skip judge over one shard's list: every test `ok`, or an allowed skip
+    (ALLOWED_SKIPS) whose condition the list's environment meets, with its exact reason;
+    each fault named by `who`, the job that judges."""
+    problems = []
+    for entry in data["ran"]:
+        test, outcome = entry[0], entry[1]
+        if outcome == "ok":
+            continue
+        if outcome != "skipped":
+            problems.append(f"{who}: {test} ended '{outcome}' in shard {shard}: only ok "
+                            "passes here")
+            continue
+        allowed = ALLOWED_SKIPS.get(test)
+        if allowed is None:
+            problems.append(f"{who}: {test} was skipped in shard {shard}: not an allowed "
+                            "skip")
+            continue
+        field, holds, condition, reason = allowed
+        if entry[2] != reason:
+            problems.append(f"{who}: {test} was skipped in shard {shard} with the reason "
+                            f"{entry[2]!r}, not the allowed {reason!r}")
+        elif not holds(data["env"][field]):
+            problems.append(f"{who}: {test} was skipped in shard {shard}, but its "
+                            f"condition {condition} does not hold there")
+    return problems
+
+
+def read_gate_plan(path: Path, head: str, base: str, plan_gate: str) -> tuple[dict | None, list]:
+    """H1: the plan queue-gate-plan uploaded, held to this group and to the plan job's own
+    output: (the plan, []) or (None, the refusal)."""
+    try:
+        plan = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return None, [f"queue-gate: no plan for {head[:12]}"]
+    if not isinstance(plan, dict):
+        return None, [f"queue-gate: no plan for {head[:12]}"]
+    wanted = (("schema", GATE_PLAN_SCHEMA), ("head", head), ("base", base),
+              ("gate", {"true": True, "false": False}.get(plan_gate)), ("shards", GATE_SHARDS))
+    for field, expected in wanted:
+        value = plan.get(field)
+        if type(value) is not type(expected) or value != expected:
+            shown = "the plan job's output, " + repr(plan_gate) if field == "gate" else expected
+            return None, [f"queue-gate: the plan's {field} is not {shown}"]
+    return plan, []
+
+
+def gaps_carry(path: Path) -> bool | None:
+    """Whether queue-gaps' plan carries the landing tool's tests; None when it cannot be
+    read."""
+    try:
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        commands = plan["commands"]
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError):
+        return None
+    if not isinstance(commands, list):
+        return None
+    return any(isinstance(c, dict) and c.get("carried") == GATE_CARRIER
+               and c.get("command") == GATE_COMMAND for c in commands)
+
+
+def gate_prove(repo: Path, head: str, base: str | None, plan_path: Path | None,
+               gaps_path: Path | None, lists: Path, plan_gate: str | None) -> list[str]:
+    """--gate-prove: queue-gate's and gate-tests' verdict on the landing tool's tests, in
+    this order, the first failure ending it (L0.2): for queue-gate, H1, the plan, and N5,
+    queue-gaps' plan carries the tests exactly when the plan's gate is true, and a gate
+    false passes; then, and for gate-tests, which gives no plan and runs it only when the
+    gate is reached, every shard's list, H-RAN round 3; the checkout's own `--cover` with
+    the count from the plan, 12, in a process that holds no token; then main's skip
+    judge."""
+    who = "queue-gate" if plan_path is not None else "gate-tests"
+    if plan_path is None:
+        plan = {"gate": True, "shards": GATE_SHARDS}
+    else:
+        plan, problems = read_gate_plan(plan_path, head, base, plan_gate)
+        if problems:
+            return problems
+    if gaps_path is not None:
+        carries = gaps_carry(gaps_path)
+        if carries is None:
+            return [f"queue-gate: no plan of queue-gaps for {head[:12]}"]
+        if carries != plan["gate"]:
+            return [f"queue-gate: queue-gaps carries the gate's tests {str(carries).lower()}, "
+                    f"the plan's gate is {str(plan['gate']).lower()}"]
+    if not plan["gate"]:
+        print(f"queue-gate: not reached for {head[:12]}", flush=True)
+        return []
+    if held := tokens_held():
+        raise ValueError("gate-prove: this process's environment holds a token ("
+                         + ", ".join(held) + "), which the group's tests could read")
+    checkout(repo, head)
+    found: dict[int, dict] = {}
+    files = sorted(p for p in lists.rglob("*") if p.is_file()) if lists.is_dir() else []
+    for path in files:
+        data = ran_list(path)
+        if data is None:
+            shard = re.search(r"([0-9]+)\.json$", path.name)
+            return [f"{who}: the list of shard {shard[1] if shard else path.name} is not "
+                    "H-RAN round 3"]
+        found.setdefault(data["shard"], data)
+    missing = [k for k in range(1, plan["shards"] + 1) if k not in found]
+    if missing:
+        return [f"{who}: shard {k} of {plan['shards']} left no list of the tests it ran"
+                for k in missing]
+    command = [*GATE_COMMAND, "--cover", str(lists), "--shards", str(plan["shards"])]
+    print("gate-prove: " + shlex.join(command), flush=True)
+    done = subprocess.run(command, cwd=repo, stdin=subprocess.DEVNULL)
+    if done.returncode != 0:
+        return [f"{who}: the checkout's own {shlex.join(command[1:3])} --shards "
+                f"{plan['shards']} failed (exit {done.returncode})"]
+    problems = [problem for k in sorted(found) for problem in skip_problems(k, found[k], who)]
+    if not problems:
+        print(f"{who}: {head[:12]}: the {plan['shards']} shards' lists prove every test ran "
+              "once and passed, as ok or an allowed skip", flush=True)
+    return problems
 
 
 def main(argv=None) -> int:
@@ -2076,7 +2434,22 @@ def main(argv=None) -> int:
     parser.add_argument("--acceptance-run", action="store_true")
     parser.add_argument("--ci-workflow")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--gate-plan", action="store_true")
+    parser.add_argument("--github-output", action="store_true")
+    parser.add_argument("--gate-shard")
+    parser.add_argument("--ran", type=Path)
+    parser.add_argument("--gate-prove", action="store_true")
+    parser.add_argument("--gaps-plan", type=Path)
+    parser.add_argument("--lists", type=Path)
+    parser.add_argument("--plan-gate")
     args = parser.parse_args(argv)
+    gate_args = (args.gate_plan, args.github_output, args.gate_shard, args.ran, args.gate_prove,
+                 args.gaps_plan, args.lists, args.plan_gate)
+    if args.gate_plan or args.gate_shard is not None or args.gate_prove:
+        return gate_main(parser, args)
+    if any(gate_args):
+        parser.error("--github-output, --ran, --gaps-plan, --lists and --plan-gate belong to "
+                     "--gate-plan, --gate-shard and --gate-prove")
     waiting = (args.acceptance_run, args.ci_workflow, args.out)
     if args.tree is not None:
         if any((args.head, args.base, args.repo, args.github_json, args.gaps, args.plan,
@@ -2158,11 +2531,19 @@ def main(argv=None) -> int:
             # --run-plan to run.
             if not args.gaps:
                 problems = heading_problems(page_blob(repo, head))
-            elif args.plan is not None:
-                write_plan(args.plan, head, gaps(repo, base, entries))
-                problems = []
             else:
-                problems = run_gaps(repo, gaps(repo, base, entries))
+                # The landing tool's tests are never run whole here: whenever the group
+                # reaches them, queue-gate runs them in shards (L0), and the plan says so.
+                reached, path, why = gate_reach(repo, base, head, entries)
+                print(f"gaps: the landing tool's tests: "
+                      + (f"carried by {GATE_CARRIER}, since {why}" if reached
+                         else "not reached"), flush=True)
+                chosen = carried(gaps(repo, base, entries), reached)
+                if args.plan is not None:
+                    write_plan(args.plan, head, chosen)
+                    problems = []
+                else:
+                    problems = run_gaps(repo, chosen)
     except Refused as error:
         problems = [str(error)]
     except (OSError, UnicodeError, ValueError, safe_push.Refusal) as error:
@@ -2177,6 +2558,70 @@ def main(argv=None) -> int:
     if problems:
         for problem in problems:
             print(f"queue: REFUSED: {problem}")
+        return 1
+    print("queue: PASS")
+    return 0
+
+
+def gate_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    """--gate-plan, --gate-shard and --gate-prove (L0), each alone with its own arguments:
+    Git alone, in the checkout of the group's head; no GitHub read and no token."""
+    modes = [args.gate_plan, args.gate_shard is not None, args.gate_prove]
+    others = (args.repo, args.github_json, args.gaps, args.run_plan, args.tree, args.render,
+              args.acceptance_run, args.ci_workflow)
+    if sum(modes) != 1 or any(others):
+        parser.error("--gate-plan, --gate-shard and --gate-prove each stand alone")
+    if args.gate_plan and (not all((args.head, args.base, args.out)) or any(
+            (args.plan, args.ran, args.gaps_plan, args.lists, args.plan_gate))):
+        parser.error("--gate-plan needs --head, --base and --out, and accepts --github-output")
+    if args.gate_shard is not None and (not all((args.head, args.ran)) or any(
+            (args.base, args.out, args.plan, args.github_output, args.gaps_plan, args.lists,
+             args.plan_gate))):
+        parser.error("--gate-shard K/12 needs --head and --ran, and accepts nothing else")
+    if args.gate_prove and (not all((args.head, args.lists)) or any(
+            (args.out, args.ran, args.github_output)) or (
+            not args.base or args.plan_gate is None if args.plan is not None
+            else any((args.base, args.plan_gate is not None, args.gaps_plan)))):
+        parser.error("--gate-prove needs --head and --lists; queue-gate's needs --base, --plan "
+                     "and --plan-gate too, and accepts --gaps-plan; gate-tests' gives none of "
+                     "them")
+    repo = Path.cwd()
+    try:
+        head = oid(args.head, "head")
+        if args.gate_shard is not None:
+            problems = gate_shard(repo, head, shard_spec(args.gate_shard), args.ran)
+        elif args.gate_prove:
+            problems = gate_prove(repo, head, oid(args.base, "base") if args.base else None,
+                                  args.plan, args.gaps_plan, args.lists, args.plan_gate)
+        else:
+            base = oid(args.base, "base")
+            commit(repo, head)
+            commit(repo, base)
+            if not ancestor(repo, base, head):
+                raise ValueError("the group's base is not an ancestor of its head")
+            plan, line = gate_plan(repo, base, head)
+            output = os.environ.get("GITHUB_OUTPUT", "") if args.github_output else None
+            if output == "":
+                raise ValueError("--github-output: GITHUB_OUTPUT is not set")
+            with open(args.out, "x", encoding="utf-8") as target:
+                target.write(canonical(plan))
+            if output:
+                with open(output, "a", encoding="utf-8") as target:
+                    target.write(f"gate={'true' if plan['gate'] else 'false'}\n")
+            print(line, flush=True)
+            return 0
+    except Refused as error:
+        problems = [str(error)]
+    except (OSError, UnicodeError, ValueError, safe_push.Refusal) as error:
+        print(f"queue: could not read: {error}", file=sys.stderr)
+        return 2
+    except Exception as error:  # noqa: BLE001
+        print(f"queue: could not read: unexpected {type(error).__name__}", file=sys.stderr)
+        return 2
+    if problems:
+        for problem in problems:
+            print(problem if problem.startswith(("queue-gate: ", "gate-tests: "))
+                  else f"queue: REFUSED: {problem}")
         return 1
     print("queue: PASS")
     return 0

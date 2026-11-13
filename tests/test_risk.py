@@ -16,12 +16,16 @@ to main, and on a pull request of class R3 and above (a change to
 scripts/risk.py is R5); the cadence runs it on main every six hours.
 """
 
+import ast
+import fnmatch
 import os
+import re
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 RISK = ROOT / "scripts" / "risk.py"
@@ -353,7 +357,7 @@ class Repo(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         values = dict(line.split("=", 1)
                       for line in output.read_text(encoding="utf-8").splitlines())
-        self.assertEqual(sorted(values), ["class", "formal_model"])
+        self.assertEqual(sorted(values), ["class", "formal_model", "gate"])
         return values["class"], values["formal_model"], done.stdout
 
 
@@ -452,7 +456,7 @@ class Command(Repo):
                          env=dict(self.env, GITHUB_OUTPUT=str(output)))
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertEqual(output.read_text(encoding="utf-8"),
-                         "earlier=1\nclass=R5\nformal_model=true\n")
+                         "earlier=1\nclass=R5\nformal_model=true\ngate=true\n")
         self.assertTrue(done.stdout.startswith("R5 "), done.stdout)
         # Asked for, GITHUB_OUTPUT must be set: no class otherwise.
         done = self.risk("--diff", self.base, head, "--github-output")
@@ -630,7 +634,8 @@ class FormalModel(Repo):
                 head = self.commit({}, removed=(name,))
                 cls, model, out = self.lane(head)
                 self.assertEqual((cls, model), ("R2", "true"), out)
-                self.assertEqual(out.splitlines()[1:-1], [f"  R2 {name}"])
+                self.assertEqual(out.splitlines()[1:-2], [f"  R2 {name}"])
+                self.assertTrue(out.splitlines()[-1].startswith("gate tests: "), out)
 
     def test_a_new_import_counts_at_the_diffs_end(self):
         # A proof change that also gives the model a new input is R4, by model/; the file
@@ -667,6 +672,8 @@ class FormalModel(Repo):
                 done = self.risk("--diff", start, head)
                 self.assertEqual(done.returncode, 0, done.stderr)
                 lines = done.stdout.splitlines()
+                # The last line is the gate's (L3.2); the formal model's comes before it.
+                self.assertTrue(lines.pop().startswith("gate tests: "), done.stdout)
                 self.assertEqual(lines[:2], ["R2 Proofs", "  R2 Elements/BookI/Prop09.lean"])
                 self.assertTrue(lines[-1].startswith(
                     "formal model: in full, since Elements/BookI/Prop07.lean, in the formal "
@@ -775,6 +782,726 @@ class Repository(unittest.TestCase):
         self.assertEqual((full, why), (False, "the change touches nothing under model/, nor "
                                               "the axiom lock, nor a file the formal model "
                                               "imports"))
+
+
+# The landing tool's inputs (CI-SCOPE-1a, L3.1): the reads of its two files that the check
+# below resolves, `HERE /` and `SOURCE /` paths with their loops, constants and globs, and the
+# programs they run by subprocess; and the trace of the code under test, which shows what it
+# opens at runtime.
+GATE_FILES = ("scripts/safe_push.py", "scripts/test_safe_push.py")
+# What `HERE` and `SOURCE` name in the two files: scripts/ and the tree's root.
+BASES = {"HERE": "scripts", "SOURCE": ""}
+# The rows of GATE_READ_EXCLUDED as built, each with the decisions entry that names its path
+# and this test (G-ADD): a row beyond them is refused, so that the list only shrinks unless a
+# protected pull request of its own adds a row here, beside risk.py's.
+EXCLUDED_AS_BUILT = {("scripts/test_safe_push.py", "assets/*.png"):
+                     "docs/decisions/2026-11-12-ci-scope-1a.md"}
+# A line of a decisions entry that records a run of the whole landing tool's suite on main,
+# sharded: the compensating run that GATE_READ_EXCLUDED_LIVE needs (G-FLIP).
+SUITE_RUN = re.compile(r"^- Whole-suite run on main: ([0-9a-f]{40}), (\d{4}-\d\d-\d\dT\d\d:\d\d:"
+                       r"\d\dZ), (\d+) of \3 shards green\.$", re.M)
+
+
+def constants(tree: ast.Module) -> dict:
+    """A module's constants, read by `ast` alone: each name bound once at the top level to a
+    string, an f-string of other such names, or a tuple or list of strings, in which a
+    starred generator of an f-string `<folder>/{...}` stands for `<folder>/*`."""
+    found: dict = {}
+
+    def value(node):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return node.value
+        if isinstance(node, ast.JoinedStr):
+            parts = [value(part.value) if isinstance(part, ast.FormattedValue)
+                     else part.value for part in node.values]
+            return "".join(parts) if all(isinstance(p, str) for p in parts) else None
+        if isinstance(node, ast.Name):
+            return found.get(node.id)
+        if isinstance(node, (ast.Tuple, ast.List)):
+            items = []
+            for element in node.elts:
+                if isinstance(element, ast.Starred):
+                    inner = element.value
+                    if isinstance(inner, ast.Call) and inner.args:
+                        inner = inner.args[0]
+                    template = getattr(inner, "elt", None)
+                    if not isinstance(template, ast.JoinedStr) or not template.values \
+                            or not isinstance(template.values[0], ast.Constant) \
+                            or not str(template.values[0].value).endswith("/"):
+                        return None
+                    items.append(template.values[0].value + "*")
+                else:
+                    item = value(element)
+                    if not isinstance(item, str):
+                        return None
+                    items.append(item)
+            return tuple(items)
+        return None
+
+    for statement in tree.body:
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1 \
+                and isinstance(statement.targets[0], ast.Name):
+            got = value(statement.value)
+            if got is not None:
+                found[statement.targets[0].id] = got
+    return found
+
+
+def gate_reads(texts: dict[str, str]) -> list[tuple[str, int, frozenset | None, str]]:
+    """Every read of the two files' text (by path in `texts`): (file, line, the paths it
+    takes, or None when the check cannot resolve it, and its text). A read is a `HERE /` or
+    `SOURCE /` path (HERE.parent is SOURCE) whose operands are strings, safe_push's module
+    constants, names bound in its function to one of them, or the target of a `for` over a
+    tuple of strings or such a constant; on which `.glob(pattern)` is `<path>/<pattern>`
+    and shutil.copytree `<path>/*`. And each string under scripts/ or tests/ in a list or
+    tuple given first to a subprocess call, a program the file runs."""
+    own = {path: ast.parse(text, filename=path) for path, text in texts.items()}
+    safe_push = constants(own["scripts/safe_push.py"]) if "scripts/safe_push.py" in own else {}
+    reads = []
+    for path, tree in own.items():
+        module = constants(tree)
+        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+
+        def bindings(node) -> dict:
+            """The names bound in the function holding `node`: by assignment, and as a loop's
+            target, each to the values it may take (a tuple)."""
+            scope = node
+            while scope in parents and not isinstance(scope, (ast.FunctionDef,
+                                                               ast.AsyncFunctionDef)):
+                scope = parents[scope]
+            bound: dict = {}
+            for inner in ast.walk(scope):
+                if isinstance(inner, ast.For) and isinstance(inner.target, ast.Name):
+                    got = operand(inner.iter, {})
+                    if got is not None:
+                        bound[inner.target.id] = got
+                elif isinstance(inner, ast.Assign) and len(inner.targets) == 1 \
+                        and isinstance(inner.targets[0], ast.Name):
+                    got = operand(inner.value, {})
+                    if got is not None:
+                        bound.setdefault(inner.targets[0].id, got)
+            return bound
+
+        def operand(node, bound) -> tuple | None:
+            """The strings an operand may be, or None."""
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                return (node.value,)
+            if isinstance(node, (ast.Tuple, ast.List)) and all(
+                    isinstance(e, ast.Constant) and isinstance(e.value, str) for e in node.elts):
+                return tuple(e.value for e in node.elts)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) \
+                    and node.value.id == "safe_push" and node.attr in safe_push:
+                got = safe_push[node.attr]
+                return got if isinstance(got, tuple) else (got,)
+            if isinstance(node, ast.Name):
+                if node.id in bound:
+                    return bound[node.id]
+                if node.id in module and node.id not in BASES:
+                    got = module[node.id]
+                    return got if isinstance(got, tuple) else (got,)
+            return None
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and isinstance(node.func.value, ast.Name) \
+                    and node.func.value.id == "subprocess" and node.args \
+                    and isinstance(node.args[0], (ast.List, ast.Tuple)):
+                for element in node.args[0].elts:
+                    if isinstance(element, ast.Constant) and isinstance(element.value, str) \
+                            and element.value.startswith(("scripts/", "tests/")):
+                        reads.append((path, node.lineno, frozenset([element.value]),
+                                      element.value))
+            if not (isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div)) or (
+                    isinstance(parents.get(node), ast.BinOp)
+                    and isinstance(parents[node].op, ast.Div) and parents[node].left is node):
+                continue
+            chain, left = [], node
+            while isinstance(left, ast.BinOp) and isinstance(left.op, ast.Div):
+                chain.insert(0, left.right)
+                left = left.left
+            if isinstance(left, ast.Attribute) and left.attr == "parent" \
+                    and isinstance(left.value, ast.Name) and left.value.id == "HERE":
+                base = ""
+            elif isinstance(left, ast.Name) and left.id in BASES:
+                base = BASES[left.id]
+            else:
+                continue
+            bound = bindings(node)
+            options = [operand(part, bound) for part in chain]
+            text = ast.unparse(node)
+            if any(option is None for option in options):
+                reads.append((path, node.lineno, None, text))
+                continue
+            paths = {base}
+            for option in options:
+                paths = {"/".join(p for p in (prefix, item) if p)
+                         for prefix in paths for item in option}
+            above = parents.get(node)
+            if isinstance(above, ast.Attribute) and above.attr == "glob" \
+                    and isinstance(parents.get(above), ast.Call) and parents[above].args:
+                pattern = operand(parents[above].args[0], bound)
+                if pattern is None:
+                    reads.append((path, node.lineno, None, text))
+                    continue
+                paths = {f"{p}/{g}" for p in paths for g in pattern}
+            elif isinstance(above, ast.Call) and ast.unparse(above.func) == "shutil.copytree" \
+                    and above.args and above.args[0] is node:
+                paths = {f"{p}/*" for p in paths}
+            reads.append((path, node.lineno, frozenset(paths), text))
+    return reads
+
+
+def covered(path: str, inputs: set[str]) -> bool:
+    """Whether a read's path is among the inputs: a file, or a folder whose files are."""
+    return risk.reaches(path, inputs) or risk.reaches(path + "/x", inputs)
+
+
+def gate_read_problems(reads, inputs: set[str], rows) -> list[str]:
+    """What the reads and GATE_READ_EXCLUDED's rows break: a read the check cannot resolve
+    that no row names; a path read that is neither among the inputs nor a row's path on its
+    lines; and a row with no reason, a row whose lines hold no read, and a row whose lines no
+    longer read its path (F-N4, F-EXCL, G-STALE)."""
+    problems = []
+    for file, line, paths, text in reads:
+        named = [row for row in rows if row[0] == file and row[1] <= line <= row[2]]
+        if paths is None:
+            if not named:
+                problems.append(f"{file}:{line} reads {text}, which the check cannot resolve: "
+                                "name it in gate_inputs, or its line in GATE_READ_EXCLUDED")
+            continue
+        for path in sorted(paths):
+            if not covered(path, inputs) and not any(
+                    fnmatch.fnmatchcase(path, row[3]) for row in named):
+                problems.append(f"gate_inputs lacks {path}, which {file}:{line} executes "
+                                "or loads")
+    for row in rows:
+        file, first, last, path, reason = row
+        if not isinstance(reason, str) or not reason.strip():
+            problems.append(f"GATE_READ_EXCLUDED's row {path} gives no reason")
+        held = [read for read in reads if read[0] == file and first <= read[1] <= last]
+        if not held:
+            problems.append(f"GATE_READ_EXCLUDED's row {path} names {file} {first} to {last}, "
+                            "which holds no HERE / or SOURCE / read")
+        elif not any(read[2] and path in read[2] for read in held):
+            problems.append(f"GATE_READ_EXCLUDED's row {path} is stale: {file} {first} to "
+                            f"{last} no longer reads it")
+    return problems
+
+
+TRACER = r'''
+import atexit, os, runpy, sys
+out, root, script = sys.argv[1], os.path.realpath(sys.argv[2]), sys.argv[3]
+seen = set()
+def hook(event, args):
+    if event == "open" and isinstance(args[0], (str, bytes, os.PathLike)):
+        p = os.path.realpath(os.path.join(os.getcwd(), os.fsdecode(args[0])))
+        if p.startswith(root + os.sep):
+            seen.add(os.path.relpath(p, root))
+    elif event == "subprocess.Popen" and isinstance(args[1], (list, tuple)):
+        argv = [os.fsdecode(a) for a in args[1]]
+        if argv and os.path.basename(argv[0]) == "git" and ({"cat-file", "show"} & set(argv)):
+            seen.update(a.split(":", 1)[1] for a in argv[1:] if ":" in a and a[:1] != "-")
+def write():
+    with open(out, "w", encoding="utf-8") as f:
+        f.write("".join(p + "\n" for p in sorted(seen)))
+sys.addaudithook(hook)
+atexit.register(write)
+sys.argv = [script]
+sys.path.insert(0, os.path.dirname(os.path.abspath(script)))
+runpy.run_path(script, run_name="__main__")
+'''
+# The guards safe_push.py runs on every commit it checks, the tests' good commits among them,
+# with --_test-skip-checks too (guard_fidelity and guard_generated): the code under test that
+# reads the tree at runtime (docs/reports/what-the-checks-read.md measured the checks so).
+GUARDS = ("scripts/check_fidelity.py", "scripts/render.py")
+TRACED: dict = {}
+
+
+def traced(root: Path = ROOT) -> dict[str, set[str]]:
+    """The tree's paths each guard opens at runtime, or names to `git cat-file` or `git
+    show`, run once each under an audit hook in a clone of `root` at HEAD (sharing its
+    objects, writing nothing to it), each required to pass."""
+    if root not in TRACED:
+        with tempfile.TemporaryDirectory() as temp:
+            temp = Path(temp).resolve()
+            env = git_environment(temp)
+            head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, env=env,
+                                  capture_output=True, text=True, check=True).stdout.strip()
+            clone = temp / "clone"
+            for args in (["clone", "-q", "--shared", "--no-checkout", str(root), str(clone)],
+                         ["-C", str(clone), "checkout", "-q", "--detach", head]):
+                subprocess.run(["git", *args], env=env, capture_output=True, check=True)
+            (temp / "tracer.py").write_text(TRACER, encoding="utf-8")
+            found = {}
+            for guard in GUARDS:
+                out = temp / (Path(guard).stem + ".txt")
+                done = subprocess.run([sys.executable, "-I", str(temp / "tracer.py"), str(out),
+                                       str(clone), guard], cwd=clone, env=env,
+                                      capture_output=True, text=True)
+                if done.returncode != 0:
+                    raise AssertionError(f"the trace could not run {guard} (exit "
+                                         f"{done.returncode}): {done.stdout[-400:]}"
+                                         f"{done.stderr[-400:]}")
+                found[guard] = set(out.read_text(encoding="utf-8").split("\n")) - {""}
+            TRACED[root] = found
+    return TRACED[root]
+
+
+def opened_problems(rows, opened: dict[str, set[str]]) -> list[str]:
+    """Each row whose path the trace shows the code under test opening (G-OPENED)."""
+    problems = []
+    for row in rows:
+        for guard, paths in sorted(opened.items()):
+            hit = sorted(p for p in paths if fnmatch.fnmatchcase(p, row[3]))
+            if hit:
+                problems.append(f"GATE_READ_EXCLUDED's row {row[3]}: the code under test opens "
+                                f"{hit[0]} at runtime ({guard}, as safe_push.py runs it): it is "
+                                "no fixture data, and stays in the gate's reach")
+                break
+    return problems
+
+
+def added_problems(rows, root: Path = ROOT) -> list[str]:
+    """Each row beyond EXCLUDED_AS_BUILT, or whose decisions entry does not name its path and
+    this test (G-ADD)."""
+    problems = []
+    for row in rows:
+        entry = EXCLUDED_AS_BUILT.get((row[0], row[3]))
+        text = (root / entry).read_text(encoding="utf-8") if entry and (root / entry).is_file() \
+            else ""
+        if entry is None or row[3] not in text or "tests/test_risk.py" not in text:
+            problems.append(f"GATE_READ_EXCLUDED gains {row[3]}: a row is added only by its own "
+                            "protected pull request, which names it in tests/test_risk.py's "
+                            "EXCLUDED_AS_BUILT with a decisions entry citing this test")
+    return problems
+
+
+def live_problems(live, grounds, root: Path = ROOT) -> list[str]:
+    """GATE_READ_EXCLUDED_LIVE: False, or True with grounds, a decisions entry recording two
+    or more runs of the whole suite on main, sharded, each green, at most six hours apart
+    (G-FLIP)."""
+    if live is False:
+        return []
+    if live is not True:
+        return [f"GATE_READ_EXCLUDED_LIVE is {live!r}, neither True nor False"]
+    path = root / grounds if isinstance(grounds, str) and grounds.startswith(
+        "docs/decisions/") else None
+    runs = SUITE_RUN.findall(path.read_text(encoding="utf-8")) if path and path.is_file() else []
+    import datetime
+    stamps = sorted(datetime.datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ")
+                    for _, stamp, _ in runs)
+    if len(stamps) < 2 or any((b - a).total_seconds() > 6 * 3600
+                              for a, b in zip(stamps, stamps[1:])):
+        return ["GATE_READ_EXCLUDED_LIVE is True, but its grounds cite no recorded runs of the "
+                "whole suite on main, every six hours at most (GATE_READ_EXCLUDED_GROUNDS)"]
+    return []
+
+
+def head_texts(root: Path = ROOT) -> dict[str, str]:
+    return {path: (root / path).read_text(encoding="utf-8") for path in GATE_FILES}
+
+
+class GateCommand(Repo):
+    """`--diff`'s gate on a repository of the test's own, shaped as the landing tool is: its
+    two files, what they import, and what they run or read (L3)."""
+
+    FILES = {
+        "scripts/safe_push.py": "import sys\nimport heath\n",
+        "scripts/test_safe_push.py": ("import sys\nfrom pathlib import Path\n"
+                                      "HERE = Path(__file__).resolve().parent\n"
+                                      "sys.path.insert(0, str(HERE))\n"
+                                      "import safe_push\nimport render\n"),
+        "scripts/render.py": "import check_style\n",
+        "scripts/check_style.py": "import re\n",
+        "scripts/heath.py": "import os\n",
+        "scripts/check_paths.py": "import os\n",
+        "scripts/check_links.py": "import os\n",
+        "scripts/install_hooks.sh": "#!/bin/sh\n",
+        "scripts/check_release_gate.py": "import json\n",
+        "tests/test_release_gate.py": ("import sys\nfrom pathlib import Path\n"
+                                       "ROOT = Path(__file__).resolve().parents[1]\n"
+                                       "sys.path.insert(0, str(ROOT / 'scripts'))\n"
+                                       "import check_release_gate\n"),
+        "tests/model/run.py": "import search\n",
+        "tests/model/search.py": "import math\n",
+        "tests/model/derived.py": "import math\n",
+        "README.md": "A reader's edition.\n",
+        "facts.json": "{}\n",
+        "AGENTS.md": "For agents.\n",
+        "docs/STYLE.md": "The style.\n",
+        "assets/logo.png": "an image\n",
+        ".github/workflows/ci.yml": "name: CI\n",
+    }
+
+    def gate(self, head, base=None):
+        """The gate `--diff --github-output` writes, and the line it prints."""
+        output = self.temp / "gate-output"
+        output.write_text("", encoding="utf-8")
+        done = self.risk("--diff", base or self.base, head, "--github-output",
+                         env=dict(self.env, GITHUB_OUTPUT=str(output)))
+        self.assertEqual(done.returncode, 0, done.stderr)
+        values = dict(line.split("=", 1)
+                      for line in output.read_text(encoding="utf-8").splitlines())
+        line = [text for text in done.stdout.splitlines() if text.startswith("gate tests: ")]
+        self.assertEqual(len(line), 1, done.stdout)
+        print(f"  {self.id().split('.')[-1]}: gate={values['gate']}; {line[0]}")
+        return values["gate"], line[0]
+
+    def assertReached(self, head, path, base=None):
+        self.assertEqual(self.gate(head, base), (
+            "true", f"gate tests: in full, since {path} is among the landing tool's inputs"))
+
+    def assertNotReached(self, head, base=None):
+        self.assertEqual(self.gate(head, base), (
+            "false", "gate tests: pass at once, since the change touches none of the landing "
+                     "tool's inputs"))
+
+    def test_L3_g1_the_landing_tool_reaches_it(self):
+        self.assertReached(self.commit({"scripts/safe_push.py": "import sys\nimport heath\n#\n"}),
+                           "scripts/safe_push.py")
+
+    def test_L3_g2_a_document_outside_the_inputs_does_not(self):
+        # Round 2 named README.md; R3.F's F-README puts it in the reach (test_F_README), so
+        # the case is run on a document the tests never read.
+        self.assertNotReached(self.commit({"docs/STYLE.md": "The style, changed.\n"}))
+
+    def test_L3_g3_an_import_of_the_landing_tool_reaches_it(self):
+        self.assertReached(self.commit({"scripts/heath.py": "import os\n#\n"}), "scripts/heath.py")
+
+    def test_L3_g5_the_model_s_harness_reaches_it(self):
+        self.assertReached(self.commit({"tests/model/run.py": "import search\n#\n"}),
+                           "tests/model/run.py")
+
+    def test_L3_g6_install_hooks_reaches_it(self):
+        self.assertReached(self.commit({"scripts/install_hooks.sh": "#!/bin/sh\n#\n"}),
+                           "scripts/install_hooks.sh")
+
+    def test_L3_g7_check_paths_reaches_it(self):
+        self.assertReached(self.commit({"scripts/check_paths.py": "import os\n#\n"}),
+                           "scripts/check_paths.py")
+
+    def test_L3_g8_a_deletion_reaches_it_by_the_base_s_inputs(self):
+        self.assertReached(self.commit({}, removed=["scripts/install_hooks.sh"]),
+                           "scripts/install_hooks.sh")
+        # And a file only the base's import scan reaches: at the head nothing imports it.
+        base = self.commit({"scripts/safe_push.py": "import sys\nimport heath\nimport extra\n",
+                            "scripts/extra.py": "import os\n"})
+        self.git("rm", "-q", "--", "scripts/extra.py")
+        (self.root / "scripts/safe_push.py").write_text("import sys\nimport heath\n")
+        head = self.commit({})
+        self.assertNotIn("scripts/extra.py", risk.gate_inputs(head, str(self.root))[0])
+        self.assertReached(head, "scripts/extra.py", base=base)
+
+    def test_L3_g9_a_rename_reaches_it_at_both_ends(self):
+        self.git("mv", "scripts/check_paths.py", "scripts/check_paths2.py")
+        head = self.commit({})
+        self.assertReached(head, "scripts/check_paths.py")
+        # The new name alone is outside the inputs: the old one reaches them.
+        self.assertFalse(risk.reaches("scripts/check_paths2.py",
+                                      risk.gate_inputs(head, str(self.root))[0]))
+
+    def test_L3_g10_check_links_does_not(self):
+        self.assertNotReached(self.commit({"scripts/check_links.py": "import os\n#\n"}))
+
+    def test_L3_g11_any_file_of_the_model_s_harness_reaches_it(self):
+        self.assertReached(self.commit({"tests/model/derived.py": "import math\n#\n"}),
+                           "tests/model/derived.py")
+
+    def test_L3_b7_a_new_import_of_safe_push_is_among_the_inputs_at_the_head(self):
+        self.commit({"scripts/foo.py": "import os\n"})
+        before = self.git("rev-parse", "HEAD").strip()
+        head = self.commit({"scripts/safe_push.py": "import sys\nimport heath\nimport foo\n"})
+        self.assertNotIn("scripts/foo.py", risk.gate_inputs(before, str(self.root))[0])
+        self.assertIn("scripts/foo.py", risk.gate_inputs(head, str(self.root))[0])
+        later = self.commit({"scripts/foo.py": "import os\n#\n"})
+        self.assertReached(later, "scripts/foo.py", base=head)
+
+    def test_L3_b8_an_unparsed_test_file_reaches_it_for_every_change(self):
+        broken = self.commit({"scripts/test_safe_push.py": "def (:\n"})
+        head = self.commit({"docs/STYLE.md": "The style, changed.\n"})
+        gate, line = self.gate(head, base=broken)
+        self.assertEqual(gate, "true")
+        self.assertTrue(line.startswith("gate tests: in full, since scripts/test_safe_push.py, "
+                                        "which the landing tool's tests read, cannot be read "
+                                        "(it does not parse"), line)
+
+    def test_F_N3_UNREAD_an_unresolved_sys_path_folder_reaches_it_for_every_change(self):
+        unread = self.commit({"scripts/heath.py": "import sys\nsys.path.insert(0, sys.argv[1])\n"})
+        head = self.commit({"docs/STYLE.md": "The style, changed.\n"})
+        gate, line = self.gate(head, base=unread)
+        self.assertEqual(gate, "true")
+        self.assertIn("scripts/heath.py, which the landing tool's tests read, cannot be read "
+                      "(line 2 names a folder for sys.path that the reader cannot resolve", line)
+
+    def test_F_N3_RG_the_release_gate_is_found_through_its_insertion(self):
+        # The fixture's GATE_EXECUTED without the release gate: the import scan finds it, in
+        # scripts/, by tests/test_release_gate.py's own sys.path.insert; without that line,
+        # the import resolves in tests/ alone, where no such file is.
+        rows = tuple(row for row in risk.GATE_EXECUTED if row[0] != "scripts/check_release_gate.py")
+        with mock.patch.object(risk, "GATE_EXECUTED", rows):
+            self.assertIn("scripts/check_release_gate.py",
+                          risk.gate_inputs(self.base, str(self.root))[0])
+            plain = self.commit({"tests/test_release_gate.py": "import check_release_gate\n"})
+            self.assertNotIn("scripts/check_release_gate.py",
+                             risk.gate_inputs(plain, str(self.root))[0])
+        imported, why = risk.imports_of("tests/test_release_gate.py",
+                                        (ROOT / "tests/test_release_gate.py").read_text(),
+                                        {"", "scripts", "tests"})
+        self.assertIsNone(why)
+        self.assertIn("scripts/check_release_gate.py", imported)
+        self.assertIn("scripts/safe_push.py", imported)
+        print("  F-N3-RG: tests/test_release_gate.py's sys.path.insert of scripts/ puts "
+              "scripts/check_release_gate.py among the gate's inputs; without it, it is not")
+
+    def test_F_README_F_FACTS_F_ASSETS(self):
+        for label, files, path in (("F-README", {"README.md": "Changed.\n"}, "README.md"),
+                                   ("F-FACTS", {"facts.json": "{\"a\": 1}\n"}, "facts.json"),
+                                   ("F-ASSETS", {"assets/new.png": "a new image\n"},
+                                    "assets/new.png")):
+            with self.subTest(label):
+                before = self.git("rev-parse", "HEAD").strip()
+                self.assertReached(self.commit(files), path, base=before)
+
+    def test_G_LIVE_an_excluded_path_stays_in_reach_while_the_switch_is_off(self):
+        head = self.commit({"assets/new.png": "a new image\n"})
+        self.assertReached(head, "assets/new.png")
+        self.assertFalse(risk.GATE_READ_EXCLUDED_LIVE)
+        # Planted: the switch on, and the excluded path alone leaves the reach.
+        with mock.patch.object(risk, "GATE_READ_EXCLUDED_LIVE", True):
+            reached, _, _ = risk.gate(self.base, head, cwd=str(self.root))
+        self.assertFalse(reached)
+        print("  G-LIVE: with GATE_READ_EXCLUDED_LIVE False, a new assets/*.png reaches the "
+              "gate; planted True, it does not")
+
+
+class GroupLaneSwitch(unittest.TestCase):
+    """`--group-lane` (L1.0): off as built; on only for a condition it names."""
+
+    def run_with(self, value):
+        """risk.py with GROUP_LANE set to `value` (a Python expression), run --group-lane."""
+        text = RISK.read_text(encoding="utf-8")
+        self.assertEqual(text.count("\nGROUP_LANE = None\n"), 1)
+        with tempfile.TemporaryDirectory() as temp:
+            copy = Path(temp) / "risk.py"
+            copy.write_text(text.replace("\nGROUP_LANE = None\n", f"\nGROUP_LANE = {value}\n"))
+            return subprocess.run([sys.executable, "-I", str(copy), "--group-lane"],
+                                  capture_output=True, text=True)
+
+    def test_off_as_built(self):
+        done = subprocess.run([sys.executable, "-I", str(RISK), "--group-lane"],
+                              capture_output=True, text=True)
+        self.assertEqual((done.returncode, done.stdout), (0, "group-lane: off\n"))
+        self.assertIsNone(risk.GROUP_LANE)
+
+    def test_on_for_a_named_condition(self):
+        for value in ("L6", "GROUP-VERIFY"):
+            with self.subTest(value):
+                done = self.run_with(repr(value))
+                self.assertEqual((done.returncode, done.stdout),
+                                 (0, f"group-lane: on, because {value}\n"))
+
+    def test_L1_s4_any_other_value_exits_2(self):
+        for value in ('"L2"', '"L4"', "True", '""'):
+            with self.subTest(value):
+                done = self.run_with(value)
+                self.assertEqual((done.returncode, done.stdout), (2, ""))
+                self.assertIn(f"risk.py: GROUP_LANE is {value.replace(chr(34), chr(39))}, "
+                              "neither None, L6 nor GROUP-VERIFY", done.stderr)
+        print("  L1.s4: GROUP_LANE 'L2': --group-lane exits 2: "
+              + self.run_with('"L2"').stderr.strip())
+
+
+class GateReads(unittest.TestCase):
+    """The audited reads of the landing tool's two files (F-N4), and GATE_READ_EXCLUDED's
+    rows held by the same check and by the trace of the code under test (R3.G, R3.H)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.texts = head_texts()
+        cls.reads = gate_reads(cls.texts)
+        cls.inputs, cls.unread = risk.gate_inputs("HEAD", str(ROOT))
+
+    def problems(self, texts=None, rows=None):
+        return gate_read_problems(gate_reads(texts) if texts else self.reads, self.inputs,
+                                  risk.GATE_READ_EXCLUDED if rows is None else rows)
+
+    def planted(self, file, before, after, count=1):
+        texts = dict(self.texts)
+        self.assertEqual(texts[file].count(before), count, before)
+        texts[file] = texts[file].replace(before, after, 1)
+        return texts
+
+    def line_of(self, texts, file, needle):
+        return next(n for n, line in enumerate(texts[file].splitlines(), 1) if needle in line)
+
+    def test_F_AST_BASE_every_read_of_the_head_resolves_into_the_inputs(self):
+        self.assertEqual(self.unread, {})
+        self.assertEqual(self.problems(), [])
+        resolved = sum(1 for read in self.reads if read[2] is not None)
+        print(f"  F-AST-BASE: {resolved} of {len(self.reads)} reads of the two files resolved, "
+              f"each among gate_inputs or a GATE_READ_EXCLUDED row")
+
+    def test_F_AST_BASE_at_the_base_commit(self):
+        # The two files as public main held them before this change (b34df227's, the same
+        # at 640b0d2f), against the head's inputs.
+        texts = {}
+        for path in GATE_FILES:
+            done = subprocess.run(["git", "show", f"640b0d2f7a2c3c9d86f0a95e1e4a9348f53fd13c:{path}"],
+                                  cwd=ROOT, capture_output=True, text=True)
+            if done.returncode != 0:
+                self.skipTest("the base commit is not in this repository")
+            texts[path] = done.stdout
+        self.assertEqual(gate_read_problems(gate_reads(texts), self.inputs, ()), [])
+
+    def test_F_AST_NEW_a_new_read_outside_the_inputs_fails_naming_it(self):
+        texts = self.planted("scripts/test_safe_push.py", "\nTIMES = HERE /",
+                             '\nSTYLE = (SOURCE / "docs" / "STYLE.md").read_text()\nTIMES = HERE /')
+        line = self.line_of(texts, "scripts/test_safe_push.py", 'STYLE = (SOURCE')
+        self.assertEqual(self.problems(texts), [
+            f"gate_inputs lacks docs/STYLE.md, which scripts/test_safe_push.py:{line} executes "
+            "or loads"])
+        print(f"  F-AST-NEW: {self.problems(texts)[0]}")
+
+    def test_F_AST_UNRESOLVED_a_read_it_cannot_resolve_fails_naming_its_line(self):
+        texts = self.planted("scripts/test_safe_push.py", "\nTIMES = HERE /",
+                             "\nODD = SOURCE / os.environ['ODD']\nTIMES = HERE /")
+        line = self.line_of(texts, "scripts/test_safe_push.py", "ODD = SOURCE")
+        print(f"  F-AST-UNRESOLVED: {self.problems(texts)[0]}")
+        self.assertEqual(self.problems(texts), [
+            f"scripts/test_safe_push.py:{line} reads SOURCE / os.environ['ODD'], which the "
+            "check cannot resolve: name it in gate_inputs, or its line in GATE_READ_EXCLUDED"])
+        # Named by a row, the line passes.
+        row = ("scripts/test_safe_push.py", line, line, "anything", "a reason")
+        self.assertEqual([p for p in self.problems(texts, (*risk.GATE_READ_EXCLUDED, row))
+                          if "cannot resolve" in p], [])
+
+    def test_L3_b9_a_program_run_outside_the_inputs_fails_naming_it(self):
+        texts = self.planted("scripts/test_safe_push.py", "\nTIMES = HERE /",
+                             '\nNEW = subprocess.run([sys.executable, "scripts/new_tool.py"])'
+                             "\nTIMES = HERE /")
+        line = self.line_of(texts, "scripts/test_safe_push.py", "scripts/new_tool.py")
+        problems = self.problems(texts)
+        self.assertEqual(problems, [f"gate_inputs lacks scripts/new_tool.py, which "
+                                    f"scripts/test_safe_push.py:{line} executes or loads"])
+        print(f"  L3.b9: {problems[0]}")
+
+    def test_F_EXCL_a_row_with_no_reason_or_no_read_on_its_lines_fails(self):
+        (file, first, last, path, _), = risk.GATE_READ_EXCLUDED
+        self.assertEqual(self.problems(rows=((file, first, last, path, ""),)),
+                         [f"GATE_READ_EXCLUDED's row {path} gives no reason"])
+        self.assertEqual(self.problems(rows=((file, 1, 1, path, "a reason"),)), [
+            f"GATE_READ_EXCLUDED's row {path} names {file} 1 to 1, which holds no HERE / or "
+            "SOURCE / read"])
+        print("  F-EXCL: refused: a row with no reason, and a row on a line with no read")
+
+    def test_G_STALE_a_row_whose_line_no_longer_reads_its_path_fails(self):
+        (file, first, last, path, reason), = risk.GATE_READ_EXCLUDED
+        texts = self.planted(file, '(SOURCE / "assets").glob("*.png")',
+                             '(SOURCE / "assets").glob("*.jpg")')
+        self.assertEqual(self.problems(texts), [
+            "gate_inputs lacks assets/*.jpg, which scripts/test_safe_push.py:"
+            f"{first} executes or loads",
+            f"GATE_READ_EXCLUDED's row {path} is stale: {file} {first} to {last} no longer "
+            "reads it"])
+        print(f"  G-STALE: {self.problems(texts)[1]}")
+
+    def test_G2_the_rows_as_built(self):
+        self.assertEqual([(row[0], row[3]) for row in risk.GATE_READ_EXCLUDED],
+                         [("scripts/test_safe_push.py", "assets/*.png")])
+        self.assertEqual(added_problems(risk.GATE_READ_EXCLUDED), [])
+        self.assertEqual(live_problems(risk.GATE_READ_EXCLUDED_LIVE,
+                                       risk.GATE_READ_EXCLUDED_GROUNDS), [])
+        self.assertIs(risk.GATE_READ_EXCLUDED_LIVE, False)
+        # Every row's path stays in the gate's reach while the switch is off (G-LIVE).
+        for row in risk.GATE_READ_EXCLUDED:
+            self.assertTrue(covered(row[3], self.inputs), row)
+
+    def test_G_ADD_a_row_added_without_its_own_grounds_is_refused(self):
+        row = ("scripts/test_safe_push.py", 1, 1, "AGENTS.md", "a reason")
+        self.assertEqual(added_problems((*risk.GATE_READ_EXCLUDED, row)), [
+            "GATE_READ_EXCLUDED gains AGENTS.md: a row is added only by its own protected pull "
+            "request, which names it in tests/test_risk.py's EXCLUDED_AS_BUILT with a decisions "
+            "entry citing this test"])
+        print(f"  G-ADD: {added_problems((*risk.GATE_READ_EXCLUDED, row))[0]}")
+
+    def test_G_FLIP_the_switch_on_needs_recorded_runs_of_the_whole_suite(self):
+        refused = ["GATE_READ_EXCLUDED_LIVE is True, but its grounds cite no recorded runs of the "
+                   "whole suite on main, every six hours at most (GATE_READ_EXCLUDED_GROUNDS)"]
+        self.assertEqual(live_problems(True, None), refused)
+        self.assertEqual(live_problems("yes", None),
+                         ["GATE_READ_EXCLUDED_LIVE is 'yes', neither True nor False"])
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "docs/decisions").mkdir(parents=True)
+            entry = root / "docs/decisions/grounds.md"
+            run = "- Whole-suite run on main: {}, {}, 12 of 12 shards green.\n"
+            for text, expected in (
+                    ("No runs.\n", refused),
+                    (run.format("a" * 40, "2026-12-01T00:00:00Z"), refused),
+                    (run.format("a" * 40, "2026-12-01T00:00:00Z")
+                     + run.format("b" * 40, "2026-12-01T09:00:00Z"), refused),
+                    (run.format("a" * 40, "2026-12-01T00:00:00Z")
+                     + run.format("b" * 40, "2026-12-01T06:00:00Z"), [])):
+                with self.subTest(text=text):
+                    entry.write_text(text)
+                    self.assertEqual(live_problems(True, "docs/decisions/grounds.md", root),
+                                     expected)
+        print(f"  G-FLIP: {refused[0]}")
+
+
+class GateTrace(unittest.TestCase):
+    """The trace of the code under test (R3.G G1, R3.H): check_fidelity.py and render.py,
+    as safe_push.py runs them on every commit it checks, under an audit hook. A row of
+    GATE_READ_EXCLUDED whose path they open is refused by name."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.opened = traced()
+
+    def row(self, path, line=None):
+        return ("scripts/test_safe_push.py", line or 1, line or 1, path, "a planted row")
+
+    def test_G2_assets_png_is_never_opened(self):
+        self.assertEqual(opened_problems(risk.GATE_READ_EXCLUDED, self.opened), [])
+        self.assertTrue(any(p.startswith("assets/") for ps in self.opened.values() for p in ps),
+                        "the trace sees the assets folder's other files")
+        print("  G2: assets/*.png: never opened by "
+              + " or ".join(sorted(self.opened)) + "; the row stands")
+
+    def test_G_AGENTS_R3_H_a_planted_AGENTS_md_row_is_refused(self):
+        problems = opened_problems([self.row("AGENTS.md")], self.opened)
+        self.assertEqual(len(problems), 1)
+        self.assertTrue(problems[0].startswith("GATE_READ_EXCLUDED's row AGENTS.md: the code "
+                                               "under test opens AGENTS.md at runtime"), problems)
+        for guard in GUARDS:
+            self.assertIn("AGENTS.md", self.opened[guard], guard)
+        print(f"  G-AGENTS (R3.H): {problems[0]}")
+
+    def test_G_OPENED_a_planted_row_for_review_III_16_toml_is_refused(self):
+        for path in ("review/III/16.toml", "Elements/BookIII/Prop01.lean"):
+            with self.subTest(path):
+                problems = opened_problems([self.row(path)], self.opened)
+                self.assertEqual(len(problems), 1)
+                self.assertTrue(problems[0].startswith(
+                    f"GATE_READ_EXCLUDED's row {path}: the code under test opens {path} at "
+                    "runtime"), problems)
+                print(f"  G-OPENED: {problems[0]}")
+
+    def test_G_FIG_the_idea_figure_stays_in_reach(self):
+        problems = opened_problems([self.row("figures/I/01-idea.svg")], self.opened)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("scripts/render.py", problems[0])
+        print(f"  G-FIG: {problems[0]}")
+
+    def test_G1_the_nine_paths(self):
+        # G1's table, as the trace reads it at this head: every path but assets/*.png opened.
+        verdicts = {path: bool(opened_problems([self.row(path)], self.opened))
+                    for path in ("README.md", "facts.json", "docs/FORMALIZATION.md",
+                                 "docs/PROGRAM.md", "figures/I/01-idea.svg",
+                                 "Elements/BookIII/Prop01.lean", "review/III/16.toml",
+                                 "AGENTS.md", "assets/*.png")}
+        self.assertEqual([path for path, opened in verdicts.items() if not opened],
+                         ["assets/*.png"])
 
 
 if __name__ == "__main__":
