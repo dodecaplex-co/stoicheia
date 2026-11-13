@@ -875,7 +875,8 @@ proposition, and a later book's numeral replaces `I` in the paths.
 
 **The Lean notes**
 
-14. They read as section 1 asks: full sentences, letters plain, a shared step pointed to
+14. P9: A step noted in a companion is noted in the main theorem too.
+    The notes read as section 1 asks: full sentences, letters plain, a shared step pointed to
     rather than explained again, how rather than why. The rules for the Lean itself are in
     [FORMALIZATION.md](FORMALIZATION.md), and its reviewers' checklist is in
     [WORKFLOW.md](WORKFLOW.md).
