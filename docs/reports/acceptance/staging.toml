@@ -1,0 +1,9 @@
+[source]
+commit = "c6fd19b76c1edea692fc0bebb50e520c0a4c5eef"
+
+[Staging]
+files = [".gitkeep"]
+"declarations for Books I to III" = 0
+
+[acceptance]
+ALLOWED_LIMITS = []
