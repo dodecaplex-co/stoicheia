@@ -119,6 +119,15 @@ Our III.2 follows Euclid through I.5, I.16 and I.19, and neither it nor its coro
 `Prop2.triangle`, `Prop2.oppositeSide` and `Prop2.sameSide` uses Circle 1, Circle 2 or
 Circle 3, which are proved after them.
 
+### I.5 and restricted superposition
+
+What the restricted rule gives at once: I.5 by Pappus' argument (equal base angles).
+Pappus' argument uses I.4's citable laws, with no proposition cited.
+Pappus' argument: for AB = AC, compare ABC with ACB.
+This reach uses Euclid's own superposition principle.
+Direct use only in I.4 and I.8 is an edition policy, not a logical limit of the restricted rule.
+This is the reader's hand derivation, with a Lean audit lemma still to be supplied.
+
 ### III.5
 
 Our III.5 follows Euclid's argument, by Definition I.15 and the order on EFG. Cutting
