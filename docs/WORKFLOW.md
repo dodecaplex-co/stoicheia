@@ -477,6 +477,7 @@ python3 -I tests/test_jev_models.py
 python3 scripts/audit/jev.py self-test
 python3 -I tests/test_screen.py
 python3 scripts/test_safe_push.py Units.test_every_step_after_the_lane_step_carries_its_condition
+python3 -I tests/test_group_lane.py
 python3 -I tests/test_acceptance_limits.py
 python3 -I tests/test_check_superposition_pins.py
 python3 -I scripts/check_superposition_pins.py
@@ -556,9 +557,12 @@ worktree, as the pre-flight's does: a file that any command above leaves changed
 generated page or not, fails it, so the sequence runs on a committed revision. More jobs
 run on their own, each in isolation: CI's `risk`, which classifies the change (below);
 `negative`, `model`, `formal-model`, `acceptance` and `queue-tests`, more of CI's on
-each pull request, `negative` and `formal-model` of them by the class `risk` gives; the
-queue's judge, `queue-integrity` and `queue-gaps`, in a workflow of its own that the
-organization's ruleset is to run from main (section 10, "The merge queue"); and
+each pull request, `negative` and `formal-model` of them by the class `risk` gives, and
+`gate-shards` and `gate-tests`, the safe_push tests in 12 shards and their verdict, by the
+gate `risk` gives; the queue's judge, `queue-integrity` and `queue-gaps`, and
+`queue-gate-plan`, `queue-gate-shards` and `queue-gate`, which judge the safe_push tests
+of a group that reaches them, in a workflow of its own that the organization's ruleset is
+to run from main (section 10, "The merge queue"); and
 on a cadence, in the `safe-push-tests` workflow (below), the shards of `safe-push-shards`
 and the `safe-push-tests` job, which gives the verdict on them, and `negative-tests` and
 `formal-model-kernel`, which run on main the commands of CI's `negative` and
@@ -648,10 +652,17 @@ on 22 October ([the decision](decisions/2026-10-22-checks-by-risk.md)):
 |---|---|---|---|
 | Pre-flight ([section 10](#landing-work-pull-requests), step 2) | steps 1 to 3, the scans and the guards, 10 to 30 seconds; step 4 left to CI | steps 1 to 4, step 4 being this section's sequence and the negative tests, 9 to 19 minutes, and twice that when a check input changes | as R3 |
 | CI on the pull request | `check` (3.5 to 6.5 minutes), `model` and `acceptance` (4.5 minutes); `negative` passes at once, and `formal-model` too unless the change touches its inputs | as R0 to R2, and `negative` in full (15.5 minutes) | as R3, and `formal-model` in full (8 minutes) |
+| The landing tool's tests (`gate-shards`, `gate-tests`) | on a pull request whose change reaches the landing tool's inputs (`scripts/risk.py`'s `gate_inputs`, its output `gate`), or whose gate main's `risk.py` does not give: `scripts/test_safe_push.py` in 12 shards (about 45 minutes), judged by main's `check_queue.py --gate-prove`; otherwise `gate-tests` passes at once and says why. In a merge group, the queue's `queue-gate` runs them (section 10, "The merge queue") | as R0 to R2 | as R0 to R2 |
+| CI in a merge group | R5 for every class while main's group lane is off (`scripts/risk.py`'s `GROUP_LANE`, off as built): every job in full. Once its own protected pull request turns it on, for a condition `tests/test_group_lane.py` holds in code, a group is classed by its diff, as a pull request is | as R0 to R2 | as R0 to R2 |
 
 Main's run after each merge, the post-merge workflow's call, is R5, and runs every job in
 full: `negative` and `formal-model` beside `check`, `model` and `acceptance`, which runs on
-every event CI runs on. The cadence, the
+every event CI runs on. Since 12 November 2026 the owner has disabled the post-merge and
+`safe-push-tests` workflows on GitHub, and main's run after each merge, and the safe_push
+tests at each merge that reaches them and once a day, run on the project's own machine
+instead (the decision's ruling 1581,
+[docs/decisions/2026-11-12-ci-scope-1a.md](decisions/2026-11-12-ci-scope-1a.md)); what
+follows is what each workflow does when it runs. The cadence, the
 `safe-push-tests` workflow, runs on main every six hours, whatever landed: the safe_push
 tests, in twelve shards side by side (in one job, by 23 October, they took 72 to 78
 minutes, and 137 on the slow run cited below), the negative tests in full, and the formal
@@ -1327,8 +1338,13 @@ turned on before both are held. Its four rules are:
   entry's labels, must be R0 to R2 and change no check input and no protected path but
   judged content: the block's own, from its base to its head, and what the entry's merge
   brings into the group, from the merge's first parent, as CI's risk job classes a pull
-  request's merge commit. The group's own CI run is classed R5, so every check runs on
-  the group before it merges. The block is a declaration: anyone who can edit the pull
+  request's merge commit. While main's group lane is off (`scripts/risk.py`'s
+  `GROUP_LANE`, off as built), the group's own CI run is R5, so every check still runs on
+  it before it merges. With it on, an R0 to R2 group runs as its pull request did:
+  `check`, `model`, `acceptance` and `queue-tests` in full in CI, and `negative` and
+  `formal-model` held by the lane's named condition, proven before the merge by a
+  verified result off CI (GROUP-VERIFY) or run after it off CI with an automatic revert
+  on red (L6). The block is a declaration: anyone who can edit the pull
   request's body can type one, and the judge checks it for consistency with the
   repository, not as proof that a pre-flight ran. Its authenticity is held by write
   access to the pull request, as above, until #574's signatures replace it. The queue
@@ -1415,7 +1431,10 @@ and no other ("Out of a red main", below), or the judge refuses it.
 union of the entries' derived changes and their declarations. A changed `tests/test_*.py`
 runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself; a changed
 `scripts/<name>.py` runs its existing `tests/test_<name>.py` or `scripts/test_<name>.py`
-tests. The safe_push test command is `python3 scripts/test_safe_push.py`. A file under
+tests. The safe_push test command is `python3 scripts/test_safe_push.py`, which
+`queue-gaps` never runs: whenever main's `check_queue.py` finds that the group reaches it
+(`gate_reached`, below), its plan names it carried by `queue-gate`, and `--run-plan` says
+so and runs it not. A file under
 `.github/`, changed or deleted, asks for the tests that read it, which `GITHUB_TESTS`
 names; any other path under `.github/` is refused, as is a group that deletes a test
 named there, whether or not it changes a file under `.github/`, until main's copy of the
@@ -1435,6 +1454,30 @@ artifact not there yet is waited for. The artifact is bounded (8 MiB downloaded;
 stored or deflated, each at most 2 MiB; `verdicts.json` read through a bounded stream).
 Declared rules are printed for the reader. Foundations need no extra run here, since
 `model` and `formal-model` run on every group.
+
+**The landing tool's tests in the queue.** `scripts/test_safe_push.py` takes about 400
+runner-minutes, which one job of the queue's 150 cannot hold, so three jobs of the queue's
+judge run it from main's copy of `queue-judge.yml`
+([the decision](decisions/2026-11-12-ci-scope-1a.md)). `queue-gate-plan` asks main's
+`check_queue.py --gate-plan`, from Git alone and with no token, whether the group reaches
+the tests: `gate_reached`, the union of what `--gaps` chooses for the group's entries,
+each against its own merge base, and main's `scripts/risk.py` gate for the group's diff
+(its `gate_inputs`); a `risk.py` without that gate, or one that fails, reaches them for
+every group. `--gaps` makes the same choice, so the two cannot differ. When the plan's
+gate is true, `queue-gate-shards` runs the group's own suite in 12 shards, each through
+main's `check_queue.py --gate-shard`, which refuses to run while a variable named with
+TOKEN is set. `queue-gate` then runs main's `check_queue.py --gate-prove`: the plan must
+be this group's, with the plan job's own answer; `queue-gaps`' plan must carry the tests
+exactly when the plan's gate is true; and, when it is, every shard must have left its list
+of what it ran, the group's own `--cover` must prove against the plan's 12 shards that
+each test ran once, and every test must have passed as `ok`, or be one of the three skips
+`ALLOWED_SKIPS` in main's `check_queue.py` names, where its condition holds, with its
+exact reason. Its last step passes only when that proof passed and, for a gate true, the
+shards succeeded. Main controls what runs and how it is judged; a group that rewrites its
+own suite could still write lists of `ok`, as with `queue-gaps`' tests. Each of the judge's
+required jobs, and each of CI's, has no `if` but `always()`, reads each job it needs in
+its first step, and ends with a step under `always()` that judges its work step's
+outcome, since GitHub counts a required job it skips as passed.
 
 The tests are the group's own code, and on Linux a process can read its parent's
 environment (`/proc/<ppid>/environ`), so no test runs in a step that holds the token.
@@ -1646,8 +1689,9 @@ starts with the group and waits for `acceptance` with no earlier limit of its ow
 status check timeout binds, as before; but the handover after `acceptance` ends (a poll
 of up to a minute, then a few reads and the download) is not the runner wait it
 replaces, so a group that ends at the very edge of the timeout may now be ejected there.
-`queue-gaps` may run the tests of `safe_push.py` and `check_queue.py` in one group, at
-most about 40 minutes as measured off GitHub, and its choosing
+`queue-gaps` may run the tests of `check_queue.py` in one group, never those of
+`safe_push.py`, which `queue-gate` runs in 12 shards beside it (about 45 minutes for the
+slowest), and its choosing
 step, like `queue-integrity` (limit 20 minutes), may wait up to 10 minutes for a
 revert's run to complete before it judges the revert (above): a shorter timeout ejects
 sound slow groups, and every automatic revert whose run is still in progress. These

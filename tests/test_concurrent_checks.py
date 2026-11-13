@@ -1254,6 +1254,7 @@ class TheRegistry(unittest.TestCase):
         "python3 -I tests/test_screen.py",
         "python3 scripts/test_safe_push.py "
         "Units.test_every_step_after_the_lane_step_carries_its_condition",
+        "python3 -I tests/test_group_lane.py",
         "python3 -I tests/test_acceptance_limits.py",
         "python3 -I tests/test_check_superposition_pins.py",
         "python3 -I scripts/check_superposition_pins.py",

@@ -6,8 +6,10 @@ on:
   # another branch or of a tag runs nothing here (docs/decisions/2026-10-22-checks-by-risk.md).
   # Main's run after each merge comes from post-merge.yml, which calls this workflow under
   # its push to main, so a push trigger here would run main's commit twice. That call is
-  # the risk job's case of a push to main, R5; a merge group, as any other event, falls
-  # to the job's last case, R5 too.
+  # the risk job's case of a push to main, R5. A merge group is R5 too while main's group
+  # lane is off (scripts/risk.py GROUP_LANE, off as built); once its own protected pull
+  # request turns it on, a group is classed by its diff, as a pull request is
+  # (docs/decisions/2026-11-12-ci-scope-1a.md).
   pull_request:
   merge_group:
   workflow_call:
@@ -22,9 +24,14 @@ jobs:
     # read no label. This job reads one, `release`, and it can only raise the class. Main's
     # copy of scripts/risk.py, never the change's own, classifies the files the change
     # brings to main, so a change cannot lower its own class by editing the classifier. A
-    # pull request into main is classified so, exactly, from GitHub's merge commit; one
-    # whose run starts with the `release` label, one into any other branch, a push to main
-    # and every other event are R5, and `negative` and `formal-model` run in full. The label
+    # pull request into main is classified so, exactly, from GitHub's merge commit; a merge
+    # group is classified so from its base and head only while main's group lane is on,
+    # its checkout its head, its base an ancestor of its head, each of its commits a pull
+    # request's merge, and no pull request in it labelled `release`, each label read from
+    # GitHub; one whose run starts with the `release` label, one into any other branch, a
+    # push to main and every other event are R5, and `negative` and `formal-model` run in
+    # full. Main's risk.py writes its answer to a file of its own first, which must hold one
+    # class, one formal_model and at most one gate, and nothing else, or it is R5. The label
     # is read from the event that started the run, and git safe-push adds a pull request's
     # labels after it pushes, so a label given with that push counts from the next push.
     # Main's run after the merge, post-merge.yml's call, runs every job in full, `negative`
@@ -38,10 +45,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # A merge group's pull requests' labels, read for `release`.
+      pull-requests: read
     timeout-minutes: 10
     outputs:
       class: ${{ steps.classify.outputs.class }}
       formal_model: ${{ steps.classify.outputs.formal_model }}
+      gate: ${{ steps.classify.outputs.gate }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -57,12 +67,20 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RELEASE: ${{ contains(github.event.pull_request.labels.*.name, 'release') }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE_REF: ${{ github.event.merge_group.base_ref }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           r5() {
             echo "$1: R5, negative and formal-model run in full"
             { echo "class=R5"; echo "formal_model=true"; } >> "$GITHUB_OUTPUT"
             exit 0
+          }
+          full_id() {
+            [[ "$1" =~ ^[0-9a-f]{40}$ ]] && [ "$1" != 0000000000000000000000000000000000000000 ]
           }
           case "$EVENT:$REF" in
             push:refs/heads/main)
@@ -82,7 +100,50 @@ jobs:
               fi
               base=$(git rev-parse HEAD^1)
               head=$(git rev-parse HEAD)
+              kind="the pull request"
               what="the pull request" ;;
+            merge_group:*)
+              # Each check fails to R5, never to a skip; base and head are set once the ids
+              # are known whole, before any line reads them.
+              if ! full_id "$GROUP_BASE" || ! full_id "$GROUP_HEAD"; then
+                r5 "a merge group whose base or head is not a full commit id"
+              fi
+              if [ "$GROUP_BASE_REF" != refs/heads/main ]; then
+                r5 "a merge group into $GROUP_BASE_REF, not main"
+              fi
+              base=$GROUP_BASE
+              head=$GROUP_HEAD
+              if [ "$(git rev-parse HEAD)" != "$head" ]; then
+                r5 "a merge group whose checkout is not its head, $head"
+              fi
+              if ! git merge-base --is-ancestor "$base" "$head"; then
+                r5 "a merge group whose base is not an ancestor of its head"
+              fi
+              # A release in the group is R5: each commit is a pull request's merge, whose
+              # labels GitHub gives, a group having none of its own.
+              if ! merges=$(git log --first-parent --format='%H %s' "$base..$head") \
+                  || [ -z "$merges" ]; then
+                r5 "a merge group whose commits could not be read"
+              fi
+              numbers=""
+              while read -r commit subject; do
+                if ! [[ "$subject" =~ ^Merge\ pull\ request\ \#([1-9][0-9]*)\ from\  ]]; then
+                  r5 "a merge group whose commit ${commit:0:12} names no pull request"
+                fi
+                number=${BASH_REMATCH[1]}
+                if ! labelled=$(gh api "repos/$REPOSITORY/pulls/$number" \
+                    --jq '[.labels[].name | ascii_downcase] | index("release") != null'); then
+                  r5 "the labels of #$number could not be read"
+                fi
+                case "$labelled" in
+                  false) ;;
+                  true) r5 "a merge group holding #$number, labelled release" ;;
+                  *) r5 "the labels of #$number could not be read" ;;
+                esac
+                numbers="${numbers:+$numbers, }#$number"
+              done <<< "$merges"
+              kind="the merge group"
+              what="the merge group ${head:0:12} (pull requests $numbers)" ;;
             *)
               r5 "a $EVENT event of $REF" ;;
           esac
@@ -92,8 +153,40 @@ jobs:
             r5 "main, at $base, has no scripts/risk.py to classify $what"
           fi
           git show "$base:scripts/risk.py" > "$RUNNER_TEMP/risk.py"
+          if [ "$EVENT" = merge_group ]; then
+            # The switch: a group is classed by its diff only while main's group lane is on.
+            status=0
+            lane=$(python3 -I "$RUNNER_TEMP/risk.py" --group-lane 2> /dev/null) || status=$?
+            case "$status:$lane" in
+              "0:group-lane: on, because L6"|"0:group-lane: on, because GROUP-VERIFY")
+                echo "$lane: main's scripts/risk.py classes the merge group by its diff" ;;
+              "0:group-lane: off")
+                r5 "a merge group while main's group lane is off (scripts/risk.py GROUP_LANE)" ;;
+              *)
+                r5 "main's risk.py gave no group lane (exit $status)" ;;
+            esac
+          fi
           echo "main's scripts/risk.py, at $base, classifies $what"
-          python3 -I "$RUNNER_TEMP/risk.py" --diff "$base" "$head" --github-output
+          # Its answer is data, held to its form before it is used: one class, one
+          # formal_model and at most one gate (none from a risk.py before the gate), nothing
+          # else; a gate absent leaves gate-tests to judge the landing tool's tests in full.
+          out="$RUNNER_TEMP/risk.out"
+          : > "$out"
+          status=0
+          GITHUB_OUTPUT="$out" python3 -I "$RUNNER_TEMP/risk.py" --diff "$base" "$head" --github-output || status=$?
+          if [ "$status" -ne 0 ]; then
+            r5 "main's risk.py could not class $kind (exit $status)"
+          fi
+          classes=$(grep -c -E '^class=R[0-5]$' "$out" || true)
+          models=$(grep -c -E '^formal_model=(true|false)$' "$out" || true)
+          gates=$(grep -c -E '^gate=(true|false)$' "$out" || true)
+          lines=$(grep -c '' "$out" || true)
+          if [ "$classes" -ne 1 ] || [ "$models" -ne 1 ] || [ "$gates" -gt 1 ] ||
+             [ "$lines" -ne $((classes + models + gates)) ]; then
+            first=$(sed -n 1p "$out" | cut -c 1-120 | LC_ALL=C tr -d '\n' | LC_ALL=C tr -c '[:print:]' '?')
+            r5 "main's risk.py gave no class for $kind: $first"
+          fi
+          cat "$out" >> "$GITHUB_OUTPUT"
 
   check:
     runs-on: ubuntu-latest
@@ -143,15 +236,18 @@ jobs:
 
   negative:
     # Break the project on purpose, and check that every break is caught: in full for a
-    # change of class R3, R4 or R5, which every push to main is, and every pull request
-    # whose run starts with the `release` label (`risk`); for R0 to R2 the job passes at
-    # once and says why, since main's run after the merge runs the tests in full, and the
-    # cadence (safe-push-tests.yml) runs them on main every six hours
-    # (docs/decisions/2026-10-22-risk-lanes.md). git safe-push's pre-flight runs them as
+    # change of class R3, R4 or R5, which every push to main is, every merge group while
+    # main's group lane is off, as built, and every pull request whose run starts with the
+    # `release` label (`risk`); for R0 to R2 the job passes at once and says why: the merge
+    # group runs them in full before the merge while the lane is off, and main's run after
+    # each merge runs them off CI (docs/decisions/2026-11-12-ci-scope-1a.md); the cadence
+    # workflow, safe-push-tests.yml, is disabled. git safe-push's pre-flight runs them as
     # well for R3 to R5, and for R0 to R2 leaves them out with the rest of its step 4
     # (docs/decisions/2026-10-22-checks-by-risk.md). The job runs whatever became of
     # `risk`, and fails unless `risk` succeeded: GitHub accepts a skipped required check,
-    # so a failed or cancelled classification must fail it, never skip it.
+    # so a failed or cancelled classification must fail it, never skip it; and its last
+    # step, which always runs, fails unless the tests ran and passed or the lane passed at
+    # once, so that no step skipped by a wrong condition leaves the job green.
     needs: risk
     if: always()
     runs-on: ubuntu-latest
@@ -171,7 +267,7 @@ jobs:
               echo "class $CLASS: the negative tests run in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0|R1|R2)
-              echo "class $CLASS: the negative tests run in main's run after the merge and on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md, docs/decisions/2026-10-22-checks-by-risk.md)"
+              echo "class $CLASS: the negative tests are not run in this job; under ruling 1581 they run on the VM at the merge commit, after the merge"
               echo "full=false" >> "$GITHUB_OUTPUT" ;;
             *)
               echo "the risk job gave no class from R0 to R5: '$CLASS'"
@@ -210,10 +306,212 @@ jobs:
       - name: An edited Heath word, wrong radii in I.1, a weakened axiom, a statements' word changed, a primitive no longer opaque, stale and incomplete review records, a native_decide, planted assumptions in I.15's porism and I.16, and a sorry in a complete book
         # In four workers, one for each of the runner's cores: 434 seconds against 714 for
         # one on an AMD EPYC 9V45 (docs/decisions/2026-10-29-ci-negative-workers.md).
+        id: plants
         if: steps.lane.outputs.full == 'true'
         env:
           STOICHEIA_NEGATIVE_WORKERS: "4"
         run: python3 scripts/negative_tests.py
+
+      - name: Pass only when the negative tests ran and passed, or the lane passed at once
+        if: always()
+        env:
+          LANE: ${{ steps.lane.outcome }}
+          FULL: ${{ steps.lane.outputs.full }}
+          WORK: ${{ steps.plants.outcome }}
+        run: |
+          case "$LANE:$FULL:$WORK" in
+            success:false:skipped) echo "negative: the lane passed at once, as its step says." ;;
+            success:true:success) echo "negative: the negative tests ran in full and passed." ;;
+            *) echo "negative: the lane step ended '$LANE' (full '$FULL'), and the negative tests '$WORK'."; exit 1 ;;
+          esac
+
+  gate-shards:
+    # The landing tool's tests, scripts/test_safe_push.py, the tests of the gate every pull
+    # request lands through, in 12 shards, for a pull request whose change reaches what they
+    # read or run (main's scripts/risk.py, gate_inputs: `gate`), as the cadence's
+    # safe-push-tests.yml runs them, each shard keeping its list of what it ran for
+    # gate-tests' proof. A gate main's risk.py does not give, as one from before the gate
+    # would not, runs them too (fail closed). In a merge group and on main they run
+    # elsewhere: queue-gate, and main's run after each merge (gate-tests says where).
+    needs: risk
+    if: always() && needs.risk.result == 'success' && github.event_name == 'pull_request' && needs.risk.outputs.gate != 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # As the cadence's shards: about 42 to 47 minutes for the slowest of 12.
+    timeout-minutes: 90
+    strategy:
+      # Every shard runs to its end, so that one failing hides none of the others'.
+      fail-fast: false
+      matrix:
+        # 1 to N, each once, and N written here alone: strategy.job-total, which each
+        # shard is given as N, is N too.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The tests clone this repository.
+          fetch-depth: 0
+          # No token stays in .git/config while the tests run.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned YAML parser the tests read the workflow with
+        # Isolated, from the runner's temporary directory, as the check job installs it.
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
+
+      - name: Check the gate every pull request lands through, guard by guard, one shard of the tests
+        # --ran: after its run the shard writes the tests it ran, each with its outcome.
+        run: |
+          set -o pipefail
+          python3 scripts/test_safe_push.py --shard ${{ matrix.shard }}/${{ strategy.job-total }} --ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json" 2>&1 | tee "$RUNNER_TEMP/test_safe_push-${{ matrix.shard }}.log"
+
+      - name: Keep the list of the tests this shard ran, for the proof
+        # Kept when a test failed too, so that the proof names it. A shard that stops
+        # before its end writes no list and keeps none, and the proof then fails.
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: gate-ran-${{ matrix.shard }}
+          path: ${{ runner.temp }}/ran-${{ matrix.shard }}.json
+          if-no-files-found: error
+          overwrite: true
+
+      - name: Keep the shard's log
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: gate-log-${{ matrix.shard }}
+          path: ${{ runner.temp }}/test_safe_push-${{ matrix.shard }}.log
+          if-no-files-found: ignore
+          overwrite: true
+
+  gate-tests:
+    # The verdict on the landing tool's tests, a required check of its own, which reports on
+    # every event (safe_push.py's REQUIRED_CHECKS). Its lane reads the event and the risk
+    # job's gate: a merge group's are queue-gate's, main's run off CI, and a pull request
+    # whose change reaches none of the landing tool's inputs passes at once; one that does,
+    # or whose gate main's risk.py does not give, is judged in full by main's
+    # scripts/check_queue.py --gate-prove, taken from the checkout's first parent, never the
+    # pull request's own copy: every shard's list, the pull request's own --cover against
+    # 12 shards, and main's skip judge. The last step, which always runs, passes only when
+    # the lane passed at once, or the shards succeeded and the proof passed, each judged on
+    # its own.
+    needs: [risk, gate-shards]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Read the event and the gate, and judge the landing tool's tests in full where they run here
+        id: lane
+        env:
+          EVENT: ${{ github.event_name }}
+          RESULT: ${{ needs.risk.result }}
+          CLASS: ${{ needs.risk.outputs.class }}
+          GATE: ${{ needs.risk.outputs.gate }}
+        run: |
+          if [ "$RESULT" != success ]; then
+            echo "the risk job ended: $RESULT; without its answer the gate's tests cannot pass"
+            exit 1
+          fi
+          case "$EVENT:$GATE" in
+            merge_group:*)
+              echo "merge group: the gate's tests are not run in this job; queue-gate runs them from main's queue-judge.yml when main's check_queue.py gate_reached is true (L0.1)"
+              echo "full=false" >> "$GITHUB_OUTPUT" ;;
+            push:*)
+              echo "main: the gate's tests are not run in this job; under ruling 1581 they run on the VM at each merge that reaches the gate and once a day"
+              echo "full=false" >> "$GITHUB_OUTPUT" ;;
+            pull_request:false)
+              echo "class $CLASS: the change touches none of the landing tool's inputs (risk.py gate_inputs)"
+              echo "full=false" >> "$GITHUB_OUTPUT" ;;
+            pull_request:true|pull_request:)
+              echo "class $CLASS, gate '$GATE': the gate's tests are judged in full, from their 12 shards"
+              echo "full=true" >> "$GITHUB_OUTPUT" ;;
+            pull_request:*)
+              echo "the risk job gave gate '$GATE', neither true nor false"
+              exit 1 ;;
+            *)
+              echo "gate-tests: event $EVENT is not pull_request, merge_group or push"
+              exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v5
+        if: steps.lane.outputs.full == 'true'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: steps.lane.outputs.full == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned YAML parser the tests read the workflow with
+        if: steps.lane.outputs.full == 'true'
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
+
+      - name: Fetch every shard's list of the tests it ran
+        if: steps.lane.outputs.full == 'true'
+        uses: actions/download-artifact@v5
+        with:
+          pattern: gate-ran-*
+          path: ${{ runner.temp }}/gate-ran
+
+      - name: Prove the shards' lists with main's copy of check_queue.py, with no token
+        # Main is the checkout's first parent, GitHub's merge of the pull request into it.
+        id: cover
+        if: steps.lane.outputs.full == 'true'
+        run: |
+          test "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3
+          main=$(git rev-parse HEAD^1)
+          if ! git cat-file -e "$main:scripts/check_queue.py"; then
+            echo "main, at $main, has no scripts/check_queue.py to judge the gate's tests"
+            exit 1
+          fi
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$main:scripts" > "$RUNNER_TEMP/gate-judge.tar"
+          tar -xf "$RUNNER_TEMP/gate-judge.tar" -C "$RUNNER_TEMP/judge"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gate-prove --head "$(git rev-parse HEAD)" --lists "$RUNNER_TEMP/gate-ran"
+
+      - name: Pass only when the shards succeeded and the proof passed, or the lane passed at once
+        if: always()
+        env:
+          LANE: ${{ steps.lane.outcome }}
+          FULL: ${{ steps.lane.outputs.full }}
+          SHARDS: ${{ needs.gate-shards.result }}
+          COVER: ${{ steps.cover.outcome }}
+        run: |
+          if [ "$LANE" != success ]; then
+            echo "gate-tests: the lane step ended '$LANE'."
+            exit 1
+          fi
+          case "$FULL" in
+            false) echo "gate-tests: passed at once, as the lane step says."; exit 0 ;;
+            true) ;;
+            *) echo "gate-tests: the lane step gave full '$FULL', neither true nor false."; exit 1 ;;
+          esac
+          red=0
+          case "$SHARDS" in
+            success) echo "Every shard of scripts/test_safe_push.py succeeded." ;;
+            failure) echo "The shards ended in failure: a shard failed, and the proof above and the shard's log name the test."; red=1 ;;
+            cancelled) echo "The shards ended cancelled: a shard was cancelled, so not every test is known to have passed."; red=1 ;;
+            skipped) echo "The shards were skipped, so no test ran."; red=1 ;;
+            *) echo "The shards ended '$SHARDS', which is not success."; red=1 ;;
+          esac
+          if [ "$COVER" = success ]; then
+            echo "Main's proof passed: every test ran once, in one shard, and passed, as ok or as a skip it allows."
+          else
+            echo "Main's proof ended '$COVER', not success."
+            red=1
+          fi
+          exit "$red"
 
   model:
     # The axioms in the plane: needs no Lean, for it reads the committed facts.json.
@@ -251,9 +549,12 @@ jobs:
     # cleanly or an import it cannot resolve, the job runs in full for every change, and
     # `risk`'s log names the file.
     # Otherwise the job passes at once and says why: the change touches none of the model's
-    # inputs, and the cadence (safe-push-tests.yml) checks the model on main every six
-    # hours (docs/decisions/2026-10-22-risk-lanes.md).
-    # Like `negative`, it fails unless `risk` succeeded, never skipped.
+    # inputs; the merge group checks it in full before the merge while main's group lane is
+    # off, as built, and main's run after each merge checks it off CI
+    # (docs/decisions/2026-11-12-ci-scope-1a.md); the cadence workflow is disabled.
+    # Like `negative`, it fails unless `risk` succeeded, never skipped, and its last step,
+    # which always runs, fails unless the model was checked and passed or the lane passed
+    # at once.
     needs: risk
     if: always()
     runs-on: ubuntu-latest
@@ -280,7 +581,7 @@ jobs:
               echo "class $CLASS, and the change touches a file the formal model imports, or a file among them has a header the classifier cannot read; the risk job's log names it: the formal model is checked in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0:false|R1:false|R2:false|R3:false)
-              echo "class $CLASS, and the change touches nothing under model/, nor the axiom lock, the model's kernel check or a file the formal model imports, so the formal model is checked on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md)"
+              echo "class $CLASS: the formal model is not checked in this job; under ruling 1581 it is checked on the VM at the merge commit, after the merge"
               echo "full=false" >> "$GITHUB_OUTPUT" ;;
             *)
               echo "the risk job gave no class from R0 to R5, with formal_model true or false: '$CLASS', '$FORMAL_MODEL'"
@@ -345,10 +646,24 @@ jobs:
         # from nothing (model/README.md, "The CI job"). --self-test runs first and needs
         # no Mathlib: lake build must accept a theorem of False added without the kernel's
         # check, and the replay must reject it, naming it.
+        id: kernel
         if: steps.lane.outputs.full == 'true'
         run: |
           python3 scripts/check_model_kernel.py --self-test
           python3 scripts/check_model_kernel.py
+
+      - name: Pass only when the formal model was checked and passed, or the lane passed at once
+        if: always()
+        env:
+          LANE: ${{ steps.lane.outcome }}
+          FULL: ${{ steps.lane.outputs.full }}
+          WORK: ${{ steps.kernel.outcome }}
+        run: |
+          case "$LANE:$FULL:$WORK" in
+            success:false:skipped) echo "formal-model: the lane passed at once, as its step says." ;;
+            success:true:success) echo "formal-model: the formal model was checked in full and passed." ;;
+            *) echo "formal-model: the lane step ended '$LANE' (full '$FULL'), and the kernel's check '$WORK'."; exit 1 ;;
+          esac
 
   acceptance:
     # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request, as this
@@ -453,6 +768,7 @@ jobs:
       - name: Check the pull request against the acceptance checklist, and write its report
         # Exit 1 is a failing item, which the ratchet weighs in the last step; 2 or more is
         # a checker that could not run, which fails at once.
+        id: checklist
         run: |
           case "$ACCEPTANCE_GATE" in
             ratchet|full) ;;
@@ -487,6 +803,7 @@ jobs:
           test "$status" -le 1
 
       - name: No item that passes on main fails on the pull request
+        id: compare
         if: env.ACCEPTANCE_GATE == 'ratchet'
         run: python3 scripts/check_acceptance.py --compare "$RUNNER_TEMP/acceptance/main.json" "$RUNNER_TEMP/acceptance/verdicts.json"
 
@@ -498,6 +815,20 @@ jobs:
         with:
           name: acceptance
           path: ${{ runner.temp }}/acceptance/
+
+      - name: Pass only when the checklist passed and, under the ratchet, the comparison too
+        # The job's last step, which always runs: a step skipped by a wrong condition leaves
+        # it red, never green.
+        if: always()
+        env:
+          CHECKLIST: ${{ steps.checklist.outcome }}
+          COMPARE: ${{ steps.compare.outcome }}
+        run: |
+          case "$ACCEPTANCE_GATE:$CHECKLIST:$COMPARE" in
+            ratchet:success:success) echo "acceptance: no item that passes on main fails here." ;;
+            full:success:skipped) echo "acceptance: every item passes." ;;
+            *) echo "acceptance: the gate '$ACCEPTANCE_GATE', the checklist '$CHECKLIST' and the comparison '$COMPARE'."; exit 1 ;;
+          esac
 
   queue-tests:
     # The offline cases of the queue's judge and its automatic reverts, which need no
